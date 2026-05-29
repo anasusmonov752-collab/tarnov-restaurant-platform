@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tarnov Restaurant — Kirish</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .ornament { color: var(--gold); opacity: 0.6; }
+    .divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .divider span { color: var(--text3); font-size: 0.75rem; }
+  </style>
+</head>
+<body>
+  <div id="toast-container"></div>
+  <div class="login-page">
+    <div class="login-container">
+
+      <div class="login-logo">
+        <svg class="logo-svg" width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="36" cy="36" r="35" stroke="#C8922A" stroke-width="1.5" stroke-dasharray="4 2"/>
+          <circle cx="36" cy="36" r="28" stroke="#C8922A" stroke-width="0.5" opacity="0.4"/>
+          <path d="M36 12 L38 20 L36 18 L34 20 Z" fill="#C8922A"/>
+          <path d="M36 60 L38 52 L36 54 L34 52 Z" fill="#C8922A"/>
+          <path d="M12 36 L20 38 L18 36 L20 34 Z" fill="#C8922A"/>
+          <path d="M60 36 L52 38 L54 36 L52 34 Z" fill="#C8922A"/>
+          <text x="36" y="32" text-anchor="middle" font-family="serif" font-size="10" font-weight="bold" fill="#C8922A" letter-spacing="2">TR</text>
+          <path d="M22 40 Q36 34 50 40" stroke="#C8922A" stroke-width="1" fill="none" opacity="0.6"/>
+          <path d="M24 43 Q36 37 48 43" stroke="#C8922A" stroke-width="0.5" fill="none" opacity="0.4"/>
+          <circle cx="36" cy="36" r="3" fill="none" stroke="#C8922A" stroke-width="1"/>
+          <circle cx="36" cy="18" r="1.5" fill="#C8922A"/>
+          <circle cx="36" cy="54" r="1.5" fill="#C8922A"/>
+          <circle cx="18" cy="36" r="1.5" fill="#C8922A"/>
+          <circle cx="54" cy="36" r="1.5" fill="#C8922A"/>
+        </svg>
+        <h1>TARNOV</h1>
+        <p>Restaurant · Training Platform</p>
+      </div>
+
+      <div class="login-card">
+        <div class="login-tabs">
+          <button class="login-tab active" onclick="switchTab('superadmin')">⚡ Super Admin</button>
+          <button class="login-tab" onclick="switchTab('restaurant')">🏪 Admin</button>
+          <button class="login-tab" onclick="switchTab('waiter')">👨‍🍳 Ofitsiant</button>
+        </div>
+
+        <!-- Super Admin -->
+        <div class="tab-panel active" id="panel-superadmin">
+          <div class="form-group">
+            <label>Email manzil</label>
+            <input type="email" class="form-control" id="sa-email" placeholder="admin@tarnov.uz" value="admin@tarnov.uz">
+          </div>
+          <div class="form-group">
+            <label>Parol</label>
+            <input type="password" class="form-control" id="sa-password" placeholder="••••••••">
+          </div>
+          <button class="btn btn-gold btn-full btn-lg" onclick="login('superadmin')">
+            Kirish
+          </button>
+          <p style="text-align:center;margin-top:14px;font-size:0.78rem;color:var(--text3)">
+            Default: admin@tarnov.uz / Tarnov2024!
+          </p>
+        </div>
+
+        <!-- Restaurant Admin -->
+        <div class="tab-panel" id="panel-restaurant">
+          <div class="form-group">
+            <label>Email manzil</label>
+            <input type="email" class="form-control" id="ra-email" placeholder="admin@restaurant.uz">
+          </div>
+          <div class="form-group">
+            <label>Parol</label>
+            <input type="password" class="form-control" id="ra-password" placeholder="••••••••">
+          </div>
+          <button class="btn btn-gold btn-full btn-lg" onclick="login('restaurant')">
+            Kirish
+          </button>
+        </div>
+
+        <!-- Waiter -->
+        <div class="tab-panel" id="panel-waiter">
+          <div class="form-group">
+            <label>Restoranni tanlang</label>
+            <select class="form-control" id="w-restaurant">
+              <option value="">— Restoran tanlang —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>4 xonali PIN</label>
+            <input type="password" class="form-control pin-input" id="w-pin" placeholder="• • • •" maxlength="4" inputmode="numeric" pattern="\d{4}">
+          </div>
+          <button class="btn btn-gold btn-full btn-lg" onclick="login('waiter')">
+            Kirish
+          </button>
+        </div>
+
+        <div id="login-error" class="alert alert-danger" style="display:none;margin-top:16px"></div>
+      </div>
+
+      <p style="text-align:center;margin-top:24px;font-size:0.75rem;color:var(--text3)">
+        ✦ Tarnov Restaurant HR Training Platform ✦
+      </p>
+    </div>
+  </div>
+
+  <script src="/js/utils.js"></script>
+  <script>
+    const tabs = document.querySelectorAll('.login-tab');
+
+    function switchTab(type) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      tabs.forEach(t => t.classList.remove('active'));
+      document.getElementById(`panel-${type}`).classList.add('active');
+      event.target.classList.add('active');
+      document.getElementById('login-error').style.display = 'none';
+      if (type === 'waiter') loadRestaurants();
+    }
+
+    async function loadRestaurants() {
+      try {
+        const list = await api('/api/restaurants/list');
+        const sel = document.getElementById('w-restaurant');
+        sel.innerHTML = '<option value="">— Restoran tanlang —</option>';
+        list.forEach(r => {
+          const opt = document.createElement('option');
+          opt.value = r.id;
+          opt.textContent = r.name + (r.location ? ` — ${r.location}` : '');
+          sel.appendChild(opt);
+        });
+      } catch {}
+    }
+
+    async function login(type) {
+      const errEl = document.getElementById('login-error');
+      errEl.style.display = 'none';
+      let body = { loginType: type };
+
+      if (type === 'superadmin') {
+        body.email = document.getElementById('sa-email').value.trim();
+        body.password = document.getElementById('sa-password').value;
+      } else if (type === 'restaurant') {
+        body.email = document.getElementById('ra-email').value.trim();
+        body.password = document.getElementById('ra-password').value;
+      } else {
+        body.restaurantId = document.getElementById('w-restaurant').value;
+        body.pin = document.getElementById('w-pin').value;
+      }
+
+      try {
+        const res = await api('/api/auth/login', { method: 'POST', body: JSON.stringify(body) });
+        window.location.href = res.redirect;
+      } catch (e) {
+        errEl.textContent = e.message || 'Kirish amalga oshmadi';
+        errEl.style.display = 'flex';
+      }
+    }
+
+    // Enter key support
+    document.addEventListener('keypress', e => {
+      if (e.key === 'Enter') {
+        const active = document.querySelector('.tab-panel.active');
+        const type = active.id.replace('panel-', '');
+        login(type);
+      }
+    });
+
+    // Check if already logged in
+    api('/api/auth/me').then(user => {
+      if (user.role === 'superadmin') window.location.href = '/super-admin.html';
+      else if (user.role === 'restaurant') window.location.href = '/restaurant-admin.html';
+      else if (user.role === 'waiter') window.location.href = '/waiter.html';
+    }).catch(() => {});
+  </script>
+</body>
+</html>

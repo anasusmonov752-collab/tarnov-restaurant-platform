@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tarnov — Restoran Admin</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="toast-container"></div>
+
+<div class="mobile-topbar">
+  <button class="hamburger" onclick="toggleSidebar()">☰</button>
+  <span style="color:var(--gold);font-weight:700;letter-spacing:0.1em" id="mob-name">TARNOV</span>
+  <button class="btn btn-ghost btn-sm" onclick="logout()">Chiqish</button>
+</div>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <h2 id="sb-name">RESTORAN</h2>
+        <p id="sb-loc" style="color:var(--text3);font-size:0.75rem;margin-top:2px"></p>
+      </div>
+      <div class="sidebar-user" style="margin-top:14px">
+        <div class="user-name">Restoran Admin</div>
+        <div class="user-role">🏪 Boshqaruvchi</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">Boshqaruv</div>
+      <button class="nav-item active" onclick="showPage('dashboard')"><span class="nav-icon">📊</span>Dashboard</button>
+      <button class="nav-item" onclick="showPage('menu')"><span class="nav-icon">🍽️</span>Menyu</button>
+      <button class="nav-item" onclick="showPage('waiters')"><span class="nav-icon">👨‍🍳</span>Ofitsiantlar</button>
+      <button class="nav-item" onclick="showPage('questions')"><span class="nav-icon">❓</span>Savollar</button>
+      <div class="nav-section-title" style="margin-top:12px">Test & E'lonlar</div>
+      <button class="nav-item" onclick="showPage('testdays')"><span class="nav-icon">📅</span>Test kunlari</button>
+      <button class="nav-item" onclick="showPage('announcements')"><span class="nav-icon">📢</span>E'lonlar</button>
+      <button class="nav-item" onclick="showPage('results')"><span class="nav-icon">🏆</span>Natijalar</button>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn btn-ghost btn-full btn-sm" onclick="logout()">← Chiqish</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+
+    <!-- DASHBOARD -->
+    <div id="page-dashboard" class="page">
+      <div class="page-header">
+        <div><h1>Dashboard <span class="gold">✦</span></h1><p id="dash-sub">Restoran boshqaruv paneli</p></div>
+      </div>
+      <div class="page-body">
+        <div class="stats-grid" id="dash-stats"></div>
+        <div class="grid-2" style="gap:20px">
+          <div class="card">
+            <div class="card-header"><h3 class="card-title">📢 So'nggi e'lonlar</h3><button class="btn btn-ghost btn-sm" onclick="showPage('announcements')">Barchasi</button></div>
+            <div id="dash-ann"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3 class="card-title">🏆 So'nggi natijalar</h3><button class="btn btn-ghost btn-sm" onclick="showPage('results')">Barchasi</button></div>
+            <div id="dash-results"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MENU -->
+    <div id="page-menu" class="page" style="display:none">
+      <div class="page-header">
+        <div><h1>Menyu boshqaruvi</h1><p>Taomlarni qo'shish, tahrirlash va o'chirish</p></div>
+        <button class="btn btn-gold" onclick="openMenuModal()">+ Taom qo'shish</button>
+      </div>
+      <div class="page-body">
+        <div class="flex gap-12 mb-16" style="flex-wrap:wrap">
+          <div class="search-box" style="flex:1;min-width:200px">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="form-control" id="menu-search" placeholder="Taom qidirish..." oninput="filterMenu()">
+          </div>
+          <select class="form-control" id="menu-cat-filter" onchange="filterMenu()" style="width:auto;min-width:160px">
+            <option value="">Barcha kategoriyalar</option>
+          </select>
+        </div>
+        <div class="menu-grid" id="menu-grid"></div>
+      </div>
+    </div>
+
+    <!-- WAITERS -->
+    <div id="page-waiters" class="page" style="display:none">
+      <div class="page-header">
+        <div><h1>Ofitsiantlar</h1><p>PIN tayinlash va ofitsiantlarni boshqarish</p></div>
+        <button class="btn btn-gold" onclick="openWaiterModal()">+ Ofitsiant qo'shish</button>
+      </div>
+      <div class="page-body">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Ism</th><th>PIN</th><th>Status</th><th>Qo'shilgan</th><th>Amallar</th></tr></thead>
+            <tbody id="waiters-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUESTIONS -->
+    <div id="page-questions" class="page" style="display:none">
+      <div class="page-header">
+        <div><h1>Test savollari</h1><p>Test uchun savollar bazasini boshqarish</p></div>
+        <button class="btn btn-gold" onclick="openQuestionModal()">+ Savol qo'shish</button>
+      </div>
+      <div class="page-body">
+        <div class="flex gap-8 mb-16" style="flex-wrap:wrap;align-items:center">
+          <div id="q-stats" class="flex gap-8"></div>
+          <div style="margin-left:auto">
+            <select class="form-control" id="q-diff-filter" onchange="filterQuestions()" style="width:auto">
+              <option value="">Barcha darajalar</option>
+              <option value="easy">🟢 Oson</option>
+              <option value="medium">🟡 O'rta</option>
+              <option value="hard">🔴 Qiyin</option>
+            </select>
+          </div>
+        </div>
+        <div id="questions-list"></div>
+      </div>
+    </div>
+
+    <!-- TEST DAYS -->
+    <div id="page-testdays" class="page" style="display:none">
+      <div class="page-header">
+        <div><h1>Test kunlari</h1><p>Ofitsiantlar uchun test kunlarini belgilash</p></div>
+      </div>
+      <div class="page-body">
+        <div class="grid-2" style="gap:24px;align-items:start">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title" id="cal-title">— — —</h3>
+              <div class="flex gap-8">
+                <button class="btn btn-ghost btn-sm btn-icon" onclick="prevMonth()">‹</button>
+                <button class="btn btn-ghost btn-sm btn-icon" onclick="nextMonth()">›</button>
+              </div>
+            </div>
+            <div class="calendar" id="calendar"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3 class="card-title">📅 Belgilangan kunlar</h3></div>
+            <div id="testdays-list"></div>
+            <div class="alert alert-info mt-16" style="font-size:0.82rem">
+              ℹ️ Test kunlari belgilanganda ofitsiantlar menyuni ko'ra olmaydi va test topshirishi mumkin.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANNOUNCEMENTS -->
+    <div id="page-announcements" class="page" style="display:none">
+      <div class="page-header">
+        <div><h1>E'lonlar</h1><p>Ofitsiantlarga xabar yuborish</p></div>
+        <button class="btn btn-gold" onclick="openAnnModal()">+ E'lon yuborish</button>
+      </div>
+      <div class="page-body">
+        <div id="ann-list"></div>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div id="page-results" class="page" style="display:none">
+      <div class="page-header">
+        <div><h1>Test natijalari</h1><p>Ofitsiantlar test natijalari va statistika</p></div>
+      </div>
+      <div class="page-body">
+        <div class="flex gap-12 mb-16" style="flex-wrap:wrap">
+          <input type="date" class="form-control" id="res-date-filter" onchange="filterResults()" style="width:auto">
+          <input type="text" class="form-control" id="res-name-filter" placeholder="Ism bo'yicha qidirish" oninput="filterResults()" style="flex:1;min-width:160px">
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Sana</th><th>Ofitsiant</th><th>Ball</th><th>Oson</th><th>O'rta</th><th>Qiyin</th><th>Sertifikat</th><th>Batafsil</th></tr></thead>
+            <tbody id="results-table"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MENU MODAL -->
+<div class="modal-overlay" id="menu-modal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3 class="modal-title" id="menu-modal-title">Yangi taom</h3>
+      <button class="modal-close" onclick="closeMenuModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="m-id">
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Taom nomi *</label>
+          <input type="text" class="form-control" id="m-name" placeholder="Caesar Salad">
+        </div>
+        <div class="form-group">
+          <label>Kategoriya *</label>
+          <input type="text" class="form-control" id="m-cat" placeholder="Salatlar" list="cat-suggestions">
+          <datalist id="cat-suggestions"></datalist>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Tavsif</label>
+        <textarea class="form-control" id="m-desc" placeholder="Taomning qisqacha tavsifi..."></textarea>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Tarkib (vergul bilan)</label>
+          <input type="text" class="form-control" id="m-ingredients" placeholder="Salat, pomidor, pishloq">
+        </div>
+        <div class="form-group">
+          <label>Allergiyalar (vergul bilan)</label>
+          <input type="text" class="form-control" id="m-allergens" placeholder="Sut, tuxum">
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Narxi (so'm)</label>
+          <input type="number" class="form-control" id="m-price" placeholder="45000">
+        </div>
+        <div class="form-group">
+          <label>Tavsiya iborasi (ofitsianta)</label>
+          <input type="text" class="form-control" id="m-suggestion" placeholder="Shifokor tavsiya etadi...">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Rasm</label>
+        <input type="file" class="form-control" id="m-image" accept="image/*">
+        <div id="m-img-preview" style="margin-top:10px"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeMenuModal()">Bekor qilish</button>
+      <button class="btn btn-gold" onclick="saveMenuItem()">Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<!-- WAITER MODAL -->
+<div class="modal-overlay" id="waiter-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="wm-title">Ofitsiant qo'shish</h3>
+      <button class="modal-close" onclick="closeWaiterModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="wm-id">
+      <div class="form-group">
+        <label>Ism *</label>
+        <input type="text" class="form-control" id="wm-name" placeholder="Jasur Toshmatov">
+      </div>
+      <div class="form-group">
+        <label>4 xonali PIN *</label>
+        <input type="text" class="form-control pin-input" id="wm-pin" placeholder="• • • •" maxlength="4" inputmode="numeric">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeWaiterModal()">Bekor qilish</button>
+      <button class="btn btn-gold" onclick="saveWaiter()">Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUESTION MODAL -->
+<div class="modal-overlay" id="question-modal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3 class="modal-title" id="qm-title">Savol qo'shish</h3>
+      <button class="modal-close" onclick="closeQuestionModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="qm-id">
+      <div class="form-group">
+        <label>Savol matni *</label>
+        <textarea class="form-control" id="qm-question" placeholder="Savol yozing..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Qiyinlik darajasi *</label>
+        <select class="form-control" id="qm-difficulty">
+          <option value="easy">🟢 Oson (Easy)</option>
+          <option value="medium">🟡 O'rta (Medium)</option>
+          <option value="hard">🔴 Qiyin (Hard)</option>
+        </select>
+      </div>
+      <div id="options-container">
+        <label style="display:block;margin-bottom:8px;font-size:0.82rem;color:var(--text2);font-weight:500">Javob variantlari * (to'g'ri javobni belgilang)</label>
+        <div id="options-list"></div>
+        <button class="btn btn-ghost btn-sm mt-8" onclick="addOption()" id="add-opt-btn">+ Variant qo'shish</button>
+      </div>
+      <div class="form-group mt-16">
+        <label>Menyu taomi (ixtiyoriy)</label>
+        <select class="form-control" id="qm-menu">
+          <option value="">— Taom tanlamang —</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeQuestionModal()">Bekor qilish</button>
+      <button class="btn btn-gold" onclick="saveQuestion()">Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<!-- ANNOUNCEMENT MODAL -->
+<div class="modal-overlay" id="ann-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">E'lon yuborish</h3>
+      <button class="modal-close" onclick="closeAnnModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Sarlavha *</label>
+        <input type="text" class="form-control" id="ann-title" placeholder="E'lon sarlavhasi">
+      </div>
+      <div class="form-group">
+        <label>Matn *</label>
+        <textarea class="form-control" id="ann-content" placeholder="E'lon matni..." style="min-height:120px"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeAnnModal()">Bekor qilish</button>
+      <button class="btn btn-gold" onclick="saveAnn()">Yuborish</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT DETAIL MODAL -->
+<div class="modal-overlay" id="result-modal">
+  <div class="modal modal-xl">
+    <div class="modal-header">
+      <h3 class="modal-title">Test natijasi batafsil</h3>
+      <button class="modal-close" onclick="document.getElementById('result-modal').classList.remove('show')">✕</button>
+    </div>
+    <div class="modal-body" id="result-detail"></div>
+  </div>
+</div>
+
+<script src="/js/utils.js"></script>
+<script>
+let menuItems = [], waiters = [], questions = [], announcements = [], results = [], testDays = [];
+let calYear, calMonth;
+let optionCount = 0;
+
+async function init() {
+  await requireRole('restaurant');
+  const info = await api('/api/restaurant/info');
+  document.getElementById('sb-name').textContent = info.name;
+  document.getElementById('mob-name').textContent = info.name;
+  if (info.location) document.getElementById('sb-loc').textContent = '📍 ' + info.location;
+
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth();
+
+  await Promise.all([loadMenu(), loadWaiters(), loadQuestions(), loadAnnouncements(), loadResults(), loadTestDays()]);
+  renderDashboard();
+}
+
+// ===== DASHBOARD =====
+function renderDashboard() {
+  const today = new Date().toISOString().split('T')[0];
+  const isTestDay = testDays.includes(today);
+  document.getElementById('dash-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-icon">🍽️</div><div class="stat-value">${menuItems.length}</div><div class="stat-label">Menyu taomlar</div></div>
+    <div class="stat-card"><div class="stat-icon">👨‍🍳</div><div class="stat-value">${waiters.filter(w=>w.active).length}</div><div class="stat-label">Faol ofitsiantlar</div></div>
+    <div class="stat-card"><div class="stat-icon">❓</div><div class="stat-value">${questions.length}</div><div class="stat-label">Savollar bazasi</div></div>
+    <div class="stat-card"><div class="stat-icon">🏆</div><div class="stat-value">${results.filter(r=>r.hasCertificate).length}</div><div class="stat-label">Sertifikatlar</div></div>
+    <div class="stat-card" style="border-color:${isTestDay?'var(--warning)':'var(--border)'}">
+      <div class="stat-icon">${isTestDay?'🔴':'✅'}</div>
+      <div class="stat-value" style="font-size:1rem;color:${isTestDay?'var(--warning)':'var(--success)'}">${isTestDay?'TEST KUNI':'Oddiy kun'}</div>
+      <div class="stat-label">Bugun</div>
+    </div>
+  `;
+  const annEl = document.getElementById('dash-ann');
+  if (!announcements.length) annEl.innerHTML = '<p style="color:var(--text3);font-size:0.85rem;padding:8px 0">Hali e\'lon yo\'q</p>';
+  else annEl.innerHTML = announcements.slice(0,3).map(a=>`
+    <div style="padding:12px 0;border-bottom:1px solid var(--border2)">
+      <div style="font-weight:600;font-size:0.9rem">${a.title}</div>
+      <div style="color:var(--text2);font-size:0.8rem;margin-top:2px">${a.content.substring(0,80)}${a.content.length>80?'...':''}</div>
+      <div style="color:var(--text3);font-size:0.75rem;margin-top:4px">${formatDateTime(a.createdAt)}</div>
+    </div>`).join('');
+  const resEl = document.getElementById('dash-results');
+  if (!results.length) resEl.innerHTML = '<p style="color:var(--text3);font-size:0.85rem;padding:8px 0">Hali natija yo\'q</p>';
+  else resEl.innerHTML = results.slice(0,5).map(r=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border2)">
+      <div>
+        <div style="font-weight:600;font-size:0.88rem">${r.waiterName}</div>
+        <div style="color:var(--text3);font-size:0.76rem">${r.date}</div>
+      </div>
+      <div style="font-size:1.2rem;font-weight:700;color:${scoreColor(r.score)}">${r.score}%${r.hasCertificate?' 🏆':''}</div>
+    </div>`).join('');
+}
+
+// ===== MENU =====
+async function loadMenu() {
+  menuItems = await api('/api/restaurant/menu');
+  renderMenu();
+}
+
+function renderMenu() {
+  const search = document.getElementById('menu-search')?.value.toLowerCase() || '';
+  const cat = document.getElementById('menu-cat-filter')?.value || '';
+  const filtered = menuItems.filter(m =>
+    (!search || m.name.toLowerCase().includes(search) || m.category.toLowerCase().includes(search)) &&
+    (!cat || m.category === cat)
+  );
+  const cats = [...new Set(menuItems.map(m => m.category))];
+  const catSel = document.getElementById('menu-cat-filter');
+  if (catSel) {
+    const curr = catSel.value;
+    catSel.innerHTML = '<option value="">Barcha kategoriyalar</option>' + cats.map(c => `<option value="${c}" ${c===curr?'selected':''}>${c}</option>`).join('');
+  }
+  const catDatalist = document.getElementById('cat-suggestions');
+  if (catDatalist) catDatalist.innerHTML = cats.map(c => `<option value="${c}">`).join('');
+
+  const grid = document.getElementById('menu-grid');
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🍽️</div><h3>Taom topilmadi</h3><p>Yangi taom qo'shing</p></div>`;
+    return;
+  }
+  grid.innerHTML = filtered.map(item => `
+    <div class="menu-card">
+      <div class="menu-card-img">
+        ${item.image ? `<img src="${item.image}" alt="${item.name}" onerror="this.parentElement.innerHTML='🍽️'">` : '🍽️'}
+      </div>
+      <div class="menu-card-body">
+        <div class="menu-card-cat">${item.category}</div>
+        <div class="menu-card-name">${item.name}</div>
+        <div class="menu-card-desc">${item.description || 'Tavsif yo\'q'}</div>
+        ${item.allergens?.length ? `<div style="margin-bottom:8px">${item.allergens.map(a=>`<span class="tag tag-allergen">⚠ ${a}</span>`).join('')}</div>` : ''}
+        <div class="menu-card-price">${formatPrice(item.price)}</div>
+      </div>
+      <div class="menu-card-footer">
+        <button class="btn btn-ghost btn-sm" onclick="openMenuModal('${item.id}')" style="flex:1">✏️ Tahrir</button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteMenuItem('${item.id}')">🗑</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterMenu() { renderMenu(); }
+
+function openMenuModal(id) {
+  const item = id ? menuItems.find(m => m.id === id) : null;
+  document.getElementById('menu-modal-title').textContent = item ? 'Taomni tahrirlash' : 'Yangi taom qo\'shish';
+  document.getElementById('m-id').value = id || '';
+  document.getElementById('m-name').value = item?.name || '';
+  document.getElementById('m-cat').value = item?.category || '';
+  document.getElementById('m-desc').value = item?.description || '';
+  document.getElementById('m-ingredients').value = item?.ingredients?.join(', ') || '';
+  document.getElementById('m-allergens').value = item?.allergens?.join(', ') || '';
+  document.getElementById('m-price').value = item?.price || '';
+  document.getElementById('m-suggestion').value = item?.servingSuggestion || '';
+  document.getElementById('m-image').value = '';
+  document.getElementById('m-img-preview').innerHTML = item?.image ? `<img src="${item.image}" style="height:80px;border-radius:8px;object-fit:cover">` : '';
+  document.getElementById('menu-modal').classList.add('show');
+}
+
+function closeMenuModal() { document.getElementById('menu-modal').classList.remove('show'); }
+
+async function saveMenuItem() {
+  const id = document.getElementById('m-id').value;
+  const fd = new FormData();
+  fd.append('name', document.getElementById('m-name').value.trim());
+  fd.append('category', document.getElementById('m-cat').value.trim());
+  fd.append('description', document.getElementById('m-desc').value.trim());
+  fd.append('ingredients', document.getElementById('m-ingredients').value.trim());
+  fd.append('allergens', document.getElementById('m-allergens').value.trim());
+  fd.append('price', document.getElementById('m-price').value);
+  fd.append('servingSuggestion', document.getElementById('m-suggestion').value.trim());
+  const imgFile = document.getElementById('m-image').files[0];
+  if (imgFile) fd.append('image', imgFile);
+  try {
+    if (id) await apiForm(`/api/restaurant/menu/${id}`, fd, 'PUT');
+    else await apiForm('/api/restaurant/menu', fd);
+    toast(id ? 'Taom yangilandi' : 'Taom qo\'shildi', 'success');
+    closeMenuModal();
+    await loadMenu();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteMenuItem(id) {
+  const item = menuItems.find(m => m.id === id);
+  if (!confirmDialog(`"${item?.name}" taomini o'chirishni tasdiqlaysizmi?`)) return;
+  try {
+    await api(`/api/restaurant/menu/${id}`, { method: 'DELETE' });
+    toast('Taom o\'chirildi', 'success');
+    await loadMenu();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ===== WAITERS =====
+async function loadWaiters() {
+  waiters = await api('/api/restaurant/waiters');
+  renderWaiters();
+}
+
+function renderWaiters() {
+  const tbody = document.getElementById('waiters-table');
+  if (!waiters.length) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">👨‍🍳</div><h3>Ofitsiant yo\'q</h3></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = waiters.map((w, i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td><strong>${w.name}</strong></td>
+      <td><code style="background:var(--bg);padding:4px 10px;border-radius:6px;letter-spacing:0.2em;font-size:1rem">${w.pin}</code></td>
+      <td><span class="badge ${w.active?'badge-success':'badge-danger'}">${w.active?'✓ Faol':'✕ Nofaol'}</span></td>
+      <td><small>${formatDate(w.createdAt)}</small></td>
+      <td>
+        <div class="flex gap-8">
+          <button class="btn btn-ghost btn-sm" onclick="openWaiterModal('${w.id}')">✏️ Tahrir</button>
+          <button class="btn btn-sm" onclick="toggleWaiter('${w.id}')"
+            style="${w.active?'background:rgba(243,156,18,0.1);color:var(--warning);border:1px solid rgba(243,156,18,0.3)':'background:rgba(46,204,113,0.1);color:var(--success);border:1px solid rgba(46,204,113,0.3)'}">
+            ${w.active?'To\'xtat':'Faollashtir'}
+          </button>
+          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteWaiter('${w.id}')">🗑</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function openWaiterModal(id) {
+  const w = id ? waiters.find(x => x.id === id) : null;
+  document.getElementById('wm-title').textContent = w ? 'Ofitsiantni tahrirlash' : 'Ofitsiant qo\'shish';
+  document.getElementById('wm-id').value = id || '';
+  document.getElementById('wm-name').value = w?.name || '';
+  document.getElementById('wm-pin').value = w?.pin || '';
+  document.getElementById('waiter-modal').classList.add('show');
+}
+function closeWaiterModal() { document.getElementById('waiter-modal').classList.remove('show'); }
+
+async function saveWaiter() {
+  const id = document.getElementById('wm-id').value;
+  const body = { name: document.getElementById('wm-name').value.trim(), pin: document.getElementById('wm-pin').value };
+  try {
+    if (id) await api(`/api/restaurant/waiters/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+    else await api('/api/restaurant/waiters', { method: 'POST', body: JSON.stringify(body) });
+    toast(id ? 'Ofitsiant yangilandi' : 'Ofitsiant qo\'shildi', 'success');
+    closeWaiterModal();
+    await loadWaiters();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function toggleWaiter(id) {
+  const w = waiters.find(x => x.id === id);
+  try {
+    await api(`/api/restaurant/waiters/${id}`, { method: 'PUT', body: JSON.stringify({ active: !w.active }) });
+    toast('Holat yangilandi', 'success');
+    await loadWaiters();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteWaiter(id) {
+  const w = waiters.find(x => x.id === id);
+  if (!confirmDialog(`"${w?.name}" ofitsiantni o'chirishni tasdiqlaysizmi?`)) return;
+  try {
+    await api(`/api/restaurant/waiters/${id}`, { method: 'DELETE' });
+    toast('Ofitsiant o\'chirildi', 'success');
+    await loadWaiters();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ===== QUESTIONS =====
+async function loadQuestions() {
+  questions = await api('/api/restaurant/questions');
+  renderQuestions();
+}
+
+function renderQuestions() {
+  const diff = document.getElementById('q-diff-filter')?.value || '';
+  const filtered = diff ? questions.filter(q => q.difficulty === diff) : questions;
+  const easy = questions.filter(q=>q.difficulty==='easy').length;
+  const medium = questions.filter(q=>q.difficulty==='medium').length;
+  const hard = questions.filter(q=>q.difficulty==='hard').length;
+  document.getElementById('q-stats').innerHTML = `
+    <span class="badge" style="background:rgba(46,204,113,0.15);color:var(--easy)">🟢 Oson: ${easy}/10</span>
+    <span class="badge" style="background:rgba(243,156,18,0.15);color:var(--medium)">🟡 O'rta: ${medium}/5</span>
+    <span class="badge" style="background:rgba(231,76,60,0.15);color:var(--hard)">🔴 Qiyin: ${hard}/5</span>
+    ${easy>=10&&medium>=5&&hard>=5 ? '<span class="badge badge-success">✓ Test uchun tayyor</span>' : '<span class="badge badge-danger">✕ Yetarli savol yo\'q</span>'}
+  `;
+  const container = document.getElementById('questions-list');
+  if (!filtered.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">❓</div><h3>Savol topilmadi</h3><p>Yangi savol qo'shing</p></div>`;
+    return;
+  }
+  container.innerHTML = filtered.map((q, i) => `
+    <div class="card card-sm mb-16" style="border-left:3px solid ${q.difficulty==='easy'?'var(--easy)':q.difficulty==='medium'?'var(--medium)':'var(--hard)'}">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <div style="flex:1">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+            <span class="question-difficulty diff-${q.difficulty}">${diffLabel(q.difficulty)}</span>
+            <span style="color:var(--text3);font-size:0.8rem">#${i+1}</span>
+          </div>
+          <div style="font-weight:600;margin-bottom:10px">${q.question}</div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            ${q.options.map((opt, idx) => `
+              <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;background:${idx===q.correctAnswer?'rgba(46,204,113,0.1)':'var(--bg)'};border:1px solid ${idx===q.correctAnswer?'rgba(46,204,113,0.3)':'var(--border2)'}">
+                <span style="font-size:0.8rem;font-weight:700;color:${idx===q.correctAnswer?'var(--success)':'var(--text3)'}">${String.fromCharCode(65+idx)}</span>
+                <span style="font-size:0.88rem;color:${idx===q.correctAnswer?'var(--success)':'var(--text2)'}">${opt} ${idx===q.correctAnswer?'✓':''}</span>
+              </div>`).join('')}
+          </div>
+        </div>
+        <div class="flex gap-8" style="flex-shrink:0">
+          <button class="btn btn-ghost btn-sm btn-icon" onclick="openQuestionModal('${q.id}')" title="Tahrirlash">✏️</button>
+          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteQuestion('${q.id}')">🗑</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function filterQuestions() { renderQuestions(); }
+
+function addOption() {
+  const list = document.getElementById('options-list');
+  const idx = list.children.length;
+  if (idx >= 6) { toast('Maksimal 6 ta variant', 'error'); return; }
+  const div = document.createElement('div');
+  div.className = 'flex gap-8 mb-8';
+  div.innerHTML = `
+    <label style="display:flex;align-items:center;gap:8px;flex:1;padding:10px 12px;border:2px solid var(--border);border-radius:10px;cursor:pointer;transition:border-color 0.15s" id="opt-label-${idx}">
+      <input type="radio" name="correct-answer" value="${idx}" onchange="highlightCorrect(${idx})" style="accent-color:var(--gold)">
+      <input type="text" class="form-control" id="opt-${idx}" placeholder="Javob varianti ${String.fromCharCode(65+idx)}" style="border:none;background:none;padding:0;outline:none;flex:1">
+    </label>
+    <button class="btn btn-danger btn-sm btn-icon" onclick="this.parentElement.remove();reindexOptions()" ${idx===0?'style="visibility:hidden"':''}>✕</button>`;
+  list.appendChild(div);
+}
+
+function highlightCorrect(selectedIdx) {
+  document.querySelectorAll('[id^="opt-label-"]').forEach((el, i) => {
+    el.style.borderColor = i === selectedIdx ? 'var(--gold)' : 'var(--border)';
+    el.style.background = i === selectedIdx ? 'rgba(200,146,42,0.08)' : 'transparent';
+  });
+}
+
+function reindexOptions() {
+  const list = document.getElementById('options-list');
+  [...list.children].forEach((div, i) => {
+    const radio = div.querySelector('input[type=radio]');
+    if (radio) { radio.value = i; radio.setAttribute('onchange', `highlightCorrect(${i})`); }
+    const input = div.querySelector('input[type=text]');
+    if (input) input.placeholder = `Javob varianti ${String.fromCharCode(65+i)}`;
+    const label = div.querySelector('label');
+    if (label) label.id = `opt-label-${i}`;
+  });
+}
+
+function openQuestionModal(id) {
+  const q = id ? questions.find(x => x.id === id) : null;
+  document.getElementById('qm-title').textContent = q ? 'Savolni tahrirlash' : 'Savol qo\'shish';
+  document.getElementById('qm-id').value = id || '';
+  document.getElementById('qm-question').value = q?.question || '';
+  document.getElementById('qm-difficulty').value = q?.difficulty || 'easy';
+  const menuSel = document.getElementById('qm-menu');
+  menuSel.innerHTML = '<option value="">— Taom tanlamang —</option>' + menuItems.map(m=>`<option value="${m.id}" ${q?.menuItemId===m.id?'selected':''}>${m.name}</option>`).join('');
+  document.getElementById('options-list').innerHTML = '';
+  const opts = q?.options || ['', ''];
+  opts.forEach((opt, i) => addOption());
+  opts.forEach((opt, i) => { document.getElementById(`opt-${i}`).value = opt; });
+  if (q) {
+    const radios = document.querySelectorAll('input[name="correct-answer"]');
+    radios.forEach((r, i) => { if (parseInt(r.value) === q.correctAnswer) { r.checked = true; highlightCorrect(q.correctAnswer); } });
+  }
+  document.getElementById('question-modal').classList.add('show');
+}
+function closeQuestionModal() { document.getElementById('question-modal').classList.remove('show'); }
+
+async function saveQuestion() {
+  const id = document.getElementById('qm-id').value;
+  const list = document.getElementById('options-list');
+  const options = [...list.querySelectorAll('input[type=text]')].map(i => i.value.trim()).filter(Boolean);
+  const selectedRadio = document.querySelector('input[name="correct-answer"]:checked');
+  if (!selectedRadio) { toast('To\'g\'ri javobni belgilang', 'error'); return; }
+  const body = {
+    question: document.getElementById('qm-question').value.trim(),
+    difficulty: document.getElementById('qm-difficulty').value,
+    options: JSON.stringify(options),
+    correctAnswer: selectedRadio.value,
+    menuItemId: document.getElementById('qm-menu').value
+  };
+  if (!body.question || options.length < 2) { toast('Savol va kamida 2 variant kiritish shart', 'error'); return; }
+  try {
+    if (id) await api(`/api/restaurant/questions/${id}`, { method: 'PUT', body: JSON.stringify({...body, options}) });
+    else await api('/api/restaurant/questions', { method: 'POST', body: JSON.stringify({...body, options}) });
+    toast(id ? 'Savol yangilandi' : 'Savol qo\'shildi', 'success');
+    closeQuestionModal();
+    await loadQuestions();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteQuestion(id) {
+  if (!confirmDialog('Savolni o\'chirishni tasdiqlaysizmi?')) return;
+  try {
+    await api(`/api/restaurant/questions/${id}`, { method: 'DELETE' });
+    toast('Savol o\'chirildi', 'success');
+    await loadQuestions();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ===== TEST DAYS / CALENDAR =====
+async function loadTestDays() {
+  testDays = await api('/api/restaurant/testdays');
+  renderCalendar();
+  renderTestDaysList();
+}
+
+function renderCalendar() {
+  const months = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'];
+  document.getElementById('cal-title').textContent = `${months[calMonth]} ${calYear}`;
+  const days = ['Du','Se','Ch','Pa','Ju','Sh','Ya'];
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const adjusted = (firstDay + 6) % 7;
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const today = new Date().toISOString().split('T')[0];
+  let html = days.map(d => `<div class="calendar-day-name">${d}</div>`).join('');
+  for (let i=0; i<adjusted; i++) html += '<div class="calendar-day empty"></div>';
+  for (let d=1; d<=daysInMonth; d++) {
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isTest = testDays.includes(dateStr);
+    const isToday = dateStr === today;
+    html += `<div class="calendar-day ${isTest?'test-day':''} ${isToday?'today':''}" onclick="toggleTestDay('${dateStr}')" title="${dateStr}">
+      ${d}${isTest?'<br><span style="font-size:0.5rem">✦</span>':''}
+    </div>`;
+  }
+  document.getElementById('calendar').innerHTML = `
+    <div class="calendar-grid" style="grid-template-columns:repeat(7,1fr)">${html}</div>`;
+}
+
+function renderTestDaysList() {
+  const el = document.getElementById('testdays-list');
+  if (!testDays.length) { el.innerHTML = '<p style="color:var(--text3);font-size:0.85rem">Hali test kuni belgilanmagan</p>'; return; }
+  el.innerHTML = [...testDays].sort().map(d => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border2)">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:1.2rem">📅</span>
+        <span style="font-weight:600">${formatDate(d)}</span>
+        ${d === new Date().toISOString().split('T')[0] ? '<span class="badge badge-warning">Bugun</span>' : ''}
+      </div>
+      <button class="btn btn-danger btn-sm btn-icon" onclick="removeTestDay('${d}')">✕</button>
+    </div>`).join('');
+}
+
+async function toggleTestDay(date) {
+  if (testDays.includes(date)) {
+    await removeTestDay(date);
+  } else {
+    try {
+      await api('/api/restaurant/testdays', { method: 'POST', body: JSON.stringify({ date }) });
+      toast('Test kuni belgilandi', 'success');
+      testDays.push(date);
+      renderCalendar();
+      renderTestDaysList();
+    } catch (e) { toast(e.message, 'error'); }
+  }
+}
+
+async function removeTestDay(date) {
+  try {
+    await api(`/api/restaurant/testdays/${date}`, { method: 'DELETE' });
+    toast('Test kuni o\'chirildi', 'success');
+    testDays = testDays.filter(d => d !== date);
+    renderCalendar();
+    renderTestDaysList();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function prevMonth() { calMonth--; if (calMonth<0) { calMonth=11; calYear--; } renderCalendar(); }
+function nextMonth() { calMonth++; if (calMonth>11) { calMonth=0; calYear++; } renderCalendar(); }
+
+// ===== ANNOUNCEMENTS =====
+async function loadAnnouncements() {
+  announcements = await api('/api/restaurant/announcements');
+  renderAnnouncements();
+}
+
+function renderAnnouncements() {
+  const el = document.getElementById('ann-list');
+  if (!el) return;
+  if (!announcements.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📢</div><h3>Hali e'lon yo'q</h3></div>`;
+    return;
+  }
+  el.innerHTML = announcements.map(a => `
+    <div class="card mb-16" style="border-left:3px solid var(--gold)">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+        <div>
+          <div style="font-weight:700;font-size:1rem;margin-bottom:6px">📢 ${a.title}</div>
+          <div style="color:var(--text2);font-size:0.9rem;line-height:1.6">${a.content}</div>
+          <div style="color:var(--text3);font-size:0.75rem;margin-top:8px">${formatDateTime(a.createdAt)}</div>
+        </div>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteAnn('${a.id}')">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+function openAnnModal() { document.getElementById('ann-title').value=''; document.getElementById('ann-content').value=''; document.getElementById('ann-modal').classList.add('show'); }
+function closeAnnModal() { document.getElementById('ann-modal').classList.remove('show'); }
+
+async function saveAnn() {
+  const body = { title: document.getElementById('ann-title').value.trim(), content: document.getElementById('ann-content').value.trim() };
+  if (!body.title || !body.content) { toast('Sarlavha va matn majburiy', 'error'); return; }
+  try {
+    await api('/api/restaurant/announcements', { method: 'POST', body: JSON.stringify(body) });
+    toast('E\'lon yuborildi', 'success');
+    closeAnnModal();
+    await loadAnnouncements();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteAnn(id) {
+  if (!confirmDialog('E\'lonni o\'chirishni tasdiqlaysizmi?')) return;
+  try {
+    await api(`/api/restaurant/announcements/${id}`, { method: 'DELETE' });
+    toast('E\'lon o\'chirildi', 'success');
+    await loadAnnouncements();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ===== RESULTS =====
+async function loadResults() {
+  results = await api('/api/restaurant/results');
+  renderResults();
+}
+
+function renderResults() {
+  const dateF = document.getElementById('res-date-filter')?.value || '';
+  const nameF = document.getElementById('res-name-filter')?.value.toLowerCase() || '';
+  const filtered = results.filter(r =>
+    (!dateF || r.date === dateF) &&
+    (!nameF || r.waiterName.toLowerCase().includes(nameF))
+  );
+  const tbody = document.getElementById('results-table');
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🏆</div><h3>Natija topilmadi</h3></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.map(r => `
+    <tr>
+      <td>${r.date}</td>
+      <td><strong>${r.waiterName}</strong></td>
+      <td><span style="font-size:1.1rem;font-weight:700;color:${scoreColor(r.score)}">${r.score}%</span></td>
+      <td><small style="color:var(--easy)">${r.easyScore}/${r.easyTotal}</small></td>
+      <td><small style="color:var(--medium)">${r.mediumScore}/${r.mediumTotal}</small></td>
+      <td><small style="color:var(--hard)">${r.hardScore}/${r.hardTotal}</small></td>
+      <td>${r.hasCertificate ? '<span class="badge badge-gold">🏆 Ha</span>' : '<span class="badge badge-ghost">Yo\'q</span>'}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="showResultDetail('${r.id}')">Ko'rish</button></td>
+    </tr>`).join('');
+}
+
+function filterResults() { renderResults(); }
+
+function showResultDetail(id) {
+  const r = results.find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('result-detail').innerHTML = `
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="font-size:1.2rem;font-weight:700;margin-bottom:4px">${r.waiterName}</div>
+      <div style="color:var(--text3);font-size:0.85rem">${r.date} · ${formatDateTime(r.submittedAt)}</div>
+      <div style="margin-top:16px">
+        <span style="font-size:3rem;font-weight:800;color:${scoreColor(r.score)}">${r.score}%</span>
+        ${r.hasCertificate ? '<div style="margin-top:8px"><span class="badge badge-gold" style="font-size:0.9rem;padding:6px 16px">🏆 Sertifikat oldi</span></div>' : ''}
+      </div>
+    </div>
+    <div class="breakdown-grid" style="margin-bottom:24px">
+      <div class="breakdown-item"><div class="breakdown-score" style="color:var(--easy)">${r.easyScore}/${r.easyTotal}</div><div class="breakdown-label">🟢 Oson</div></div>
+      <div class="breakdown-item"><div class="breakdown-score" style="color:var(--medium)">${r.mediumScore}/${r.mediumTotal}</div><div class="breakdown-label">🟡 O'rta</div></div>
+      <div class="breakdown-item"><div class="breakdown-score" style="color:var(--hard)">${r.hardScore}/${r.hardTotal}</div><div class="breakdown-label">🔴 Qiyin</div></div>
+    </div>
+    <h4 style="margin-bottom:16px">Batafsil tahlil</h4>
+    ${r.breakdown.map((b, i) => `
+      <div style="padding:12px;border-radius:10px;background:${b.isCorrect?'rgba(46,204,113,0.08)':'rgba(231,76,60,0.08)'};border:1px solid ${b.isCorrect?'rgba(46,204,113,0.2)':'rgba(231,76,60,0.2)'};margin-bottom:8px">
+        <div style="font-weight:600;margin-bottom:8px">${i+1}. ${b.question}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:0.82rem">
+          <span>Berilgan: <strong style="color:${b.isCorrect?'var(--success)':'var(--danger)'}">${b.options?.[b.selectedAnswer]||'—'}</strong></span>
+          ${!b.isCorrect?`<span>To'g'ri: <strong style="color:var(--success)">${b.options?.[b.correctAnswer]||'—'}</strong></span>`:''}
+          <span class="badge ${b.isCorrect?'badge-success':'badge-danger'}" style="margin-left:auto">${b.isCorrect?'✓ To\'g\'ri':'✕ Noto\'g\'ri'}</span>
+        </div>
+      </div>`).join('')}
+  `;
+  document.getElementById('result-modal').classList.add('show');
+}
+
+// ===== NAVIGATION =====
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.style.display='none');
+  document.getElementById(`page-${page}`).style.display='block';
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  event?.currentTarget?.classList.add('active');
+  if (window.innerWidth<=900) {
+    document.getElementById('sidebar').classList.remove('mobile-open');
+    document.getElementById('sidebar-overlay').classList.remove('show');
+  }
+  if (page==='testdays') renderCalendar();
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('mobile-open');
+  document.getElementById('sidebar-overlay').classList.toggle('show');
+}
+
+init();
+</script>
+</body>
+</html>

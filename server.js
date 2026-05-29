@@ -28,7 +28,8 @@ const MenuItemSchema = new mongoose.Schema({
   id: { type: String, default: () => uuidv4() },
   name: String, category: String, description: String,
   ingredients: [String], allergens: [String],
-  price: Number, servingSuggestion: String, image: String,
+  price: Number, servingSuggestion: String,
+  image: { type: String, maxlength: 2000000 }, // Base64 ~1.5MB rasm
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -272,22 +273,22 @@ app.get('/api/restaurant/menu', auth(['restaurant']), async (req, res) => {
   res.json(r?.menu || []);
 });
 
-app.post('/api/restaurant/menu', auth(['restaurant']), upload.single('image'), async (req, res) => {
-  const { name, category, description, ingredients, allergens, price, servingSuggestion } = req.body;
+app.post('/api/restaurant/menu', auth(['restaurant']), async (req, res) => {
+  const { name, category, description, ingredients, allergens, price, servingSuggestion, imageBase64 } = req.body;
   if (!name || !category) return res.status(400).json({ error: 'Taom nomi va kategoriya majburiy' });
   const item = {
     id: uuidv4(), name, category, description: description || '',
     ingredients: ingredients ? ingredients.split(',').map(i => i.trim()).filter(Boolean) : [],
     allergens: allergens ? allergens.split(',').map(a => a.trim()).filter(Boolean) : [],
     price: parseInt(price) || 0, servingSuggestion: servingSuggestion || '',
-    image: req.file ? `/uploads/${req.file.filename}` : null
+    image: imageBase64 || null
   };
   await Restaurant.updateOne({ id: req.user.restaurantId }, { $push: { menu: item } });
   res.json({ success: true, item });
 });
 
-app.put('/api/restaurant/menu/:itemId', auth(['restaurant']), upload.single('image'), async (req, res) => {
-  const { name, category, description, ingredients, allergens, price, servingSuggestion } = req.body;
+app.put('/api/restaurant/menu/:itemId', auth(['restaurant']), async (req, res) => {
+  const { name, category, description, ingredients, allergens, price, servingSuggestion, imageBase64 } = req.body;
   const update = {};
   if (name) update['menu.$.name'] = name;
   if (category) update['menu.$.category'] = category;
@@ -296,7 +297,7 @@ app.put('/api/restaurant/menu/:itemId', auth(['restaurant']), upload.single('ima
   if (allergens !== undefined) update['menu.$.allergens'] = allergens.split(',').map(a => a.trim()).filter(Boolean);
   if (price !== undefined) update['menu.$.price'] = parseInt(price) || 0;
   if (servingSuggestion !== undefined) update['menu.$.servingSuggestion'] = servingSuggestion;
-  if (req.file) update['menu.$.image'] = `/uploads/${req.file.filename}`;
+  if (imageBase64) update['menu.$.image'] = imageBase64;
   await Restaurant.updateOne({ id: req.user.restaurantId, 'menu.id': req.params.itemId }, { $set: update });
   res.json({ success: true });
 });

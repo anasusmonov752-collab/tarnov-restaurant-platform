@@ -230,9 +230,10 @@
         </div>
       </div>
       <div class="form-group">
-        <label>Rasm</label>
-        <input type="file" class="form-control" id="m-image" accept="image/*">
+        <label>Rasm (max 1MB)</label>
+        <input type="file" class="form-control" id="m-image" accept="image/*" onchange="previewImage(this)">
         <div id="m-img-preview" style="margin-top:10px"></div>
+        <input type="hidden" id="m-image-base64">
       </div>
     </div>
     <div class="modal-footer">
@@ -447,6 +448,29 @@ function renderMenu() {
 
 function filterMenu() { renderMenu(); }
 
+function previewImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 1.5 * 1024 * 1024) { toast('Rasm 1.5MB dan kichik bo\'lishi kerak', 'error'); input.value = ''; return; }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    // Rasmni kichraytirish (max 800px)
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      if (w > 800) { h = Math.round(h * 800 / w); w = 800; }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const base64 = canvas.toDataURL('image/jpeg', 0.8);
+      document.getElementById('m-image-base64').value = base64;
+      document.getElementById('m-img-preview').innerHTML = `<img src="${base64}" style="height:80px;border-radius:8px;object-fit:cover">`;
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
 function openMenuModal(id) {
   const item = id ? menuItems.find(m => m.id === id) : null;
   document.getElementById('menu-modal-title').textContent = item ? 'Taomni tahrirlash' : 'Yangi taom qo\'shish';
@@ -459,6 +483,7 @@ function openMenuModal(id) {
   document.getElementById('m-price').value = item?.price || '';
   document.getElementById('m-suggestion').value = item?.servingSuggestion || '';
   document.getElementById('m-image').value = '';
+  document.getElementById('m-image-base64').value = '';
   document.getElementById('m-img-preview').innerHTML = item?.image ? `<img src="${item.image}" style="height:80px;border-radius:8px;object-fit:cover">` : '';
   document.getElementById('menu-modal').classList.add('show');
 }
@@ -467,19 +492,20 @@ function closeMenuModal() { document.getElementById('menu-modal').classList.remo
 
 async function saveMenuItem() {
   const id = document.getElementById('m-id').value;
-  const fd = new FormData();
-  fd.append('name', document.getElementById('m-name').value.trim());
-  fd.append('category', document.getElementById('m-cat').value.trim());
-  fd.append('description', document.getElementById('m-desc').value.trim());
-  fd.append('ingredients', document.getElementById('m-ingredients').value.trim());
-  fd.append('allergens', document.getElementById('m-allergens').value.trim());
-  fd.append('price', document.getElementById('m-price').value);
-  fd.append('servingSuggestion', document.getElementById('m-suggestion').value.trim());
-  const imgFile = document.getElementById('m-image').files[0];
-  if (imgFile) fd.append('image', imgFile);
+  const body = {
+    name: document.getElementById('m-name').value.trim(),
+    category: document.getElementById('m-cat').value.trim(),
+    description: document.getElementById('m-desc').value.trim(),
+    ingredients: document.getElementById('m-ingredients').value.trim(),
+    allergens: document.getElementById('m-allergens').value.trim(),
+    price: document.getElementById('m-price').value,
+    servingSuggestion: document.getElementById('m-suggestion').value.trim(),
+  };
+  const base64 = document.getElementById('m-image-base64').value;
+  if (base64) body.imageBase64 = base64;
   try {
-    if (id) await apiForm(`/api/restaurant/menu/${id}`, fd, 'PUT');
-    else await apiForm('/api/restaurant/menu', fd);
+    if (id) await api(`/api/restaurant/menu/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+    else await api('/api/restaurant/menu', { method: 'POST', body: JSON.stringify(body) });
     toast(id ? 'Taom yangilandi' : 'Taom qo\'shildi', 'success');
     closeMenuModal();
     await loadMenu();

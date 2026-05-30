@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 380" fill="none">
+  <defs>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#F0C96B"/>
+      <stop offset="40%"  stop-color="#C8922A"/>
+      <stop offset="100%" stop-color="#A06A10"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="500" height="380" fill="#0A0A0A"/>
+
+  <!-- ── Ornamental Flourish ── -->
+  <!-- Center top dot -->
+  <circle cx="250" cy="52" r="4" fill="url(#gold)"/>
+
+  <!-- Left large C-scroll -->
+  <path d="M250 56 C240 62, 218 62, 210 72 C200 85, 205 100, 218 102 C230 104, 238 96, 235 86"
+        stroke="url(#gold)" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  <!-- Left outer curl -->
+  <path d="M210 72 C196 72, 182 68, 175 78 C168 90, 178 102, 192 100"
+        stroke="url(#gold)" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Left far curl -->
+  <path d="M175 78 C162 68, 148 72, 142 82 C136 94, 144 106, 156 104"
+        stroke="url(#gold)" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+
+  <!-- Right large C-scroll (mirror) -->
+  <path d="M250 56 C260 62, 282 62, 290 72 C300 85, 295 100, 282 102 C270 104, 262 96, 265 86"
+        stroke="url(#gold)" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  <!-- Right outer curl -->
+  <path d="M290 72 C304 72, 318 68, 325 78 C332 90, 322 102, 308 100"
+        stroke="url(#gold)" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Right far curl -->
+  <path d="M325 78 C338 68, 352 72, 358 82 C364 94, 356 106, 344 104"
+        stroke="url(#gold)" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+
+  <!-- Horizontal lines flanking ornament -->
+  <line x1="48" y1="116" x2="205" y2="116" stroke="url(#gold)" stroke-width="1.2" opacity="0.85"/>
+  <line x1="295" y1="116" x2="452" y2="116" stroke="url(#gold)" stroke-width="1.2" opacity="0.85"/>
+
+  <!-- ── TARNOV ── -->
+  <text x="250" y="232"
+        text-anchor="middle"
+        font-family="'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif"
+        font-size="96"
+        font-weight="bold"
+        letter-spacing="14"
+        fill="url(#gold)">TARNOV</text>
+
+  <!-- ── RESTAURANT line with dashes ── -->
+  <line x1="72"  y1="268" x2="168" y2="268" stroke="url(#gold)" stroke-width="1" opacity="0.75"/>
+  <line x1="332" y1="268" x2="428" y2="268" stroke="url(#gold)" stroke-width="1" opacity="0.75"/>
+
+  <text x="250" y="272"
+        text-anchor="middle"
+        font-family="'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif"
+        font-size="20"
+        letter-spacing="8"
+        fill="url(#gold)"
+        opacity="0.9">RESTAURANT</text>
+</svg>

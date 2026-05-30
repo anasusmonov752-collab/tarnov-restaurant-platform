@@ -66,6 +66,15 @@ h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
   margin-bottom: 12px;
 }
 
+.login-logo .logo-img {
+  width: 240px;
+  height: auto;
+  margin-bottom: 8px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .login-logo h1 {
   font-size: 1.6rem;
   letter-spacing: 0.15em;

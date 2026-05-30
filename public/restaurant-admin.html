@@ -39,6 +39,8 @@
       <button class="nav-item" onclick="showPage('testdays')"><span class="nav-icon">📅</span>Test kunlari</button>
       <button class="nav-item" onclick="showPage('announcements')"><span class="nav-icon">📢</span>E'lonlar</button>
       <button class="nav-item" onclick="showPage('results')"><span class="nav-icon">🏆</span>Natijalar</button>
+      <div class="nav-section-title" style="margin-top:12px">Xodimlar</div>
+      <button class="nav-item" onclick="showPage('adaptation')"><span class="nav-icon">🎓</span>Adaptatsiya</button>
     </nav>
     <div class="sidebar-footer">
       <button class="btn btn-ghost btn-full btn-sm" onclick="logout()">← Chiqish</button>
@@ -207,7 +209,94 @@
       </div>
     </div>
 
+    <!-- ADAPTATION -->
+    <div id="page-adaptation" class="page" style="display:none">
+      <div class="page-header">
+        <div><h1>🎓 Adaptatsiya</h1><p>Yangi xodimlar uchun restoran ma'lumotlari</p></div>
+        <button class="btn btn-gold" onclick="saveAdaptation()">💾 Saqlash</button>
+      </div>
+      <div class="page-body">
+
+        <!-- Tabs -->
+        <div class="flex gap-8 mb-24" style="border-bottom:1px solid var(--border);padding-bottom:0">
+          <button class="adapt-tab active" onclick="switchAdaptTab('info',this)">📖 Restoran haqida</button>
+          <button class="adapt-tab" onclick="switchAdaptTab('management',this)">👥 Boshqaruv</button>
+        </div>
+
+        <!-- INFO TAB -->
+        <div id="adapt-tab-info">
+          <div class="card mb-16">
+            <div class="card-header"><h3 class="card-title">📜 Restoran tarixi</h3></div>
+            <div class="card-body">
+              <textarea class="form-control" id="adapt-history" rows="6" placeholder="Restoran qachon va qanday tashkil topgani, taraqqiyot yo'li..."></textarea>
+            </div>
+          </div>
+          <div class="card mb-16">
+            <div class="card-header"><h3 class="card-title">🎯 Missiya</h3></div>
+            <div class="card-body">
+              <textarea class="form-control" id="adapt-mission" rows="4" placeholder="Restoranning asosiy maqsadi va yo'nalishi..."></textarea>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3 class="card-title">💎 Qadriyatlar</h3><span style="font-size:0.78rem;color:var(--text3)">har bir qator — alohida qadriyat</span></div>
+            <div class="card-body">
+              <textarea class="form-control" id="adapt-values" rows="5" placeholder="Sifat&#10;Mehmon xizmat&#10;Jamoadosh ruh&#10;Halollik"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- MANAGEMENT TAB -->
+        <div id="adapt-tab-management" style="display:none">
+          <div class="card mb-16">
+            <div class="card-header">
+              <h3 class="card-title">Boshqaruv xodimlari</h3>
+              <button class="btn btn-gold btn-sm" onclick="openMemberModal()">+ Qo'shish</button>
+            </div>
+            <div id="management-list" style="padding:16px 0">
+              <div style="text-align:center;padding:40px;color:var(--text3)">Hali xodim qo'shilmagan</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
   </main>
+</div>
+
+<!-- MANAGEMENT MEMBER MODAL -->
+<div class="modal-overlay" id="member-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="member-modal-title">Xodim qo'shish</h3>
+      <button class="modal-close" onclick="closeMemberModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="member-id">
+      <div class="form-group">
+        <label>Ism familiya *</label>
+        <input type="text" class="form-control" id="member-name" placeholder="Aziz Karimov">
+      </div>
+      <div class="form-group">
+        <label>Lavozim *</label>
+        <input type="text" class="form-control" id="member-position" placeholder="Bosh oshpaz">
+      </div>
+      <div class="form-group">
+        <label>Telefon</label>
+        <input type="text" class="form-control" id="member-phone" placeholder="+998 90 123 45 67">
+      </div>
+      <div class="form-group">
+        <label>Foto</label>
+        <input type="file" class="form-control" id="member-photo-file" accept="image/*" onchange="previewMemberPhoto(this)">
+        <img id="member-photo-preview" style="display:none;width:80px;height:80px;object-fit:cover;border-radius:50%;margin-top:8px;border:2px solid var(--gold)">
+        <input type="hidden" id="member-photo">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeMemberModal()">Bekor</button>
+      <button class="btn btn-gold" onclick="saveMember()">Saqlash</button>
+    </div>
+  </div>
 </div>
 
 <!-- MENU MODAL -->
@@ -1038,6 +1127,133 @@ async function confirmImport() {
   await loadWaiters();
 }
 
+// ===== ADAPTATION =====
+let editingMemberId = null;
+
+async function loadAdaptation() {
+  try {
+    const data = await api('/api/restaurant/adaptation');
+    document.getElementById('adapt-history').value = data.history || '';
+    document.getElementById('adapt-mission').value = data.mission || '';
+    document.getElementById('adapt-values').value = (data.values || []).join('\n');
+    renderManagement(data.management || []);
+  } catch(e) { toast('Adaptatsiya ma\'lumotlari yuklanmadi', 'error'); }
+}
+
+async function saveAdaptation() {
+  const history = document.getElementById('adapt-history').value;
+  const mission = document.getElementById('adapt-mission').value;
+  const values = document.getElementById('adapt-values').value;
+  try {
+    await api('/api/restaurant/adaptation', { method:'PUT', body: JSON.stringify({ history, mission, values }) });
+    toast('Saqlandi ✓', 'success');
+  } catch(e) { toast('Xatolik yuz berdi', 'error'); }
+}
+
+function switchAdaptTab(tab, btn) {
+  document.getElementById('adapt-tab-info').style.display = tab==='info' ? '' : 'none';
+  document.getElementById('adapt-tab-management').style.display = tab==='management' ? '' : 'none';
+  document.querySelectorAll('.adapt-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function renderManagement(list) {
+  const el = document.getElementById('management-list');
+  if (!list.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3)">Hali xodim qo\'shilmagan</div>'; return; }
+  const sorted = [...list].sort((a,b) => (a.order||0)-(b.order||0));
+  el.innerHTML = sorted.map(m => `
+    <div style="display:flex;align-items:center;gap:16px;padding:14px 16px;border-bottom:1px solid var(--border)">
+      <div style="width:52px;height:52px;border-radius:50%;overflow:hidden;border:2px solid var(--gold);flex-shrink:0;background:var(--card2);display:flex;align-items:center;justify-content:center">
+        ${m.photo ? `<img src="${m.photo}" style="width:100%;height:100%;object-fit:cover">` : `<span style="font-size:1.4rem">👤</span>`}
+      </div>
+      <div style="flex:1">
+        <div style="font-weight:600">${m.name}</div>
+        <div style="color:var(--gold);font-size:0.82rem">${m.position}</div>
+        ${m.phone ? `<div style="color:var(--text3);font-size:0.78rem">${m.phone}</div>` : ''}
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="openMemberModal('${m.id}')">✏️</button>
+        <button class="btn btn-ghost btn-sm" onclick="deleteMember('${m.id}')">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openMemberModal(id) {
+  editingMemberId = id || null;
+  document.getElementById('member-modal-title').textContent = id ? 'Xodimni tahrirlash' : 'Xodim qo\'shish';
+  document.getElementById('member-name').value = '';
+  document.getElementById('member-position').value = '';
+  document.getElementById('member-phone').value = '';
+  document.getElementById('member-photo').value = '';
+  document.getElementById('member-photo-preview').style.display = 'none';
+  if (id) {
+    const el = document.querySelector(`[onclick="openMemberModal('${id}')"]`);
+    const row = el?.closest('[style*="border-bottom"]');
+    if (row) {
+      document.getElementById('member-name').value = row.querySelector('[style*="font-weight:600"]')?.textContent || '';
+      document.getElementById('member-position').value = row.querySelector('[style*="var(--gold)"]')?.textContent || '';
+    }
+  }
+  document.getElementById('member-modal').classList.add('show');
+}
+
+function closeMemberModal() {
+  document.getElementById('member-modal').classList.remove('show');
+  editingMemberId = null;
+}
+
+function previewMemberPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const size = 200;
+      canvas.width = size; canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      const scale = Math.max(size/img.width, size/img.height);
+      const w = img.width*scale, h = img.height*scale;
+      ctx.drawImage(img, (size-w)/2, (size-h)/2, w, h);
+      const b64 = canvas.toDataURL('image/jpeg', 0.85);
+      document.getElementById('member-photo').value = b64;
+      const prev = document.getElementById('member-photo-preview');
+      prev.src = b64; prev.style.display = 'block';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveMember() {
+  const name = document.getElementById('member-name').value.trim();
+  const position = document.getElementById('member-position').value.trim();
+  const phone = document.getElementById('member-phone').value.trim();
+  const photo = document.getElementById('member-photo').value;
+  if (!name || !position) { toast('Ism va lavozim kiritish shart', 'error'); return; }
+  try {
+    if (editingMemberId) {
+      await api(`/api/restaurant/adaptation/management/${editingMemberId}`, { method:'PUT', body: JSON.stringify({ name, position, phone, photo }) });
+    } else {
+      await api('/api/restaurant/adaptation/management', { method:'POST', body: JSON.stringify({ name, position, phone, photo }) });
+    }
+    closeMemberModal();
+    loadAdaptation();
+    toast('Saqlandi ✓', 'success');
+  } catch(e) { toast('Xatolik', 'error'); }
+}
+
+async function deleteMember(id) {
+  if (!confirm('O\'chirilsinmi?')) return;
+  try {
+    await api(`/api/restaurant/adaptation/management/${id}`, { method:'DELETE' });
+    loadAdaptation();
+    toast('O\'chirildi', 'success');
+  } catch(e) { toast('Xatolik', 'error'); }
+}
+
 // ===== NAVIGATION =====
 function showPage(page) {
   document.querySelectorAll('.page').forEach(p => p.style.display='none');
@@ -1049,6 +1265,7 @@ function showPage(page) {
     document.getElementById('sidebar-overlay').classList.remove('show');
   }
   if (page==='testdays') renderCalendar();
+  if (page==='adaptation') loadAdaptation();
 }
 
 function toggleSidebar() {

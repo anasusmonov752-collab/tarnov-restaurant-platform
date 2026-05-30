@@ -74,6 +74,22 @@ const TestResultSchema = new mongoose.Schema({
   submittedAt: { type: Date, default: Date.now }
 });
 
+const ManagementMemberSchema = new mongoose.Schema({
+  id: { type: String, default: () => uuidv4() },
+  name: String,
+  position: String,
+  phone: String,
+  photo: { type: String, maxlength: 2000000 },
+  order: { type: Number, default: 0 }
+});
+
+const AdaptationSchema = new mongoose.Schema({
+  history: { type: String, default: '' },
+  mission: { type: String, default: '' },
+  values: [String],
+  management: [ManagementMemberSchema]
+}, { _id: false });
+
 const RestaurantSchema = new mongoose.Schema({
   id: { type: String, default: () => uuidv4(), unique: true },
   name: String, location: String,
@@ -88,7 +104,8 @@ const RestaurantSchema = new mongoose.Schema({
   questions: [QuestionSchema],
   testDays: [String],
   announcements: [AnnouncementSchema],
-  testResults: [TestResultSchema]
+  testResults: [TestResultSchema],
+  adaptation: { type: AdaptationSchema, default: () => ({}) }
 });
 
 const SuperAdmin = mongoose.model('SuperAdmin', SuperAdminSchema);
@@ -512,6 +529,59 @@ app.get('/api/waiter/history', auth(['waiter']), async (req, res) => {
 app.get('/api/waiter/announcements', auth(['waiter']), async (req, res) => {
   const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'announcements');
   res.json(r?.announcements || []);
+});
+
+// ==================== ADAPTATION ====================
+
+app.get('/api/restaurant/adaptation', auth(['restaurant']), async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'adaptation');
+  res.json(r?.adaptation || {});
+});
+
+app.put('/api/restaurant/adaptation', auth(['restaurant']), async (req, res) => {
+  const { history, mission, values } = req.body;
+  const update = {};
+  if (history !== undefined) update['adaptation.history'] = history;
+  if (mission !== undefined) update['adaptation.mission'] = mission;
+  if (values !== undefined) update['adaptation.values'] = Array.isArray(values) ? values : values.split('\n').map(v => v.trim()).filter(Boolean);
+  await Restaurant.updateOne({ id: req.user.restaurantId }, { $set: update });
+  res.json({ success: true });
+});
+
+app.post('/api/restaurant/adaptation/management', auth(['restaurant']), async (req, res) => {
+  const { name, position, phone, photo, order } = req.body;
+  if (!name || !position) return res.status(400).json({ error: 'Ism va lavozim kiritish shart' });
+  const member = { id: uuidv4(), name, position, phone: phone || '', photo: photo || '', order: order || 0 };
+  await Restaurant.updateOne({ id: req.user.restaurantId }, { $push: { 'adaptation.management': member } });
+  res.json({ success: true, member });
+});
+
+app.put('/api/restaurant/adaptation/management/:memberId', auth(['restaurant']), async (req, res) => {
+  const { name, position, phone, photo, order } = req.body;
+  const update = {};
+  if (name) update['adaptation.management.$.name'] = name;
+  if (position) update['adaptation.management.$.position'] = position;
+  if (phone !== undefined) update['adaptation.management.$.phone'] = phone;
+  if (photo !== undefined) update['adaptation.management.$.photo'] = photo;
+  if (order !== undefined) update['adaptation.management.$.order'] = order;
+  await Restaurant.updateOne(
+    { id: req.user.restaurantId, 'adaptation.management.id': req.params.memberId },
+    { $set: update }
+  );
+  res.json({ success: true });
+});
+
+app.delete('/api/restaurant/adaptation/management/:memberId', auth(['restaurant']), async (req, res) => {
+  await Restaurant.updateOne(
+    { id: req.user.restaurantId },
+    { $pull: { 'adaptation.management': { id: req.params.memberId } } }
+  );
+  res.json({ success: true });
+});
+
+app.get('/api/waiter/adaptation', auth(['waiter']), async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'adaptation');
+  res.json(r?.adaptation || {});
 });
 
 // ==================== START ====================

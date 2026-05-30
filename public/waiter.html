@@ -96,6 +96,44 @@
     <div id="ann-list"></div>
   </div>
 
+  <!-- ADAPTATION -->
+  <div id="page-adaptation" class="waiter-content" style="display:none">
+    <div style="display:flex;gap:8px;border-bottom:1px solid var(--border);margin-bottom:20px;padding-bottom:0">
+      <button class="adapt-tab active" onclick="switchAdaptViewTab('info',this)">📖 Restoran</button>
+      <button class="adapt-tab" onclick="switchAdaptViewTab('team',this)">👥 Jamoa</button>
+    </div>
+
+    <!-- INFO -->
+    <div id="adapt-view-info">
+      <div id="adapt-view-history" style="display:none" class="card mb-16">
+        <div class="card-header"><h3 class="card-title">📜 Restoran tarixi</h3></div>
+        <div class="card-body" id="adapt-history-text" style="white-space:pre-wrap;line-height:1.8;color:var(--text2)"></div>
+      </div>
+      <div id="adapt-view-mission" style="display:none" class="card mb-16">
+        <div class="card-header"><h3 class="card-title">🎯 Missiya</h3></div>
+        <div class="card-body" id="adapt-mission-text" style="white-space:pre-wrap;line-height:1.8;color:var(--text2)"></div>
+      </div>
+      <div id="adapt-view-values" style="display:none" class="card">
+        <div class="card-header"><h3 class="card-title">💎 Qadriyatlar</h3></div>
+        <div class="card-body" id="adapt-values-list"></div>
+      </div>
+      <div id="adapt-view-empty" style="text-align:center;padding:60px 20px;color:var(--text3)">
+        <div style="font-size:3rem;margin-bottom:12px">📖</div>
+        <p>Ma'lumotlar hali to'ldirilmagan</p>
+      </div>
+    </div>
+
+    <!-- TEAM -->
+    <div id="adapt-view-team" style="display:none">
+      <div id="adapt-team-list">
+        <div style="text-align:center;padding:60px 20px;color:var(--text3)">
+          <div style="font-size:3rem;margin-bottom:12px">👥</div>
+          <p>Jamoa ma'lumotlari hali qo'shilmagan</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <!-- BOTTOM NAV -->
@@ -114,6 +152,9 @@
   </button>
   <button class="waiter-nav-item" onclick="showWaiterPage('ann', this)">
     <span class="nav-icon">📢</span>E'lonlar
+  </button>
+  <button class="waiter-nav-item" onclick="showWaiterPage('adaptation', this)">
+    <span class="nav-icon">🎓</span>Adaptatsiya
   </button>
 </nav>
 
@@ -535,6 +576,62 @@ async function loadAnnouncements() {
   } catch {}
 }
 
+// ===== ADAPTATION =====
+async function loadAdaptation() {
+  try {
+    const data = await api('/api/waiter/adaptation');
+    const hasHistory = data.history?.trim();
+    const hasMission = data.mission?.trim();
+    const hasValues  = data.values?.length;
+    const hasInfo    = hasHistory || hasMission || hasValues;
+
+    document.getElementById('adapt-view-empty').style.display = hasInfo ? 'none' : '';
+
+    if (hasHistory) {
+      document.getElementById('adapt-view-history').style.display = '';
+      document.getElementById('adapt-history-text').textContent  = data.history;
+    }
+    if (hasMission) {
+      document.getElementById('adapt-view-mission').style.display = '';
+      document.getElementById('adapt-mission-text').textContent  = data.mission;
+    }
+    if (hasValues) {
+      document.getElementById('adapt-view-values').style.display = '';
+      document.getElementById('adapt-values-list').innerHTML = data.values.map(v =>
+        `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--gold);font-size:1.1rem">✦</span>
+          <span style="color:var(--text2)">${v}</span>
+        </div>`
+      ).join('');
+    }
+
+    const team = data.management || [];
+    const sorted = [...team].sort((a,b)=>(a.order||0)-(b.order||0));
+    document.getElementById('adapt-team-list').innerHTML = sorted.length ? sorted.map(m => `
+      <div class="member-card">
+        <div class="member-avatar">
+          ${m.photo ? `<img src="${m.photo}" alt="${m.name}">` : '👤'}
+        </div>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:1rem">${m.name}</div>
+          <div style="color:var(--gold);font-size:0.82rem;margin-top:2px">${m.position}</div>
+          ${m.phone ? `<a href="tel:${m.phone}" style="color:var(--text3);font-size:0.8rem;text-decoration:none">📞 ${m.phone}</a>` : ''}
+        </div>
+      </div>
+    `).join('') : `<div style="text-align:center;padding:60px 20px;color:var(--text3)">
+        <div style="font-size:3rem;margin-bottom:12px">👥</div>
+        <p>Jamoa ma'lumotlari hali qo'shilmagan</p>
+      </div>`;
+  } catch(e) { console.error(e); }
+}
+
+function switchAdaptViewTab(tab, btn) {
+  document.getElementById('adapt-view-info').style.display  = tab==='info'  ? '' : 'none';
+  document.getElementById('adapt-view-team').style.display  = tab==='team'  ? '' : 'none';
+  document.querySelectorAll('#page-adaptation .adapt-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
 // ===== NAVIGATION =====
 function showWaiterPage(page, btn) {
   document.querySelectorAll('[id^="page-"]').forEach(p=>p.style.display='none');
@@ -545,6 +642,7 @@ function showWaiterPage(page, btn) {
   if (page==='test') { document.getElementById('test-home').style.display='block'; document.getElementById('test-active').style.display='none'; document.getElementById('test-result').style.display='none'; loadTestInfo(); }
   if (page==='history') loadHistory();
   if (page==='ann') loadAnnouncements();
+  if (page==='adaptation') loadAdaptation();
 }
 
 init();

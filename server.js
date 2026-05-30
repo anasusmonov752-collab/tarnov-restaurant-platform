@@ -75,6 +75,19 @@ const TestResultSchema = new mongoose.Schema({
   submittedAt: { type: Date, default: Date.now }
 });
 
+const ChecklistItemSchema = new mongoose.Schema({
+  id: { type: String, default: () => uuidv4() },
+  title: String,
+  description: { type: String, default: '' },
+  period: { type: String, enum: ['1-kun', '1-hafta', '1-oy'], default: '1-hafta' },
+  order: { type: Number, default: 0 }
+});
+
+const WaiterChecklistSchema = new mongoose.Schema({
+  waiterId: String,
+  completedItems: [String]
+}, { _id: false });
+
 const ManagementMemberSchema = new mongoose.Schema({
   id: { type: String, default: () => uuidv4() },
   name: String,
@@ -106,6 +119,8 @@ const RestaurantSchema = new mongoose.Schema({
   testDays: [String],
   announcements: [AnnouncementSchema],
   testResults: [TestResultSchema],
+  checklist: [ChecklistItemSchema],
+  waiterChecklists: [WaiterChecklistSchema],
   adaptation: { type: AdaptationSchema, default: () => ({}) }
 });
 
@@ -530,6 +545,79 @@ app.get('/api/waiter/history', auth(['waiter']), async (req, res) => {
 app.get('/api/waiter/announcements', auth(['waiter']), async (req, res) => {
   const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'announcements');
   res.json(r?.announcements || []);
+});
+
+// ==================== CHECKLIST ====================
+
+app.get('/api/restaurant/checklist', auth(['restaurant']), async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'checklist waiters waiterChecklists');
+  const items = (r?.checklist || []).sort((a,b) => (a.order||0)-(b.order||0));
+  const waiters = (r?.waiters || []).filter(w => w.active);
+  const wChecklists = r?.waiterChecklists || [];
+  const progress = waiters.map(w => {
+    const wc = wChecklists.find(x => x.waiterId === w.id);
+    const done = wc?.completedItems?.length || 0;
+    return { waiterId: w.id, waiterName: w.name, completed: done, total: items.length };
+  });
+  res.json({ items, progress });
+});
+
+app.post('/api/restaurant/checklist', auth(['restaurant']), async (req, res) => {
+  const { title, description, period, order } = req.body;
+  if (!title) return res.status(400).json({ error: 'Sarlavha kiritish shart' });
+  const item = { id: uuidv4(), title, description: description||'', period: period||'1-hafta', order: order||0 };
+  await Restaurant.updateOne({ id: req.user.restaurantId }, { $push: { checklist: item } });
+  res.json({ success: true, item });
+});
+
+app.put('/api/restaurant/checklist/:itemId', auth(['restaurant']), async (req, res) => {
+  const { title, description, period, order } = req.body;
+  const update = {};
+  if (title) update['checklist.$.title'] = title;
+  if (description !== undefined) update['checklist.$.description'] = description;
+  if (period) update['checklist.$.period'] = period;
+  if (order !== undefined) update['checklist.$.order'] = order;
+  await Restaurant.updateOne({ id: req.user.restaurantId, 'checklist.id': req.params.itemId }, { $set: update });
+  res.json({ success: true });
+});
+
+app.delete('/api/restaurant/checklist/:itemId', auth(['restaurant']), async (req, res) => {
+  await Restaurant.updateOne({ id: req.user.restaurantId }, { $pull: { checklist: { id: req.params.itemId } } });
+  res.json({ success: true });
+});
+
+app.get('/api/waiter/checklist', auth(['waiter']), async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'checklist waiterChecklists');
+  const items = (r?.checklist || []).sort((a,b) => (a.order||0)-(b.order||0));
+  const wc = (r?.waiterChecklists || []).find(x => x.waiterId === req.user.waiterId);
+  const completed = wc?.completedItems || [];
+  res.json({ items: items.map(i => ({ ...i.toObject(), done: completed.includes(i.id) })) });
+});
+
+app.post('/api/waiter/checklist/:itemId/toggle', auth(['waiter']), async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'waiterChecklists checklist');
+  const exists = r?.checklist?.find(x => x.id === req.params.itemId);
+  if (!exists) return res.status(404).json({ error: 'Topshiriq topilmadi' });
+  const wc = (r?.waiterChecklists || []).find(x => x.waiterId === req.user.waiterId);
+  const completed = wc?.completedItems || [];
+  const isDone = completed.includes(req.params.itemId);
+  if (isDone) {
+    await Restaurant.updateOne(
+      { id: req.user.restaurantId, 'waiterChecklists.waiterId': req.user.waiterId },
+      { $pull: { 'waiterChecklists.$.completedItems': req.params.itemId } }
+    );
+  } else if (wc) {
+    await Restaurant.updateOne(
+      { id: req.user.restaurantId, 'waiterChecklists.waiterId': req.user.waiterId },
+      { $push: { 'waiterChecklists.$.completedItems': req.params.itemId } }
+    );
+  } else {
+    await Restaurant.updateOne(
+      { id: req.user.restaurantId },
+      { $push: { waiterChecklists: { waiterId: req.user.waiterId, completedItems: [req.params.itemId] } } }
+    );
+  }
+  res.json({ success: true, done: !isDone });
 });
 
 // ==================== ADAPTATION ====================

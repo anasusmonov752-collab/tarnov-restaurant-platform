@@ -96,6 +96,18 @@
     <div id="ann-list"></div>
   </div>
 
+  <!-- CHECKLIST -->
+  <div id="page-checklist" class="waiter-content" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <h2>✅ Mening checklistim</h2>
+      <div id="cl-waiter-summary" style="font-size:0.85rem;color:var(--gold);font-weight:600"></div>
+    </div>
+    <div class="progress-bar mb-20" style="height:8px;border-radius:4px">
+      <div class="progress-fill" id="cl-waiter-progress" style="width:0%;transition:width 0.4s;border-radius:4px"></div>
+    </div>
+    <div id="cl-waiter-groups"></div>
+  </div>
+
   <!-- ADAPTATION -->
   <div id="page-adaptation" class="waiter-content" style="display:none">
     <div style="display:flex;gap:8px;border-bottom:1px solid var(--border);margin-bottom:20px;padding-bottom:0">
@@ -152,6 +164,9 @@
   </button>
   <button class="waiter-nav-item" onclick="showWaiterPage('ann', this)">
     <span class="nav-icon">📢</span>E'lonlar
+  </button>
+  <button class="waiter-nav-item" onclick="showWaiterPage('checklist', this)">
+    <span class="nav-icon">✅</span>Checklist
   </button>
   <button class="waiter-nav-item" onclick="showWaiterPage('adaptation', this)">
     <span class="nav-icon">🎓</span>Adaptatsiya
@@ -576,6 +591,61 @@ async function loadAnnouncements() {
   } catch {}
 }
 
+// ===== CHECKLIST =====
+const CL_PERIODS = { '1-kun': { label: '1-kun', color: '#E74C3C' }, '1-hafta': { label: '1-hafta', color: '#F39C12' }, '1-oy': { label: '1-oy', color: '#2ECC71' } };
+
+async function loadWaiterChecklist() {
+  try {
+    const data = await api('/api/waiter/checklist');
+    const items = data.items || [];
+    const done = items.filter(i => i.done).length;
+    const pct = items.length ? Math.round((done/items.length)*100) : 0;
+
+    document.getElementById('cl-waiter-summary').textContent = `${done}/${items.length} bajarildi`;
+    document.getElementById('cl-waiter-progress').style.width = pct + '%';
+
+    const groups = { '1-kun': [], '1-hafta': [], '1-oy': [] };
+    items.forEach(i => (groups[i.period] || groups['1-hafta']).push(i));
+
+    const el = document.getElementById('cl-waiter-groups');
+    if (!items.length) {
+      el.innerHTML = '<div style="text-align:center;padding:60px;color:var(--text3)"><div style="font-size:3rem;margin-bottom:12px">✅</div><p>Hali vazifa qo\'shilmagan</p></div>';
+      return;
+    }
+    el.innerHTML = Object.entries(groups).filter(([,v])=>v.length).map(([period, list]) => {
+      const p = CL_PERIODS[period];
+      return `
+        <div class="card mb-16">
+          <div class="card-header">
+            <h3 class="card-title" style="color:${p.color}">⏱ ${p.label}</h3>
+            <span style="font-size:0.8rem;color:var(--text3)">${list.filter(i=>i.done).length}/${list.length}</span>
+          </div>
+          ${list.map(item => `
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-top:1px solid var(--border);cursor:pointer;transition:background 0.2s"
+                 onclick="toggleChecklistItem('${item.id}', this)">
+              <div style="width:22px;height:22px;border-radius:6px;border:2px solid ${item.done ? p.color : 'var(--border)'};
+                   background:${item.done ? p.color : 'transparent'};display:flex;align-items:center;justify-content:center;
+                   flex-shrink:0;margin-top:1px;transition:all 0.2s">
+                ${item.done ? '<span style="color:#000;font-size:0.75rem;font-weight:bold">✓</span>' : ''}
+              </div>
+              <div style="flex:1">
+                <div style="font-weight:600;${item.done ? 'text-decoration:line-through;color:var(--text3)' : ''}">${item.title}</div>
+                ${item.description ? `<div style="color:var(--text3);font-size:0.82rem;margin-top:2px">${item.description}</div>` : ''}
+              </div>
+            </div>
+          `).join('')}
+        </div>`;
+    }).join('');
+  } catch(e) { console.error(e); }
+}
+
+async function toggleChecklistItem(itemId, rowEl) {
+  try {
+    const res = await api(`/api/waiter/checklist/${itemId}/toggle`, { method:'POST' });
+    loadWaiterChecklist();
+  } catch(e) { toast('Xatolik', 'error'); }
+}
+
 // ===== ADAPTATION =====
 async function loadAdaptation() {
   try {
@@ -642,6 +712,7 @@ function showWaiterPage(page, btn) {
   if (page==='test') { document.getElementById('test-home').style.display='block'; document.getElementById('test-active').style.display='none'; document.getElementById('test-result').style.display='none'; loadTestInfo(); }
   if (page==='history') loadHistory();
   if (page==='ann') loadAnnouncements();
+  if (page==='checklist') loadWaiterChecklist();
   if (page==='adaptation') loadAdaptation();
 }
 

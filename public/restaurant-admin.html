@@ -41,6 +41,7 @@
       <button class="nav-item" onclick="showPage('results')"><span class="nav-icon">🏆</span>Natijalar</button>
       <div class="nav-section-title" style="margin-top:12px">Xodimlar</div>
       <button class="nav-item" onclick="showPage('adaptation')"><span class="nav-icon">🎓</span>Adaptatsiya</button>
+      <button class="nav-item" onclick="showPage('checklist')"><span class="nav-icon">✅</span>Checklist</button>
     </nav>
     <div class="sidebar-footer">
       <button class="btn btn-ghost btn-full btn-sm" onclick="logout()">← Chiqish</button>
@@ -209,6 +210,30 @@
       </div>
     </div>
 
+    <!-- CHECKLIST -->
+    <div id="page-checklist" class="page" style="display:none">
+      <div class="page-header">
+        <div><h1>✅ Onboarding Checklist</h1><p>Yangi xodimlar uchun vazifalar ro'yxati</p></div>
+        <button class="btn btn-gold" onclick="openChecklistModal()">+ Vazifa qo'shish</button>
+      </div>
+      <div class="page-body">
+        <div class="flex gap-8 mb-20" style="border-bottom:1px solid var(--border);padding-bottom:0">
+          <button class="adapt-tab active" onclick="switchChecklistTab('items',this)">📋 Vazifalar</button>
+          <button class="adapt-tab" onclick="switchChecklistTab('progress',this)">📊 Jarayon</button>
+        </div>
+
+        <!-- ITEMS TAB -->
+        <div id="cl-tab-items">
+          <div id="cl-groups"></div>
+        </div>
+
+        <!-- PROGRESS TAB -->
+        <div id="cl-tab-progress" style="display:none">
+          <div id="cl-progress-list"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- ADAPTATION -->
     <div id="page-adaptation" class="page" style="display:none">
       <div class="page-header">
@@ -262,6 +287,39 @@
     </div>
 
   </main>
+</div>
+
+<!-- CHECKLIST ITEM MODAL -->
+<div class="modal-overlay" id="checklist-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="cl-modal-title">Vazifa qo'shish</h3>
+      <button class="modal-close" onclick="closeChecklistModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cl-item-id">
+      <div class="form-group">
+        <label>Vazifa nomi *</label>
+        <input type="text" class="form-control" id="cl-title" placeholder="Menyu bilan tanishish">
+      </div>
+      <div class="form-group">
+        <label>Izoh</label>
+        <textarea class="form-control" id="cl-description" rows="3" placeholder="Batafsil tavsif..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Muddat</label>
+        <select class="form-control" id="cl-period">
+          <option value="1-kun">1-kun</option>
+          <option value="1-hafta" selected>1-hafta</option>
+          <option value="1-oy">1-oy</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeChecklistModal()">Bekor</button>
+      <button class="btn btn-gold" onclick="saveChecklistItem()">Saqlash</button>
+    </div>
+  </div>
 </div>
 
 <!-- MANAGEMENT MEMBER MODAL -->
@@ -1127,6 +1185,123 @@ async function confirmImport() {
   await loadWaiters();
 }
 
+// ===== CHECKLIST =====
+let cachedChecklist = [];
+let editingChecklistId = null;
+
+const PERIODS = { '1-kun': { label: '1-kun', color: '#E74C3C' }, '1-hafta': { label: '1-hafta', color: '#F39C12' }, '1-oy': { label: '1-oy', color: '#2ECC71' } };
+
+async function loadChecklist() {
+  try {
+    const data = await api('/api/restaurant/checklist');
+    cachedChecklist = data.items || [];
+    renderChecklistItems(cachedChecklist);
+    renderChecklistProgress(data.progress || []);
+  } catch(e) { toast('Checklist yuklanmadi', 'error'); }
+}
+
+function renderChecklistItems(items) {
+  const el = document.getElementById('cl-groups');
+  if (!items.length) { el.innerHTML = '<div style="text-align:center;padding:60px;color:var(--text3)"><div style="font-size:3rem;margin-bottom:12px">✅</div><p>Hali vazifa qo\'shilmagan</p></div>'; return; }
+  const groups = { '1-kun': [], '1-hafta': [], '1-oy': [] };
+  items.forEach(i => (groups[i.period] || groups['1-hafta']).push(i));
+  el.innerHTML = Object.entries(groups).filter(([,v])=>v.length).map(([period, list]) => `
+    <div class="card mb-16">
+      <div class="card-header">
+        <h3 class="card-title" style="color:${PERIODS[period].color}">⏱ ${PERIODS[period].label}</h3>
+        <span style="font-size:0.8rem;color:var(--text3)">${list.length} ta vazifa</span>
+      </div>
+      ${list.map(item => `
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-top:1px solid var(--border)">
+          <div style="width:8px;height:8px;border-radius:50%;background:${PERIODS[period].color};margin-top:6px;flex-shrink:0"></div>
+          <div style="flex:1">
+            <div style="font-weight:600">${item.title}</div>
+            ${item.description ? `<div style="color:var(--text3);font-size:0.82rem;margin-top:2px">${item.description}</div>` : ''}
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-ghost btn-sm" onclick="openChecklistModal('${item.id}')">✏️</button>
+            <button class="btn btn-ghost btn-sm" onclick="deleteChecklistItem('${item.id}')">🗑️</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function renderChecklistProgress(progress) {
+  const el = document.getElementById('cl-progress-list');
+  if (!progress.length) { el.innerHTML = '<div style="text-align:center;padding:60px;color:var(--text3)">Ofitsiantlar yo\'q</div>'; return; }
+  el.innerHTML = progress.map(p => {
+    const pct = p.total ? Math.round((p.completed/p.total)*100) : 0;
+    const color = pct===100 ? 'var(--success)' : pct>=50 ? 'var(--warning)' : 'var(--gold)';
+    return `
+      <div class="card mb-12" style="padding:16px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+          <div style="font-weight:600;flex:1">${p.waiterName}</div>
+          <div style="font-size:0.85rem;color:${color};font-weight:700">${p.completed}/${p.total}</div>
+          <div style="font-size:0.85rem;color:${color};font-weight:700">${pct}%</div>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${color}"></div></div>
+      </div>
+    `;
+  }).join('');
+}
+
+function switchChecklistTab(tab, btn) {
+  document.getElementById('cl-tab-items').style.display = tab==='items' ? '' : 'none';
+  document.getElementById('cl-tab-progress').style.display = tab==='progress' ? '' : 'none';
+  document.querySelectorAll('#page-checklist .adapt-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function openChecklistModal(id) {
+  editingChecklistId = id || null;
+  document.getElementById('cl-modal-title').textContent = id ? 'Vazifani tahrirlash' : 'Vazifa qo\'shish';
+  document.getElementById('cl-title').value = '';
+  document.getElementById('cl-description').value = '';
+  document.getElementById('cl-period').value = '1-hafta';
+  if (id) {
+    const item = cachedChecklist.find(x => x.id === id);
+    if (item) {
+      document.getElementById('cl-title').value = item.title || '';
+      document.getElementById('cl-description').value = item.description || '';
+      document.getElementById('cl-period').value = item.period || '1-hafta';
+    }
+  }
+  document.getElementById('checklist-modal').classList.add('show');
+}
+
+function closeChecklistModal() {
+  document.getElementById('checklist-modal').classList.remove('show');
+  editingChecklistId = null;
+}
+
+async function saveChecklistItem() {
+  const title = document.getElementById('cl-title').value.trim();
+  const description = document.getElementById('cl-description').value.trim();
+  const period = document.getElementById('cl-period').value;
+  if (!title) { toast('Vazifa nomini kiriting', 'error'); return; }
+  try {
+    if (editingChecklistId) {
+      await api(`/api/restaurant/checklist/${editingChecklistId}`, { method:'PUT', body: JSON.stringify({ title, description, period }) });
+    } else {
+      await api('/api/restaurant/checklist', { method:'POST', body: JSON.stringify({ title, description, period }) });
+    }
+    closeChecklistModal();
+    loadChecklist();
+    toast('Saqlandi ✓', 'success');
+  } catch(e) { toast('Xatolik', 'error'); }
+}
+
+async function deleteChecklistItem(id) {
+  if (!confirm('O\'chirilsinmi?')) return;
+  try {
+    await api(`/api/restaurant/checklist/${id}`, { method:'DELETE' });
+    loadChecklist();
+    toast('O\'chirildi', 'success');
+  } catch(e) { toast('Xatolik', 'error'); }
+}
+
 // ===== ADAPTATION =====
 let editingMemberId = null;
 let cachedManagement = [];
@@ -1276,6 +1451,7 @@ function showPage(page) {
   }
   if (page==='testdays') renderCalendar();
   if (page==='adaptation') loadAdaptation();
+  if (page==='checklist') loadChecklist();
 }
 
 function toggleSidebar() {

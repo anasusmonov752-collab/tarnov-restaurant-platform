@@ -18,21 +18,45 @@
     <div class="login-container">
 
       <div class="login-logo">
-        <svg class="logo-svg" width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="36" cy="36" r="35" stroke="#C8922A" stroke-width="1.5" stroke-dasharray="4 2"/>
-          <circle cx="36" cy="36" r="28" stroke="#C8922A" stroke-width="0.5" opacity="0.4"/>
-          <path d="M36 12 L38 20 L36 18 L34 20 Z" fill="#C8922A"/>
-          <path d="M36 60 L38 52 L36 54 L34 52 Z" fill="#C8922A"/>
-          <path d="M12 36 L20 38 L18 36 L20 34 Z" fill="#C8922A"/>
-          <path d="M60 36 L52 38 L54 36 L52 34 Z" fill="#C8922A"/>
-          <text x="36" y="32" text-anchor="middle" font-family="serif" font-size="10" font-weight="bold" fill="#C8922A" letter-spacing="2">TR</text>
-          <path d="M22 40 Q36 34 50 40" stroke="#C8922A" stroke-width="1" fill="none" opacity="0.6"/>
-          <path d="M24 43 Q36 37 48 43" stroke="#C8922A" stroke-width="0.5" fill="none" opacity="0.4"/>
-          <circle cx="36" cy="36" r="3" fill="none" stroke="#C8922A" stroke-width="1"/>
-          <circle cx="36" cy="18" r="1.5" fill="#C8922A"/>
-          <circle cx="36" cy="54" r="1.5" fill="#C8922A"/>
-          <circle cx="18" cy="36" r="1.5" fill="#C8922A"/>
-          <circle cx="54" cy="36" r="1.5" fill="#C8922A"/>
+        <svg class="logo-svg" width="110" height="110" viewBox="0 0 110 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Outer ring -->
+          <circle cx="55" cy="55" r="53" stroke="#C8922A" stroke-width="1.5"/>
+          <circle cx="55" cy="55" r="47" stroke="#C8922A" stroke-width="0.5" opacity="0.5"/>
+          <!-- Inner decorative ring -->
+          <circle cx="55" cy="55" r="40" stroke="#C8922A" stroke-width="0.5" stroke-dasharray="3 3" opacity="0.35"/>
+          <!-- Cardinal ornaments -->
+          <polygon points="55,5 57.5,13 55,11 52.5,13" fill="#C8922A"/>
+          <polygon points="55,105 57.5,97 55,99 52.5,97" fill="#C8922A"/>
+          <polygon points="5,55 13,57.5 11,55 13,52.5" fill="#C8922A"/>
+          <polygon points="105,55 97,57.5 99,55 97,52.5" fill="#C8922A"/>
+          <!-- Corner dots -->
+          <circle cx="55" cy="16" r="2" fill="#C8922A"/>
+          <circle cx="55" cy="94" r="2" fill="#C8922A"/>
+          <circle cx="16" cy="55" r="2" fill="#C8922A"/>
+          <circle cx="94" cy="55" r="2" fill="#C8922A"/>
+          <!-- Gold plate background -->
+          <circle cx="55" cy="55" r="34" fill="#C8922A" opacity="0.08"/>
+          <!-- Fork & knife icon -->
+          <g transform="translate(29, 28)" stroke="#C8922A" stroke-width="1.6" stroke-linecap="round" fill="none">
+            <!-- Fork -->
+            <line x1="10" y1="4" x2="10" y2="22"/>
+            <line x1="7"  y1="4" x2="7"  y2="11"/>
+            <line x1="10" y1="4" x2="7"  y2="4"/>
+            <line x1="13" y1="4" x2="13" y2="11"/>
+            <line x1="10" y1="4" x2="13" y2="4"/>
+            <line x1="7"  y1="11" x2="13" y2="11"/>
+            <!-- Knife -->
+            <line x1="43" y1="4"  x2="43" y2="22"/>
+            <path d="M43 4 Q49 8 43 14" fill="#C8922A" fill-opacity="0.15" stroke="#C8922A" stroke-width="1.4"/>
+          </g>
+          <!-- TARNOV text -->
+          <text x="55" y="69" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif"
+                font-size="13" font-weight="bold" fill="#C8922A" letter-spacing="4">TARNOV</text>
+          <!-- Bottom line decoration -->
+          <line x1="30" y1="74" x2="80" y2="74" stroke="#C8922A" stroke-width="0.6" opacity="0.6"/>
+          <!-- RESTAURANT small text -->
+          <text x="55" y="83" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif"
+                font-size="6.5" fill="#C8922A" letter-spacing="3" opacity="0.8">RESTAURANT</text>
         </svg>
         <h1>TARNOV</h1>
         <p>Restaurant · Training Platform</p>
@@ -49,7 +73,7 @@
         <div class="tab-panel active" id="panel-superadmin">
           <div class="form-group">
             <label>Email manzil</label>
-            <input type="email" class="form-control" id="sa-email" placeholder="admin@tarnov.uz" value="admin@tarnov.uz">
+            <input type="email" class="form-control" id="sa-email" placeholder="admin@tarnov.uz">
           </div>
           <div class="form-group">
             <label>Parol</label>
@@ -58,9 +82,6 @@
           <button class="btn btn-gold btn-full btn-lg" onclick="login('superadmin')">
             Kirish
           </button>
-          <p style="text-align:center;margin-top:14px;font-size:0.78rem;color:var(--text3)">
-            Default: admin@tarnov.uz / Tarnov2024!
-          </p>
         </div>
 
         <!-- Restaurant Admin -->

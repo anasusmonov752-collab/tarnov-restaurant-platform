@@ -7,9 +7,14 @@ const mongoose = require('mongoose');
 const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+if (!process.env.JWT_SECRET) {
+  console.warn('⚠️  JWT_SECRET env variable not set — using insecure default. Set it in production!');
+}
 const JWT_SECRET = process.env.JWT_SECRET || 'tarnov-secret-jwt-key-2024';
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/tarnov';
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
@@ -111,6 +116,14 @@ app.use(cookieParser());
 app.use('/uploads', express.static(UPLOADS_DIR));
 app.use(express.static(path.join(__dirname, 'public')));
 
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'Juda ko\'p urinish. 15 daqiqadan so\'ng qayta urinib ko\'ring.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOADS_DIR),
   filename: (req, file, cb) => cb(null, `${uuidv4()}${path.extname(file.originalname)}`)
@@ -136,7 +149,7 @@ function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
 
 // ==================== AUTH ====================
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', loginLimiter, async (req, res) => {
   const { loginType, email, password, restaurantId, pin } = req.body;
 
   if (loginType === 'superadmin') {

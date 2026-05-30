@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tarnov Restaurant — Kirish</title>
   <link rel="stylesheet" href="/css/style.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <style>
-    .ornament { color: var(--gold); opacity: 0.6; }
     .divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; }
     .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
     .divider span { color: var(--text3); font-size: 0.75rem; }
+    .login-tab i { width: 15px; height: 15px; }
   </style>
 </head>
 <body>
@@ -25,9 +26,15 @@
 
       <div class="login-card">
         <div class="login-tabs">
-          <button class="login-tab active" onclick="switchTab('superadmin')">⚡ Super Admin</button>
-          <button class="login-tab" onclick="switchTab('restaurant')">🏪 Admin</button>
-          <button class="login-tab" onclick="switchTab('waiter')">👨‍🍳 Ofitsiant</button>
+          <button class="login-tab active" onclick="switchTab('superadmin', event)">
+            <i data-lucide="zap"></i> Super Admin
+          </button>
+          <button class="login-tab" onclick="switchTab('restaurant', event)">
+            <i data-lucide="store"></i> Admin
+          </button>
+          <button class="login-tab" onclick="switchTab('waiter', event)">
+            <i data-lucide="chef-hat"></i> Ofitsiant
+          </button>
         </div>
 
         <!-- Super Admin -->
@@ -88,13 +95,13 @@
 
   <script src="/js/utils.js"></script>
   <script>
-    const tabs = document.querySelectorAll('.login-tab');
+    lucide.createIcons();
 
-    function switchTab(type) {
+    function switchTab(type, event) {
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-      tabs.forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
       document.getElementById(`panel-${type}`).classList.add('active');
-      event.target.classList.add('active');
+      event.currentTarget.classList.add('active');
       document.getElementById('login-error').style.display = 'none';
       if (type === 'waiter') loadRestaurants();
     }
@@ -138,7 +145,6 @@
       }
     }
 
-    // Enter key support
     document.addEventListener('keypress', e => {
       if (e.key === 'Enter') {
         const active = document.querySelector('.tab-panel.active');
@@ -147,7 +153,6 @@
       }
     });
 
-    // Check if already logged in
     api('/api/auth/me').then(user => {
       if (user.role === 'superadmin') window.location.href = '/super-admin.html';
       else if (user.role === 'restaurant') window.location.href = '/restaurant-admin.html';

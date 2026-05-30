@@ -5,14 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tarnov — Restoran Admin</title>
   <link rel="stylesheet" href="/css/style.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
 <div id="toast-container"></div>
 
 <div class="mobile-topbar">
-  <button class="hamburger" onclick="toggleSidebar()">☰</button>
+  <button class="hamburger" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
   <span style="color:var(--gold);font-weight:700;letter-spacing:0.1em" id="mob-name">TARNOV</span>
-  <button class="btn btn-ghost btn-sm" onclick="logout()">Chiqish</button>
+  <button class="btn btn-ghost btn-sm" onclick="logout()"><i data-lucide="log-out"></i></button>
 </div>
 <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
 
@@ -26,25 +27,45 @@
       </div>
       <div class="sidebar-user" style="margin-top:14px">
         <div class="user-name">Restoran Admin</div>
-        <div class="user-role">🏪 Boshqaruvchi</div>
+        <div class="user-role"><i data-lucide="store" style="width:13px;height:13px"></i> Boshqaruvchi</div>
       </div>
     </div>
     <nav class="sidebar-nav">
       <div class="nav-section-title">Boshqaruv</div>
-      <button class="nav-item active" onclick="showPage('dashboard')"><span class="nav-icon">📊</span>Dashboard</button>
-      <button class="nav-item" onclick="showPage('menu')"><span class="nav-icon">🍽️</span>Menyu</button>
-      <button class="nav-item" onclick="showPage('waiters')"><span class="nav-icon">👨‍🍳</span>Ofitsiantlar</button>
-      <button class="nav-item" onclick="showPage('questions')"><span class="nav-icon">❓</span>Savollar</button>
+      <button class="nav-item active" onclick="showPage('dashboard', this)">
+        <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span>Dashboard
+      </button>
+      <button class="nav-item" onclick="showPage('menu', this)">
+        <span class="nav-icon"><i data-lucide="utensils"></i></span>Menyu
+      </button>
+      <button class="nav-item" onclick="showPage('waiters', this)">
+        <span class="nav-icon"><i data-lucide="chef-hat"></i></span>Ofitsiantlar
+      </button>
+      <button class="nav-item" onclick="showPage('questions', this)">
+        <span class="nav-icon"><i data-lucide="help-circle"></i></span>Savollar
+      </button>
       <div class="nav-section-title" style="margin-top:12px">Test & E'lonlar</div>
-      <button class="nav-item" onclick="showPage('testdays')"><span class="nav-icon">📅</span>Test kunlari</button>
-      <button class="nav-item" onclick="showPage('announcements')"><span class="nav-icon">📢</span>E'lonlar</button>
-      <button class="nav-item" onclick="showPage('results')"><span class="nav-icon">🏆</span>Natijalar</button>
+      <button class="nav-item" onclick="showPage('testdays', this)">
+        <span class="nav-icon"><i data-lucide="calendar"></i></span>Test kunlari
+      </button>
+      <button class="nav-item" onclick="showPage('announcements', this)">
+        <span class="nav-icon"><i data-lucide="megaphone"></i></span>E'lonlar
+      </button>
+      <button class="nav-item" onclick="showPage('results', this)">
+        <span class="nav-icon"><i data-lucide="trophy"></i></span>Natijalar
+      </button>
       <div class="nav-section-title" style="margin-top:12px">Xodimlar</div>
-      <button class="nav-item" onclick="showPage('adaptation')"><span class="nav-icon">🎓</span>Adaptatsiya</button>
-      <button class="nav-item" onclick="showPage('checklist')"><span class="nav-icon">✅</span>Checklist</button>
+      <button class="nav-item" onclick="showPage('adaptation', this)">
+        <span class="nav-icon"><i data-lucide="book-open"></i></span>Adaptatsiya
+      </button>
+      <button class="nav-item" onclick="showPage('checklist', this)">
+        <span class="nav-icon"><i data-lucide="clipboard-list"></i></span>Checklist
+      </button>
     </nav>
     <div class="sidebar-footer">
-      <button class="btn btn-ghost btn-full btn-sm" onclick="logout()">← Chiqish</button>
+      <button class="btn btn-ghost btn-full btn-sm" onclick="logout()">
+        <i data-lucide="log-out"></i> Chiqish
+      </button>
     </div>
   </aside>
 
@@ -59,11 +80,17 @@
         <div class="stats-grid" id="dash-stats"></div>
         <div class="grid-2" style="gap:20px">
           <div class="card">
-            <div class="card-header"><h3 class="card-title">📢 So'nggi e'lonlar</h3><button class="btn btn-ghost btn-sm" onclick="showPage('announcements')">Barchasi</button></div>
+            <div class="card-header">
+              <h3 class="card-title"><i data-lucide="megaphone" style="width:16px;height:16px"></i> So'nggi e'lonlar</h3>
+              <button class="btn btn-ghost btn-sm" onclick="showPage('announcements')">Barchasi</button>
+            </div>
             <div id="dash-ann"></div>
           </div>
           <div class="card">
-            <div class="card-header"><h3 class="card-title">🏆 So'nggi natijalar</h3><button class="btn btn-ghost btn-sm" onclick="showPage('results')">Barchasi</button></div>
+            <div class="card-header">
+              <h3 class="card-title"><i data-lucide="trophy" style="width:16px;height:16px"></i> So'nggi natijalar</h3>
+              <button class="btn btn-ghost btn-sm" onclick="showPage('results')">Barchasi</button>
+            </div>
             <div id="dash-results"></div>
           </div>
         </div>
@@ -74,12 +101,14 @@
     <div id="page-menu" class="page" style="display:none">
       <div class="page-header">
         <div><h1>Menyu boshqaruvi</h1><p>Taomlarni qo'shish, tahrirlash va o'chirish</p></div>
-        <button class="btn btn-gold" onclick="openMenuModal()">+ Taom qo'shish</button>
+        <button class="btn btn-gold" onclick="openMenuModal()">
+          <i data-lucide="plus"></i> Taom qo'shish
+        </button>
       </div>
       <div class="page-body">
         <div class="flex gap-12 mb-16" style="flex-wrap:wrap">
           <div class="search-box" style="flex:1;min-width:200px">
-            <span class="search-icon">🔍</span>
+            <span class="search-icon"><i data-lucide="search"></i></span>
             <input type="text" class="form-control" id="menu-search" placeholder="Taom qidirish..." oninput="filterMenu()">
           </div>
           <select class="form-control" id="menu-cat-filter" onchange="filterMenu()" style="width:auto;min-width:160px">
@@ -95,15 +124,22 @@
       <div class="page-header">
         <div><h1>Ofitsiantlar</h1><p>PIN tayinlash va ofitsiantlarni boshqarish</p></div>
         <div class="flex gap-8">
-          <button class="btn btn-outline" onclick="downloadTemplate()">⬇ Shablon yuklash</button>
-          <button class="btn btn-outline" onclick="document.getElementById('excel-input').click()">📂 Excel yuklash</button>
+          <button class="btn btn-outline" onclick="downloadTemplate()">
+            <i data-lucide="download"></i> Shablon
+          </button>
+          <button class="btn btn-outline" onclick="document.getElementById('excel-input').click()">
+            <i data-lucide="folder-open"></i> CSV yuklash
+          </button>
           <input type="file" id="excel-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="importFromExcel(this)">
-          <button class="btn btn-gold" onclick="openWaiterModal()">+ Ofitsiant qo'shish</button>
+          <button class="btn btn-gold" onclick="openWaiterModal()">
+            <i data-lucide="plus"></i> Ofitsiant qo'shish
+          </button>
         </div>
       </div>
       <div class="page-body">
         <div class="alert alert-info mb-16" style="font-size:0.82rem">
-          📊 Excel/CSV formatda yuklash uchun: <strong>Ism</strong> va <strong>PIN</strong> ustunlari bo'lishi kerak.
+          <i data-lucide="info" style="width:14px;height:14px"></i>
+          Excel/CSV formatda yuklash uchun: <strong>Ism</strong> va <strong>PIN</strong> ustunlari bo'lishi kerak.
           <a href="#" onclick="downloadTemplate()" style="color:var(--gold)">Shablon yuklab oling</a>.
         </div>
         <div id="import-preview" style="display:none" class="card mb-16">
@@ -111,7 +147,9 @@
             <h3 class="card-title" id="import-title">Import ko'rinishi</h3>
             <div class="flex gap-8">
               <button class="btn btn-ghost btn-sm" onclick="cancelImport()">Bekor qilish</button>
-              <button class="btn btn-gold btn-sm" onclick="confirmImport()">✓ Yuklashni tasdiqlash</button>
+              <button class="btn btn-gold btn-sm" onclick="confirmImport()">
+                <i data-lucide="check"></i> Yuklashni tasdiqlash
+              </button>
             </div>
           </div>
           <div class="table-wrap">
@@ -134,7 +172,9 @@
     <div id="page-questions" class="page" style="display:none">
       <div class="page-header">
         <div><h1>Test savollari</h1><p>Test uchun savollar bazasini boshqarish</p></div>
-        <button class="btn btn-gold" onclick="openQuestionModal()">+ Savol qo'shish</button>
+        <button class="btn btn-gold" onclick="openQuestionModal()">
+          <i data-lucide="plus"></i> Savol qo'shish
+        </button>
       </div>
       <div class="page-body">
         <div class="flex gap-8 mb-16" style="flex-wrap:wrap;align-items:center">
@@ -142,9 +182,9 @@
           <div style="margin-left:auto">
             <select class="form-control" id="q-diff-filter" onchange="filterQuestions()" style="width:auto">
               <option value="">Barcha darajalar</option>
-              <option value="easy">🟢 Oson</option>
-              <option value="medium">🟡 O'rta</option>
-              <option value="hard">🔴 Qiyin</option>
+              <option value="easy">● Oson</option>
+              <option value="medium">● O'rta</option>
+              <option value="hard">● Qiyin</option>
             </select>
           </div>
         </div>
@@ -163,17 +203,24 @@
             <div class="card-header">
               <h3 class="card-title" id="cal-title">— — —</h3>
               <div class="flex gap-8">
-                <button class="btn btn-ghost btn-sm btn-icon" onclick="prevMonth()">‹</button>
-                <button class="btn btn-ghost btn-sm btn-icon" onclick="nextMonth()">›</button>
+                <button class="btn btn-ghost btn-sm btn-icon" onclick="prevMonth()">
+                  <i data-lucide="chevron-left"></i>
+                </button>
+                <button class="btn btn-ghost btn-sm btn-icon" onclick="nextMonth()">
+                  <i data-lucide="chevron-right"></i>
+                </button>
               </div>
             </div>
             <div class="calendar" id="calendar"></div>
           </div>
           <div class="card">
-            <div class="card-header"><h3 class="card-title">📅 Belgilangan kunlar</h3></div>
+            <div class="card-header">
+              <h3 class="card-title"><i data-lucide="calendar" style="width:16px;height:16px"></i> Belgilangan kunlar</h3>
+            </div>
             <div id="testdays-list"></div>
             <div class="alert alert-info mt-16" style="font-size:0.82rem">
-              ℹ️ Test kunlari belgilanganda ofitsiantlar menyuni ko'ra olmaydi va test topshirishi mumkin.
+              <i data-lucide="info" style="width:14px;height:14px"></i>
+              Test kunlari belgilanganda ofitsiantlar menyuni ko'ra olmaydi va test topshirishi mumkin.
             </div>
           </div>
         </div>
@@ -184,11 +231,11 @@
     <div id="page-announcements" class="page" style="display:none">
       <div class="page-header">
         <div><h1>E'lonlar</h1><p>Ofitsiantlarga xabar yuborish</p></div>
-        <button class="btn btn-gold" onclick="openAnnModal()">+ E'lon yuborish</button>
+        <button class="btn btn-gold" onclick="openAnnModal()">
+          <i data-lucide="send"></i> E'lon yuborish
+        </button>
       </div>
-      <div class="page-body">
-        <div id="ann-list"></div>
-      </div>
+      <div class="page-body"><div id="ann-list"></div></div>
     </div>
 
     <!-- RESULTS -->
@@ -213,88 +260,90 @@
     <!-- CHECKLIST -->
     <div id="page-checklist" class="page" style="display:none">
       <div class="page-header">
-        <div><h1>✅ Onboarding Checklist</h1><p>Yangi xodimlar uchun vazifalar ro'yxati</p></div>
-        <button class="btn btn-gold" onclick="openChecklistModal()">+ Vazifa qo'shish</button>
+        <div><h1>Onboarding Checklist</h1><p>Yangi xodimlar uchun vazifalar ro'yxati</p></div>
+        <button class="btn btn-gold" onclick="openChecklistModal()">
+          <i data-lucide="plus"></i> Vazifa qo'shish
+        </button>
       </div>
       <div class="page-body">
         <div class="flex gap-8 mb-20" style="border-bottom:1px solid var(--border);padding-bottom:0">
-          <button class="adapt-tab active" onclick="switchChecklistTab('items',this)">📋 Vazifalar</button>
-          <button class="adapt-tab" onclick="switchChecklistTab('progress',this)">📊 Jarayon</button>
+          <button class="adapt-tab active" onclick="switchChecklistTab('items',this)">
+            <i data-lucide="clipboard-list" style="width:14px;height:14px"></i> Vazifalar
+          </button>
+          <button class="adapt-tab" onclick="switchChecklistTab('progress',this)">
+            <i data-lucide="bar-chart-2" style="width:14px;height:14px"></i> Jarayon
+          </button>
         </div>
-
-        <!-- ITEMS TAB -->
-        <div id="cl-tab-items">
-          <div id="cl-groups"></div>
-        </div>
-
-        <!-- PROGRESS TAB -->
-        <div id="cl-tab-progress" style="display:none">
-          <div id="cl-progress-list"></div>
-        </div>
+        <div id="cl-tab-items"><div id="cl-groups"></div></div>
+        <div id="cl-tab-progress" style="display:none"><div id="cl-progress-list"></div></div>
       </div>
     </div>
 
     <!-- ADAPTATION -->
     <div id="page-adaptation" class="page" style="display:none">
       <div class="page-header">
-        <div><h1>🎓 Adaptatsiya</h1><p>Yangi xodimlar uchun restoran ma'lumotlari</p></div>
-        <button class="btn btn-gold" onclick="saveAdaptation()">💾 Saqlash</button>
+        <div><h1>Adaptatsiya</h1><p>Yangi xodimlar uchun restoran ma'lumotlari</p></div>
+        <button class="btn btn-gold" onclick="saveAdaptation()">
+          <i data-lucide="save"></i> Saqlash
+        </button>
       </div>
       <div class="page-body">
-
-        <!-- Tabs -->
         <div class="flex gap-8 mb-24" style="border-bottom:1px solid var(--border);padding-bottom:0">
-          <button class="adapt-tab active" onclick="switchAdaptTab('info',this)">📖 Restoran haqida</button>
-          <button class="adapt-tab" onclick="switchAdaptTab('management',this)">👥 Boshqaruv</button>
+          <button class="adapt-tab active" onclick="switchAdaptTab('info',this)">
+            <i data-lucide="book-open" style="width:14px;height:14px"></i> Restoran haqida
+          </button>
+          <button class="adapt-tab" onclick="switchAdaptTab('management',this)">
+            <i data-lucide="users" style="width:14px;height:14px"></i> Boshqaruv
+          </button>
         </div>
-
-        <!-- INFO TAB -->
         <div id="adapt-tab-info">
           <div class="card mb-16">
-            <div class="card-header"><h3 class="card-title">📜 Restoran tarixi</h3></div>
+            <div class="card-header"><h3 class="card-title"><i data-lucide="scroll-text" style="width:15px;height:15px"></i> Restoran tarixi</h3></div>
             <div class="card-body">
-              <textarea class="form-control" id="adapt-history" rows="6" placeholder="Restoran qachon va qanday tashkil topgani, taraqqiyot yo'li..."></textarea>
+              <textarea class="form-control" id="adapt-history" rows="6" placeholder="Restoran qachon va qanday tashkil topgani..."></textarea>
             </div>
           </div>
           <div class="card mb-16">
-            <div class="card-header"><h3 class="card-title">🎯 Missiya</h3></div>
+            <div class="card-header"><h3 class="card-title"><i data-lucide="target" style="width:15px;height:15px"></i> Missiya</h3></div>
             <div class="card-body">
-              <textarea class="form-control" id="adapt-mission" rows="4" placeholder="Restoranning asosiy maqsadi va yo'nalishi..."></textarea>
+              <textarea class="form-control" id="adapt-mission" rows="4" placeholder="Restoranning asosiy maqsadi..."></textarea>
             </div>
           </div>
           <div class="card">
-            <div class="card-header"><h3 class="card-title">💎 Qadriyatlar</h3><span style="font-size:0.78rem;color:var(--text3)">har bir qator — alohida qadriyat</span></div>
+            <div class="card-header">
+              <h3 class="card-title"><i data-lucide="gem" style="width:15px;height:15px"></i> Qadriyatlar</h3>
+              <span style="font-size:0.78rem;color:var(--text3)">har bir qator — alohida qadriyat</span>
+            </div>
             <div class="card-body">
-              <textarea class="form-control" id="adapt-values" rows="5" placeholder="Sifat&#10;Mehmon xizmat&#10;Jamoadosh ruh&#10;Halollik"></textarea>
+              <textarea class="form-control" id="adapt-values" rows="5" placeholder="Sifat&#10;Mehmon xizmat&#10;Jamoadosh ruh"></textarea>
             </div>
           </div>
         </div>
-
-        <!-- MANAGEMENT TAB -->
         <div id="adapt-tab-management" style="display:none">
           <div class="card mb-16">
             <div class="card-header">
               <h3 class="card-title">Boshqaruv xodimlari</h3>
-              <button class="btn btn-gold btn-sm" onclick="openMemberModal()">+ Qo'shish</button>
+              <button class="btn btn-gold btn-sm" onclick="openMemberModal()">
+                <i data-lucide="plus"></i> Qo'shish
+              </button>
             </div>
             <div id="management-list" style="padding:16px 0">
               <div style="text-align:center;padding:40px;color:var(--text3)">Hali xodim qo'shilmagan</div>
             </div>
           </div>
         </div>
-
       </div>
     </div>
 
   </main>
 </div>
 
-<!-- CHECKLIST ITEM MODAL -->
+<!-- CHECKLIST MODAL -->
 <div class="modal-overlay" id="checklist-modal">
   <div class="modal">
     <div class="modal-header">
       <h3 class="modal-title" id="cl-modal-title">Vazifa qo'shish</h3>
-      <button class="modal-close" onclick="closeChecklistModal()">✕</button>
+      <button class="modal-close" onclick="closeChecklistModal()"><i data-lucide="x"></i></button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="cl-item-id">
@@ -327,7 +376,7 @@
   <div class="modal">
     <div class="modal-header">
       <h3 class="modal-title" id="member-modal-title">Xodim qo'shish</h3>
-      <button class="modal-close" onclick="closeMemberModal()">✕</button>
+      <button class="modal-close" onclick="closeMemberModal()"><i data-lucide="x"></i></button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="member-id">
@@ -362,7 +411,7 @@
   <div class="modal modal-lg">
     <div class="modal-header">
       <h3 class="modal-title" id="menu-modal-title">Yangi taom</h3>
-      <button class="modal-close" onclick="closeMenuModal()">✕</button>
+      <button class="modal-close" onclick="closeMenuModal()"><i data-lucide="x"></i></button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="m-id">
@@ -397,7 +446,7 @@
           <input type="number" class="form-control" id="m-price" placeholder="45000">
         </div>
         <div class="form-group">
-          <label>Tavsiya iborasi (ofitsianta)</label>
+          <label>Tavsiya iborasi</label>
           <input type="text" class="form-control" id="m-suggestion" placeholder="Shifokor tavsiya etadi...">
         </div>
       </div>
@@ -420,7 +469,7 @@
   <div class="modal">
     <div class="modal-header">
       <h3 class="modal-title" id="wm-title">Ofitsiant qo'shish</h3>
-      <button class="modal-close" onclick="closeWaiterModal()">✕</button>
+      <button class="modal-close" onclick="closeWaiterModal()"><i data-lucide="x"></i></button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="wm-id">
@@ -445,7 +494,7 @@
   <div class="modal modal-lg">
     <div class="modal-header">
       <h3 class="modal-title" id="qm-title">Savol qo'shish</h3>
-      <button class="modal-close" onclick="closeQuestionModal()">✕</button>
+      <button class="modal-close" onclick="closeQuestionModal()"><i data-lucide="x"></i></button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="qm-id">
@@ -456,15 +505,17 @@
       <div class="form-group">
         <label>Qiyinlik darajasi *</label>
         <select class="form-control" id="qm-difficulty">
-          <option value="easy">🟢 Oson (Easy)</option>
-          <option value="medium">🟡 O'rta (Medium)</option>
-          <option value="hard">🔴 Qiyin (Hard)</option>
+          <option value="easy">● Oson</option>
+          <option value="medium">● O'rta</option>
+          <option value="hard">● Qiyin</option>
         </select>
       </div>
       <div id="options-container">
         <label style="display:block;margin-bottom:8px;font-size:0.82rem;color:var(--text2);font-weight:500">Javob variantlari * (to'g'ri javobni belgilang)</label>
         <div id="options-list"></div>
-        <button class="btn btn-ghost btn-sm mt-8" onclick="addOption()" id="add-opt-btn">+ Variant qo'shish</button>
+        <button class="btn btn-ghost btn-sm mt-8" onclick="addOption()" id="add-opt-btn">
+          <i data-lucide="plus" style="width:14px;height:14px"></i> Variant qo'shish
+        </button>
       </div>
       <div class="form-group mt-16">
         <label>Menyu taomi (ixtiyoriy)</label>
@@ -485,7 +536,7 @@
   <div class="modal">
     <div class="modal-header">
       <h3 class="modal-title">E'lon yuborish</h3>
-      <button class="modal-close" onclick="closeAnnModal()">✕</button>
+      <button class="modal-close" onclick="closeAnnModal()"><i data-lucide="x"></i></button>
     </div>
     <div class="modal-body">
       <div class="form-group">
@@ -499,7 +550,9 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeAnnModal()">Bekor qilish</button>
-      <button class="btn btn-gold" onclick="saveAnn()">Yuborish</button>
+      <button class="btn btn-gold" onclick="saveAnn()">
+        <i data-lucide="send" style="width:14px;height:14px"></i> Yuborish
+      </button>
     </div>
   </div>
 </div>
@@ -509,7 +562,7 @@
   <div class="modal modal-xl">
     <div class="modal-header">
       <h3 class="modal-title">Test natijasi batafsil</h3>
-      <button class="modal-close" onclick="document.getElementById('result-modal').classList.remove('show')">✕</button>
+      <button class="modal-close" onclick="document.getElementById('result-modal').classList.remove('show')"><i data-lucide="x"></i></button>
     </div>
     <div class="modal-body" id="result-detail"></div>
   </div>
@@ -519,14 +572,14 @@
 <script>
 let menuItems = [], waiters = [], questions = [], announcements = [], results = [], testDays = [];
 let calYear, calMonth;
-let optionCount = 0;
 
 async function init() {
   await requireRole('restaurant');
+  lucide.createIcons();
   const info = await api('/api/restaurant/info');
   document.getElementById('sb-name').textContent = info.name;
   document.getElementById('mob-name').textContent = info.name;
-  if (info.location) document.getElementById('sb-loc').textContent = '📍 ' + info.location;
+  if (info.location) document.getElementById('sb-loc').innerHTML = `<i data-lucide="map-pin" style="width:11px;height:11px"></i> ${info.location}`;
 
   const now = new Date();
   calYear = now.getFullYear();
@@ -534,6 +587,7 @@ async function init() {
 
   await Promise.all([loadMenu(), loadWaiters(), loadQuestions(), loadAnnouncements(), loadResults(), loadTestDays()]);
   renderDashboard();
+  renderIcons();
 }
 
 // ===== DASHBOARD =====
@@ -541,12 +595,12 @@ function renderDashboard() {
   const today = new Date().toISOString().split('T')[0];
   const isTestDay = testDays.includes(today);
   document.getElementById('dash-stats').innerHTML = `
-    <div class="stat-card"><div class="stat-icon">🍽️</div><div class="stat-value">${menuItems.length}</div><div class="stat-label">Menyu taomlar</div></div>
-    <div class="stat-card"><div class="stat-icon">👨‍🍳</div><div class="stat-value">${waiters.filter(w=>w.active).length}</div><div class="stat-label">Faol ofitsiantlar</div></div>
-    <div class="stat-card"><div class="stat-icon">❓</div><div class="stat-value">${questions.length}</div><div class="stat-label">Savollar bazasi</div></div>
-    <div class="stat-card"><div class="stat-icon">🏆</div><div class="stat-value">${results.filter(r=>r.hasCertificate).length}</div><div class="stat-label">Sertifikatlar</div></div>
+    <div class="stat-card"><div class="stat-icon"><i data-lucide="utensils"></i></div><div class="stat-value">${menuItems.length}</div><div class="stat-label">Menyu taomlar</div></div>
+    <div class="stat-card"><div class="stat-icon"><i data-lucide="chef-hat"></i></div><div class="stat-value">${waiters.filter(w=>w.active).length}</div><div class="stat-label">Faol ofitsiantlar</div></div>
+    <div class="stat-card"><div class="stat-icon"><i data-lucide="help-circle"></i></div><div class="stat-value">${questions.length}</div><div class="stat-label">Savollar bazasi</div></div>
+    <div class="stat-card"><div class="stat-icon"><i data-lucide="trophy"></i></div><div class="stat-value">${results.filter(r=>r.hasCertificate).length}</div><div class="stat-label">Sertifikatlar</div></div>
     <div class="stat-card" style="border-color:${isTestDay?'var(--warning)':'var(--border)'}">
-      <div class="stat-icon">${isTestDay?'🔴':'✅'}</div>
+      <div class="stat-icon"><i data-lucide="${isTestDay?'alert-circle':'circle-check'}"></i></div>
       <div class="stat-value" style="font-size:1rem;color:${isTestDay?'var(--warning)':'var(--success)'}">${isTestDay?'TEST KUNI':'Oddiy kun'}</div>
       <div class="stat-label">Bugun</div>
     </div>
@@ -567,15 +621,13 @@ function renderDashboard() {
         <div style="font-weight:600;font-size:0.88rem">${r.waiterName}</div>
         <div style="color:var(--text3);font-size:0.76rem">${r.date}</div>
       </div>
-      <div style="font-size:1.2rem;font-weight:700;color:${scoreColor(r.score)}">${r.score}%${r.hasCertificate?' 🏆':''}</div>
+      <div style="font-size:1.2rem;font-weight:700;color:${scoreColor(r.score)}">${r.score}%${r.hasCertificate?' <i data-lucide="trophy" style="width:14px;height:14px;color:var(--gold)"></i>':''}</div>
     </div>`).join('');
+  renderIcons();
 }
 
 // ===== MENU =====
-async function loadMenu() {
-  menuItems = await api('/api/restaurant/menu');
-  renderMenu();
-}
+async function loadMenu() { menuItems = await api('/api/restaurant/menu'); renderMenu(); }
 
 function renderMenu() {
   const search = document.getElementById('menu-search')?.value.toLowerCase() || '';
@@ -592,30 +644,36 @@ function renderMenu() {
   }
   const catDatalist = document.getElementById('cat-suggestions');
   if (catDatalist) catDatalist.innerHTML = cats.map(c => `<option value="${c}">`).join('');
-
   const grid = document.getElementById('menu-grid');
   if (!filtered.length) {
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🍽️</div><h3>Taom topilmadi</h3><p>Yangi taom qo'shing</p></div>`;
-    return;
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div class="empty-icon"><i data-lucide="utensils"></i></div>
+      <h3>Taom topilmadi</h3><p>Yangi taom qo'shing</p></div>`;
+    renderIcons(); return;
   }
   grid.innerHTML = filtered.map(item => `
     <div class="menu-card">
       <div class="menu-card-img">
-        ${item.image ? `<img src="${item.image}" alt="${item.name}" onerror="this.parentElement.innerHTML='🍽️'">` : '🍽️'}
+        ${item.image ? `<img src="${item.image}" alt="${item.name}" onerror="this.parentElement.innerHTML='<i data-lucide=utensils style=width:40px;height:40px;opacity:0.3></i>'">` : `<i data-lucide="utensils" style="width:40px;height:40px;opacity:0.3"></i>`}
       </div>
       <div class="menu-card-body">
         <div class="menu-card-cat">${item.category}</div>
         <div class="menu-card-name">${item.name}</div>
         <div class="menu-card-desc">${item.description || 'Tavsif yo\'q'}</div>
-        ${item.allergens?.length ? `<div style="margin-bottom:8px">${item.allergens.map(a=>`<span class="tag tag-allergen">⚠ ${a}</span>`).join('')}</div>` : ''}
+        ${item.allergens?.length ? `<div style="margin-bottom:8px">${item.allergens.map(a=>`<span class="tag tag-allergen"><i data-lucide="alert-triangle" style="width:10px;height:10px"></i> ${a}</span>`).join('')}</div>` : ''}
         <div class="menu-card-price">${formatPrice(item.price)}</div>
       </div>
       <div class="menu-card-footer">
-        <button class="btn btn-ghost btn-sm" onclick="openMenuModal('${item.id}')" style="flex:1">✏️ Tahrir</button>
-        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteMenuItem('${item.id}')">🗑</button>
+        <button class="btn btn-ghost btn-sm" onclick="openMenuModal('${item.id}')" style="flex:1">
+          <i data-lucide="pencil"></i> Tahrir
+        </button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteMenuItem('${item.id}')">
+          <i data-lucide="trash-2"></i>
+        </button>
       </div>
     </div>
   `).join('');
+  renderIcons();
 }
 
 function filterMenu() { renderMenu(); }
@@ -626,7 +684,6 @@ function previewImage(input) {
   if (file.size > 1.5 * 1024 * 1024) { toast('Rasm 1.5MB dan kichik bo\'lishi kerak', 'error'); input.value = ''; return; }
   const reader = new FileReader();
   reader.onload = function(e) {
-    // Rasmni kichraytirish (max 800px)
     const img = new Image();
     img.onload = function() {
       const canvas = document.createElement('canvas');
@@ -658,8 +715,8 @@ function openMenuModal(id) {
   document.getElementById('m-image-base64').value = '';
   document.getElementById('m-img-preview').innerHTML = item?.image ? `<img src="${item.image}" style="height:80px;border-radius:8px;object-fit:cover">` : '';
   document.getElementById('menu-modal').classList.add('show');
+  renderIcons();
 }
-
 function closeMenuModal() { document.getElementById('menu-modal').classList.remove('show'); }
 
 async function saveMenuItem() {
@@ -695,16 +752,15 @@ async function deleteMenuItem(id) {
 }
 
 // ===== WAITERS =====
-async function loadWaiters() {
-  waiters = await api('/api/restaurant/waiters');
-  renderWaiters();
-}
+async function loadWaiters() { waiters = await api('/api/restaurant/waiters'); renderWaiters(); }
 
 function renderWaiters() {
   const tbody = document.getElementById('waiters-table');
   if (!waiters.length) {
-    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">👨‍🍳</div><h3>Ofitsiant yo\'q</h3></div></td></tr>';
-    return;
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state">
+      <div class="empty-icon"><i data-lucide="chef-hat"></i></div>
+      <h3>Ofitsiant yo'q</h3></div></td></tr>`;
+    renderIcons(); return;
   }
   tbody.innerHTML = waiters.map((w, i) => `
     <tr>
@@ -715,15 +771,16 @@ function renderWaiters() {
       <td><small>${formatDate(w.createdAt)}</small></td>
       <td>
         <div class="flex gap-8">
-          <button class="btn btn-ghost btn-sm" onclick="openWaiterModal('${w.id}')">✏️ Tahrir</button>
+          <button class="btn btn-ghost btn-sm btn-icon" onclick="openWaiterModal('${w.id}')"><i data-lucide="pencil"></i></button>
           <button class="btn btn-sm" onclick="toggleWaiter('${w.id}')"
             style="${w.active?'background:rgba(243,156,18,0.1);color:var(--warning);border:1px solid rgba(243,156,18,0.3)':'background:rgba(46,204,113,0.1);color:var(--success);border:1px solid rgba(46,204,113,0.3)'}">
-            ${w.active?'To\'xtat':'Faollashtir'}
+            <i data-lucide="${w.active?'pause':'play'}"></i> ${w.active?'To\'xtat':'Faol'}
           </button>
-          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteWaiter('${w.id}')">🗑</button>
+          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteWaiter('${w.id}')"><i data-lucide="trash-2"></i></button>
         </div>
       </td>
     </tr>`).join('');
+  renderIcons();
 }
 
 function openWaiterModal(id) {
@@ -733,6 +790,7 @@ function openWaiterModal(id) {
   document.getElementById('wm-name').value = w?.name || '';
   document.getElementById('wm-pin').value = w?.pin || '';
   document.getElementById('waiter-modal').classList.add('show');
+  renderIcons();
 }
 function closeWaiterModal() { document.getElementById('waiter-modal').classList.remove('show'); }
 
@@ -768,10 +826,7 @@ async function deleteWaiter(id) {
 }
 
 // ===== QUESTIONS =====
-async function loadQuestions() {
-  questions = await api('/api/restaurant/questions');
-  renderQuestions();
-}
+async function loadQuestions() { questions = await api('/api/restaurant/questions'); renderQuestions(); }
 
 function renderQuestions() {
   const diff = document.getElementById('q-diff-filter')?.value || '';
@@ -780,15 +835,19 @@ function renderQuestions() {
   const medium = questions.filter(q=>q.difficulty==='medium').length;
   const hard = questions.filter(q=>q.difficulty==='hard').length;
   document.getElementById('q-stats').innerHTML = `
-    <span class="badge" style="background:rgba(46,204,113,0.15);color:var(--easy)">🟢 Oson: ${easy}/10</span>
-    <span class="badge" style="background:rgba(243,156,18,0.15);color:var(--medium)">🟡 O'rta: ${medium}/5</span>
-    <span class="badge" style="background:rgba(231,76,60,0.15);color:var(--hard)">🔴 Qiyin: ${hard}/5</span>
-    ${easy>=10&&medium>=5&&hard>=5 ? '<span class="badge badge-success">✓ Test uchun tayyor</span>' : '<span class="badge badge-danger">✕ Yetarli savol yo\'q</span>'}
+    <span class="badge" style="background:rgba(46,204,113,0.15);color:var(--easy)">Oson: ${easy}/10</span>
+    <span class="badge" style="background:rgba(243,156,18,0.15);color:var(--medium)">O'rta: ${medium}/5</span>
+    <span class="badge" style="background:rgba(231,76,60,0.15);color:var(--hard)">Qiyin: ${hard}/5</span>
+    ${easy>=10&&medium>=5&&hard>=5
+      ? '<span class="badge badge-success">✓ Test uchun tayyor</span>'
+      : '<span class="badge badge-danger">✕ Yetarli savol yo\'q</span>'}
   `;
   const container = document.getElementById('questions-list');
   if (!filtered.length) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-icon">❓</div><h3>Savol topilmadi</h3><p>Yangi savol qo'shing</p></div>`;
-    return;
+    container.innerHTML = `<div class="empty-state">
+      <div class="empty-icon"><i data-lucide="help-circle"></i></div>
+      <h3>Savol topilmadi</h3><p>Yangi savol qo'shing</p></div>`;
+    renderIcons(); return;
   }
   container.innerHTML = filtered.map((q, i) => `
     <div class="card card-sm mb-16" style="border-left:3px solid ${q.difficulty==='easy'?'var(--easy)':q.difficulty==='medium'?'var(--medium)':'var(--hard)'}">
@@ -801,18 +860,21 @@ function renderQuestions() {
           <div style="font-weight:600;margin-bottom:10px">${q.question}</div>
           <div style="display:flex;flex-direction:column;gap:4px">
             ${q.options.map((opt, idx) => `
-              <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;background:${idx===q.correctAnswer?'rgba(46,204,113,0.1)':'var(--bg)'};border:1px solid ${idx===q.correctAnswer?'rgba(46,204,113,0.3)':'var(--border2)'}">
+              <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:6px;
+                background:${idx===q.correctAnswer?'rgba(46,204,113,0.1)':'var(--bg)'};
+                border:1px solid ${idx===q.correctAnswer?'rgba(46,204,113,0.3)':'var(--border2)'}">
                 <span style="font-size:0.8rem;font-weight:700;color:${idx===q.correctAnswer?'var(--success)':'var(--text3)'}">${String.fromCharCode(65+idx)}</span>
                 <span style="font-size:0.88rem;color:${idx===q.correctAnswer?'var(--success)':'var(--text2)'}">${opt} ${idx===q.correctAnswer?'✓':''}</span>
               </div>`).join('')}
           </div>
         </div>
         <div class="flex gap-8" style="flex-shrink:0">
-          <button class="btn btn-ghost btn-sm btn-icon" onclick="openQuestionModal('${q.id}')" title="Tahrirlash">✏️</button>
-          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteQuestion('${q.id}')">🗑</button>
+          <button class="btn btn-ghost btn-sm btn-icon" onclick="openQuestionModal('${q.id}')"><i data-lucide="pencil"></i></button>
+          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteQuestion('${q.id}')"><i data-lucide="trash-2"></i></button>
         </div>
       </div>
     </div>`).join('');
+  renderIcons();
 }
 
 function filterQuestions() { renderQuestions(); }
@@ -828,8 +890,11 @@ function addOption() {
       <input type="radio" name="correct-answer" value="${idx}" onchange="highlightCorrect(${idx})" style="accent-color:var(--gold)">
       <input type="text" class="form-control" id="opt-${idx}" placeholder="Javob varianti ${String.fromCharCode(65+idx)}" style="border:none;background:none;padding:0;outline:none;flex:1">
     </label>
-    <button class="btn btn-danger btn-sm btn-icon" onclick="this.parentElement.remove();reindexOptions()" ${idx===0?'style="visibility:hidden"':''}>✕</button>`;
+    <button class="btn btn-ghost btn-sm btn-icon" onclick="this.parentElement.remove();reindexOptions()" ${idx===0?'style="visibility:hidden"':''}>
+      <i data-lucide="x"></i>
+    </button>`;
   list.appendChild(div);
+  renderIcons();
 }
 
 function highlightCorrect(selectedIdx) {
@@ -861,13 +926,14 @@ function openQuestionModal(id) {
   menuSel.innerHTML = '<option value="">— Taom tanlamang —</option>' + menuItems.map(m=>`<option value="${m.id}" ${q?.menuItemId===m.id?'selected':''}>${m.name}</option>`).join('');
   document.getElementById('options-list').innerHTML = '';
   const opts = q?.options || ['', ''];
-  opts.forEach((opt, i) => addOption());
+  opts.forEach(() => addOption());
   opts.forEach((opt, i) => { document.getElementById(`opt-${i}`).value = opt; });
   if (q) {
     const radios = document.querySelectorAll('input[name="correct-answer"]');
-    radios.forEach((r, i) => { if (parseInt(r.value) === q.correctAnswer) { r.checked = true; highlightCorrect(q.correctAnswer); } });
+    radios.forEach(r => { if (parseInt(r.value) === q.correctAnswer) { r.checked = true; highlightCorrect(q.correctAnswer); } });
   }
   document.getElementById('question-modal').classList.add('show');
+  renderIcons();
 }
 function closeQuestionModal() { document.getElementById('question-modal').classList.remove('show'); }
 
@@ -903,12 +969,8 @@ async function deleteQuestion(id) {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-// ===== TEST DAYS / CALENDAR =====
-async function loadTestDays() {
-  testDays = await api('/api/restaurant/testdays');
-  renderCalendar();
-  renderTestDaysList();
-}
+// ===== TEST DAYS =====
+async function loadTestDays() { testDays = await api('/api/restaurant/testdays'); renderCalendar(); renderTestDaysList(); }
 
 function renderCalendar() {
   const months = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'];
@@ -928,8 +990,7 @@ function renderCalendar() {
       ${d}${isTest?'<br><span style="font-size:0.5rem">✦</span>':''}
     </div>`;
   }
-  document.getElementById('calendar').innerHTML = `
-    <div class="calendar-grid" style="grid-template-columns:repeat(7,1fr)">${html}</div>`;
+  document.getElementById('calendar').innerHTML = `<div class="calendar-grid" style="grid-template-columns:repeat(7,1fr)">${html}</div>`;
 }
 
 function renderTestDaysList() {
@@ -938,24 +999,22 @@ function renderTestDaysList() {
   el.innerHTML = [...testDays].sort().map(d => `
     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border2)">
       <div style="display:flex;align-items:center;gap:10px">
-        <span style="font-size:1.2rem">📅</span>
+        <i data-lucide="calendar" style="width:16px;height:16px;color:var(--gold)"></i>
         <span style="font-weight:600">${formatDate(d)}</span>
         ${d === new Date().toISOString().split('T')[0] ? '<span class="badge badge-warning">Bugun</span>' : ''}
       </div>
-      <button class="btn btn-danger btn-sm btn-icon" onclick="removeTestDay('${d}')">✕</button>
+      <button class="btn btn-ghost btn-sm btn-icon" onclick="removeTestDay('${d}')"><i data-lucide="x"></i></button>
     </div>`).join('');
+  renderIcons();
 }
 
 async function toggleTestDay(date) {
-  if (testDays.includes(date)) {
-    await removeTestDay(date);
-  } else {
+  if (testDays.includes(date)) { await removeTestDay(date); }
+  else {
     try {
       await api('/api/restaurant/testdays', { method: 'POST', body: JSON.stringify({ date }) });
       toast('Test kuni belgilandi', 'success');
-      testDays.push(date);
-      renderCalendar();
-      renderTestDaysList();
+      testDays.push(date); renderCalendar(); renderTestDaysList();
     } catch (e) { toast(e.message, 'error'); }
   }
 }
@@ -964,9 +1023,7 @@ async function removeTestDay(date) {
   try {
     await api(`/api/restaurant/testdays/${date}`, { method: 'DELETE' });
     toast('Test kuni o\'chirildi', 'success');
-    testDays = testDays.filter(d => d !== date);
-    renderCalendar();
-    renderTestDaysList();
+    testDays = testDays.filter(d => d !== date); renderCalendar(); renderTestDaysList();
   } catch (e) { toast(e.message, 'error'); }
 }
 
@@ -974,32 +1031,34 @@ function prevMonth() { calMonth--; if (calMonth<0) { calMonth=11; calYear--; } r
 function nextMonth() { calMonth++; if (calMonth>11) { calMonth=0; calYear++; } renderCalendar(); }
 
 // ===== ANNOUNCEMENTS =====
-async function loadAnnouncements() {
-  announcements = await api('/api/restaurant/announcements');
-  renderAnnouncements();
-}
+async function loadAnnouncements() { announcements = await api('/api/restaurant/announcements'); renderAnnouncements(); }
 
 function renderAnnouncements() {
   const el = document.getElementById('ann-list');
   if (!el) return;
   if (!announcements.length) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📢</div><h3>Hali e'lon yo'q</h3></div>`;
-    return;
+    el.innerHTML = `<div class="empty-state">
+      <div class="empty-icon"><i data-lucide="megaphone"></i></div>
+      <h3>Hali e'lon yo'q</h3></div>`;
+    renderIcons(); return;
   }
   el.innerHTML = announcements.map(a => `
     <div class="card mb-16" style="border-left:3px solid var(--gold)">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
         <div>
-          <div style="font-weight:700;font-size:1rem;margin-bottom:6px">📢 ${a.title}</div>
+          <div style="font-weight:700;font-size:1rem;margin-bottom:6px;display:flex;align-items:center;gap:8px">
+            <i data-lucide="megaphone" style="width:15px;height:15px;color:var(--gold)"></i> ${a.title}
+          </div>
           <div style="color:var(--text2);font-size:0.9rem;line-height:1.6">${a.content}</div>
           <div style="color:var(--text3);font-size:0.75rem;margin-top:8px">${formatDateTime(a.createdAt)}</div>
         </div>
-        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteAnn('${a.id}')">🗑</button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="deleteAnn('${a.id}')"><i data-lucide="trash-2"></i></button>
       </div>
     </div>`).join('');
+  renderIcons();
 }
 
-function openAnnModal() { document.getElementById('ann-title').value=''; document.getElementById('ann-content').value=''; document.getElementById('ann-modal').classList.add('show'); }
+function openAnnModal() { document.getElementById('ann-title').value=''; document.getElementById('ann-content').value=''; document.getElementById('ann-modal').classList.add('show'); renderIcons(); }
 function closeAnnModal() { document.getElementById('ann-modal').classList.remove('show'); }
 
 async function saveAnn() {
@@ -1007,9 +1066,7 @@ async function saveAnn() {
   if (!body.title || !body.content) { toast('Sarlavha va matn majburiy', 'error'); return; }
   try {
     await api('/api/restaurant/announcements', { method: 'POST', body: JSON.stringify(body) });
-    toast('E\'lon yuborildi', 'success');
-    closeAnnModal();
-    await loadAnnouncements();
+    toast('E\'lon yuborildi', 'success'); closeAnnModal(); await loadAnnouncements();
   } catch (e) { toast(e.message, 'error'); }
 }
 
@@ -1017,28 +1074,23 @@ async function deleteAnn(id) {
   if (!confirmDialog('E\'lonni o\'chirishni tasdiqlaysizmi?')) return;
   try {
     await api(`/api/restaurant/announcements/${id}`, { method: 'DELETE' });
-    toast('E\'lon o\'chirildi', 'success');
-    await loadAnnouncements();
+    toast('E\'lon o\'chirildi', 'success'); await loadAnnouncements();
   } catch (e) { toast(e.message, 'error'); }
 }
 
 // ===== RESULTS =====
-async function loadResults() {
-  results = await api('/api/restaurant/results');
-  renderResults();
-}
+async function loadResults() { results = await api('/api/restaurant/results'); renderResults(); }
 
 function renderResults() {
   const dateF = document.getElementById('res-date-filter')?.value || '';
   const nameF = document.getElementById('res-name-filter')?.value.toLowerCase() || '';
-  const filtered = results.filter(r =>
-    (!dateF || r.date === dateF) &&
-    (!nameF || r.waiterName.toLowerCase().includes(nameF))
-  );
+  const filtered = results.filter(r => (!dateF || r.date === dateF) && (!nameF || r.waiterName.toLowerCase().includes(nameF)));
   const tbody = document.getElementById('results-table');
   if (!filtered.length) {
-    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🏆</div><h3>Natija topilmadi</h3></div></td></tr>';
-    return;
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">
+      <div class="empty-icon"><i data-lucide="trophy"></i></div>
+      <h3>Natija topilmadi</h3></div></td></tr>`;
+    renderIcons(); return;
   }
   tbody.innerHTML = filtered.map(r => `
     <tr>
@@ -1048,9 +1100,10 @@ function renderResults() {
       <td><small style="color:var(--easy)">${r.easyScore}/${r.easyTotal}</small></td>
       <td><small style="color:var(--medium)">${r.mediumScore}/${r.mediumTotal}</small></td>
       <td><small style="color:var(--hard)">${r.hardScore}/${r.hardTotal}</small></td>
-      <td>${r.hasCertificate ? '<span class="badge badge-gold">🏆 Ha</span>' : '<span class="badge badge-ghost">Yo\'q</span>'}</td>
+      <td>${r.hasCertificate ? '<span class="badge badge-gold"><i data-lucide="trophy" style="width:11px;height:11px"></i> Ha</span>' : '<span class="badge badge-ghost">Yo\'q</span>'}</td>
       <td><button class="btn btn-ghost btn-sm" onclick="showResultDetail('${r.id}')">Ko'rish</button></td>
     </tr>`).join('');
+  renderIcons();
 }
 
 function filterResults() { renderResults(); }
@@ -1064,13 +1117,13 @@ function showResultDetail(id) {
       <div style="color:var(--text3);font-size:0.85rem">${r.date} · ${formatDateTime(r.submittedAt)}</div>
       <div style="margin-top:16px">
         <span style="font-size:3rem;font-weight:800;color:${scoreColor(r.score)}">${r.score}%</span>
-        ${r.hasCertificate ? '<div style="margin-top:8px"><span class="badge badge-gold" style="font-size:0.9rem;padding:6px 16px">🏆 Sertifikat oldi</span></div>' : ''}
+        ${r.hasCertificate ? '<div style="margin-top:8px"><span class="badge badge-gold" style="font-size:0.9rem;padding:6px 16px"><i data-lucide="trophy" style="width:13px;height:13px"></i> Sertifikat oldi</span></div>' : ''}
       </div>
     </div>
     <div class="breakdown-grid" style="margin-bottom:24px">
-      <div class="breakdown-item"><div class="breakdown-score" style="color:var(--easy)">${r.easyScore}/${r.easyTotal}</div><div class="breakdown-label">🟢 Oson</div></div>
-      <div class="breakdown-item"><div class="breakdown-score" style="color:var(--medium)">${r.mediumScore}/${r.mediumTotal}</div><div class="breakdown-label">🟡 O'rta</div></div>
-      <div class="breakdown-item"><div class="breakdown-score" style="color:var(--hard)">${r.hardScore}/${r.hardTotal}</div><div class="breakdown-label">🔴 Qiyin</div></div>
+      <div class="breakdown-item"><div class="breakdown-score" style="color:var(--easy)">${r.easyScore}/${r.easyTotal}</div><div class="breakdown-label">Oson</div></div>
+      <div class="breakdown-item"><div class="breakdown-score" style="color:var(--medium)">${r.mediumScore}/${r.mediumTotal}</div><div class="breakdown-label">O'rta</div></div>
+      <div class="breakdown-item"><div class="breakdown-score" style="color:var(--hard)">${r.hardScore}/${r.hardTotal}</div><div class="breakdown-label">Qiyin</div></div>
     </div>
     <h4 style="margin-bottom:16px">Batafsil tahlil</h4>
     ${r.breakdown.map((b, i) => `
@@ -1084,14 +1137,14 @@ function showResultDetail(id) {
       </div>`).join('')}
   `;
   document.getElementById('result-modal').classList.add('show');
+  renderIcons();
 }
 
 // ===== EXCEL IMPORT =====
 let importData = [];
 
 function downloadTemplate() {
-  // CSV shablon yaratish
-  const csv = 'Ism,PIN\nJasur Toshmatov,1234\nMadina Karimova,5678\nBobur Rahimov,9012';
+  const csv = 'Ism,PIN\nJasur Toshmatov,1234\nMadina Karimova,5678';
   const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1104,91 +1157,63 @@ async function importFromExcel(input) {
   const file = input.files[0];
   if (!file) return;
   input.value = '';
-
   const text = await file.text();
-  let rows = [];
-
-  if (file.name.endsWith('.csv')) {
-    // CSV parse - vergul yoki nuqtali vergul (;) avtomatik aniqlanadi
-    const lines = text.split('\n').filter(l => l.trim());
-    const firstLine = lines[0];
-    const sep = firstLine.includes(';') ? ';' : ',';
-    const headers = firstLine.split(sep).map(h => h.trim().toLowerCase().replace(/﻿/g,'').replace(/﻿/g,''));
-    const ismIdx = headers.findIndex(h => h.includes('ism') || h.includes('name') || h.includes('nom'));
-    const pinIdx = headers.findIndex(h => h.includes('pin') || h.includes('kod') || h.includes('parol'));
-
-    if (ismIdx === -1 || pinIdx === -1) {
-      toast('CSV da "Ism" va "PIN" ustunlari topilmadi!', 'error'); return;
-    }
-
-    for (let i = 1; i < lines.length; i++) {
-      const cols = lines[i].split(sep).map(c => c.trim().replace(/"/g, ''));
-      if (!cols[ismIdx]) continue;
-      rows.push({ name: cols[ismIdx], pin: String(cols[pinIdx] || '').trim() });
-    }
-  } else {
-    toast('Iltimos .csv formatda yuklang. Shablonni yuklab foydalaning.', 'error'); return;
+  if (!file.name.endsWith('.csv')) { toast('Iltimos .csv formatda yuklang.', 'error'); return; }
+  const lines = text.split('\n').filter(l => l.trim());
+  const firstLine = lines[0];
+  const sep = firstLine.includes(';') ? ';' : ',';
+  const headers = firstLine.split(sep).map(h => h.trim().toLowerCase().replace(/﻿/g,''));
+  const ismIdx = headers.findIndex(h => h.includes('ism') || h.includes('name'));
+  const pinIdx = headers.findIndex(h => h.includes('pin'));
+  if (ismIdx === -1 || pinIdx === -1) { toast('CSV da "Ism" va "PIN" ustunlari topilmadi!', 'error'); return; }
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(sep).map(c => c.trim().replace(/"/g, ''));
+    if (!cols[ismIdx]) continue;
+    rows.push({ name: cols[ismIdx], pin: String(cols[pinIdx] || '').trim() });
   }
-
   if (!rows.length) { toast('Fayl bo\'sh yoki noto\'g\'ri format', 'error'); return; }
-
-  // Validatsiya
   importData = rows.map(r => {
     const pin = String(r.pin).padStart(4, '0').slice(0, 4);
     const existing = waiters.find(w => w.pin === pin);
-    let status = '✅ Tayyor';
-    let error = '';
-    if (!r.name) { status = '❌ Ism yo\'q'; error = 'ism'; }
-    else if (!/^\d{4}$/.test(pin)) { status = '❌ PIN noto\'g\'ri'; error = 'pin'; }
-    else if (existing) { status = `⚠️ PIN band (${existing.name})`; error = 'duplicate'; }
+    let status = '✓ Tayyor'; let error = '';
+    if (!r.name) { status = '✕ Ism yo\'q'; error = 'ism'; }
+    else if (!/^\d{4}$/.test(pin)) { status = '✕ PIN noto\'g\'ri'; error = 'pin'; }
+    else if (existing) { status = `⚠ PIN band (${existing.name})`; error = 'duplicate'; }
     return { name: r.name, pin, status, error };
   });
-
   const valid = importData.filter(r => !r.error).length;
   const invalid = importData.length - valid;
-
-  document.getElementById('import-title').textContent =
-    `Import: ${importData.length} ta ofitsiant — ${valid} ta yuklash mumkin, ${invalid} ta xato`;
+  document.getElementById('import-title').textContent = `Import: ${importData.length} ta — ${valid} yuklash mumkin, ${invalid} xato`;
   document.getElementById('import-table').innerHTML = importData.map((r, i) => `
     <tr style="opacity:${r.error?'0.6':'1'}">
-      <td>${i+1}</td>
-      <td>${r.name}</td>
+      <td>${i+1}</td><td>${r.name}</td>
       <td><code style="background:var(--bg);padding:3px 8px;border-radius:5px;letter-spacing:0.2em">${r.pin}</code></td>
       <td>${r.status}</td>
     </tr>`).join('');
   document.getElementById('import-preview').style.display = 'block';
   window.scrollTo(0, 0);
+  renderIcons();
 }
 
-function cancelImport() {
-  importData = [];
-  document.getElementById('import-preview').style.display = 'none';
-}
+function cancelImport() { importData = []; document.getElementById('import-preview').style.display = 'none'; }
 
 async function confirmImport() {
   const valid = importData.filter(r => !r.error);
   if (!valid.length) { toast('Yuklash mumkin bo\'lgan ofitsiant yo\'q', 'error'); return; }
-
   const btn = document.querySelector('#import-preview .btn-gold');
   btn.disabled = true; btn.textContent = 'Yuklanmoqda...';
-
   let success = 0, fail = 0;
   for (const w of valid) {
-    try {
-      await api('/api/restaurant/waiters', { method: 'POST', body: JSON.stringify({ name: w.name, pin: w.pin }) });
-      success++;
-    } catch { fail++; }
+    try { await api('/api/restaurant/waiters', { method: 'POST', body: JSON.stringify({ name: w.name, pin: w.pin }) }); success++; }
+    catch { fail++; }
   }
-
-  toast(`✅ ${success} ta ofitsiant qo'shildi${fail ? `, ${fail} ta xato` : ''}`, 'success');
-  cancelImport();
-  await loadWaiters();
+  toast(`${success} ta ofitsiant qo'shildi${fail ? `, ${fail} ta xato` : ''}`, 'success');
+  cancelImport(); await loadWaiters();
 }
 
 // ===== CHECKLIST =====
-let cachedChecklist = [];
-let editingChecklistId = null;
-
+let cachedChecklist = [], editingChecklistId = null;
 const PERIODS = { '1-kun': { label: '1-kun', color: '#E74C3C' }, '1-hafta': { label: '1-hafta', color: '#F39C12' }, '1-oy': { label: '1-oy', color: '#2ECC71' } };
 
 async function loadChecklist() {
@@ -1202,13 +1227,20 @@ async function loadChecklist() {
 
 function renderChecklistItems(items) {
   const el = document.getElementById('cl-groups');
-  if (!items.length) { el.innerHTML = '<div style="text-align:center;padding:60px;color:var(--text3)"><div style="font-size:3rem;margin-bottom:12px">✅</div><p>Hali vazifa qo\'shilmagan</p></div>'; return; }
+  if (!items.length) {
+    el.innerHTML = `<div style="text-align:center;padding:60px;color:var(--text3)">
+      <div style="margin-bottom:12px"><i data-lucide="clipboard-list" style="width:48px;height:48px;opacity:0.3"></i></div>
+      <p>Hali vazifa qo'shilmagan</p></div>`;
+    renderIcons(); return;
+  }
   const groups = { '1-kun': [], '1-hafta': [], '1-oy': [] };
   items.forEach(i => (groups[i.period] || groups['1-hafta']).push(i));
   el.innerHTML = Object.entries(groups).filter(([,v])=>v.length).map(([period, list]) => `
     <div class="card mb-16">
       <div class="card-header">
-        <h3 class="card-title" style="color:${PERIODS[period].color}">⏱ ${PERIODS[period].label}</h3>
+        <h3 class="card-title" style="color:${PERIODS[period].color}">
+          <i data-lucide="clock" style="width:15px;height:15px"></i> ${PERIODS[period].label}
+        </h3>
         <span style="font-size:0.8rem;color:var(--text3)">${list.length} ta vazifa</span>
       </div>
       ${list.map(item => `
@@ -1219,13 +1251,12 @@ function renderChecklistItems(items) {
             ${item.description ? `<div style="color:var(--text3);font-size:0.82rem;margin-top:2px">${item.description}</div>` : ''}
           </div>
           <div style="display:flex;gap:6px">
-            <button class="btn btn-ghost btn-sm" onclick="openChecklistModal('${item.id}')">✏️</button>
-            <button class="btn btn-ghost btn-sm" onclick="deleteChecklistItem('${item.id}')">🗑️</button>
+            <button class="btn btn-ghost btn-sm btn-icon" onclick="openChecklistModal('${item.id}')"><i data-lucide="pencil"></i></button>
+            <button class="btn btn-ghost btn-sm btn-icon" onclick="deleteChecklistItem('${item.id}')"><i data-lucide="trash-2"></i></button>
           </div>
-        </div>
-      `).join('')}
-    </div>
-  `).join('');
+        </div>`).join('')}
+    </div>`).join('');
+  renderIcons();
 }
 
 function renderChecklistProgress(progress) {
@@ -1234,16 +1265,13 @@ function renderChecklistProgress(progress) {
   el.innerHTML = progress.map(p => {
     const pct = p.total ? Math.round((p.completed/p.total)*100) : 0;
     const color = pct===100 ? 'var(--success)' : pct>=50 ? 'var(--warning)' : 'var(--gold)';
-    return `
-      <div class="card mb-12" style="padding:16px">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
-          <div style="font-weight:600;flex:1">${p.waiterName}</div>
-          <div style="font-size:0.85rem;color:${color};font-weight:700">${p.completed}/${p.total}</div>
-          <div style="font-size:0.85rem;color:${color};font-weight:700">${pct}%</div>
-        </div>
-        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${color}"></div></div>
+    return `<div class="card mb-12" style="padding:16px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+        <div style="font-weight:600;flex:1">${p.waiterName}</div>
+        <div style="font-size:0.85rem;color:${color};font-weight:700">${p.completed}/${p.total} · ${pct}%</div>
       </div>
-    `;
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${color}"></div></div>
+    </div>`;
   }).join('');
 }
 
@@ -1262,49 +1290,31 @@ function openChecklistModal(id) {
   document.getElementById('cl-period').value = '1-hafta';
   if (id) {
     const item = cachedChecklist.find(x => x.id === id);
-    if (item) {
-      document.getElementById('cl-title').value = item.title || '';
-      document.getElementById('cl-description').value = item.description || '';
-      document.getElementById('cl-period').value = item.period || '1-hafta';
-    }
+    if (item) { document.getElementById('cl-title').value = item.title||''; document.getElementById('cl-description').value = item.description||''; document.getElementById('cl-period').value = item.period||'1-hafta'; }
   }
   document.getElementById('checklist-modal').classList.add('show');
+  renderIcons();
 }
-
-function closeChecklistModal() {
-  document.getElementById('checklist-modal').classList.remove('show');
-  editingChecklistId = null;
-}
+function closeChecklistModal() { document.getElementById('checklist-modal').classList.remove('show'); editingChecklistId = null; }
 
 async function saveChecklistItem() {
   const title = document.getElementById('cl-title').value.trim();
-  const description = document.getElementById('cl-description').value.trim();
-  const period = document.getElementById('cl-period').value;
   if (!title) { toast('Vazifa nomini kiriting', 'error'); return; }
   try {
-    if (editingChecklistId) {
-      await api(`/api/restaurant/checklist/${editingChecklistId}`, { method:'PUT', body: JSON.stringify({ title, description, period }) });
-    } else {
-      await api('/api/restaurant/checklist', { method:'POST', body: JSON.stringify({ title, description, period }) });
-    }
-    closeChecklistModal();
-    loadChecklist();
-    toast('Saqlandi ✓', 'success');
+    if (editingChecklistId) await api(`/api/restaurant/checklist/${editingChecklistId}`, { method:'PUT', body: JSON.stringify({ title, description: document.getElementById('cl-description').value.trim(), period: document.getElementById('cl-period').value }) });
+    else await api('/api/restaurant/checklist', { method:'POST', body: JSON.stringify({ title, description: document.getElementById('cl-description').value.trim(), period: document.getElementById('cl-period').value }) });
+    closeChecklistModal(); loadChecklist(); toast('Saqlandi', 'success');
   } catch(e) { toast('Xatolik', 'error'); }
 }
 
 async function deleteChecklistItem(id) {
   if (!confirm('O\'chirilsinmi?')) return;
-  try {
-    await api(`/api/restaurant/checklist/${id}`, { method:'DELETE' });
-    loadChecklist();
-    toast('O\'chirildi', 'success');
-  } catch(e) { toast('Xatolik', 'error'); }
+  try { await api(`/api/restaurant/checklist/${id}`, { method:'DELETE' }); loadChecklist(); toast('O\'chirildi', 'success'); }
+  catch(e) { toast('Xatolik', 'error'); }
 }
 
 // ===== ADAPTATION =====
-let editingMemberId = null;
-let cachedManagement = [];
+let editingMemberId = null, cachedManagement = [];
 
 async function loadAdaptation() {
   try {
@@ -1318,12 +1328,13 @@ async function loadAdaptation() {
 }
 
 async function saveAdaptation() {
-  const history = document.getElementById('adapt-history').value;
-  const mission = document.getElementById('adapt-mission').value;
-  const values = document.getElementById('adapt-values').value;
   try {
-    await api('/api/restaurant/adaptation', { method:'PUT', body: JSON.stringify({ history, mission, values }) });
-    toast('Saqlandi ✓', 'success');
+    await api('/api/restaurant/adaptation', { method:'PUT', body: JSON.stringify({
+      history: document.getElementById('adapt-history').value,
+      mission: document.getElementById('adapt-mission').value,
+      values: document.getElementById('adapt-values').value
+    })});
+    toast('Saqlandi', 'success');
   } catch(e) { toast('Xatolik yuz berdi', 'error'); }
 }
 
@@ -1341,7 +1352,7 @@ function renderManagement(list) {
   el.innerHTML = sorted.map(m => `
     <div style="display:flex;align-items:center;gap:16px;padding:14px 16px;border-bottom:1px solid var(--border)">
       <div style="width:52px;height:52px;border-radius:50%;overflow:hidden;border:2px solid var(--gold);flex-shrink:0;background:var(--card2);display:flex;align-items:center;justify-content:center">
-        ${m.photo ? `<img src="${m.photo}" style="width:100%;height:100%;object-fit:cover">` : `<span style="font-size:1.4rem">👤</span>`}
+        ${m.photo ? `<img src="${m.photo}" style="width:100%;height:100%;object-fit:cover">` : `<i data-lucide="user" style="width:22px;height:22px;opacity:0.5"></i>`}
       </div>
       <div style="flex:1">
         <div style="font-weight:600">${m.name}</div>
@@ -1349,44 +1360,33 @@ function renderManagement(list) {
         ${m.phone ? `<div style="color:var(--text3);font-size:0.78rem">${m.phone}</div>` : ''}
       </div>
       <div style="display:flex;gap:8px">
-        <button class="btn btn-ghost btn-sm" onclick="openMemberModal('${m.id}')">✏️</button>
-        <button class="btn btn-ghost btn-sm" onclick="deleteMember('${m.id}')">🗑️</button>
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="openMemberModal('${m.id}')"><i data-lucide="pencil"></i></button>
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="deleteMember('${m.id}')"><i data-lucide="trash-2"></i></button>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
+  renderIcons();
 }
 
 function openMemberModal(id) {
   editingMemberId = id || null;
   document.getElementById('member-modal-title').textContent = id ? 'Xodimni tahrirlash' : 'Xodim qo\'shish';
-  document.getElementById('member-name').value = '';
-  document.getElementById('member-position').value = '';
-  document.getElementById('member-phone').value = '';
-  document.getElementById('member-photo').value = '';
+  ['member-name','member-position','member-phone','member-photo'].forEach(x => document.getElementById(x).value = '');
   document.getElementById('member-photo-file').value = '';
   const prev = document.getElementById('member-photo-preview');
-  prev.style.display = 'none';
-  prev.src = '';
-
+  prev.style.display = 'none'; prev.src = '';
   if (id) {
     const m = cachedManagement.find(x => x.id === id);
     if (m) {
       document.getElementById('member-name').value = m.name || '';
       document.getElementById('member-position').value = m.position || '';
       document.getElementById('member-phone').value = m.phone || '';
-      if (m.photo) {
-        prev.src = m.photo;
-        prev.style.display = 'block';
-      }
+      if (m.photo) { prev.src = m.photo; prev.style.display = 'block'; }
     }
   }
   document.getElementById('member-modal').classList.add('show');
+  renderIcons();
 }
-
-function closeMemberModal() {
-  document.getElementById('member-modal').classList.remove('show');
-  editingMemberId = null;
-}
+function closeMemberModal() { document.getElementById('member-modal').classList.remove('show'); editingMemberId = null; }
 
 function previewMemberPhoto(input) {
   const file = input.files[0];
@@ -1415,36 +1415,27 @@ function previewMemberPhoto(input) {
 async function saveMember() {
   const name = document.getElementById('member-name').value.trim();
   const position = document.getElementById('member-position').value.trim();
-  const phone = document.getElementById('member-phone').value.trim();
-  const photo = document.getElementById('member-photo').value;
   if (!name || !position) { toast('Ism va lavozim kiritish shart', 'error'); return; }
   try {
-    if (editingMemberId) {
-      await api(`/api/restaurant/adaptation/management/${editingMemberId}`, { method:'PUT', body: JSON.stringify({ name, position, phone, photo }) });
-    } else {
-      await api('/api/restaurant/adaptation/management', { method:'POST', body: JSON.stringify({ name, position, phone, photo }) });
-    }
-    closeMemberModal();
-    loadAdaptation();
-    toast('Saqlandi ✓', 'success');
+    const body = { name, position, phone: document.getElementById('member-phone').value.trim(), photo: document.getElementById('member-photo').value };
+    if (editingMemberId) await api(`/api/restaurant/adaptation/management/${editingMemberId}`, { method:'PUT', body: JSON.stringify(body) });
+    else await api('/api/restaurant/adaptation/management', { method:'POST', body: JSON.stringify(body) });
+    closeMemberModal(); loadAdaptation(); toast('Saqlandi', 'success');
   } catch(e) { toast('Xatolik', 'error'); }
 }
 
 async function deleteMember(id) {
   if (!confirm('O\'chirilsinmi?')) return;
-  try {
-    await api(`/api/restaurant/adaptation/management/${id}`, { method:'DELETE' });
-    loadAdaptation();
-    toast('O\'chirildi', 'success');
-  } catch(e) { toast('Xatolik', 'error'); }
+  try { await api(`/api/restaurant/adaptation/management/${id}`, { method:'DELETE' }); loadAdaptation(); toast('O\'chirildi', 'success'); }
+  catch(e) { toast('Xatolik', 'error'); }
 }
 
 // ===== NAVIGATION =====
-function showPage(page) {
+function showPage(page, btn) {
   document.querySelectorAll('.page').forEach(p => p.style.display='none');
   document.getElementById(`page-${page}`).style.display='block';
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  event?.currentTarget?.classList.add('active');
+  if (btn) btn.classList.add('active');
   if (window.innerWidth<=900) {
     document.getElementById('sidebar').classList.remove('mobile-open');
     document.getElementById('sidebar-overlay').classList.remove('show');

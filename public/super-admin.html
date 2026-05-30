@@ -5,14 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tarnov — Super Admin</title>
   <link rel="stylesheet" href="/css/style.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
 <div id="toast-container"></div>
 
 <div class="mobile-topbar">
-  <button class="hamburger" onclick="toggleSidebar()">☰</button>
+  <button class="hamburger" onclick="toggleSidebar()">
+    <i data-lucide="menu"></i>
+  </button>
   <span style="color:var(--gold);font-weight:700;letter-spacing:0.1em">TARNOV</span>
-  <button class="btn btn-ghost btn-sm" onclick="logout()">Chiqish</button>
+  <button class="btn btn-ghost btn-sm" onclick="logout()">
+    <i data-lucide="log-out"></i> Chiqish
+  </button>
 </div>
 <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
 
@@ -25,21 +30,21 @@
       </div>
       <div class="sidebar-user" style="margin-top:14px">
         <div class="user-name">Super Admin</div>
-        <div class="user-role">⚡ Bosh administrator</div>
+        <div class="user-role"><i data-lucide="shield-check" style="width:13px;height:13px"></i> Bosh administrator</div>
       </div>
     </div>
     <nav class="sidebar-nav">
       <div class="nav-section-title">Boshqaruv</div>
       <button class="nav-item active" onclick="showPage('dashboard')">
-        <span class="nav-icon">📊</span> Dashboard
+        <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span> Dashboard
       </button>
       <button class="nav-item" onclick="showPage('restaurants')">
-        <span class="nav-icon">🏪</span> Restoranlar
+        <span class="nav-icon"><i data-lucide="store"></i></span> Restoranlar
       </button>
     </nav>
     <div class="sidebar-footer">
       <button class="btn btn-ghost btn-full btn-sm" onclick="logout()">
-        ← Chiqish
+        <i data-lucide="log-out"></i> Chiqish
       </button>
     </div>
   </aside>
@@ -52,7 +57,9 @@
           <h1>Dashboard <span class="gold">✦</span></h1>
           <p>Barcha restoranlar umumiy ko'rinishi</p>
         </div>
-        <button class="btn btn-gold" onclick="showPage('restaurants'); openAddModal()">+ Restoran qo'shish</button>
+        <button class="btn btn-gold" onclick="showPage('restaurants'); openAddModal()">
+          <i data-lucide="plus"></i> Restoran qo'shish
+        </button>
       </div>
       <div class="page-body">
         <div class="stats-grid" id="dash-stats"></div>
@@ -64,14 +71,8 @@
             <table>
               <thead>
                 <tr>
-                  <th>Restoran</th>
-                  <th>Admin email</th>
-                  <th>Tarif</th>
-                  <th>Narx</th>
-                  <th>Ofitsiantlar</th>
-                  <th>Menyu</th>
-                  <th>Status</th>
-                  <th>Amallar</th>
+                  <th>Restoran</th><th>Admin email</th><th>Tarif</th><th>Narx</th>
+                  <th>Ofitsiantlar</th><th>Menyu</th><th>Status</th><th>Amallar</th>
                 </tr>
               </thead>
               <tbody id="dash-restaurants"></tbody>
@@ -88,7 +89,9 @@
           <h1>Restoranlar</h1>
           <p>Barcha restoranlarni boshqarish</p>
         </div>
-        <button class="btn btn-gold" onclick="openAddModal()">+ Yangi restoran</button>
+        <button class="btn btn-gold" onclick="openAddModal()">
+          <i data-lucide="plus"></i> Yangi restoran
+        </button>
       </div>
       <div class="page-body">
         <div id="restaurants-list"></div>
@@ -102,7 +105,7 @@
   <div class="modal">
     <div class="modal-header">
       <h3 class="modal-title" id="modal-title">Yangi restoran</h3>
-      <button class="modal-close" onclick="closeModal()">✕</button>
+      <button class="modal-close" onclick="closeModal()"><i data-lucide="x"></i></button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="edit-id">
@@ -152,6 +155,7 @@ let dashData = null;
 
 async function init() {
   await requireRole('superadmin');
+  lucide.createIcons();
   loadDashboard();
 }
 
@@ -169,19 +173,38 @@ async function loadDashboard() {
 function renderStats() {
   const d = dashData;
   document.getElementById('dash-stats').innerHTML = `
-    <div class="stat-card"><div class="stat-icon">🏪</div><div class="stat-value">${d.total}</div><div class="stat-label">Jami restoran</div></div>
-    <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value">${d.active}</div><div class="stat-label">Faol</div></div>
-    <div class="stat-card"><div class="stat-icon">👨‍🍳</div><div class="stat-value">${d.totalWaiters}</div><div class="stat-label">Ofitsiantlar</div></div>
-    <div class="stat-card"><div class="stat-icon">🍽️</div><div class="stat-value">${d.totalMenuItems}</div><div class="stat-label">Menyu taomlar</div></div>
-    <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-value">${(d.totalRevenue/1000000).toFixed(1)}M</div><div class="stat-label">Oylik daromad</div></div>
+    <div class="stat-card">
+      <div class="stat-icon"><i data-lucide="store"></i></div>
+      <div class="stat-value">${d.total}</div><div class="stat-label">Jami restoran</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon"><i data-lucide="circle-check"></i></div>
+      <div class="stat-value">${d.active}</div><div class="stat-label">Faol</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon"><i data-lucide="chef-hat"></i></div>
+      <div class="stat-value">${d.totalWaiters}</div><div class="stat-label">Ofitsiantlar</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon"><i data-lucide="utensils"></i></div>
+      <div class="stat-value">${d.totalMenuItems}</div><div class="stat-label">Menyu taomlar</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon"><i data-lucide="wallet"></i></div>
+      <div class="stat-value">${(d.totalRevenue/1000000).toFixed(1)}M</div>
+      <div class="stat-label">Oylik daromad</div>
+    </div>
   `;
+  renderIcons();
 }
 
 function renderDashTable() {
   const tbody = document.getElementById('dash-restaurants');
   if (!dashData.restaurants.length) {
-    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">🏪</div><h3>Hali restoran yo\'q</h3></div></td></tr>';
-    return;
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">
+      <div class="empty-icon"><i data-lucide="store"></i></div>
+      <h3>Hali restoran yo'q</h3></div></td></tr>`;
+    renderIcons(); return;
   }
   tbody.innerHTML = dashData.restaurants.map(r => `
     <tr>
@@ -198,22 +221,30 @@ function renderDashTable() {
       </td>
       <td>
         <div class="flex gap-8">
-          <button class="btn btn-ghost btn-sm btn-icon" onclick="openEditModal('${r.id}')" title="Tahrirlash">✏️</button>
-          <button class="btn btn-sm ${r.active ? 'btn-warning' : 'btn-success'}" onclick="toggleRestaurant('${r.id}')" style="${r.active ? 'background:rgba(243,156,18,0.1);color:var(--warning);border:1px solid rgba(243,156,18,0.3)' : ''}">
-            ${r.active ? 'To\'xtat' : 'Faollashtir'}
+          <button class="btn btn-ghost btn-sm btn-icon" onclick="openEditModal('${r.id}')" title="Tahrirlash">
+            <i data-lucide="pencil"></i>
           </button>
-          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteRestaurant('${r.id}', '${r.name}')" title="O'chirish">🗑</button>
+          <button class="btn btn-sm ${r.active ? '' : 'btn-success'}" onclick="toggleRestaurant('${r.id}')"
+            style="${r.active ? 'background:rgba(243,156,18,0.1);color:var(--warning);border:1px solid rgba(243,156,18,0.3)' : ''}">
+            <i data-lucide="${r.active ? 'pause' : 'play'}"></i> ${r.active ? 'To\'xtat' : 'Faol'}
+          </button>
+          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteRestaurant('${r.id}', '${r.name}')" title="O'chirish">
+            <i data-lucide="trash-2"></i>
+          </button>
         </div>
       </td>
     </tr>
   `).join('');
+  renderIcons();
 }
 
 function renderRestaurantCards() {
   const container = document.getElementById('restaurants-list');
   if (!dashData.restaurants.length) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-icon">🏪</div><h3>Hali restoran yo'q</h3><p>Yangi restoran qo'shish uchun tugmani bosing</p></div>`;
-    return;
+    container.innerHTML = `<div class="empty-state">
+      <div class="empty-icon"><i data-lucide="store"></i></div>
+      <h3>Hali restoran yo'q</h3><p>Yangi restoran qo'shish uchun tugmani bosing</p></div>`;
+    renderIcons(); return;
   }
   container.innerHTML = `
     <div class="table-wrap">
@@ -226,7 +257,7 @@ function renderRestaurantCards() {
           <tr>
             <td>
               <strong>${r.name}</strong>
-              ${r.location ? `<br><small style="color:var(--text3)">📍 ${r.location}</small>` : ''}
+              ${r.location ? `<br><small style="color:var(--text3)"><i data-lucide="map-pin" style="width:11px;height:11px"></i> ${r.location}</small>` : ''}
             </td>
             <td><small>${r.adminEmail}</small></td>
             <td><span class="badge badge-gold">${r.plan}</span></td>
@@ -237,18 +268,23 @@ function renderRestaurantCards() {
             <td><small>${formatDate(r.createdAt)}</small></td>
             <td>
               <div class="flex gap-8">
-                <button class="btn btn-ghost btn-sm" onclick="openEditModal('${r.id}')">✏️ Tahrir</button>
+                <button class="btn btn-ghost btn-sm" onclick="openEditModal('${r.id}')">
+                  <i data-lucide="pencil"></i> Tahrir
+                </button>
                 <button class="btn btn-sm" onclick="toggleRestaurant('${r.id}')"
                   style="${r.active ? 'background:rgba(243,156,18,0.1);color:var(--warning);border:1px solid rgba(243,156,18,0.3)' : 'background:rgba(46,204,113,0.1);color:var(--success);border:1px solid rgba(46,204,113,0.3)'}">
-                  ${r.active ? '⏸' : '▶'} ${r.active ? 'To\'xtat' : 'Faol'}
+                  <i data-lucide="${r.active ? 'pause' : 'play'}"></i> ${r.active ? 'To\'xtat' : 'Faol'}
                 </button>
-                <button class="btn btn-danger btn-sm" onclick="deleteRestaurant('${r.id}', '${r.name}')">🗑</button>
+                <button class="btn btn-danger btn-sm btn-icon" onclick="deleteRestaurant('${r.id}', '${r.name}')">
+                  <i data-lucide="trash-2"></i>
+                </button>
               </div>
             </td>
           </tr>`).join('')}
         </tbody>
       </table>
     </div>`;
+  renderIcons();
 }
 
 function showPage(page) {
@@ -258,7 +294,10 @@ function showPage(page) {
   document.querySelectorAll('.nav-item').forEach(n => {
     if (n.textContent.toLowerCase().includes(page === 'dashboard' ? 'dashboard' : 'restoran')) n.classList.add('active');
   });
-  if (window.innerWidth <= 900) document.getElementById('sidebar').classList.remove('mobile-open'), document.getElementById('sidebar-overlay').classList.remove('show');
+  if (window.innerWidth <= 900) {
+    document.getElementById('sidebar').classList.remove('mobile-open');
+    document.getElementById('sidebar-overlay').classList.remove('show');
+  }
 }
 
 function toggleSidebar() {
@@ -274,6 +313,7 @@ function openAddModal() {
   ['r-name','r-location','r-email','r-password','r-price'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('r-plan').value = 'basic';
   document.getElementById('restaurant-modal').classList.add('show');
+  renderIcons();
 }
 
 function openEditModal(id) {
@@ -290,6 +330,7 @@ function openEditModal(id) {
   document.getElementById('r-plan').value = r.plan || 'basic';
   document.getElementById('r-price').value = r.planPrice || '';
   document.getElementById('restaurant-modal').classList.add('show');
+  renderIcons();
 }
 
 function closeModal() {
@@ -318,9 +359,7 @@ async function saveRestaurant() {
     }
     closeModal();
     loadDashboard();
-  } catch (e) {
-    toast(e.message, 'error');
-  }
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 async function toggleRestaurant(id) {
@@ -328,9 +367,7 @@ async function toggleRestaurant(id) {
     const res = await api(`/api/super/restaurants/${id}/toggle`, { method: 'PATCH' });
     toast(res.active ? 'Restoran faollashtirildi' : 'Restoran to\'xtatildi', 'success');
     loadDashboard();
-  } catch (e) {
-    toast(e.message, 'error');
-  }
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 async function deleteRestaurant(id, name) {
@@ -339,9 +376,7 @@ async function deleteRestaurant(id, name) {
     await api(`/api/super/restaurants/${id}`, { method: 'DELETE' });
     toast('Restoran o\'chirildi', 'success');
     loadDashboard();
-  } catch (e) {
-    toast(e.message, 'error');
-  }
+  } catch (e) { toast(e.message, 'error'); }
 }
 
 init();

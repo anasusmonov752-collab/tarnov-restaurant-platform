@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tarnov — Ofitsiant</title>
   <link rel="stylesheet" href="/css/style.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body style="background:var(--bg)">
 <div id="toast-container"></div>
@@ -20,7 +21,9 @@
   </div>
   <div class="flex gap-8 align-center">
     <div id="test-day-badge"></div>
-    <button class="btn btn-ghost btn-sm" onclick="logout()">Chiqish</button>
+    <button class="btn btn-ghost btn-sm" onclick="logout()">
+      <i data-lucide="log-out" style="width:15px;height:15px"></i>
+    </button>
   </div>
 </div>
 
@@ -42,7 +45,7 @@
   <div id="page-menu" class="waiter-content" style="display:none">
     <div id="menu-hidden-msg" style="display:none">
       <div class="card" style="text-align:center;padding:40px;border-color:var(--warning)">
-        <div style="font-size:3rem;margin-bottom:16px">🔒</div>
+        <div style="margin-bottom:16px"><i data-lucide="lock" style="width:48px;height:48px;color:var(--warning)"></i></div>
         <h2 style="color:var(--warning);margin-bottom:8px">Bugun test kuni!</h2>
         <p style="color:var(--text2)">Menyu test kuni yashiriladi.<br>Testga tayyorlanish uchun vaqtingizni sarflang.</p>
       </div>
@@ -57,7 +60,7 @@
   <div id="page-test" class="waiter-content" style="display:none">
     <div id="test-home">
       <div class="card" style="text-align:center;padding:40px">
-        <div style="font-size:3rem;margin-bottom:16px">📝</div>
+        <div style="margin-bottom:16px"><i data-lucide="file-text" style="width:48px;height:48px;color:var(--gold)"></i></div>
         <h2 style="margin-bottom:8px">Test topshirish</h2>
         <p style="color:var(--text2);margin-bottom:24px">20 ta savol: 10 oson + 5 o'rta + 5 qiyin<br>Har savol uchun 30 soniya</p>
         <div id="test-start-info" style="margin-bottom:24px"></div>
@@ -78,7 +81,9 @@
         <div class="options-list" id="q-options"></div>
       </div>
       <div style="margin-top:16px;text-align:right">
-        <button class="btn btn-gold" onclick="nextQuestion()" id="next-btn" disabled>Keyingisi →</button>
+        <button class="btn btn-gold" onclick="nextQuestion()" id="next-btn" disabled>
+          Keyingisi <i data-lucide="arrow-right" style="width:15px;height:15px"></i>
+        </button>
       </div>
     </div>
     <div id="test-result" style="display:none"></div>
@@ -99,7 +104,7 @@
   <!-- CHECKLIST -->
   <div id="page-checklist" class="waiter-content" style="display:none">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-      <h2>✅ Mening checklistim</h2>
+      <h2>Mening checklistim</h2>
       <div id="cl-waiter-summary" style="font-size:0.85rem;color:var(--gold);font-weight:600"></div>
     </div>
     <div class="progress-bar mb-20" style="height:8px;border-radius:4px">
@@ -111,35 +116,37 @@
   <!-- ADAPTATION -->
   <div id="page-adaptation" class="waiter-content" style="display:none">
     <div style="display:flex;gap:8px;border-bottom:1px solid var(--border);margin-bottom:20px;padding-bottom:0">
-      <button class="adapt-tab active" onclick="switchAdaptViewTab('info',this)">📖 Restoran</button>
-      <button class="adapt-tab" onclick="switchAdaptViewTab('team',this)">👥 Jamoa</button>
+      <button class="adapt-tab active" onclick="switchAdaptViewTab('info',this)">
+        <i data-lucide="book-open" style="width:14px;height:14px"></i> Restoran
+      </button>
+      <button class="adapt-tab" onclick="switchAdaptViewTab('team',this)">
+        <i data-lucide="users" style="width:14px;height:14px"></i> Jamoa
+      </button>
     </div>
 
-    <!-- INFO -->
     <div id="adapt-view-info">
       <div id="adapt-view-history" style="display:none" class="card mb-16">
-        <div class="card-header"><h3 class="card-title">📜 Restoran tarixi</h3></div>
+        <div class="card-header"><h3 class="card-title"><i data-lucide="scroll-text" style="width:15px;height:15px"></i> Restoran tarixi</h3></div>
         <div class="card-body" id="adapt-history-text" style="white-space:pre-wrap;line-height:1.8;color:var(--text2)"></div>
       </div>
       <div id="adapt-view-mission" style="display:none" class="card mb-16">
-        <div class="card-header"><h3 class="card-title">🎯 Missiya</h3></div>
+        <div class="card-header"><h3 class="card-title"><i data-lucide="target" style="width:15px;height:15px"></i> Missiya</h3></div>
         <div class="card-body" id="adapt-mission-text" style="white-space:pre-wrap;line-height:1.8;color:var(--text2)"></div>
       </div>
       <div id="adapt-view-values" style="display:none" class="card">
-        <div class="card-header"><h3 class="card-title">💎 Qadriyatlar</h3></div>
+        <div class="card-header"><h3 class="card-title"><i data-lucide="gem" style="width:15px;height:15px"></i> Qadriyatlar</h3></div>
         <div class="card-body" id="adapt-values-list"></div>
       </div>
       <div id="adapt-view-empty" style="text-align:center;padding:60px 20px;color:var(--text3)">
-        <div style="font-size:3rem;margin-bottom:12px">📖</div>
+        <div style="margin-bottom:12px"><i data-lucide="book-open" style="width:48px;height:48px;opacity:0.3"></i></div>
         <p>Ma'lumotlar hali to'ldirilmagan</p>
       </div>
     </div>
 
-    <!-- TEAM -->
     <div id="adapt-view-team" style="display:none">
       <div id="adapt-team-list">
         <div style="text-align:center;padding:60px 20px;color:var(--text3)">
-          <div style="font-size:3rem;margin-bottom:12px">👥</div>
+          <div style="margin-bottom:12px"><i data-lucide="users" style="width:48px;height:48px;opacity:0.3"></i></div>
           <p>Jamoa ma'lumotlari hali qo'shilmagan</p>
         </div>
       </div>
@@ -151,25 +158,25 @@
 <!-- BOTTOM NAV -->
 <nav class="waiter-nav">
   <button class="waiter-nav-item active" onclick="showWaiterPage('home', this)">
-    <span class="nav-icon">🏠</span>Bosh sahifa
+    <span class="nav-icon"><i data-lucide="home"></i></span>Bosh sahifa
   </button>
   <button class="waiter-nav-item" onclick="showWaiterPage('menu', this)">
-    <span class="nav-icon">🍽️</span>Menyu
+    <span class="nav-icon"><i data-lucide="utensils"></i></span>Menyu
   </button>
   <button class="waiter-nav-item" onclick="showWaiterPage('test', this)">
-    <span class="nav-icon">📝</span>Test
+    <span class="nav-icon"><i data-lucide="file-text"></i></span>Test
   </button>
   <button class="waiter-nav-item" onclick="showWaiterPage('history', this)">
-    <span class="nav-icon">🏆</span>Tarix
+    <span class="nav-icon"><i data-lucide="trophy"></i></span>Tarix
   </button>
   <button class="waiter-nav-item" onclick="showWaiterPage('ann', this)">
-    <span class="nav-icon">📢</span>E'lonlar
+    <span class="nav-icon"><i data-lucide="megaphone"></i></span>E'lonlar
   </button>
   <button class="waiter-nav-item" onclick="showWaiterPage('checklist', this)">
-    <span class="nav-icon">✅</span>Checklist
+    <span class="nav-icon"><i data-lucide="clipboard-list"></i></span>Checklist
   </button>
   <button class="waiter-nav-item" onclick="showWaiterPage('adaptation', this)">
-    <span class="nav-icon">🎓</span>Adaptatsiya
+    <span class="nav-icon"><i data-lucide="book-open"></i></span>Adaptatsiya
   </button>
 </nav>
 
@@ -178,7 +185,9 @@
   <div class="modal">
     <div class="modal-header">
       <h3 class="modal-title" id="mi-name">—</h3>
-      <button class="modal-close" onclick="document.getElementById('menu-item-modal').classList.remove('show')">✕</button>
+      <button class="modal-close" onclick="document.getElementById('menu-item-modal').classList.remove('show')">
+        <i data-lucide="x"></i>
+      </button>
     </div>
     <div class="modal-body">
       <div id="mi-img" style="margin-bottom:16px;border-radius:12px;overflow:hidden;max-height:220px"></div>
@@ -196,8 +205,10 @@
 <div class="modal-overlay" id="cert-modal">
   <div class="modal">
     <div class="modal-header">
-      <h3 class="modal-title">🏆 Sertifikat</h3>
-      <button class="modal-close" onclick="document.getElementById('cert-modal').classList.remove('show')">✕</button>
+      <h3 class="modal-title"><i data-lucide="trophy" style="width:16px;height:16px;color:var(--gold)"></i> Sertifikat</h3>
+      <button class="modal-close" onclick="document.getElementById('cert-modal').classList.remove('show')">
+        <i data-lucide="x"></i>
+      </button>
     </div>
     <div class="modal-body">
       <div class="certificate-box" id="cert-content"></div>
@@ -210,33 +221,29 @@
 
 <script src="/js/utils.js"></script>
 <script>
-let waiterInfo = null;
-let menuData = [];
-let activeCategory = 'all';
-let testQuestions = [];
-let currentQIndex = 0;
-let answers = {};
-let timerInterval = null;
-let timeLeft = 30;
-let selectedOption = null;
+let waiterInfo = null, menuData = [], activeCategory = 'all';
+let testQuestions = [], currentQIndex = 0, answers = {}, timerInterval = null, timeLeft = 30, selectedOption = null;
 
 async function init() {
   await requireRole('waiter');
+  lucide.createIcons();
   try {
     waiterInfo = await api('/api/waiter/info');
     document.getElementById('w-restaurant-name').textContent = waiterInfo.restaurant.name;
     document.getElementById('w-waiter-name').textContent = waiterInfo.waiter?.name || '';
     document.getElementById('home-name').textContent = waiterInfo.waiter?.name || '';
     if (waiterInfo.isTestDay) {
-      document.getElementById('test-day-badge').innerHTML = '<span class="badge badge-warning">🔴 Test kuni</span>';
+      document.getElementById('test-day-badge').innerHTML = '<span class="badge badge-warning"><i data-lucide="alert-circle" style="width:12px;height:12px"></i> Test kuni</span>';
       document.getElementById('test-day-alert').innerHTML = `
         <div class="alert alert-warning mb-16">
-          📝 <strong>Bugun test kuni!</strong> Menyu yashirilgan. Test topshirishga tayyorlaning.
+          <i data-lucide="file-text" style="width:14px;height:14px"></i>
+          <strong>Bugun test kuni!</strong> Menyu yashirilgan. Test topshirishga tayyorlaning.
         </div>`;
       document.getElementById('home-sub').textContent = 'Bugun test kuni. Omad tilaymiz!';
     }
     renderHomeAnnouncements();
     loadHistory().then(renderHomeStats);
+    renderIcons();
   } catch (e) { toast(e.message, 'error'); }
 }
 
@@ -245,7 +252,9 @@ function renderHomeAnnouncements() {
   if (!anns.length) return;
   document.getElementById('home-announcements').innerHTML = `
     <div class="card mb-16" style="border-left:3px solid var(--gold)">
-      <div style="font-size:0.75rem;color:var(--gold);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px">📢 So'nggi e'lonlar</div>
+      <div style="font-size:0.75rem;color:var(--gold);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+        <i data-lucide="megaphone" style="width:13px;height:13px"></i> So'nggi e'lonlar
+      </div>
       ${anns.map(a=>`
         <div style="padding:10px 0;border-bottom:1px solid var(--border2)">
           <div style="font-weight:600;font-size:0.9rem">${a.title}</div>
@@ -253,6 +262,7 @@ function renderHomeAnnouncements() {
           <div style="color:var(--text3);font-size:0.73rem;margin-top:4px">${formatDateTime(a.createdAt)}</div>
         </div>`).join('')}
     </div>`;
+  renderIcons();
 }
 
 let historyData = [];
@@ -264,8 +274,10 @@ async function loadHistory() {
 function renderHistory() {
   const el = document.getElementById('history-list');
   if (!historyData.length) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🏆</div><h3>Hali test topshirmadingiz</h3><p>Birinchi testingizni topshiring!</p></div>`;
-    return;
+    el.innerHTML = `<div class="empty-state">
+      <div class="empty-icon"><i data-lucide="trophy"></i></div>
+      <h3>Hali test topshirmadingiz</h3><p>Birinchi testingizni topshiring!</p></div>`;
+    renderIcons(); return;
   }
   el.innerHTML = historyData.map(r => `
     <div class="card mb-16">
@@ -279,24 +291,17 @@ function renderHistory() {
             <div style="font-size:2rem;font-weight:800;color:${scoreColor(r.score)}">${r.score}%</div>
             <div style="font-size:0.72rem;color:var(--text3)">${r.totalCorrect}/${r.totalQuestions} to'g'ri</div>
           </div>
-          ${r.hasCertificate ? `<button class="btn btn-gold btn-sm" onclick="showCert('${r.id}')">🏆 Sertifikat</button>` : ''}
+          ${r.hasCertificate ? `<button class="btn btn-gold btn-sm" onclick="showCert('${r.id}')">
+            <i data-lucide="trophy" style="width:13px;height:13px"></i> Sertifikat</button>` : ''}
         </div>
       </div>
       <div class="breakdown-grid" style="margin-top:16px">
-        <div class="breakdown-item">
-          <div class="breakdown-score" style="color:var(--easy)">${r.easyScore}/${r.easyTotal}</div>
-          <div class="breakdown-label">🟢 Oson</div>
-        </div>
-        <div class="breakdown-item">
-          <div class="breakdown-score" style="color:var(--medium)">${r.mediumScore}/${r.mediumTotal}</div>
-          <div class="breakdown-label">🟡 O'rta</div>
-        </div>
-        <div class="breakdown-item">
-          <div class="breakdown-score" style="color:var(--hard)">${r.hardScore}/${r.hardTotal}</div>
-          <div class="breakdown-label">🔴 Qiyin</div>
-        </div>
+        <div class="breakdown-item"><div class="breakdown-score" style="color:var(--easy)">${r.easyScore}/${r.easyTotal}</div><div class="breakdown-label">Oson</div></div>
+        <div class="breakdown-item"><div class="breakdown-score" style="color:var(--medium)">${r.mediumScore}/${r.mediumTotal}</div><div class="breakdown-label">O'rta</div></div>
+        <div class="breakdown-item"><div class="breakdown-score" style="color:var(--hard)">${r.hardScore}/${r.hardTotal}</div><div class="breakdown-label">Qiyin</div></div>
       </div>
     </div>`).join('');
+  renderIcons();
 }
 
 function renderHomeStats() {
@@ -306,18 +311,19 @@ function renderHomeStats() {
   const certs = historyData.filter(r=>r.hasCertificate).length;
   document.getElementById('home-stats').innerHTML = `
     <div class="stats-grid">
-      <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value">${historyData.length}</div><div class="stat-label">Jami testlar</div></div>
-      <div class="stat-card"><div class="stat-icon">🥇</div><div class="stat-value" style="color:var(--success)">${best}%</div><div class="stat-label">Eng yaxshi natija</div></div>
-      <div class="stat-card"><div class="stat-icon">📈</div><div class="stat-value">${avg}%</div><div class="stat-label">O'rtacha ball</div></div>
-      <div class="stat-card"><div class="stat-icon">🏆</div><div class="stat-value" style="color:var(--gold)">${certs}</div><div class="stat-label">Sertifikatlar</div></div>
+      <div class="stat-card"><div class="stat-icon"><i data-lucide="bar-chart-2"></i></div><div class="stat-value">${historyData.length}</div><div class="stat-label">Jami testlar</div></div>
+      <div class="stat-card"><div class="stat-icon"><i data-lucide="medal"></i></div><div class="stat-value" style="color:var(--success)">${best}%</div><div class="stat-label">Eng yaxshi</div></div>
+      <div class="stat-card"><div class="stat-icon"><i data-lucide="trending-up"></i></div><div class="stat-value">${avg}%</div><div class="stat-label">O'rtacha</div></div>
+      <div class="stat-card"><div class="stat-icon"><i data-lucide="trophy"></i></div><div class="stat-value" style="color:var(--gold)">${certs}</div><div class="stat-label">Sertifikatlar</div></div>
     </div>`;
+  renderIcons();
 }
 
 function showCert(resultId) {
   const r = historyData.find(x=>x.id===resultId);
   if (!r) return;
   document.getElementById('cert-content').innerHTML = `
-    <div style="font-size:2rem;margin-bottom:12px">🏆</div>
+    <div style="margin-bottom:12px"><i data-lucide="trophy" style="width:48px;height:48px;color:var(--gold)"></i></div>
     <div style="font-size:0.75rem;color:var(--text3);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px">MUVAFFAQIYAT SERTIFIKATI</div>
     <div style="font-size:1.6rem;font-weight:700;color:var(--gold);margin-bottom:4px">${r.waiterName}</div>
     <div style="color:var(--text2);margin-bottom:16px;font-size:0.9rem">
@@ -328,6 +334,7 @@ function showCert(resultId) {
     <div style="display:inline-block;padding:6px 20px;border:1px solid var(--gold);border-radius:20px;font-size:0.8rem;color:var(--gold)">✦ TARNOV RESTAURANT PLATFORM ✦</div>
   `;
   document.getElementById('cert-modal').classList.add('show');
+  renderIcons();
 }
 
 // ===== MENU =====
@@ -337,7 +344,7 @@ async function loadMenu() {
     if (data.hidden) {
       document.getElementById('menu-hidden-msg').style.display='block';
       document.getElementById('menu-visible').style.display='none';
-      return;
+      renderIcons(); return;
     }
     document.getElementById('menu-hidden-msg').style.display='none';
     document.getElementById('menu-visible').style.display='block';
@@ -365,22 +372,24 @@ function renderMenuItems(cat) {
   const items = cat==='all' ? menuData : menuData.filter(m=>m.category===cat);
   const grid = document.getElementById('menu-items');
   if (!items.length) {
-    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🍽️</div><h3>Taom topilmadi</h3></div>`;
-    return;
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div class="empty-icon"><i data-lucide="utensils"></i></div><h3>Taom topilmadi</h3></div>`;
+    renderIcons(); return;
   }
   grid.innerHTML = items.map(item=>`
     <div class="menu-card" onclick="showMenuDetail('${item.id}')" style="cursor:pointer">
       <div class="menu-card-img">
-        ${item.image?`<img src="${item.image}" alt="${item.name}" onerror="this.parentElement.innerHTML='🍽️'">` : '🍽️'}
+        ${item.image?`<img src="${item.image}" alt="${item.name}" onerror="this.style.display='none'">` : `<i data-lucide="utensils" style="width:36px;height:36px;opacity:0.3"></i>`}
       </div>
       <div class="menu-card-body">
         <div class="menu-card-cat">${item.category}</div>
         <div class="menu-card-name">${item.name}</div>
         <div class="menu-card-desc">${item.description||'Tavsif yo\'q'}</div>
-        ${item.allergens?.length?`<div style="margin-bottom:6px">${item.allergens.map(a=>`<span class="tag tag-allergen">⚠ ${a}</span>`).join('')}</div>`:''}
+        ${item.allergens?.length?`<div style="margin-bottom:6px">${item.allergens.map(a=>`<span class="tag tag-allergen"><i data-lucide="alert-triangle" style="width:10px;height:10px"></i> ${a}</span>`).join('')}</div>`:''}
         <div class="menu-card-price">${formatPrice(item.price)}</div>
       </div>
     </div>`).join('');
+  renderIcons();
 }
 
 function showMenuDetail(id) {
@@ -392,11 +401,11 @@ function showMenuDetail(id) {
   document.getElementById('mi-price').textContent = formatPrice(item.price);
   document.getElementById('mi-img').innerHTML = item.image ? `<img src="${item.image}" style="width:100%;height:220px;object-fit:cover">` : '';
   document.getElementById('mi-ingredients').innerHTML = item.ingredients?.length ?
-    `<div style="margin-bottom:6px"><strong style="font-size:0.82rem">🧾 Tarkib:</strong><br>${item.ingredients.map(i=>`<span class="tag">${i}</span>`).join('')}</div>` : '';
+    `<div style="margin-bottom:6px"><strong style="font-size:0.82rem">Tarkib:</strong><br>${item.ingredients.map(i=>`<span class="tag">${i}</span>`).join('')}</div>` : '';
   document.getElementById('mi-allergens').innerHTML = item.allergens?.length ?
-    `<div style="margin-bottom:6px"><strong style="font-size:0.82rem">⚠️ Allergiyalar:</strong><br>${item.allergens.map(a=>`<span class="tag tag-allergen">${a}</span>`).join('')}</div>` : '';
+    `<div style="margin-bottom:6px"><strong style="font-size:0.82rem">Allergiyalar:</strong><br>${item.allergens.map(a=>`<span class="tag tag-allergen">${a}</span>`).join('')}</div>` : '';
   document.getElementById('mi-suggestion').innerHTML = item.servingSuggestion ?
-    `<div style="padding:12px;background:rgba(200,146,42,0.08);border-radius:10px;border-left:3px solid var(--gold);font-size:0.88rem;color:var(--text2);font-style:italic">💬 ${item.servingSuggestion}</div>` : '';
+    `<div style="padding:12px;background:rgba(200,146,42,0.08);border-radius:10px;border-left:3px solid var(--gold);font-size:0.88rem;color:var(--text2);font-style:italic">${item.servingSuggestion}</div>` : '';
   document.getElementById('menu-item-modal').classList.add('show');
 }
 
@@ -405,33 +414,27 @@ async function loadTestInfo() {
   const el = document.getElementById('test-start-info');
   const btn = document.getElementById('start-test-btn');
   if (!waiterInfo?.isTestDay) {
-    el.innerHTML = '<div class="alert alert-info">Bugun test kuni emas. Test kunlari admin tomonidan belgilanadi.</div>';
-    btn.disabled = true;
-    return;
+    el.innerHTML = '<div class="alert alert-info"><i data-lucide="info" style="width:14px;height:14px"></i> Bugun test kuni emas. Test kunlari admin tomonidan belgilanadi.</div>';
+    btn.disabled = true; renderIcons(); return;
   }
   try {
     const history = await api('/api/waiter/history');
     const today = new Date().toISOString().split('T')[0];
     const todayResult = history.find(r=>r.date===today);
     if (todayResult) {
-      btn.disabled = true;
-      btn.textContent = 'Test topshirildi ✓';
-      el.innerHTML = `<div class="alert alert-success">
-        Siz bugun testni topshirdingiz! Natija: <strong>${todayResult.score}%</strong>
-        ${todayResult.hasCertificate?'<br>🏆 Sertifikat oldingiz!':''}
-      </div>`;
+      btn.disabled = true; btn.textContent = 'Test topshirildi ✓';
+      el.innerHTML = `<div class="alert alert-success">Siz bugun testni topshirdingiz! Natija: <strong>${todayResult.score}%</strong>${todayResult.hasCertificate?'<br>Sertifikat oldingiz!':''}</div>`;
     } else {
-      el.innerHTML = '<div class="alert alert-warning">⚠️ Bugun test kuni. Testni boshlashdan oldin yaxshilab tayyorlaning!</div>';
+      el.innerHTML = '<div class="alert alert-warning"><i data-lucide="alert-triangle" style="width:14px;height:14px"></i> Bugun test kuni. Testni boshlashdan oldin yaxshilab tayyorlaning!</div>';
     }
+    renderIcons();
   } catch {}
 }
 
 async function startTest() {
   try {
     const data = await api('/api/waiter/test/start');
-    testQuestions = data.questions;
-    currentQIndex = 0;
-    answers = {};
+    testQuestions = data.questions; currentQIndex = 0; answers = {};
     document.getElementById('test-home').style.display='none';
     document.getElementById('test-result').style.display='none';
     document.getElementById('test-active').style.display='block';
@@ -458,6 +461,7 @@ function showQuestion() {
       ${opt}
     </button>`).join('');
   startTimer();
+  renderIcons();
 }
 
 function selectOption(idx) {
@@ -465,26 +469,15 @@ function selectOption(idx) {
   selectedOption = idx;
   const q = testQuestions[currentQIndex];
   answers[q.id] = idx;
-  document.querySelectorAll('.option-btn').forEach((btn, i)=>{
-    btn.classList.remove('selected');
-    if (i===idx) btn.classList.add('selected');
-  });
+  document.querySelectorAll('.option-btn').forEach((btn, i)=>{ btn.classList.remove('selected'); if (i===idx) btn.classList.add('selected'); });
   document.getElementById('next-btn').disabled = false;
   clearInterval(timerInterval);
 }
 
 function startTimer() {
   clearInterval(timerInterval);
-  timeLeft = 30;
-  updateTimerDisplay();
-  timerInterval = setInterval(()=>{
-    timeLeft--;
-    updateTimerDisplay();
-    if (timeLeft<=0) {
-      clearInterval(timerInterval);
-      autoAdvance();
-    }
-  }, 1000);
+  timeLeft = 30; updateTimerDisplay();
+  timerInterval = setInterval(()=>{ timeLeft--; updateTimerDisplay(); if (timeLeft<=0) { clearInterval(timerInterval); autoAdvance(); } }, 1000);
 }
 
 function updateTimerDisplay() {
@@ -493,24 +486,17 @@ function updateTimerDisplay() {
   el.className = 'timer-circle' + (timeLeft<=5?' danger':timeLeft<=10?' warning':'');
 }
 
-function autoAdvance() {
-  if (selectedOption===null) {
-    const q = testQuestions[currentQIndex];
-    answers[q.id] = -1;
-  }
-  nextQuestion();
-}
+function autoAdvance() { if (selectedOption===null) { answers[testQuestions[currentQIndex].id] = -1; } nextQuestion(); }
 
 function nextQuestion() {
   clearInterval(timerInterval);
-  if (currentQIndex < testQuestions.length-1) {
-    currentQIndex++;
-    showQuestion();
-  } else {
-    submitTest();
-  }
+  if (currentQIndex < testQuestions.length-1) { currentQIndex++; showQuestion(); }
+  else { submitTest(); }
   const btn = document.getElementById('next-btn');
-  btn.textContent = currentQIndex >= testQuestions.length-1 ? 'Yakunlash ✓' : 'Keyingisi →';
+  if (btn) btn.innerHTML = currentQIndex >= testQuestions.length-1
+    ? 'Yakunlash <i data-lucide="check" style="width:15px;height:15px"></i>'
+    : 'Keyingisi <i data-lucide="arrow-right" style="width:15px;height:15px"></i>';
+  renderIcons();
 }
 
 async function submitTest() {
@@ -523,35 +509,37 @@ async function submitTest() {
     document.getElementById('test-result').style.display='block';
     document.getElementById('test-result').innerHTML = `
       <div class="card" style="text-align:center;padding:32px">
-        <div style="font-size:2rem;margin-bottom:12px">🎉</div>
+        <div style="margin-bottom:12px"><i data-lucide="party-popper" style="width:40px;height:40px;color:var(--gold)"></i></div>
         <h2 style="margin-bottom:8px">Test yakunlandi!</h2>
         <div class="score-circle" style="margin:20px auto">
           <div class="score-number" style="color:${scoreColor(r.score)}">${r.score}%</div>
           <div class="score-label">${r.totalCorrect}/${r.totalQuestions}</div>
         </div>
-        ${r.hasCertificate ? `<div class="alert alert-success" style="margin:16px 0">🏆 Tabriklaymiz! Siz 90%+ ball to'plab sertifikat oldingiz!</div>` : ''}
+        ${r.hasCertificate ? `<div class="alert alert-success" style="margin:16px 0"><i data-lucide="trophy" style="width:15px;height:15px"></i> Tabriklaymiz! Sertifikat oldingiz!</div>` : ''}
         <div class="breakdown-grid" style="margin:20px 0">
-          <div class="breakdown-item"><div class="breakdown-score" style="color:var(--easy)">${r.easyScore}/${r.easyTotal}</div><div class="breakdown-label">🟢 Oson</div></div>
-          <div class="breakdown-item"><div class="breakdown-score" style="color:var(--medium)">${r.mediumScore}/${r.mediumTotal}</div><div class="breakdown-label">🟡 O'rta</div></div>
-          <div class="breakdown-item"><div class="breakdown-score" style="color:var(--hard)">${r.hardScore}/${r.hardTotal}</div><div class="breakdown-label">🔴 Qiyin</div></div>
+          <div class="breakdown-item"><div class="breakdown-score" style="color:var(--easy)">${r.easyScore}/${r.easyTotal}</div><div class="breakdown-label">Oson</div></div>
+          <div class="breakdown-item"><div class="breakdown-score" style="color:var(--medium)">${r.mediumScore}/${r.mediumTotal}</div><div class="breakdown-label">O'rta</div></div>
+          <div class="breakdown-item"><div class="breakdown-score" style="color:var(--hard)">${r.hardScore}/${r.hardTotal}</div><div class="breakdown-label">Qiyin</div></div>
         </div>
-        <h4 style="text-align:left;margin-bottom:12px">Noto'g'ri javoblar tahlili:</h4>
+        <h4 style="text-align:left;margin-bottom:12px">Noto'g'ri javoblar:</h4>
         <div style="text-align:left">
           ${r.breakdown.filter(b=>!b.isCorrect).length===0
-            ? '<div class="alert alert-success">Barcha savollarga to\'g\'ri javob berdingiz! 🌟</div>'
+            ? '<div class="alert alert-success">Barcha savollarga to\'g\'ri javob berdingiz!</div>'
             : r.breakdown.filter(b=>!b.isCorrect).map(b=>`
               <div style="padding:12px;border-radius:10px;background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.2);margin-bottom:8px">
                 <div style="font-weight:600;font-size:0.88rem;margin-bottom:4px">${b.question}</div>
-                <div style="font-size:0.82rem;color:var(--danger)">Sizning javob: ${b.options?.[b.selectedAnswer]||'Javob berilmadi'}</div>
-                <div style="font-size:0.82rem;color:var(--success)">To'g'ri javob: ${b.options?.[b.correctAnswer]||'—'}</div>
+                <div style="font-size:0.82rem;color:var(--danger)">Sizning: ${b.options?.[b.selectedAnswer]||'Javob berilmadi'}</div>
+                <div style="font-size:0.82rem;color:var(--success)">To'g'ri: ${b.options?.[b.correctAnswer]||'—'}</div>
               </div>`).join('')}
         </div>
         <div class="flex gap-12 mt-16" style="justify-content:center;flex-wrap:wrap">
-          ${r.hasCertificate ? `<button class="btn btn-gold" onclick="showCertFromResult(${JSON.stringify(r).replace(/"/g,'&quot;')})">🏆 Sertifikatni ko'rish</button>` : ''}
+          ${r.hasCertificate ? `<button class="btn btn-gold" onclick="showCertFromResult(${JSON.stringify(r).replace(/"/g,'&quot;')})">
+            <i data-lucide="trophy" style="width:14px;height:14px"></i> Sertifikatni ko'rish</button>` : ''}
           <button class="btn btn-ghost" onclick="showWaiterPage('history', document.querySelectorAll('.waiter-nav-item')[3])">Tarixga o'tish</button>
         </div>
       </div>`;
     await loadHistory();
+    renderIcons();
   } catch (e) {
     toast(e.message, 'error');
     document.getElementById('test-home').style.display='block';
@@ -560,7 +548,7 @@ async function submitTest() {
 
 function showCertFromResult(r) {
   document.getElementById('cert-content').innerHTML = `
-    <div style="font-size:2rem;margin-bottom:12px">🏆</div>
+    <div style="margin-bottom:12px"><i data-lucide="trophy" style="width:48px;height:48px;color:var(--gold)"></i></div>
     <div style="font-size:0.75rem;color:var(--text3);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:8px">MUVAFFAQIYAT SERTIFIKATI</div>
     <div style="font-size:1.6rem;font-weight:700;color:var(--gold);margin-bottom:4px">${r.waiterName}</div>
     <div style="color:var(--text2);margin-bottom:16px;font-size:0.9rem">
@@ -571,6 +559,7 @@ function showCertFromResult(r) {
     <div style="display:inline-block;padding:6px 20px;border:1px solid var(--gold);border-radius:20px;font-size:0.8rem;color:var(--gold)">✦ TARNOV RESTAURANT PLATFORM ✦</div>
   `;
   document.getElementById('cert-modal').classList.add('show');
+  renderIcons();
 }
 
 // ===== ANNOUNCEMENTS =====
@@ -579,15 +568,20 @@ async function loadAnnouncements() {
     const list = await api('/api/waiter/announcements');
     const el = document.getElementById('ann-list');
     if (!list.length) {
-      el.innerHTML = `<div class="empty-state"><div class="empty-icon">📢</div><h3>Hali e'lon yo'q</h3></div>`;
-      return;
+      el.innerHTML = `<div class="empty-state">
+        <div class="empty-icon"><i data-lucide="megaphone"></i></div>
+        <h3>Hali e'lon yo'q</h3></div>`;
+      renderIcons(); return;
     }
     el.innerHTML = list.map(a=>`
       <div class="card mb-16" style="border-left:3px solid var(--gold)">
-        <div style="font-weight:700;font-size:1rem;margin-bottom:6px">📢 ${a.title}</div>
+        <div style="font-weight:700;font-size:1rem;margin-bottom:6px;display:flex;align-items:center;gap:8px">
+          <i data-lucide="megaphone" style="width:15px;height:15px;color:var(--gold)"></i> ${a.title}
+        </div>
         <div style="color:var(--text2);font-size:0.9rem;line-height:1.6">${a.content}</div>
         <div style="color:var(--text3);font-size:0.75rem;margin-top:8px">${formatDateTime(a.createdAt)}</div>
       </div>`).join('');
+    renderIcons();
   } catch {}
 }
 
@@ -600,16 +594,13 @@ async function loadWaiterChecklist() {
     const items = data.items || [];
     const done = items.filter(i => i.done).length;
     const pct = items.length ? Math.round((done/items.length)*100) : 0;
-
     document.getElementById('cl-waiter-summary').textContent = `${done}/${items.length} bajarildi`;
     document.getElementById('cl-waiter-progress').style.width = pct + '%';
-
     const groups = { '1-kun': [], '1-hafta': [], '1-oy': [] };
     items.forEach(i => (groups[i.period] || groups['1-hafta']).push(i));
-
     const el = document.getElementById('cl-waiter-groups');
     if (!items.length) {
-      el.innerHTML = '<div style="text-align:center;padding:60px;color:var(--text3)"><div style="font-size:3rem;margin-bottom:12px">✅</div><p>Hali vazifa qo\'shilmagan</p></div>';
+      el.innerHTML = '<div style="text-align:center;padding:60px;color:var(--text3)">Hali vazifa qo\'shilmagan</div>';
       return;
     }
     el.innerHTML = Object.entries(groups).filter(([,v])=>v.length).map(([period, list]) => {
@@ -617,81 +608,69 @@ async function loadWaiterChecklist() {
       return `
         <div class="card mb-16">
           <div class="card-header">
-            <h3 class="card-title" style="color:${p.color}">⏱ ${p.label}</h3>
+            <h3 class="card-title" style="color:${p.color}">
+              <i data-lucide="clock" style="width:14px;height:14px"></i> ${p.label}
+            </h3>
             <span style="font-size:0.8rem;color:var(--text3)">${list.filter(i=>i.done).length}/${list.length}</span>
           </div>
           ${list.map(item => `
-            <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-top:1px solid var(--border);cursor:pointer;transition:background 0.2s"
+            <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-top:1px solid var(--border);cursor:pointer"
                  onclick="toggleChecklistItem('${item.id}', this)">
               <div style="width:22px;height:22px;border-radius:6px;border:2px solid ${item.done ? p.color : 'var(--border)'};
                    background:${item.done ? p.color : 'transparent'};display:flex;align-items:center;justify-content:center;
                    flex-shrink:0;margin-top:1px;transition:all 0.2s">
-                ${item.done ? '<span style="color:#000;font-size:0.75rem;font-weight:bold">✓</span>' : ''}
+                ${item.done ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
               </div>
               <div style="flex:1">
                 <div style="font-weight:600;${item.done ? 'text-decoration:line-through;color:var(--text3)' : ''}">${item.title}</div>
                 ${item.description ? `<div style="color:var(--text3);font-size:0.82rem;margin-top:2px">${item.description}</div>` : ''}
               </div>
-            </div>
-          `).join('')}
+            </div>`).join('')}
         </div>`;
     }).join('');
+    renderIcons();
   } catch(e) { console.error(e); }
 }
 
-async function toggleChecklistItem(itemId, rowEl) {
-  try {
-    const res = await api(`/api/waiter/checklist/${itemId}/toggle`, { method:'POST' });
-    loadWaiterChecklist();
-  } catch(e) { toast('Xatolik', 'error'); }
+async function toggleChecklistItem(itemId) {
+  try { await api(`/api/waiter/checklist/${itemId}/toggle`, { method:'POST' }); loadWaiterChecklist(); }
+  catch(e) { toast('Xatolik', 'error'); }
 }
 
 // ===== ADAPTATION =====
 async function loadAdaptation() {
   try {
     const data = await api('/api/waiter/adaptation');
-    const hasHistory = data.history?.trim();
-    const hasMission = data.mission?.trim();
-    const hasValues  = data.values?.length;
-    const hasInfo    = hasHistory || hasMission || hasValues;
-
+    const hasHistory = data.history?.trim(), hasMission = data.mission?.trim(), hasValues = data.values?.length;
+    const hasInfo = hasHistory || hasMission || hasValues;
     document.getElementById('adapt-view-empty').style.display = hasInfo ? 'none' : '';
-
-    if (hasHistory) {
-      document.getElementById('adapt-view-history').style.display = '';
-      document.getElementById('adapt-history-text').textContent  = data.history;
-    }
-    if (hasMission) {
-      document.getElementById('adapt-view-mission').style.display = '';
-      document.getElementById('adapt-mission-text').textContent  = data.mission;
-    }
+    if (hasHistory) { document.getElementById('adapt-view-history').style.display = ''; document.getElementById('adapt-history-text').textContent = data.history; }
+    if (hasMission) { document.getElementById('adapt-view-mission').style.display = ''; document.getElementById('adapt-mission-text').textContent = data.mission; }
     if (hasValues) {
       document.getElementById('adapt-view-values').style.display = '';
       document.getElementById('adapt-values-list').innerHTML = data.values.map(v =>
         `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
           <span style="color:var(--gold);font-size:1.1rem">✦</span>
           <span style="color:var(--text2)">${v}</span>
-        </div>`
-      ).join('');
+        </div>`).join('');
     }
-
-    const team = data.management || [];
-    const sorted = [...team].sort((a,b)=>(a.order||0)-(b.order||0));
-    document.getElementById('adapt-team-list').innerHTML = sorted.length ? sorted.map(m => `
+    const team = [...(data.management || [])].sort((a,b)=>(a.order||0)-(b.order||0));
+    document.getElementById('adapt-team-list').innerHTML = team.length ? team.map(m => `
       <div class="member-card">
         <div class="member-avatar">
-          ${m.photo ? `<img src="${m.photo}" alt="${m.name}">` : '👤'}
+          ${m.photo ? `<img src="${m.photo}" alt="${m.name}">` : `<i data-lucide="user" style="width:24px;height:24px;opacity:0.5"></i>`}
         </div>
         <div style="flex:1">
           <div style="font-weight:700;font-size:1rem">${m.name}</div>
           <div style="color:var(--gold);font-size:0.82rem;margin-top:2px">${m.position}</div>
-          ${m.phone ? `<a href="tel:${m.phone}" style="color:var(--text3);font-size:0.8rem;text-decoration:none">📞 ${m.phone}</a>` : ''}
+          ${m.phone ? `<a href="tel:${m.phone}" style="color:var(--text3);font-size:0.8rem;text-decoration:none;display:flex;align-items:center;gap:4px;margin-top:2px">
+            <i data-lucide="phone" style="width:12px;height:12px"></i> ${m.phone}</a>` : ''}
         </div>
-      </div>
-    `).join('') : `<div style="text-align:center;padding:60px 20px;color:var(--text3)">
-        <div style="font-size:3rem;margin-bottom:12px">👥</div>
-        <p>Jamoa ma'lumotlari hali qo'shilmagan</p>
-      </div>`;
+      </div>`).join('')
+    : `<div style="text-align:center;padding:60px 20px;color:var(--text3)">
+        <div style="margin-bottom:12px"><i data-lucide="users" style="width:48px;height:48px;opacity:0.3"></i></div>
+        <p>Jamoa ma'lumotlari hali qo'shilmagan</p></div>`;
+    renderIcons();
   } catch(e) { console.error(e); }
 }
 

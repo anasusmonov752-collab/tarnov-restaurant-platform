@@ -563,7 +563,7 @@ app.put('/api/restaurant/adaptation/management/:memberId', auth(['restaurant']),
   if (name) update['adaptation.management.$.name'] = name;
   if (position) update['adaptation.management.$.position'] = position;
   if (phone !== undefined) update['adaptation.management.$.phone'] = phone;
-  if (photo !== undefined) update['adaptation.management.$.photo'] = photo;
+  if (photo) update['adaptation.management.$.photo'] = photo; // only update if new photo provided
   if (order !== undefined) update['adaptation.management.$.order'] = order;
   await Restaurant.updateOne(
     { id: req.user.restaurantId, 'adaptation.management.id': req.params.memberId },

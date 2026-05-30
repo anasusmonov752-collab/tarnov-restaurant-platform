@@ -1129,6 +1129,7 @@ async function confirmImport() {
 
 // ===== ADAPTATION =====
 let editingMemberId = null;
+let cachedManagement = [];
 
 async function loadAdaptation() {
   try {
@@ -1136,7 +1137,8 @@ async function loadAdaptation() {
     document.getElementById('adapt-history').value = data.history || '';
     document.getElementById('adapt-mission').value = data.mission || '';
     document.getElementById('adapt-values').value = (data.values || []).join('\n');
-    renderManagement(data.management || []);
+    cachedManagement = data.management || [];
+    renderManagement(cachedManagement);
   } catch(e) { toast('Adaptatsiya ma\'lumotlari yuklanmadi', 'error'); }
 }
 
@@ -1186,13 +1188,21 @@ function openMemberModal(id) {
   document.getElementById('member-position').value = '';
   document.getElementById('member-phone').value = '';
   document.getElementById('member-photo').value = '';
-  document.getElementById('member-photo-preview').style.display = 'none';
+  document.getElementById('member-photo-file').value = '';
+  const prev = document.getElementById('member-photo-preview');
+  prev.style.display = 'none';
+  prev.src = '';
+
   if (id) {
-    const el = document.querySelector(`[onclick="openMemberModal('${id}')"]`);
-    const row = el?.closest('[style*="border-bottom"]');
-    if (row) {
-      document.getElementById('member-name').value = row.querySelector('[style*="font-weight:600"]')?.textContent || '';
-      document.getElementById('member-position').value = row.querySelector('[style*="var(--gold)"]')?.textContent || '';
+    const m = cachedManagement.find(x => x.id === id);
+    if (m) {
+      document.getElementById('member-name').value = m.name || '';
+      document.getElementById('member-position').value = m.position || '';
+      document.getElementById('member-phone').value = m.phone || '';
+      if (m.photo) {
+        prev.src = m.photo;
+        prev.style.display = 'block';
+      }
     }
   }
   document.getElementById('member-modal').classList.add('show');

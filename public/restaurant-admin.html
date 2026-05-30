@@ -90,9 +90,33 @@
     <div id="page-waiters" class="page" style="display:none">
       <div class="page-header">
         <div><h1>Ofitsiantlar</h1><p>PIN tayinlash va ofitsiantlarni boshqarish</p></div>
-        <button class="btn btn-gold" onclick="openWaiterModal()">+ Ofitsiant qo'shish</button>
+        <div class="flex gap-8">
+          <button class="btn btn-outline" onclick="downloadTemplate()">⬇ Shablon yuklash</button>
+          <button class="btn btn-outline" onclick="document.getElementById('excel-input').click()">📂 Excel yuklash</button>
+          <input type="file" id="excel-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="importFromExcel(this)">
+          <button class="btn btn-gold" onclick="openWaiterModal()">+ Ofitsiant qo'shish</button>
+        </div>
       </div>
       <div class="page-body">
+        <div class="alert alert-info mb-16" style="font-size:0.82rem">
+          📊 Excel/CSV formatda yuklash uchun: <strong>Ism</strong> va <strong>PIN</strong> ustunlari bo'lishi kerak.
+          <a href="#" onclick="downloadTemplate()" style="color:var(--gold)">Shablon yuklab oling</a>.
+        </div>
+        <div id="import-preview" style="display:none" class="card mb-16">
+          <div class="card-header">
+            <h3 class="card-title" id="import-title">Import ko'rinishi</h3>
+            <div class="flex gap-8">
+              <button class="btn btn-ghost btn-sm" onclick="cancelImport()">Bekor qilish</button>
+              <button class="btn btn-gold btn-sm" onclick="confirmImport()">✓ Yuklashni tasdiqlash</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>#</th><th>Ism</th><th>PIN</th><th>Holat</th></tr></thead>
+              <tbody id="import-table"></tbody>
+            </table>
+          </div>
+        </div>
         <div class="table-wrap">
           <table>
             <thead><tr><th>#</th><th>Ism</th><th>PIN</th><th>Status</th><th>Qo'shilgan</th><th>Amallar</th></tr></thead>
@@ -912,6 +936,103 @@ function showResultDetail(id) {
       </div>`).join('')}
   `;
   document.getElementById('result-modal').classList.add('show');
+}
+
+// ===== EXCEL IMPORT =====
+let importData = [];
+
+function downloadTemplate() {
+  // CSV shablon yaratish
+  const csv = 'Ism,PIN\nJasur Toshmatov,1234\nMadina Karimova,5678\nBobur Rahimov,9012';
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'ofitsiantlar_shablon.csv';
+  a.click(); URL.revokeObjectURL(url);
+  toast('Shablon yuklandi', 'success');
+}
+
+async function importFromExcel(input) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = '';
+
+  const text = await file.text();
+  let rows = [];
+
+  if (file.name.endsWith('.csv')) {
+    // CSV parse
+    const lines = text.split('\n').filter(l => l.trim());
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/﻿/g, ''));
+    const ismIdx = headers.findIndex(h => h.includes('ism') || h.includes('name') || h.includes('nom'));
+    const pinIdx = headers.findIndex(h => h.includes('pin') || h.includes('kod') || h.includes('parol'));
+
+    if (ismIdx === -1 || pinIdx === -1) {
+      toast('CSV da "Ism" va "PIN" ustunlari topilmadi!', 'error'); return;
+    }
+
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(',').map(c => c.trim().replace(/"/g, ''));
+      if (!cols[ismIdx]) continue;
+      rows.push({ name: cols[ismIdx], pin: String(cols[pinIdx] || '').trim() });
+    }
+  } else {
+    toast('Iltimos .csv formatda yuklang. Shablonni yuklab foydalaning.', 'error'); return;
+  }
+
+  if (!rows.length) { toast('Fayl bo\'sh yoki noto\'g\'ri format', 'error'); return; }
+
+  // Validatsiya
+  importData = rows.map(r => {
+    const pin = String(r.pin).padStart(4, '0').slice(0, 4);
+    const existing = waiters.find(w => w.pin === pin);
+    let status = '✅ Tayyor';
+    let error = '';
+    if (!r.name) { status = '❌ Ism yo\'q'; error = 'ism'; }
+    else if (!/^\d{4}$/.test(pin)) { status = '❌ PIN noto\'g\'ri'; error = 'pin'; }
+    else if (existing) { status = `⚠️ PIN band (${existing.name})`; error = 'duplicate'; }
+    return { name: r.name, pin, status, error };
+  });
+
+  const valid = importData.filter(r => !r.error).length;
+  const invalid = importData.length - valid;
+
+  document.getElementById('import-title').textContent =
+    `Import: ${importData.length} ta ofitsiant — ${valid} ta yuklash mumkin, ${invalid} ta xato`;
+  document.getElementById('import-table').innerHTML = importData.map((r, i) => `
+    <tr style="opacity:${r.error?'0.6':'1'}">
+      <td>${i+1}</td>
+      <td>${r.name}</td>
+      <td><code style="background:var(--bg);padding:3px 8px;border-radius:5px;letter-spacing:0.2em">${r.pin}</code></td>
+      <td>${r.status}</td>
+    </tr>`).join('');
+  document.getElementById('import-preview').style.display = 'block';
+  window.scrollTo(0, 0);
+}
+
+function cancelImport() {
+  importData = [];
+  document.getElementById('import-preview').style.display = 'none';
+}
+
+async function confirmImport() {
+  const valid = importData.filter(r => !r.error);
+  if (!valid.length) { toast('Yuklash mumkin bo\'lgan ofitsiant yo\'q', 'error'); return; }
+
+  const btn = document.querySelector('#import-preview .btn-gold');
+  btn.disabled = true; btn.textContent = 'Yuklanmoqda...';
+
+  let success = 0, fail = 0;
+  for (const w of valid) {
+    try {
+      await api('/api/restaurant/waiters', { method: 'POST', body: JSON.stringify({ name: w.name, pin: w.pin }) });
+      success++;
+    } catch { fail++; }
+  }
+
+  toast(`✅ ${success} ta ofitsiant qo'shildi${fail ? `, ${fail} ta xato` : ''}`, 'success');
+  cancelImport();
+  await loadWaiters();
 }
 
 // ===== NAVIGATION =====

@@ -961,9 +961,11 @@ async function importFromExcel(input) {
   let rows = [];
 
   if (file.name.endsWith('.csv')) {
-    // CSV parse
+    // CSV parse - vergul yoki nuqtali vergul (;) avtomatik aniqlanadi
     const lines = text.split('\n').filter(l => l.trim());
-    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/﻿/g, ''));
+    const firstLine = lines[0];
+    const sep = firstLine.includes(';') ? ';' : ',';
+    const headers = firstLine.split(sep).map(h => h.trim().toLowerCase().replace(/﻿/g,'').replace(/﻿/g,''));
     const ismIdx = headers.findIndex(h => h.includes('ism') || h.includes('name') || h.includes('nom'));
     const pinIdx = headers.findIndex(h => h.includes('pin') || h.includes('kod') || h.includes('parol'));
 
@@ -972,7 +974,7 @@ async function importFromExcel(input) {
     }
 
     for (let i = 1; i < lines.length; i++) {
-      const cols = lines[i].split(',').map(c => c.trim().replace(/"/g, ''));
+      const cols = lines[i].split(sep).map(c => c.trim().replace(/"/g, ''));
       if (!cols[ismIdx]) continue;
       rows.push({ name: cols[ismIdx], pin: String(cols[pinIdx] || '').trim() });
     }

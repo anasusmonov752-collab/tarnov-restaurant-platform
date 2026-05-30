@@ -503,13 +503,30 @@ app.get('/api/waiter/announcements', auth(['waiter']), async (req, res) => {
 
 // ==================== START ====================
 
-connectDB().then(() => {
+async function startServer() {
+  let retries = 5;
+  while (retries > 0) {
+    try {
+      await connectDB();
+      break;
+    } catch (err) {
+      retries--;
+      console.error(`MongoDB ulanish xatosi (${5 - retries}/5):`, err.message);
+      if (retries === 0) {
+        console.error('MongoDB ga ulanib bo\'lmadi. MONGODB_URI ni tekshiring!');
+        console.error('MONGODB_URI:', process.env.MONGODB_URI ? 'O\'rnatilgan' : 'O\'RNATILMAGAN!');
+        process.exit(1);
+      }
+      console.log(`${3} soniyadan so\'ng qayta uriniladi...`);
+      await new Promise(r => setTimeout(r, 3000));
+    }
+  }
+
   app.listen(PORT, () => {
     console.log(`✦ Tarnov Restaurant Platform`);
     console.log(`✦ Running on http://localhost:${PORT}`);
     console.log(`✦ Super Admin: admin@tarnov.uz / Tarnov2024!`);
   });
-}).catch(err => {
-  console.error('MongoDB connection error:', err);
-  process.exit(1);
-});
+}
+
+startServer();

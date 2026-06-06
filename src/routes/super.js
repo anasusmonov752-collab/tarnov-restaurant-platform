@@ -47,7 +47,12 @@ router.put('/restaurants/:id', guard, asyncHandler(async (req, res) => {
   if (plan) update.plan = plan;
   if (planPrice !== undefined) update.planPrice = parseInt(planPrice);
   if (active !== undefined) update.active = Boolean(active);
-  if (adminEmail) update.adminEmail = adminEmail;
+  if (adminEmail) {
+    const normalized = adminEmail.toLowerCase().trim();
+    const duplicate = await Restaurant.findOne({ adminEmail: normalized, id: { $ne: req.params.id } });
+    if (duplicate) return res.status(400).json({ error: 'Bu email boshqa restoranda allaqachon mavjud' });
+    update.adminEmail = normalized;
+  }
   if (adminPassword) update.adminPassword = await bcrypt.hash(adminPassword, 10);
   await Restaurant.updateOne({ id: req.params.id }, update);
   res.json({ success: true });

@@ -73,7 +73,14 @@ router.put('/waiters/:waiterId', guard, asyncHandler(async (req, res) => {
   const { name, pin, active } = req.body;
   const update = {};
   if (name) update['waiters.$.name'] = name;
-  if (pin && /^\d{4}$/.test(pin)) update['waiters.$.pin'] = pin;
+  if (pin) {
+    if (!/^\d{4}$/.test(pin)) return res.status(400).json({ error: 'PIN 4 raqamli bo\'lishi kerak' });
+    const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'waiters');
+    if (r.waiters.find(w => w.pin === pin && w.id !== req.params.waiterId)) {
+      return res.status(400).json({ error: 'Bu PIN boshqa ofitsiantda allaqachon mavjud' });
+    }
+    update['waiters.$.pin'] = pin;
+  }
   if (active !== undefined) update['waiters.$.active'] = Boolean(active);
   await Restaurant.updateOne({ id: req.user.restaurantId, 'waiters.id': req.params.waiterId }, { $set: update });
   res.json({ success: true });
@@ -129,6 +136,9 @@ router.get('/testdays', guard, asyncHandler(async (req, res) => {
 
 router.post('/testdays', guard, asyncHandler(async (req, res) => {
   const { date } = req.body;
+  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ error: 'Sana formati noto\'g\'ri. YYYY-MM-DD bo\'lishi kerak' });
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return res.status(400).json({ error: 'Noto\'g\'ri sana' });
   await Restaurant.updateOne({ id: req.user.restaurantId }, { $addToSet: { testDays: date } });
   res.json({ success: true });
 }));

@@ -3,29 +3,39 @@ const { v4: uuidv4 } = require('uuid');
 
 const MenuItemSchema = new mongoose.Schema({
   id: { type: String, default: () => uuidv4() },
-  name: String, category: String, description: String,
-  ingredients: [String], allergens: [String],
-  price: Number, servingSuggestion: String,
+  name: { type: String, required: true, trim: true },
+  category: { type: String, required: true, trim: true },
+  description: { type: String, default: '', trim: true },
+  ingredients: [String],
+  allergens: [String],
+  price: { type: Number, min: 0, default: 0 },
+  servingSuggestion: { type: String, default: '' },
   image: { type: String, maxlength: 2000000 },
   createdAt: { type: Date, default: Date.now }
 });
 
 const WaiterSchema = new mongoose.Schema({
   id: { type: String, default: () => uuidv4() },
-  name: String, pin: String, active: { type: Boolean, default: true },
+  name: { type: String, required: true, trim: true },
+  pin: { type: String, required: true, match: [/^\d{4}$/, 'PIN 4 raqamli bo\'lishi kerak'] },
+  active: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now }
 });
 
 const QuestionSchema = new mongoose.Schema({
   id: { type: String, default: () => uuidv4() },
-  question: String, options: [String],
-  correctAnswer: Number, difficulty: String,
-  menuItemId: String, createdAt: { type: Date, default: Date.now }
+  question: { type: String, required: true, trim: true },
+  options: { type: [String], validate: { validator: v => v.length >= 2, message: 'Kamida 2 ta javob varianti kerak' } },
+  correctAnswer: { type: Number, required: true, min: 0 },
+  difficulty: { type: String, required: true, enum: ['easy', 'medium', 'hard'] },
+  menuItemId: String,
+  createdAt: { type: Date, default: Date.now }
 });
 
 const AnnouncementSchema = new mongoose.Schema({
   id: { type: String, default: () => uuidv4() },
-  title: String, content: String,
+  title: { type: String, required: true, trim: true },
+  content: { type: String, required: true, trim: true },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -48,7 +58,7 @@ const TestResultSchema = new mongoose.Schema({
 
 const ChecklistItemSchema = new mongoose.Schema({
   id: { type: String, default: () => uuidv4() },
-  title: String,
+  title: { type: String, required: true, trim: true },
   description: { type: String, default: '' },
   period: { type: String, enum: ['1-kun', '1-hafta', '1-oy'], default: '1-hafta' },
   order: { type: Number, default: 0 }
@@ -61,7 +71,9 @@ const WaiterChecklistSchema = new mongoose.Schema({
 
 const ManagementMemberSchema = new mongoose.Schema({
   id: { type: String, default: () => uuidv4() },
-  name: String, position: String, phone: String,
+  name: { type: String, required: true, trim: true },
+  position: { type: String, required: true, trim: true },
+  phone: String,
   photo: { type: String, maxlength: 2000000 },
   order: { type: Number, default: 0 }
 });
@@ -75,12 +87,20 @@ const AdaptationSchema = new mongoose.Schema({
 
 const RestaurantSchema = new mongoose.Schema({
   id: { type: String, default: () => uuidv4(), unique: true },
-  name: String, location: String,
+  name: { type: String, required: true, trim: true },
+  location: { type: String, default: '', trim: true },
   active: { type: Boolean, default: true },
-  plan: { type: String, default: 'basic' },
-  planPrice: { type: Number, default: 0 },
-  adminEmail: { type: String, unique: true },
-  adminPassword: String,
+  plan: { type: String, default: 'basic', enum: ['basic', 'pro', 'enterprise'] },
+  planPrice: { type: Number, default: 0, min: 0 },
+  adminEmail: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true,
+    match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Email format noto\'g\'ri']
+  },
+  adminPassword: { type: String, required: true, minlength: 6 },
   createdAt: { type: Date, default: Date.now },
   menu: [MenuItemSchema],
   waiters: [WaiterSchema],

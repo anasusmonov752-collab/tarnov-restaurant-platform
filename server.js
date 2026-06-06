@@ -30,6 +30,9 @@ if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 app.use('/uploads', express.static(UPLOADS_DIR));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// ── Health check (UptimeRobot / keep-alive) ────────────────────────
+app.get('/ping', (req, res) => res.json({ ok: true, ts: Date.now() }));
+
 // ── Public route: restaurant list for waiter login ─────────────────
 const Restaurant = require('./src/models/Restaurant');
 app.get('/api/restaurants/list', async (req, res, next) => {

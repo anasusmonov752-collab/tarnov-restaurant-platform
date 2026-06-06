@@ -26,7 +26,7 @@ router.post('/login', loginLimiter, asyncHandler(async (req, res) => {
     const valid = await bcrypt.compare(password, admin.password);
     if (!valid) return res.status(401).json({ error: 'Noto\'g\'ri email yoki parol' });
     const token = jwt.sign({ role: 'superadmin', name: admin.name }, JWT_SECRET, { expiresIn: '24h' });
-    res.cookie('token', token, { httpOnly: true, maxAge: 86400000, sameSite: 'lax' });
+    res.cookie('token', token, { httpOnly: true, maxAge: 86400000, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' });
     return res.json({ success: true, role: 'superadmin', redirect: '/super-admin.html' });
   }
 
@@ -39,7 +39,7 @@ router.post('/login', loginLimiter, asyncHandler(async (req, res) => {
       { role: 'restaurant', restaurantId: restaurant.id, restaurantName: restaurant.name },
       JWT_SECRET, { expiresIn: '24h' }
     );
-    res.cookie('token', token, { httpOnly: true, maxAge: 86400000, sameSite: 'lax' });
+    res.cookie('token', token, { httpOnly: true, maxAge: 86400000, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' });
     return res.json({ success: true, role: 'restaurant', redirect: '/restaurant-admin.html' });
   }
 
@@ -53,7 +53,7 @@ router.post('/login', loginLimiter, asyncHandler(async (req, res) => {
       { role: 'waiter', restaurantId: restaurant.id, restaurantName: restaurant.name, waiterId: waiter.id, waiterName: waiter.name },
       JWT_SECRET, { expiresIn: '12h' }
     );
-    res.cookie('token', token, { httpOnly: true, maxAge: 43200000, sameSite: 'lax' });
+    res.cookie('token', token, { httpOnly: true, maxAge: 43200000, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' });
     return res.json({ success: true, role: 'waiter', redirect: '/waiter.html' });
   }
 

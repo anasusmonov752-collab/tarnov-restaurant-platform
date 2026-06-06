@@ -59,9 +59,12 @@ router.post('/test/submit', guard, asyncHandler(async (req, res) => {
   const today = new Date().toISOString().split('T')[0];
   if (!r.testDays.includes(today)) return res.status(403).json({ error: 'Bugun test kuni emas' });
   const { answers } = req.body;
+  if (!answers || typeof answers !== 'object' || Array.isArray(answers)) {
+    return res.status(400).json({ error: 'Javoblar noto\'g\'ri formatda' });
+  }
   let easyScore = 0, easyTotal = 0, mediumScore = 0, mediumTotal = 0, hardScore = 0, hardTotal = 0;
   const breakdown = [];
-  Object.entries(answers || {}).forEach(([qId, selected]) => {
+  Object.entries(answers).forEach(([qId, selected]) => {
     const q = r.questions.find(x => x.id === qId);
     if (!q) return;
     const isCorrect = parseInt(selected) === q.correctAnswer;
@@ -80,7 +83,16 @@ router.post('/test/submit', guard, asyncHandler(async (req, res) => {
     easyScore, easyTotal, mediumScore, mediumTotal, hardScore, hardTotal,
     hasCertificate: percentage >= 90, breakdown
   };
-  await Restaurant.updateOne({ id: req.user.restaurantId }, { $push: { testResults: result } });
+  // Atomic update: faqat bu waiter bugun test topshirmagan bo'lsa qo'shadi
+  const updateResult = await Restaurant.updateOne(
+    { id: req.user.restaurantId, testResults: { $not: { $elemMatch: { waiterId: req.user.waiterId, date: today } } } },
+    { $push: { testResults: result } }
+  );
+  if (updateResult.modifiedCount === 0) {
+    const existing = await Restaurant.findOne({ id: req.user.restaurantId }, 'testResults');
+    const taken = existing.testResults.find(x => x.waiterId === req.user.waiterId && x.date === today);
+    return res.status(400).json({ error: 'Siz bugun allaqachon test topshirdingiz', result: taken });
+  }
   res.json({ success: true, result });
 }));
 

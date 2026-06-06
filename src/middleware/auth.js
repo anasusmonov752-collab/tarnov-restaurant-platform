@@ -1,6 +1,10 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'tarnov-secret-jwt-key-2024';
+const JWT_SECRET = process.env.JWT_SECRET || (
+  process.env.NODE_ENV === 'production'
+    ? (() => { throw new Error('JWT_SECRET muhit o\'zgaruvchisi o\'rnatilmagan!'); })()
+    : 'tarnov-dev-only-secret'
+);
 
 function auth(roles) {
   return (req, res, next) => {

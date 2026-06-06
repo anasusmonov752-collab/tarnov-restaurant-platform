@@ -10,7 +10,7 @@ const MenuItemSchema = new mongoose.Schema({
   allergens: [String],
   price: { type: Number, min: 0, default: 0 },
   servingSuggestion: { type: String, default: '' },
-  image: { type: String, maxlength: 2000000 },
+  image: { type: String, maxlength: 7000000 },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -74,7 +74,7 @@ const ManagementMemberSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   position: { type: String, required: true, trim: true },
   phone: String,
-  photo: { type: String, maxlength: 2000000 },
+  photo: { type: String, maxlength: 7000000 },
   order: { type: Number, default: 0 }
 });
 

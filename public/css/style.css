@@ -68,6 +68,11 @@ html[data-theme="fresh-emerald"] {
   --login-bg: #DDE2F5; --login-card-bg: #FFFFFF; --login-card-bg2: #F5F7FC;
   --login-gradient: radial-gradient(ellipse at 50% 0%, rgba(67,85,196,0.18) 0%, transparent 60%);
   --row-hover: rgba(0,0,0,0.025); --btn-text: #FFFFFF;
+  --glass-bg: rgba(255,255,255,0.75); --glass-border: rgba(67,85,196,0.18);
+  --glass-shine: rgba(255,255,255,0.9); --glass-shadow: 0 8px 40px rgba(0,0,0,0.08);
+  --sidebar-glass: rgba(255,255,255,0.80); --login-glass: rgba(255,255,255,0.90);
+  --modal-glass: rgba(255,255,255,0.92); --optbtn-glass: rgba(0,0,0,0.04);
+  --nav-glass: rgba(255,255,255,0.85); --header-glass: rgba(255,255,255,0.85);
 }
 
 /* ===== TEMA 3: ROYAL CRIMSON — To'q qizil [TO'Q — steakhouse/Italian] ===== */
@@ -116,6 +121,11 @@ html[data-theme="warm-amber"] {
   --login-bg: #EDE4D5; --login-card-bg: #FFFFFF; --login-card-bg2: #FBF6F0;
   --login-gradient: radial-gradient(ellipse at 50% 0%, rgba(196,98,42,0.18) 0%, transparent 60%);
   --row-hover: rgba(0,0,0,0.025); --btn-text: #FFFFFF;
+  --glass-bg: rgba(255,255,255,0.78); --glass-border: rgba(196,98,42,0.18);
+  --glass-shine: rgba(255,255,255,0.9); --glass-shadow: 0 8px 40px rgba(0,0,0,0.07);
+  --sidebar-glass: rgba(255,248,240,0.85); --login-glass: rgba(255,255,255,0.92);
+  --modal-glass: rgba(255,255,255,0.93); --optbtn-glass: rgba(0,0,0,0.04);
+  --nav-glass: rgba(255,250,245,0.88); --header-glass: rgba(255,250,245,0.88);
 }
 
 body {
@@ -1493,6 +1503,12 @@ svg.lucide, i[data-lucide] {
   --glass-shine:    rgba(255, 255, 255, 0.07);
   --glass-blur:     24px;
   --glass-shadow:   0 8px 40px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.04) inset;
+  --sidebar-glass:  rgba(14, 11, 5, 0.60);
+  --login-glass:    rgba(12, 9, 4, 0.65);
+  --modal-glass:    rgba(14, 11, 5, 0.72);
+  --optbtn-glass:   rgba(255,255,255,0.03);
+  --nav-glass:      rgba(10, 8, 3, 0.70);
+  --header-glass:   rgba(10, 8, 3, 0.65);
 }
 
 /* Ambient background glows — give backdrop-filter something to blur */
@@ -1510,7 +1526,7 @@ body {
 
 /* Sidebar glass */
 .sidebar {
-  background: rgba(14, 11, 5, 0.6) !important;
+  background: var(--sidebar-glass) !important;
   backdrop-filter: blur(var(--glass-blur)) saturate(160%) !important;
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%) !important;
   border-right: 1px solid var(--glass-border) !important;
@@ -1565,7 +1581,7 @@ body {
 
 /* Login card glass */
 .login-card {
-  background: rgba(12, 9, 4, 0.65) !important;
+  background: var(--login-glass) !important;
   backdrop-filter: blur(32px) saturate(180%);
   -webkit-backdrop-filter: blur(32px) saturate(180%);
   border: 1px solid rgba(200,146,42,0.28) !important;
@@ -1585,7 +1601,7 @@ body {
 }
 
 .modal {
-  background: rgba(14, 11, 5, 0.72) !important;
+  background: var(--modal-glass) !important;
   backdrop-filter: blur(28px) saturate(160%);
   -webkit-backdrop-filter: blur(28px) saturate(160%);
   border: 1px solid rgba(200,146,42,0.22) !important;
@@ -1606,7 +1622,7 @@ body {
 
 /* Option buttons glass */
 .option-btn {
-  background: rgba(255,255,255,0.03) !important;
+  background: var(--optbtn-glass) !important;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1.5px solid rgba(255,255,255,0.07) !important;
@@ -1624,7 +1640,7 @@ body {
 
 /* Waiter bottom nav — iOS-style frosted glass tab bar */
 .waiter-nav {
-  background: rgba(10, 8, 3, 0.7) !important;
+  background: var(--nav-glass) !important;
   backdrop-filter: blur(28px) saturate(180%);
   -webkit-backdrop-filter: blur(28px) saturate(180%);
   border-top: 1px solid rgba(200,146,42,0.18) !important;
@@ -1635,7 +1651,7 @@ body {
 
 /* Waiter header glass */
 .waiter-header {
-  background: rgba(10, 8, 3, 0.65) !important;
+  background: var(--header-glass) !important;
   backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
   border-bottom: 1px solid var(--accent-bg2) !important;
@@ -1644,7 +1660,7 @@ body {
 
 /* Mobile topbar glass */
 .mobile-topbar {
-  background: rgba(10, 8, 3, 0.7) !important;
+  background: var(--nav-glass) !important;
   backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
   border-bottom: 1px solid var(--accent-bg2) !important;

@@ -40,14 +40,14 @@ html[data-theme="elegant-dark"] {
 
 /* ===== TEMA 2: FRESH EMERALD — To'q yashil fon (eco/healthy) ===== */
 html[data-theme="fresh-emerald"] {
-  --bg: #021A0A;
-  --card: #042E12;
-  --card2: #063D18;
+  --bg: #052B12;
+  --card: #0A4020;
+  --card2: #0D5028;
   --gold: #00E676;
   --gold-light: #69F0AE;
   --gold-dark: #00C853;
-  --border: #0A5C20;
-  --border2: #084A1A;
+  --border: #1A7A40;
+  --border2: #145E32;
   --text: #F1FFF7;
   --text2: #80E8A8;
   --text3: #3DAB68;
@@ -55,14 +55,14 @@ html[data-theme="fresh-emerald"] {
 
 /* ===== TEMA 3: ROYAL CRIMSON — To'q qizil fon (steakhouse/Italian) ===== */
 html[data-theme="royal-crimson"] {
-  --bg: #160203;
-  --card: #250508;
-  --card2: #30070B;
+  --bg: #2D0408;
+  --card: #420610;
+  --card2: #520816;
   --gold: #FF1744;
   --gold-light: #FF5252;
   --gold-dark: #D50000;
-  --border: #5C0A10;
-  --border2: #48080D;
+  --border: #8C1020;
+  --border2: #720D1A;
   --text: #FFF5F5;
   --text2: #FFAAB5;
   --text3: #E06070;
@@ -70,14 +70,14 @@ html[data-theme="royal-crimson"] {
 
 /* ===== TEMA 4: OCEAN BLUE — To'q ko'k fon (seafood/Mediterranean) ===== */
 html[data-theme="ocean-blue"] {
-  --bg: #010D1F;
-  --card: #041830;
-  --card2: #07223F;
+  --bg: #03173A;
+  --card: #062550;
+  --card2: #082E62;
   --gold: #00B0FF;
   --gold-light: #40C4FF;
   --gold-dark: #0091EA;
-  --border: #0A3A6A;
-  --border2: #082E55;
+  --border: #1050A0;
+  --border2: #0C3E80;
   --text: #EEF8FF;
   --text2: #7EC8F5;
   --text3: #3A88CC;
@@ -85,14 +85,14 @@ html[data-theme="ocean-blue"] {
 
 /* ===== TEMA 5: WARM AMBER — To'q jigarrang fon (cafe/casual) ===== */
 html[data-theme="warm-amber"] {
-  --bg: #130800;
-  --card: #1F1000;
-  --card2: #2A1600;
+  --bg: #2A1400;
+  --card: #3D1E00;
+  --card2: #4E2600;
   --gold: #FF8F00;
   --gold-light: #FFB300;
   --gold-dark: #E65100;
-  --border: #5C2E00;
-  --border2: #4A2500;
+  --border: #8A4A00;
+  --border2: #703C00;
   --text: #FFF8EE;
   --text2: #FFCC80;
   --text3: #CC8800;

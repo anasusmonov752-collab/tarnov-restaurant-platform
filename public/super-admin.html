@@ -132,37 +132,37 @@
         <div id="theme-picker" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:4px">
           <div class="theme-option" data-theme="elegant-dark" onclick="selectTheme('elegant-dark')" title="Elegant Dark">
             <div style="background:#111;border:2px solid #C8922A;border-radius:8px;padding:10px 4px;text-align:center;cursor:pointer">
-              <div style="width:24px;height:24px;background:#C8922A;border-radius:50%;margin:0 auto 4px"></div>
-              <div style="font-size:10px;color:#C8922A;font-weight:600">Elegant</div>
-              <div style="font-size:9px;color:#666">Dark Gold</div>
+              <div style="width:28px;height:28px;background:linear-gradient(135deg,#C8922A,#F0B040);border-radius:50%;margin:0 auto 4px"></div>
+              <div style="font-size:10px;color:#F0B040;font-weight:700">Elegant</div>
+              <div style="font-size:9px;color:#888">Dark Gold</div>
             </div>
           </div>
           <div class="theme-option" data-theme="fresh-emerald" onclick="selectTheme('fresh-emerald')" title="Fresh Emerald">
-            <div style="background:#121A17;border:2px solid #333;border-radius:8px;padding:10px 4px;text-align:center;cursor:pointer">
-              <div style="width:24px;height:24px;background:#27AE60;border-radius:50%;margin:0 auto 4px"></div>
-              <div style="font-size:10px;color:#27AE60;font-weight:600">Fresh</div>
-              <div style="font-size:9px;color:#5C9970">Emerald</div>
+            <div style="background:#042E12;border:2px solid #333;border-radius:8px;padding:10px 4px;text-align:center;cursor:pointer">
+              <div style="width:28px;height:28px;background:linear-gradient(135deg,#00C853,#69F0AE);border-radius:50%;margin:0 auto 4px"></div>
+              <div style="font-size:10px;color:#00E676;font-weight:700">Fresh</div>
+              <div style="font-size:9px;color:#3DAB68">Emerald</div>
             </div>
           </div>
           <div class="theme-option" data-theme="royal-crimson" onclick="selectTheme('royal-crimson')" title="Royal Crimson">
-            <div style="background:#150E0E;border:2px solid #333;border-radius:8px;padding:10px 4px;text-align:center;cursor:pointer">
-              <div style="width:24px;height:24px;background:#C0392B;border-radius:50%;margin:0 auto 4px"></div>
-              <div style="font-size:10px;color:#C0392B;font-weight:600">Royal</div>
-              <div style="font-size:9px;color:#8B5E5E">Crimson</div>
+            <div style="background:#250508;border:2px solid #333;border-radius:8px;padding:10px 4px;text-align:center;cursor:pointer">
+              <div style="width:28px;height:28px;background:linear-gradient(135deg,#D50000,#FF5252);border-radius:50%;margin:0 auto 4px"></div>
+              <div style="font-size:10px;color:#FF1744;font-weight:700">Royal</div>
+              <div style="font-size:9px;color:#E06070">Crimson</div>
             </div>
           </div>
           <div class="theme-option" data-theme="ocean-blue" onclick="selectTheme('ocean-blue')" title="Ocean Blue">
-            <div style="background:#0E1520;border:2px solid #333;border-radius:8px;padding:10px 4px;text-align:center;cursor:pointer">
-              <div style="width:24px;height:24px;background:#2980B9;border-radius:50%;margin:0 auto 4px"></div>
-              <div style="font-size:10px;color:#2980B9;font-weight:600">Ocean</div>
-              <div style="font-size:9px;color:#4A7FA8">Blue</div>
+            <div style="background:#041830;border:2px solid #333;border-radius:8px;padding:10px 4px;text-align:center;cursor:pointer">
+              <div style="width:28px;height:28px;background:linear-gradient(135deg,#0091EA,#40C4FF);border-radius:50%;margin:0 auto 4px"></div>
+              <div style="font-size:10px;color:#00B0FF;font-weight:700">Ocean</div>
+              <div style="font-size:9px;color:#3A88CC">Blue</div>
             </div>
           </div>
           <div class="theme-option" data-theme="warm-amber" onclick="selectTheme('warm-amber')" title="Warm Amber">
-            <div style="background:#1A1108;border:2px solid #333;border-radius:8px;padding:10px 4px;text-align:center;cursor:pointer">
-              <div style="width:24px;height:24px;background:#D68910;border-radius:50%;margin:0 auto 4px"></div>
-              <div style="font-size:10px;color:#D68910;font-weight:600">Warm</div>
-              <div style="font-size:9px;color:#8B6914">Amber</div>
+            <div style="background:#1F1000;border:2px solid #333;border-radius:8px;padding:10px 4px;text-align:center;cursor:pointer">
+              <div style="width:28px;height:28px;background:linear-gradient(135deg,#E65100,#FFB300);border-radius:50%;margin:0 auto 4px"></div>
+              <div style="font-size:10px;color:#FF8F00;font-weight:700">Warm</div>
+              <div style="font-size:9px;color:#CC8800">Amber</div>
             </div>
           </div>
         </div>
@@ -387,7 +387,7 @@ function selectTheme(theme) {
   });
   const sel = document.querySelector(`#theme-picker [data-theme="${theme}"] > div`);
   if (sel) {
-    const colors = { 'elegant-dark':'#C8922A','fresh-emerald':'#27AE60','royal-crimson':'#C0392B','ocean-blue':'#2980B9','warm-amber':'#D68910' };
+    const colors = { 'elegant-dark':'#C8922A','fresh-emerald':'#00E676','royal-crimson':'#FF1744','ocean-blue':'#00B0FF','warm-amber':'#FF8F00' };
     sel.style.border = `2px solid ${colors[theme] || '#C8922A'}`;
   }
 }

@@ -496,8 +496,8 @@ function toggleNeon() {
   const on = document.body.classList.toggle('neon-mode');
   document.getElementById('neon-btn').classList.toggle('on', on);
   localStorage.setItem('neonMode', on ? '1' : '');
-  if (on) { startLiquidBg(); startCursorTrail(); }
-  else { stopLiquidBg(); stopCursorTrail(); }
+  if (on) { startLiquidBg(); }
+  else { stopLiquidBg(); }
 }
 if (localStorage.getItem('neonMode')) {
   document.body.classList.add('neon-mode');
@@ -523,7 +523,7 @@ async function init() {
     } else {
       updateStreak();
     }
-    if (localStorage.getItem('neonMode')) { startLiquidBg(); startCursorTrail(); }
+    if (localStorage.getItem('neonMode')) { startLiquidBg(); }
     if (waiterInfo.isTestDay) {
       document.getElementById('test-day-badge').innerHTML = '<span class="badge badge-warning"><i data-lucide="alert-circle" style="width:12px;height:12px"></i> Test kuni</span>';
       document.getElementById('test-day-alert').innerHTML = `

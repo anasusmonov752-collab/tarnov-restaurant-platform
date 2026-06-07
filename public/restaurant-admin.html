@@ -74,7 +74,21 @@
     <!-- DASHBOARD -->
     <div id="page-dashboard" class="page">
       <div class="page-header">
-        <div><h1>Dashboard <span class="gold">✦</span></h1><p id="dash-sub">Restoran boshqaruv paneli</p></div>
+        <div>
+          <h1 style="display:flex;align-items:center;gap:12px">Dashboard <span class="gold">✦</span>
+            <span class="live-badge" id="live-badge" style="display:none">
+              <span class="live-dot"></span>LIVE
+            </span>
+          </h1>
+          <p id="dash-sub">Restoran boshqaruv paneli</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:0.78rem;color:var(--text3)" id="last-refresh"></span>
+          <div style="display:flex;align-items:center;gap:6px;font-size:0.78rem;color:var(--text3)">
+            <span>Neon</span>
+            <button class="neon-toggle" id="neon-btn" onclick="toggleNeon()" title="Neon mode"></button>
+          </div>
+        </div>
       </div>
       <div class="page-body">
         <div class="stats-grid" id="dash-stats"></div>
@@ -244,6 +258,25 @@
         <div><h1>Test natijalari</h1><p>Ofitsiantlar test natijalari va statistika</p></div>
       </div>
       <div class="page-body">
+        <div class="card mb-20">
+          <div class="card-header">
+            <h3 class="card-title"><i data-lucide="activity" style="width:15px;height:15px"></i> Faollik xaritasi (so'nggi 16 hafta)</h3>
+            <div style="display:flex;align-items:center;gap:8px;font-size:0.75rem;color:var(--text3)">
+              kam <span style="display:inline-flex;gap:2px">
+                <span style="width:11px;height:11px;border-radius:2px;background:var(--border);display:inline-block"></span>
+                <span style="width:11px;height:11px;border-radius:2px;background:rgba(200,146,42,0.25);display:inline-block"></span>
+                <span style="width:11px;height:11px;border-radius:2px;background:rgba(200,146,42,0.55);display:inline-block"></span>
+                <span style="width:11px;height:11px;border-radius:2px;background:rgba(200,146,42,0.8);display:inline-block"></span>
+                <span style="width:11px;height:11px;border-radius:2px;background:#C8922A;display:inline-block"></span>
+              </span> ko'p
+            </div>
+          </div>
+          <div class="heatmap-wrap">
+            <div class="heatmap-month-labels" id="hm-months"></div>
+            <div class="heatmap-grid" id="hm-grid"></div>
+            <div style="font-size:0.72rem;color:var(--text3);margin-top:8px" id="hm-total"></div>
+          </div>
+        </div>
         <div class="flex gap-12 mb-16" style="flex-wrap:wrap">
           <input type="date" class="form-control" id="res-date-filter" onchange="filterResults()" style="width:auto">
           <input type="text" class="form-control" id="res-name-filter" placeholder="Ism bo'yicha qidirish" oninput="filterResults()" style="flex:1;min-width:160px">
@@ -1443,6 +1476,7 @@ function showPage(page, btn) {
   if (page==='testdays') renderCalendar();
   if (page==='adaptation') loadAdaptation();
   if (page==='checklist') loadChecklist();
+  if (page==='results') renderHeatmap();
 }
 
 function toggleSidebar() {
@@ -1450,7 +1484,90 @@ function toggleSidebar() {
   document.getElementById('sidebar-overlay').classList.toggle('show');
 }
 
-init();
+// ── Neon toggle ──
+function toggleNeon() {
+  const on = document.body.classList.toggle('neon-mode');
+  document.getElementById('neon-btn').classList.toggle('on', on);
+  localStorage.setItem('neonMode', on ? '1' : '');
+}
+if (localStorage.getItem('neonMode')) {
+  document.body.classList.add('neon-mode');
+  document.getElementById('neon-btn')?.classList.add('on');
+}
+
+// ── Heatmap ──
+function renderHeatmap() {
+  const grid  = document.getElementById('hm-grid');
+  const months = document.getElementById('hm-months');
+  const total  = document.getElementById('hm-total');
+  if (!grid) return;
+
+  const WEEKS = 16;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const start = new Date(today);
+  start.setDate(start.getDate() - WEEKS * 7 + 1);
+
+  // count tests per day
+  const counts = {};
+  (results || []).forEach(r => { counts[r.date] = (counts[r.date] || 0) + 1; });
+  const max = Math.max(1, ...Object.values(counts));
+
+  // build columns (by week)
+  const cols = [];
+  const cur = new Date(start);
+  while (cur <= today) {
+    const week = [];
+    for (let d = 0; d < 7; d++) {
+      if (cur > today) { week.push(null); cur.setDate(cur.getDate()+1); continue; }
+      const key = cur.toISOString().split('T')[0];
+      week.push({ date: key, count: counts[key] || 0 });
+      cur.setDate(cur.getDate()+1);
+    }
+    cols.push(week);
+  }
+
+  // month labels
+  let lastMonth = -1;
+  const monthNames = ['Yan','Fev','Mar','Apr','May','Iyn','Iyl','Avg','Sen','Okt','Noy','Dek'];
+  months.innerHTML = cols.map(week => {
+    const firstDay = week.find(d => d);
+    if (!firstDay) return '<span class="heatmap-month-label"></span>';
+    const m = new Date(firstDay.date).getMonth();
+    if (m !== lastMonth) { lastMonth = m; return `<span class="heatmap-month-label">${monthNames[m]}</span>`; }
+    return '<span class="heatmap-month-label"></span>';
+  }).join('');
+
+  grid.innerHTML = cols.map(week => `
+    <div class="heatmap-col">
+      ${week.map(day => {
+        if (!day) return '<div class="heatmap-cell"></div>';
+        const level = day.count === 0 ? 0 : day.count >= max ? 5 : Math.ceil((day.count / max) * 4);
+        return `<div class="heatmap-cell ${level?'h'+level:''}" title="${day.date}: ${day.count} ta test"></div>`;
+      }).join('')}
+    </div>`).join('');
+
+  const totalTests = Object.values(counts).reduce((s,v)=>s+v,0);
+  total.textContent = `So'nggi ${WEEKS} hafta ichida jami ${totalTests} ta test topshirildi`;
+}
+
+// ── Live dashboard polling ──
+let liveInterval = null;
+
+async function startLiveDashboard() {
+  document.getElementById('live-badge').style.display = 'inline-flex';
+  const refresh = async () => {
+    try {
+      await Promise.all([loadResults(), loadWaiters()]);
+      renderDashboard();
+      const now = new Date();
+      document.getElementById('last-refresh').textContent =
+        `Yangilandi: ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+    } catch {}
+  };
+  liveInterval = setInterval(refresh, 30000);
+}
+
+init().then(() => startLiveDashboard());
 </script>
 </body>
 </html>

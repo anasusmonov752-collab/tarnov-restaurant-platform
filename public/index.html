@@ -11,9 +11,23 @@
     .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
     .divider span { color: var(--text3); font-size: 0.75rem; }
     .login-tab i { width: 15px; height: 15px; }
+    #particle-canvas { position:fixed; inset:0; pointer-events:none; z-index:0; }
+    .login-page, .login-container { position: relative; z-index: 1; }
+    .neon-toggle-wrap {
+      position: fixed; top: 16px; right: 16px; z-index: 100;
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(0,0,0,0.4); backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.07); border-radius: 20px;
+      padding: 6px 12px; font-size: 0.72rem; color: var(--text3);
+    }
   </style>
 </head>
 <body>
+  <canvas id="particle-canvas"></canvas>
+  <div class="neon-toggle-wrap">
+    <span>⚡ Neon</span>
+    <button class="neon-toggle" id="neon-btn" onclick="toggleNeon()" title="Neon mode"></button>
+  </div>
   <div id="toast-container"></div>
   <div class="login-page">
     <div class="login-container">
@@ -158,6 +172,70 @@
       else if (user.role === 'restaurant') window.location.href = '/restaurant-admin.html';
       else if (user.role === 'waiter') window.location.href = '/waiter.html';
     }).catch(() => {});
+
+    // ── Neon toggle ──
+    function toggleNeon() {
+      const on = document.body.classList.toggle('neon-mode');
+      document.getElementById('neon-btn').classList.toggle('on', on);
+      localStorage.setItem('neonMode', on ? '1' : '');
+    }
+    if (localStorage.getItem('neonMode')) {
+      document.body.classList.add('neon-mode');
+      document.getElementById('neon-btn').classList.add('on');
+    }
+
+    // ── Particle canvas ──
+    (function() {
+      const canvas = document.getElementById('particle-canvas');
+      const ctx = canvas.getContext('2d');
+      let W, H, particles = [];
+
+      function resize() {
+        W = canvas.width  = window.innerWidth;
+        H = canvas.height = window.innerHeight;
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      function rand(min, max) { return Math.random() * (max - min) + min; }
+
+      function mkParticle() {
+        return {
+          x: rand(0, W), y: rand(0, H),
+          r: rand(0.6, 2.2),
+          vx: rand(-0.18, 0.18), vy: rand(-0.28, -0.08),
+          alpha: rand(0.15, 0.55),
+          da: rand(0.003, 0.008),
+          fadeIn: true
+        };
+      }
+
+      for (let i = 0; i < 90; i++) particles.push(mkParticle());
+
+      function isNeon() { return document.body.classList.contains('neon-mode'); }
+
+      function draw() {
+        ctx.clearRect(0, 0, W, H);
+        const color = isNeon() ? '0,245,255' : '200,146,42';
+        particles.forEach(p => {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${color},${p.alpha})`;
+          ctx.fill();
+
+          p.x += p.vx;
+          p.y += p.vy;
+          if (p.fadeIn) { p.alpha += p.da; if (p.alpha >= 0.55) p.fadeIn = false; }
+          else          { p.alpha -= p.da; }
+
+          if (p.y < -10 || p.alpha <= 0) Object.assign(p, mkParticle(), { y: H + 5, alpha: 0, fadeIn: true });
+          if (p.x < 0) p.x = W;
+          if (p.x > W) p.x = 0;
+        });
+        requestAnimationFrame(draw);
+      }
+      draw();
+    })();
   </script>
 </body>
 </html>

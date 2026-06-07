@@ -6,6 +6,7 @@
   <title>Tarnov — Ofitsiant</title>
   <link rel="stylesheet" href="/css/style.css">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body style="background:var(--bg)">
 <div id="toast-container"></div>
@@ -21,6 +22,7 @@
   </div>
   <div class="flex gap-8 align-center">
     <div id="test-day-badge"></div>
+    <button class="neon-toggle" id="neon-btn" onclick="toggleNeon()" title="Neon mode" style="margin-right:4px"></button>
     <button class="btn btn-ghost btn-sm" onclick="logout()">
       <i data-lucide="log-out" style="width:15px;height:15px"></i>
     </button>
@@ -113,6 +115,39 @@
     <div id="cl-waiter-groups"></div>
   </div>
 
+  <!-- FLASHCARD -->
+  <div id="page-flashcard" class="waiter-content" style="display:none">
+    <div class="fc-controls">
+      <div>
+        <h2 style="margin-bottom:2px">Flashcard rejimi</h2>
+        <div style="font-size:0.82rem;color:var(--text2)">Kartochkani bosib orqasini ko'ring</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span class="fc-counter" id="fc-counter">0 / 0</span>
+        <button class="btn btn-ghost btn-sm" onclick="shuffleFlashcards()"><i data-lucide="shuffle" style="width:13px;height:13px"></i> Aralashtir</button>
+        <button class="btn btn-ghost btn-sm" onclick="flipAllCards(false)"><i data-lucide="rotate-ccw" style="width:13px;height:13px"></i> Qayta yopish</button>
+      </div>
+    </div>
+    <div class="category-pills" id="fc-cats"></div>
+    <div class="flashcard-grid" id="fc-grid"></div>
+  </div>
+
+  <!-- LEADERBOARD -->
+  <div id="page-leaderboard" class="waiter-content" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+      <div>
+        <h2 style="margin-bottom:2px">Reyting jadvali</h2>
+        <div style="font-size:0.82rem;color:var(--text2)">Restoran ichidagi eng yaxshi natijalar</div>
+      </div>
+      <select class="form-control" id="lb-filter" onchange="loadLeaderboard()" style="width:auto;padding:8px 14px;font-size:0.85rem">
+        <option value="best">Eng yaxshi natija</option>
+        <option value="avg">O'rtacha natija</option>
+        <option value="certs">Sertifikatlar soni</option>
+      </select>
+    </div>
+    <div id="lb-list"></div>
+  </div>
+
   <!-- ADAPTATION -->
   <div id="page-adaptation" class="waiter-content" style="display:none">
     <div style="display:flex;gap:8px;border-bottom:1px solid var(--border);margin-bottom:20px;padding-bottom:0">
@@ -178,6 +213,12 @@
   <button class="waiter-nav-item" onclick="showWaiterPage('adaptation', this)">
     <span class="nav-icon"><i data-lucide="book-open"></i></span>Adaptatsiya
   </button>
+  <button class="waiter-nav-item" onclick="showWaiterPage('flashcard', this)">
+    <span class="nav-icon"><i data-lucide="layers"></i></span>Flashcard
+  </button>
+  <button class="waiter-nav-item" onclick="showWaiterPage('leaderboard', this)">
+    <span class="nav-icon"><i data-lucide="bar-chart-2"></i></span>Reyting
+  </button>
 </nav>
 
 <!-- MENU ITEM DETAIL MODAL -->
@@ -223,6 +264,18 @@
 <script>
 let waiterInfo = null, menuData = [], activeCategory = 'all';
 let testQuestions = [], currentQIndex = 0, answers = {}, timerInterval = null, timeLeft = 30, selectedOption = null;
+let fcData = [], fcCategory = 'all';
+
+// ── Neon toggle ──
+function toggleNeon() {
+  const on = document.body.classList.toggle('neon-mode');
+  document.getElementById('neon-btn').classList.toggle('on', on);
+  localStorage.setItem('neonMode', on ? '1' : '');
+}
+if (localStorage.getItem('neonMode')) {
+  document.body.classList.add('neon-mode');
+  document.getElementById('neon-btn').classList.add('on');
+}
 
 async function init() {
   await requireRole('waiter');
@@ -304,19 +357,52 @@ function renderHistory() {
   renderIcons();
 }
 
+function calcStreak(history) {
+  if (!history.length) return 0;
+  const sorted = [...history].sort((a,b) => new Date(b.date)-new Date(a.date));
+  let streak = 0;
+  let prev = null;
+  for (const r of sorted) {
+    const d = new Date(r.date);
+    if (!prev) { streak = 1; prev = d; continue; }
+    const diff = Math.round((prev - d) / 86400000);
+    if (diff === 1) { streak++; prev = d; }
+    else break;
+  }
+  return streak;
+}
+
 function renderHomeStats() {
   if (!historyData.length) return;
   const best = Math.max(...historyData.map(r=>r.score));
   const avg = Math.round(historyData.reduce((s,r)=>s+r.score,0)/historyData.length);
   const certs = historyData.filter(r=>r.hasCertificate).length;
+  const streak = calcStreak(historyData);
+  const streakHTML = streak >= 2 ? `
+    <div style="margin-bottom:16px">
+      <span class="streak-badge"><span class="streak-fire">🔥</span> ${streak} kunlik seria!</span>
+    </div>` : '';
   document.getElementById('home-stats').innerHTML = `
+    ${streakHTML}
     <div class="stats-grid">
-      <div class="stat-card"><div class="stat-icon"><i data-lucide="bar-chart-2"></i></div><div class="stat-value">${historyData.length}</div><div class="stat-label">Jami testlar</div></div>
-      <div class="stat-card"><div class="stat-icon"><i data-lucide="medal"></i></div><div class="stat-value" style="color:var(--success)">${best}%</div><div class="stat-label">Eng yaxshi</div></div>
-      <div class="stat-card"><div class="stat-icon"><i data-lucide="trending-up"></i></div><div class="stat-value">${avg}%</div><div class="stat-label">O'rtacha</div></div>
-      <div class="stat-card"><div class="stat-icon"><i data-lucide="trophy"></i></div><div class="stat-value" style="color:var(--gold)">${certs}</div><div class="stat-label">Sertifikatlar</div></div>
+      <div class="stat-card"><div class="stat-icon"><i data-lucide="bar-chart-2"></i></div><div class="stat-value" data-count="${historyData.length}">0</div><div class="stat-label">Jami testlar</div></div>
+      <div class="stat-card"><div class="stat-icon"><i data-lucide="medal"></i></div><div class="stat-value" style="color:var(--success)" data-count="${best}" data-suffix="%">0%</div><div class="stat-label">Eng yaxshi</div></div>
+      <div class="stat-card"><div class="stat-icon"><i data-lucide="trending-up"></i></div><div class="stat-value" data-count="${avg}" data-suffix="%">0%</div><div class="stat-label">O'rtacha</div></div>
+      <div class="stat-card"><div class="stat-icon"><i data-lucide="trophy"></i></div><div class="stat-value" style="color:var(--gold)" data-count="${certs}">0</div><div class="stat-label">Sertifikatlar</div></div>
     </div>`;
   renderIcons();
+  // counter animation
+  document.querySelectorAll('.stat-value[data-count]').forEach(el => {
+    const target = parseInt(el.dataset.count);
+    const suffix = el.dataset.suffix || '';
+    let cur = 0;
+    const step = Math.max(1, Math.ceil(target / 30));
+    const iv = setInterval(() => {
+      cur = Math.min(cur + step, target);
+      el.textContent = cur + suffix;
+      if (cur >= target) clearInterval(iv);
+    }, 30);
+  });
 }
 
 function showCert(resultId) {
@@ -390,6 +476,7 @@ function renderMenuItems(cat) {
       </div>
     </div>`).join('');
   renderIcons();
+  init3DTilt();
 }
 
 function showMenuDetail(id) {
@@ -506,38 +593,62 @@ async function submitTest() {
     const data = await api('/api/waiter/test/submit', { method:'POST', body: JSON.stringify({ answers }) });
     const r = data.result;
     waiterInfo.isTestDay = false;
+    const wrongAnswers = r.breakdown.filter(b=>!b.isCorrect);
     document.getElementById('test-result').style.display='block';
     document.getElementById('test-result').innerHTML = `
       <div class="card" style="text-align:center;padding:32px">
         <div style="margin-bottom:12px"><i data-lucide="party-popper" style="width:40px;height:40px;color:var(--gold)"></i></div>
         <h2 style="margin-bottom:8px">Test yakunlandi!</h2>
-        <div class="score-circle" style="margin:20px auto">
-          <div class="score-number" style="color:${scoreColor(r.score)}">${r.score}%</div>
+        <div class="score-circle animate-in" style="margin:20px auto;border-color:${scoreColor(r.score)}">
+          <div class="score-number" id="result-score-num" style="color:${scoreColor(r.score)}">0%</div>
           <div class="score-label">${r.totalCorrect}/${r.totalQuestions}</div>
         </div>
-        ${r.hasCertificate ? `<div class="alert alert-success" style="margin:16px 0"><i data-lucide="trophy" style="width:15px;height:15px"></i> Tabriklaymiz! Sertifikat oldingiz!</div>` : ''}
+        ${r.hasCertificate ? `<div class="alert alert-success" style="margin:16px 0"><i data-lucide="trophy" style="width:15px;height:15px"></i> Tabriklaymiz! Sertifikat oldingiz! 🏆</div>` : ''}
         <div class="breakdown-grid" style="margin:20px 0">
           <div class="breakdown-item"><div class="breakdown-score" style="color:var(--easy)">${r.easyScore}/${r.easyTotal}</div><div class="breakdown-label">Oson</div></div>
           <div class="breakdown-item"><div class="breakdown-score" style="color:var(--medium)">${r.mediumScore}/${r.mediumTotal}</div><div class="breakdown-label">O'rta</div></div>
           <div class="breakdown-item"><div class="breakdown-score" style="color:var(--hard)">${r.hardScore}/${r.hardTotal}</div><div class="breakdown-label">Qiyin</div></div>
         </div>
-        <h4 style="text-align:left;margin-bottom:12px">Noto'g'ri javoblar:</h4>
+        <h4 style="text-align:left;margin-bottom:12px">
+          <i data-lucide="x-circle" style="width:15px;height:15px;color:var(--danger);vertical-align:middle"></i>
+          Noto'g'ri javoblar (${wrongAnswers.length}):
+        </h4>
         <div style="text-align:left">
-          ${r.breakdown.filter(b=>!b.isCorrect).length===0
-            ? '<div class="alert alert-success">Barcha savollarga to\'g\'ri javob berdingiz!</div>'
-            : r.breakdown.filter(b=>!b.isCorrect).map(b=>`
-              <div style="padding:12px;border-radius:10px;background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.2);margin-bottom:8px">
-                <div style="font-weight:600;font-size:0.88rem;margin-bottom:4px">${b.question}</div>
-                <div style="font-size:0.82rem;color:var(--danger)">Sizning: ${b.options?.[b.selectedAnswer]||'Javob berilmadi'}</div>
-                <div style="font-size:0.82rem;color:var(--success)">To'g'ri: ${b.options?.[b.correctAnswer]||'—'}</div>
+          ${wrongAnswers.length===0
+            ? '<div class="alert alert-success"><i data-lucide="check-circle-2" style="width:14px;height:14px"></i> Barcha savollarga to\'g\'ri javob berdingiz! 🎉</div>'
+            : wrongAnswers.map((b,i)=>`
+              <div style="padding:14px;border-radius:12px;background:rgba(231,76,60,0.06);border:1px solid rgba(231,76,60,0.18);margin-bottom:10px;animation:fadeUp 0.4s ease ${i*0.06}s both">
+                <div style="font-size:0.72rem;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em">${diffLabel(b.difficulty)}</div>
+                <div style="font-weight:600;font-size:0.9rem;margin-bottom:8px">${b.question}</div>
+                <div style="display:flex;flex-direction:column;gap:4px">
+                  <div style="font-size:0.83rem;padding:6px 10px;border-radius:8px;background:rgba(231,76,60,0.1);color:var(--danger)">
+                    ✗ Sizning: <strong>${b.options?.[b.selectedAnswer]||'Javob berilmadi'}</strong>
+                  </div>
+                  <div style="font-size:0.83rem;padding:6px 10px;border-radius:8px;background:rgba(46,204,113,0.1);color:var(--success)">
+                    ✓ To'g'ri: <strong>${b.options?.[b.correctAnswer]||'—'}</strong>
+                  </div>
+                </div>
               </div>`).join('')}
         </div>
         <div class="flex gap-12 mt-16" style="justify-content:center;flex-wrap:wrap">
-          ${r.hasCertificate ? `<button class="btn btn-gold" onclick="showCertFromResult(${JSON.stringify(r).replace(/"/g,'&quot;')})">
-            <i data-lucide="trophy" style="width:14px;height:14px"></i> Sertifikatni ko'rish</button>` : ''}
-          <button class="btn btn-ghost" onclick="showWaiterPage('history', document.querySelectorAll('.waiter-nav-item')[3])">Tarixga o'tish</button>
+          ${r.hasCertificate ? `
+            <button class="btn btn-gold" onclick="showCertFromResult(${JSON.stringify(r).replace(/"/g,'&quot;')})">
+              <i data-lucide="trophy" style="width:14px;height:14px"></i> Sertifikat</button>
+            <button class="btn btn-outline" onclick="downloadPDF(${JSON.stringify(r).replace(/"/g,'&quot;')})">
+              <i data-lucide="download" style="width:14px;height:14px"></i> PDF yuklab olish</button>` : ''}
+          <button class="btn btn-ghost" onclick="showWaiterPage('history', document.querySelectorAll('.waiter-nav-item')[3])">
+            <i data-lucide="clock" style="width:14px;height:14px"></i> Tarixga o'tish</button>
         </div>
       </div>`;
+    // Score count-up animation
+    const scoreEl = document.getElementById('result-score-num');
+    let cur = 0;
+    const step = Math.max(1, Math.ceil(r.score / 40));
+    const iv = setInterval(() => {
+      cur = Math.min(cur + step, r.score);
+      scoreEl.textContent = cur + '%';
+      if (cur >= r.score) clearInterval(iv);
+    }, 25);
     await loadHistory();
     renderIcons();
   } catch (e) {
@@ -681,6 +792,182 @@ function switchAdaptViewTab(tab, btn) {
   btn.classList.add('active');
 }
 
+// ===== 3D TILT =====
+function init3DTilt() {
+  document.querySelectorAll('.menu-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const rect = card.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width  - 0.5;
+      const y = (e.clientY - rect.top)  / rect.height - 0.5;
+      card.style.transform = `perspective(600px) rotateY(${x*14}deg) rotateX(${-y*10}deg) scale(1.03)`;
+      card.style.boxShadow = `${-x*20}px ${y*20}px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(200,146,42,0.2)`;
+    });
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = '';
+      card.style.boxShadow = '';
+    });
+  });
+}
+
+// ===== FLASHCARD =====
+let fcItems = [], fcActive = 'all';
+
+async function loadFlashcards() {
+  if (!menuData.length) {
+    const data = await api('/api/waiter/menu');
+    if (data.hidden) { document.getElementById('fc-grid').innerHTML = '<div class="empty-state"><div class="empty-icon"><i data-lucide="lock"></i></div><h3>Bugun test kuni — menyu yashirilgan</h3></div>'; renderIcons(); return; }
+    menuData = data.menu || [];
+  }
+  fcItems = [...menuData];
+  renderFCCategories();
+  renderFlashcards();
+}
+
+function renderFCCategories() {
+  const cats = [...new Set(menuData.map(m=>m.category))];
+  document.getElementById('fc-cats').innerHTML =
+    `<button class="pill active" onclick="filterFC('all',this)">Hammasi (${menuData.length})</button>` +
+    cats.map(c=>`<button class="pill" onclick="filterFC('${c}',this)">${c} (${menuData.filter(m=>m.category===c).length})</button>`).join('');
+}
+
+function filterFC(cat, btn) {
+  document.querySelectorAll('#fc-cats .pill').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  fcActive = cat;
+  fcItems = cat==='all' ? [...menuData] : menuData.filter(m=>m.category===cat);
+  renderFlashcards();
+}
+
+function shuffleFlashcards() {
+  fcItems = fcItems.sort(()=>Math.random()-0.5);
+  renderFlashcards();
+  toast('Kartochkalar aralashtirildi!', 'success');
+}
+
+function flipAllCards(state) {
+  document.querySelectorAll('.flashcard').forEach(c => c.classList.toggle('flipped', state));
+}
+
+function renderFlashcards() {
+  const grid = document.getElementById('fc-grid');
+  document.getElementById('fc-counter').textContent = `${fcItems.length} ta taom`;
+  if (!fcItems.length) { grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon"><i data-lucide="layers"></i></div><h3>Taom topilmadi</h3></div>'; renderIcons(); return; }
+  grid.innerHTML = fcItems.map((item,i) => `
+    <div class="flashcard" onclick="this.classList.toggle('flipped')" style="animation:fadeUp 0.3s ease ${i*0.04}s both">
+      <div class="flashcard-inner">
+        <div class="flashcard-front">
+          <div class="fc-category">${item.category}</div>
+          <div class="fc-name">${item.name}</div>
+          <div class="fc-price">${formatPrice(item.price)}</div>
+          <div class="fc-hint">Bosing — batafsil ▸</div>
+        </div>
+        <div class="flashcard-back">
+          <div class="fc-back-title">Tavsif</div>
+          <div class="fc-back-text" style="margin-bottom:10px">${item.description||'—'}</div>
+          ${item.ingredients?.length ? `<div class="fc-back-title">Tarkib</div><div class="fc-back-text" style="margin-bottom:10px">${item.ingredients.join(', ')}</div>` : ''}
+          ${item.allergens?.length ? `<div class="fc-back-title" style="color:var(--danger)">Allergiyalar</div><div class="fc-back-text" style="color:rgba(231,76,60,0.9)">${item.allergens.join(', ')}</div>` : ''}
+          ${item.servingSuggestion ? `<div class="fc-back-title" style="margin-top:8px">Tavsiya</div><div class="fc-back-text" style="font-style:italic">${item.servingSuggestion}</div>` : ''}
+        </div>
+      </div>
+    </div>`).join('');
+  renderIcons();
+}
+
+// ===== LEADERBOARD =====
+async function loadLeaderboard() {
+  const filter = document.getElementById('lb-filter')?.value || 'best';
+  const el = document.getElementById('lb-list');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div> Yuklanmoqda...</div>';
+  try {
+    const data = await api(`/api/waiter/leaderboard?filter=${filter}`);
+    const myId = waiterInfo?.waiter?.id;
+    if (!data.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon"><i data-lucide="bar-chart-2"></i></div><h3>Hali natijalar yo\'q</h3></div>'; renderIcons(); return; }
+    el.innerHTML = data.map((item, i) => {
+      const rank = i + 1;
+      const rankClass = rank===1?'r1':rank===2?'r2':rank===3?'r3':'';
+      const isMe = item.waiterId === myId;
+      return `
+        <div class="leaderboard-item rank-${Math.min(rank,4)} ${isMe?'lb-me':''}" style="animation:fadeUp 0.3s ease ${i*0.05}s both">
+          <div class="lb-rank ${rankClass}">${rank<=3?['🥇','🥈','🥉'][rank-1]:rank}</div>
+          <div style="flex:1">
+            <div class="lb-name">${item.name}${isMe?' <span style="font-size:0.72rem;color:var(--gold);font-weight:500">(Siz)</span>':''}</div>
+            <div class="lb-certs">${item.certCount} ta sertifikat · ${item.testCount} ta test</div>
+          </div>
+          <div style="text-align:right">
+            <div class="lb-score" style="color:${scoreColor(item.value)}">${item.value}%</div>
+            <div style="font-size:0.7rem;color:var(--text3)">${filter==='best'?'eng yaxshi':filter==='avg'?'o\'rtacha':'sertifikat'}</div>
+          </div>
+        </div>`;
+    }).join('');
+    renderIcons();
+  } catch(e) { el.innerHTML = `<div class="alert alert-danger">${e.message}</div>`; }
+}
+
+// ===== PDF CERTIFICATE =====
+async function downloadPDF(r) {
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    const W = doc.internal.pageSize.getWidth();
+
+    // Background
+    doc.setFillColor(10,10,10);
+    doc.rect(0,0,W,297,'F');
+
+    // Gold border
+    doc.setDrawColor(200,146,42); doc.setLineWidth(1.5);
+    doc.rect(12,12,W-24,273,'S');
+    doc.setLineWidth(0.5);
+    doc.rect(14,14,W-28,269,'S');
+
+    // Header
+    doc.setTextColor(200,146,42);
+    doc.setFontSize(9); doc.setFont('helvetica','bold');
+    doc.text('MUVAFFAQIYAT SERTIFIKATI', W/2, 38, {align:'center'});
+    doc.setFontSize(8); doc.setFont('helvetica','normal');
+    doc.setTextColor(150,150,150);
+    doc.text('TARNOV RESTAURANT TRAINING PLATFORM', W/2, 46, {align:'center'});
+
+    // Divider
+    doc.setDrawColor(200,146,42,0.4); doc.setLineWidth(0.3);
+    doc.line(30,52,W-30,52);
+
+    // Name
+    doc.setTextColor(255,255,255);
+    doc.setFontSize(28); doc.setFont('helvetica','bold');
+    doc.text(r.waiterName || '—', W/2, 80, {align:'center'});
+
+    // Description
+    doc.setFontSize(10); doc.setFont('helvetica','normal');
+    doc.setTextColor(170,170,170);
+    doc.text(`${waiterInfo?.restaurant?.name || 'Tarnov Restaurant'} restoranida`, W/2, 94, {align:'center'});
+    doc.text("menyu bo'yicha bilimlarini muvaffaqiyatli tasdiqladi", W/2, 101, {align:'center'});
+
+    // Score
+    doc.setFontSize(52); doc.setFont('helvetica','bold');
+    doc.setTextColor(r.score>=90?46:r.score>=70?243:231, r.score>=90?204:r.score>=70?156:76, r.score>=90?113:r.score>=70?18:60);
+    doc.text(`${r.score}%`, W/2, 135, {align:'center'});
+
+    // Breakdown
+    doc.setFontSize(9); doc.setFont('helvetica','normal');
+    doc.setTextColor(150,150,150);
+    doc.text(`Oson: ${r.easyScore}/${r.easyTotal}   O'rta: ${r.mediumScore}/${r.mediumTotal}   Qiyin: ${r.hardScore}/${r.hardTotal}`, W/2, 148, {align:'center'});
+
+    // Date
+    doc.setFontSize(10); doc.setTextColor(200,146,42);
+    doc.text(r.date || new Date().toISOString().split('T')[0], W/2, 162, {align:'center'});
+
+    // Footer
+    doc.setLineWidth(0.3); doc.setDrawColor(200,146,42,0.4);
+    doc.line(30,240,W-30,240);
+    doc.setFontSize(7); doc.setTextColor(100,100,100);
+    doc.text('✦ TARNOV RESTAURANT PLATFORM ✦', W/2, 248, {align:'center'});
+
+    doc.save(`sertifikat-${r.waiterName||'waiter'}-${r.date||'2024'}.pdf`);
+    toast('PDF yuklab olindi!', 'success');
+  } catch(e) { toast('PDF xatosi: ' + e.message, 'error'); }
+}
+
 // ===== NAVIGATION =====
 function showWaiterPage(page, btn) {
   document.querySelectorAll('[id^="page-"]').forEach(p=>p.style.display='none');
@@ -693,6 +980,8 @@ function showWaiterPage(page, btn) {
   if (page==='ann') loadAnnouncements();
   if (page==='checklist') loadWaiterChecklist();
   if (page==='adaptation') loadAdaptation();
+  if (page==='flashcard') loadFlashcards();
+  if (page==='leaderboard') loadLeaderboard();
 }
 
 init();

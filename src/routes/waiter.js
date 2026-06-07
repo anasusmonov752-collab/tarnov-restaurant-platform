@@ -146,4 +146,30 @@ router.get('/adaptation', guard, asyncHandler(async (req, res) => {
   res.json(r?.adaptation || {});
 }));
 
+router.get('/leaderboard', guard, asyncHandler(async (req, res) => {
+  const filter = req.query.filter || 'best'; // best | avg | certs
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'testResults waiters');
+  if (!r) return res.json([]);
+
+  const waiterMap = {};
+  (r.waiters || []).forEach(w => { waiterMap[w.id] = w.name; });
+
+  const grouped = {};
+  (r.testResults || []).forEach(result => {
+    if (!grouped[result.waiterId]) grouped[result.waiterId] = [];
+    grouped[result.waiterId].push(result);
+  });
+
+  const board = Object.entries(grouped).map(([waiterId, results]) => {
+    const best = Math.max(...results.map(x => x.score));
+    const avg  = Math.round(results.reduce((s,x) => s + x.score, 0) / results.length);
+    const certs = results.filter(x => x.hasCertificate).length;
+    const value = filter === 'best' ? best : filter === 'avg' ? avg : certs;
+    return { waiterId, name: waiterMap[waiterId] || 'Noma\'lum', value, certCount: certs, testCount: results.length };
+  });
+
+  board.sort((a, b) => b.value - a.value);
+  res.json(board.slice(0, 20));
+}));
+
 module.exports = router;

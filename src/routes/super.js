@@ -19,7 +19,6 @@ router.get('/dashboard', guard, asyncHandler(async (req, res) => {
     totalRevenue: restaurants.reduce((s, r) => s + (r.planPrice || 0), 0),
     restaurants: restaurants.map(r => ({
       id: r.id, name: r.name, location: r.location, active: r.active,
-      theme: r.theme || 'elegant-dark',
       plan: r.plan, planPrice: r.planPrice, adminEmail: r.adminEmail,
       waitersCount: r.waiters.length, menuCount: r.menu.length,
       questionsCount: r.questions.length, createdAt: r.createdAt
@@ -28,14 +27,12 @@ router.get('/dashboard', guard, asyncHandler(async (req, res) => {
 }));
 
 router.post('/restaurants', guard, asyncHandler(async (req, res) => {
-  const { name, location, adminEmail, adminPassword, plan, planPrice, theme } = req.body;
+  const { name, location, adminEmail, adminPassword, plan, planPrice } = req.body;
   if (!name || !adminEmail || !adminPassword) return res.status(400).json({ error: 'Ism, email va parol majburiy' });
   const existing = await Restaurant.findOne({ adminEmail });
   if (existing) return res.status(400).json({ error: 'Bu email allaqachon mavjud' });
-  const validThemes = ['elegant-dark', 'fresh-emerald', 'royal-crimson', 'ocean-blue', 'warm-amber'];
   const restaurant = await Restaurant.create({
     id: uuidv4(), name, location: location || '', active: true,
-    theme: validThemes.includes(theme) ? theme : 'elegant-dark',
     plan: plan || 'basic', planPrice: parseInt(planPrice) || 0,
     adminEmail, adminPassword: await bcrypt.hash(adminPassword, 10)
   });
@@ -43,13 +40,11 @@ router.post('/restaurants', guard, asyncHandler(async (req, res) => {
 }));
 
 router.put('/restaurants/:id', guard, asyncHandler(async (req, res) => {
-  const { name, location, plan, planPrice, active, adminPassword, adminEmail, theme } = req.body;
-  const validThemes = ['elegant-dark', 'fresh-emerald', 'royal-crimson', 'ocean-blue', 'warm-amber'];
+  const { name, location, plan, planPrice, active, adminPassword, adminEmail } = req.body;
   const update = {};
   if (name) update.name = name;
   if (location !== undefined) update.location = location;
   if (plan) update.plan = plan;
-  if (theme && validThemes.includes(theme)) update.theme = theme;
   if (planPrice !== undefined) update.planPrice = parseInt(planPrice);
   if (active !== undefined) update.active = Boolean(active);
   if (adminEmail) {

@@ -2143,21 +2143,6 @@ body.neon-mode h1, body.neon-mode .gold { color: #00F5FF; }
   55%,100%{ opacity: 0; }
 }
 
-/* Streak badge */
-.streak-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  background: rgba(255,100,0,0.12);
-  border: 1px solid rgba(255,100,0,0.3);
-  color: #FF6A00;
-  vertical-align: middle;
-}
-
 /* Rainbow avatar (neon mode) */
 @keyframes avatarRainbow {
   0%   { color:#00F5FF; text-shadow:0 0 14px #00F5FF,0 0 28px #00F5FF; }

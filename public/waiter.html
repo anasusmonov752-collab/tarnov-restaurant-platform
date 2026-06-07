@@ -42,8 +42,15 @@
   <!-- HOME -->
   <div id="page-home" class="waiter-content">
     <div class="card mb-16" style="border:1px solid var(--gold);background:radial-gradient(ellipse at top,rgba(200,146,42,0.06),transparent)">
-      <div style="font-size:1.4rem;font-weight:700;margin-bottom:4px">Salom, <span id="home-name" class="gold">—</span>! 👋</div>
-      <div style="color:var(--text2);font-size:0.9rem" id="home-sub">Bugun ham yaxshi xizmat ko'rsating</div>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px">
+        <div id="home-avatar" style="width:52px;height:52px;border-radius:50%;background:rgba(200,146,42,0.15);border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <span id="home-avatar-letter" class="waiter-avatar-letter" style="font-size:1.5rem">—</span>
+        </div>
+        <div>
+          <div style="font-size:1.3rem;font-weight:700;margin-bottom:2px">Salom, <span id="home-name" class="gold">—</span>! 👋</div>
+          <div style="color:var(--text2);font-size:0.88rem" id="home-sub">Bugun ham yaxshi xizmat ko'rsating</div>
+        </div>
+      </div>
     </div>
     <div id="test-day-alert"></div>
     <div id="home-announcements"></div>
@@ -504,7 +511,9 @@ async function init() {
     waiterInfo = await api('/api/waiter/info');
     document.getElementById('w-restaurant-name').textContent = waiterInfo.restaurant.name;
     const waiterName = waiterInfo.waiter?.name || '';
-    document.getElementById('w-waiter-name').innerHTML = renderWaiterAvatar(waiterName) + ' ' + waiterName;
+    document.getElementById('w-waiter-name').textContent = waiterName;
+    const avatarEl = document.getElementById('home-avatar-letter');
+    if (avatarEl) avatarEl.textContent = (waiterName[0] || '?').toUpperCase();
     typeText(document.getElementById('home-name'), waiterName, 40);
     const streak = getCurrentStreak();
     if (streak > 0) {

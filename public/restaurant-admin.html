@@ -753,6 +753,7 @@
 </div>
 
 <script src="/js/utils.js"></script>
+<script src="/js/creative.js"></script>
 <script>
 let menuItems = [], waiters = [], questions = [], announcements = [], results = [], testDays = [];
 let calYear, calMonth;
@@ -778,25 +779,42 @@ async function init() {
 function renderDashboard() {
   const today = new Date().toISOString().split('T')[0];
   const isTestDay = testDays.includes(today);
+  const certCount = results.filter(r=>r.hasCertificate).length;
+  const activeWaiters = waiters.filter(w=>w.active).length;
   document.getElementById('dash-stats').innerHTML = `
-    <div class="stat-card"><div class="stat-icon"><i data-lucide="utensils"></i></div><div class="stat-value">${menuItems.length}</div><div class="stat-label">Menyu taomlar</div></div>
-    <div class="stat-card"><div class="stat-icon"><i data-lucide="chef-hat"></i></div><div class="stat-value">${waiters.filter(w=>w.active).length}</div><div class="stat-label">Faol ofitsiantlar</div></div>
-    <div class="stat-card"><div class="stat-icon"><i data-lucide="help-circle"></i></div><div class="stat-value">${questions.length}</div><div class="stat-label">Savollar bazasi</div></div>
-    <div class="stat-card"><div class="stat-icon"><i data-lucide="trophy"></i></div><div class="stat-value">${results.filter(r=>r.hasCertificate).length}</div><div class="stat-label">Sertifikatlar</div></div>
+    <div class="stat-card"><div class="stat-icon"><i data-lucide="utensils"></i></div><div class="stat-value" data-target="${menuItems.length}">0</div><div class="stat-label">Menyu taomlar</div></div>
+    <div class="stat-card"><div class="stat-icon"><i data-lucide="chef-hat"></i></div><div class="stat-value" data-target="${activeWaiters}">0</div><div class="stat-label">Faol ofitsiantlar</div></div>
+    <div class="stat-card"><div class="stat-icon"><i data-lucide="help-circle"></i></div><div class="stat-value" data-target="${questions.length}">0</div><div class="stat-label">Savollar bazasi</div></div>
+    <div class="stat-card"><div class="stat-icon"><i data-lucide="trophy"></i></div><div class="stat-value" data-target="${certCount}">0</div><div class="stat-label">Sertifikatlar</div></div>
     <div class="stat-card" style="border-color:${isTestDay?'var(--warning)':'var(--border)'}">
       <div class="stat-icon"><i data-lucide="${isTestDay?'alert-circle':'circle-check'}"></i></div>
       <div class="stat-value" style="font-size:1rem;color:${isTestDay?'var(--warning)':'var(--success)'}">${isTestDay?'TEST KUNI':'Oddiy kun'}</div>
       <div class="stat-label">Bugun</div>
     </div>
   `;
+  // Animate stat counters
+  document.querySelectorAll('#dash-stats .stat-value[data-target]').forEach(el => {
+    const t = parseInt(el.dataset.target, 10);
+    if (t > 0) animateCounter(el, t, 1100);
+    else el.textContent = t;
+  });
+
   const annEl = document.getElementById('dash-ann');
-  if (!announcements.length) annEl.innerHTML = '<p style="color:var(--text3);font-size:0.85rem;padding:8px 0">Hali e\'lon yo\'q</p>';
-  else annEl.innerHTML = announcements.slice(0,3).map(a=>`
-    <div style="padding:12px 0;border-bottom:1px solid var(--border2)">
-      <div style="font-weight:600;font-size:0.9rem">${a.title}</div>
-      <div style="color:var(--text2);font-size:0.8rem;margin-top:2px">${a.content.substring(0,80)}${a.content.length>80?'...':''}</div>
-      <div style="color:var(--text3);font-size:0.75rem;margin-top:4px">${formatDateTime(a.createdAt)}</div>
-    </div>`).join('');
+  if (!announcements.length) {
+    annEl.innerHTML = '<p style="color:var(--text3);font-size:0.85rem;padding:8px 0">Hali e\'lon yo\'q</p>';
+  } else {
+    annEl.innerHTML = announcements.slice(0,3).map((a, i)=>`
+      <div style="padding:12px 0;border-bottom:1px solid var(--border2)">
+        <div class="dash-ann-title-${i}" style="font-weight:600;font-size:0.9rem"></div>
+        <div style="color:var(--text2);font-size:0.8rem;margin-top:2px">${a.content.substring(0,80)}${a.content.length>80?'...':''}</div>
+        <div style="color:var(--text3);font-size:0.75rem;margin-top:4px">${formatDateTime(a.createdAt)}</div>
+      </div>`).join('');
+    announcements.slice(0,3).forEach((a, i) => {
+      const el = annEl.querySelector(`.dash-ann-title-${i}`);
+      if (el) typeText(el, a.title, 30);
+    });
+  }
+
   const resEl = document.getElementById('dash-results');
   if (!results.length) resEl.innerHTML = '<p style="color:var(--text3);font-size:0.85rem;padding:8px 0">Hali natija yo\'q</p>';
   else resEl.innerHTML = results.slice(0,5).map(r=>`

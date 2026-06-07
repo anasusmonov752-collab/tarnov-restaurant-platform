@@ -3,17 +3,17 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --bg: #060E08;
-  --card: #0C1610;
-  --card2: #101C13;
+  --bg: #071A09;
+  --card: #0D2410;
+  --card2: #112B14;
   --gold: #C8922A;
   --gold-light: #E5A93A;
   --gold-dark: #A07520;
-  --border: #1C3020;
-  --border2: #162818;
+  --border: #1E4522;
+  --border2: #183A1B;
   --text: #F0F7F1;
-  --text2: #8FAF94;
-  --text3: #4A6B50;
+  --text2: #8FBF94;
+  --text3: #4A7550;
   --success: #2ECC71;
   --danger: #E74C3C;
   --warning: #F39C12;
@@ -50,11 +50,11 @@ h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #040C06;
+  background: #071A09;
   background-image:
-    radial-gradient(ellipse at 50% 0%, rgba(20,80,30,0.5) 0%, transparent 55%),
-    radial-gradient(ellipse at 50% 0%, rgba(200,146,42,0.12) 0%, transparent 45%),
-    radial-gradient(ellipse at 0% 100%, rgba(10,40,15,0.3) 0%, transparent 40%);
+    radial-gradient(ellipse at 50% 0%, rgba(30,120,50,0.4) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 0%, rgba(200,146,42,0.15) 0%, transparent 45%),
+    radial-gradient(ellipse at 0% 100%, rgba(15,70,25,0.4) 0%, transparent 40%);
   padding: 20px;
   position: relative;
   overflow: hidden;
@@ -123,7 +123,7 @@ h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
 }
 
 .login-card {
-  background: linear-gradient(145deg, #0E1A10, #0A140C);
+  background: linear-gradient(145deg, #122816, #0D2010);
   border: 1px solid rgba(200,146,42,0.2);
   border-radius: 24px;
   padding: 38px;
@@ -1227,7 +1227,7 @@ table tr:hover td { background: rgba(255,255,255,0.02); }
 
 /* Sidebar glow */
 .sidebar {
-  background: linear-gradient(180deg, #0E1A10 0%, #090F0A 100%);
+  background: linear-gradient(180deg, #112814 0%, #0A1E0D 100%);
   box-shadow: 4px 0 32px rgba(0,0,0,0.5), inset -1px 0 0 rgba(200,146,42,0.06);
   border-right: 1px solid rgba(30,50,25,0.8) !important;
 }

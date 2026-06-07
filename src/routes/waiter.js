@@ -16,7 +16,7 @@ router.get('/info', guard, asyncHandler(async (req, res) => {
   const today = new Date().toISOString().split('T')[0];
   res.json({
     waiter,
-    restaurant: { id: r.id, name: r.name, location: r.location },
+    restaurant: { id: r.id, name: r.name, location: r.location, theme: r.theme || 'elegant-dark' },
     isTestDay: r.testDays.includes(today),
     announcements: (r.announcements || []).slice(0, 3)
   });

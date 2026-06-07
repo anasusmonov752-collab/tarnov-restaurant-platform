@@ -23,6 +23,81 @@
   --hard: #E74C3C;
 }
 
+/* ===== TEMA 1: ELEGANT DARK (default) — Qora + Oltin ===== */
+[data-theme="elegant-dark"] {
+  --bg: #0A0A0A;
+  --card: #111111;
+  --card2: #161616;
+  --gold: #C8922A;
+  --gold-light: #E5A93A;
+  --gold-dark: #A07520;
+  --border: #2A2A2A;
+  --border2: #222222;
+  --text: #FFFFFF;
+  --text2: #AAAAAA;
+  --text3: #666666;
+}
+
+/* ===== TEMA 2: FRESH EMERALD — Qoʻngʻir + Yashil (eco/healthy) ===== */
+[data-theme="fresh-emerald"] {
+  --bg: #0B1210;
+  --card: #121A17;
+  --card2: #182320;
+  --gold: #27AE60;
+  --gold-light: #2ECC71;
+  --gold-dark: #1E8449;
+  --border: #1E3328;
+  --border2: #172B21;
+  --text: #F0FFF4;
+  --text2: #A8D5B5;
+  --text3: #5C9970;
+}
+
+/* ===== TEMA 3: ROYAL CRIMSON — Qora + Toʻq qizil (steakhouse/Italian) ===== */
+[data-theme="royal-crimson"] {
+  --bg: #0D0808;
+  --card: #150E0E;
+  --card2: #1C1212;
+  --gold: #C0392B;
+  --gold-light: #E74C3C;
+  --gold-dark: #922B21;
+  --border: #2E1515;
+  --border2: #261010;
+  --text: #FFF5F5;
+  --text2: #D4A0A0;
+  --text3: #8B5E5E;
+}
+
+/* ===== TEMA 4: OCEAN BLUE — Qoʻngʻir + Moviy (seafood/Mediterranean) ===== */
+[data-theme="ocean-blue"] {
+  --bg: #080E14;
+  --card: #0E1520;
+  --card2: #121C2A;
+  --gold: #2980B9;
+  --gold-light: #3498DB;
+  --gold-dark: #1F618D;
+  --border: #172535;
+  --border2: #121E2C;
+  --text: #EBF5FB;
+  --text2: #85C1E9;
+  --text3: #4A7FA8;
+}
+
+/* ===== TEMA 5: WARM AMBER — Issiq + Toʻq sariq (cafe/casual) ===== */
+[data-theme="warm-amber"] {
+  --bg: #0F0B07;
+  --card: #1A1108;
+  --card2: #21160A;
+  --gold: #D68910;
+  --gold-light: #F39C12;
+  --gold-dark: #B7770D;
+  --border: #332208;
+  --border2: #281A06;
+  --text: #FFFBF0;
+  --text2: #D4AC6A;
+  --text3: #8B6914;
+}
+
 body {
   font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg);

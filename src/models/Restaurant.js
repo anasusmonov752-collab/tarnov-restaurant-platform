@@ -131,6 +131,7 @@ const RestaurantSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   location: { type: String, default: '', trim: true },
   active: { type: Boolean, default: true },
+  theme: { type: String, default: 'elegant-dark', enum: ['elegant-dark', 'fresh-emerald', 'royal-crimson', 'ocean-blue', 'warm-amber'] },
   plan: { type: String, default: 'basic', enum: ['basic', 'pro', 'enterprise'] },
   planPrice: { type: Number, default: 0, min: 0 },
   adminEmail: {

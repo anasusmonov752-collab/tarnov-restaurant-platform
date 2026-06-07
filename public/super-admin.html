@@ -127,6 +127,47 @@
         <label>Admin paroli <span id="pass-hint" style="color:var(--text3)">(yangilash uchun to'ldiring)</span></label>
         <input type="password" class="form-control" id="r-password" placeholder="••••••••">
       </div>
+      <div class="form-group">
+        <label>Interfeys temasi</label>
+        <div id="theme-picker" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:4px">
+          <div class="theme-option" data-theme="elegant-dark" onclick="selectTheme('elegant-dark')" title="Elegant Dark">
+            <div style="background:#111;border:2px solid #C8922A;border-radius:8px;padding:10px 4px;text-align:center;cursor:pointer">
+              <div style="width:24px;height:24px;background:#C8922A;border-radius:50%;margin:0 auto 4px"></div>
+              <div style="font-size:10px;color:#C8922A;font-weight:600">Elegant</div>
+              <div style="font-size:9px;color:#666">Dark Gold</div>
+            </div>
+          </div>
+          <div class="theme-option" data-theme="fresh-emerald" onclick="selectTheme('fresh-emerald')" title="Fresh Emerald">
+            <div style="background:#121A17;border:2px solid #333;border-radius:8px;padding:10px 4px;text-align:center;cursor:pointer">
+              <div style="width:24px;height:24px;background:#27AE60;border-radius:50%;margin:0 auto 4px"></div>
+              <div style="font-size:10px;color:#27AE60;font-weight:600">Fresh</div>
+              <div style="font-size:9px;color:#5C9970">Emerald</div>
+            </div>
+          </div>
+          <div class="theme-option" data-theme="royal-crimson" onclick="selectTheme('royal-crimson')" title="Royal Crimson">
+            <div style="background:#150E0E;border:2px solid #333;border-radius:8px;padding:10px 4px;text-align:center;cursor:pointer">
+              <div style="width:24px;height:24px;background:#C0392B;border-radius:50%;margin:0 auto 4px"></div>
+              <div style="font-size:10px;color:#C0392B;font-weight:600">Royal</div>
+              <div style="font-size:9px;color:#8B5E5E">Crimson</div>
+            </div>
+          </div>
+          <div class="theme-option" data-theme="ocean-blue" onclick="selectTheme('ocean-blue')" title="Ocean Blue">
+            <div style="background:#0E1520;border:2px solid #333;border-radius:8px;padding:10px 4px;text-align:center;cursor:pointer">
+              <div style="width:24px;height:24px;background:#2980B9;border-radius:50%;margin:0 auto 4px"></div>
+              <div style="font-size:10px;color:#2980B9;font-weight:600">Ocean</div>
+              <div style="font-size:9px;color:#4A7FA8">Blue</div>
+            </div>
+          </div>
+          <div class="theme-option" data-theme="warm-amber" onclick="selectTheme('warm-amber')" title="Warm Amber">
+            <div style="background:#1A1108;border:2px solid #333;border-radius:8px;padding:10px 4px;text-align:center;cursor:pointer">
+              <div style="width:24px;height:24px;background:#D68910;border-radius:50%;margin:0 auto 4px"></div>
+              <div style="font-size:10px;color:#D68910;font-weight:600">Warm</div>
+              <div style="font-size:9px;color:#8B6914">Amber</div>
+            </div>
+          </div>
+        </div>
+        <input type="hidden" id="r-theme" value="elegant-dark">
+      </div>
       <div class="grid-2">
         <div class="form-group">
           <label>Tarif rejasi</label>
@@ -312,6 +353,7 @@ function openAddModal() {
   document.getElementById('modal-save-btn').textContent = 'Qo\'shish';
   ['r-name','r-location','r-email','r-password','r-price'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('r-plan').value = 'basic';
+  selectTheme('elegant-dark');
   document.getElementById('restaurant-modal').classList.add('show');
   renderIcons();
 }
@@ -329,12 +371,25 @@ function openEditModal(id) {
   document.getElementById('r-password').value = '';
   document.getElementById('r-plan').value = r.plan || 'basic';
   document.getElementById('r-price').value = r.planPrice || '';
+  selectTheme(r.theme || 'elegant-dark');
   document.getElementById('restaurant-modal').classList.add('show');
   renderIcons();
 }
 
 function closeModal() {
   document.getElementById('restaurant-modal').classList.remove('show');
+}
+
+function selectTheme(theme) {
+  document.getElementById('r-theme').value = theme;
+  document.querySelectorAll('#theme-picker .theme-option > div').forEach(el => {
+    el.style.border = '2px solid #333';
+  });
+  const sel = document.querySelector(`#theme-picker [data-theme="${theme}"] > div`);
+  if (sel) {
+    const colors = { 'elegant-dark':'#C8922A','fresh-emerald':'#27AE60','royal-crimson':'#C0392B','ocean-blue':'#2980B9','warm-amber':'#D68910' };
+    sel.style.border = `2px solid ${colors[theme] || '#C8922A'}`;
+  }
 }
 
 async function saveRestaurant() {
@@ -345,7 +400,8 @@ async function saveRestaurant() {
     adminEmail: document.getElementById('r-email').value.trim(),
     adminPassword: document.getElementById('r-password').value,
     plan: document.getElementById('r-plan').value,
-    planPrice: document.getElementById('r-price').value
+    planPrice: document.getElementById('r-price').value,
+    theme: document.getElementById('r-theme').value
   };
   if (!id && !body.adminPassword) { toast('Parol majburiy', 'error'); return; }
   try {

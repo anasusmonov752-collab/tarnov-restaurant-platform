@@ -193,36 +193,101 @@
 <!-- BOTTOM NAV gradient hint -->
 <div class="waiter-nav-wrap"></div>
 
-<!-- BOTTOM NAV -->
-<nav class="waiter-nav">
-  <button class="waiter-nav-item active" onclick="showWaiterPage('home', this)">
+<!-- BOTTOM NAV (5 tab) -->
+<nav class="waiter-nav" id="waiter-nav">
+  <button class="waiter-nav-item active" id="nav-home" onclick="showWaiterPage('home', this)">
     <span class="nav-icon"><i data-lucide="home"></i></span>Bosh sahifa
   </button>
-  <button class="waiter-nav-item" onclick="showWaiterPage('menu', this)">
+  <button class="waiter-nav-item" id="nav-menu" onclick="showWaiterPage('menu', this)">
     <span class="nav-icon"><i data-lucide="utensils"></i></span>Menyu
   </button>
-  <button class="waiter-nav-item" onclick="showWaiterPage('test', this)">
+  <button class="waiter-nav-item" id="nav-test" onclick="showWaiterPage('test', this)">
     <span class="nav-icon"><i data-lucide="file-text"></i></span>Test
   </button>
-  <button class="waiter-nav-item" onclick="showWaiterPage('history', this)">
+  <button class="waiter-nav-item" id="nav-history" onclick="showWaiterPage('history', this)">
     <span class="nav-icon"><i data-lucide="trophy"></i></span>Tarix
   </button>
-  <button class="waiter-nav-item" onclick="showWaiterPage('ann', this)">
-    <span class="nav-icon"><i data-lucide="megaphone"></i></span>E'lonlar
-  </button>
-  <button class="waiter-nav-item" onclick="showWaiterPage('checklist', this)">
-    <span class="nav-icon"><i data-lucide="clipboard-list"></i></span>Checklist
-  </button>
-  <button class="waiter-nav-item" onclick="showWaiterPage('adaptation', this)">
-    <span class="nav-icon"><i data-lucide="book-open"></i></span>Adaptatsiya
-  </button>
-  <button class="waiter-nav-item" onclick="showWaiterPage('flashcard', this)">
-    <span class="nav-icon"><i data-lucide="layers"></i></span>Flashcard
-  </button>
-  <button class="waiter-nav-item" onclick="showWaiterPage('leaderboard', this)">
-    <span class="nav-icon"><i data-lucide="bar-chart-2"></i></span>Reyting
+  <button class="waiter-nav-item" id="nav-more" onclick="toggleMoreSheet()">
+    <span class="nav-icon"><i data-lucide="grid-3x3"></i></span>Ko'proq
   </button>
 </nav>
+
+<!-- MORE BOTTOM SHEET -->
+<div id="more-backdrop" onclick="closeMoreSheet()" style="
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5);
+  backdrop-filter:blur(4px); z-index:400;
+"></div>
+
+<div id="more-sheet" style="
+  position:fixed; bottom:0; left:0; right:0; z-index:401;
+  background:rgba(12,9,4,0.88);
+  backdrop-filter:blur(32px) saturate(180%);
+  -webkit-backdrop-filter:blur(32px) saturate(180%);
+  border-top:1px solid rgba(200,146,42,0.25);
+  border-radius:24px 24px 0 0;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  box-shadow: 0 -20px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08);
+  transform: translateY(100%);
+  transition: transform 0.38s cubic-bezier(0.34,1.2,0.64,1);
+">
+  <!-- Drag handle -->
+  <div style="display:flex;justify-content:center;padding:12px 0 4px">
+    <div style="width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,0.18)"></div>
+  </div>
+
+  <!-- Title -->
+  <div style="padding:4px 24px 16px;display:flex;align-items:center;justify-content:space-between">
+    <span style="font-size:1rem;font-weight:700;color:var(--text2)">Qo'shimcha bo'limlar</span>
+    <button onclick="closeMoreSheet()" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:50%;width:28px;height:28px;color:var(--text3);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center">×</button>
+  </div>
+
+  <!-- 3×2 Grid -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 16px 12px" id="more-grid">
+
+    <button class="more-grid-item" onclick="moreNav('ann')" id="more-ann">
+      <div class="more-grid-icon" style="background:rgba(52,152,219,0.15);border-color:rgba(52,152,219,0.25)">
+        <i data-lucide="megaphone" style="width:22px;height:22px;color:#3498DB"></i>
+      </div>
+      <span>E'lonlar</span>
+    </button>
+
+    <button class="more-grid-item" onclick="moreNav('checklist')" id="more-checklist">
+      <div class="more-grid-icon" style="background:rgba(46,204,113,0.15);border-color:rgba(46,204,113,0.25)">
+        <i data-lucide="clipboard-list" style="width:22px;height:22px;color:#2ECC71"></i>
+      </div>
+      <span>Checklist</span>
+    </button>
+
+    <button class="more-grid-item" onclick="moreNav('flashcard')" id="more-flashcard">
+      <div class="more-grid-icon" style="background:rgba(200,146,42,0.15);border-color:rgba(200,146,42,0.25)">
+        <i data-lucide="layers" style="width:22px;height:22px;color:var(--gold)"></i>
+      </div>
+      <span>Flashcard</span>
+    </button>
+
+    <button class="more-grid-item" onclick="moreNav('leaderboard')" id="more-leaderboard">
+      <div class="more-grid-icon" style="background:rgba(243,156,18,0.15);border-color:rgba(243,156,18,0.25)">
+        <i data-lucide="bar-chart-2" style="width:22px;height:22px;color:#F39C12"></i>
+      </div>
+      <span>Reyting</span>
+    </button>
+
+    <button class="more-grid-item" onclick="moreNav('adaptation')" id="more-adaptation">
+      <div class="more-grid-icon" style="background:rgba(155,89,182,0.15);border-color:rgba(155,89,182,0.25)">
+        <i data-lucide="book-open" style="width:22px;height:22px;color:#9B59B6"></i>
+      </div>
+      <span>Adaptatsiya</span>
+    </button>
+
+    <button class="more-grid-item" onclick="moreNav('home')" id="more-profile">
+      <div class="more-grid-icon" style="background:rgba(231,76,60,0.12);border-color:rgba(231,76,60,0.2)">
+        <i data-lucide="user-circle" style="width:22px;height:22px;color:#E74C3C"></i>
+      </div>
+      <span>Profil</span>
+    </button>
+
+  </div>
+</div>
 
 <!-- MENU ITEM DETAIL MODAL -->
 <div class="modal-overlay" id="menu-item-modal">
@@ -971,16 +1036,46 @@ async function downloadPDF(r) {
   } catch(e) { toast('PDF xatosi: ' + e.message, 'error'); }
 }
 
+// ===== MORE SHEET =====
+const MORE_PAGES = new Set(['ann','checklist','flashcard','leaderboard','adaptation']);
+let moreSheetOpen = false;
+
+function toggleMoreSheet() {
+  moreSheetOpen ? closeMoreSheet() : openMoreSheet();
+}
+function openMoreSheet() {
+  moreSheetOpen = true;
+  document.getElementById('more-backdrop').style.display = 'block';
+  requestAnimationFrame(() => document.getElementById('more-sheet').classList.add('open'));
+  lucide.createIcons();
+}
+function closeMoreSheet() {
+  moreSheetOpen = false;
+  document.getElementById('more-sheet').classList.remove('open');
+  document.getElementById('more-backdrop').style.display = 'none';
+}
+function moreNav(page) {
+  closeMoreSheet();
+  document.querySelectorAll('.waiter-nav-item').forEach(n => n.classList.remove('active','more-active'));
+  document.getElementById('nav-more').classList.add('active','more-active');
+  document.querySelectorAll('.more-grid-item').forEach(el => el.classList.remove('active-page'));
+  const gridEl = document.getElementById('more-' + page);
+  if (gridEl) gridEl.classList.add('active-page');
+  _showPage(page);
+}
+
 // ===== NAVIGATION =====
 function showWaiterPage(page, btn) {
+  document.querySelectorAll('.waiter-nav-item').forEach(n => n.classList.remove('active','more-active'));
+  if (btn) btn.classList.add('active');
+  if (!MORE_PAGES.has(page)) document.querySelectorAll('.more-grid-item').forEach(el => el.classList.remove('active-page'));
+  closeMoreSheet();
+  _showPage(page);
+}
+
+function _showPage(page) {
   document.querySelectorAll('[id^="page-"]').forEach(p=>p.style.display='none');
   document.getElementById(`page-${page}`).style.display='block';
-  document.querySelectorAll('.waiter-nav-item').forEach(n=>n.classList.remove('active'));
-  if (btn) {
-    btn.classList.add('active');
-    // Aktiv tugmani navda markazga scroll qilish
-    btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-  }
   if (page==='menu') loadMenu();
   if (page==='test') { document.getElementById('test-home').style.display='block'; document.getElementById('test-active').style.display='none'; document.getElementById('test-result').style.display='none'; loadTestInfo(); }
   if (page==='history') loadHistory();

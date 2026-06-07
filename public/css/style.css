@@ -2037,6 +2037,65 @@ body.neon-mode h1, body.neon-mode .gold { color: #00F5FF; }
   0%, 100% { box-shadow: 0 0 0 0 rgba(46,204,113,0.4); }
   50%       { box-shadow: 0 0 0 6px rgba(46,204,113,0); }
 }
+/* ========== MORE GRID SHEET ========== */
+.more-grid-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 8px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.04);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.07);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text2);
+  transition: all 0.18s;
+  letter-spacing: 0.01em;
+}
+.more-grid-item:hover,
+.more-grid-item:active {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(200,146,42,0.25);
+  transform: scale(0.96);
+  color: var(--text);
+}
+.more-grid-item.active-page {
+  background: rgba(200,146,42,0.1);
+  border-color: rgba(200,146,42,0.4);
+  color: var(--gold);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 0 16px rgba(200,146,42,0.1);
+}
+.more-grid-icon {
+  width: 52px; height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid;
+  backdrop-filter: blur(8px);
+  transition: transform 0.18s;
+}
+.more-grid-item:active .more-grid-icon { transform: scale(0.9); }
+
+/* "Ko'proq" button dot indicator when sub-page active */
+.waiter-nav-item.more-active .nav-icon::after {
+  content: '';
+  position: absolute;
+  top: -2px; right: -2px;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--gold);
+  border: 1.5px solid var(--bg);
+}
+.waiter-nav-item .nav-icon { position: relative; }
+
+/* More sheet open animation */
+#more-sheet.open { transform: translateY(0) !important; }
+
 .live-badge {
   display: inline-flex;
   align-items: center;

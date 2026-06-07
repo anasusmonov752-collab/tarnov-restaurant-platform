@@ -3,17 +3,17 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --bg: #071A09;
-  --card: #0D2410;
-  --card2: #112B14;
+  --bg: #0A0A0A;
+  --card: #111111;
+  --card2: #161616;
   --gold: #C8922A;
   --gold-light: #E5A93A;
   --gold-dark: #A07520;
-  --border: #1E4522;
-  --border2: #183A1B;
-  --text: #F0F7F1;
-  --text2: #8FBF94;
-  --text3: #4A7550;
+  --border: #2A2A2A;
+  --border2: #222222;
+  --text: #FFFFFF;
+  --text2: #AAAAAA;
+  --text3: #666666;
   --success: #2ECC71;
   --danger: #E74C3C;
   --warning: #F39C12;
@@ -50,11 +50,11 @@ h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #071A09;
+  background: #050505;
   background-image:
-    radial-gradient(ellipse at 50% 0%, rgba(30,120,50,0.4) 0%, transparent 55%),
-    radial-gradient(ellipse at 50% 0%, rgba(200,146,42,0.15) 0%, transparent 45%),
-    radial-gradient(ellipse at 0% 100%, rgba(15,70,25,0.4) 0%, transparent 40%);
+    radial-gradient(ellipse at 50% 0%, rgba(200,146,42,0.18) 0%, transparent 55%),
+    radial-gradient(ellipse at 0% 100%, rgba(200,146,42,0.08) 0%, transparent 40%),
+    radial-gradient(ellipse at 100% 50%, rgba(200,146,42,0.06) 0%, transparent 40%);
   padding: 20px;
   position: relative;
   overflow: hidden;
@@ -65,8 +65,8 @@ h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
   position: absolute;
   top: -200px; left: 50%;
   transform: translateX(-50%);
-  width: 700px; height: 700px;
-  background: radial-gradient(circle, rgba(20,120,40,0.08) 0%, rgba(200,146,42,0.06) 40%, transparent 70%);
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(200,146,42,0.12) 0%, transparent 70%);
   animation: loginGlow 4s ease-in-out infinite alternate;
   pointer-events: none;
 }
@@ -80,7 +80,7 @@ h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
   content: '';
   position: absolute;
   inset: 0;
-  background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2318A832' fill-opacity='0.025'%3E%3Ccircle cx='20' cy='20' r='1'/%3E%3C/g%3E%3C/svg%3E");
+  background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23C8922A' fill-opacity='0.03'%3E%3Ccircle cx='20' cy='20' r='1'/%3E%3C/g%3E%3C/svg%3E");
   pointer-events: none;
 }
 
@@ -123,8 +123,8 @@ h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
 }
 
 .login-card {
-  background: linear-gradient(145deg, #122816, #0D2010);
-  border: 1px solid rgba(200,146,42,0.2);
+  background: linear-gradient(145deg, #161616, #111111);
+  border: 1px solid rgba(200,146,42,0.25);
   border-radius: 24px;
   padding: 38px;
   box-shadow:
@@ -1227,9 +1227,9 @@ table tr:hover td { background: rgba(255,255,255,0.02); }
 
 /* Sidebar glow */
 .sidebar {
-  background: linear-gradient(180deg, #112814 0%, #0A1E0D 100%);
-  box-shadow: 4px 0 32px rgba(0,0,0,0.5), inset -1px 0 0 rgba(200,146,42,0.06);
-  border-right: 1px solid rgba(30,50,25,0.8) !important;
+  background: linear-gradient(180deg, #141414 0%, #0d0d0d 100%);
+  box-shadow: 4px 0 32px rgba(0,0,0,0.5), inset -1px 0 0 rgba(200,146,42,0.08);
+  border-right: 1px solid rgba(200,146,42,0.1) !important;
 }
 
 /* Score circle pulse on certificate */

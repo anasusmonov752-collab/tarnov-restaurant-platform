@@ -146,6 +146,106 @@ router.get('/adaptation', guard, asyncHandler(async (req, res) => {
   res.json(r?.adaptation || {});
 }));
 
+// ── TRAINING MODULES ─────────────────────────────────────────
+
+router.get('/modules', guard, asyncHandler(async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'modules moduleProgress');
+  const modules = (r?.modules || []).sort((a,b) => (a.order||0)-(b.order||0));
+  const myProgress = (r?.moduleProgress || []).filter(p => p.waiterId === req.user.waiterId);
+
+  const result = modules.map(m => {
+    const prog = myProgress.find(p => p.moduleId === m.id) || {};
+    const completedLessons = prog.completedLessons || [];
+    const totalLessons = m.lessons.length;
+    return {
+      id: m.id, title: m.title, description: m.description,
+      emoji: m.emoji, color: m.color, order: m.order,
+      totalLessons, completedLessons: completedLessons.length,
+      quizScore: prog.quizScore ?? -1,
+      completed: prog.completed || false,
+      badgeEarned: prog.badgeEarned || false,
+      passingScore: m.passingScore || 70,
+      quizCount: m.quiz?.length || 0,
+      // lessons (without heavy image data for list view)
+      lessons: m.lessons.sort((a,b)=>(a.order||0)-(b.order||0)).map(l => ({
+        id: l.id, title: l.title, order: l.order,
+        hasImage: !!l.image, hasVideo: !!l.videoUrl,
+        done: completedLessons.includes(l.id)
+      }))
+    };
+  });
+  res.json(result);
+}));
+
+// Get single lesson (full content)
+router.get('/modules/:moduleId/lessons/:lessonId', guard, asyncHandler(async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'modules moduleProgress');
+  const mod = r?.modules?.find(m => m.id === req.params.moduleId);
+  if (!mod) return res.status(404).json({ error: 'Modul topilmadi' });
+  const lesson = mod.lessons.find(l => l.id === req.params.lessonId);
+  if (!lesson) return res.status(404).json({ error: 'Dars topilmadi' });
+
+  // Mark lesson as completed
+  const prog = (r.moduleProgress || []).find(p => p.waiterId === req.user.waiterId && p.moduleId === req.params.moduleId);
+  if (!prog) {
+    await Restaurant.updateOne({ id: req.user.restaurantId }, {
+      $push: { moduleProgress: { waiterId: req.user.waiterId, moduleId: req.params.moduleId, completedLessons: [lesson.id] } }
+    });
+  } else if (!prog.completedLessons.includes(lesson.id)) {
+    await Restaurant.updateOne(
+      { id: req.user.restaurantId, 'moduleProgress.waiterId': req.user.waiterId, 'moduleProgress.moduleId': req.params.moduleId },
+      { $push: { 'moduleProgress.$.completedLessons': lesson.id } }
+    );
+  }
+
+  // Check if all lessons done
+  const updatedR = await Restaurant.findOne({ id: req.user.restaurantId }, 'modules moduleProgress');
+  const updProg = (updatedR.moduleProgress || []).find(p => p.waiterId === req.user.waiterId && p.moduleId === req.params.moduleId);
+  const allDone = mod.lessons.length > 0 && mod.lessons.every(l => (updProg?.completedLessons || []).includes(l.id));
+
+  res.json({ ...lesson.toObject(), allLessonsDone: allDone, quizAvailable: allDone && mod.quiz?.length > 0 });
+}));
+
+// Get quiz for module
+router.get('/modules/:moduleId/quiz', guard, asyncHandler(async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'modules moduleProgress');
+  const mod = r?.modules?.find(m => m.id === req.params.moduleId);
+  if (!mod) return res.status(404).json({ error: 'Modul topilmadi' });
+
+  const prog = (r.moduleProgress || []).find(p => p.waiterId === req.user.waiterId && p.moduleId === req.params.moduleId);
+  if (!prog || prog.quizScore >= 0) return res.status(400).json({ error: 'Quiz allaqachon topshirilgan yoki darslar tugallanmagan' });
+
+  // Return quiz without correct answers
+  res.json({ quiz: mod.quiz.map(q => ({ id: q.id, question: q.question, options: q.options })) });
+}));
+
+// Submit quiz
+router.post('/modules/:moduleId/quiz', guard, asyncHandler(async (req, res) => {
+  const { answers } = req.body; // { questionId: selectedIndex }
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'modules moduleProgress');
+  const mod = r?.modules?.find(m => m.id === req.params.moduleId);
+  if (!mod) return res.status(404).json({ error: 'Modul topilmadi' });
+
+  let correct = 0;
+  mod.quiz.forEach(q => {
+    if (parseInt(answers[q.id]) === q.correctAnswer) correct++;
+  });
+  const score = mod.quiz.length > 0 ? Math.round((correct / mod.quiz.length) * 100) : 100;
+  const passed = score >= (mod.passingScore || 70);
+
+  await Restaurant.updateOne(
+    { id: req.user.restaurantId, 'moduleProgress.waiterId': req.user.waiterId, 'moduleProgress.moduleId': req.params.moduleId },
+    { $set: {
+      'moduleProgress.$.quizScore': score,
+      'moduleProgress.$.completed': passed,
+      'moduleProgress.$.badgeEarned': passed,
+      'moduleProgress.$.completedAt': passed ? new Date() : undefined
+    }}
+  );
+
+  res.json({ score, correct, total: mod.quiz.length, passed, passingScore: mod.passingScore || 70 });
+}));
+
 router.get('/leaderboard', guard, asyncHandler(async (req, res) => {
   const filter = req.query.filter || 'best'; // best | avg | certs
   const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'testResults waiters');

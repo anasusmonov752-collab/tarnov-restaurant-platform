@@ -1,0 +1,32 @@
+{
+  "name": "Tarnov Training Platform",
+  "short_name": "Tarnov",
+  "description": "Tarnov Restaurant xodimlar o'quv platformasi",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0A0A0A",
+  "theme_color": "#C8922A",
+  "lang": "uz",
+  "icons": [
+    { "src": "/images/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/images/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" },
+    { "src": "/images/logo.jpg", "sizes": "512x512", "type": "image/jpeg", "purpose": "any" }
+  ],
+  "categories": ["education", "business"],
+  "shortcuts": [
+    {
+      "name": "Test topshirish",
+      "short_name": "Test",
+      "url": "/waiter.html",
+      "icons": [{ "src": "/images/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Menyu ko'rish",
+      "short_name": "Menyu",
+      "url": "/waiter.html",
+      "icons": [{ "src": "/images/icon.svg", "sizes": "any" }]
+    }
+  ]
+}

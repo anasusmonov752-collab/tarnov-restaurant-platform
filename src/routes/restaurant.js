@@ -258,4 +258,127 @@ router.delete('/adaptation/management/:memberId', guard, asyncHandler(async (req
   res.json({ success: true });
 }));
 
+// ── TRAINING MODULES ─────────────────────────────────────────
+
+// Get all modules (with progress summary)
+router.get('/modules', guard, asyncHandler(async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'modules moduleProgress');
+  const modules = (r?.modules || []).sort((a,b) => (a.order||0) - (b.order||0));
+  const progress = r?.moduleProgress || [];
+
+  // Add progress stats per module
+  const result = modules.map(m => {
+    const prog = progress.filter(p => p.moduleId === m.id);
+    const completed = prog.filter(p => p.completed).length;
+    return {
+      ...m.toObject(),
+      stats: { totalWaiters: prog.length, completed, avgScore: prog.filter(p=>p.quizScore>=0).length
+        ? Math.round(prog.filter(p=>p.quizScore>=0).reduce((s,p)=>s+p.quizScore,0) / prog.filter(p=>p.quizScore>=0).length)
+        : null }
+    };
+  });
+  res.json(result);
+}));
+
+// Create module
+router.post('/modules', guard, asyncHandler(async (req, res) => {
+  const { title, description, emoji, color, order } = req.body;
+  if (!title?.trim()) return res.status(400).json({ error: 'Modul nomi kiritilmagan' });
+  const module = { id: uuidv4(), title: title.trim(), description: description?.trim()||'',
+    emoji: emoji||'📚', color: color||'#C8922A', order: order||0, lessons: [], quiz: [] };
+  await Restaurant.updateOne({ id: req.user.restaurantId }, { $push: { modules: module } });
+  res.json({ success: true, module });
+}));
+
+// Update module
+router.put('/modules/:moduleId', guard, asyncHandler(async (req, res) => {
+  const { title, description, emoji, color, order, passingScore } = req.body;
+  const upd = {};
+  if (title)        upd['modules.$.title']        = title.trim();
+  if (description !== undefined) upd['modules.$.description'] = description.trim();
+  if (emoji)        upd['modules.$.emoji']        = emoji;
+  if (color)        upd['modules.$.color']        = color;
+  if (order !== undefined) upd['modules.$.order'] = order;
+  if (passingScore) upd['modules.$.passingScore'] = passingScore;
+  await Restaurant.updateOne({ id: req.user.restaurantId, 'modules.id': req.params.moduleId }, { $set: upd });
+  res.json({ success: true });
+}));
+
+// Delete module
+router.delete('/modules/:moduleId', guard, asyncHandler(async (req, res) => {
+  await Restaurant.updateOne({ id: req.user.restaurantId }, { $pull: { modules: { id: req.params.moduleId } } });
+  res.json({ success: true });
+}));
+
+// Reorder modules
+router.put('/modules/reorder', guard, asyncHandler(async (req, res) => {
+  const { orders } = req.body; // [{ id, order }]
+  const bulkOps = orders.map(({ id, order }) => ({
+    updateOne: { filter: { id: req.user.restaurantId, 'modules.id': id }, update: { $set: { 'modules.$.order': order } } }
+  }));
+  await Restaurant.bulkWrite(bulkOps);
+  res.json({ success: true });
+}));
+
+// Add lesson to module
+router.post('/modules/:moduleId/lessons', guard, asyncHandler(async (req, res) => {
+  const { title, content, image, videoUrl, order } = req.body;
+  if (!title?.trim()) return res.status(400).json({ error: 'Dars nomi kiritilmagan' });
+  const lesson = { id: uuidv4(), title: title.trim(), content: content?.trim()||'',
+    image: image||'', videoUrl: videoUrl||'', order: order||0 };
+  await Restaurant.updateOne(
+    { id: req.user.restaurantId, 'modules.id': req.params.moduleId },
+    { $push: { 'modules.$.lessons': lesson } }
+  );
+  res.json({ success: true, lesson });
+}));
+
+// Update lesson
+router.put('/modules/:moduleId/lessons/:lessonId', guard, asyncHandler(async (req, res) => {
+  const { title, content, image, videoUrl, order } = req.body;
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'modules');
+  const mod = r?.modules?.find(m => m.id === req.params.moduleId);
+  if (!mod) return res.status(404).json({ error: 'Modul topilmadi' });
+  const lesson = mod.lessons.find(l => l.id === req.params.lessonId);
+  if (!lesson) return res.status(404).json({ error: 'Dars topilmadi' });
+  if (title)     lesson.title    = title.trim();
+  if (content !== undefined) lesson.content = content.trim();
+  if (image !== undefined)   lesson.image   = image;
+  if (videoUrl !== undefined) lesson.videoUrl = videoUrl;
+  if (order !== undefined)   lesson.order   = order;
+  await r.save();
+  res.json({ success: true });
+}));
+
+// Delete lesson
+router.delete('/modules/:moduleId/lessons/:lessonId', guard, asyncHandler(async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'modules');
+  const mod = r?.modules?.find(m => m.id === req.params.moduleId);
+  if (!mod) return res.status(404).json({ error: 'Modul topilmadi' });
+  mod.lessons = mod.lessons.filter(l => l.id !== req.params.lessonId);
+  await r.save();
+  res.json({ success: true });
+}));
+
+// Update quiz for module
+router.put('/modules/:moduleId/quiz', guard, asyncHandler(async (req, res) => {
+  const { quiz } = req.body; // [{ question, options, correctAnswer }]
+  if (!Array.isArray(quiz)) return res.status(400).json({ error: 'Quiz massiv bo\'lishi kerak' });
+  const quizWithIds = quiz.map(q => ({ id: uuidv4(), question: q.question, options: q.options, correctAnswer: q.correctAnswer }));
+  await Restaurant.updateOne(
+    { id: req.user.restaurantId, 'modules.id': req.params.moduleId },
+    { $set: { 'modules.$.quiz': quizWithIds } }
+  );
+  res.json({ success: true });
+}));
+
+// Get module progress per waiter
+router.get('/modules/:moduleId/progress', guard, asyncHandler(async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'moduleProgress waiters');
+  const prog = (r?.moduleProgress || []).filter(p => p.moduleId === req.params.moduleId);
+  const waiterMap = {};
+  (r?.waiters || []).forEach(w => { waiterMap[w.id] = w.name; });
+  res.json(prog.map(p => ({ ...p, waiterName: waiterMap[p.waiterId] || 'Noma\'lum' })));
+}));
+
 module.exports = router;

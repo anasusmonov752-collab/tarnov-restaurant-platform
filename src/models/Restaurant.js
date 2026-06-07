@@ -78,6 +78,47 @@ const ManagementMemberSchema = new mongoose.Schema({
   order: { type: Number, default: 0 }
 });
 
+// ── Training Modules ──────────────────────────────────────────
+const LessonSchema = new mongoose.Schema({
+  id:          { type: String, default: () => uuidv4() },
+  title:       { type: String, required: true, trim: true },
+  content:     { type: String, default: '', trim: true },   // markdown-like text
+  image:       { type: String, maxlength: 7000000 },        // base64 or URL
+  videoUrl:    { type: String, default: '' },               // optional YouTube embed
+  order:       { type: Number, default: 0 },
+  createdAt:   { type: Date, default: Date.now }
+});
+
+const ModuleQuizSchema = new mongoose.Schema({
+  id:            { type: String, default: () => uuidv4() },
+  question:      { type: String, required: true },
+  options:       [String],
+  correctAnswer: { type: Number, required: true }
+}, { _id: false });
+
+const ModuleSchema = new mongoose.Schema({
+  id:          { type: String, default: () => uuidv4() },
+  title:       { type: String, required: true, trim: true },
+  description: { type: String, default: '', trim: true },
+  emoji:       { type: String, default: '📚' },
+  color:       { type: String, default: '#C8922A' },        // accent color
+  order:       { type: Number, default: 0 },
+  lessons:     [LessonSchema],
+  quiz:        [ModuleQuizSchema],                          // mini-quiz at end
+  passingScore:{ type: Number, default: 70 },              // % to pass
+  createdAt:   { type: Date, default: Date.now }
+});
+
+const WaiterModuleProgressSchema = new mongoose.Schema({
+  waiterId:          String,
+  moduleId:          String,
+  completedLessons:  [String],                             // lesson ids
+  quizScore:         { type: Number, default: -1 },        // -1 = not taken
+  completed:         { type: Boolean, default: false },
+  completedAt:       Date,
+  badgeEarned:       { type: Boolean, default: false }
+}, { _id: false });
+
 const AdaptationSchema = new mongoose.Schema({
   history: { type: String, default: '' },
   mission: { type: String, default: '' },
@@ -110,7 +151,9 @@ const RestaurantSchema = new mongoose.Schema({
   testResults: [TestResultSchema],
   checklist: [ChecklistItemSchema],
   waiterChecklists: [WaiterChecklistSchema],
-  adaptation: { type: AdaptationSchema, default: () => ({}) }
+  adaptation: { type: AdaptationSchema, default: () => ({}) },
+  modules: [ModuleSchema],
+  moduleProgress: [WaiterModuleProgressSchema]
 });
 
 module.exports = mongoose.model('Restaurant', RestaurantSchema);

@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tarnov — Restoran Admin</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#C8922A">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Tarnov Admin">
+  <link rel="apple-touch-icon" href="/images/icon.svg">
   <link rel="stylesheet" href="/css/style.css">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
@@ -60,6 +67,11 @@
       </button>
       <button class="nav-item" onclick="showPage('checklist', this)">
         <span class="nav-icon"><i data-lucide="clipboard-list"></i></span>Checklist
+      </button>
+      <button class="nav-item" onclick="showPage('modules', this)" style="border-left:3px solid rgba(155,89,182,0.5)">
+        <span class="nav-icon"><i data-lucide="graduation-cap"></i></span>
+        <span>O'quv modullar</span>
+        <span class="badge badge-info" style="margin-left:auto;font-size:0.6rem;padding:2px 6px">YANGI</span>
       </button>
     </nav>
     <div class="sidebar-footer">
@@ -287,6 +299,145 @@
             <tbody id="results-table"></tbody>
           </table>
         </div>
+      </div>
+    </div>
+
+    <!-- TRAINING MODULES -->
+    <div id="page-modules" class="page" style="display:none">
+      <div class="page-header">
+        <div>
+          <h1><i data-lucide="graduation-cap" style="width:28px;height:28px;color:#9B59B6;vertical-align:middle"></i> O'quv Modullar</h1>
+          <p>Ofitsiantlar uchun strukturali o'quv kurslari</p>
+        </div>
+        <button class="btn btn-gold" onclick="openModuleModal()">
+          <i data-lucide="plus"></i> Modul qo'shish
+        </button>
+      </div>
+      <div class="page-body">
+
+        <!-- Stats row -->
+        <div class="stats-grid" id="mod-stats" style="margin-bottom:20px"></div>
+
+        <!-- Module cards -->
+        <div id="mod-list"></div>
+
+      </div>
+    </div>
+
+    <!-- MODULE MODAL -->
+    <div class="modal-overlay" id="module-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 class="modal-title" id="module-modal-title">Modul qo'shish</h3>
+          <button class="modal-close" onclick="closeModal('module-modal')"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="mod-id">
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Emoji</label>
+              <input type="text" class="form-control" id="mod-emoji" value="📚" maxlength="2" style="font-size:1.4rem;text-align:center">
+            </div>
+            <div class="form-group">
+              <label>Rang</label>
+              <input type="color" class="form-control" id="mod-color" value="#9B59B6" style="height:46px;cursor:pointer">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Modul nomi <span style="color:var(--danger)">*</span></label>
+            <input type="text" class="form-control" id="mod-title" placeholder="Masalan: Salatlar bo'limi">
+          </div>
+          <div class="form-group">
+            <label>Tavsif</label>
+            <textarea class="form-control" id="mod-desc" placeholder="Bu modul haqida qisqacha..." rows="2"></textarea>
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Tartib raqami</label>
+              <input type="number" class="form-control" id="mod-order" value="0" min="0">
+            </div>
+            <div class="form-group">
+              <label>Quiz uchun minimal ball (%)</label>
+              <input type="number" class="form-control" id="mod-passing" value="70" min="0" max="100">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" onclick="closeModal('module-modal')">Bekor</button>
+          <button class="btn btn-gold" onclick="saveModule()"><i data-lucide="save"></i> Saqlash</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LESSON MODAL -->
+    <div class="modal-overlay" id="lesson-modal">
+      <div class="modal modal-lg">
+        <div class="modal-header">
+          <h3 class="modal-title" id="lesson-modal-title">Dars qo'shish</h3>
+          <button class="modal-close" onclick="closeModal('lesson-modal')"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="lesson-mod-id">
+          <input type="hidden" id="lesson-id">
+          <div class="form-group">
+            <label>Dars nomi <span style="color:var(--danger)">*</span></label>
+            <input type="text" class="form-control" id="lesson-title" placeholder="Masalan: Grek salati haqida">
+          </div>
+          <div class="form-group">
+            <label>Kontent (matn)</label>
+            <textarea class="form-control" id="lesson-content" placeholder="Dars matni. Taom haqida ma'lumot, tarkib, qoidalar..." rows="6"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Rasm (ixtiyoriy)</label>
+            <input type="file" class="form-control" id="lesson-img-file" accept="image/*" onchange="previewLessonImg(this)">
+            <div id="lesson-img-preview" style="margin-top:8px"></div>
+            <input type="hidden" id="lesson-img">
+          </div>
+          <div class="form-group">
+            <label>Video URL (YouTube embed, ixtiyoriy)</label>
+            <input type="text" class="form-control" id="lesson-video" placeholder="https://www.youtube.com/embed/...">
+          </div>
+          <div class="form-group">
+            <label>Tartib raqami</label>
+            <input type="number" class="form-control" id="lesson-order" value="0" min="0">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" onclick="closeModal('lesson-modal')">Bekor</button>
+          <button class="btn btn-gold" onclick="saveLesson()"><i data-lucide="save"></i> Saqlash</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUIZ MODAL -->
+    <div class="modal-overlay" id="quiz-modal">
+      <div class="modal modal-xl">
+        <div class="modal-header">
+          <h3 class="modal-title" id="quiz-modal-title">Mini-Quiz savollar</h3>
+          <button class="modal-close" onclick="closeModal('quiz-modal')"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="quiz-mod-id">
+          <div id="quiz-questions-list"></div>
+          <button class="btn btn-ghost btn-full mt-16" onclick="addQuizQuestion()">
+            <i data-lucide="plus"></i> Savol qo'shish
+          </button>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" onclick="closeModal('quiz-modal')">Bekor</button>
+          <button class="btn btn-gold" onclick="saveQuiz()"><i data-lucide="save"></i> Saqlash</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODULE PROGRESS MODAL -->
+    <div class="modal-overlay" id="mod-progress-modal">
+      <div class="modal modal-lg">
+        <div class="modal-header">
+          <h3 class="modal-title" id="mod-progress-title">Ofitsiantlar progressi</h3>
+          <button class="modal-close" onclick="closeModal('mod-progress-modal')"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-body" id="mod-progress-body"></div>
       </div>
     </div>
 
@@ -1464,6 +1615,281 @@ async function deleteMember(id) {
 }
 
 // ===== NAVIGATION =====
+// ══════════════════════════════════════════
+//  TRAINING MODULES — Admin
+// ══════════════════════════════════════════
+let adminModules = [];
+let quizQuestions = [];
+
+async function loadModules() {
+  try {
+    adminModules = await api('/api/restaurant/modules');
+    renderModules();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function renderModules() {
+  // Stats
+  const total = adminModules.length;
+  const totalLessons = adminModules.reduce((s,m)=>s+(m.lessons?.length||0),0);
+  const totalQuiz = adminModules.reduce((s,m)=>s+(m.quiz?.length||0),0);
+  document.getElementById('mod-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-icon"><i data-lucide="graduation-cap"></i></div><div class="stat-value">${total}</div><div class="stat-label">Modullar</div></div>
+    <div class="stat-card"><div class="stat-icon"><i data-lucide="book-open"></i></div><div class="stat-value">${totalLessons}</div><div class="stat-label">Darslar</div></div>
+    <div class="stat-card"><div class="stat-icon"><i data-lucide="help-circle"></i></div><div class="stat-value">${totalQuiz}</div><div class="stat-label">Quiz savollari</div></div>
+  `;
+
+  const el = document.getElementById('mod-list');
+  if (!adminModules.length) {
+    el.innerHTML = `<div class="empty-state">
+      <div class="empty-icon"><i data-lucide="graduation-cap"></i></div>
+      <h3>Hali modul yo'q</h3>
+      <p>Birinchi o'quv modulingizni yarating</p>
+      <button class="btn btn-gold" style="margin-top:16px" onclick="openModuleModal()"><i data-lucide="plus"></i> Modul qo'shish</button>
+    </div>`;
+    renderIcons(); return;
+  }
+
+  el.innerHTML = adminModules.map(m => `
+    <div class="card mb-16" style="border-left:4px solid ${m.color||'#9B59B6'}">
+      <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap">
+        <!-- Emoji badge -->
+        <div style="width:56px;height:56px;border-radius:16px;background:${m.color||'#9B59B6'}22;border:1px solid ${m.color||'#9B59B6'}44;display:flex;align-items:center;justify-content:center;font-size:1.8rem;flex-shrink:0">${m.emoji||'📚'}</div>
+        <!-- Info -->
+        <div style="flex:1;min-width:200px">
+          <div style="font-weight:700;font-size:1.05rem;margin-bottom:4px">${m.title}</div>
+          <div style="color:var(--text2);font-size:0.85rem;margin-bottom:10px">${m.description||''}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <span class="badge badge-ghost"><i data-lucide="book-open" style="width:11px;height:11px"></i> ${m.lessons?.length||0} ta dars</span>
+            <span class="badge badge-ghost"><i data-lucide="help-circle" style="width:11px;height:11px"></i> ${m.quiz?.length||0} ta quiz</span>
+            <span class="badge badge-ghost" style="color:var(--text3)">Min: ${m.passingScore||70}%</span>
+            ${m.stats ? `<span class="badge badge-success">${m.stats.completed} ta tugatdi</span>` : ''}
+          </div>
+        </div>
+        <!-- Actions -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="openLessonModal('${m.id}')">
+            <i data-lucide="plus"></i> Dars
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="openQuizModal('${m.id}')">
+            <i data-lucide="help-circle"></i> Quiz
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="showModuleProgress('${m.id}','${m.title}')">
+            <i data-lucide="bar-chart-2"></i>
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="openModuleModal('${m.id}')">
+            <i data-lucide="edit-2"></i>
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="deleteModule('${m.id}')">
+            <i data-lucide="trash-2"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Lessons list -->
+      ${m.lessons?.length ? `
+        <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px">
+          <div style="font-size:0.78rem;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.08em">Darslar</div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            ${[...m.lessons].sort((a,b)=>(a.order||0)-(b.order||0)).map((l,i) => `
+              <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06)">
+                <span style="width:22px;height:22px;border-radius:6px;background:${m.color||'#9B59B6'}22;color:${m.color||'#9B59B6'};font-size:0.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${i+1}</span>
+                <span style="flex:1;font-size:0.88rem;font-weight:500">${l.title}</span>
+                ${l.hasImage?'<span style="font-size:0.7rem;color:var(--text3)">🖼</span>':''}
+                ${l.hasVideo?'<span style="font-size:0.7rem;color:var(--text3)">▶</span>':''}
+                <button class="btn btn-ghost btn-sm" style="padding:4px 8px" onclick="openLessonModal('${m.id}','${l.id}')"><i data-lucide="edit-2" style="width:12px;height:12px"></i></button>
+                <button class="btn btn-danger btn-sm" style="padding:4px 8px" onclick="deleteLesson('${m.id}','${l.id}')"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>
+              </div>`).join('')}
+          </div>
+        </div>` : ''}
+    </div>`).join('');
+  renderIcons();
+}
+
+function openModuleModal(moduleId) {
+  const m = moduleId ? adminModules.find(x=>x.id===moduleId) : null;
+  document.getElementById('module-modal-title').textContent = m ? 'Modulni tahrirlash' : 'Modul qo\'shish';
+  document.getElementById('mod-id').value = m?.id || '';
+  document.getElementById('mod-title').value = m?.title || '';
+  document.getElementById('mod-desc').value = m?.description || '';
+  document.getElementById('mod-emoji').value = m?.emoji || '📚';
+  document.getElementById('mod-color').value = m?.color || '#9B59B6';
+  document.getElementById('mod-order').value = m?.order ?? 0;
+  document.getElementById('mod-passing').value = m?.passingScore ?? 70;
+  document.getElementById('module-modal').classList.add('show');
+  renderIcons();
+}
+
+async function saveModule() {
+  const id = document.getElementById('mod-id').value;
+  const body = {
+    title: document.getElementById('mod-title').value.trim(),
+    description: document.getElementById('mod-desc').value.trim(),
+    emoji: document.getElementById('mod-emoji').value.trim() || '📚',
+    color: document.getElementById('mod-color').value,
+    order: parseInt(document.getElementById('mod-order').value)||0,
+    passingScore: parseInt(document.getElementById('mod-passing').value)||70
+  };
+  if (!body.title) { toast('Modul nomi kiritilmagan', 'error'); return; }
+  try {
+    if (id) await api(`/api/restaurant/modules/${id}`, { method:'PUT', body:JSON.stringify(body) });
+    else    await api('/api/restaurant/modules', { method:'POST', body:JSON.stringify(body) });
+    closeModal('module-modal');
+    await loadModules();
+    toast(id ? 'Modul yangilandi' : 'Modul qo\'shildi!', 'success');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function deleteModule(id) {
+  if (!confirmDialog('Modulni o\'chirish?')) return;
+  await api(`/api/restaurant/modules/${id}`, { method:'DELETE' });
+  await loadModules();
+  toast('Modul o\'chirildi', 'success');
+}
+
+// ── LESSONS ──
+function openLessonModal(moduleId, lessonId) {
+  const m = adminModules.find(x=>x.id===moduleId);
+  const l = lessonId ? m?.lessons?.find(x=>x.id===lessonId) : null;
+  document.getElementById('lesson-modal-title').textContent = l ? 'Darsni tahrirlash' : 'Dars qo\'shish';
+  document.getElementById('lesson-mod-id').value = moduleId;
+  document.getElementById('lesson-id').value = l?.id || '';
+  document.getElementById('lesson-title').value = l?.title || '';
+  document.getElementById('lesson-content').value = l?.content || '';
+  document.getElementById('lesson-video').value = l?.videoUrl || '';
+  document.getElementById('lesson-order').value = l?.order ?? (m?.lessons?.length||0);
+  document.getElementById('lesson-img').value = '';
+  document.getElementById('lesson-img-preview').innerHTML = l?.image ?
+    `<img src="${l.image}" style="max-height:120px;border-radius:8px;border:1px solid var(--border)">` : '';
+  document.getElementById('lesson-modal').classList.add('show');
+  renderIcons();
+}
+
+function previewLessonImg(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image(); img.src = e.target.result;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const MAX = 800; let w = img.width, h = img.height;
+      if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const data = canvas.toDataURL('image/jpeg', 0.8);
+      document.getElementById('lesson-img').value = data;
+      document.getElementById('lesson-img-preview').innerHTML = `<img src="${data}" style="max-height:120px;border-radius:8px;border:1px solid var(--border)">`;
+    };
+  };
+  reader.readAsDataURL(file);
+}
+
+async function saveLesson() {
+  const modId = document.getElementById('lesson-mod-id').value;
+  const lessonId = document.getElementById('lesson-id').value;
+  const body = {
+    title:    document.getElementById('lesson-title').value.trim(),
+    content:  document.getElementById('lesson-content').value.trim(),
+    image:    document.getElementById('lesson-img').value || undefined,
+    videoUrl: document.getElementById('lesson-video').value.trim(),
+    order:    parseInt(document.getElementById('lesson-order').value)||0
+  };
+  if (!body.title) { toast('Dars nomi kiritilmagan', 'error'); return; }
+  try {
+    if (lessonId) await api(`/api/restaurant/modules/${modId}/lessons/${lessonId}`, { method:'PUT', body:JSON.stringify(body) });
+    else          await api(`/api/restaurant/modules/${modId}/lessons`, { method:'POST', body:JSON.stringify(body) });
+    closeModal('lesson-modal');
+    await loadModules();
+    toast(lessonId ? 'Dars yangilandi' : 'Dars qo\'shildi!', 'success');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function deleteLesson(modId, lessonId) {
+  if (!confirmDialog('Darsni o\'chirish?')) return;
+  await api(`/api/restaurant/modules/${modId}/lessons/${lessonId}`, { method:'DELETE' });
+  await loadModules();
+  toast('Dars o\'chirildi', 'success');
+}
+
+// ── QUIZ ──
+function openQuizModal(moduleId) {
+  const m = adminModules.find(x=>x.id===moduleId);
+  document.getElementById('quiz-modal-title').textContent = `"${m.title}" — Quiz savollar`;
+  document.getElementById('quiz-mod-id').value = moduleId;
+  quizQuestions = m.quiz?.map(q => ({ ...q })) || [];
+  renderQuizEditor();
+  document.getElementById('quiz-modal').classList.add('show');
+  renderIcons();
+}
+
+function renderQuizEditor() {
+  const el = document.getElementById('quiz-questions-list');
+  el.innerHTML = quizQuestions.map((q,i) => `
+    <div class="card mb-12" style="border:1px solid rgba(200,146,42,0.2)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <span style="font-weight:700;color:var(--gold);font-size:0.85rem">${i+1}-savol</span>
+        <button class="btn btn-danger btn-sm" style="padding:4px 8px" onclick="removeQuizQ(${i})"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>
+      </div>
+      <div class="form-group" style="margin-bottom:10px">
+        <input type="text" class="form-control" value="${q.question||''}" oninput="quizQuestions[${i}].question=this.value" placeholder="Savol matni...">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${(q.options||['','','','']).map((opt,oi) => `
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="radio" name="correct_${i}" value="${oi}" ${q.correctAnswer===oi?'checked':''} onchange="quizQuestions[${i}].correctAnswer=${oi}" style="accent-color:var(--gold)">
+            <input type="text" class="form-control" style="flex:1" value="${opt||''}" oninput="quizQuestions[${i}].options[${oi}]=this.value" placeholder="${String.fromCharCode(65+oi)} varianti...">
+          </div>`).join('')}
+      </div>
+      <div style="font-size:0.75rem;color:var(--text3);margin-top:8px">✓ To'g'ri javobni radio tugmasi bilan belgilang</div>
+    </div>`).join('');
+  renderIcons();
+}
+
+function addQuizQuestion() {
+  quizQuestions.push({ question:'', options:['','','',''], correctAnswer:0 });
+  renderQuizEditor();
+}
+function removeQuizQ(i) { quizQuestions.splice(i,1); renderQuizEditor(); }
+
+async function saveQuiz() {
+  const modId = document.getElementById('quiz-mod-id').value;
+  const valid = quizQuestions.every(q => q.question?.trim() && q.options?.filter(o=>o?.trim()).length >= 2);
+  if (!valid) { toast('Barcha savollarda kamida 2 ta variant bo\'lishi kerak', 'error'); return; }
+  try {
+    await api(`/api/restaurant/modules/${modId}/quiz`, { method:'PUT', body:JSON.stringify({ quiz: quizQuestions }) });
+    closeModal('quiz-modal');
+    await loadModules();
+    toast('Quiz saqlandi!', 'success');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+// ── PROGRESS ──
+async function showModuleProgress(moduleId, title) {
+  document.getElementById('mod-progress-title').textContent = `${title} — Progress`;
+  document.getElementById('mod-progress-body').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  document.getElementById('mod-progress-modal').classList.add('show');
+  try {
+    const data = await api(`/api/restaurant/modules/${moduleId}/progress`);
+    const el = document.getElementById('mod-progress-body');
+    if (!data.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon"><i data-lucide="bar-chart-2"></i></div><h3>Hali progress yo\'q</h3></div>'; renderIcons(); return; }
+    el.innerHTML = `
+      <div class="table-wrap">
+        <table><thead><tr><th>Ofitsiant</th><th>Darslar</th><th>Quiz</th><th>Holat</th></tr></thead>
+        <tbody>${data.map(p => `
+          <tr>
+            <td><strong>${p.waiterName}</strong></td>
+            <td>${p.completedLessons?.length||0} ta</td>
+            <td>${p.quizScore>=0 ? p.quizScore+'%' : '—'}</td>
+            <td>${p.completed
+              ? '<span class="badge badge-success"><i data-lucide="check-circle" style="width:11px;height:11px"></i> Tugatdi</span>'
+              : '<span class="badge badge-warning">Davom etmoqda</span>'}</td>
+          </tr>`).join('')}
+        </tbody></table>
+      </div>`;
+    renderIcons();
+  } catch(e) { document.getElementById('mod-progress-body').innerHTML = `<div class="alert alert-danger">${e.message}</div>`; }
+}
+
 function showPage(page, btn) {
   document.querySelectorAll('.page').forEach(p => p.style.display='none');
   document.getElementById(`page-${page}`).style.display='block';
@@ -1477,6 +1903,7 @@ function showPage(page, btn) {
   if (page==='adaptation') loadAdaptation();
   if (page==='checklist') loadChecklist();
   if (page==='results') renderHeatmap();
+  if (page==='modules') loadModules();
 }
 
 function toggleSidebar() {

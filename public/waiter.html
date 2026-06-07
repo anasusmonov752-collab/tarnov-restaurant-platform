@@ -499,7 +499,7 @@ async function init() {
   lucide.createIcons();
   try {
     waiterInfo = await api('/api/waiter/info');
-    if (waiterInfo.restaurant?.theme) document.documentElement.setAttribute('data-theme', waiterInfo.restaurant.theme);
+    document.documentElement.setAttribute('data-theme', waiterInfo.restaurant?.theme || 'elegant-dark');
     document.getElementById('w-restaurant-name').textContent = waiterInfo.restaurant.name;
     document.getElementById('w-waiter-name').textContent = waiterInfo.waiter?.name || '';
     document.getElementById('home-name').textContent = waiterInfo.waiter?.name || '';

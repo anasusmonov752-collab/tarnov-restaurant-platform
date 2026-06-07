@@ -24,7 +24,7 @@
 }
 
 /* ===== TEMA 1: ELEGANT DARK (default) — Qora + Oltin ===== */
-[data-theme="elegant-dark"] {
+html[data-theme="elegant-dark"] {
   --bg: #0A0A0A;
   --card: #111111;
   --card2: #161616;
@@ -39,7 +39,7 @@
 }
 
 /* ===== TEMA 2: FRESH EMERALD — Qoʻngʻir + Yashil (eco/healthy) ===== */
-[data-theme="fresh-emerald"] {
+html[data-theme="fresh-emerald"] {
   --bg: #0B1210;
   --card: #121A17;
   --card2: #182320;
@@ -54,7 +54,7 @@
 }
 
 /* ===== TEMA 3: ROYAL CRIMSON — Qora + Toʻq qizil (steakhouse/Italian) ===== */
-[data-theme="royal-crimson"] {
+html[data-theme="royal-crimson"] {
   --bg: #0D0808;
   --card: #150E0E;
   --card2: #1C1212;
@@ -69,7 +69,7 @@
 }
 
 /* ===== TEMA 4: OCEAN BLUE — Qoʻngʻir + Moviy (seafood/Mediterranean) ===== */
-[data-theme="ocean-blue"] {
+html[data-theme="ocean-blue"] {
   --bg: #080E14;
   --card: #0E1520;
   --card2: #121C2A;
@@ -84,7 +84,7 @@
 }
 
 /* ===== TEMA 5: WARM AMBER — Issiq + Toʻq sariq (cafe/casual) ===== */
-[data-theme="warm-amber"] {
+html[data-theme="warm-amber"] {
   --bg: #0F0B07;
   --card: #1A1108;
   --card2: #21160A;

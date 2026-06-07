@@ -761,7 +761,7 @@ async function init() {
   await requireRole('restaurant');
   lucide.createIcons();
   const info = await api('/api/restaurant/info');
-  if (info.theme) document.documentElement.setAttribute('data-theme', info.theme);
+  document.documentElement.setAttribute('data-theme', info.theme || 'elegant-dark');
   document.getElementById('sb-name').textContent = info.name;
   document.getElementById('mob-name').textContent = info.name;
   if (info.location) document.getElementById('sb-loc').innerHTML = `<i data-lucide="map-pin" style="width:11px;height:11px"></i> ${info.location}`;

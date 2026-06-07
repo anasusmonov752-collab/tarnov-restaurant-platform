@@ -299,34 +299,98 @@
 
   <!-- ADAPTATION -->
   <div id="page-adaptation" class="waiter-content" style="display:none">
-    <div style="display:flex;gap:8px;border-bottom:1px solid var(--border);margin-bottom:20px;padding-bottom:0">
-      <button class="adapt-tab active" onclick="switchAdaptViewTab('info',this)">
-        <i data-lucide="book-open" style="width:14px;height:14px"></i> Restoran
+    <!-- 4-tab nav -->
+    <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:20px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch">
+      <button class="adapt-tab active" onclick="switchAdaptViewTab('info',this)" style="white-space:nowrap;flex-shrink:0">
+        <i data-lucide="landmark" style="width:13px;height:13px"></i> Restoran
       </button>
-      <button class="adapt-tab" onclick="switchAdaptViewTab('team',this)">
-        <i data-lucide="users" style="width:14px;height:14px"></i> Jamoa
+      <button class="adapt-tab" onclick="switchAdaptViewTab('journey',this)" style="white-space:nowrap;flex-shrink:0">
+        <i data-lucide="map" style="width:13px;height:13px"></i> Yo'l xaritasi
+      </button>
+      <button class="adapt-tab" onclick="switchAdaptViewTab('docs',this)" style="white-space:nowrap;flex-shrink:0">
+        <i data-lucide="file-text" style="width:13px;height:13px"></i> Hujjatlar
+      </button>
+      <button class="adapt-tab" onclick="switchAdaptViewTab('team',this)" style="white-space:nowrap;flex-shrink:0">
+        <i data-lucide="users" style="width:13px;height:13px"></i> Jamoa
       </button>
     </div>
 
+    <!-- TAB 1: RESTORAN -->
     <div id="adapt-view-info">
-      <div id="adapt-view-history" style="display:none" class="card mb-16">
-        <div class="card-header"><h3 class="card-title"><i data-lucide="scroll-text" style="width:15px;height:15px"></i> Restoran tarixi</h3></div>
-        <div class="card-body" id="adapt-history-text" style="white-space:pre-wrap;line-height:1.8;color:var(--text2)"></div>
+      <!-- History -->
+      <div id="adapt-view-history" style="display:none" class="mb-16">
+        <div style="background:linear-gradient(135deg,rgba(200,146,42,0.1),rgba(200,146,42,0.03));border:1px solid rgba(200,146,42,0.2);border-radius:16px;overflow:hidden">
+          <div style="padding:14px 18px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(200,146,42,0.15)">
+            <div style="width:30px;height:30px;background:rgba(200,146,42,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <i data-lucide="scroll-text" style="width:15px;height:15px;color:var(--gold)"></i>
+            </div>
+            <div>
+              <div style="font-weight:700;font-size:0.9rem">Bizning tarix</div>
+              <div style="font-size:0.7rem;color:var(--text3)">Restoran haqida</div>
+            </div>
+          </div>
+          <div style="padding:16px 18px">
+            <div style="font-size:2.2rem;color:rgba(200,146,42,0.25);line-height:1;margin-bottom:-4px;font-family:Georgia,serif">"</div>
+            <p id="adapt-history-text" style="white-space:pre-wrap;line-height:1.9;color:var(--text2);font-size:0.9rem;margin:0"></p>
+          </div>
+        </div>
       </div>
-      <div id="adapt-view-mission" style="display:none" class="card mb-16">
-        <div class="card-header"><h3 class="card-title"><i data-lucide="target" style="width:15px;height:15px"></i> Missiya</h3></div>
-        <div class="card-body" id="adapt-mission-text" style="white-space:pre-wrap;line-height:1.8;color:var(--text2)"></div>
+
+      <!-- Mission -->
+      <div id="adapt-view-mission" style="display:none" class="mb-16">
+        <div style="background:rgba(15,10,5,0.6);border:1px solid rgba(200,146,42,0.3);border-radius:16px;padding:22px 18px;text-align:center;position:relative;overflow:hidden">
+          <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),transparent)"></div>
+          <div style="width:40px;height:40px;background:rgba(200,146,42,0.12);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+            <i data-lucide="target" style="width:18px;height:18px;color:var(--gold)"></i>
+          </div>
+          <div style="font-size:0.65rem;letter-spacing:0.16em;color:var(--gold);text-transform:uppercase;margin-bottom:10px;font-weight:700">Bizning missiya</div>
+          <p id="adapt-mission-text" style="font-size:1rem;line-height:1.8;color:var(--text1);font-style:italic;margin:0;white-space:pre-wrap"></p>
+        </div>
       </div>
-      <div id="adapt-view-values" style="display:none" class="card">
-        <div class="card-header"><h3 class="card-title"><i data-lucide="gem" style="width:15px;height:15px"></i> Qadriyatlar</h3></div>
-        <div class="card-body" id="adapt-values-list"></div>
+
+      <!-- Values -->
+      <div id="adapt-view-values" style="display:none">
+        <div style="font-size:0.65rem;letter-spacing:0.13em;color:var(--text3);text-transform:uppercase;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:6px">
+          <i data-lucide="gem" style="width:12px;height:12px;color:var(--gold)"></i> Bizning qadriyatlar
+        </div>
+        <div id="adapt-values-list" style="display:flex;flex-wrap:wrap;gap:9px"></div>
       </div>
+
+      <!-- Empty -->
       <div id="adapt-view-empty" style="text-align:center;padding:60px 20px;color:var(--text3)">
         <div style="margin-bottom:12px"><i data-lucide="book-open" style="width:48px;height:48px;opacity:0.3"></i></div>
         <p>Ma'lumotlar hali to'ldirilmagan</p>
       </div>
     </div>
 
+    <!-- TAB 2: YO'L XARITASI -->
+    <div id="adapt-view-journey" style="display:none">
+      <div id="adapt-journey-empty" style="text-align:center;padding:60px 20px;color:var(--text3)">
+        <div style="margin-bottom:12px"><i data-lucide="map" style="width:48px;height:48px;opacity:0.3"></i></div>
+        <p>Onboarding bosqichlari hali qo'shilmagan</p>
+      </div>
+      <div id="adapt-journey-list"></div>
+    </div>
+
+    <!-- TAB 3: HUJJATLAR -->
+    <div id="adapt-view-docs" style="display:none">
+      <div id="adapt-docs-progress" style="display:none;background:rgba(200,146,42,0.07);border:1px solid rgba(200,146,42,0.18);border-radius:12px;padding:13px 16px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
+          <span style="font-size:0.8rem;color:var(--text2);font-weight:600">O'qilgan hujjatlar</span>
+          <span id="adapt-docs-counter" style="font-size:0.8rem;color:var(--gold);font-weight:700">0/0</span>
+        </div>
+        <div style="height:5px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden">
+          <div id="adapt-docs-bar" style="height:100%;background:linear-gradient(90deg,var(--gold),#f5c842);border-radius:3px;transition:width 0.6s ease;width:0%"></div>
+        </div>
+      </div>
+      <div id="adapt-docs-list"></div>
+      <div id="adapt-docs-empty" style="text-align:center;padding:60px 20px;color:var(--text3)">
+        <div style="margin-bottom:12px"><i data-lucide="file-text" style="width:48px;height:48px;opacity:0.3"></i></div>
+        <p>Hujjatlar hali qo'shilmagan</p>
+      </div>
+    </div>
+
+    <!-- TAB 4: JAMOA -->
     <div id="adapt-view-team" style="display:none">
       <div id="adapt-team-list">
         <div style="text-align:center;padding:60px 20px;color:var(--text3)">
@@ -1001,46 +1065,164 @@ async function toggleChecklistItem(itemId) {
 }
 
 // ===== ADAPTATION =====
+let adaptData = null;
+
 async function loadAdaptation() {
   try {
     const data = await api('/api/waiter/adaptation');
-    const hasHistory = data.history?.trim(), hasMission = data.mission?.trim(), hasValues = data.values?.length;
-    const hasInfo = hasHistory || hasMission || hasValues;
-    document.getElementById('adapt-view-empty').style.display = hasInfo ? 'none' : '';
-    if (hasHistory) { document.getElementById('adapt-view-history').style.display = ''; document.getElementById('adapt-history-text').textContent = data.history; }
-    if (hasMission) { document.getElementById('adapt-view-mission').style.display = ''; document.getElementById('adapt-mission-text').textContent = data.mission; }
-    if (hasValues) {
-      document.getElementById('adapt-view-values').style.display = '';
-      document.getElementById('adapt-values-list').innerHTML = data.values.map(v =>
-        `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)">
-          <span style="color:var(--gold);font-size:1.1rem">✦</span>
-          <span style="color:var(--text2)">${v}</span>
-        </div>`).join('');
-    }
-    const team = [...(data.management || [])].sort((a,b)=>(a.order||0)-(b.order||0));
-    document.getElementById('adapt-team-list').innerHTML = team.length ? team.map(m => `
-      <div class="member-card">
-        <div class="member-avatar">
-          ${m.photo ? `<img src="${m.photo}" alt="${m.name}">` : `<i data-lucide="user" style="width:24px;height:24px;opacity:0.5"></i>`}
-        </div>
-        <div style="flex:1">
-          <div style="font-weight:700;font-size:1rem">${m.name}</div>
-          <div style="color:var(--gold);font-size:0.82rem;margin-top:2px">${m.position}</div>
-          ${m.phone ? `<a href="tel:${m.phone}" style="color:var(--text3);font-size:0.8rem;text-decoration:none;display:flex;align-items:center;gap:4px;margin-top:2px">
-            <i data-lucide="phone" style="width:12px;height:12px"></i> ${m.phone}</a>` : ''}
-        </div>
-      </div>`).join('')
-    : `<div style="text-align:center;padding:60px 20px;color:var(--text3)">
-        <div style="margin-bottom:12px"><i data-lucide="users" style="width:48px;height:48px;opacity:0.3"></i></div>
-        <p>Jamoa ma'lumotlari hali qo'shilmagan</p></div>`;
+    adaptData = data;
+    renderAdaptInfo(data);
+    renderAdaptJourney(data);
+    renderAdaptDocs(data);
+    renderAdaptTeam(data);
     renderIcons();
   } catch(e) { console.error(e); }
 }
 
+function renderAdaptInfo(data) {
+  const hasHistory = data.history?.trim();
+  const hasMission = data.mission?.trim();
+  const hasValues  = data.values?.length;
+  document.getElementById('adapt-view-empty').style.display = (hasHistory || hasMission || hasValues) ? 'none' : '';
+  if (hasHistory) {
+    document.getElementById('adapt-view-history').style.display = '';
+    document.getElementById('adapt-history-text').textContent = data.history;
+  }
+  if (hasMission) {
+    document.getElementById('adapt-view-mission').style.display = '';
+    document.getElementById('adapt-mission-text').textContent = data.mission;
+  }
+  if (hasValues) {
+    document.getElementById('adapt-view-values').style.display = '';
+    const colors = ['#C8922A','#3498DB','#9B59B6','#2ECC71','#E74C3C','#1ABC9C','#F39C12','#E67E22'];
+    document.getElementById('adapt-values-list').innerHTML = data.values.map((v,i) => {
+      const c = colors[i % colors.length];
+      return `<div style="display:inline-flex;align-items:center;gap:6px;padding:8px 15px;background:${c}18;border:1px solid ${c}40;border-radius:100px;font-size:0.85rem;font-weight:600;color:${c}">
+        <span style="font-size:0.9rem">✦</span> ${v}
+      </div>`;
+    }).join('');
+  }
+}
+
+function renderAdaptJourney(data) {
+  const steps = [...(data.onboardingSteps || [])].sort((a,b)=>(a.order||0)-(b.order||0));
+  const list  = document.getElementById('adapt-journey-list');
+  const empty = document.getElementById('adapt-journey-empty');
+  if (!steps.length) { empty.style.display=''; list.innerHTML=''; return; }
+  empty.style.display = 'none';
+  const dayColors  = {'1-kun':'#3498DB','3-kun':'#9B59B6','1-hafta':'#C8922A','1-oy':'#2ECC71'};
+  const dayLabels  = {'1-kun':'Birinchi kun','3-kun':'Uchinchi kun','1-hafta':'Birinchi hafta','1-oy':'Birinchi oy'};
+  list.innerHTML = steps.map((step, idx) => {
+    const col    = dayColors[step.day] || '#C8922A';
+    const label  = dayLabels[step.day] || step.day;
+    const isLast = idx === steps.length - 1;
+    const tasks  = (step.tasks || []).filter(Boolean);
+    return `<div style="display:flex;gap:0;margin-bottom:${isLast?'0':'8px'}">
+      <div style="display:flex;flex-direction:column;align-items:center;width:42px;flex-shrink:0">
+        <div style="width:34px;height:34px;border-radius:50%;background:${col}1a;border:2px solid ${col};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <span style="font-size:0.68rem;font-weight:800;color:${col}">${idx+1}</span>
+        </div>
+        ${!isLast?`<div style="width:2px;flex:1;min-height:16px;background:linear-gradient(${col}70,${col}10);margin-top:4px"></div>`:''}
+      </div>
+      <div style="flex:1;padding:0 0 ${isLast?'0':'18px'} 12px">
+        <div style="font-size:0.65rem;letter-spacing:0.1em;color:${col};text-transform:uppercase;font-weight:700;margin-bottom:3px">${label}</div>
+        <div style="font-weight:700;font-size:0.95rem;margin-bottom:5px">${step.title}</div>
+        ${step.description?`<p style="color:var(--text2);font-size:0.84rem;line-height:1.7;margin-bottom:${tasks.length?'9px':'0'};margin-top:0">${step.description}</p>`:''}
+        ${tasks.length?`<div style="display:flex;flex-direction:column;gap:5px">${tasks.map(t=>`
+          <div style="display:flex;align-items:flex-start;gap:7px;font-size:0.82rem;color:var(--text2)">
+            <div style="width:16px;height:16px;border-radius:4px;border:1.5px solid ${col}55;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">
+              <div style="width:7px;height:7px;border-radius:2px;background:${col}30"></div>
+            </div>${t}
+          </div>`).join('')}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderAdaptDocs(data) {
+  const docs    = [...(data.documents || [])].sort((a,b)=>(a.order||0)-(b.order||0));
+  const readSet = new Set(data.readDocuments || []);
+  const list    = document.getElementById('adapt-docs-list');
+  const empty   = document.getElementById('adapt-docs-empty');
+  const progress= document.getElementById('adapt-docs-progress');
+  if (!docs.length) { empty.style.display=''; list.innerHTML=''; progress.style.display='none'; return; }
+  empty.style.display = 'none';
+  const readCount = docs.filter(d => readSet.has(d.id)).length;
+  document.getElementById('adapt-docs-counter').textContent = `${readCount}/${docs.length}`;
+  document.getElementById('adapt-docs-bar').style.width = (docs.length ? readCount/docs.length*100 : 0) + '%';
+  progress.style.display = '';
+  list.innerHTML = docs.map(doc => {
+    const isRead = readSet.has(doc.id);
+    return `<div id="adoc-${doc.id}" style="background:rgba(255,255,255,0.03);border:1px solid ${isRead?'rgba(46,204,113,0.3)':'var(--border)'};border-radius:14px;margin-bottom:10px;overflow:hidden;transition:border-color 0.3s">
+      <div onclick="toggleAdaptDoc('${doc.id}')" style="padding:13px 15px;display:flex;align-items:center;gap:11px;cursor:pointer">
+        <div style="font-size:1.4rem;flex-shrink:0">${doc.icon||'📄'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:0.9rem">${doc.title}</div>
+          ${doc.required?'<span style="font-size:0.65rem;background:rgba(231,76,60,0.12);color:#E74C3C;border:1px solid rgba(231,76,60,0.25);border-radius:4px;padding:2px 6px;font-weight:700;letter-spacing:0.04em">MAJBURIY</span>':''}
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+          ${isRead?'<span style="color:#2ECC71;font-size:0.75rem;font-weight:600;display:flex;align-items:center;gap:3px"><i data-lucide="check-circle-2" style="width:13px;height:13px"></i> O\'qildi</span>':''}
+          <i data-lucide="chevron-down" style="width:15px;height:15px;color:var(--text3);transition:transform 0.2s" id="adoc-chevron-${doc.id}"></i>
+        </div>
+      </div>
+      <div id="adoc-content-${doc.id}" style="display:none;border-top:1px solid var(--border)">
+        <div style="padding:15px;color:var(--text2);font-size:0.87rem;line-height:1.9;white-space:pre-wrap">${doc.content||''}</div>
+        ${!isRead?`<div style="padding:0 15px 15px">
+          <button onclick="markDocRead('${doc.id}')" style="width:100%;padding:10px;background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.28);border-radius:10px;color:#2ECC71;font-weight:700;font-size:0.86rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px">
+            <i data-lucide="check" style="width:15px;height:15px"></i> O'qidim ✓
+          </button>
+        </div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderAdaptTeam(data) {
+  const team = [...(data.management || [])].sort((a,b)=>(a.order||0)-(b.order||0));
+  document.getElementById('adapt-team-list').innerHTML = team.length ? team.map(m => `
+    <div class="member-card">
+      <div class="member-avatar">
+        ${m.photo?`<img src="${m.photo}" alt="${m.name}">`:`<i data-lucide="user" style="width:24px;height:24px;opacity:0.5"></i>`}
+      </div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:1rem">${m.name}</div>
+        <div style="color:var(--gold);font-size:0.82rem;margin-top:2px">${m.position}</div>
+        ${m.phone?`<a href="tel:${m.phone}" style="color:var(--text3);font-size:0.8rem;text-decoration:none;display:flex;align-items:center;gap:4px;margin-top:2px">
+          <i data-lucide="phone" style="width:12px;height:12px"></i> ${m.phone}</a>`:''}
+      </div>
+    </div>`).join('')
+  : `<div style="text-align:center;padding:60px 20px;color:var(--text3)">
+      <div style="margin-bottom:12px"><i data-lucide="users" style="width:48px;height:48px;opacity:0.3"></i></div>
+      <p>Jamoa ma'lumotlari hali qo'shilmagan</p></div>`;
+}
+
+function toggleAdaptDoc(docId) {
+  const content = document.getElementById(`adoc-content-${docId}`);
+  const chevron = document.getElementById(`adoc-chevron-${docId}`);
+  const isOpen  = content.style.display !== 'none';
+  content.style.display = isOpen ? 'none' : '';
+  chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+  renderIcons();
+}
+
+async function markDocRead(docId) {
+  try {
+    await api(`/api/waiter/adaptation/documents/${docId}/read`, { method:'POST' });
+    if (adaptData) {
+      if (!adaptData.readDocuments) adaptData.readDocuments = [];
+      if (!adaptData.readDocuments.includes(docId)) adaptData.readDocuments.push(docId);
+      renderAdaptDocs(adaptData);
+      renderIcons();
+    }
+    toast('Hujjat o\'qildi deb belgilandi ✓', 'success');
+  } catch(e) { toast('Xatolik', 'error'); }
+}
+
 function switchAdaptViewTab(tab, btn) {
-  document.getElementById('adapt-view-info').style.display  = tab==='info'  ? '' : 'none';
-  document.getElementById('adapt-view-team').style.display  = tab==='team'  ? '' : 'none';
-  document.querySelectorAll('#page-adaptation .adapt-tab').forEach(b=>b.classList.remove('active'));
+  ['info','journey','docs','team'].forEach(t =>
+    document.getElementById(`adapt-view-${t}`).style.display = t===tab ? '' : 'none'
+  );
+  document.querySelectorAll('#page-adaptation .adapt-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 }
 

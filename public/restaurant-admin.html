@@ -467,19 +467,28 @@
     <div id="page-adaptation" class="page" style="display:none">
       <div class="page-header">
         <div><h1>Adaptatsiya</h1><p>Yangi xodimlar uchun restoran ma'lumotlari</p></div>
-        <button class="btn btn-gold" onclick="saveAdaptation()">
+        <button class="btn btn-gold" id="adapt-save-btn" onclick="saveAdaptation()">
           <i data-lucide="save"></i> Saqlash
         </button>
       </div>
       <div class="page-body">
-        <div class="flex gap-8 mb-24" style="border-bottom:1px solid var(--border);padding-bottom:0">
-          <button class="adapt-tab active" onclick="switchAdaptTab('info',this)">
+        <!-- 4 tabs -->
+        <div class="flex gap-8 mb-24" style="border-bottom:1px solid var(--border);padding-bottom:0;overflow-x:auto;scrollbar-width:none">
+          <button class="adapt-tab active" onclick="switchAdaptTab('info',this)" style="white-space:nowrap;flex-shrink:0">
             <i data-lucide="book-open" style="width:14px;height:14px"></i> Restoran haqida
           </button>
-          <button class="adapt-tab" onclick="switchAdaptTab('management',this)">
+          <button class="adapt-tab" onclick="switchAdaptTab('onboarding',this)" style="white-space:nowrap;flex-shrink:0">
+            <i data-lucide="map" style="width:14px;height:14px"></i> Onboarding
+          </button>
+          <button class="adapt-tab" onclick="switchAdaptTab('documents',this)" style="white-space:nowrap;flex-shrink:0">
+            <i data-lucide="file-text" style="width:14px;height:14px"></i> Hujjatlar
+          </button>
+          <button class="adapt-tab" onclick="switchAdaptTab('management',this)" style="white-space:nowrap;flex-shrink:0">
             <i data-lucide="users" style="width:14px;height:14px"></i> Boshqaruv
           </button>
         </div>
+
+        <!-- TAB: Restoran haqida -->
         <div id="adapt-tab-info">
           <div class="card mb-16">
             <div class="card-header"><h3 class="card-title"><i data-lucide="scroll-text" style="width:15px;height:15px"></i> Restoran tarixi</h3></div>
@@ -503,6 +512,38 @@
             </div>
           </div>
         </div>
+
+        <!-- TAB: Onboarding -->
+        <div id="adapt-tab-onboarding" style="display:none">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title"><i data-lucide="map" style="width:15px;height:15px"></i> Onboarding bosqichlari</h3>
+              <button class="btn btn-gold btn-sm" onclick="openStepModal()">
+                <i data-lucide="plus"></i> Bosqich qo'shish
+              </button>
+            </div>
+            <div id="onboarding-list" style="padding:8px 0">
+              <div style="text-align:center;padding:40px;color:var(--text3)">Hali bosqich qo'shilmagan</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: Hujjatlar -->
+        <div id="adapt-tab-documents" style="display:none">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title"><i data-lucide="file-text" style="width:15px;height:15px"></i> Hujjatlar va qoidalar</h3>
+              <button class="btn btn-gold btn-sm" onclick="openDocModal()">
+                <i data-lucide="plus"></i> Hujjat qo'shish
+              </button>
+            </div>
+            <div id="documents-list" style="padding:8px 0">
+              <div style="text-align:center;padding:40px;color:var(--text3)">Hali hujjat qo'shilmagan</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB: Boshqaruv -->
         <div id="adapt-tab-management" style="display:none">
           <div class="card mb-16">
             <div class="card-header">
@@ -586,6 +627,79 @@
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeMemberModal()">Bekor</button>
       <button class="btn btn-gold" onclick="saveMember()">Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<!-- DOCUMENT MODAL -->
+<div class="modal-overlay" id="doc-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="doc-modal-title">Hujjat qo'shish</h3>
+      <button class="modal-close" onclick="closeDocModal()"><i data-lucide="x"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="doc-id">
+      <div class="form-group">
+        <label>Sarlavha *</label>
+        <input type="text" class="form-control" id="doc-title" placeholder="Ish tartibi qoidalari">
+      </div>
+      <div class="form-group">
+        <label>Emoji ikonka</label>
+        <input type="text" class="form-control" id="doc-icon" placeholder="📄" style="font-size:1.2rem;width:80px">
+      </div>
+      <div class="form-group">
+        <label>Mazmun</label>
+        <textarea class="form-control" id="doc-content" rows="7" placeholder="Hujjat matni..."></textarea>
+      </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+          <input type="checkbox" id="doc-required" style="width:16px;height:16px;accent-color:var(--gold)">
+          <span>Majburiy o'qish</span>
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeDocModal()">Bekor</button>
+      <button class="btn btn-gold" onclick="saveDoc()">Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<!-- ONBOARDING STEP MODAL -->
+<div class="modal-overlay" id="step-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="step-modal-title">Bosqich qo'shish</h3>
+      <button class="modal-close" onclick="closeStepModal()"><i data-lucide="x"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="step-id">
+      <div class="form-group">
+        <label>Davr *</label>
+        <select class="form-control" id="step-day">
+          <option value="1-kun">1-kun (Birinchi kun)</option>
+          <option value="3-kun">3-kun (Uchinchi kun)</option>
+          <option value="1-hafta">1-hafta (Birinchi hafta)</option>
+          <option value="1-oy">1-oy (Birinchi oy)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Sarlavha *</label>
+        <input type="text" class="form-control" id="step-title" placeholder="Restoran bilan tanishish">
+      </div>
+      <div class="form-group">
+        <label>Tavsif</label>
+        <textarea class="form-control" id="step-description" rows="3" placeholder="Bu bosqichda nima bo'lishi haqida..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Vazifalar <span style="color:var(--text3);font-size:0.78rem">(har bir qator — alohida vazifa)</span></label>
+        <textarea class="form-control" id="step-tasks" rows="5" placeholder="Boshqaruvchi bilan tanishish&#10;Menyu bilan tanishish&#10;Ish joyi ko'rsatiladi"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeStepModal()">Bekor</button>
+      <button class="btn btn-gold" onclick="saveStep()">Saqlash</button>
     </div>
   </div>
 </div>
@@ -1517,6 +1631,8 @@ async function deleteChecklistItem(id) {
 
 // ===== ADAPTATION =====
 let editingMemberId = null, cachedManagement = [];
+let editingDocId = null, cachedDocs = [];
+let editingStepId = null, cachedSteps = [];
 
 async function loadAdaptation() {
   try {
@@ -1525,7 +1641,11 @@ async function loadAdaptation() {
     document.getElementById('adapt-mission').value = data.mission || '';
     document.getElementById('adapt-values').value = (data.values || []).join('\n');
     cachedManagement = data.management || [];
+    cachedDocs       = data.documents || [];
+    cachedSteps      = data.onboardingSteps || [];
     renderManagement(cachedManagement);
+    renderDocuments(cachedDocs);
+    renderOnboarding(cachedSteps);
   } catch(e) { toast('Adaptatsiya ma\'lumotlari yuklanmadi', 'error'); }
 }
 
@@ -1534,17 +1654,152 @@ async function saveAdaptation() {
     await api('/api/restaurant/adaptation', { method:'PUT', body: JSON.stringify({
       history: document.getElementById('adapt-history').value,
       mission: document.getElementById('adapt-mission').value,
-      values: document.getElementById('adapt-values').value
+      values:  document.getElementById('adapt-values').value
     })});
     toast('Saqlandi', 'success');
   } catch(e) { toast('Xatolik yuz berdi', 'error'); }
 }
 
 function switchAdaptTab(tab, btn) {
-  document.getElementById('adapt-tab-info').style.display = tab==='info' ? '' : 'none';
-  document.getElementById('adapt-tab-management').style.display = tab==='management' ? '' : 'none';
-  document.querySelectorAll('.adapt-tab').forEach(b => b.classList.remove('active'));
+  ['info','onboarding','documents','management'].forEach(t =>
+    document.getElementById(`adapt-tab-${t}`).style.display = t===tab ? '' : 'none'
+  );
+  document.querySelectorAll('#page-adaptation .adapt-tab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  document.getElementById('adapt-save-btn').style.display = tab==='info' ? '' : 'none';
+}
+
+// ── DOCUMENTS ────────────────────────────────────
+function renderDocuments(list) {
+  const el = document.getElementById('documents-list');
+  if (!list.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3)">Hali hujjat qo\'shilmagan</div>'; return; }
+  const sorted = [...list].sort((a,b) => (a.order||0)-(b.order||0));
+  el.innerHTML = sorted.map(d => `
+    <div style="display:flex;align-items:center;gap:14px;padding:13px 16px;border-bottom:1px solid var(--border)">
+      <div style="font-size:1.5rem;flex-shrink:0">${d.icon||'📄'}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:0.92rem">${d.title}</div>
+        <div style="display:flex;gap:6px;margin-top:3px;flex-wrap:wrap">
+          ${d.required?'<span style="font-size:0.67rem;background:rgba(231,76,60,0.12);color:#E74C3C;border:1px solid rgba(231,76,60,0.25);border-radius:4px;padding:2px 6px;font-weight:700">MAJBURIY</span>':''}
+          ${d.content?`<span style="font-size:0.72rem;color:var(--text3)">${d.content.slice(0,50)}${d.content.length>50?'…':''}</span>`:''}
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="openDocModal('${d.id}')"><i data-lucide="pencil"></i></button>
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="deleteDoc('${d.id}')"><i data-lucide="trash-2"></i></button>
+      </div>
+    </div>`).join('');
+  renderIcons();
+}
+
+function openDocModal(id) {
+  editingDocId = id || null;
+  document.getElementById('doc-modal-title').textContent = id ? 'Hujjatni tahrirlash' : 'Hujjat qo\'shish';
+  document.getElementById('doc-id').value = '';
+  document.getElementById('doc-title').value = '';
+  document.getElementById('doc-icon').value = '📄';
+  document.getElementById('doc-content').value = '';
+  document.getElementById('doc-required').checked = false;
+  if (id) {
+    const d = cachedDocs.find(x => x.id === id);
+    if (d) {
+      document.getElementById('doc-title').value   = d.title || '';
+      document.getElementById('doc-icon').value    = d.icon || '📄';
+      document.getElementById('doc-content').value = d.content || '';
+      document.getElementById('doc-required').checked = !!d.required;
+    }
+  }
+  document.getElementById('doc-modal').classList.add('show');
+}
+function closeDocModal() { document.getElementById('doc-modal').classList.remove('show'); editingDocId = null; }
+
+async function saveDoc() {
+  const title   = document.getElementById('doc-title').value.trim();
+  const icon    = document.getElementById('doc-icon').value.trim() || '📄';
+  const content = document.getElementById('doc-content').value.trim();
+  const required= document.getElementById('doc-required').checked;
+  if (!title) { toast('Sarlavha kiritish shart', 'error'); return; }
+  try {
+    const body = JSON.stringify({ title, icon, content, required });
+    if (editingDocId) await api(`/api/restaurant/adaptation/documents/${editingDocId}`, { method:'PUT', body });
+    else              await api('/api/restaurant/adaptation/documents', { method:'POST', body });
+    closeDocModal(); loadAdaptation(); toast('Saqlandi', 'success');
+  } catch(e) { toast('Xatolik', 'error'); }
+}
+
+async function deleteDoc(id) {
+  if (!confirm('O\'chirilsinmi?')) return;
+  try { await api(`/api/restaurant/adaptation/documents/${id}`, { method:'DELETE' }); loadAdaptation(); toast('O\'chirildi', 'success'); }
+  catch(e) { toast('Xatolik', 'error'); }
+}
+
+// ── ONBOARDING STEPS ────────────────────────────
+function renderOnboarding(list) {
+  const el = document.getElementById('onboarding-list');
+  if (!list.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3)">Hali bosqich qo\'shilmagan</div>'; return; }
+  const dayColors = {'1-kun':'#3498DB','3-kun':'#9B59B6','1-hafta':'#C8922A','1-oy':'#2ECC71'};
+  const dayLabels = {'1-kun':'1-kun','3-kun':'3-kun','1-hafta':'1-hafta','1-oy':'1-oy'};
+  const sorted = [...list].sort((a,b) => (a.order||0)-(b.order||0));
+  el.innerHTML = sorted.map(s => {
+    const c = dayColors[s.day] || '#C8922A';
+    const tasks = (s.tasks||[]).filter(Boolean);
+    return `<div style="display:flex;align-items:flex-start;gap:14px;padding:13px 16px;border-bottom:1px solid var(--border)">
+      <div style="width:36px;height:36px;border-radius:50%;background:${c}18;border:2px solid ${c};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">
+        <span style="font-size:0.7rem;font-weight:800;color:${c}">${dayLabels[s.day]||s.day}</span>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:0.92rem">${s.title}</div>
+        ${s.description?`<div style="color:var(--text3);font-size:0.78rem;margin-top:2px">${s.description.slice(0,70)}${s.description.length>70?'…':''}</div>`:''}
+        ${tasks.length?`<div style="font-size:0.72rem;color:var(--text3);margin-top:3px">${tasks.length} ta vazifa</div>`:''}
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="openStepModal('${s.id}')"><i data-lucide="pencil"></i></button>
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="deleteStep('${s.id}')"><i data-lucide="trash-2"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+  renderIcons();
+}
+
+function openStepModal(id) {
+  editingStepId = id || null;
+  document.getElementById('step-modal-title').textContent = id ? 'Bosqichni tahrirlash' : 'Bosqich qo\'shish';
+  document.getElementById('step-id').value = '';
+  document.getElementById('step-day').value = '1-kun';
+  document.getElementById('step-title').value = '';
+  document.getElementById('step-description').value = '';
+  document.getElementById('step-tasks').value = '';
+  if (id) {
+    const s = cachedSteps.find(x => x.id === id);
+    if (s) {
+      document.getElementById('step-day').value         = s.day || '1-kun';
+      document.getElementById('step-title').value       = s.title || '';
+      document.getElementById('step-description').value = s.description || '';
+      document.getElementById('step-tasks').value       = (s.tasks||[]).join('\n');
+    }
+  }
+  document.getElementById('step-modal').classList.add('show');
+}
+function closeStepModal() { document.getElementById('step-modal').classList.remove('show'); editingStepId = null; }
+
+async function saveStep() {
+  const day         = document.getElementById('step-day').value;
+  const title       = document.getElementById('step-title').value.trim();
+  const description = document.getElementById('step-description').value.trim();
+  const tasks       = document.getElementById('step-tasks').value;
+  if (!title) { toast('Sarlavha kiritish shart', 'error'); return; }
+  try {
+    const body = JSON.stringify({ day, title, description, tasks });
+    if (editingStepId) await api(`/api/restaurant/adaptation/onboarding/${editingStepId}`, { method:'PUT', body });
+    else               await api('/api/restaurant/adaptation/onboarding', { method:'POST', body });
+    closeStepModal(); loadAdaptation(); toast('Saqlandi', 'success');
+  } catch(e) { toast('Xatolik', 'error'); }
+}
+
+async function deleteStep(id) {
+  if (!confirm('O\'chirilsinmi?')) return;
+  try { await api(`/api/restaurant/adaptation/onboarding/${id}`, { method:'DELETE' }); loadAdaptation(); toast('O\'chirildi', 'success'); }
+  catch(e) { toast('Xatolik', 'error'); }
 }
 
 function renderManagement(list) {

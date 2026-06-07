@@ -19,7 +19,8 @@ const WaiterSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   pin: { type: String, required: true, match: [/^\d{4}$/, 'PIN 4 raqamli bo\'lishi kerak'] },
   active: { type: Boolean, default: true },
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  readDocuments: [String]
 });
 
 const QuestionSchema = new mongoose.Schema({
@@ -119,11 +120,31 @@ const WaiterModuleProgressSchema = new mongoose.Schema({
   badgeEarned:       { type: Boolean, default: false }
 }, { _id: false });
 
+const AdaptDocumentSchema = new mongoose.Schema({
+  id:       { type: String, default: () => uuidv4() },
+  title:    { type: String, required: true, trim: true },
+  content:  { type: String, default: '', trim: true },
+  icon:     { type: String, default: '📄' },
+  required: { type: Boolean, default: false },
+  order:    { type: Number, default: 0 }
+}, { _id: false });
+
+const OnboardingStepSchema = new mongoose.Schema({
+  id:          { type: String, default: () => uuidv4() },
+  day:         { type: String, default: '1-kun' },
+  title:       { type: String, required: true, trim: true },
+  description: { type: String, default: '' },
+  tasks:       [String],
+  order:       { type: Number, default: 0 }
+}, { _id: false });
+
 const AdaptationSchema = new mongoose.Schema({
-  history: { type: String, default: '' },
-  mission: { type: String, default: '' },
-  values: [String],
-  management: [ManagementMemberSchema]
+  history:         { type: String, default: '' },
+  mission:         { type: String, default: '' },
+  values:          [String],
+  management:      [ManagementMemberSchema],
+  documents:       [AdaptDocumentSchema],
+  onboardingSteps: [OnboardingStepSchema]
 }, { _id: false });
 
 const RestaurantSchema = new mongoose.Schema({

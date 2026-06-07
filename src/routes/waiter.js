@@ -142,8 +142,19 @@ router.post('/checklist/:itemId/toggle', guard, asyncHandler(async (req, res) =>
 }));
 
 router.get('/adaptation', guard, asyncHandler(async (req, res) => {
-  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'adaptation');
-  res.json(r?.adaptation || {});
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'adaptation waiters');
+  const waiter = (r?.waiters || []).find(w => w.id === req.user.waiterId);
+  const adapt = r?.adaptation ? r.adaptation.toObject() : {};
+  adapt.readDocuments = waiter?.readDocuments || [];
+  res.json(adapt);
+}));
+
+router.post('/adaptation/documents/:docId/read', guard, asyncHandler(async (req, res) => {
+  await Restaurant.updateOne(
+    { id: req.user.restaurantId, 'waiters.id': req.user.waiterId },
+    { $addToSet: { 'waiters.$.readDocuments': req.params.docId } }
+  );
+  res.json({ success: true });
 }));
 
 // ── TRAINING MODULES ─────────────────────────────────────────

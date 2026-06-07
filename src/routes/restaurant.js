@@ -258,6 +258,71 @@ router.delete('/adaptation/management/:memberId', guard, asyncHandler(async (req
   res.json({ success: true });
 }));
 
+// ---- DOCUMENTS ----
+router.post('/adaptation/documents', guard, asyncHandler(async (req, res) => {
+  const { title, content, icon, required, order } = req.body;
+  if (!title) return res.status(400).json({ error: 'Sarlavha kiritish shart' });
+  const doc = { id: uuidv4(), title, content: content || '', icon: icon || '📄', required: !!required, order: order || 0 };
+  await Restaurant.updateOne({ id: req.user.restaurantId }, { $push: { 'adaptation.documents': doc } });
+  res.json({ success: true, document: doc });
+}));
+
+router.put('/adaptation/documents/:docId', guard, asyncHandler(async (req, res) => {
+  const { title, content, icon, required, order } = req.body;
+  const update = {};
+  if (title !== undefined) update['adaptation.documents.$.title'] = title;
+  if (content !== undefined) update['adaptation.documents.$.content'] = content;
+  if (icon !== undefined) update['adaptation.documents.$.icon'] = icon;
+  if (required !== undefined) update['adaptation.documents.$.required'] = required;
+  if (order !== undefined) update['adaptation.documents.$.order'] = order;
+  await Restaurant.updateOne(
+    { id: req.user.restaurantId, 'adaptation.documents.id': req.params.docId },
+    { $set: update }
+  );
+  res.json({ success: true });
+}));
+
+router.delete('/adaptation/documents/:docId', guard, asyncHandler(async (req, res) => {
+  await Restaurant.updateOne(
+    { id: req.user.restaurantId },
+    { $pull: { 'adaptation.documents': { id: req.params.docId } } }
+  );
+  res.json({ success: true });
+}));
+
+// ---- ONBOARDING STEPS ----
+router.post('/adaptation/onboarding', guard, asyncHandler(async (req, res) => {
+  const { day, title, description, tasks, order } = req.body;
+  if (!title) return res.status(400).json({ error: 'Sarlavha kiritish shart' });
+  const tasksArr = Array.isArray(tasks) ? tasks : (tasks || '').split('\n').map(t => t.trim()).filter(Boolean);
+  const step = { id: uuidv4(), day: day || '1-kun', title, description: description || '', tasks: tasksArr, order: order || 0 };
+  await Restaurant.updateOne({ id: req.user.restaurantId }, { $push: { 'adaptation.onboardingSteps': step } });
+  res.json({ success: true, step });
+}));
+
+router.put('/adaptation/onboarding/:stepId', guard, asyncHandler(async (req, res) => {
+  const { day, title, description, tasks, order } = req.body;
+  const update = {};
+  if (day !== undefined) update['adaptation.onboardingSteps.$.day'] = day;
+  if (title !== undefined) update['adaptation.onboardingSteps.$.title'] = title;
+  if (description !== undefined) update['adaptation.onboardingSteps.$.description'] = description;
+  if (tasks !== undefined) update['adaptation.onboardingSteps.$.tasks'] = Array.isArray(tasks) ? tasks : tasks.split('\n').map(t => t.trim()).filter(Boolean);
+  if (order !== undefined) update['adaptation.onboardingSteps.$.order'] = order;
+  await Restaurant.updateOne(
+    { id: req.user.restaurantId, 'adaptation.onboardingSteps.id': req.params.stepId },
+    { $set: update }
+  );
+  res.json({ success: true });
+}));
+
+router.delete('/adaptation/onboarding/:stepId', guard, asyncHandler(async (req, res) => {
+  await Restaurant.updateOne(
+    { id: req.user.restaurantId },
+    { $pull: { 'adaptation.onboardingSteps': { id: req.params.stepId } } }
+  );
+  res.json({ success: true });
+}));
+
 // ── TRAINING MODULES ─────────────────────────────────────────
 
 // Get all modules (with progress summary)

@@ -190,6 +190,9 @@
 
 </div>
 
+<!-- BOTTOM NAV gradient hint -->
+<div class="waiter-nav-wrap"></div>
+
 <!-- BOTTOM NAV -->
 <nav class="waiter-nav">
   <button class="waiter-nav-item active" onclick="showWaiterPage('home', this)">
@@ -973,7 +976,11 @@ function showWaiterPage(page, btn) {
   document.querySelectorAll('[id^="page-"]').forEach(p=>p.style.display='none');
   document.getElementById(`page-${page}`).style.display='block';
   document.querySelectorAll('.waiter-nav-item').forEach(n=>n.classList.remove('active'));
-  if (btn) btn.classList.add('active');
+  if (btn) {
+    btn.classList.add('active');
+    // Aktiv tugmani navda markazga scroll qilish
+    btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }
   if (page==='menu') loadMenu();
   if (page==='test') { document.getElementById('test-home').style.display='block'; document.getElementById('test-active').style.display='none'; document.getElementById('test-result').style.display='none'; loadTestInfo(); }
   if (page==='history') loadHistory();

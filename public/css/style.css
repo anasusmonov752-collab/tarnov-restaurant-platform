@@ -2107,3 +2107,80 @@ body.neon-mode h1, body.neon-mode .gold { color: #00F5FF; }
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
+
+
+/* ========== CREATIVE FEATURES ========== */
+
+/* Liquid blobs */
+@keyframes liquidFlow1 {
+  0%,100% { transform: translate(0,0) scale(1); }
+  33%      { transform: translate(6%,-8%) scale(1.08); }
+  66%      { transform: translate(-5%,5%) scale(0.95); }
+}
+@keyframes liquidFlow2 {
+  0%,100% { transform: translate(0,0) scale(1); }
+  33%      { transform: translate(-7%,5%) scale(1.06); }
+  66%      { transform: translate(4%,-6%) scale(0.97); }
+}
+@keyframes liquidFlow3 {
+  0%,100% { transform: translate(0,0) scale(1); }
+  50%      { transform: translate(8%,8%) scale(1.1); }
+}
+
+/* Typing cursor */
+.typing-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 0.9em;
+  background: var(--gold);
+  vertical-align: middle;
+  margin-left: 1px;
+  border-radius: 1px;
+  animation: typingBlink 0.65s ease-in-out infinite;
+}
+@keyframes typingBlink {
+  0%,45%  { opacity: 1; }
+  55%,100%{ opacity: 0; }
+}
+
+/* Streak badge */
+.streak-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: rgba(255,100,0,0.12);
+  border: 1px solid rgba(255,100,0,0.3);
+  color: #FF6A00;
+  vertical-align: middle;
+}
+
+/* Rainbow avatar (neon mode) */
+@keyframes avatarRainbow {
+  0%   { color:#00F5FF; text-shadow:0 0 14px #00F5FF,0 0 28px #00F5FF; }
+  16%  { color:#FF00FF; text-shadow:0 0 14px #FF00FF,0 0 28px #FF00FF; }
+  33%  { color:#FF4500; text-shadow:0 0 14px #FF4500,0 0 28px #FF4500; }
+  50%  { color:#00FF88; text-shadow:0 0 14px #00FF88,0 0 28px #00FF88; }
+  66%  { color:#FFE500; text-shadow:0 0 14px #FFE500,0 0 28px #FFE500; }
+  83%  { color:#FF69B4; text-shadow:0 0 14px #FF69B4,0 0 28px #FF69B4; }
+  100% { color:#00F5FF; text-shadow:0 0 14px #00F5FF,0 0 28px #00F5FF; }
+}
+.waiter-avatar-letter {
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--gold);
+  display: inline-block;
+  line-height: 1;
+}
+body.neon-mode .waiter-avatar-letter {
+  animation: avatarRainbow 3s linear infinite;
+}
+
+/* Score slot machine transition */
+.score-number {
+  transition: transform 0.05s, opacity 0.05s;
+  display: inline-block;
+}

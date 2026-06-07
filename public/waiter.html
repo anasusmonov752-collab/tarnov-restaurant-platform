@@ -478,6 +478,7 @@
 </div>
 
 <script src="/js/utils.js"></script>
+<script src="/js/creative.js"></script>
 <script>
 let waiterInfo = null, menuData = [], activeCategory = 'all';
 let testQuestions = [], currentQIndex = 0, answers = {}, timerInterval = null, timeLeft = 30, selectedOption = null;
@@ -488,6 +489,8 @@ function toggleNeon() {
   const on = document.body.classList.toggle('neon-mode');
   document.getElementById('neon-btn').classList.toggle('on', on);
   localStorage.setItem('neonMode', on ? '1' : '');
+  if (on) { startLiquidBg(); startCursorTrail(); }
+  else { stopLiquidBg(); stopCursorTrail(); }
 }
 if (localStorage.getItem('neonMode')) {
   document.body.classList.add('neon-mode');
@@ -500,8 +503,18 @@ async function init() {
   try {
     waiterInfo = await api('/api/waiter/info');
     document.getElementById('w-restaurant-name').textContent = waiterInfo.restaurant.name;
-    document.getElementById('w-waiter-name').textContent = waiterInfo.waiter?.name || '';
-    document.getElementById('home-name').textContent = waiterInfo.waiter?.name || '';
+    const waiterName = waiterInfo.waiter?.name || '';
+    document.getElementById('w-waiter-name').innerHTML = renderWaiterAvatar(waiterName) + ' ' + waiterName;
+    typeText(document.getElementById('home-name'), waiterName, 40);
+    const streak = getCurrentStreak();
+    if (streak > 0) {
+      updateStreak();
+      const subEl = document.getElementById('home-sub');
+      if (subEl) subEl.innerHTML = `Bugun ham yaxshi xizmat ko'rsating &nbsp;<span class="streak-badge">${streakEmoji(streak)} ${streak} kunlik seria!</span>`;
+    } else {
+      updateStreak();
+    }
+    if (localStorage.getItem('neonMode')) { startLiquidBg(); startCursorTrail(); }
     if (waiterInfo.isTestDay) {
       document.getElementById('test-day-badge').innerHTML = '<span class="badge badge-warning"><i data-lucide="alert-circle" style="width:12px;height:12px"></i> Test kuni</span>';
       document.getElementById('test-day-alert').innerHTML = `
@@ -608,17 +621,15 @@ function renderHomeStats() {
       <div class="stat-card"><div class="stat-icon"><i data-lucide="trophy"></i></div><div class="stat-value" style="color:var(--gold)" data-count="${certs}">0</div><div class="stat-label">Sertifikatlar</div></div>
     </div>`;
   renderIcons();
-  // counter animation
+  // Animated counters (creative feature)
   document.querySelectorAll('.stat-value[data-count]').forEach(el => {
     const target = parseInt(el.dataset.count);
     const suffix = el.dataset.suffix || '';
-    let cur = 0;
-    const step = Math.max(1, Math.ceil(target / 30));
-    const iv = setInterval(() => {
-      cur = Math.min(cur + step, target);
-      el.textContent = cur + suffix;
-      if (cur >= target) clearInterval(iv);
-    }, 30);
+    if (suffix) {
+      animateCounter({ set textContent(v) { el.textContent = v + suffix; } }, target);
+    } else {
+      animateCounter(el, target);
+    }
   });
 }
 
@@ -857,15 +868,11 @@ async function submitTest() {
             <i data-lucide="clock" style="width:14px;height:14px"></i> Tarixga o'tish</button>
         </div>
       </div>`;
-    // Score count-up animation
+    // Slot machine score animation
     const scoreEl = document.getElementById('result-score-num');
-    let cur = 0;
-    const step = Math.max(1, Math.ceil(r.score / 40));
-    const iv = setInterval(() => {
-      cur = Math.min(cur + step, r.score);
-      scoreEl.textContent = cur + '%';
-      if (cur >= r.score) clearInterval(iv);
-    }, 25);
+    slotMachineScore(scoreEl, r.score, () => {
+      if (r.score >= 90) launchConfetti();
+    });
     await loadHistory();
     renderIcons();
   } catch (e) {
@@ -1521,15 +1528,11 @@ async function lvNextQuizQ() {
       ? `${r.score}% — Quiz muvaffaqiyatli topshirildi!`
       : `${r.score}% — Minimal ball: ${m?.passingScore||70}%. Darslarni qaytadan o'qing.`;
 
-    // Score count-up
+    // Slot machine score animation
     const scoreEl = document.getElementById('lv-res-score');
-    scoreEl.textContent = '0%';
-    let cur = 0;
-    const iv = setInterval(() => {
-      cur = Math.min(cur + 2, r.score);
-      scoreEl.textContent = cur + '%';
-      if (cur >= r.score) clearInterval(iv);
-    }, 20);
+    slotMachineScore(scoreEl, r.score, () => {
+      if (r.passed) launchConfetti();
+    });
 
     // Refresh module data in background
     api('/api/waiter/modules').then(fresh => { LS.modules = fresh; }).catch(() => {});

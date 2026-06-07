@@ -206,44 +206,63 @@ router.get('/modules/:moduleId/lessons/:lessonId', guard, asyncHandler(async (re
   res.json({ ...lesson.toObject(), allLessonsDone: allDone, quizAvailable: allDone && mod.quiz?.length > 0 });
 }));
 
-// Get quiz for module
+// Get quiz (allow retry if not passed)
 router.get('/modules/:moduleId/quiz', guard, asyncHandler(async (req, res) => {
-  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'modules moduleProgress');
+  const r   = await Restaurant.findOne({ id: req.user.restaurantId }, 'modules moduleProgress');
   const mod = r?.modules?.find(m => m.id === req.params.moduleId);
-  if (!mod) return res.status(404).json({ error: 'Modul topilmadi' });
+  if (!mod)              return res.status(404).json({ error: 'Modul topilmadi' });
+  if (!mod.quiz?.length) return res.status(400).json({ error: 'Bu modulda quiz savollar yo\'q' });
 
-  const prog = (r.moduleProgress || []).find(p => p.waiterId === req.user.waiterId && p.moduleId === req.params.moduleId);
-  if (!prog || prog.quizScore >= 0) return res.status(400).json({ error: 'Quiz allaqachon topshirilgan yoki darslar tugallanmagan' });
+  const prog = (r.moduleProgress || []).find(
+    p => p.waiterId === req.user.waiterId && p.moduleId === req.params.moduleId
+  );
+  // Block only if already PASSED
+  if (prog?.completed) return res.status(400).json({ error: 'Siz bu quizni allaqachon muvaffaqiyatli topshirdingiz' });
 
-  // Return quiz without correct answers
+  // All lessons must be completed first
+  const done = prog?.completedLessons || [];
+  if (mod.lessons.length > 0 && !mod.lessons.every(l => done.includes(l.id))) {
+    return res.status(400).json({ error: 'Avval barcha darslarni tugatish kerak' });
+  }
+
   res.json({ quiz: mod.quiz.map(q => ({ id: q.id, question: q.question, options: q.options })) });
 }));
 
 // Submit quiz
 router.post('/modules/:moduleId/quiz', guard, asyncHandler(async (req, res) => {
-  const { answers } = req.body; // { questionId: selectedIndex }
-  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'modules moduleProgress');
+  const { answers } = req.body;
+  if (!answers || typeof answers !== 'object') return res.status(400).json({ error: 'Javoblar noto\'g\'ri' });
+
+  const r   = await Restaurant.findOne({ id: req.user.restaurantId }, 'modules moduleProgress');
   const mod = r?.modules?.find(m => m.id === req.params.moduleId);
   if (!mod) return res.status(404).json({ error: 'Modul topilmadi' });
 
-  let correct = 0;
-  mod.quiz.forEach(q => {
-    if (parseInt(answers[q.id]) === q.correctAnswer) correct++;
-  });
-  const score = mod.quiz.length > 0 ? Math.round((correct / mod.quiz.length) * 100) : 100;
-  const passed = score >= (mod.passingScore || 70);
-
-  await Restaurant.updateOne(
-    { id: req.user.restaurantId, 'moduleProgress.waiterId': req.user.waiterId, 'moduleProgress.moduleId': req.params.moduleId },
-    { $set: {
-      'moduleProgress.$.quizScore': score,
-      'moduleProgress.$.completed': passed,
-      'moduleProgress.$.badgeEarned': passed,
-      'moduleProgress.$.completedAt': passed ? new Date() : undefined
-    }}
+  const existing = (r.moduleProgress || []).find(
+    p => p.waiterId === req.user.waiterId && p.moduleId === req.params.moduleId
   );
+  if (existing?.completed) return res.status(400).json({ error: 'Siz bu quizni allaqachon muvaffaqiyatli topshirdingiz' });
 
-  res.json({ score, correct, total: mod.quiz.length, passed, passingScore: mod.passingScore || 70 });
+  let correct = 0;
+  mod.quiz.forEach(q => { if (parseInt(answers[q.id]) === q.correctAnswer) correct++; });
+  const total  = mod.quiz.length;
+  const score  = total > 0 ? Math.round((correct / total) * 100) : 100;
+  const passed = score >= (mod.passingScore || 70);
+  const update = { quizScore: score, completed: passed, badgeEarned: passed };
+  if (passed) update.completedAt = new Date();
+
+  if (existing) {
+    await Restaurant.updateOne(
+      { id: req.user.restaurantId, 'moduleProgress.waiterId': req.user.waiterId, 'moduleProgress.moduleId': req.params.moduleId },
+      { $set: Object.fromEntries(Object.entries(update).map(([k,v]) => [`moduleProgress.$.${k}`, v])) }
+    );
+  } else {
+    await Restaurant.updateOne(
+      { id: req.user.restaurantId },
+      { $push: { moduleProgress: { waiterId: req.user.waiterId, moduleId: req.params.moduleId, completedLessons: [], ...update } } }
+    );
+  }
+
+  res.json({ score, correct, total, passed, passingScore: mod.passingScore || 70 });
 }));
 
 router.get('/leaderboard', guard, asyncHandler(async (req, res) => {

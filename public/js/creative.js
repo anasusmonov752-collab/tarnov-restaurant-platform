@@ -51,14 +51,19 @@ function slotMachineScore(el, finalScore, doneCallback) {
 
 // ─── 2. LIQUID BACKGROUND ────────────────────────
 function startLiquidBg() {
-  if (document.getElementById('neon-liquid-wrap')) return;
+  stopLiquidBg();
+  const isLavender = document.body.classList.contains('neon-mode-2');
   const wrap = document.createElement('div');
   wrap.id = 'neon-liquid-wrap';
   wrap.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden';
-  const blobs = [
-    { color: 'rgba(0,245,255,0.07)', size: '65vmax', top: '-20%', left: '-10%', anim: 'liquidFlow1 14s ease-in-out infinite' },
-    { color: 'rgba(160,0,255,0.05)', size: '55vmax', bottom: '-15%', right: '-10%', anim: 'liquidFlow2 18s ease-in-out infinite' },
-    { color: 'rgba(0,180,255,0.045)', size: '45vmax', top: '40%', left: '35%', anim: 'liquidFlow3 11s ease-in-out infinite' },
+  const blobs = isLavender ? [
+    { color: 'rgba(200,85,255,0.08)',  size: '65vmax', top: '-20%',  left: '-10%',   anim: 'liquidFlow1 14s ease-in-out infinite' },
+    { color: 'rgba(120,0,255,0.06)',   size: '55vmax', bottom: '-15%', right: '-10%', anim: 'liquidFlow2 18s ease-in-out infinite' },
+    { color: 'rgba(180,50,255,0.05)',  size: '45vmax', top: '40%',   left: '35%',    anim: 'liquidFlow3 11s ease-in-out infinite' },
+  ] : [
+    { color: 'rgba(0,245,255,0.07)',   size: '65vmax', top: '-20%',  left: '-10%',   anim: 'liquidFlow1 14s ease-in-out infinite' },
+    { color: 'rgba(160,0,255,0.05)',   size: '55vmax', bottom: '-15%', right: '-10%', anim: 'liquidFlow2 18s ease-in-out infinite' },
+    { color: 'rgba(0,180,255,0.045)', size: '45vmax', top: '40%',   left: '35%',    anim: 'liquidFlow3 11s ease-in-out infinite' },
   ];
   blobs.forEach(b => {
     const el = document.createElement('div');

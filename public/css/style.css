@@ -1736,7 +1736,7 @@ table th {
 /* Scrollbar glass track */
 ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2) !important; }
 
-/* ========== NEON GLOW MODE ========== */
+/* ========== NEON GLOW MODE — CYAN ========== */
 body.neon-mode {
   --gold:        #00F5FF;
   --gold-light:  #80FFFF;
@@ -1769,27 +1769,70 @@ body.neon-mode .login-card { border-color: rgba(0,245,255,0.3) !important; box-s
 body.neon-mode .toast { border-left-color: #00F5FF !important; }
 body.neon-mode h1, body.neon-mode .gold { color: #00F5FF; }
 
+/* ========== NEON GLOW MODE — LAVENDER (2) ========== */
+body.neon-mode-2 {
+  --gold:        #C855FF;
+  --gold-light:  #E08AFF;
+  --gold-dark:   #9B30CC;
+  --glass-bg:    rgba(25, 5, 35, 0.62);
+  --glass-border:rgba(200, 85, 255, 0.22);
+  background:
+    radial-gradient(ellipse 60% 40% at 15% 20%, rgba(200,85,255,0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 35% at 85% 75%, rgba(120,0,255,0.07) 0%, transparent 65%),
+    radial-gradient(ellipse 40% 30% at 50% 50%, rgba(180,50,255,0.05) 0%, transparent 60%),
+    #0D0515;
+}
+body.neon-mode-2 .btn-gold {
+  background: linear-gradient(135deg, #E08AFF, #C855FF, #9B30CC);
+  box-shadow: 0 4px 20px rgba(200,85,255,0.45), inset 0 1px 0 rgba(255,255,255,0.25);
+  color: #fff;
+}
+body.neon-mode-2 .sidebar {
+  background: rgba(18,4,28,0.72) !important;
+  border-right: 1px solid rgba(200,85,255,0.18) !important;
+  box-shadow: 4px 0 40px rgba(200,85,255,0.12), inset -1px 0 0 rgba(200,85,255,0.08) !important;
+}
+body.neon-mode-2 .stat-icon { background: rgba(200,85,255,0.12); border-color: rgba(200,85,255,0.25); }
+body.neon-mode-2 .nav-item.active { background: rgba(200,85,255,0.1) !important; border-left-color: #C855FF; }
+body.neon-mode-2 .progress-fill { background: linear-gradient(90deg, #9B30CC, #C855FF); box-shadow: 0 0 12px rgba(200,85,255,0.55); }
+body.neon-mode-2 .timer-circle { border-color: #C855FF; color: #C855FF; }
+body.neon-mode-2 .option-btn.selected { border-color: #C855FF !important; background: rgba(200,85,255,0.1) !important; box-shadow: 0 0 16px rgba(200,85,255,0.25); }
+body.neon-mode-2 .pill.active { background: linear-gradient(135deg, #E08AFF, #C855FF) !important; }
+body.neon-mode-2 .login-card { border-color: rgba(200,85,255,0.3) !important; box-shadow: 0 40px 100px rgba(0,0,0,0.75), 0 0 60px rgba(200,85,255,0.12) !important; }
+body.neon-mode-2 .toast { border-left-color: #C855FF !important; }
+body.neon-mode-2 h1, body.neon-mode-2 .gold { color: #C855FF; }
+body.neon-mode-2 .waiter-avatar-letter { animation: avatarRainbow 3s linear infinite; }
+
+/* ========== NEON TOGGLE BUTTON ========== */
 .neon-toggle {
-  width: 34px; height: 20px;
+  width: 46px; height: 22px;
   background: var(--border);
-  border-radius: 10px;
+  border-radius: 11px;
   position: relative;
   cursor: pointer;
   border: none;
   transition: background 0.3s;
   flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  color: transparent;
+  letter-spacing: -0.5px;
 }
 .neon-toggle::after {
   content: '';
   position: absolute;
   top: 3px; left: 3px;
-  width: 14px; height: 14px;
+  width: 16px; height: 16px;
   border-radius: 50%;
   background: var(--text2);
-  transition: transform 0.3s, background 0.3s;
+  transition: transform 0.3s, background 0.3s, box-shadow 0.3s;
 }
-.neon-toggle.on { background: rgba(0,245,255,0.3); }
-.neon-toggle.on::after { transform: translateX(14px); background: #00F5FF; box-shadow: 0 0 8px rgba(0,245,255,0.8); }
+/* State 1: Cyan */
+.neon-toggle.on { background: rgba(0,245,255,0.25); }
+.neon-toggle.on::after { transform: translateX(11px); background: #00F5FF; box-shadow: 0 0 10px rgba(0,245,255,0.9); }
+/* State 2: Lavender */
+.neon-toggle.on2 { background: rgba(200,85,255,0.25); }
+.neon-toggle.on2::after { transform: translateX(24px); background: #C855FF; box-shadow: 0 0 10px rgba(200,85,255,0.9); }
 
 /* ========== 3D CARD TILT ========== */
 .menu-card {

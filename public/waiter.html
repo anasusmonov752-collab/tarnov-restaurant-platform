@@ -491,18 +491,36 @@ let waiterInfo = null, menuData = [], activeCategory = 'all';
 let testQuestions = [], currentQIndex = 0, answers = {}, timerInterval = null, timeLeft = 30, selectedOption = null;
 let fcData = [], fcCategory = 'all';
 
-// ── Neon toggle ──
+// ── Neon toggle (3 holat: off → cyan → lavender → off) ──
 function toggleNeon() {
-  const on = document.body.classList.toggle('neon-mode');
-  document.getElementById('neon-btn').classList.toggle('on', on);
-  localStorage.setItem('neonMode', on ? '1' : '');
-  if (on) { startLiquidBg(); }
-  else { stopLiquidBg(); }
+  const btn = document.getElementById('neon-btn');
+  const saved = localStorage.getItem('neonMode') || '0';
+  const next = saved === '0' ? '1' : saved === '1' ? '2' : '0';
+
+  document.body.classList.remove('neon-mode', 'neon-mode-2');
+  btn.classList.remove('on', 'on2');
+
+  if (next === '1') {
+    document.body.classList.add('neon-mode');
+    btn.classList.add('on');
+    startLiquidBg();
+  } else if (next === '2') {
+    document.body.classList.add('neon-mode-2');
+    btn.classList.add('on2');
+    startLiquidBg();
+  } else {
+    stopLiquidBg();
+  }
+  localStorage.setItem('neonMode', next);
 }
-if (localStorage.getItem('neonMode')) {
-  document.body.classList.add('neon-mode');
-  document.getElementById('neon-btn').classList.add('on');
-}
+
+// Init: restore saved neon state
+(function() {
+  const saved = localStorage.getItem('neonMode') || '0';
+  const btn = document.getElementById('neon-btn');
+  if (saved === '1') { document.body.classList.add('neon-mode'); btn.classList.add('on'); }
+  else if (saved === '2') { document.body.classList.add('neon-mode-2'); btn.classList.add('on2'); }
+})();
 
 async function init() {
   await requireRole('waiter');
@@ -523,7 +541,8 @@ async function init() {
     } else {
       updateStreak();
     }
-    if (localStorage.getItem('neonMode')) { startLiquidBg(); }
+    const nm = localStorage.getItem('neonMode') || '0';
+    if (nm === '1' || nm === '2') startLiquidBg();
     if (waiterInfo.isTestDay) {
       document.getElementById('test-day-badge').innerHTML = '<span class="badge badge-warning"><i data-lucide="alert-circle" style="width:12px;height:12px"></i> Test kuni</span>';
       document.getElementById('test-day-alert').innerHTML = `

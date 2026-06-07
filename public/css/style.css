@@ -987,12 +987,8 @@ table tr:hover td { background: rgba(255,255,255,0.02); }
   border-top: 1px solid var(--border);
   display: flex;
   z-index: 100;
-  padding-bottom: env(safe-area-inset-bottom);
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-  scroll-snap-type: x proximity;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  overflow: visible;
 }
 
 .waiter-nav::-webkit-scrollbar { display: none; }
@@ -1060,7 +1056,7 @@ table tr:hover td { background: rgba(255,255,255,0.02); }
 .member-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
 .waiter-content {
-  padding: 20px 20px 100px;
+  padding: 20px 20px calc(72px + env(safe-area-inset-bottom, 0px));
   max-width: 800px;
   margin: 0 auto;
 }

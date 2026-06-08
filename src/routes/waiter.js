@@ -142,8 +142,10 @@ router.post('/checklist/:itemId/toggle', guard, asyncHandler(async (req, res) =>
 }));
 
 router.get('/kpi', guard, asyncHandler(async (req, res) => {
-  const r       = await Restaurant.findOne({ id: req.user.restaurantId }, 'testResults');
+  const r       = await Restaurant.findOne({ id: req.user.restaurantId }, 'testResults kpiSettings');
   const results = (r?.testResults || []).filter(t => t.waiterId === req.user.waiterId);
+  const KPI_DEF = { masterMin:90,masterBonus:15,proMin:75,proBonus:0,goodMin:60,goodBonus:0,warningMin:45,warningPenalty:-10,penaltyMin:30,penaltyFine:-20 };
+  const s = { ...KPI_DEF, ...(r?.kpiSettings?.toObject?.() || r?.kpiSettings || {}) };
 
   // 10 kunlik davr yordamchi funksiyalari
   function getPeriodKey(date) {
@@ -185,7 +187,7 @@ router.get('/kpi', guard, asyncHandler(async (req, res) => {
   let d2=new Date(today), consecutiveLow=0;
   for(let i=0;i<6;i++){
     const k=getPeriodKey(d2);
-    if(byPeriod[k]!==undefined){ if(byPeriod[k]<60)consecutiveLow++; else break; }
+    if(byPeriod[k]!==undefined){ if(byPeriod[k]<s.goodMin)consecutiveLow++; else break; }
     const day=d2.getDate();
     if(day<=10)d2=new Date(d2.getFullYear(),d2.getMonth(),1);
     else if(day<=20)d2=new Date(d2.getFullYear(),d2.getMonth(),10);
@@ -194,12 +196,12 @@ router.get('/kpi', guard, asyncHandler(async (req, res) => {
   }
 
   let level,label,color,emoji,penalty,advice;
-  if      (avg>=90){level='master'; label='MASTER';        color='#F39C12';emoji='🏆';penalty=+15;advice='Ajoyib natija! Bu davrda ish haqingizga +15% bonus qo\'shiladi.';}
-  else if (avg>=75){level='pro';    label='PRO';           color='#3498DB';emoji='⭐';penalty=0;  advice='Yaxshi natija! Keyingi davrda 90%+ ga yetib MASTER bo\'ling.';}
-  else if (avg>=60){level='good';   label='YAXSHI';        color='#2ECC71';emoji='✅';penalty=0;  advice='Me\'yor darajasida. Menyu va ingredientlarni chuqurroq o\'rganing.';}
-  else if (avg>=45){level='warning';label='OGOHLANTIRISH'; color='#E67E22';emoji='⚠️';penalty=-10;advice='Diqqat! Bu davr uchun ish haqidan 10% ushlanadi. O\'quv modullarni bajaring.';}
-  else if (avg>=30){level='penalty';label='JAZO';          color='#E74C3C';emoji='🔴';penalty=-20;advice='Kritik! Bu davr uchun 20% ushlanma. Darhol o\'quv modullariga o\'ting.';}
-  else             {level='fail';   label='NOMUVOFIQ';     color='#9B59B6';emoji='❌';penalty=0;  advice='Qayta o\'qitish majburiy. Rahbariyat bilan bog\'laning.';}
+  if      (avg>=s.masterMin) {level='master'; label='MASTER';        color='#F39C12';emoji='🏆';penalty=s.masterBonus;   advice=`Ajoyib natija! Bu davrda ish haqingizga +${s.masterBonus}% bonus qo'shiladi.`;}
+  else if (avg>=s.proMin)    {level='pro';    label='PRO';           color='#3498DB';emoji='⭐';penalty=s.proBonus;      advice=`Yaxshi natija! Keyingi davrda ${s.masterMin}%+ ga yetib MASTER bo'ling.`;}
+  else if (avg>=s.goodMin)   {level='good';   label='YAXSHI';        color='#2ECC71';emoji='✅';penalty=s.goodBonus;     advice="Me'yor darajasida. Menyu va ingredientlarni chuqurroq o'rganing.";}
+  else if (avg>=s.warningMin){level='warning';label='OGOHLANTIRISH'; color='#E67E22';emoji='⚠️';penalty=s.warningPenalty;advice=`Diqqat! Bu davr uchun ish haqidan ${Math.abs(s.warningPenalty)}% ushlanadi.`;}
+  else if (avg>=s.penaltyMin){level='penalty';label='JAZO';          color='#E74C3C';emoji='🔴';penalty=s.penaltyFine;   advice=`Kritik! Bu davr uchun ${Math.abs(s.penaltyFine)}% ushlanma. O'quv modullariga o'ting.`;}
+  else                       {level='fail';   label='NOMUVOFIQ';     color='#9B59B6';emoji='❌';penalty=0;               advice="Qayta o'qitish majburiy. Rahbariyat bilan bog'laning.";}
 
   res.json({ level,label,color,emoji,avg,testCount:current.length,penalty,consecutiveLow,periodLabel,advice });
 }));

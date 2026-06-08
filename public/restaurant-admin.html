@@ -273,9 +273,14 @@
     <div id="page-kpi" class="page" style="display:none">
       <div class="page-header">
         <div><h1>KPI Hisoboti</h1><p id="kpi-period-title">Xodimlar bilim darajasi — joriy 10 kunlik davr bo'yicha</p></div>
-        <button class="btn btn-ghost" onclick="loadKPI()" style="gap:6px">
-          <i data-lucide="refresh-cw" style="width:15px;height:15px"></i> Yangilash
-        </button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="openKPISettings()" style="gap:6px">
+            <i data-lucide="settings-2" style="width:14px;height:14px"></i> Sozlamalar
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="loadKPI()" style="gap:6px">
+            <i data-lucide="refresh-cw" style="width:14px;height:14px"></i> Yangilash
+          </button>
+        </div>
       </div>
       <div class="page-body">
         <!-- Summary cards -->
@@ -696,6 +701,99 @@
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeMemberModal()">Bekor</button>
       <button class="btn btn-gold" onclick="saveMember()">Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<!-- KPI SETTINGS MODAL -->
+<div class="modal-overlay" id="kpi-settings-modal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3 class="modal-title">⚙️ KPI Sozlamalari</h3>
+      <button class="modal-close" onclick="closeModal('kpi-settings-modal')"><i data-lucide="x"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text3);font-size:0.83rem;margin-bottom:16px">Har bir daraja uchun minimal ball chegarasi va ish haqi ta'sirini belgilang.</p>
+      <div style="display:grid;gap:10px">
+
+        <!-- MASTER -->
+        <div style="display:grid;grid-template-columns:24px 1fr 1fr 1fr;gap:10px;align-items:center;padding:12px;background:rgba(243,156,18,0.06);border:1px solid rgba(243,156,18,0.2);border-radius:10px">
+          <span style="font-size:1.2rem">🏆</span>
+          <span style="font-weight:700;color:#F39C12">MASTER</span>
+          <div class="form-group" style="margin:0">
+            <label style="font-size:0.73rem">Minimal ball (%)</label>
+            <input type="number" class="form-control" id="ks-masterMin" min="1" max="100" value="90" style="height:34px">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label style="font-size:0.73rem">Bonus (%)</label>
+            <input type="number" class="form-control" id="ks-masterBonus" min="0" max="100" value="15" style="height:34px;color:#2ECC71">
+          </div>
+        </div>
+
+        <!-- PRO -->
+        <div style="display:grid;grid-template-columns:24px 1fr 1fr 1fr;gap:10px;align-items:center;padding:12px;background:rgba(52,152,219,0.06);border:1px solid rgba(52,152,219,0.2);border-radius:10px">
+          <span style="font-size:1.2rem">⭐</span>
+          <span style="font-weight:700;color:#3498DB">PRO</span>
+          <div class="form-group" style="margin:0">
+            <label style="font-size:0.73rem">Minimal ball (%)</label>
+            <input type="number" class="form-control" id="ks-proMin" min="1" max="100" value="75" style="height:34px">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label style="font-size:0.73rem">Bonus (%)</label>
+            <input type="number" class="form-control" id="ks-proBonus" min="0" max="100" value="0" style="height:34px">
+          </div>
+        </div>
+
+        <!-- YAXSHI -->
+        <div style="display:grid;grid-template-columns:24px 1fr 1fr 1fr;gap:10px;align-items:center;padding:12px;background:rgba(46,204,113,0.06);border:1px solid rgba(46,204,113,0.2);border-radius:10px">
+          <span style="font-size:1.2rem">✅</span>
+          <span style="font-weight:700;color:#2ECC71">YAXSHI</span>
+          <div class="form-group" style="margin:0">
+            <label style="font-size:0.73rem">Minimal ball (%)</label>
+            <input type="number" class="form-control" id="ks-goodMin" min="1" max="100" value="60" style="height:34px">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label style="font-size:0.73rem">Bonus (%)</label>
+            <input type="number" class="form-control" id="ks-goodBonus" min="0" max="100" value="0" style="height:34px">
+          </div>
+        </div>
+
+        <!-- OGOHLANTIRISH -->
+        <div style="display:grid;grid-template-columns:24px 1fr 1fr 1fr;gap:10px;align-items:center;padding:12px;background:rgba(230,126,34,0.06);border:1px solid rgba(230,126,34,0.2);border-radius:10px">
+          <span style="font-size:1.2rem">⚠️</span>
+          <span style="font-weight:700;color:#E67E22">OGOHLANTIRISH</span>
+          <div class="form-group" style="margin:0">
+            <label style="font-size:0.73rem">Minimal ball (%)</label>
+            <input type="number" class="form-control" id="ks-warningMin" min="1" max="100" value="45" style="height:34px">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label style="font-size:0.73rem">Ushlanma (%) <span style="color:var(--text3)">manfiy</span></label>
+            <input type="number" class="form-control" id="ks-warningPenalty" min="-100" max="0" value="-10" style="height:34px;color:#E67E22">
+          </div>
+        </div>
+
+        <!-- JAZO -->
+        <div style="display:grid;grid-template-columns:24px 1fr 1fr 1fr;gap:10px;align-items:center;padding:12px;background:rgba(231,76,60,0.06);border:1px solid rgba(231,76,60,0.2);border-radius:10px">
+          <span style="font-size:1.2rem">🔴</span>
+          <span style="font-weight:700;color:#E74C3C">JAZO</span>
+          <div class="form-group" style="margin:0">
+            <label style="font-size:0.73rem">Minimal ball (%)</label>
+            <input type="number" class="form-control" id="ks-penaltyMin" min="1" max="100" value="30" style="height:34px">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label style="font-size:0.73rem">Ushlanma (%) <span style="color:var(--text3)">manfiy</span></label>
+            <input type="number" class="form-control" id="ks-penaltyFine" min="-100" max="0" value="-20" style="height:34px;color:#E74C3C">
+          </div>
+        </div>
+
+      </div>
+      <div style="margin-top:12px;padding:10px 12px;background:rgba(155,89,182,0.06);border:1px solid rgba(155,89,182,0.2);border-radius:8px;font-size:0.78rem;color:var(--text3)">
+        ❌ <strong style="color:#9B59B6">NOMUVOFIQ</strong> — yuqoridagi minimal balldan past barcha natijalar. O'zbekiston Mehnat Kodeksi 181-moddasi: maksimal ushlanma 20%.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('kpi-settings-modal')">Bekor</button>
+      <button class="btn btn-gold" onclick="saveKPISettings()">Saqlash</button>
     </div>
   </div>
 </div>
@@ -2371,6 +2469,49 @@ function filterKPI() {
     (!search || k.waiterName.toLowerCase().includes(search))
   );
   renderKPITable(filtered);
+}
+
+async function openKPISettings() {
+  try {
+    const s = await api('/api/restaurant/kpi-settings');
+    document.getElementById('ks-masterMin').value      = s.masterMin      ?? 90;
+    document.getElementById('ks-masterBonus').value    = s.masterBonus    ?? 15;
+    document.getElementById('ks-proMin').value         = s.proMin         ?? 75;
+    document.getElementById('ks-proBonus').value       = s.proBonus       ?? 0;
+    document.getElementById('ks-goodMin').value        = s.goodMin        ?? 60;
+    document.getElementById('ks-goodBonus').value      = s.goodBonus      ?? 0;
+    document.getElementById('ks-warningMin').value     = s.warningMin     ?? 45;
+    document.getElementById('ks-warningPenalty').value = s.warningPenalty ?? -10;
+    document.getElementById('ks-penaltyMin').value     = s.penaltyMin     ?? 30;
+    document.getElementById('ks-penaltyFine').value    = s.penaltyFine    ?? -20;
+    document.getElementById('kpi-settings-modal').classList.add('show');
+    renderIcons();
+  } catch(e) { toast('Sozlamalar yuklanmadi', 'error'); }
+}
+
+async function saveKPISettings() {
+  const body = {
+    masterMin:      Number(document.getElementById('ks-masterMin').value),
+    masterBonus:    Number(document.getElementById('ks-masterBonus').value),
+    proMin:         Number(document.getElementById('ks-proMin').value),
+    proBonus:       Number(document.getElementById('ks-proBonus').value),
+    goodMin:        Number(document.getElementById('ks-goodMin').value),
+    goodBonus:      Number(document.getElementById('ks-goodBonus').value),
+    warningMin:     Number(document.getElementById('ks-warningMin').value),
+    warningPenalty: Number(document.getElementById('ks-warningPenalty').value),
+    penaltyMin:     Number(document.getElementById('ks-penaltyMin').value),
+    penaltyFine:    Number(document.getElementById('ks-penaltyFine').value),
+  };
+  // Validatsiya
+  if (body.masterMin <= body.proMin || body.proMin <= body.goodMin || body.goodMin <= body.warningMin || body.warningMin <= body.penaltyMin) {
+    toast('Darajalar ketma-ketligi noto\'g\'ri (yuqoridan pastga kamayishi kerak)', 'error'); return;
+  }
+  try {
+    await api('/api/restaurant/kpi-settings', { method:'PUT', body: JSON.stringify(body) });
+    closeModal('kpi-settings-modal');
+    toast('KPI sozlamalari saqlandi ✓', 'success');
+    loadKPI();
+  } catch(e) { toast('Xatolik', 'error'); }
 }
 
 function toggleSidebar() {

@@ -120,6 +120,19 @@ const WaiterModuleProgressSchema = new mongoose.Schema({
   badgeEarned:       { type: Boolean, default: false }
 }, { _id: false });
 
+const KPISettingsSchema = new mongoose.Schema({
+  masterMin:       { type: Number, default: 90  },
+  masterBonus:     { type: Number, default: 15  },
+  proMin:          { type: Number, default: 75  },
+  proBonus:        { type: Number, default: 0   },
+  goodMin:         { type: Number, default: 60  },
+  goodBonus:       { type: Number, default: 0   },
+  warningMin:      { type: Number, default: 45  },
+  warningPenalty:  { type: Number, default: -10 },
+  penaltyMin:      { type: Number, default: 30  },
+  penaltyFine:     { type: Number, default: -20 },
+}, { _id: false });
+
 const AdaptDocumentSchema = new mongoose.Schema({
   id:       { type: String, default: () => uuidv4() },
   title:    { type: String, required: true, trim: true },
@@ -172,7 +185,8 @@ const RestaurantSchema = new mongoose.Schema({
   testResults: [TestResultSchema],
   checklist: [ChecklistItemSchema],
   waiterChecklists: [WaiterChecklistSchema],
-  adaptation: { type: AdaptationSchema, default: () => ({}) },
+  adaptation:   { type: AdaptationSchema,  default: () => ({}) },
+  kpiSettings:  { type: KPISettingsSchema, default: () => ({}) },
   modules: [ModuleSchema],
   moduleProgress: [WaiterModuleProgressSchema]
 });

@@ -215,59 +215,56 @@ function getLastPeriodKeys(n) {
   return keys;
 }
 
-function calcKPI(results) {
+const KPI_DEFAULTS = {
+  masterMin:90, masterBonus:15, proMin:75, proBonus:0,
+  goodMin:60, goodBonus:0, warningMin:45, warningPenalty:-10,
+  penaltyMin:30, penaltyFine:-20
+};
+
+function calcKPI(results, cfg = {}) {
+  const s = { ...KPI_DEFAULTS, ...cfg };
   const todayKey    = getPeriodKey(new Date());
   const periodLabel = getPeriodLabel(new Date());
-
-  // Joriy 10 kunlik davrdagi test
-  const current = results.filter(r => getPeriodKey(r.submittedAt || r.date) === todayKey);
+  const current     = results.filter(r => getPeriodKey(r.submittedAt || r.date) === todayKey);
 
   if (!current.length) {
-    // Test topshirilmagan — oldingi davrdan olinadi (ma'lumot uchun)
     const prev = [...results].sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt))[0];
-    return {
-      level: 'nodata', label: "Test topshirilmagan", color: '#666666', emoji: '—',
-      avg: null, testCount: 0, penalty: 0, consecutiveLow: 0,
-      periodLabel, lastScore: prev?.score ?? null
-    };
+    return { level:'nodata', label:'Test topshirilmagan', color:'#666666', emoji:'—',
+             avg:null, testCount:0, penalty:0, consecutiveLow:0, periodLabel, lastScore:prev?.score??null };
   }
 
-  // Joriy davr testi (1 ta bo'lishi kerak, lekin bir nechta bo'lsa o'rtacha)
   const avg = Math.round(current.reduce((s, r) => s + r.score, 0) / current.length);
 
-  // Ketma-ket past davrlar (oxirgi 6 davr)
   const lastKeys = getLastPeriodKeys(6);
   const byPeriod = {};
-  results.forEach(r => {
-    const k = getPeriodKey(r.submittedAt || r.date);
-    if (!byPeriod[k] || r.score > byPeriod[k]) byPeriod[k] = r.score;
-  });
+  results.forEach(r => { const k=getPeriodKey(r.submittedAt||r.date); if(!byPeriod[k]||r.score>byPeriod[k]) byPeriod[k]=r.score; });
   let consecutiveLow = 0;
   for (const k of lastKeys) {
-    if (byPeriod[k] !== undefined && byPeriod[k] < 60) consecutiveLow++;
+    if (byPeriod[k] !== undefined && byPeriod[k] < s.goodMin) consecutiveLow++;
     else if (byPeriod[k] !== undefined) break;
   }
 
   let level, label, color, emoji, penalty;
-  if      (avg >= 90) { level='master';  label='MASTER';        color='#F39C12'; emoji='🏆'; penalty=+15; }
-  else if (avg >= 75) { level='pro';     label='PRO';           color='#3498DB'; emoji='⭐'; penalty=0;   }
-  else if (avg >= 60) { level='good';    label='YAXSHI';        color='#2ECC71'; emoji='✅'; penalty=0;   }
-  else if (avg >= 45) { level='warning'; label='OGOHLANTIRISH'; color='#E67E22'; emoji='⚠️'; penalty=-10; }
-  else if (avg >= 30) { level='penalty'; label='JAZO';          color='#E74C3C'; emoji='🔴'; penalty=-20; }
-  else                { level='fail';    label='NOMUVOFIQ';      color='#9B59B6'; emoji='❌'; penalty=0;   }
+  if      (avg >= s.masterMin)  { level='master';  label='MASTER';        color='#F39C12'; emoji='🏆'; penalty=s.masterBonus;    }
+  else if (avg >= s.proMin)     { level='pro';     label='PRO';           color='#3498DB'; emoji='⭐'; penalty=s.proBonus;       }
+  else if (avg >= s.goodMin)    { level='good';    label='YAXSHI';        color='#2ECC71'; emoji='✅'; penalty=s.goodBonus;      }
+  else if (avg >= s.warningMin) { level='warning'; label='OGOHLANTIRISH'; color='#E67E22'; emoji='⚠️'; penalty=s.warningPenalty; }
+  else if (avg >= s.penaltyMin) { level='penalty'; label='JAZO';          color='#E74C3C'; emoji='🔴'; penalty=s.penaltyFine;    }
+  else                          { level='fail';    label='NOMUVOFIQ';      color='#9B59B6'; emoji='❌'; penalty:0;                }
 
-  return { level, label, color, emoji, avg, testCount: current.length, penalty, consecutiveLow, periodLabel };
+  return { level, label, color, emoji, avg, testCount:current.length, penalty, consecutiveLow, periodLabel };
 }
 
 router.get('/kpi', guard, asyncHandler(async (req, res) => {
-  const r       = await Restaurant.findOne({ id: req.user.restaurantId }, 'waiters testResults');
+  const r       = await Restaurant.findOne({ id: req.user.restaurantId }, 'waiters testResults kpiSettings');
   const waiters = (r?.waiters || []).filter(w => w.active);
   const results = r?.testResults || [];
+  const cfg     = r?.kpiSettings?.toObject ? r.kpiSettings.toObject() : (r?.kpiSettings || {});
   const periodLabel = getPeriodLabel(new Date());
 
   const kpiList = waiters.map(w => {
     const wr   = results.filter(r => r.waiterId === w.id);
-    const kpi  = calcKPI(wr);
+    const kpi  = calcKPI(wr, cfg);
     const last = [...wr].sort((a,b) => new Date(b.submittedAt) - new Date(a.submittedAt))[0];
     return { waiterId: w.id, waiterName: w.name, ...kpi, lastTestDate: last?.date || null };
   }).sort((a, b) => {
@@ -284,7 +281,20 @@ router.get('/kpi', guard, asyncHandler(async (req, res) => {
     fail:    kpiList.filter(k => k.level==='fail').length,
     nodata:  kpiList.filter(k => k.level==='nodata').length,
   };
-  res.json({ kpiList, summary, periodLabel });
+  res.json({ kpiList, summary, periodLabel, settings: { ...KPI_DEFAULTS, ...cfg } });
+}));
+
+router.get('/kpi-settings', guard, asyncHandler(async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'kpiSettings');
+  res.json({ ...KPI_DEFAULTS, ...(r?.kpiSettings?.toObject?.() || r?.kpiSettings || {}) });
+}));
+
+router.put('/kpi-settings', guard, asyncHandler(async (req, res) => {
+  const fields = ['masterMin','masterBonus','proMin','proBonus','goodMin','goodBonus','warningMin','warningPenalty','penaltyMin','penaltyFine'];
+  const update = {};
+  fields.forEach(f => { if (req.body[f] !== undefined) update[`kpiSettings.${f}`] = Number(req.body[f]); });
+  await Restaurant.updateOne({ id: req.user.restaurantId }, { $set: update });
+  res.json({ success: true });
 }));
 
 // ---- CHECKLIST ----

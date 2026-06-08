@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tarnov — Kirish</title>
+  <title>RestoPro — Kirish</title>
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#C8922A">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Tarnov">
+  <meta name="apple-mobile-web-app-title" content="RestoPro">
   <link rel="apple-touch-icon" href="/images/icon.svg">
   <link rel="stylesheet" href="/css/style.css">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
@@ -17,166 +17,157 @@
     /* ── Split layout ── */
     .split-page {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1.1fr 0.9fr;
       min-height: 100vh;
     }
 
-    /* ── LEFT: Brand panel ── */
+    /* ── LEFT: Platform brand panel ── */
     .brand-panel {
       position: relative;
-      background: #050505;
+      background: #060606;
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      padding: 48px;
+      padding: 52px 48px;
+      gap: 0;
     }
     .brand-panel::before {
       content: '';
       position: absolute;
       inset: 0;
       background:
-        radial-gradient(ellipse at 30% 20%, rgba(200,146,42,0.22) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 80%, rgba(200,146,42,0.10) 0%, transparent 45%);
+        radial-gradient(ellipse at 20% 10%,  rgba(200,146,42,0.18) 0%, transparent 45%),
+        radial-gradient(ellipse at 85% 85%,  rgba(200,146,42,0.09) 0%, transparent 40%),
+        radial-gradient(ellipse at 60% 50%,  rgba(200,146,42,0.04) 0%, transparent 50%);
       pointer-events: none;
     }
     .brand-panel::after {
       content: '';
       position: absolute;
       inset: 0;
-      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23C8922A' fill-opacity='0.025'%3E%3Ccircle cx='30' cy='30' r='1.5'/%3E%3C/g%3E%3C/svg%3E");
+      background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23C8922A' fill-opacity='0.025'%3E%3Ccircle cx='20' cy='20' r='1'/%3E%3C/g%3E%3C/svg%3E");
       pointer-events: none;
     }
-    #brand-canvas {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-    }
+    #brand-canvas { position:absolute; inset:0; pointer-events:none; z-index:0; }
+
     .brand-inner {
       position: relative;
       z-index: 1;
       display: flex;
       flex-direction: column;
       height: 100%;
-      gap: 0;
     }
 
-    /* Logo */
-    .brand-logo-wrap { margin-bottom: 40px; }
-    .brand-logo-img {
-      width: 160px;
-      height: auto;
-      border-radius: 12px;
-      display: block;
-      filter: drop-shadow(0 8px 24px rgba(200,146,42,0.3));
-    }
-    .brand-logo-fallback {
+    /* Platform badge */
+    .platform-badge {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
-      font-size: 1.6rem;
-      font-weight: 800;
-      letter-spacing: 0.1em;
+      gap: 8px;
+      background: rgba(200,146,42,0.1);
+      border: 1px solid rgba(200,146,42,0.25);
+      border-radius: 100px;
+      padding: 6px 14px;
+      font-size: 0.72rem;
+      font-weight: 700;
       color: var(--gold);
+      letter-spacing: 0.08em;
       text-transform: uppercase;
+      margin-bottom: 32px;
+      width: fit-content;
     }
+    .platform-badge-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      animation: blink 2s ease-in-out infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-    /* Tagline */
-    .brand-tagline {
-      font-size: clamp(1.6rem, 3vw, 2.4rem);
+    /* Main heading */
+    .brand-heading {
+      font-size: clamp(1.8rem, 3.2vw, 2.8rem);
       font-weight: 800;
-      line-height: 1.2;
-      letter-spacing: -0.02em;
-      margin-bottom: 16px;
-      background: linear-gradient(135deg, #fff 0%, var(--gold-light) 50%, var(--gold) 100%);
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      margin-bottom: 18px;
+      background: linear-gradient(135deg, #ffffff 0%, #e8e8e8 40%, var(--gold-light) 70%, var(--gold) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
 
-    .brand-sub {
-      font-size: 1rem;
-      color: var(--text2);
+    .brand-desc {
+      font-size: 0.95rem;
+      color: var(--text3);
       line-height: 1.7;
-      max-width: 360px;
-      margin-bottom: 40px;
+      max-width: 380px;
+      margin-bottom: 48px;
     }
 
-    /* Quote */
-    .brand-quote {
-      position: relative;
-      padding: 20px 24px;
-      background: rgba(200,146,42,0.07);
-      border-left: 3px solid var(--gold);
-      border-radius: 0 12px 12px 0;
-      margin-bottom: 40px;
-    }
-    .brand-quote::before {
-      content: '"';
-      position: absolute;
-      top: -12px;
-      left: 20px;
-      font-size: 3rem;
-      color: var(--gold);
-      opacity: 0.4;
-      font-family: Georgia, serif;
-      line-height: 1;
-    }
-    .brand-quote p {
-      font-size: 0.92rem;
-      color: var(--text2);
-      font-style: italic;
-      line-height: 1.8;
-    }
-
-    /* Stats */
-    .brand-stats {
+    /* Feature cards */
+    .feature-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: 1fr 1fr;
       gap: 12px;
-      margin-top: auto;
-    }
-    .brand-stat {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(200,146,42,0.18);
-      border-radius: 14px;
-      padding: 16px 12px;
-      text-align: center;
-      backdrop-filter: blur(10px);
-      transition: transform 0.2s, border-color 0.2s;
-    }
-    .brand-stat:hover { transform: translateY(-2px); border-color: rgba(200,146,42,0.35); }
-    .brand-stat-num {
-      font-size: 1.6rem;
-      font-weight: 800;
-      color: var(--gold);
-      line-height: 1;
-      margin-bottom: 4px;
-    }
-    .brand-stat-label {
-      font-size: 0.7rem;
-      color: var(--text3);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      font-weight: 600;
+      margin-bottom: auto;
     }
 
-    /* Bottom */
-    .brand-bottom {
-      margin-top: 32px;
+    .feature-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      padding: 16px;
+      transition: all 0.25s;
+      cursor: default;
+    }
+    .feature-card:hover {
+      background: rgba(255,255,255,0.05);
+      border-color: rgba(200,146,42,0.2);
+      transform: translateY(-2px);
+    }
+    .feature-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      justify-content: center;
+      margin-bottom: 10px;
     }
-    .brand-year {
-      font-size: 0.75rem;
+    .feature-name {
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+    .feature-desc {
+      font-size: 0.73rem;
+      color: var(--text3);
+      line-height: 1.5;
+    }
+
+    /* Bottom bar */
+    .brand-bottom {
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .brand-bottom-text {
+      font-size: 0.73rem;
       color: var(--text3);
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
     }
-    .brand-year::before { content: ''; width: 20px; height: 1px; background: var(--border); }
+    .brand-bottom-text i { color: var(--gold); opacity: 0.6; }
+    .brand-version {
+      font-size: 0.68rem;
+      color: rgba(200,146,42,0.4);
+      letter-spacing: 0.06em;
+    }
 
     /* ── RIGHT: Form panel ── */
     .form-panel {
@@ -185,66 +176,72 @@
       align-items: center;
       justify-content: center;
       padding: 48px 40px;
+      border-left: 1px solid rgba(255,255,255,0.04);
       position: relative;
-      border-left: 1px solid rgba(200,146,42,0.1);
+    }
+    .form-panel::before {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0; left: 0;
+      width: 1px;
+      background: linear-gradient(180deg, transparent, rgba(200,146,42,0.2), transparent);
     }
     .form-panel-inner {
       width: 100%;
-      max-width: 400px;
-      animation: fadeUp 0.5s cubic-bezier(0.34,1.56,0.64,1);
+      max-width: 390px;
     }
 
-    @keyframes fadeUp {
-      from { opacity:0; transform:translateY(24px) scale(0.98); }
-      to   { opacity:1; transform:translateY(0) scale(1); }
+    /* Form header */
+    .form-header { margin-bottom: 32px; }
+    .form-header-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
     }
-
-    .form-panel-title {
-      font-size: 1.4rem;
+    .form-header-logo-icon {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, var(--gold-light), var(--gold));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .form-header-logo-name {
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+    .form-header-logo-sub {
+      font-size: 0.68rem;
+      color: var(--text3);
+      margin-top: 1px;
+    }
+    .form-title {
+      font-size: 1.3rem;
       font-weight: 700;
-      margin-bottom: 6px;
       letter-spacing: -0.02em;
+      margin-bottom: 4px;
     }
-    .form-panel-sub {
-      font-size: 0.84rem;
-      color: var(--text3);
-      margin-bottom: 32px;
-    }
+    .form-sub { font-size: 0.83rem; color: var(--text3); }
 
-    /* Neon toggle */
-    .neon-toggle-wrap {
-      position: fixed;
-      top: 16px; right: 16px;
-      z-index: 100;
-      display: flex; align-items: center; gap: 8px;
-      background: rgba(0,0,0,0.5);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 20px;
-      padding: 6px 12px;
-      font-size: 0.72rem;
-      color: var(--text3);
-    }
-
-    /* Login tabs redesign */
+    /* Login tabs */
     .login-tabs {
       display: flex;
       gap: 4px;
-      background: rgba(0,0,0,0.4);
-      border: 1px solid rgba(200,146,42,0.12);
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
       border-radius: 14px;
       padding: 5px;
       margin-bottom: 28px;
     }
     .login-tab {
       flex: 1;
-      padding: 9px 10px;
+      padding: 9px 8px;
       border: none;
       background: transparent;
       color: var(--text3);
       border-radius: 10px;
       cursor: pointer;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 500;
       transition: all 0.2s;
       white-space: nowrap;
@@ -254,60 +251,69 @@
       gap: 5px;
       font-family: inherit;
     }
-    .login-tab i { width: 14px; height: 14px; }
+    .login-tab i { width: 13px; height: 13px; }
     .login-tab.active {
       background: linear-gradient(135deg, var(--gold-light), var(--gold));
       color: #000;
       font-weight: 700;
-      box-shadow: 0 4px 12px rgba(200,146,42,0.4);
+      box-shadow: 0 4px 12px rgba(200,146,42,0.35);
     }
-    .login-tab:hover:not(.active) { color: var(--text2); background: rgba(255,255,255,0.05); }
+    .login-tab:hover:not(.active) {
+      color: var(--text2);
+      background: rgba(255,255,255,0.04);
+    }
     .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
+    .tab-panel.active { display: block; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(20px) scale(0.98)} to{opacity:1;transform:none} }
+
+    .form-panel-inner { animation: fadeUp 0.45s cubic-bezier(0.34,1.56,0.64,1); }
 
     /* PIN dots */
     .pin-dots {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       justify-content: center;
-      margin: 8px 0 20px;
+      margin: 6px 0 18px;
     }
     .pin-dot {
-      width: 14px; height: 14px;
+      width: 12px; height: 12px;
       border-radius: 50%;
-      border: 2px solid var(--border);
+      border: 2px solid rgba(255,255,255,0.12);
       background: transparent;
-      transition: all 0.15s;
+      transition: all 0.15s cubic-bezier(0.34,1.56,0.64,1);
     }
     .pin-dot.filled {
       background: var(--gold);
       border-color: var(--gold);
-      box-shadow: 0 0 8px rgba(200,146,42,0.5);
+      box-shadow: 0 0 10px rgba(200,146,42,0.45);
+      transform: scale(1.2);
     }
 
-    /* Divider */
-    .divider {
-      display: flex; align-items: center; gap: 12px; margin: 20px 0;
+    /* Neon toggle */
+    .neon-toggle-wrap {
+      position: fixed; top: 16px; right: 16px; z-index: 100;
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(0,0,0,0.55); backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.07); border-radius: 20px;
+      padding: 6px 12px; font-size: 0.7rem; color: var(--text3);
     }
-    .divider::before, .divider::after {
-      content: ''; flex: 1; height: 1px; background: var(--border);
-    }
-    .divider span { color: var(--text3); font-size: 0.72rem; }
 
-    /* ── Mobile responsive ── */
-    @media (max-width: 800px) {
+    /* Mobile */
+    @media (max-width: 820px) {
       .split-page { grid-template-columns: 1fr; }
-      .brand-panel {
-        padding: 32px 24px 28px;
-        min-height: auto;
-      }
-      .brand-tagline { font-size: 1.5rem; }
-      .brand-sub { display: none; }
-      .brand-quote { display: none; }
-      .brand-stats { grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 24px; }
-      .brand-stat-num { font-size: 1.3rem; }
-      .brand-bottom { display: none; }
-      .form-panel { padding: 32px 24px; border-left: none; border-top: 1px solid rgba(200,146,42,0.1); }
+      .brand-panel { padding: 32px 24px 24px; min-height: auto; }
+      .brand-heading { font-size: 1.7rem; }
+      .brand-desc { display:none; }
+      .feature-grid { grid-template-columns: repeat(2,1fr); gap: 8px; }
+      .feature-card { padding: 12px; }
+      .feature-desc { display:none; }
+      .brand-bottom { display:none; }
+      .form-panel { padding: 32px 24px; border-left:none; border-top:1px solid rgba(255,255,255,0.05); }
+    }
+    @media (max-width: 420px) {
+      .feature-grid { grid-template-columns: repeat(2,1fr); }
+      .form-panel { padding: 24px 16px; }
     }
   </style>
 </head>
@@ -315,80 +321,107 @@
   <canvas id="brand-canvas"></canvas>
   <div class="neon-toggle-wrap">
     <span>⚡ Neon</span>
-    <button class="neon-toggle" id="neon-btn" onclick="toggleNeon()" title="Neon mode"></button>
+    <button class="neon-toggle" id="neon-btn" onclick="toggleNeon()"></button>
   </div>
   <div id="toast-container"></div>
 
   <div class="split-page">
 
-    <!-- LEFT: Brand panel -->
+    <!-- LEFT: Platform brand -->
     <div class="brand-panel">
       <div class="brand-inner">
 
-        <!-- Logo -->
-        <div class="brand-logo-wrap">
-          <img src="/images/logo.jpg" alt="Tarnov"
-               class="brand-logo-img"
-               onerror="this.style.display='none';document.getElementById('brand-logo-fallback').style.display='flex'">
-          <div class="brand-logo-fallback" id="brand-logo-fallback" style="display:none">
-            <i data-lucide="utensils" style="color:var(--gold);width:28px;height:28px"></i>
-            TARNOV
-          </div>
+        <!-- Badge -->
+        <div class="platform-badge">
+          <div class="platform-badge-dot"></div>
+          Restaurant HR Platform
         </div>
 
-        <!-- Tagline -->
-        <div class="brand-tagline">Tarnov —<br>eng yaxshi<br>tanlov!</div>
+        <!-- Heading -->
+        <h1 class="brand-heading">
+          Xodimlar uchun<br>aqlli o'quv<br>tizimi
+        </h1>
 
-        <!-- Sub -->
-        <p class="brand-sub">
-          2005-yildan beri Toshkentning ishonchli oilaviy restoran tarmog'i. Lagmondan boshlab, bugun 4 ta filialga o'sgan.
+        <!-- Desc -->
+        <p class="brand-desc">
+          Restoran xodimlarini o'qitish, bilimlarini baholash va KPI ni kuzatish — barchasi bitta qulay platformada.
         </p>
 
-        <!-- Quote -->
-        <div class="brand-quote">
-          <p>Har bir mehmon bizdan faqat ovqat olmaydi — u issiqlik oladi, hurmat oladi, uy hissi oladi.</p>
-        </div>
+        <!-- Features -->
+        <div class="feature-grid">
+          <div class="feature-card">
+            <div class="feature-icon" style="background:rgba(52,152,219,0.15)">
+              <i data-lucide="file-text" style="width:18px;height:18px;color:#3498DB"></i>
+            </div>
+            <div class="feature-name">Test tizimi</div>
+            <div class="feature-desc">Menyu bo'yicha bilimlarni avtomatik baholash</div>
+          </div>
 
-        <!-- Stats -->
-        <div class="brand-stats">
-          <div class="brand-stat">
-            <div class="brand-stat-num" id="bs-1">0</div>
-            <div class="brand-stat-label">Filial</div>
+          <div class="feature-card">
+            <div class="feature-icon" style="background:rgba(243,156,18,0.15)">
+              <i data-lucide="bar-chart-2" style="width:18px;height:18px;color:#F39C12"></i>
+            </div>
+            <div class="feature-name">KPI hisoboti</div>
+            <div class="feature-desc">Har xodim uchun oylik ish haqi hisobi</div>
           </div>
-          <div class="brand-stat">
-            <div class="brand-stat-num" id="bs-2">0</div>
-            <div class="brand-stat-label">Xodim</div>
+
+          <div class="feature-card">
+            <div class="feature-icon" style="background:rgba(155,89,182,0.15)">
+              <i data-lucide="graduation-cap" style="width:18px;height:18px;color:#9B59B6"></i>
+            </div>
+            <div class="feature-name">O'quv modullar</div>
+            <div class="feature-desc">Darslar, videolar va quiz testlari</div>
           </div>
-          <div class="brand-stat">
-            <div class="brand-stat-num" id="bs-3">0</div>
-            <div class="brand-stat-label">Yil tajriba</div>
+
+          <div class="feature-card">
+            <div class="feature-icon" style="background:rgba(46,204,113,0.15)">
+              <i data-lucide="users" style="width:18px;height:18px;color:#2ECC71"></i>
+            </div>
+            <div class="feature-name">Adaptatsiya</div>
+            <div class="feature-desc">Yangi xodimlarni onboarding qilish</div>
           </div>
         </div>
 
         <!-- Bottom -->
         <div class="brand-bottom">
-          <span class="brand-year">Toshkent shahrida 2005-yildan</span>
+          <div class="brand-bottom-text">
+            <i data-lucide="shield-check" style="width:14px;height:14px"></i>
+            Xavfsiz · Tez · Ishonchli
+          </div>
+          <div class="brand-version">v2.0 · 2026</div>
         </div>
 
       </div>
     </div>
 
-    <!-- RIGHT: Form panel -->
+    <!-- RIGHT: Login form -->
     <div class="form-panel">
       <div class="form-panel-inner">
 
-        <div class="form-panel-title">Xush kelibsiz 👋</div>
-        <p class="form-panel-sub">Platformaga kirish uchun rolni tanlang</p>
+        <!-- Header -->
+        <div class="form-header">
+          <div class="form-header-logo">
+            <div class="form-header-logo-icon">
+              <i data-lucide="utensils" style="width:20px;height:20px;color:#000"></i>
+            </div>
+            <div>
+              <div class="form-header-logo-name">RestoPro</div>
+              <div class="form-header-logo-sub">HR Training Platform</div>
+            </div>
+          </div>
+          <div class="form-title">Xush kelibsiz 👋</div>
+          <div class="form-sub">Platformaga kirish uchun rolni tanlang</div>
+        </div>
 
         <!-- Tabs -->
         <div class="login-tabs">
-          <button class="login-tab active" onclick="switchTab('superadmin', event)">
+          <button class="login-tab active" onclick="switchTab('superadmin',event)">
             <i data-lucide="zap"></i> Super
           </button>
-          <button class="login-tab" onclick="switchTab('restaurant', event)">
+          <button class="login-tab" onclick="switchTab('restaurant',event)">
             <i data-lucide="store"></i> Admin
           </button>
-          <button class="login-tab" onclick="switchTab('waiter', event)">
+          <button class="login-tab" onclick="switchTab('waiter',event)">
             <i data-lucide="chef-hat"></i> Ofitsiant
           </button>
         </div>
@@ -398,7 +431,7 @@
           <div class="form-group">
             <label>Email manzil</label>
             <input type="email" class="form-control" id="sa-email"
-                   placeholder="admin@tarnov.uz" autocomplete="email">
+                   placeholder="super@platform.uz" autocomplete="email">
           </div>
           <div class="form-group">
             <label>Parol</label>
@@ -406,8 +439,7 @@
                    placeholder="••••••••" autocomplete="current-password">
           </div>
           <button class="btn btn-gold btn-full btn-lg" onclick="login('superadmin')" id="btn-superadmin">
-            <i data-lucide="log-in" style="width:18px;height:18px"></i>
-            Kirish
+            <i data-lucide="log-in" style="width:17px;height:17px"></i> Kirish
           </button>
         </div>
 
@@ -416,7 +448,7 @@
           <div class="form-group">
             <label>Email manzil</label>
             <input type="email" class="form-control" id="ra-email"
-                   placeholder="admin@restaurant.uz" autocomplete="email">
+                   placeholder="admin@restoran.uz" autocomplete="email">
           </div>
           <div class="form-group">
             <label>Parol</label>
@@ -424,8 +456,7 @@
                    placeholder="••••••••" autocomplete="current-password">
           </div>
           <button class="btn btn-gold btn-full btn-lg" onclick="login('restaurant')" id="btn-restaurant">
-            <i data-lucide="log-in" style="width:18px;height:18px"></i>
-            Kirish
+            <i data-lucide="log-in" style="width:17px;height:17px"></i> Kirish
           </button>
         </div>
 
@@ -446,23 +477,19 @@
               <div class="pin-dot" id="pd-3"></div>
             </div>
             <input type="password" class="form-control pin-input" id="w-pin"
-                   placeholder="• • • •" maxlength="4" inputmode="numeric"
-                   pattern="\d{4}" oninput="updatePinDots(this.value)">
+                   placeholder="• • • •" maxlength="4"
+                   inputmode="numeric" pattern="\d{4}"
+                   oninput="updatePinDots(this.value)">
           </div>
           <button class="btn btn-gold btn-full btn-lg" onclick="login('waiter')" id="btn-waiter">
-            <i data-lucide="log-in" style="width:18px;height:18px"></i>
-            Kirish
+            <i data-lucide="log-in" style="width:17px;height:17px"></i> Kirish
           </button>
         </div>
 
-        <div id="login-error" class="alert alert-danger" style="display:none;margin-top:16px"></div>
+        <div id="login-error" class="alert alert-danger" style="display:none;margin-top:14px"></div>
 
-        <!-- Footer -->
-        <p style="text-align:center;margin-top:28px;font-size:0.72rem;color:var(--text3)">
-          Tarnov Restaurant HR Training Platform<br>
-          <span style="color:rgba(200,146,42,0.5)">✦</span>
-          <span style="margin:0 6px">Toshkent, O'zbekiston</span>
-          <span style="color:rgba(200,146,42,0.5)">✦</span>
+        <p style="text-align:center;margin-top:24px;font-size:0.7rem;color:rgba(255,255,255,0.12)">
+          © 2026 RestoPro · Barcha huquqlar himoyalangan
         </p>
       </div>
     </div>
@@ -473,24 +500,20 @@
   <script>
     lucide.createIcons();
 
-    // ── Tab switching ──
-    function switchTab(type, event) {
+    function switchTab(type, e) {
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
       document.getElementById(`panel-${type}`).classList.add('active');
-      event.currentTarget.classList.add('active');
+      e.currentTarget.classList.add('active');
       document.getElementById('login-error').style.display = 'none';
       if (type === 'waiter') loadRestaurants();
     }
 
-    // ── PIN dots ──
     function updatePinDots(val) {
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < 4; i++)
         document.getElementById(`pd-${i}`).classList.toggle('filled', i < val.length);
-      }
     }
 
-    // ── Load restaurants ──
     async function loadRestaurants() {
       try {
         const list = await api('/api/restaurants/list');
@@ -505,7 +528,6 @@
       } catch {}
     }
 
-    // ── Login ──
     async function login(type) {
       const errEl = document.getElementById('login-error');
       const btn   = document.getElementById(`btn-${type}`);
@@ -513,123 +535,91 @@
 
       let body = { loginType: type };
       if (type === 'superadmin') {
-        body.email    = document.getElementById('sa-email').value.trim();
+        body.email = document.getElementById('sa-email').value.trim();
         body.password = document.getElementById('sa-password').value;
       } else if (type === 'restaurant') {
-        body.email    = document.getElementById('ra-email').value.trim();
+        body.email = document.getElementById('ra-email').value.trim();
         body.password = document.getElementById('ra-password').value;
       } else {
         body.restaurantId = document.getElementById('w-restaurant').value;
-        body.pin          = document.getElementById('w-pin').value;
+        body.pin = document.getElementById('w-pin').value;
       }
 
       btn.disabled = true;
-      btn.innerHTML = '<i data-lucide="loader" style="width:18px;height:18px;animation:spin 1s linear infinite"></i> Kirish...';
-      lucide.createIcons();
+      btn.innerHTML = '<svg style="width:17px;height:17px;animation:spin 0.8s linear infinite" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> Kirish...';
 
       try {
-        const res = await api('/api/auth/login', { method: 'POST', body: JSON.stringify(body) });
+        const res = await api('/api/auth/login', { method:'POST', body:JSON.stringify(body) });
         window.location.href = res.redirect;
       } catch (e) {
         errEl.textContent = e.message || 'Kirish amalga oshmadi';
         errEl.style.display = 'flex';
         btn.disabled = false;
-        btn.innerHTML = '<i data-lucide="log-in" style="width:18px;height:18px"></i> Kirish';
-        lucide.createIcons();
+        btn.innerHTML = '<svg style="width:17px;height:17px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg> Kirish';
       }
     }
 
-    // Enter key
     document.addEventListener('keypress', e => {
       if (e.key !== 'Enter') return;
-      const active = document.querySelector('.tab-panel.active');
-      login(active.id.replace('panel-', ''));
+      const type = document.querySelector('.tab-panel.active').id.replace('panel-','');
+      login(type);
     });
 
-    // Auth check
-    api('/api/auth/me').then(user => {
-      if (user.role === 'superadmin') window.location.href = '/super-admin.html';
-      else if (user.role === 'restaurant') window.location.href = '/restaurant-admin.html';
-      else if (user.role === 'waiter') window.location.href = '/waiter.html';
-    }).catch(() => {});
+    // Auth redirect
+    api('/api/auth/me').then(u => {
+      if (u.role==='superadmin') location.href='/super-admin.html';
+      else if (u.role==='restaurant') location.href='/restaurant-admin.html';
+      else if (u.role==='waiter') location.href='/waiter.html';
+    }).catch(()=>{});
 
-    // ── Neon toggle ──
+    // Neon
     function toggleNeon() {
       const on = document.body.classList.toggle('neon-mode');
       document.getElementById('neon-btn').classList.toggle('on', on);
-      localStorage.setItem('neonMode', on ? '1' : '');
+      localStorage.setItem('neonMode', on?'1':'');
     }
     if (localStorage.getItem('neonMode')) {
       document.body.classList.add('neon-mode');
       document.getElementById('neon-btn')?.classList.add('on');
     }
 
-    // ── Stat counter animation ──
-    function animateCounter(el, target, suffix = '') {
-      let start = 0;
-      const duration = 1800;
-      const startTime = performance.now();
-      function step(now) {
-        const progress = Math.min((now - startTime) / duration, 1);
-        const ease = 1 - Math.pow(1 - progress, 3);
-        el.textContent = Math.round(ease * target) + suffix;
-        if (progress < 1) requestAnimationFrame(step);
-      }
-      requestAnimationFrame(step);
-    }
-
-    setTimeout(() => {
-      animateCounter(document.getElementById('bs-1'), 4);
-      animateCounter(document.getElementById('bs-2'), 600, '+');
-      animateCounter(document.getElementById('bs-3'), 19, '+');
-    }, 600);
-
-    // ── Brand canvas (floating particles) ──
+    // Particle canvas (brand panel only)
     (function() {
       const canvas = document.getElementById('brand-canvas');
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
-      let W, H, particles = [];
+      let W, H, P = [];
 
       function resize() {
-        const panel = canvas.parentElement;
-        W = canvas.width  = panel?.offsetWidth  || window.innerWidth / 2;
+        const panel = document.querySelector('.brand-panel');
+        W = canvas.width  = panel?.offsetWidth  || window.innerWidth * 0.55;
         H = canvas.height = panel?.offsetHeight || window.innerHeight;
       }
-      window.addEventListener('resize', resize);
-      resize();
+      window.addEventListener('resize', resize); resize();
 
-      function rand(a, b) { return Math.random() * (b - a) + a; }
-      function mk() {
-        return { x: rand(0,W), y: rand(0,H), r: rand(0.5,2), vx: rand(-0.1,0.1), vy: rand(-0.2,-0.05),
-                 a: rand(0.1,0.4), da: rand(0.002,0.006), fadeIn: true };
-      }
+      function r(a,b){ return Math.random()*(b-a)+a; }
+      function mk(){ return { x:r(0,W),y:r(0,H),rad:r(0.5,1.8),vx:r(-0.08,0.08),vy:r(-0.18,-0.04),a:r(0.08,0.35),da:r(0.001,0.004),fi:true }; }
+      for(let i=0;i<70;i++) P.push(mk());
 
-      for (let i = 0; i < 60; i++) particles.push(mk());
+      const isNeon=()=>document.body.classList.contains('neon-mode');
 
-      function isNeon() { return document.body.classList.contains('neon-mode'); }
-
-      function draw() {
-        ctx.clearRect(0, 0, W, H);
-        const color = isNeon() ? '0,245,255' : '200,146,42';
-        particles.forEach(p => {
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${color},${p.a})`;
-          ctx.fill();
-          p.x += p.vx; p.y += p.vy;
-          if (p.fadeIn) { p.a += p.da; if (p.a >= 0.4) p.fadeIn = false; }
-          else          { p.a -= p.da; }
-          if (p.y < -5 || p.a <= 0) Object.assign(p, mk(), { y: H + 5, a: 0, fadeIn: true });
-          if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+      (function draw() {
+        ctx.clearRect(0,0,W,H);
+        const c=isNeon()?'0,245,255':'200,146,42';
+        P.forEach(p=>{
+          ctx.beginPath(); ctx.arc(p.x,p.y,p.rad,0,Math.PI*2);
+          ctx.fillStyle=`rgba(${c},${p.a})`; ctx.fill();
+          p.x+=p.vx; p.y+=p.vy;
+          if(p.fi){p.a+=p.da; if(p.a>=0.35)p.fi=false;}
+          else{p.a-=p.da;}
+          if(p.y<-5||p.a<=0) Object.assign(p,mk(),{y:H+5,a:0,fi:true});
+          if(p.x<0)p.x=W; if(p.x>W)p.x=0;
         });
         requestAnimationFrame(draw);
-      }
-      draw();
+      })();
 
-      // add spin keyframe
-      const style = document.createElement('style');
-      style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+      const style=document.createElement('style');
+      style.textContent='@keyframes spin{to{transform:rotate(360deg)}}';
       document.head.appendChild(style);
     })();
   </script>

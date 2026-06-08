@@ -142,23 +142,66 @@ router.post('/checklist/:itemId/toggle', guard, asyncHandler(async (req, res) =>
 }));
 
 router.get('/kpi', guard, asyncHandler(async (req, res) => {
-  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'testResults');
+  const r       = await Restaurant.findOne({ id: req.user.restaurantId }, 'testResults');
   const results = (r?.testResults || []).filter(t => t.waiterId === req.user.waiterId);
-  if (!results.length) return res.json({ level:'nodata', label:"Ma'lumot yo'q", color:'#666', emoji:'—', avg:null, testCount:0, penalty:0, consecutiveLow:0 });
-  const thirtyAgo = new Date(); thirtyAgo.setDate(thirtyAgo.getDate()-30);
-  const recent = results.filter(r => new Date(r.submittedAt) >= thirtyAgo);
-  const use = recent.length ? recent : results;
-  const avg = Math.round(use.reduce((s,r)=>s+r.score,0)/use.length);
-  const sorted = [...results].sort((a,b)=>new Date(b.submittedAt)-new Date(a.submittedAt));
-  let consecutiveLow=0; for(const r of sorted){ if(r.score<60) consecutiveLow++; else break; }
+
+  // 10 kunlik davr yordamchi funksiyalari
+  function getPeriodKey(date) {
+    const d = new Date(date);
+    const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0');
+    const p = d.getDate()<=10?'1':d.getDate()<=20?'2':'3';
+    return `${y}-${m}-${p}`;
+  }
+  function getPeriodLabel(date) {
+    const d = new Date(date);
+    const months=['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'];
+    const m=months[d.getMonth()], y=d.getFullYear(), day=d.getDate();
+    if(day<=10) return `1–10 ${m} ${y}`;
+    if(day<=20) return `11–20 ${m} ${y}`;
+    const last=new Date(y,d.getMonth()+1,0).getDate();
+    return `21–${last} ${m} ${y}`;
+  }
+
+  const today      = new Date();
+  const todayKey   = getPeriodKey(today);
+  const periodLabel= getPeriodLabel(today);
+  const current    = results.filter(r => getPeriodKey(r.submittedAt||r.date) === todayKey);
+
+  if (!current.length) {
+    const prev = [...results].sort((a,b)=>new Date(b.submittedAt)-new Date(a.submittedAt))[0];
+    return res.json({
+      level:'nodata', label:'Test topshirilmagan', color:'#666666', emoji:'—',
+      avg:null, testCount:0, penalty:0, consecutiveLow:0, periodLabel,
+      lastScore: prev?.score??null,
+      advice:'Bu 10 kunlik davrda hali test topshirilmagan. Test kuni e\'lonini kuzatib boring.'
+    });
+  }
+
+  const avg = Math.round(current.reduce((s,r)=>s+r.score,0)/current.length);
+
+  // Ketma-ket past davrlar
+  const byPeriod={};
+  results.forEach(r=>{const k=getPeriodKey(r.submittedAt||r.date);if(byPeriod[k]===undefined||r.score>byPeriod[k])byPeriod[k]=r.score;});
+  let d2=new Date(today), consecutiveLow=0;
+  for(let i=0;i<6;i++){
+    const k=getPeriodKey(d2);
+    if(byPeriod[k]!==undefined){ if(byPeriod[k]<60)consecutiveLow++; else break; }
+    const day=d2.getDate();
+    if(day<=10)d2=new Date(d2.getFullYear(),d2.getMonth(),1);
+    else if(day<=20)d2=new Date(d2.getFullYear(),d2.getMonth(),10);
+    else d2=new Date(d2.getFullYear(),d2.getMonth(),20);
+    d2.setDate(d2.getDate()-1);
+  }
+
   let level,label,color,emoji,penalty,advice;
-  if      (avg>=90){level='master'; label='MASTER';        color='#F39C12';emoji='🏆';penalty=+15;advice='Ajoyib! Siz eng yaxshi xodimlar safisida. Davom eting!';}
-  else if (avg>=75){level='pro';    label='PRO';           color='#3498DB';emoji='⭐';penalty=0;  advice='Yaxshi natija! 90% ga yetish uchun qiyin savollarga e\'tibor bering.';}
+  if      (avg>=90){level='master'; label='MASTER';        color='#F39C12';emoji='🏆';penalty=+15;advice='Ajoyib natija! Bu davrda ish haqingizga +15% bonus qo\'shiladi.';}
+  else if (avg>=75){level='pro';    label='PRO';           color='#3498DB';emoji='⭐';penalty=0;  advice='Yaxshi natija! Keyingi davrda 90%+ ga yetib MASTER bo\'ling.';}
   else if (avg>=60){level='good';   label='YAXSHI';        color='#2ECC71';emoji='✅';penalty=0;  advice='Me\'yor darajasida. Menyu va ingredientlarni chuqurroq o\'rganing.';}
-  else if (avg>=45){level='warning';label='OGOHLANTIRISH'; color='#E67E22';emoji='⚠️';penalty=-10;advice='Diqqat! Ish haqingizdan 10% ushlanmoqda. O\'quv modullarni bajaring.';}
-  else if (avg>=30){level='penalty';label='JAZO';          color='#E74C3C';emoji='🔴';penalty=-20;advice='Kritik holat! 20% ushlanma. Darhol qayta o\'qitishga murojaat qiling.';}
-  else             {level='fail';   label='NOMUVOFIQ';     color='#9B59B6';emoji='❌';penalty=0;  advice='Qayta o\'qitish majburiy. Rahbariyat bilan gaplashing.';}
-  res.json({ level,label,color,emoji,avg,testCount:use.length,penalty,consecutiveLow,advice });
+  else if (avg>=45){level='warning';label='OGOHLANTIRISH'; color='#E67E22';emoji='⚠️';penalty=-10;advice='Diqqat! Bu davr uchun ish haqidan 10% ushlanadi. O\'quv modullarni bajaring.';}
+  else if (avg>=30){level='penalty';label='JAZO';          color='#E74C3C';emoji='🔴';penalty=-20;advice='Kritik! Bu davr uchun 20% ushlanma. Darhol o\'quv modullariga o\'ting.';}
+  else             {level='fail';   label='NOMUVOFIQ';     color='#9B59B6';emoji='❌';penalty=0;  advice='Qayta o\'qitish majburiy. Rahbariyat bilan bog\'laning.';}
+
+  res.json({ level,label,color,emoji,avg,testCount:current.length,penalty,consecutiveLow,periodLabel,advice });
 }));
 
 router.get('/adaptation', guard, asyncHandler(async (req, res) => {

@@ -272,7 +272,7 @@
     <!-- KPI -->
     <div id="page-kpi" class="page" style="display:none">
       <div class="page-header">
-        <div><h1>KPI Hisoboti</h1><p>Xodimlar bilim darajasi — oxirgi 30 kun test natijalari asosida</p></div>
+        <div><h1>KPI Hisoboti</h1><p id="kpi-period-title">Xodimlar bilim darajasi — joriy 10 kunlik davr bo'yicha</p></div>
         <button class="btn btn-ghost" onclick="loadKPI()" style="gap:6px">
           <i data-lucide="refresh-cw" style="width:15px;height:15px"></i> Yangilash
         </button>
@@ -324,8 +324,8 @@
         <!-- Izoh -->
         <div class="card mt-16" style="background:rgba(200,146,42,0.04);border-color:rgba(200,146,42,0.15)">
           <div class="card-body" style="font-size:0.82rem;color:var(--text3);line-height:1.8">
-            <strong style="color:var(--text2)">KPI hisoblash usuli:</strong> Oxirgi 30 kundagi test natijalari o'rtachasi asosida.
-            Agar 30 kunda test bo'lmagan bo'lsa — barcha vaqt o'rtachasi olinadi.<br>
+            <strong style="color:var(--text2)">KPI hisoblash usuli:</strong> Joriy 10 kunlik davrdagi test natijasi asosida (1 davr = 1 test = 1 oylik hisob).<br>
+            Davrlar: <strong style="color:var(--text2)">1–10 kun</strong> · <strong style="color:var(--text2)">11–20 kun</strong> · <strong style="color:var(--text2)">21–oy oxiri</strong> — oyiga 3 ta oylik hisob.<br>
             <strong style="color:var(--text2)">Mehnat kodeksi 181-moddasi:</strong> ish haqidan maksimal 20% ushlab qolinadi.<br>
             <strong style="color:var(--text2)">Statistika manbai:</strong> Toshkent HoReCa sektori, 2026 yil.
           </div>
@@ -2281,6 +2281,10 @@ async function loadKPI() {
     document.getElementById('kpi-table-body').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text3)">Yuklanmoqda...</td></tr>';
     const data = await api('/api/restaurant/kpi');
     kpiData = data.kpiList || [];
+    if (data.periodLabel) {
+      const el = document.getElementById('kpi-period-title');
+      if (el) el.textContent = `Joriy davr: ${data.periodLabel} · 10 kunlik oylik hisobi`;
+    }
     renderKPISummary(data.summary);
     renderKPIAlerts(kpiData);
     renderKPITable(kpiData);

@@ -173,59 +173,95 @@ router.get('/results', guard, asyncHandler(async (req, res) => {
   res.json((r?.testResults || []).sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt)));
 }));
 
-// ---- KPI (10 kunlik davr tizimi) ----
+// ---- KPI (dinamik davr tizimi) ----
 
-// 10 kunlik davr: 1→"1-10", 2→"11-20", 3→"21-aox"
-function getPeriodKey(date) {
-  const d = new Date(date);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
+const MONTHS_UZ = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'];
+
+function getPeriodKey(date, days = 10) {
+  const d   = new Date(date);
+  const y   = d.getFullYear();
+  const m   = String(d.getMonth() + 1).padStart(2, '0');
   const day = d.getDate();
-  const p = day <= 10 ? '1' : day <= 20 ? '2' : '3';
-  return `${y}-${m}-${p}`;
+
+  if (days === 7) {
+    // ISO hafta raqami
+    const jan1   = new Date(y, 0, 1);
+    const week   = Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+    return `${y}-W${String(week).padStart(2,'0')}`;
+  }
+  if (days === 10) {
+    const p = day <= 10 ? '1' : day <= 20 ? '2' : '3';
+    return `${y}-${m}-P${p}`;
+  }
+  if (days === 14) {
+    const p = day <= 14 ? '1' : '2';
+    return `${y}-${m}-H${p}`;
+  }
+  if (days === 15) {
+    const p = day <= 15 ? '1' : '2';
+    return `${y}-${m}-Q${p}`;
+  }
+  // 30 kun = oylik
+  return `${y}-${m}`;
 }
 
-function getPeriodLabel(date) {
-  const d = new Date(date);
-  const months = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'];
-  const m = months[d.getMonth()];
-  const y = d.getFullYear();
+function getPeriodLabel(date, days = 10) {
+  const d   = new Date(date);
+  const y   = d.getFullYear();
+  const m   = MONTHS_UZ[d.getMonth()];
   const day = d.getDate();
-  if (day <= 10)  return `1–10 ${m} ${y}`;
-  if (day <= 20)  return `11–20 ${m} ${y}`;
-  const last = new Date(y, d.getMonth() + 1, 0).getDate();
-  return `21–${last} ${m} ${y}`;
+  const lastDay = new Date(y, d.getMonth() + 1, 0).getDate();
+
+  if (days === 7) {
+    // Hafta boshi (Dushanba) va oxiri (Yakshanba)
+    const dow   = d.getDay() === 0 ? 6 : d.getDay() - 1; // 0=Dush
+    const start = new Date(d); start.setDate(day - dow);
+    const end   = new Date(start); end.setDate(start.getDate() + 6);
+    const sm = MONTHS_UZ[start.getMonth()];
+    const em = MONTHS_UZ[end.getMonth()];
+    return `${start.getDate()} ${sm} – ${end.getDate()} ${em} ${y}`;
+  }
+  if (days === 10) {
+    if (day <= 10)  return `1–10 ${m} ${y}`;
+    if (day <= 20)  return `11–20 ${m} ${y}`;
+    return `21–${lastDay} ${m} ${y}`;
+  }
+  if (days === 14) {
+    if (day <= 14)  return `1–14 ${m} ${y}`;
+    return `15–${lastDay} ${m} ${y}`;
+  }
+  if (days === 15) {
+    if (day <= 15)  return `1–15 ${m} ${y}`;
+    return `16–${lastDay} ${m} ${y}`;
+  }
+  return `${m} ${y}`;
 }
 
-// Oxirgi N davr uchun period keylarini qaytaradi (bugundan orqaga)
-function getLastPeriodKeys(n) {
+// Oxirgi N davr keylarini qaytaradi
+function getLastPeriodKeys(n, days = 10) {
   const keys = [];
-  const today = new Date();
-  let d = new Date(today);
+  let d = new Date();
   while (keys.length < n) {
-    keys.push(getPeriodKey(d));
-    // oldingi davrga o'tish
-    const day = d.getDate();
-    if (day <= 10)       d = new Date(d.getFullYear(), d.getMonth(), 1);   // shu oyning 1-kuni → o'tgan oy 3-davr
-    else if (day <= 20)  d = new Date(d.getFullYear(), d.getMonth(), 10);  // shu oyning 10-kuni → 1-davr
-    else                 d = new Date(d.getFullYear(), d.getMonth(), 20);  // shu oyning 20-kuni → 2-davr
-    // bir kun orqaga
-    d.setDate(d.getDate() - 1);
+    const key = getPeriodKey(d, days);
+    if (!keys.includes(key)) keys.push(key);
+    d.setDate(d.getDate() - days);
   }
   return keys;
 }
 
 const KPI_DEFAULTS = {
+  periodDays:10,
   masterMin:90, masterBonus:15, proMin:75, proBonus:0,
   goodMin:60, goodBonus:0, warningMin:45, warningPenalty:-10,
   penaltyMin:30, penaltyFine:-20
 };
 
 function calcKPI(results, cfg = {}) {
-  const s = { ...KPI_DEFAULTS, ...cfg };
-  const todayKey    = getPeriodKey(new Date());
-  const periodLabel = getPeriodLabel(new Date());
-  const current     = results.filter(r => getPeriodKey(r.submittedAt || r.date) === todayKey);
+  const s           = { ...KPI_DEFAULTS, ...cfg };
+  const days        = s.periodDays || 10;
+  const todayKey    = getPeriodKey(new Date(), days);
+  const periodLabel = getPeriodLabel(new Date(), days);
+  const current     = results.filter(r => getPeriodKey(r.submittedAt || r.date, days) === todayKey);
 
   if (!current.length) {
     const prev = [...results].sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt))[0];
@@ -235,9 +271,9 @@ function calcKPI(results, cfg = {}) {
 
   const avg = Math.round(current.reduce((s, r) => s + r.score, 0) / current.length);
 
-  const lastKeys = getLastPeriodKeys(6);
+  const lastKeys = getLastPeriodKeys(6, days);
   const byPeriod = {};
-  results.forEach(r => { const k=getPeriodKey(r.submittedAt||r.date); if(!byPeriod[k]||r.score>byPeriod[k]) byPeriod[k]=r.score; });
+  results.forEach(r => { const k=getPeriodKey(r.submittedAt||r.date,days); if(!byPeriod[k]||r.score>byPeriod[k]) byPeriod[k]=r.score; });
   let consecutiveLow = 0;
   for (const k of lastKeys) {
     if (byPeriod[k] !== undefined && byPeriod[k] < s.goodMin) consecutiveLow++;
@@ -290,7 +326,7 @@ router.get('/kpi-settings', guard, asyncHandler(async (req, res) => {
 }));
 
 router.put('/kpi-settings', guard, asyncHandler(async (req, res) => {
-  const fields = ['masterMin','masterBonus','proMin','proBonus','goodMin','goodBonus','warningMin','warningPenalty','penaltyMin','penaltyFine'];
+  const fields = ['periodDays','masterMin','masterBonus','proMin','proBonus','goodMin','goodBonus','warningMin','warningPenalty','penaltyMin','penaltyFine'];
   const update = {};
   fields.forEach(f => { if (req.body[f] !== undefined) update[`kpiSettings.${f}`] = Number(req.body[f]); });
   await Restaurant.updateOne({ id: req.user.restaurantId }, { $set: update });

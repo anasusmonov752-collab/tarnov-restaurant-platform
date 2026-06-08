@@ -121,6 +121,7 @@ const WaiterModuleProgressSchema = new mongoose.Schema({
 }, { _id: false });
 
 const KPISettingsSchema = new mongoose.Schema({
+  periodDays:      { type: Number, default: 10, enum: [7, 10, 14, 15, 30] },
   masterMin:       { type: Number, default: 90  },
   masterBonus:     { type: Number, default: 15  },
   proMin:          { type: Number, default: 75  },

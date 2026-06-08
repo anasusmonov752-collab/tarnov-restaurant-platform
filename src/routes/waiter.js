@@ -147,21 +147,30 @@ router.get('/kpi', guard, asyncHandler(async (req, res) => {
   const KPI_DEF = { masterMin:90,masterBonus:15,proMin:75,proBonus:0,goodMin:60,goodBonus:0,warningMin:45,warningPenalty:-10,penaltyMin:30,penaltyFine:-20 };
   const s = { ...KPI_DEF, ...(r?.kpiSettings?.toObject?.() || r?.kpiSettings || {}) };
 
-  // 10 kunlik davr yordamchi funksiyalari
+  const days   = s.periodDays || 10;
+  const MUZ    = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'];
+
   function getPeriodKey(date) {
-    const d = new Date(date);
-    const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0');
-    const p = d.getDate()<=10?'1':d.getDate()<=20?'2':'3';
-    return `${y}-${m}-${p}`;
+    const d=new Date(date), y=d.getFullYear(), mo=String(d.getMonth()+1).padStart(2,'0'), day=d.getDate();
+    if(days===7){ const j=new Date(y,0,1),w=Math.ceil(((d-j)/86400000+j.getDay()+1)/7); return `${y}-W${String(w).padStart(2,'0')}`; }
+    if(days===10){ return `${y}-${mo}-P${day<=10?'1':day<=20?'2':'3'}`; }
+    if(days===14){ return `${y}-${mo}-H${day<=14?'1':'2'}`; }
+    if(days===15){ return `${y}-${mo}-Q${day<=15?'1':'2'}`; }
+    return `${y}-${mo}`;
   }
   function getPeriodLabel(date) {
-    const d = new Date(date);
-    const months=['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'];
-    const m=months[d.getMonth()], y=d.getFullYear(), day=d.getDate();
-    if(day<=10) return `1–10 ${m} ${y}`;
-    if(day<=20) return `11–20 ${m} ${y}`;
+    const d=new Date(date), y=d.getFullYear(), m=MUZ[d.getMonth()], day=d.getDate();
     const last=new Date(y,d.getMonth()+1,0).getDate();
-    return `21–${last} ${m} ${y}`;
+    if(days===7){
+      const dow=d.getDay()===0?6:d.getDay()-1;
+      const st=new Date(d); st.setDate(day-dow);
+      const en=new Date(st); en.setDate(st.getDate()+6);
+      return `${st.getDate()} ${MUZ[st.getMonth()]} – ${en.getDate()} ${MUZ[en.getMonth()]} ${y}`;
+    }
+    if(days===10){ if(day<=10) return `1–10 ${m} ${y}`; if(day<=20) return `11–20 ${m} ${y}`; return `21–${last} ${m} ${y}`; }
+    if(days===14){ return day<=14?`1–14 ${m} ${y}`:`15–${last} ${m} ${y}`; }
+    if(days===15){ return day<=15?`1–15 ${m} ${y}`:`16–${last} ${m} ${y}`; }
+    return `${m} ${y}`;
   }
 
   const today      = new Date();
@@ -175,24 +184,19 @@ router.get('/kpi', guard, asyncHandler(async (req, res) => {
       level:'nodata', label:'Test topshirilmagan', color:'#666666', emoji:'—',
       avg:null, testCount:0, penalty:0, consecutiveLow:0, periodLabel,
       lastScore: prev?.score??null,
-      advice:'Bu 10 kunlik davrda hali test topshirilmagan. Test kuni e\'lonini kuzatib boring.'
+      advice:`Bu ${days} kunlik davrda hali test topshirilmagan. Test kuni e'lonini kuzatib boring.`
     });
   }
 
   const avg = Math.round(current.reduce((s,r)=>s+r.score,0)/current.length);
 
-  // Ketma-ket past davrlar
   const byPeriod={};
   results.forEach(r=>{const k=getPeriodKey(r.submittedAt||r.date);if(byPeriod[k]===undefined||r.score>byPeriod[k])byPeriod[k]=r.score;});
   let d2=new Date(today), consecutiveLow=0;
   for(let i=0;i<6;i++){
     const k=getPeriodKey(d2);
     if(byPeriod[k]!==undefined){ if(byPeriod[k]<s.goodMin)consecutiveLow++; else break; }
-    const day=d2.getDate();
-    if(day<=10)d2=new Date(d2.getFullYear(),d2.getMonth(),1);
-    else if(day<=20)d2=new Date(d2.getFullYear(),d2.getMonth(),10);
-    else d2=new Date(d2.getFullYear(),d2.getMonth(),20);
-    d2.setDate(d2.getDate()-1);
+    d2.setDate(d2.getDate()-days);
   }
 
   let level,label,color,emoji,penalty,advice;

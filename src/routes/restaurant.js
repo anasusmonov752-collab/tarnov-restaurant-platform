@@ -173,6 +173,52 @@ router.get('/results', guard, asyncHandler(async (req, res) => {
   res.json((r?.testResults || []).sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt)));
 }));
 
+// ---- KPI ----
+function calcKPI(results) {
+  if (!results.length) return { level: 'nodata', label: "Ma'lumot yo'q", color: '#666666', emoji: '—', avg: null, testCount: 0, penalty: 0, consecutiveLow: 0 };
+  const thirtyAgo = new Date(); thirtyAgo.setDate(thirtyAgo.getDate() - 30);
+  const recent = results.filter(r => new Date(r.submittedAt) >= thirtyAgo);
+  const use = recent.length ? recent : results;
+  const avg = Math.round(use.reduce((s, r) => s + r.score, 0) / use.length);
+  // consecutive low (last results sorted by date)
+  const sorted = [...results].sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+  let consecutiveLow = 0;
+  for (const r of sorted) { if (r.score < 60) consecutiveLow++; else break; }
+  let level, label, color, emoji, penalty;
+  if      (avg >= 90) { level='master';  label='MASTER';         color='#F39C12'; emoji='🏆'; penalty=+15; }
+  else if (avg >= 75) { level='pro';     label='PRO';            color='#3498DB'; emoji='⭐'; penalty=0;   }
+  else if (avg >= 60) { level='good';    label='YAXSHI';         color='#2ECC71'; emoji='✅'; penalty=0;   }
+  else if (avg >= 45) { level='warning'; label='OGOHLANTIRISH';  color='#E67E22'; emoji='⚠️'; penalty=-10; }
+  else if (avg >= 30) { level='penalty'; label='JAZO';           color='#E74C3C'; emoji='🔴'; penalty=-20; }
+  else                { level='fail';    label='NOMUVOFIQ';       color='#9B59B6'; emoji='❌'; penalty=0;   }
+  return { level, label, color, emoji, avg, testCount: use.length, penalty, consecutiveLow };
+}
+
+router.get('/kpi', guard, asyncHandler(async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'waiters testResults');
+  const waiters = (r?.waiters || []).filter(w => w.active);
+  const results = r?.testResults || [];
+  const kpiList = waiters.map(w => {
+    const wr = results.filter(r => r.waiterId === w.id);
+    const kpi = calcKPI(wr);
+    const last = [...wr].sort((a,b)=>new Date(b.submittedAt)-new Date(a.submittedAt))[0];
+    return { waiterId: w.id, waiterName: w.name, ...kpi, lastTestDate: last?.date || null };
+  }).sort((a, b) => {
+    const order = ['fail','penalty','warning','nodata','good','pro','master'];
+    return order.indexOf(a.level) - order.indexOf(b.level);
+  });
+  const summary = {
+    master:  kpiList.filter(k=>k.level==='master').length,
+    pro:     kpiList.filter(k=>k.level==='pro').length,
+    good:    kpiList.filter(k=>k.level==='good').length,
+    warning: kpiList.filter(k=>k.level==='warning').length,
+    penalty: kpiList.filter(k=>k.level==='penalty').length,
+    fail:    kpiList.filter(k=>k.level==='fail').length,
+    nodata:  kpiList.filter(k=>k.level==='nodata').length,
+  };
+  res.json({ kpiList, summary });
+}));
+
 // ---- CHECKLIST ----
 router.get('/checklist', guard, asyncHandler(async (req, res) => {
   const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'checklist waiters waiterChecklists');

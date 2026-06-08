@@ -141,6 +141,26 @@ router.post('/checklist/:itemId/toggle', guard, asyncHandler(async (req, res) =>
   res.json({ success: true, done: !isDone });
 }));
 
+router.get('/kpi', guard, asyncHandler(async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'testResults');
+  const results = (r?.testResults || []).filter(t => t.waiterId === req.user.waiterId);
+  if (!results.length) return res.json({ level:'nodata', label:"Ma'lumot yo'q", color:'#666', emoji:'—', avg:null, testCount:0, penalty:0, consecutiveLow:0 });
+  const thirtyAgo = new Date(); thirtyAgo.setDate(thirtyAgo.getDate()-30);
+  const recent = results.filter(r => new Date(r.submittedAt) >= thirtyAgo);
+  const use = recent.length ? recent : results;
+  const avg = Math.round(use.reduce((s,r)=>s+r.score,0)/use.length);
+  const sorted = [...results].sort((a,b)=>new Date(b.submittedAt)-new Date(a.submittedAt));
+  let consecutiveLow=0; for(const r of sorted){ if(r.score<60) consecutiveLow++; else break; }
+  let level,label,color,emoji,penalty,advice;
+  if      (avg>=90){level='master'; label='MASTER';        color='#F39C12';emoji='🏆';penalty=+15;advice='Ajoyib! Siz eng yaxshi xodimlar safisida. Davom eting!';}
+  else if (avg>=75){level='pro';    label='PRO';           color='#3498DB';emoji='⭐';penalty=0;  advice='Yaxshi natija! 90% ga yetish uchun qiyin savollarga e\'tibor bering.';}
+  else if (avg>=60){level='good';   label='YAXSHI';        color='#2ECC71';emoji='✅';penalty=0;  advice='Me\'yor darajasida. Menyu va ingredientlarni chuqurroq o\'rganing.';}
+  else if (avg>=45){level='warning';label='OGOHLANTIRISH'; color='#E67E22';emoji='⚠️';penalty=-10;advice='Diqqat! Ish haqingizdan 10% ushlanmoqda. O\'quv modullarni bajaring.';}
+  else if (avg>=30){level='penalty';label='JAZO';          color='#E74C3C';emoji='🔴';penalty=-20;advice='Kritik holat! 20% ushlanma. Darhol qayta o\'qitishga murojaat qiling.';}
+  else             {level='fail';   label='NOMUVOFIQ';     color='#9B59B6';emoji='❌';penalty=0;  advice='Qayta o\'qitish majburiy. Rahbariyat bilan gaplashing.';}
+  res.json({ level,label,color,emoji,avg,testCount:use.length,penalty,consecutiveLow,advice });
+}));
+
 router.get('/adaptation', guard, asyncHandler(async (req, res) => {
   const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'adaptation waiters');
   const waiter = (r?.waiters || []).find(w => w.id === req.user.waiterId);

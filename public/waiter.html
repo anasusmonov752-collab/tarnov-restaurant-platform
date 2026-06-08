@@ -52,6 +52,9 @@
         </div>
       </div>
     </div>
+    <!-- KPI KARTOCHKA -->
+    <div id="home-kpi-card" style="display:none;margin-bottom:14px"></div>
+
     <div id="test-day-alert"></div>
     <div id="home-announcements"></div>
     <div id="home-stats"></div>
@@ -618,6 +621,7 @@ async function init() {
     }
     renderHomeAnnouncements();
     loadHistory().then(renderHomeStats);
+    loadHomeKPI();
     renderIcons();
   } catch (e) { toast(e.message, 'error'); }
 }
@@ -1062,6 +1066,50 @@ async function loadWaiterChecklist() {
 async function toggleChecklistItem(itemId) {
   try { await api(`/api/waiter/checklist/${itemId}/toggle`, { method:'POST' }); loadWaiterChecklist(); }
   catch(e) { toast('Xatolik', 'error'); }
+}
+
+// ===== KPI =====
+async function loadHomeKPI() {
+  try {
+    const k = await api('/api/waiter/kpi');
+    const card = document.getElementById('home-kpi-card');
+    if (!card) return;
+    if (k.level === 'nodata') { card.style.display='none'; return; }
+    const kpiColors = {
+      master:'#F39C12', pro:'#3498DB', good:'#2ECC71',
+      warning:'#E67E22', penalty:'#E74C3C', fail:'#9B59B6'
+    };
+    const c = kpiColors[k.level] || '#666';
+    const penaltyHtml = k.penalty > 0
+      ? `<span style="color:#2ECC71;font-size:0.78rem;font-weight:700">+${k.penalty}% bonus 🏆</span>`
+      : k.penalty < 0
+      ? `<span style="color:#E74C3C;font-size:0.78rem;font-weight:700">${k.penalty}% ushlanma ⚠️</span>`
+      : '';
+    card.style.display = '';
+    card.innerHTML = `
+      <div style="background:${c}10;border:1px solid ${c}35;border-radius:14px;padding:14px 16px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,${c},transparent)"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;color:${c};font-weight:700">Mening KPI</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            ${penaltyHtml}
+            <span style="padding:3px 10px;background:${c}20;border:1px solid ${c}40;border-radius:6px;font-size:0.72rem;font-weight:800;color:${c}">${k.emoji} ${k.label}</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="flex:1">
+            <div style="font-size:2rem;font-weight:800;color:${c};line-height:1">${k.avg}%</div>
+            <div style="font-size:0.75rem;color:var(--text3);margin-top:2px">${k.testCount} ta test o'rtachasi</div>
+          </div>
+          <div style="flex:2">
+            <div style="height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;margin-bottom:6px">
+              <div style="height:100%;width:${k.avg}%;background:linear-gradient(90deg,${c}99,${c});border-radius:3px;transition:width 1s ease"></div>
+            </div>
+            <div style="font-size:0.76rem;color:var(--text2);line-height:1.5">${k.advice}</div>
+          </div>
+        </div>
+      </div>`;
+  } catch(e) { /* jimgina */ }
 }
 
 // ===== ADAPTATION =====

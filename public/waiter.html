@@ -700,32 +700,37 @@ function calcStreak(history) {
 
 function renderHomeStats() {
   if (!historyData.length) return;
-  const best = Math.max(...historyData.map(r=>r.score));
-  const avg = Math.round(historyData.reduce((s,r)=>s+r.score,0)/historyData.length);
-  const certs = historyData.filter(r=>r.hasCertificate).length;
+  const best   = Math.max(...historyData.map(r=>r.score));
+  const avg    = Math.round(historyData.reduce((s,r)=>s+r.score,0)/historyData.length);
+  const certs  = historyData.filter(r=>r.hasCertificate).length;
   const streak = calcStreak(historyData);
-  const streakHTML = streak >= 2 ? `
-    <div style="margin-bottom:16px">
-      <span class="streak-badge"><span class="streak-fire">🔥</span> ${streak} kunlik seria!</span>
-    </div>` : '';
+
+  const stats = [
+    { icon:'bar-chart-2', value:historyData.length, label:'Jami testlar',  color:'#3498DB', suffix:''  },
+    { icon:'medal',       value:best,                label:'Eng yaxshi',   color: best>=90?'#F39C12':best>=60?'#2ECC71':'#E67E22', suffix:'%' },
+    { icon:'trending-up', value:avg,                 label:'O\'rtacha',    color: avg>=90?'#F39C12':avg>=60?'#2ECC71':'#E67E22',   suffix:'%' },
+    { icon:'award',       value:certs,               label:'Sertifikatlar',color:'#F39C12', suffix:''  },
+  ];
+
   document.getElementById('home-stats').innerHTML = `
-    ${streakHTML}
-    <div class="stats-grid">
-      <div class="stat-card"><div class="stat-icon"><i data-lucide="bar-chart-2"></i></div><div class="stat-value" data-count="${historyData.length}">0</div><div class="stat-label">Jami testlar</div></div>
-      <div class="stat-card"><div class="stat-icon"><i data-lucide="medal"></i></div><div class="stat-value" style="color:var(--success)" data-count="${best}" data-suffix="%">0%</div><div class="stat-label">Eng yaxshi</div></div>
-      <div class="stat-card"><div class="stat-icon"><i data-lucide="trending-up"></i></div><div class="stat-value" data-count="${avg}" data-suffix="%">0%</div><div class="stat-label">O'rtacha</div></div>
-      <div class="stat-card"><div class="stat-icon"><i data-lucide="trophy"></i></div><div class="stat-value" style="color:var(--gold)" data-count="${certs}">0</div><div class="stat-label">Sertifikatlar</div></div>
+    ${streak>=2?`<div style="margin-bottom:14px"><span class="streak-badge"><span class="streak-fire">🔥</span> ${streak} kunlik seria!</span></div>`:''}
+    <div class="stats-grid" style="grid-template-columns:repeat(2,1fr);gap:10px">
+      ${stats.map(s=>`
+        <div class="stat-card" style="padding:16px;border-color:${s.color}25;background:${s.color}08">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="width:32px;height:32px;border-radius:8px;background:${s.color}18;display:flex;align-items:center;justify-content:center">
+              <i data-lucide="${s.icon}" style="width:15px;height:15px;color:${s.color}"></i>
+            </div>
+          </div>
+          <div class="stat-value" data-count="${s.value}" data-suffix="${s.suffix}" style="font-size:1.6rem;color:${s.color}">0${s.suffix}</div>
+          <div class="stat-label" style="font-size:0.7rem">${s.label}</div>
+        </div>`).join('')}
     </div>`;
   renderIcons();
-  // Animated counters (creative feature)
   document.querySelectorAll('.stat-value[data-count]').forEach(el => {
     const target = parseInt(el.dataset.count);
     const suffix = el.dataset.suffix || '';
-    if (suffix) {
-      animateCounter({ set textContent(v) { el.textContent = v + suffix; } }, target);
-    } else {
-      animateCounter(el, target);
-    }
+    animateCounter({ set textContent(v){ el.textContent=v+suffix; } }, target);
   });
 }
 

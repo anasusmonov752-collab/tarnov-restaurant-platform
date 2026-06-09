@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tarnov — Super Admin</title>
+  <title>RestoPro — Super Admin</title>
   <link rel="stylesheet" href="/css/style.css">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
@@ -14,7 +14,12 @@
   <button class="hamburger" onclick="toggleSidebar()">
     <i data-lucide="menu"></i>
   </button>
-  <span style="color:var(--gold);font-weight:700;letter-spacing:0.1em">TARNOV</span>
+  <div style="display:flex;align-items:center;gap:7px">
+    <div style="width:24px;height:24px;background:linear-gradient(135deg,#C8922A,#A07520);border-radius:6px;display:flex;align-items:center;justify-content:center">
+      <i data-lucide="zap" style="width:13px;height:13px;color:#000"></i>
+    </div>
+    <span style="color:var(--gold);font-weight:800;letter-spacing:0.06em">RestoPro</span>
+  </div>
   <button class="btn btn-ghost btn-sm" onclick="logout()">
     <i data-lucide="log-out"></i> Chiqish
   </button>
@@ -24,13 +29,21 @@
 <div class="app-layout">
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <div class="sidebar-logo">
-        <img src="/images/logo.jpg" alt="Tarnov" style="width:140px;height:auto;display:block;margin:0 auto 8px;border-radius:4px" onerror="this.style.display='none'">
-        <p>Restaurant Platform</p>
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">
+          <i data-lucide="zap"></i>
+        </div>
+        <div class="sidebar-brand-text">
+          <div class="brand-name">RestoPro</div>
+          <div class="brand-sub">HR Platform</div>
+        </div>
       </div>
-      <div class="sidebar-user" style="margin-top:14px">
-        <div class="user-name">Super Admin</div>
-        <div class="user-role"><i data-lucide="shield-check" style="width:13px;height:13px"></i> Bosh administrator</div>
+      <div class="sidebar-role-badge super">
+        <i data-lucide="shield-check" style="width:10px;height:10px"></i> Super Admin
+      </div>
+      <div class="sidebar-user" style="margin-top:12px">
+        <div class="user-name">Bosh Administrator</div>
+        <div class="user-role"><i data-lucide="globe" style="width:12px;height:12px"></i> Barcha restoranlar</div>
       </div>
     </div>
     <nav class="sidebar-nav">
@@ -172,29 +185,19 @@ async function loadDashboard() {
 
 function renderStats() {
   const d = dashData;
-  document.getElementById('dash-stats').innerHTML = `
-    <div class="stat-card">
-      <div class="stat-icon"><i data-lucide="store"></i></div>
-      <div class="stat-value">${d.total}</div><div class="stat-label">Jami restoran</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon"><i data-lucide="circle-check"></i></div>
-      <div class="stat-value">${d.active}</div><div class="stat-label">Faol</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon"><i data-lucide="chef-hat"></i></div>
-      <div class="stat-value">${d.totalWaiters}</div><div class="stat-label">Ofitsiantlar</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon"><i data-lucide="utensils"></i></div>
-      <div class="stat-value">${d.totalMenuItems}</div><div class="stat-label">Menyu taomlar</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon"><i data-lucide="wallet"></i></div>
-      <div class="stat-value">${(d.totalRevenue/1000000).toFixed(1)}M</div>
-      <div class="stat-label">Oylik daromad</div>
-    </div>
-  `;
+  const cards = [
+    { icon:'store',        value:d.total,                             label:'Jami restoranlar', color:'#3498DB', bg:'rgba(52,152,219,0.1)',  border:'rgba(52,152,219,0.25)' },
+    { icon:'circle-check', value:d.active,                            label:'Faol restoranlar', color:'#2ECC71', bg:'rgba(46,204,113,0.1)',  border:'rgba(46,204,113,0.25)' },
+    { icon:'chef-hat',     value:d.totalWaiters,                      label:'Jami xodimlar',    color:'#9B59B6', bg:'rgba(155,89,182,0.1)', border:'rgba(155,89,182,0.25)' },
+    { icon:'utensils',     value:d.totalMenuItems,                    label:'Menyu taomlar',    color:'#F39C12', bg:'rgba(243,156,18,0.1)',  border:'rgba(243,156,18,0.25)' },
+    { icon:'wallet',       value:`${(d.totalRevenue/1000000).toFixed(1)}M`, label:"Oylik daromad", color:'#C8922A', bg:'rgba(200,146,42,0.1)', border:'rgba(200,146,42,0.25)' },
+  ];
+  document.getElementById('dash-stats').innerHTML = cards.map(c => `
+    <div class="stat-card" style="border-color:${c.border};background:linear-gradient(135deg,${c.bg},var(--card))">
+      <div class="stat-icon" style="color:${c.color}"><i data-lucide="${c.icon}"></i></div>
+      <div class="stat-value" style="color:${c.color}">${c.value}</div>
+      <div class="stat-label">${c.label}</div>
+    </div>`).join('');
   renderIcons();
 }
 

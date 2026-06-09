@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tarnov — Restoran Admin</title>
+  <title>RestoPro — Admin Panel</title>
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#C8922A">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Tarnov Admin">
+  <meta name="apple-mobile-web-app-title" content="RestoPro Admin">
   <link rel="apple-touch-icon" href="/images/icon.svg">
   <link rel="stylesheet" href="/css/style.css">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
@@ -19,7 +19,12 @@
 
 <div class="mobile-topbar">
   <button class="hamburger" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
-  <span style="color:var(--gold);font-weight:700;letter-spacing:0.1em" id="mob-name">TARNOV</span>
+  <div style="display:flex;align-items:center;gap:7px">
+    <div style="width:24px;height:24px;background:linear-gradient(135deg,#C8922A,#A07520);border-radius:6px;display:flex;align-items:center;justify-content:center">
+      <i data-lucide="zap" style="width:13px;height:13px;color:#000"></i>
+    </div>
+    <span style="color:var(--gold);font-weight:800;letter-spacing:0.06em" id="mob-name">RestoPro</span>
+  </div>
   <button class="btn btn-ghost btn-sm" onclick="logout()"><i data-lucide="log-out"></i></button>
 </div>
 <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
@@ -27,14 +32,25 @@
 <div class="app-layout">
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <div class="sidebar-logo">
-        <img src="/images/logo.jpg" alt="Tarnov" style="width:140px;height:auto;display:block;margin:0 auto 6px;border-radius:4px" onerror="this.style.display='none'">
-        <h2 id="sb-name" style="font-size:0.85rem;text-align:center">RESTORAN</h2>
-        <p id="sb-loc" style="color:var(--text3);font-size:0.75rem;margin-top:2px;text-align:center"></p>
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">
+          <i data-lucide="zap"></i>
+        </div>
+        <div class="sidebar-brand-text">
+          <div class="brand-name">RestoPro</div>
+          <div class="brand-sub">HR Platform</div>
+        </div>
       </div>
-      <div class="sidebar-user" style="margin-top:14px">
+      <div class="sidebar-role-badge restaurant">
+        <i data-lucide="store" style="width:10px;height:10px"></i> Admin Panel
+      </div>
+      <div class="sidebar-restaurant-info">
+        <div class="res-name" id="sb-name">—</div>
+        <div class="res-loc" id="sb-loc"></div>
+      </div>
+      <div class="sidebar-user">
         <div class="user-name">Restoran Admin</div>
-        <div class="user-role"><i data-lucide="store" style="width:13px;height:13px"></i> Boshqaruvchi</div>
+        <div class="user-role"><i data-lucide="shield" style="width:12px;height:12px"></i> Boshqaruvchi</div>
       </div>
     </div>
     <nav class="sidebar-nav">

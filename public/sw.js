@@ -1,7 +1,7 @@
-// ── Tarnov Training Platform — Service Worker ──
-const VERSION   = 'tarnov-v1';
-const STATIC    = 'tarnov-static-v1';
-const API_CACHE = 'tarnov-api-v1';
+// ── RestoPro Training Platform — Service Worker ──
+const VERSION   = 'restopro-v2';
+const STATIC    = 'restopro-static-v2';
+const API_CACHE = 'restopro-api-v2';
 
 // Static assets to precache
 const PRECACHE = [
@@ -59,9 +59,30 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Static assets: Cache first, fallback to network
+  // HTML sahifalar: Network first (har doim yangi versiya)
+  if (url.pathname.endsWith('.html') || url.pathname === '/') {
+    e.respondWith(networkFirstHTML(e.request));
+    return;
+  }
+
+  // Static assets (css, js, images): Cache first, fallback to network
   e.respondWith(cacheFirst(e.request));
 });
+
+// HTML uchun: har doim serverdan oladi, xato bo'lsa keshdan
+async function networkFirstHTML(req) {
+  try {
+    const res = await fetch(req, { cache: 'no-store' });
+    if (res.ok) {
+      const cache = await caches.open(STATIC);
+      cache.put(req, res.clone());
+    }
+    return res;
+  } catch {
+    const cached = await caches.match(req);
+    return cached || new Response('Offline', { status: 503 });
+  }
+}
 
 async function networkFirstAPI(req) {
   try {

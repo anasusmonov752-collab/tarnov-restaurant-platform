@@ -28,7 +28,18 @@ app.use(cookieParser());
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 app.use('/uploads', express.static(UPLOADS_DIR));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+  etag: false,
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      // HTML — hech qachon keshlamasin, har safar server dan olsin
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    } else if (filePath.endsWith('.css') || filePath.endsWith('.js')) {
+      // CSS/JS — 1 soat kesh, ETag bilan yangilanishni tekshiradi
+      res.setHeader('Cache-Control', 'public, max-age=3600, must-revalidate');
+    }
+  }
+}));
 
 // ── Health check (UptimeRobot / keep-alive) ────────────────────────
 app.get('/ping', (req, res) => res.json({ ok: true, ts: Date.now() }));

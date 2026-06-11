@@ -1,0 +1,1136 @@
+[
+  {
+    "uz": "Kuksi",
+    "ru": "Кукси ",
+    "price": 42000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Okroshka",
+    "ru": "Окрошка",
+    "price": 42000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Ko'za sho'rva",
+    "ru": "Куза шурпа",
+    "price": 63000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Mastava",
+    "ru": "Мастава",
+    "price": 42000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Sho'rva",
+    "ru": "Шурва",
+    "price": 42000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Xash",
+    "ru": "Хаш",
+    "price": 42000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Manpar",
+    "ru": "Манпар",
+    "price": 42000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Ananasli salat",
+    "ru": "Салат с ананасом",
+    "price": 42000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Qo'ziqorinlar navosi salati",
+    "ru": "Салат Грибная мелодия",
+    "price": 74000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Qo'ziqorinli buratto salati",
+    "ru": "Салат с бурратой и грибами",
+    "price": 94000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Salat Buratto",
+    "ru": "Бурато салат",
+    "price": 91000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Хрустящие баклажаны",
+    "ru": "Хрустящие баклажаны",
+    "price": 54000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Tarnov",
+    "ru": "Тарнов",
+    "price": 43000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Dollar",
+    "ru": "Доллар",
+    "price": 34000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Olivye",
+    "ru": "Оливье",
+    "price": 34000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Grecheskiy salat",
+    "ru": "Греческий ",
+    "price": 42000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Maftunkor",
+    "ru": "Мафтункор",
+    "price": 45000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Yaponcha salat",
+    "ru": "Японский",
+    "price": 36000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Frantsuzcha salat",
+    "ru": "Французский ",
+    "price": 32000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Salat dieta",
+    "ru": "Диетический",
+    "price": 32000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Sezar",
+    "ru": "Цезарь",
+    "price": 41000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Mimoza",
+    "ru": "Мимоза",
+    "price": 36000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Smak",
+    "ru": "Смак",
+    "price": 32000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Bahor salati 200 gr",
+    "ru": "Бахор",
+    "price": 14000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Suzma 150 gr",
+    "ru": "Сузьма ",
+    "price": 12000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Qatiq 200 gr",
+    "ru": "Кислое молоко",
+    "price": 9000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Yangi salat",
+    "ru": "Свежий",
+    "price": 17000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Vinegret salati",
+    "ru": "Винегрет ",
+    "price": 32000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Tuzlamalar",
+    "ru": "Соленое ассорти",
+    "price": 12000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Chiroqchi",
+    "ru": "Чирокчи",
+    "price": 26000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Norin kg",
+    "ru": "Норин кг (500 гр)",
+    "price": 77000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Halim",
+    "ru": "Халим ",
+    "price": 47000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Norin",
+    "ru": "Норин",
+    "price": 28000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "3 kishi uchun assorti",
+    "ru": "Ассорти для 3 персон",
+    "price": 277000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Tabaka",
+    "ru": "Табака ",
+    "price": 43000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Bifstrogan",
+    "ru": "Бефстроганов",
+    "price": 57000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Bifshteks",
+    "ru": "Бифштекс",
+    "price": 46000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Do'lma",
+    "ru": "Дулма ",
+    "price": 7500,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Beshbarmoq",
+    "ru": "Бешбармак",
+    "price": 89000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Kozon kabob",
+    "ru": "Казан-кабоб",
+    "price": 75000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Assorti 1 porsiya",
+    "ru": "Ассорти ",
+    "price": 97000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Noxot sho'rak",
+    "ru": "Нохот шурак",
+    "price": 64000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "KFC",
+    "ru": "КФС",
+    "price": 25000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "KFS uchun sous",
+    "ru": "Соус для кфс",
+    "price": 6000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "KFS qanotchalari ",
+    "ru": "Крылышки КФС",
+    "price": 33000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "KFC kg",
+    "ru": "КФС кг",
+    "price": 112000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Tushonka",
+    "ru": "Тушёнка",
+    "price": 77000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Qo'zichoq soni",
+    "ru": "Баранья ножка",
+    "price": 124000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Lag'mon",
+    "ru": "Лагман",
+    "price": 50000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Qovurma lag'mon",
+    "ru": "Жаренный лагман",
+    "price": 50000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Ganpan",
+    "ru": "Ганпан ",
+    "price": 50000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Ayrim say xamirli 1 portsiya",
+    "ru": "Айрим сай с тестом ",
+    "price": 64000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Ayrim say guruchli",
+    "ru": "Айрим сай с рисом",
+    "price": 64000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Go'sht say",
+    "ru": "Мясной сай",
+    "price": 85000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Juvova",
+    "ru": "Жувова",
+    "price": 50000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Manti",
+    "ru": "Манты",
+    "price": 10500,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Sumboro",
+    "ru": "Сумборо ",
+    "price": 74000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Sokoro",
+    "ru": "Сокоро ",
+    "price": 74000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Bedro 1 dona (240-270g)",
+    "ru": "бедро 1 шт. (240-270г)",
+    "price": 30000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Bon file 1 dona (240-260g)",
+    "ru": "Бон филе 1 шт. (240-260г)",
+    "price": 88000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Grudka (450-500g)",
+    "ru": "Грудка (450-500г)",
+    "price": 50000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Koreyka 1 dona (220-250g)",
+    "ru": "Корейка 1 шт (220-250g)",
+    "price": 73000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Ribay biftek (400g-450g)",
+    "ru": "Рибай стейк (400г-450г)",
+    "price": 102000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Qanot",
+    "ru": "Крылышки мангал",
+    "price": 10500,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Sabzavotli kabob ",
+    "ru": "Овощной ",
+    "price": 19000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Ruletli sosiska 1 dona (80-90g)",
+    "ru": "Рулетная сосиска 1 штука (80-90г)",
+    "price": 23000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Makkajo'xori",
+    "ru": "Кукуруза",
+    "price": 17000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Mangal uchun sous",
+    "ru": "Соус для мангала",
+    "price": 6000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "3 kishilik mangal assorti",
+    "ru": "Мангал ассорти для 3 персоны",
+    "price": 357000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "6 kishilik mangal assorti",
+    "ru": "Мангал ассорти для 6 персон",
+    "price": 687000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Turk assorti",
+    "ru": "Турк ассорти",
+    "price": 323000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Iskandar",
+    "ru": "Искандар",
+    "price": 98000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Donar Beyti",
+    "ru": "Донар Бейти",
+    "price": 87000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Pilov Usti donar",
+    "ru": "Пилов усти Донар ",
+    "price": 79000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Donar chizburger",
+    "ru": "Донар чизбургер ",
+    "price": 60000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Turk kebab",
+    "ru": "Турк кабоб",
+    "price": 72000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Adana achchiq",
+    "ru": "Адана острый",
+    "price": 60000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Beyti durum",
+    "ru": "Бейти дурум",
+    "price": 67000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Cheeseburger",
+    "ru": "Чизбургер",
+    "price": 45000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Qanot kebab ",
+    "ru": "Кебаб крылышки",
+    "price": 46000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Adana kabob",
+    "ru": "Адана кабоб",
+    "price": 60000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Mini burger",
+    "ru": "Мини  бургер",
+    "price": 35000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Shef burgeri",
+    "ru": "Бургер шеф",
+    "price": 44000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Pitsa «Margarita»",
+    "ru": "Пицца «Маргарита»",
+    "price": 40000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Pitsa «Pepperoni»",
+    "ru": "Пицца «Пепперони»",
+    "price": 45000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Sazan baliq",
+    "ru": "Сазан",
+    "price": 73000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Sudak ",
+    "ru": "Судак",
+    "price": 38000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Baliq steyki (240-260g)",
+    "ru": "Стейк из рыбы (240-260г)",
+    "price": 39000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Osh to'plam",
+    "ru": "Плов комплект",
+    "price": 53000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Osh",
+    "ru": "Плов",
+    "price": 43000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Qazi ",
+    "ru": "Казы ",
+    "price": 10000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Bedana tuxum 1 dona",
+    "ru": "Перепелиное яйцо",
+    "price": 1000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Sоmsa",
+    "ru": "Самса",
+    "price": 12000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Tovuqli kabob",
+    "ru": "Куриный шашлык",
+    "price": 16000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Mol go'shtidan jaz",
+    "ru": "Кусковой говяжий шашлык",
+    "price": 22000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Jigar",
+    "ru": "Шашлык из печени",
+    "price": 19000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Qiyma kabob",
+    "ru": "Молотый шашлык",
+    "price": 19000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Jaz qo'y gosht ",
+    "ru": "Кусковой из баранины",
+    "price": 24000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Ekler",
+    "ru": "Эклер",
+    "price": 17000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "San Sebastyan Pishloq pirogi",
+    "ru": "Сан Себастьян Чизкейк",
+    "price": 35000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Ekstexayzi",
+    "ru": "Экстехайзи ",
+    "price": 35000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Napoleon shirinligi",
+    "ru": "Наполеон десерт ",
+    "price": 24000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Beze merengali",
+    "ru": "Меренговое безе",
+    "price": 35000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Klassik chizkeyk",
+    "ru": "Классический чизкейк ",
+    "price": 35000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Piramida",
+    "ru": "Пирамида",
+    "price": 35000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Shokoladli chizkeyk",
+    "ru": "Шоколадный чизкейк ",
+    "price": 35000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Ptichka ",
+    "ru": "Птичка ",
+    "price": 22000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Lakomka",
+    "ru": "Лакомка ",
+    "price": 35000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Super mevali",
+    "ru": "Супер фруктовый",
+    "price": 35000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Mevali tort",
+    "ru": "Фруктовый ",
+    "price": 35000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Tabiiy o'rik sharbati",
+    "ru": "Натуральный абрикосовый сок",
+    "price": 16000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Pepsi",
+    "ru": "Пепси",
+    "price": 10000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Coca Cola",
+    "ru": "Кока-кола ",
+    "price": 10000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Fanta",
+    "ru": "Фанта",
+    "price": 10000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Hydrolife ( без газ)",
+    "ru": "Hydrolife ( без газ)",
+    "price": 5000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Chortok 0,5 l",
+    "ru": " Чорток 0,5",
+    "price": 15000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Chortoq 0,3 l",
+    "ru": "Чорток 0,3 л",
+    "price": 12000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Hydrolife ( газли )",
+    "ru": "Hydrolife ( газли )",
+    "price": 5000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Borjomi 0.5",
+    "ru": "Боржоми 0.5",
+    "price": 19500,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Borjomi 0.33",
+    "ru": "Боржоми 0.33",
+    "price": 17500,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Компот олча 1 л",
+    "ru": "Компот вишнёвый 1 л",
+    "price": 16000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Tabaka set",
+    "ru": "Табака сет",
+    "price": 50000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "OSH set",
+    "ru": "ОШ сет",
+    "price": 66000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Do'lma set",
+    "ru": "Дулма сет ",
+    "price": 67000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "KFS set",
+    "ru": "Кфс сет ",
+    "price": 42000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Assorti set",
+    "ru": "Ассорти сет ",
+    "price": 68000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Kabob set",
+    "ru": "Шашлык сет ",
+    "price": 62000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Sumboro set",
+    "ru": "Сумборо сет",
+    "price": 62000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Qovurma set",
+    "ru": "Кувурма сет",
+    "price": 59000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Mangal set",
+    "ru": "Мангал сет",
+    "price": 59000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Gonkong vafli ananas",
+    "ru": "Гонконгские вафли с ананасом",
+    "price": 50000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Gonkong vafli Miks",
+    "ru": "Гонконгские вафли Микс",
+    "price": 65000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Belgiya Vafli Miks",
+    "ru": "Бельгийские вафли Микс",
+    "price": 65000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Ananasli Belgiya vafli",
+    "ru": "Бельгийские вафли с ананасом",
+    "price": 50000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Fondyu",
+    "ru": "Фондо",
+    "price": 80000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Belgiyskiy assorti",
+    "ru": "Бельгийское ассорти",
+    "price": 60000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Gonkong vaflilari assorti",
+    "ru": "Гонконгские вафли ассорти",
+    "price": 60000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Bananli belgiya vaflisi",
+    "ru": "Бельгийские вафли с бананами",
+    "price": 40000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Bananli Gonkong vaflilari",
+    "ru": "Гонконгские вафли с бананами",
+    "price": 50000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Qulupnay bilan Belgiya vaflilari",
+    "ru": "Бельгийские вафли с клубникой",
+    "price": 55000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Qulupnayli Gonkong vaflilari",
+    "ru": "Гонконгские вафли с клубникой",
+    "price": 55000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Shokoladli Belgiya vaflilari",
+    "ru": "Бельгийские вафли с шоколадом",
+    "price": 40000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Mevali muzqaymoq",
+    "ru": "Мороженое фруктовое",
+    "price": 60000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Gonkong shokoladli vafli",
+    "ru": "Гонконгские вафли с шоколадом",
+    "price": 40000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Non",
+    "ru": "Патыр ",
+    "price": 4500,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Fri",
+    "ru": "Картофель фри ",
+    "price": 16000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Guruch ",
+    "ru": "Рис",
+    "price": 13000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Grechka",
+    "ru": "Гречка ",
+    "price": 13000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Pyure",
+    "ru": "Пюре",
+    "price": 13000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Kotletlar",
+    "ru": "Котлеты",
+    "price": 17000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Tuxum",
+    "ru": "Тухум - яйцо",
+    "price": 5000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Garimdori",
+    "ru": "Перец острый",
+    "price": 3000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Sirka",
+    "ru": "Сирка - уксус",
+    "price": 1000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Soya sousi",
+    "ru": "Соя",
+    "price": 2000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Lozi",
+    "ru": "Лози",
+    "price": 3000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Sarimsoq piyoz 3 dona",
+    "ru": "Чеснок 3 шт",
+    "price": 1000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Lagmon uchun palochka",
+    "ru": "Чуп для лагмана",
+    "price": 2000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Garnir",
+    "ru": "Гарнир",
+    "price": 31000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Go'shtli assorti",
+    "ru": "Мясной",
+    "price": 82000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Moxito yagoda",
+    "ru": "Мохито ягодный",
+    "price": 25000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Klassik Moxito",
+    "ru": "Мохито классический",
+    "price": 25000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  },
+  {
+    "uz": "Kivi mojito",
+    "ru": "Мохито киви",
+    "price": 25000,
+    "category": "Boshqa",
+    "catSlug": "other"
+  }
+]

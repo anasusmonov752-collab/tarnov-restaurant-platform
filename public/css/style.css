@@ -217,7 +217,7 @@ h1, h2, h3, h4 { font-weight: 600; letter-spacing: -0.02em; }
 select.form-control {
   cursor: pointer;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2300D4FF' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 14px center;
   padding-right: 38px;
@@ -1711,7 +1711,7 @@ table th {
   border: 1px solid rgba(255,255,255,0.08) !important;
 }
 .pill.active {
-  background: linear-gradient(135deg, rgba(229,169,58,0.9), rgba(0, 212, 255,0.85)) !important;
+  background: linear-gradient(135deg, var(--neon-light), var(--neon)) !important;
   border-color: rgba(0, 212, 255,0.6) !important;
   box-shadow: 0 4px 16px rgba(0, 212, 255,0.35), inset 0 1px 0 rgba(255,255,255,0.2);
 }
@@ -2315,3 +2315,296 @@ body.neon-mode .waiter-avatar-letter {
   display: inline-block;
 }
 
+
+/* ═══════════════════════════════════════════════
+   PROFESSIONAL 2026 UPGRADES — v3.0
+   ═══════════════════════════════════════════════ */
+
+/* ── btn-neon shimmer (same as btn-gold) ── */
+.btn-neon {
+  position: relative;
+  overflow: hidden;
+}
+.btn-neon::after {
+  content: '';
+  position: absolute;
+  top: -50%; left: -60%;
+  width: 50%; height: 200%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.55s;
+}
+.btn-neon:hover::after { left: 120%; }
+.btn-neon:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(0,212,255,0.55), inset 0 1px 0 rgba(255,255,255,0.35) !important;
+}
+.btn-neon:active { transform: translateY(0) !important; }
+
+/* ── Waiter bottom nav active indicator ── */
+.waiter-nav-item {
+  position: relative;
+}
+.waiter-nav-item.active::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 28px; height: 3px;
+  background: linear-gradient(90deg, var(--neon-dark), var(--neon));
+  border-radius: 0 0 3px 3px;
+  box-shadow: 0 0 10px rgba(0,212,255,0.6);
+}
+.waiter-nav-item.active svg,
+.waiter-nav-item.active i {
+  filter: drop-shadow(0 0 6px rgba(0,212,255,0.7));
+}
+
+/* ── Form group label — uppercase + track ── */
+.form-group > label {
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  color: var(--text3) !important;
+}
+
+/* ── Card shimmer border on hover ── */
+.card {
+  position: relative;
+  overflow: hidden;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 60%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,212,255,0.5), transparent);
+  transition: left 0.6s;
+  z-index: 1;
+  pointer-events: none;
+}
+.card:hover::before { left: 150%; }
+
+/* ── Page header glow line ── */
+.page-header::after {
+  opacity: 0.25 !important;
+  background: linear-gradient(90deg, var(--neon), rgba(0,212,255,0.3), transparent) !important;
+}
+
+/* ── Stats grid — icon glow animation ── */
+.stat-card:hover .stat-icon {
+  box-shadow: 0 0 20px currentColor !important;
+  transform: scale(1.1);
+  transition: all 0.25s;
+}
+.stat-icon {
+  transition: all 0.25s;
+}
+
+/* ── Table row hover — neon left accent ── */
+table tr:hover td {
+  background: rgba(0,212,255,0.03) !important;
+}
+table tr:hover td:first-child {
+  border-left: 2px solid rgba(0,212,255,0.4);
+}
+table td:first-child {
+  border-left: 2px solid transparent;
+  transition: border-color 0.15s;
+}
+
+/* ── Modal glassmorphism upgrade ── */
+.modal {
+  background: linear-gradient(145deg, rgba(13,21,32,0.95), rgba(8,15,24,0.95)) !important;
+  backdrop-filter: blur(32px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(180%) !important;
+  border: 1px solid rgba(0,212,255,0.18) !important;
+  box-shadow:
+    0 40px 100px rgba(0,0,0,0.75),
+    0 0 0 1px rgba(0,212,255,0.08),
+    0 0 60px rgba(0,212,255,0.06),
+    inset 0 1px 0 rgba(255,255,255,0.07) !important;
+}
+.modal-header {
+  border-bottom: 1px solid rgba(0,212,255,0.08);
+  padding-bottom: 20px !important;
+  margin-bottom: 0 !important;
+}
+.modal-title {
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+  background: linear-gradient(135deg, #E8F4FF, var(--neon));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Badge improvements ── */
+.badge {
+  border-radius: 6px !important;
+  font-size: 0.7rem !important;
+  letter-spacing: 0.04em;
+  font-weight: 700 !important;
+}
+.badge-gold {
+  background: rgba(0,212,255,0.1) !important;
+  color: var(--neon) !important;
+  border: 1px solid rgba(0,212,255,0.25) !important;
+}
+.badge-success {
+  background: rgba(0,255,136,0.1) !important;
+  color: var(--success) !important;
+  border: 1px solid rgba(0,255,136,0.25) !important;
+}
+.badge-danger {
+  background: rgba(255,59,92,0.1) !important;
+  color: var(--danger) !important;
+  border: 1px solid rgba(255,59,92,0.25) !important;
+}
+.badge-warning {
+  background: rgba(255,184,0,0.1) !important;
+  color: var(--warning) !important;
+  border: 1px solid rgba(255,184,0,0.25) !important;
+}
+.badge-info {
+  background: rgba(52,152,219,0.12) !important;
+  color: #5DADE2 !important;
+  border: 1px solid rgba(52,152,219,0.25) !important;
+}
+
+/* ── Nav item hover glow ── */
+.nav-item {
+  transition: all 0.18s !important;
+}
+.nav-item:hover {
+  background: rgba(0,212,255,0.05) !important;
+  color: var(--text) !important;
+  padding-left: 16px !important;
+}
+.nav-item.active {
+  color: var(--neon) !important;
+  font-weight: 600 !important;
+}
+
+/* ── Live badge ── */
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0,255,136,0.08);
+  border: 1px solid rgba(0,255,136,0.3);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--success);
+  letter-spacing: 0.1em;
+}
+.live-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success);
+  animation: livePulse 1.5s ease-in-out infinite;
+}
+@keyframes livePulse {
+  0%,100%{ opacity:1; transform:scale(1); }
+  50%{ opacity:0.5; transform:scale(0.8); }
+}
+
+/* ── KPI progress bar ── */
+.kpi-bar-wrap {
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.kpi-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.8s cubic-bezier(0.34,1.56,0.64,1);
+  position: relative;
+  overflow: hidden;
+}
+.kpi-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%; right: 0; bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: kpiShimmer 2s infinite;
+}
+@keyframes kpiShimmer {
+  from { left: -100%; }
+  to   { left: 200%; }
+}
+
+/* ── Score circle glow ── */
+.score-circle {
+  position: relative;
+}
+.score-circle::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--neon) var(--pct, 0%),
+    transparent var(--pct, 0%)
+  );
+  opacity: 0.15;
+  z-index: -1;
+}
+
+/* ── Sidebar hover glow line ── */
+.sidebar::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(0,212,255,0.3), transparent);
+  pointer-events: none;
+}
+
+/* ── Empty state improvement ── */
+.empty-state {
+  padding: 64px 24px !important;
+}
+.empty-icon {
+  width: 64px; height: 64px;
+  margin: 0 auto 16px;
+  border-radius: 18px;
+  background: rgba(0,212,255,0.06);
+  border: 1px solid rgba(0,212,255,0.12);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text3);
+}
+.empty-icon svg { width: 28px; height: 28px; }
+
+/* ── Toast improvement ── */
+.toast {
+  border-radius: 14px !important;
+  font-size: 0.88rem !important;
+}
+
+/* ── btn-danger glow ── */
+.btn-danger:hover {
+  box-shadow: 0 6px 20px rgba(255,59,92,0.4) !important;
+  transform: translateY(-1px);
+}
+
+/* ── Scrollbar neon upgrade ── */
+::-webkit-scrollbar { width: 4px !important; height: 4px !important; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--neon-dark), var(--neon)) !important;
+  border-radius: 4px !important;
+}
+
+/* ── Input autofill override ── */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 100px #0a1220 inset !important;
+  -webkit-text-fill-color: var(--text) !important;
+  transition: background-color 5000s ease-in-out 0s;
+}

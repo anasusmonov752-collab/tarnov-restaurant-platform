@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RestoPro — Super Admin</title>
-  <link rel="stylesheet" href="/css/style.css?v=3.0">
+  <link rel="stylesheet" href="/css/style.css?v=3.1">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
@@ -67,7 +67,7 @@
     <div id="page-dashboard" class="page">
       <div class="page-header">
         <div>
-          <h1>Dashboard <span class="neon">✦</span></h1>
+          <h1><i data-lucide="layout-dashboard" style="width:22px;height:22px;color:var(--neon);vertical-align:middle;margin-right:8px"></i>Dashboard <span class="neon">✦</span></h1>
           <p>Barcha restoranlar umumiy ko'rinishi</p>
         </div>
         <button class="btn btn-neon" onclick="showPage('restaurants'); openAddModal()">
@@ -99,7 +99,7 @@
     <div id="page-restaurants" class="page" style="display:none">
       <div class="page-header">
         <div>
-          <h1>Restoranlar</h1>
+          <h1><i data-lucide="store" style="width:22px;height:22px;color:var(--neon);vertical-align:middle;margin-right:8px"></i>Restoranlar</h1>
           <p>Barcha restoranlarni boshqarish</p>
         </div>
         <button class="btn btn-neon" onclick="openAddModal()">
@@ -162,7 +162,7 @@
   </div>
 </div>
 
-<script src="/js/utils.js?v=3.0"></script>
+<script src="/js/utils.js?v=3.1"></script>
 <script>
 let dashData = null;
 

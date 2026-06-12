@@ -394,23 +394,37 @@
 
     <!-- TRAINING MODULES -->
     <div id="page-modules" class="page" style="display:none">
-      <div class="page-header">
-        <div>
-          <h1><i data-lucide="graduation-cap" style="width:28px;height:28px;color:#9B59B6;vertical-align:middle"></i> O'quv Modullar</h1>
-          <p>Ofitsiantlar uchun strukturali o'quv kurslari</p>
+      <!-- Modules hero header -->
+      <div style="position:relative;overflow:hidden;background:linear-gradient(135deg,#0a0618 0%,#0d1020 50%,#080e18 100%);border-bottom:1px solid rgba(155,89,182,0.2);padding:32px 32px 28px">
+        <div style="position:absolute;inset:0;pointer-events:none">
+          <div style="position:absolute;top:-60px;left:-40px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(155,89,182,0.18) 0%,transparent 70%)"></div>
+          <div style="position:absolute;bottom:-40px;right:80px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(0,212,255,0.1) 0%,transparent 70%)"></div>
+          <svg style="position:absolute;inset:0;width:100%;height:100%;opacity:0.04" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M 32 0 L 0 0 0 32" fill="none" stroke="#9B59B6" stroke-width="0.5"/></pattern></defs><rect width="100%" height="100%" fill="url(#grid)"/></svg>
         </div>
-        <button class="btn btn-neon" onclick="openModuleModal()">
-          <i data-lucide="plus"></i> Modul qo'shish
-        </button>
+        <div style="position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
+          <div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+              <div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#C39BD3,#9B59B6);display:flex;align-items:center;justify-content:center;box-shadow:0 0 20px rgba(155,89,182,0.5)">
+                <i data-lucide="graduation-cap" style="width:20px;height:20px;color:#fff"></i>
+              </div>
+              <div>
+                <h1 style="font-size:1.4rem;font-weight:800;letter-spacing:-0.02em;background:linear-gradient(135deg,#fff,#C39BD3);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin:0">O'quv Modullar</h1>
+                <p style="color:rgba(155,89,182,0.7);font-size:0.78rem;margin:0;letter-spacing:0.04em">LEARNING MANAGEMENT SYSTEM</p>
+              </div>
+            </div>
+            <p style="color:var(--text2);font-size:0.85rem;margin:0">Strukturali kurslar · Video darslar · Mini-quiz testlar</p>
+          </div>
+          <button class="btn btn-neon" onclick="openModuleModal()" style="background:linear-gradient(135deg,#C39BD3,#9B59B6);box-shadow:0 4px 20px rgba(155,89,182,0.4)">
+            <i data-lucide="plus"></i> Modul qo'shish
+          </button>
+        </div>
+        <!-- Stats pills -->
+        <div id="mod-stats" style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap"></div>
       </div>
+
       <div class="page-body">
-
-        <!-- Stats row -->
-        <div class="stats-grid" id="mod-stats" style="margin-bottom:20px"></div>
-
-        <!-- Module cards -->
-        <div id="mod-list"></div>
-
+        <!-- Module cards grid -->
+        <div id="mod-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:20px"></div>
       </div>
     </div>
 
@@ -2160,80 +2174,133 @@ async function loadModules() {
 }
 
 function renderModules() {
-  // Stats
-  const total = adminModules.length;
+  const total        = adminModules.length;
   const totalLessons = adminModules.reduce((s,m)=>s+(m.lessons?.length||0),0);
-  const totalQuiz = adminModules.reduce((s,m)=>s+(m.quiz?.length||0),0);
-  document.getElementById('mod-stats').innerHTML = `
-    <div class="stat-card"><div class="stat-icon"><i data-lucide="graduation-cap"></i></div><div class="stat-value">${total}</div><div class="stat-label">Modullar</div></div>
-    <div class="stat-card"><div class="stat-icon"><i data-lucide="book-open"></i></div><div class="stat-value">${totalLessons}</div><div class="stat-label">Darslar</div></div>
-    <div class="stat-card"><div class="stat-icon"><i data-lucide="help-circle"></i></div><div class="stat-value">${totalQuiz}</div><div class="stat-label">Quiz savollari</div></div>
-  `;
+  const totalQuiz    = adminModules.reduce((s,m)=>s+(m.quiz?.length||0),0);
+  const totalDone    = adminModules.reduce((s,m)=>s+(m.stats?.completed||0),0);
+
+  // ── Stats pills ──
+  document.getElementById('mod-stats').innerHTML = [
+    { icon:'graduation-cap', val:total,        label:'Modullar',      c:'#C39BD3', bg:'rgba(155,89,182,0.15)' },
+    { icon:'book-open',      val:totalLessons, label:'Darslar',       c:'#00D4FF', bg:'rgba(0,212,255,0.12)'  },
+    { icon:'help-circle',    val:totalQuiz,    label:'Quiz savollar', c:'#FFB800', bg:'rgba(255,184,0,0.12)'  },
+    { icon:'users',          val:totalDone,    label:'Tugatadilar',   c:'#00FF88', bg:'rgba(0,255,136,0.12)'  },
+  ].map(s=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:12px;background:${s.bg};border:1px solid ${s.c}33;backdrop-filter:blur(8px)">
+      <i data-lucide="${s.icon}" style="width:16px;height:16px;color:${s.c};flex-shrink:0"></i>
+      <span style="font-size:1.25rem;font-weight:800;color:${s.c};line-height:1">${s.val}</span>
+      <span style="font-size:0.72rem;color:rgba(255,255,255,0.5);white-space:nowrap">${s.label}</span>
+    </div>`).join('');
 
   const el = document.getElementById('mod-list');
+
   if (!adminModules.length) {
-    el.innerHTML = `<div class="empty-state">
-      <div class="empty-icon"><i data-lucide="graduation-cap"></i></div>
-      <h3>Hali modul yo'q</h3>
-      <p>Birinchi o'quv modulingizni yarating</p>
-      <button class="btn btn-neon" style="margin-top:16px" onclick="openModuleModal()"><i data-lucide="plus"></i> Modul qo'shish</button>
-    </div>`;
+    el.style.display = 'block';
+    el.innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:80px 24px">
+        <div style="width:80px;height:80px;border-radius:24px;background:linear-gradient(135deg,rgba(155,89,182,0.2),rgba(155,89,182,0.05));border:1px solid rgba(155,89,182,0.3);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:2rem">🎓</div>
+        <h3 style="font-size:1.2rem;font-weight:700;margin-bottom:8px">Hali modul yo'q</h3>
+        <p style="color:var(--text3);font-size:0.88rem;margin-bottom:24px">Birinchi o'quv kursini yaratib, xodimlaringizni o'qiting</p>
+        <button class="btn btn-neon" onclick="openModuleModal()" style="background:linear-gradient(135deg,#C39BD3,#9B59B6);box-shadow:0 4px 20px rgba(155,89,182,0.4)">
+          <i data-lucide="plus"></i> Birinchi modulni yarating
+        </button>
+      </div>`;
     renderIcons(); return;
   }
 
-  el.innerHTML = adminModules.map(m => `
-    <div class="card mb-16" style="border-left:4px solid ${m.color||'#9B59B6'}">
-      <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap">
-        <!-- Emoji badge -->
-        <div style="width:56px;height:56px;border-radius:16px;background:${m.color||'#9B59B6'}22;border:1px solid ${m.color||'#9B59B6'}44;display:flex;align-items:center;justify-content:center;font-size:1.8rem;flex-shrink:0">${m.emoji||'📚'}</div>
-        <!-- Info -->
-        <div style="flex:1;min-width:200px">
-          <div style="font-weight:700;font-size:1.05rem;margin-bottom:4px">${m.title}</div>
-          <div style="color:var(--text2);font-size:0.85rem;margin-bottom:10px">${m.description||''}</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <span class="badge badge-ghost"><i data-lucide="book-open" style="width:11px;height:11px"></i> ${m.lessons?.length||0} ta dars</span>
-            <span class="badge badge-ghost"><i data-lucide="help-circle" style="width:11px;height:11px"></i> ${m.quiz?.length||0} ta quiz</span>
-            <span class="badge badge-ghost" style="color:var(--text3)">Min: ${m.passingScore||70}%</span>
-            ${m.stats ? `<span class="badge badge-success">${m.stats.completed} ta tugatdi</span>` : ''}
+  el.innerHTML = adminModules.map(m => {
+    const color   = m.color || '#9B59B6';
+    const lessons = [...(m.lessons||[])].sort((a,b)=>(a.order||0)-(b.order||0));
+    const quizCnt = m.quiz?.length || 0;
+    const done    = m.stats?.completed || 0;
+    const total   = m.stats?.total || 0;
+    const pct     = total ? Math.round(done/total*100) : 0;
+
+    return `
+    <div class="mod-card" style="--mc:${color}">
+      <!-- Card header -->
+      <div class="mod-card-head">
+        <div style="position:absolute;inset:0;background:linear-gradient(135deg,${color}28 0%,${color}08 60%,transparent 100%);pointer-events:none"></div>
+        <div style="position:absolute;top:-20px;right:-20px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,${color}22 0%,transparent 70%);pointer-events:none"></div>
+        <div style="position:relative;z-index:1;display:flex;align-items:flex-start;gap:14px">
+          <div style="width:52px;height:52px;border-radius:16px;background:${color}22;border:2px solid ${color}44;display:flex;align-items:center;justify-content:center;font-size:1.8rem;flex-shrink:0;box-shadow:0 4px 16px ${color}30">${m.emoji||'📚'}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:1rem;font-weight:800;letter-spacing:-0.01em;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.title}</div>
+            <div style="font-size:0.8rem;color:var(--text2);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${m.description||'Tavsif kiritilmagan'}</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0">
+            <button class="mc-btn" onclick="openModuleModal('${m.id}')" title="Tahrirlash">
+              <i data-lucide="edit-2" style="width:13px;height:13px"></i>
+            </button>
+            <button class="mc-btn mc-btn-danger" onclick="deleteModule('${m.id}')" title="O'chirish">
+              <i data-lucide="trash-2" style="width:13px;height:13px"></i>
+            </button>
           </div>
         </div>
-        <!-- Actions -->
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-ghost btn-sm" onclick="openLessonModal('${m.id}')">
-            <i data-lucide="plus"></i> Dars
-          </button>
-          <button class="btn btn-ghost btn-sm" onclick="openQuizModal('${m.id}')">
-            <i data-lucide="help-circle"></i> Quiz
-          </button>
-          <button class="btn btn-ghost btn-sm" onclick="showModuleProgress('${m.id}','${m.title}')">
-            <i data-lucide="bar-chart-2"></i>
-          </button>
-          <button class="btn btn-ghost btn-sm" onclick="openModuleModal('${m.id}')">
-            <i data-lucide="edit-2"></i>
-          </button>
-          <button class="btn btn-danger btn-sm" onclick="deleteModule('${m.id}')">
-            <i data-lucide="trash-2"></i>
-          </button>
+
+        <!-- Progress bar -->
+        ${total>0 ? `
+        <div style="position:relative;z-index:1;margin-top:14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+            <span style="font-size:0.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em">Tugatdilar</span>
+            <span style="font-size:0.78rem;font-weight:700;color:${color}">${done}/${total} — ${pct}%</span>
+          </div>
+          <div style="height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,${color}99,${color});border-radius:3px;transition:width 0.8s ease;box-shadow:0 0 8px ${color}60"></div>
+          </div>
+        </div>` : ''}
+      </div>
+
+      <!-- Stats row -->
+      <div class="mod-card-stats">
+        <div class="mod-stat">
+          <i data-lucide="book-open" style="width:13px;height:13px;color:${color}"></i>
+          <span>${lessons.length} dars</span>
         </div>
+        <div class="mod-stat">
+          <i data-lucide="help-circle" style="width:13px;height:13px;color:#FFB800"></i>
+          <span>${quizCnt} savol</span>
+        </div>
+        <div class="mod-stat">
+          <i data-lucide="target" style="width:13px;height:13px;color:#00D4FF"></i>
+          <span>Min: ${m.passingScore||70}%</span>
+        </div>
+        ${done>0?`<div class="mod-stat"><i data-lucide="award" style="width:13px;height:13px;color:#00FF88"></i><span>${done} tugatdi</span></div>`:''}
       </div>
 
       <!-- Lessons list -->
-      ${m.lessons?.length ? `
-        <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px">
-          <div style="font-size:0.78rem;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.08em">Darslar</div>
-          <div style="display:flex;flex-direction:column;gap:4px">
-            ${[...m.lessons].sort((a,b)=>(a.order||0)-(b.order||0)).map((l,i) => `
-              <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06)">
-                <span style="width:22px;height:22px;border-radius:6px;background:${m.color||'#9B59B6'}22;color:${m.color||'#9B59B6'};font-size:0.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${i+1}</span>
-                <span style="flex:1;font-size:0.88rem;font-weight:500">${l.title}</span>
-                ${l.hasImage?'<span style="font-size:0.7rem;color:var(--text3)">🖼</span>':''}
-                ${l.hasVideo?'<span style="font-size:0.7rem;color:var(--text3)">▶</span>':''}
-                <button class="btn btn-ghost btn-sm" style="padding:4px 8px" onclick="openLessonModal('${m.id}','${l.id}')"><i data-lucide="edit-2" style="width:12px;height:12px"></i></button>
-                <button class="btn btn-danger btn-sm" style="padding:4px 8px" onclick="deleteLesson('${m.id}','${l.id}')"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>
-              </div>`).join('')}
-          </div>
-        </div>` : ''}
-    </div>`).join('');
+      ${lessons.length ? `
+      <div class="mod-card-lessons">
+        <div style="font-size:0.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;font-weight:700">Darslar</div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          ${lessons.map((l,i)=>`
+          <div class="mod-lesson-row">
+            <div class="mod-lesson-num" style="background:${color}20;color:${color};border-color:${color}30">${i+1}</div>
+            <div class="mod-lesson-title">${l.title}</div>
+            <div style="display:flex;gap:4px;align-items:center">
+              ${l.hasVideo?`<span style="padding:2px 7px;border-radius:4px;font-size:0.65rem;background:rgba(231,76,60,0.15);color:#e74c3c;font-weight:700">▶ VID</span>`:''}
+              ${l.hasImage?`<span style="padding:2px 7px;border-radius:4px;font-size:0.65rem;background:rgba(52,152,219,0.15);color:#3498db;font-weight:700">🖼 IMG</span>`:''}
+              <button class="mc-btn" onclick="openLessonModal('${m.id}','${l.id}')" title="Tahrirlash"><i data-lucide="edit-2" style="width:11px;height:11px"></i></button>
+              <button class="mc-btn mc-btn-danger" onclick="deleteLesson('${m.id}','${l.id}')" title="O'chirish"><i data-lucide="trash-2" style="width:11px;height:11px"></i></button>
+            </div>
+          </div>`).join('')}
+        </div>
+      </div>` : ''}
+
+      <!-- Action buttons -->
+      <div class="mod-card-actions">
+        <button class="mc-action-btn" onclick="openLessonModal('${m.id}')" style="--ac:${color}">
+          <i data-lucide="plus" style="width:14px;height:14px"></i> Dars qo'shish
+        </button>
+        <button class="mc-action-btn" onclick="openQuizModal('${m.id}')" style="--ac:#FFB800">
+          <i data-lucide="help-circle" style="width:14px;height:14px"></i> Quiz
+        </button>
+        <button class="mc-action-btn" onclick="showModuleProgress('${m.id}','${m.title}')" style="--ac:#00D4FF">
+          <i data-lucide="bar-chart-2" style="width:14px;height:14px"></i> Progress
+        </button>
+      </div>
+    </div>`;
+  }).join('');
   renderIcons();
 }
 

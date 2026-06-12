@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="RestoPro">
   <link rel="apple-touch-icon" href="/images/icon.svg">
-  <link rel="stylesheet" href="/css/style.css?v=5.0">
+  <link rel="stylesheet" href="/css/style.css?v=4.1">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -73,7 +73,7 @@
     </div>
     <div id="menu-visible">
       <div class="safia-filter-bar" id="menu-cats"></div>
-      <div id="menu-items"></div>
+      <div class="menu-grid" id="menu-items" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px"></div>
     </div>
   </div>
 
@@ -514,37 +514,23 @@
   </div>
 </div>
 
-<!-- MENU ITEM DETAIL SHEET -->
-<div id="food-detail-sheet" onclick="if(event.target===this)closeFoodDetail()">
-  <div id="food-detail-inner">
-    <div class="fds-hero" id="fds-hero">
-      <div class="fds-no-img" id="fds-no-img">🍽</div>
-      <img id="fds-img" src="" alt="" style="display:none" onerror="this.style.display='none';document.getElementById('fds-no-img').style.display='flex'">
-      <button class="fds-close" onclick="closeFoodDetail()">✕</button>
-      <div class="fds-hero-content">
-        <div class="fds-cat-chip" id="fds-cat"></div>
-        <div class="fds-name" id="fds-name"></div>
-        <div class="fds-price" id="fds-price"></div>
-      </div>
+<!-- MENU ITEM DETAIL MODAL -->
+<div class="modal-overlay" id="menu-item-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="mi-name">—</h3>
+      <button class="modal-close" onclick="document.getElementById('menu-item-modal').classList.remove('show')">
+        <i data-lucide="x"></i>
+      </button>
     </div>
-    <div class="fds-body">
-      <div class="fds-handle"></div>
-      <div id="fds-desc-wrap" style="display:none">
-        <div class="fds-section-title">Tavsif</div>
-        <div class="fds-desc" id="fds-desc"></div>
-      </div>
-      <div id="fds-ing-wrap" style="display:none">
-        <div class="fds-section-title">Tarkib</div>
-        <div class="fds-chips" id="fds-ing"></div>
-      </div>
-      <div id="fds-alg-wrap" style="display:none">
-        <div class="fds-section-title">⚠ Allergenlar</div>
-        <div class="fds-chips" id="fds-alg"></div>
-      </div>
-      <div id="fds-sug-wrap" style="display:none">
-        <div class="fds-section-title">Tavsiya</div>
-        <div class="fds-suggestion" id="fds-sug"></div>
-      </div>
+    <div class="modal-body">
+      <div id="mi-img" style="margin-bottom:16px;border-radius:12px;overflow:hidden;max-height:220px"></div>
+      <div style="color:var(--neon);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px" id="mi-cat"></div>
+      <div style="color:var(--text2);margin-bottom:16px;line-height:1.7" id="mi-desc"></div>
+      <div id="mi-ingredients" style="margin-bottom:12px"></div>
+      <div id="mi-allergens" style="margin-bottom:12px"></div>
+      <div id="mi-suggestion" style="margin-bottom:12px"></div>
+      <div style="font-size:1.4rem;font-weight:700;color:var(--neon)" id="mi-price"></div>
     </div>
   </div>
 </div>
@@ -862,111 +848,34 @@ function filterCat(cat, btn) {
   renderMenuItems(cat);
 }
 
-const CAT_COLORS = {'Asosiy taomlar':'#3498DB','Salatlar':'#2ECC71',"Sho'rvalar":'#E67E22','Ichimliklar':'#00D4FF','Shirinliklar':'#E91E8C','Non mahsulotlari':'#F39C12','Mazza':'#9B59B6','Alkogolsiz':'#1ABC9C'};
-const CAT_ICONS  = {'Asosiy taomlar':'🍽','Salatlar':'🥗',"Sho'rvalar":'🍲','Ichimliklar':'🥤','Shirinliklar':'🍰','Non mahsulotlari':'🍞','Mazza':'🫙','Alkogolsiz':'🧃'};
-
-function foodCardPortrait(item) {
-  const cc = CAT_COLORS[item.category]||'#00D4FF';
-  return `<div class="food-card-p" onclick="showMenuDetail('${item.id}')">
-    <div class="fcp-img">
-      ${item.image
-        ? `<img src="${item.image}" alt="${item.name}" loading="lazy" onerror="this.style.display='none'">`
-        : `<div style="font-size:2.5rem;opacity:0.2">🍽</div>`}
-      ${item.price?`<span class="fcp-price">${formatPrice(item.price)}</span>`:''}
-    </div>
-    <div class="fcp-body">
-      <div class="fcp-name">${item.name}</div>
-      ${item.allergens?.length?`<div class="fcp-allergen">⚠ ${item.allergens.slice(0,2).join(', ')}</div>`:''}
-    </div>
-  </div>`;
-}
-
 function renderMenuItems(cat) {
+  const items = cat==='all' ? menuData : menuData.filter(m=>m.category===cat);
   const grid = document.getElementById('menu-items');
-  if (cat === 'all') {
-    // Safia uslubi: har kategoriya = alohida bo'lim + gorizontal scroll
-    const cats = [...new Set(menuData.map(m=>m.category))];
-    if (!cats.length) {
-      grid.innerHTML = `<div class="empty-state"><div class="empty-icon">🍽</div><h3>Menyu bo'sh</h3></div>`;
-      return;
-    }
-    grid.innerHTML = cats.map(c => {
-      const items = menuData.filter(m=>m.category===c);
-      const cc = CAT_COLORS[c]||'#00D4FF';
-      const ic = CAT_ICONS[c]||'🍴';
-      return `<div class="menu-section" id="msec-${CSS.escape(c)}">
-        <div class="menu-section-header">
-          <div class="menu-section-icon" style="background:${cc}18;border:1px solid ${cc}30">${ic}</div>
-          <div class="menu-section-title">${c}</div>
-          <span class="menu-section-count">${items.length} ta</span>
-        </div>
-        <div class="menu-hscroll">${items.map(foodCardPortrait).join('')}</div>
-      </div>`;
-    }).join('');
-  } else {
-    // Filterlangan: grid ko'rinish
-    const items = menuData.filter(m=>m.category===cat);
-    if (!items.length) {
-      grid.innerHTML = `<div class="empty-state"><div class="empty-icon"><i data-lucide="utensils"></i></div><h3>Taom topilmadi</h3></div>`;
-      renderIcons(); return;
-    }
-    grid.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px">
-      ${items.map(foodCardPortrait).join('')}
-    </div>`;
+  if (!items.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div class="empty-icon"><i data-lucide="utensils"></i></div><h3>Taom topilmadi</h3></div>`;
+    renderIcons(); return;
   }
-}
-
-function closeFoodDetail() {
-  document.getElementById('food-detail-sheet').classList.remove('show');
-}
-
-function showMenuDetail(id) {
-  const item = menuData.find(m=>m.id===id);
-  if (!item) return;
-
-  // Hero rasm
-  const imgEl   = document.getElementById('fds-img');
-  const noImgEl = document.getElementById('fds-no-img');
-  if (item.image) {
-    imgEl.src = item.image; imgEl.style.display = 'block';
-    noImgEl.style.display = 'none';
-  } else {
-    imgEl.style.display = 'none'; noImgEl.style.display = 'flex';
-  }
-
-  // Hero overlay rang
-  const cc = CAT_COLORS[item.category]||'#00D4FF';
-  document.getElementById('fds-cat').textContent   = item.category;
-  document.getElementById('fds-cat').style.borderColor = cc+'55';
-  document.getElementById('fds-name').textContent  = item.name;
-  document.getElementById('fds-price').textContent = item.price ? formatPrice(item.price) : '';
-
-  // Tavsif
-  const dw = document.getElementById('fds-desc-wrap');
-  if (item.description) { dw.style.display='block'; document.getElementById('fds-desc').textContent = item.description; }
-  else dw.style.display='none';
-
-  // Tarkib
-  const iw = document.getElementById('fds-ing-wrap');
-  if (item.ingredients?.length) {
-    iw.style.display='block';
-    document.getElementById('fds-ing').innerHTML = item.ingredients.map(i=>`<span class="fds-chip">${i}</span>`).join('');
-  } else iw.style.display='none';
-
-  // Allergenlar
-  const aw = document.getElementById('fds-alg-wrap');
-  if (item.allergens?.length) {
-    aw.style.display='block';
-    document.getElementById('fds-alg').innerHTML = item.allergens.map(a=>`<span class="fds-chip fds-chip-warn">⚠ ${a}</span>`).join('');
-  } else aw.style.display='none';
-
-  // Tavsiya
-  const sw = document.getElementById('fds-sug-wrap');
-  if (item.servingSuggestion) { sw.style.display='block'; document.getElementById('fds-sug').textContent = item.servingSuggestion; }
-  else sw.style.display='none';
-
-  document.getElementById('food-detail-sheet').classList.add('show');
-  document.getElementById('food-detail-inner').scrollTop = 0;
+  const catColors = {'Asosiy taomlar':'#3498DB','Salatlar':'#2ECC71','Sho\'rvalar':'#E67E22','Ichimliklar':'#00D4FF','Shirinliklar':'#E91E8C','Non mahsulotlari':'#F39C12','Mazza':'#9B59B6','Alkogolsiz':'#1ABC9C'};
+  grid.innerHTML = items.map(item=>{
+    const cc = catColors[item.category]||'#00D4FF';
+    return `
+    <div class="food-card" onclick="showMenuDetail('${item.id}')">
+      <div class="food-card-img">
+        ${item.image
+          ? `<img src="${item.image}" alt="${item.name}" onerror="this.parentElement.innerHTML='<div class=food-no-img><i data-lucide=utensils style=width:40px;height:40px></i></div>'">`
+          : `<div class="food-no-img"><i data-lucide="utensils" style="width:40px;height:40px"></i></div>`}
+        <span class="food-card-cat-chip" style="border-color:${cc}55;background:rgba(0,0,0,0.6)">${item.category}</span>
+        ${item.price?`<span class="food-card-price-tag">${formatPrice(item.price)}</span>`:''}
+      </div>
+      <div class="food-card-body">
+        <div class="food-card-name">${item.name}</div>
+        <div class="food-card-desc">${item.description||'Tavsif berilmagan'}</div>
+        ${item.allergens?.length?`<div class="food-card-tags">${item.allergens.map(a=>`<span class="food-card-tag">⚠ ${a}</span>`).join('')}</div>`:''}
+      </div>
+    </div>`}).join('');
+  renderIcons();
+  init3DTilt();
 }
 
 function showMenuDetail(id) {

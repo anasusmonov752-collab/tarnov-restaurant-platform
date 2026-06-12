@@ -1,4 +1,4 @@
-/* ═══════════════════════════════════════════════════
+﻿/* ═══════════════════════════════════════════════════
    Tarnov Platform — Creative Features
    ═══════════════════════════════════════════════════ */
 
@@ -146,7 +146,7 @@ function launchConfetti() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 
-  const COLORS = ['#C8922A','#FFD700','#00F5FF','#FF4DA6','#7FFF00','#FF6B35','#B8FF4A','#FF1E8E','#FFF700','#00FF88'];
+  const COLORS = ['#00D4FF','#FFD700','#00F5FF','#FF4DA6','#7FFF00','#FF6B35','#B8FF4A','#FF1E8E','#FFF700','#00FF88'];
   const particles = Array.from({ length: 220 }, () => ({
     x: Math.random() * canvas.width,
     y: -30 - Math.random() * 150,
@@ -269,3 +269,4 @@ function renderWaiterAvatar(name) {
   const letter = (name || '?')[0].toUpperCase();
   return `<span class="waiter-avatar-letter" title="${name}">${letter}</span>`;
 }
+

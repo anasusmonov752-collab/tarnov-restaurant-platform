@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="uz">
 <head>
   <meta charset="UTF-8">
@@ -15,7 +15,7 @@
     <i data-lucide="menu"></i>
   </button>
   <div style="display:flex;align-items:center;gap:7px">
-    <div style="width:24px;height:24px;background:linear-gradient(135deg,#C8922A,#A07520);border-radius:6px;display:flex;align-items:center;justify-content:center">
+    <div style="width:24px;height:24px;background:linear-gradient(135deg,#00D4FF,#0099CC);border-radius:6px;display:flex;align-items:center;justify-content:center">
       <i data-lucide="zap" style="width:13px;height:13px;color:#000"></i>
     </div>
     <span style="color:var(--gold);font-weight:800;letter-spacing:0.06em">RestoPro</span>
@@ -67,10 +67,10 @@
     <div id="page-dashboard" class="page">
       <div class="page-header">
         <div>
-          <h1>Dashboard <span class="gold">✦</span></h1>
+          <h1>Dashboard <span class="neon">✦</span></h1>
           <p>Barcha restoranlar umumiy ko'rinishi</p>
         </div>
-        <button class="btn btn-gold" onclick="showPage('restaurants'); openAddModal()">
+        <button class="btn btn-neon" onclick="showPage('restaurants'); openAddModal()">
           <i data-lucide="plus"></i> Restoran qo'shish
         </button>
       </div>
@@ -102,7 +102,7 @@
           <h1>Restoranlar</h1>
           <p>Barcha restoranlarni boshqarish</p>
         </div>
-        <button class="btn btn-gold" onclick="openAddModal()">
+        <button class="btn btn-neon" onclick="openAddModal()">
           <i data-lucide="plus"></i> Yangi restoran
         </button>
       </div>
@@ -157,7 +157,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal()">Bekor qilish</button>
-      <button class="btn btn-gold" id="modal-save-btn" onclick="saveRestaurant()">Saqlash</button>
+      <button class="btn btn-neon" id="modal-save-btn" onclick="saveRestaurant()">Saqlash</button>
     </div>
   </div>
 </div>
@@ -190,7 +190,7 @@ function renderStats() {
     { icon:'circle-check', value:d.active,                            label:'Faol restoranlar', color:'#2ECC71', bg:'rgba(46,204,113,0.1)',  border:'rgba(46,204,113,0.25)' },
     { icon:'chef-hat',     value:d.totalWaiters,                      label:'Jami xodimlar',    color:'#9B59B6', bg:'rgba(155,89,182,0.1)', border:'rgba(155,89,182,0.25)' },
     { icon:'utensils',     value:d.totalMenuItems,                    label:'Menyu taomlar',    color:'#F39C12', bg:'rgba(243,156,18,0.1)',  border:'rgba(243,156,18,0.25)' },
-    { icon:'wallet',       value:`${(d.totalRevenue/1000000).toFixed(1)}M`, label:"Oylik daromad", color:'#C8922A', bg:'rgba(200,146,42,0.1)', border:'rgba(200,146,42,0.25)' },
+    { icon:'wallet',       value:`${(d.totalRevenue/1000000).toFixed(1)}M`, label:"Oylik daromad", color:'#00D4FF', bg:'rgba(0, 212, 255,0.1)', border:'rgba(0, 212, 255,0.25)' },
   ];
   document.getElementById('dash-stats').innerHTML = cards.map(c => `
     <div class="stat-card" style="border-color:${c.border};background:linear-gradient(135deg,${c.bg},var(--card))">
@@ -386,3 +386,5 @@ init();
 </script>
 </body>
 </html>
+
+

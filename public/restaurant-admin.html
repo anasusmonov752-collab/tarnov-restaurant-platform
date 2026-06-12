@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="uz">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RestoPro — Admin Panel</title>
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#C8922A">
+  <meta name="theme-color" content="#00D4FF">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -20,7 +20,7 @@
 <div class="mobile-topbar">
   <button class="hamburger" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
   <div style="display:flex;align-items:center;gap:7px">
-    <div style="width:24px;height:24px;background:linear-gradient(135deg,#C8922A,#A07520);border-radius:6px;display:flex;align-items:center;justify-content:center">
+    <div style="width:24px;height:24px;background:linear-gradient(135deg,#00D4FF,#0099CC);border-radius:6px;display:flex;align-items:center;justify-content:center">
       <i data-lucide="zap" style="width:13px;height:13px;color:#000"></i>
     </div>
     <span style="color:var(--gold);font-weight:800;letter-spacing:0.06em" id="mob-name">RestoPro</span>
@@ -108,7 +108,7 @@
     <div id="page-dashboard" class="page">
       <div class="page-header">
         <div>
-          <h1 style="display:flex;align-items:center;gap:12px">Dashboard <span class="gold">✦</span>
+          <h1 style="display:flex;align-items:center;gap:12px">Dashboard <span class="neon">✦</span>
             <span class="live-badge" id="live-badge" style="display:none">
               <span class="live-dot"></span>LIVE
             </span>
@@ -148,7 +148,7 @@
     <div id="page-menu" class="page" style="display:none">
       <div class="page-header">
         <div><h1>Menyu boshqaruvi</h1><p>Taomlarni qo'shish, tahrirlash va o'chirish</p></div>
-        <button class="btn btn-gold" onclick="openMenuModal()">
+        <button class="btn btn-neon" onclick="openMenuModal()">
           <i data-lucide="plus"></i> Taom qo'shish
         </button>
       </div>
@@ -178,7 +178,7 @@
             <i data-lucide="folder-open"></i> CSV yuklash
           </button>
           <input type="file" id="excel-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="importFromExcel(this)">
-          <button class="btn btn-gold" onclick="openWaiterModal()">
+          <button class="btn btn-neon" onclick="openWaiterModal()">
             <i data-lucide="plus"></i> Ofitsiant qo'shish
           </button>
         </div>
@@ -194,7 +194,7 @@
             <h3 class="card-title" id="import-title">Import ko'rinishi</h3>
             <div class="flex gap-8">
               <button class="btn btn-ghost btn-sm" onclick="cancelImport()">Bekor qilish</button>
-              <button class="btn btn-gold btn-sm" onclick="confirmImport()">
+              <button class="btn btn-neon btn-sm" onclick="confirmImport()">
                 <i data-lucide="check"></i> Yuklashni tasdiqlash
               </button>
             </div>
@@ -219,7 +219,7 @@
     <div id="page-questions" class="page" style="display:none">
       <div class="page-header">
         <div><h1>Test savollari</h1><p>Test uchun savollar bazasini boshqarish</p></div>
-        <button class="btn btn-gold" onclick="openQuestionModal()">
+        <button class="btn btn-neon" onclick="openQuestionModal()">
           <i data-lucide="plus"></i> Savol qo'shish
         </button>
       </div>
@@ -278,7 +278,7 @@
     <div id="page-announcements" class="page" style="display:none">
       <div class="page-header">
         <div><h1>E'lonlar</h1><p>Ofitsiantlarga xabar yuborish</p></div>
-        <button class="btn btn-gold" onclick="openAnnModal()">
+        <button class="btn btn-neon" onclick="openAnnModal()">
           <i data-lucide="send"></i> E'lon yuborish
         </button>
       </div>
@@ -343,7 +343,7 @@
         </div>
 
         <!-- Izoh -->
-        <div class="card mt-16" style="background:rgba(200,146,42,0.04);border-color:rgba(200,146,42,0.15)">
+        <div class="card mt-16" style="background:rgba(0, 212, 255,0.04);border-color:rgba(0, 212, 255,0.15)">
           <div class="card-body" style="font-size:0.82rem;color:var(--text3);line-height:1.8">
             <strong style="color:var(--text2)">KPI hisoblash usuli:</strong> Joriy 10 kunlik davrdagi test natijasi asosida (1 davr = 1 test = 1 oylik hisob).<br>
             Davrlar: <strong style="color:var(--text2)">1–10 kun</strong> · <strong style="color:var(--text2)">11–20 kun</strong> · <strong style="color:var(--text2)">21–oy oxiri</strong> — oyiga 3 ta oylik hisob.<br>
@@ -366,10 +366,10 @@
             <div style="display:flex;align-items:center;gap:8px;font-size:0.75rem;color:var(--text3)">
               kam <span style="display:inline-flex;gap:2px">
                 <span style="width:11px;height:11px;border-radius:2px;background:var(--border);display:inline-block"></span>
-                <span style="width:11px;height:11px;border-radius:2px;background:rgba(200,146,42,0.25);display:inline-block"></span>
-                <span style="width:11px;height:11px;border-radius:2px;background:rgba(200,146,42,0.55);display:inline-block"></span>
-                <span style="width:11px;height:11px;border-radius:2px;background:rgba(200,146,42,0.8);display:inline-block"></span>
-                <span style="width:11px;height:11px;border-radius:2px;background:#C8922A;display:inline-block"></span>
+                <span style="width:11px;height:11px;border-radius:2px;background:rgba(0, 212, 255,0.25);display:inline-block"></span>
+                <span style="width:11px;height:11px;border-radius:2px;background:rgba(0, 212, 255,0.55);display:inline-block"></span>
+                <span style="width:11px;height:11px;border-radius:2px;background:rgba(0, 212, 255,0.8);display:inline-block"></span>
+                <span style="width:11px;height:11px;border-radius:2px;background:#00D4FF;display:inline-block"></span>
               </span> ko'p
             </div>
           </div>
@@ -399,7 +399,7 @@
           <h1><i data-lucide="graduation-cap" style="width:28px;height:28px;color:#9B59B6;vertical-align:middle"></i> O'quv Modullar</h1>
           <p>Ofitsiantlar uchun strukturali o'quv kurslari</p>
         </div>
-        <button class="btn btn-gold" onclick="openModuleModal()">
+        <button class="btn btn-neon" onclick="openModuleModal()">
           <i data-lucide="plus"></i> Modul qo'shish
         </button>
       </div>
@@ -454,7 +454,7 @@
         </div>
         <div class="modal-footer">
           <button class="btn btn-ghost" onclick="closeModal('module-modal')">Bekor</button>
-          <button class="btn btn-gold" onclick="saveModule()"><i data-lucide="save"></i> Saqlash</button>
+          <button class="btn btn-neon" onclick="saveModule()"><i data-lucide="save"></i> Saqlash</button>
         </div>
       </div>
     </div>
@@ -494,7 +494,7 @@
         </div>
         <div class="modal-footer">
           <button class="btn btn-ghost" onclick="closeModal('lesson-modal')">Bekor</button>
-          <button class="btn btn-gold" onclick="saveLesson()"><i data-lucide="save"></i> Saqlash</button>
+          <button class="btn btn-neon" onclick="saveLesson()"><i data-lucide="save"></i> Saqlash</button>
         </div>
       </div>
     </div>
@@ -515,7 +515,7 @@
         </div>
         <div class="modal-footer">
           <button class="btn btn-ghost" onclick="closeModal('quiz-modal')">Bekor</button>
-          <button class="btn btn-gold" onclick="saveQuiz()"><i data-lucide="save"></i> Saqlash</button>
+          <button class="btn btn-neon" onclick="saveQuiz()"><i data-lucide="save"></i> Saqlash</button>
         </div>
       </div>
     </div>
@@ -535,7 +535,7 @@
     <div id="page-checklist" class="page" style="display:none">
       <div class="page-header">
         <div><h1>Onboarding Checklist</h1><p>Yangi xodimlar uchun vazifalar ro'yxati</p></div>
-        <button class="btn btn-gold" onclick="openChecklistModal()">
+        <button class="btn btn-neon" onclick="openChecklistModal()">
           <i data-lucide="plus"></i> Vazifa qo'shish
         </button>
       </div>
@@ -557,7 +557,7 @@
     <div id="page-adaptation" class="page" style="display:none">
       <div class="page-header">
         <div><h1>Adaptatsiya</h1><p>Yangi xodimlar uchun restoran ma'lumotlari</p></div>
-        <button class="btn btn-gold" id="adapt-save-btn" onclick="saveAdaptation()">
+        <button class="btn btn-neon" id="adapt-save-btn" onclick="saveAdaptation()">
           <i data-lucide="save"></i> Saqlash
         </button>
       </div>
@@ -608,7 +608,7 @@
           <div class="card">
             <div class="card-header">
               <h3 class="card-title"><i data-lucide="map" style="width:15px;height:15px"></i> Onboarding bosqichlari</h3>
-              <button class="btn btn-gold btn-sm" onclick="openStepModal()">
+              <button class="btn btn-neon btn-sm" onclick="openStepModal()">
                 <i data-lucide="plus"></i> Bosqich qo'shish
               </button>
             </div>
@@ -623,7 +623,7 @@
           <div class="card">
             <div class="card-header">
               <h3 class="card-title"><i data-lucide="file-text" style="width:15px;height:15px"></i> Hujjatlar va qoidalar</h3>
-              <button class="btn btn-gold btn-sm" onclick="openDocModal()">
+              <button class="btn btn-neon btn-sm" onclick="openDocModal()">
                 <i data-lucide="plus"></i> Hujjat qo'shish
               </button>
             </div>
@@ -638,7 +638,7 @@
           <div class="card mb-16">
             <div class="card-header">
               <h3 class="card-title">Boshqaruv xodimlari</h3>
-              <button class="btn btn-gold btn-sm" onclick="openMemberModal()">
+              <button class="btn btn-neon btn-sm" onclick="openMemberModal()">
                 <i data-lucide="plus"></i> Qo'shish
               </button>
             </div>
@@ -681,7 +681,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeChecklistModal()">Bekor</button>
-      <button class="btn btn-gold" onclick="saveChecklistItem()">Saqlash</button>
+      <button class="btn btn-neon" onclick="saveChecklistItem()">Saqlash</button>
     </div>
   </div>
 </div>
@@ -716,7 +716,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeMemberModal()">Bekor</button>
-      <button class="btn btn-gold" onclick="saveMember()">Saqlash</button>
+      <button class="btn btn-neon" onclick="saveMember()">Saqlash</button>
     </div>
   </div>
 </div>
@@ -730,7 +730,7 @@
     </div>
     <div class="modal-body">
       <!-- Hisoblash davri -->
-      <div style="background:rgba(200,146,42,0.06);border:1px solid rgba(200,146,42,0.2);border-radius:10px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:16px">
+      <div style="background:rgba(0, 212, 255,0.06);border:1px solid rgba(0, 212, 255,0.2);border-radius:10px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:16px">
         <div>
           <div style="font-weight:700;font-size:0.9rem;margin-bottom:3px">📅 KPI hisoblash davri</div>
           <div style="font-size:0.78rem;color:var(--text3)">Bir davr = bir oylik hisob</div>
@@ -823,7 +823,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('kpi-settings-modal')">Bekor</button>
-      <button class="btn btn-gold" onclick="saveKPISettings()">Saqlash</button>
+      <button class="btn btn-neon" onclick="saveKPISettings()">Saqlash</button>
     </div>
   </div>
 </div>
@@ -858,7 +858,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeDocModal()">Bekor</button>
-      <button class="btn btn-gold" onclick="saveDoc()">Saqlash</button>
+      <button class="btn btn-neon" onclick="saveDoc()">Saqlash</button>
     </div>
   </div>
 </div>
@@ -896,7 +896,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeStepModal()">Bekor</button>
-      <button class="btn btn-gold" onclick="saveStep()">Saqlash</button>
+      <button class="btn btn-neon" onclick="saveStep()">Saqlash</button>
     </div>
   </div>
 </div>
@@ -954,7 +954,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeMenuModal()">Bekor qilish</button>
-      <button class="btn btn-gold" onclick="saveMenuItem()">Saqlash</button>
+      <button class="btn btn-neon" onclick="saveMenuItem()">Saqlash</button>
     </div>
   </div>
 </div>
@@ -979,7 +979,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeWaiterModal()">Bekor qilish</button>
-      <button class="btn btn-gold" onclick="saveWaiter()">Saqlash</button>
+      <button class="btn btn-neon" onclick="saveWaiter()">Saqlash</button>
     </div>
   </div>
 </div>
@@ -1021,7 +1021,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeQuestionModal()">Bekor qilish</button>
-      <button class="btn btn-gold" onclick="saveQuestion()">Saqlash</button>
+      <button class="btn btn-neon" onclick="saveQuestion()">Saqlash</button>
     </div>
   </div>
 </div>
@@ -1045,7 +1045,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeAnnModal()">Bekor qilish</button>
-      <button class="btn btn-gold" onclick="saveAnn()">
+      <button class="btn btn-neon" onclick="saveAnn()">
         <i data-lucide="send" style="width:14px;height:14px"></i> Yuborish
       </button>
     </div>
@@ -1468,7 +1468,7 @@ function addOption() {
 function highlightCorrect(selectedIdx) {
   document.querySelectorAll('[id^="opt-label-"]').forEach((el, i) => {
     el.style.borderColor = i === selectedIdx ? 'var(--gold)' : 'var(--border)';
-    el.style.background = i === selectedIdx ? 'rgba(200,146,42,0.08)' : 'transparent';
+    el.style.background = i === selectedIdx ? 'rgba(0, 212, 255,0.08)' : 'transparent';
   });
 }
 
@@ -1769,7 +1769,7 @@ function cancelImport() { importData = []; document.getElementById('import-previ
 async function confirmImport() {
   const valid = importData.filter(r => !r.error);
   if (!valid.length) { toast('Yuklash mumkin bo\'lgan ofitsiant yo\'q', 'error'); return; }
-  const btn = document.querySelector('#import-preview .btn-gold');
+  const btn = document.querySelector('#import-preview .btn-neon');
   btn.disabled = true; btn.textContent = 'Yuklanmoqda...';
   let success = 0, fail = 0;
   for (const w of valid) {
@@ -1989,11 +1989,11 @@ async function deleteDoc(id) {
 function renderOnboarding(list) {
   const el = document.getElementById('onboarding-list');
   if (!list.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3)">Hali bosqich qo\'shilmagan</div>'; return; }
-  const dayColors = {'1-kun':'#3498DB','3-kun':'#9B59B6','1-hafta':'#C8922A','1-oy':'#2ECC71'};
+  const dayColors = {'1-kun':'#3498DB','3-kun':'#9B59B6','1-hafta':'#00D4FF','1-oy':'#2ECC71'};
   const dayLabels = {'1-kun':'1-kun','3-kun':'3-kun','1-hafta':'1-hafta','1-oy':'1-oy'};
   const sorted = [...list].sort((a,b) => (a.order||0)-(b.order||0));
   el.innerHTML = sorted.map(s => {
-    const c = dayColors[s.day] || '#C8922A';
+    const c = dayColors[s.day] || '#00D4FF';
     const tasks = (s.tasks||[]).filter(Boolean);
     return `<div style="display:flex;align-items:flex-start;gap:14px;padding:13px 16px;border-bottom:1px solid var(--border)">
       <div style="width:36px;height:36px;border-radius:50%;background:${c}18;border:2px solid ${c};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">
@@ -2176,7 +2176,7 @@ function renderModules() {
       <div class="empty-icon"><i data-lucide="graduation-cap"></i></div>
       <h3>Hali modul yo'q</h3>
       <p>Birinchi o'quv modulingizni yarating</p>
-      <button class="btn btn-gold" style="margin-top:16px" onclick="openModuleModal()"><i data-lucide="plus"></i> Modul qo'shish</button>
+      <button class="btn btn-neon" style="margin-top:16px" onclick="openModuleModal()"><i data-lucide="plus"></i> Modul qo'shish</button>
     </div>`;
     renderIcons(); return;
   }
@@ -2362,7 +2362,7 @@ function openQuizModal(moduleId) {
 function renderQuizEditor() {
   const el = document.getElementById('quiz-questions-list');
   el.innerHTML = quizQuestions.map((q,i) => `
-    <div class="card mb-12" style="border:1px solid rgba(200,146,42,0.2)">
+    <div class="card mb-12" style="border:1px solid rgba(0, 212, 255,0.2)">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <span style="font-weight:700;color:var(--gold);font-size:0.85rem">${i+1}-savol</span>
         <button class="btn btn-danger btn-sm" style="padding:4px 8px" onclick="removeQuizQ(${i})"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>
@@ -2693,3 +2693,5 @@ init().then(() => startLiveDashboard());
 </script>
 </body>
 </html>
+
+

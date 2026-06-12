@@ -1,4 +1,4 @@
-// Shared utilities for all pages
+﻿// Shared utilities for all pages
 
 async function api(url, options = {}) {
   const res = await fetch(url, {
@@ -148,7 +148,7 @@ function showInstallBanner(type) {
     position:fixed; bottom:88px; left:12px; right:12px; z-index:9000;
     background:rgba(10,8,3,0.96); backdrop-filter:blur(28px) saturate(180%);
     -webkit-backdrop-filter:blur(28px) saturate(180%);
-    border:1px solid rgba(200,146,42,0.35); border-radius:20px;
+    border:1px solid rgba(0, 212, 255,0.35); border-radius:20px;
     box-shadow:0 -8px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08);
     animation:pwaSlideUp 0.45s cubic-bezier(0.34,1.2,0.64,1);
     overflow:hidden;
@@ -164,12 +164,12 @@ function showInstallBanner(type) {
         @keyframes pwaSlideUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
         .pwa-arrow { position:absolute; bottom:-10px; left:50%; transform:translateX(-50%);
           width:0; height:0; border-left:10px solid transparent; border-right:10px solid transparent;
-          border-top:10px solid rgba(200,146,42,0.35); }
+          border-top:10px solid rgba(0, 212, 255,0.35); }
       </style>
       <div style="${STYLE}">
         <!-- Header -->
         <div style="display:flex;align-items:center;gap:12px;padding:14px 16px 10px">
-          <img src="/images/icon.svg" style="width:44px;height:44px;border-radius:11px;border:1px solid rgba(200,146,42,0.3);flex-shrink:0">
+          <img src="/images/icon.svg" style="width:44px;height:44px;border-radius:11px;border:1px solid rgba(0, 212, 255,0.3);flex-shrink:0">
           <div style="flex:1">
             <div style="font-weight:700;font-size:0.92rem;color:#fff">Ilovani o'rnating!</div>
             <div style="font-size:0.76rem;color:#AAA;margin-top:1px">Bosh ekranga qo'shing — tezroq kirish</div>
@@ -178,36 +178,36 @@ function showInstallBanner(type) {
         </div>
 
         <!-- Divider -->
-        <div style="height:1px;background:rgba(200,146,42,0.15);margin:0 16px"></div>
+        <div style="height:1px;background:rgba(0, 212, 255,0.15);margin:0 16px"></div>
 
         <!-- Steps -->
         <div style="padding:12px 16px 16px;display:flex;flex-direction:column;gap:10px">
           <!-- Step 1 -->
           <div style="display:flex;align-items:center;gap:12px">
-            <div style="width:32px;height:32px;border-radius:9px;background:rgba(200,146,42,0.12);border:1px solid rgba(200,146,42,0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.1rem">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C8922A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <div style="width:32px;height:32px;border-radius:9px;background:rgba(0, 212, 255,0.12);border:1px solid rgba(0, 212, 255,0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.1rem">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00D4FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
                 <polyline points="16 6 12 2 8 6"/>
                 <line x1="12" y1="2" x2="12" y2="15"/>
               </svg>
             </div>
             <div>
-              <div style="font-size:0.85rem;font-weight:600;color:#fff">Pastdagi <span style="color:#C8922A">Share</span> tugmasini bosing</div>
+              <div style="font-size:0.85rem;font-weight:600;color:#fff">Pastdagi <span style="color:#00D4FF">Share</span> tugmasini bosing</div>
               <div style="font-size:0.73rem;color:#888;margin-top:1px">Safari quyi qismidagi yuklash belgisi</div>
             </div>
           </div>
 
           <!-- Step 2 -->
           <div style="display:flex;align-items:center;gap:12px">
-            <div style="width:32px;height:32px;border-radius:9px;background:rgba(200,146,42,0.12);border:1px solid rgba(200,146,42,0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.1rem">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C8922A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <div style="width:32px;height:32px;border-radius:9px;background:rgba(0, 212, 255,0.12);border:1px solid rgba(0, 212, 255,0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.1rem">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00D4FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="2"/>
                 <line x1="12" y1="8" x2="12" y2="16"/>
                 <line x1="8" y1="12" x2="16" y2="12"/>
               </svg>
             </div>
             <div>
-              <div style="font-size:0.85rem;font-weight:600;color:#fff"><span style="color:#C8922A">"Add to Home Screen"</span> tanlang</div>
+              <div style="font-size:0.85rem;font-weight:600;color:#fff"><span style="color:#00D4FF">"Add to Home Screen"</span> tanlang</div>
               <div style="font-size:0.73rem;color:#888;margin-top:1px">Pastga scroll qilib toping</div>
             </div>
           </div>
@@ -236,13 +236,13 @@ function showInstallBanner(type) {
       <style>@keyframes pwaSlideUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }</style>
       <div style="${STYLE}">
         <div style="padding:16px 18px;display:flex;align-items:center;gap:14px">
-          <img src="/images/icon.svg" style="width:48px;height:48px;border-radius:12px;border:1px solid rgba(200,146,42,0.3);flex-shrink:0">
+          <img src="/images/icon.svg" style="width:48px;height:48px;border-radius:12px;border:1px solid rgba(0, 212, 255,0.3);flex-shrink:0">
           <div style="flex:1">
             <div style="font-weight:700;font-size:0.92rem;color:#fff;margin-bottom:2px">Ilovani o'rnating!</div>
             <div style="font-size:0.78rem;color:#AAA">Tarnov Training — telefonga qo'shing</div>
           </div>
           <div style="display:flex;gap:8px">
-            <button onclick="installPWA()" style="background:linear-gradient(135deg,#E5A93A,#C8922A);color:#000;border:none;border-radius:10px;padding:8px 14px;font-size:0.82rem;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(200,146,42,0.4);white-space:nowrap">O'rnatish</button>
+            <button onclick="installPWA()" style="background:linear-gradient(135deg,#33DDFF,#00D4FF);color:#000;border:none;border-radius:10px;padding:8px 14px;font-size:0.82rem;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(0, 212, 255,0.4);white-space:nowrap">O'rnatish</button>
             <button onclick="dismissInstall()" style="background:rgba(255,255,255,0.07);color:#888;border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:8px 10px;font-size:0.82rem;cursor:pointer">✕</button>
           </div>
         </div>
@@ -268,3 +268,4 @@ function dismissInstall() {
   localStorage.setItem('pwaDismissed', '1');
   document.getElementById('pwa-banner')?.remove();
 }
+

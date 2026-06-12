@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="uz">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RestoPro — Kirish</title>
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#C8922A">
+  <meta name="theme-color" content="#00D4FF">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -36,9 +36,9 @@
       position: absolute;
       inset: 0;
       background:
-        radial-gradient(ellipse at 20% 10%,  rgba(200,146,42,0.18) 0%, transparent 45%),
-        radial-gradient(ellipse at 85% 85%,  rgba(200,146,42,0.09) 0%, transparent 40%),
-        radial-gradient(ellipse at 60% 50%,  rgba(200,146,42,0.04) 0%, transparent 50%);
+        radial-gradient(ellipse at 20% 10%,  rgba(0, 212, 255,0.18) 0%, transparent 45%),
+        radial-gradient(ellipse at 85% 85%,  rgba(0, 212, 255,0.09) 0%, transparent 40%),
+        radial-gradient(ellipse at 60% 50%,  rgba(0, 212, 255,0.04) 0%, transparent 50%);
       pointer-events: none;
     }
     .brand-panel::after {
@@ -63,8 +63,8 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: rgba(200,146,42,0.1);
-      border: 1px solid rgba(200,146,42,0.25);
+      background: rgba(0, 212, 255,0.1);
+      border: 1px solid rgba(0, 212, 255,0.25);
       border-radius: 100px;
       padding: 6px 14px;
       font-size: 0.72rem;
@@ -122,7 +122,7 @@
     }
     .feature-card:hover {
       background: rgba(255,255,255,0.05);
-      border-color: rgba(200,146,42,0.2);
+      border-color: rgba(0, 212, 255,0.2);
       transform: translateY(-2px);
     }
     .feature-icon {
@@ -165,7 +165,7 @@
     .brand-bottom-text i { color: var(--gold); opacity: 0.6; }
     .brand-version {
       font-size: 0.68rem;
-      color: rgba(200,146,42,0.4);
+      color: rgba(0, 212, 255,0.4);
       letter-spacing: 0.06em;
     }
 
@@ -184,7 +184,7 @@
       position: absolute;
       top: 0; bottom: 0; left: 0;
       width: 1px;
-      background: linear-gradient(180deg, transparent, rgba(200,146,42,0.2), transparent);
+      background: linear-gradient(180deg, transparent, rgba(0, 212, 255,0.2), transparent);
     }
     .form-panel-inner {
       width: 100%;
@@ -256,7 +256,7 @@
       background: linear-gradient(135deg, var(--gold-light), var(--gold));
       color: #000;
       font-weight: 700;
-      box-shadow: 0 4px 12px rgba(200,146,42,0.35);
+      box-shadow: 0 4px 12px rgba(0, 212, 255,0.35);
     }
     .login-tab:hover:not(.active) {
       color: var(--text2);
@@ -286,7 +286,7 @@
     .pin-dot.filled {
       background: var(--gold);
       border-color: var(--gold);
-      box-shadow: 0 0 10px rgba(200,146,42,0.45);
+      box-shadow: 0 0 10px rgba(0, 212, 255,0.45);
       transform: scale(1.2);
     }
 
@@ -438,7 +438,7 @@
             <input type="password" class="form-control" id="sa-password"
                    placeholder="••••••••" autocomplete="current-password">
           </div>
-          <button class="btn btn-gold btn-full btn-lg" onclick="login('superadmin')" id="btn-superadmin">
+          <button class="btn btn-neon btn-full btn-lg" onclick="login('superadmin')" id="btn-superadmin">
             <i data-lucide="log-in" style="width:17px;height:17px"></i> Kirish
           </button>
         </div>
@@ -455,7 +455,7 @@
             <input type="password" class="form-control" id="ra-password"
                    placeholder="••••••••" autocomplete="current-password">
           </div>
-          <button class="btn btn-gold btn-full btn-lg" onclick="login('restaurant')" id="btn-restaurant">
+          <button class="btn btn-neon btn-full btn-lg" onclick="login('restaurant')" id="btn-restaurant">
             <i data-lucide="log-in" style="width:17px;height:17px"></i> Kirish
           </button>
         </div>
@@ -481,7 +481,7 @@
                    inputmode="numeric" pattern="\d{4}"
                    oninput="updatePinDots(this.value)">
           </div>
-          <button class="btn btn-gold btn-full btn-lg" onclick="login('waiter')" id="btn-waiter">
+          <button class="btn btn-neon btn-full btn-lg" onclick="login('waiter')" id="btn-waiter">
             <i data-lucide="log-in" style="width:17px;height:17px"></i> Kirish
           </button>
         </div>
@@ -625,3 +625,5 @@
   </script>
 </body>
 </html>
+
+

@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="RestoPro Admin">
   <link rel="apple-touch-icon" href="/images/icon.svg">
-  <link rel="stylesheet" href="/css/style.css?v=4.0">
+  <link rel="stylesheet" href="/css/style.css?v=4.1">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
@@ -200,17 +200,17 @@
             </div>
           </div>
           <div class="table-wrap">
-            <table>
+            <div class="table-responsive"><table>
               <thead><tr><th>#</th><th>Ism</th><th>PIN</th><th>Holat</th></tr></thead>
               <tbody id="import-table"></tbody>
-            </table>
+            </table></div>
           </div>
         </div>
         <div class="table-wrap">
-          <table>
+          <div class="table-responsive"><table>
             <thead><tr><th>#</th><th>Ism</th><th>PIN</th><th>Status</th><th>Qo'shilgan</th><th>Amallar</th></tr></thead>
             <tbody id="waiters-table"></tbody>
-          </table>
+          </table></div>
         </div>
       </div>
     </div>
@@ -324,7 +324,7 @@
             </div>
           </div>
           <div class="table-wrap">
-            <table>
+            <div class="table-responsive"><table>
               <thead>
                 <tr>
                   <th>#</th>
@@ -338,7 +338,7 @@
                 </tr>
               </thead>
               <tbody id="kpi-table-body"></tbody>
-            </table>
+            </table></div>
           </div>
         </div>
 
@@ -384,10 +384,10 @@
           <input type="text" class="form-control" id="res-name-filter" placeholder="Ism bo'yicha qidirish" oninput="filterResults()" style="flex:1;min-width:160px">
         </div>
         <div class="table-wrap">
-          <table>
+          <div class="table-responsive"><table>
             <thead><tr><th>Sana</th><th>Ofitsiant</th><th>Ball</th><th>Oson</th><th>O'rta</th><th>Qiyin</th><th>Sertifikat</th><th>Batafsil</th></tr></thead>
             <tbody id="results-table"></tbody>
-          </table>
+          </table></div>
         </div>
       </div>
     </div>
@@ -2683,7 +2683,7 @@ async function showModuleProgress(moduleId, title) {
     if (!data.length) { el.innerHTML = '<div class="empty-state"><div class="empty-icon"><i data-lucide="bar-chart-2"></i></div><h3>Hali progress yo\'q</h3></div>'; renderIcons(); return; }
     el.innerHTML = `
       <div class="table-wrap">
-        <table><thead><tr><th>Ofitsiant</th><th>Darslar</th><th>Quiz</th><th>Holat</th></tr></thead>
+        <div class="table-responsive"><table><thead><tr><th>Ofitsiant</th><th>Darslar</th><th>Quiz</th><th>Holat</th></tr></thead>
         <tbody>${data.map(p => `
           <tr>
             <td><strong>${p.waiterName}</strong></td>
@@ -2693,7 +2693,7 @@ async function showModuleProgress(moduleId, title) {
               ? '<span class="badge badge-success"><i data-lucide="check-circle" style="width:11px;height:11px"></i> Tugatdi</span>'
               : '<span class="badge badge-warning">Davom etmoqda</span>'}</td>
           </tr>`).join('')}
-        </tbody></table>
+        </tbody></table></div>
       </div>`;
     renderIcons();
   } catch(e) { document.getElementById('mod-progress-body').innerHTML = `<div class="alert alert-danger">${e.message}</div>`; }

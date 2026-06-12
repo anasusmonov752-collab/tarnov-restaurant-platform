@@ -2989,3 +2989,126 @@ input:-webkit-autofill:focus {
   .hero-counters { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .hero-counter-card { padding: 16px 14px; }
 }
+
+/* =========================================================
+   MOBILE RESPONSIVE v4.1 — comprehensive mobile fixes
+   ========================================================= */
+
+/* iOS zoom oldini olish — 16px minimum */
+@media (max-width: 900px) {
+  input, select, textarea { font-size: 16px !important; }
+
+  /* Modal — mobilda to'liq ekran */
+  .modal-overlay { align-items: flex-end; padding: 0; }
+  .modal {
+    width: 100% !important; max-width: 100% !important;
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 92vh; overflow-y: auto;
+  }
+
+  /* Table — gorizontal scroll */
+  .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { min-width: 540px; }
+
+  /* Page header — vertikal stack */
+  .page-header { flex-direction: column; align-items: flex-start !important; gap: 12px !important; }
+  .page-header > div:last-child { width: 100%; }
+  .page-header .btn, .page-header button { flex: 1; justify-content: center; }
+
+  /* Hero counters — 2 ustun */
+  .hero-counters { grid-template-columns: repeat(2, 1fr) !important; gap: 12px !important; }
+
+  /* Adaptatsiya info slide — vertikal */
+  .info-slide > div[style*="grid-template-columns:1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Module card grid */
+  div[style*="minmax(380px,1fr)"] { grid-template-columns: 1fr !important; }
+
+  /* Onboarding timeline padding */
+  #onboarding-list > div { padding: 12px 8px !important; }
+
+  /* KPI table wrapper */
+  #kpi-table-wrap { overflow-x: auto; }
+}
+
+/* Waiter sahifasi — mobil */
+@media (max-width: 900px) {
+  /* Bottom nav ustida content */
+  #w-content { padding-bottom: 80px; }
+  #w-content .waiter-content { padding: 12px; }
+
+  /* Waiter nav — kichikroq */
+  .waiter-nav-item { font-size: 0.65rem; padding: 6px 4px 4px; }
+  .waiter-nav-item .nav-icon { font-size: 1.3rem; }
+
+  /* Safia filter bar */
+  .safia-filter-bar { border-radius: 12px; padding: 4px; gap: 2px; }
+  .safia-pill { padding: 7px 12px; font-size: 0.78rem; }
+
+  /* Food cards — 2 ustun */
+  #menu-items { grid-template-columns: repeat(2, 1fr) !important; gap: 12px !important; }
+  .food-card-img { height: 160px !important; }
+  .food-card-body { padding: 10px 12px 12px; }
+  .food-card-name { font-size: 0.88rem; }
+
+  /* Welcome wizard */
+  .welcome-wizard { padding: 20px 16px; }
+  .wizard-step-label { font-size: 0.6rem; }
+
+  /* Stats grid waiter */
+  .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Test sahifasi */
+  .timer-circle { width: 44px; height: 44px; font-size: 1.1rem; }
+  .question-card { padding: 16px; }
+  .options-list .option { padding: 12px 14px; font-size: 0.88rem; }
+}
+
+/* Kichik telefon ≤ 420px */
+@media (max-width: 420px) {
+  #menu-items { grid-template-columns: 1fr !important; }
+  .food-card-img { height: 200px !important; }
+
+  .hero-counters { grid-template-columns: repeat(2, 1fr) !important; }
+  .hero-counter-num { font-size: 1.6rem !important; }
+
+  .safia-pill { padding: 6px 10px; font-size: 0.75rem; }
+  .safia-pill .pill-count { display: none; }
+
+  /* Modal to'liq height */
+  .modal { max-height: 96vh; }
+
+  /* Slide nav dots */
+  #info-slide-0, #info-slide-1, #info-slide-2 {
+    /* stack vertically on small phones */
+  }
+
+  /* Tugmalar kichik */
+  .btn { padding: 9px 14px; font-size: 0.82rem; }
+  .btn-lg { padding: 12px 20px; font-size: 0.92rem; }
+}
+
+/* Admin sidebar + topbar touch fix */
+@media (max-width: 900px) {
+  .nav-item { min-height: 44px; }
+  .sidebar { width: 260px !important; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+
+  /* Dashboard grid-2 stack */
+  .grid-2 { grid-template-columns: 1fr !important; }
+
+  /* Menu admin grid */
+  #menu-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important; }
+
+  /* Flex wrap for header buttons */
+  .flex.gap-8 { flex-wrap: wrap; }
+  .flex.gap-12 { flex-wrap: wrap; }
+}
+
+/* Waiter nav icon labels — hidden on very small */
+@media (max-width: 340px) {
+  .waiter-nav-item span:not(.nav-icon) { display: none; }
+  .waiter-nav-item { padding: 8px 6px; }
+}

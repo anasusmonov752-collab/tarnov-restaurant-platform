@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="uz">
 <head>
   <meta charset="UTF-8">
@@ -10,10 +10,25 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="RestoPro">
-  <link rel="apple-touch-icon" href="/images/icon.svg">
-  <link rel="stylesheet" href="/css/style.css?v=2.0">
+  <link rel="stylesheet" href="/css/style.css?v=3.0">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <style>
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(24px) scale(0.97); } to { opacity:1; transform:none; } }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    @keyframes pulse { 0%,100%{transform:scale(1);opacity:0.7} 50%{transform:scale(1.15);opacity:1} }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: #040810;
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      color: #E8F4FF;
+      overflow-x: hidden;
+    }
+
     /* ── Split layout ── */
     .split-page {
       display: grid;
@@ -21,31 +36,32 @@
       min-height: 100vh;
     }
 
-    /* ── LEFT: Platform brand panel ── */
+    /* ══════════════════════════════
+       LEFT: Brand panel
+    ══════════════════════════════ */
     .brand-panel {
       position: relative;
-      background: #060606;
+      background: #040810;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       padding: 52px 48px;
-      gap: 0;
     }
     .brand-panel::before {
       content: '';
       position: absolute;
       inset: 0;
       background:
-        radial-gradient(ellipse at 20% 10%,  rgba(0, 212, 255,0.18) 0%, transparent 45%),
-        radial-gradient(ellipse at 85% 85%,  rgba(0, 212, 255,0.09) 0%, transparent 40%),
-        radial-gradient(ellipse at 60% 50%,  rgba(0, 212, 255,0.04) 0%, transparent 50%);
+        radial-gradient(ellipse at 15% 10%,  rgba(0,212,255,0.20) 0%, transparent 48%),
+        radial-gradient(ellipse at 88% 82%,  rgba(0,150,220,0.12) 0%, transparent 42%),
+        radial-gradient(ellipse at 55% 48%,  rgba(0,180,255,0.05) 0%, transparent 55%);
       pointer-events: none;
     }
     .brand-panel::after {
       content: '';
       position: absolute;
       inset: 0;
-      background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23C8922A' fill-opacity='0.025'%3E%3Ccircle cx='20' cy='20' r='1'/%3E%3C/g%3E%3C/svg%3E");
+      background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='20' cy='20' r='1' fill='%2300D4FF' fill-opacity='0.04'/%3E%3C/svg%3E");
       pointer-events: none;
     }
     #brand-canvas { position:absolute; inset:0; pointer-events:none; z-index:0; }
@@ -63,13 +79,13 @@
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: rgba(0, 212, 255,0.1);
-      border: 1px solid rgba(0, 212, 255,0.25);
+      background: rgba(0,212,255,0.08);
+      border: 1px solid rgba(0,212,255,0.22);
       border-radius: 100px;
       padding: 6px 14px;
       font-size: 0.72rem;
       font-weight: 700;
-      color: var(--gold);
+      color: #00D4FF;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       margin-bottom: 32px;
@@ -78,10 +94,10 @@
     .platform-badge-dot {
       width: 6px; height: 6px;
       border-radius: 50%;
-      background: var(--gold);
+      background: #00D4FF;
+      box-shadow: 0 0 8px rgba(0,212,255,0.8);
       animation: blink 2s ease-in-out infinite;
     }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
     /* Main heading */
     .brand-heading {
@@ -90,7 +106,7 @@
       line-height: 1.15;
       letter-spacing: -0.03em;
       margin-bottom: 18px;
-      background: linear-gradient(135deg, #ffffff 0%, #e8e8e8 40%, var(--gold-light) 70%, var(--gold) 100%);
+      background: linear-gradient(135deg, #ffffff 0%, #cce8ff 45%, #00D4FF 80%, #0099CC 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -98,7 +114,7 @@
 
     .brand-desc {
       font-size: 0.95rem;
-      color: var(--text3);
+      color: #4A6070;
       line-height: 1.7;
       max-width: 380px;
       margin-bottom: 48px;
@@ -111,19 +127,19 @@
       gap: 12px;
       margin-bottom: auto;
     }
-
     .feature-card {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.07);
+      background: rgba(0,212,255,0.03);
+      border: 1px solid rgba(0,212,255,0.08);
       border-radius: 14px;
       padding: 16px;
       transition: all 0.25s;
       cursor: default;
     }
     .feature-card:hover {
-      background: rgba(255,255,255,0.05);
-      border-color: rgba(0, 212, 255,0.2);
+      background: rgba(0,212,255,0.06);
+      border-color: rgba(0,212,255,0.2);
       transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
     }
     .feature-icon {
       width: 36px; height: 36px;
@@ -137,10 +153,11 @@
       font-size: 0.85rem;
       font-weight: 700;
       margin-bottom: 3px;
+      color: #E8F4FF;
     }
     .feature-desc {
       font-size: 0.73rem;
-      color: var(--text3);
+      color: #4A6070;
       line-height: 1.5;
     }
 
@@ -148,7 +165,7 @@
     .brand-bottom {
       margin-top: 40px;
       padding-top: 24px;
-      border-top: 1px solid rgba(255,255,255,0.06);
+      border-top: 1px solid rgba(0,212,255,0.08);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -157,26 +174,27 @@
     }
     .brand-bottom-text {
       font-size: 0.73rem;
-      color: var(--text3);
+      color: #4A6070;
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    .brand-bottom-text i { color: var(--gold); opacity: 0.6; }
+    .brand-bottom-text svg { color: rgba(0,212,255,0.5); }
     .brand-version {
       font-size: 0.68rem;
-      color: rgba(0, 212, 255,0.4);
+      color: rgba(0,212,255,0.35);
       letter-spacing: 0.06em;
     }
 
-    /* ── RIGHT: Form panel ── */
+    /* ══════════════════════════════
+       RIGHT: Form panel
+    ══════════════════════════════ */
     .form-panel {
-      background: #0A0A0A;
+      background: #050A10;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 48px 40px;
-      border-left: 1px solid rgba(255,255,255,0.04);
       position: relative;
     }
     .form-panel::before {
@@ -184,11 +202,12 @@
       position: absolute;
       top: 0; bottom: 0; left: 0;
       width: 1px;
-      background: linear-gradient(180deg, transparent, rgba(0, 212, 255,0.2), transparent);
+      background: linear-gradient(180deg, transparent 0%, rgba(0,212,255,0.18) 30%, rgba(0,212,255,0.18) 70%, transparent 100%);
     }
     .form-panel-inner {
       width: 100%;
       max-width: 390px;
+      animation: fadeUp 0.45s cubic-bezier(0.34,1.56,0.64,1);
     }
 
     /* Form header */
@@ -201,34 +220,39 @@
     }
     .form-header-logo-icon {
       width: 38px; height: 38px;
-      background: linear-gradient(135deg, var(--gold-light), var(--gold));
+      background: linear-gradient(135deg, #00D4FF, #0099CC);
       border-radius: 10px;
       display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 16px rgba(0,212,255,0.4);
+      flex-shrink: 0;
     }
+    .form-header-logo-icon svg { color: #000 !important; stroke: #000 !important; }
     .form-header-logo-name {
       font-size: 1rem;
       font-weight: 800;
       letter-spacing: -0.01em;
+      color: #E8F4FF;
     }
     .form-header-logo-sub {
       font-size: 0.68rem;
-      color: var(--text3);
+      color: #4A6070;
       margin-top: 1px;
     }
     .form-title {
-      font-size: 1.3rem;
+      font-size: 1.35rem;
       font-weight: 700;
       letter-spacing: -0.02em;
       margin-bottom: 4px;
+      color: #E8F4FF;
     }
-    .form-sub { font-size: 0.83rem; color: var(--text3); }
+    .form-sub { font-size: 0.83rem; color: #4A6070; }
 
     /* Login tabs */
     .login-tabs {
       display: flex;
       gap: 4px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.07);
+      background: rgba(0,212,255,0.04);
+      border: 1px solid rgba(0,212,255,0.1);
       border-radius: 14px;
       padding: 5px;
       margin-bottom: 28px;
@@ -238,7 +262,7 @@
       padding: 9px 8px;
       border: none;
       background: transparent;
-      color: var(--text3);
+      color: #4A6070;
       border-radius: 10px;
       cursor: pointer;
       font-size: 0.78rem;
@@ -251,158 +275,257 @@
       gap: 5px;
       font-family: inherit;
     }
-    .login-tab i { width: 13px; height: 13px; }
+    .login-tab svg { width: 13px; height: 13px; }
     .login-tab.active {
-      background: linear-gradient(135deg, var(--gold-light), var(--gold));
+      background: linear-gradient(135deg, #00EEFF, #00D4FF, #0099CC);
       color: #000;
       font-weight: 700;
-      box-shadow: 0 4px 12px rgba(0, 212, 255,0.35);
+      box-shadow: 0 4px 14px rgba(0,212,255,0.4), 0 0 0 1px rgba(0,212,255,0.2);
     }
     .login-tab:hover:not(.active) {
-      color: var(--text2);
-      background: rgba(255,255,255,0.04);
+      color: #8BAABF;
+      background: rgba(0,212,255,0.06);
     }
     .tab-panel { display: none; }
     .tab-panel.active { display: block; animation: fadeIn 0.2s ease; }
-    @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
-    @keyframes fadeUp { from{opacity:0;transform:translateY(20px) scale(0.98)} to{opacity:1;transform:none} }
 
-    .form-panel-inner { animation: fadeUp 0.45s cubic-bezier(0.34,1.56,0.64,1); }
+    /* Form controls override for form panel */
+    .form-panel .form-control {
+      background: rgba(0,212,255,0.04);
+      border: 1px solid rgba(0,212,255,0.12);
+      border-radius: 12px;
+      color: #E8F4FF;
+      padding: 13px 16px;
+      font-size: 0.95rem;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+      outline: none;
+      font-family: inherit;
+      width: 100%;
+    }
+    .form-panel .form-control:focus {
+      border-color: #00D4FF;
+      background: rgba(0,212,255,0.07);
+      box-shadow: 0 0 0 3px rgba(0,212,255,0.12), 0 0 16px rgba(0,212,255,0.08);
+    }
+    .form-panel .form-control::placeholder { color: #2a3d4f; }
+
+    /* Password input wrapper */
+    .pw-wrap { position: relative; }
+    .pw-wrap .form-control { padding-right: 46px; }
+    .pw-toggle {
+      position: absolute;
+      right: 12px; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none; cursor: pointer;
+      color: #4A6070; padding: 4px;
+      display: flex; align-items: center;
+      transition: color 0.15s;
+    }
+    .pw-toggle:hover { color: #00D4FF; }
+    .pw-toggle svg { width: 16px; height: 16px; }
+
+    /* Select override */
+    .form-panel select.form-control {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2300D4FF' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 38px;
+    }
+    .form-panel select.form-control option { background: #0a1520; color: #E8F4FF; }
+
+    /* Label */
+    .form-panel .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      color: #8BAABF;
+      margin-bottom: 6px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    /* Submit button */
+    .btn-login {
+      width: 100%;
+      padding: 14px 24px;
+      background: linear-gradient(135deg, #00EEFF 0%, #00D4FF 50%, #0099CC 100%);
+      border: none;
+      border-radius: 12px;
+      color: #000;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+      font-family: inherit;
+      letter-spacing: 0.01em;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,212,255,0.35);
+      margin-top: 4px;
+    }
+    .btn-login::after {
+      content: '';
+      position: absolute;
+      top: -50%; left: -60%;
+      width: 50%; height: 200%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      transform: skewX(-20deg);
+      transition: left 0.5s;
+    }
+    .btn-login:hover::after { left: 120%; }
+    .btn-login:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(0,212,255,0.5); }
+    .btn-login:active { transform: translateY(0); }
+    .btn-login:disabled {
+      background: #1A2535;
+      color: #4A6070;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+    .btn-login svg { width: 17px; height: 17px; }
 
     /* PIN dots */
     .pin-dots {
       display: flex;
       gap: 10px;
       justify-content: center;
-      margin: 6px 0 18px;
+      margin: 6px 0 16px;
     }
     .pin-dot {
       width: 12px; height: 12px;
       border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.12);
+      border: 2px solid rgba(0,212,255,0.2);
       background: transparent;
       transition: all 0.15s cubic-bezier(0.34,1.56,0.64,1);
     }
     .pin-dot.filled {
-      background: var(--gold);
-      border-color: var(--gold);
-      box-shadow: 0 0 10px rgba(0, 212, 255,0.45);
-      transform: scale(1.2);
+      background: #00D4FF;
+      border-color: #00D4FF;
+      box-shadow: 0 0 10px rgba(0,212,255,0.6), 0 0 20px rgba(0,212,255,0.3);
+      transform: scale(1.25);
     }
 
-    /* Neon toggle */
-    .neon-toggle-wrap {
-      position: fixed; top: 16px; right: 16px; z-index: 100;
-      display: flex; align-items: center; gap: 8px;
-      background: rgba(0,0,0,0.55); backdrop-filter: blur(16px);
-      border: 1px solid rgba(255,255,255,0.07); border-radius: 20px;
-      padding: 6px 12px; font-size: 0.7rem; color: var(--text3);
+    /* Error alert */
+    .login-error {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,59,92,0.08);
+      border: 1px solid rgba(255,59,92,0.25);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-top: 14px;
+      font-size: 0.85rem;
+      color: #FF3B5C;
+    }
+    .login-error svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    /* Footer text */
+    .form-footer {
+      text-align: center;
+      margin-top: 28px;
+      font-size: 0.68rem;
+      color: rgba(0,212,255,0.2);
+      letter-spacing: 0.04em;
     }
 
     /* Mobile */
     @media (max-width: 820px) {
       .split-page { grid-template-columns: 1fr; }
-      .brand-panel { padding: 32px 24px 24px; min-height: auto; }
-      .brand-heading { font-size: 1.7rem; }
+      .brand-panel { padding: 28px 24px 20px; min-height: auto; }
+      .brand-heading { font-size: 1.6rem; }
       .brand-desc { display:none; }
       .feature-grid { grid-template-columns: repeat(2,1fr); gap: 8px; }
       .feature-card { padding: 12px; }
       .feature-desc { display:none; }
       .brand-bottom { display:none; }
-      .form-panel { padding: 32px 24px; border-left:none; border-top:1px solid rgba(255,255,255,0.05); }
+      .form-panel { padding: 32px 24px; }
+      .form-panel::before { display:none; }
     }
     @media (max-width: 420px) {
-      .feature-grid { grid-template-columns: repeat(2,1fr); }
       .form-panel { padding: 24px 16px; }
     }
   </style>
 </head>
 <body>
-  <canvas id="brand-canvas"></canvas>
-  <div class="neon-toggle-wrap">
-    <span>⚡ Neon</span>
-    <button class="neon-toggle" id="neon-btn" onclick="toggleNeon()"></button>
-  </div>
   <div id="toast-container"></div>
 
   <div class="split-page">
 
-    <!-- LEFT: Platform brand -->
+    <!-- ══ LEFT: Platform brand ══ -->
     <div class="brand-panel">
+      <canvas id="brand-canvas"></canvas>
       <div class="brand-inner">
 
-        <!-- Badge -->
         <div class="platform-badge">
           <div class="platform-badge-dot"></div>
           Restaurant HR Platform
         </div>
 
-        <!-- Heading -->
         <h1 class="brand-heading">
           Xodimlar uchun<br>aqlli o'quv<br>tizimi
         </h1>
 
-        <!-- Desc -->
         <p class="brand-desc">
           Restoran xodimlarini o'qitish, bilimlarini baholash va KPI ni kuzatish — barchasi bitta qulay platformada.
         </p>
 
-        <!-- Features -->
         <div class="feature-grid">
           <div class="feature-card">
-            <div class="feature-icon" style="background:rgba(52,152,219,0.15)">
-              <i data-lucide="file-text" style="width:18px;height:18px;color:#3498DB"></i>
+            <div class="feature-icon" style="background:rgba(0,212,255,0.12)">
+              <i data-lucide="file-text" style="width:18px;height:18px;color:#00D4FF"></i>
             </div>
             <div class="feature-name">Test tizimi</div>
             <div class="feature-desc">Menyu bo'yicha bilimlarni avtomatik baholash</div>
           </div>
-
           <div class="feature-card">
-            <div class="feature-icon" style="background:rgba(243,156,18,0.15)">
-              <i data-lucide="bar-chart-2" style="width:18px;height:18px;color:#F39C12"></i>
+            <div class="feature-icon" style="background:rgba(255,184,0,0.12)">
+              <i data-lucide="bar-chart-2" style="width:18px;height:18px;color:#FFB800"></i>
             </div>
             <div class="feature-name">KPI hisoboti</div>
             <div class="feature-desc">Har xodim uchun oylik ish haqi hisobi</div>
           </div>
-
           <div class="feature-card">
-            <div class="feature-icon" style="background:rgba(155,89,182,0.15)">
+            <div class="feature-icon" style="background:rgba(155,89,182,0.12)">
               <i data-lucide="graduation-cap" style="width:18px;height:18px;color:#9B59B6"></i>
             </div>
             <div class="feature-name">O'quv modullar</div>
             <div class="feature-desc">Darslar, videolar va quiz testlari</div>
           </div>
-
           <div class="feature-card">
-            <div class="feature-icon" style="background:rgba(46,204,113,0.15)">
-              <i data-lucide="users" style="width:18px;height:18px;color:#2ECC71"></i>
+            <div class="feature-icon" style="background:rgba(0,255,136,0.1)">
+              <i data-lucide="users" style="width:18px;height:18px;color:#00FF88"></i>
             </div>
             <div class="feature-name">Adaptatsiya</div>
             <div class="feature-desc">Yangi xodimlarni onboarding qilish</div>
           </div>
         </div>
 
-        <!-- Bottom -->
         <div class="brand-bottom">
           <div class="brand-bottom-text">
-            <i data-lucide="shield-check" style="width:14px;height:14px"></i>
+            <i data-lucide="shield-check" style="width:14px;height:14px;color:rgba(0,212,255,0.5)"></i>
             Xavfsiz · Tez · Ishonchli
           </div>
-          <div class="brand-version">v2.0 · 2026</div>
+          <div class="brand-version">v3.0 · 2026</div>
         </div>
 
       </div>
     </div>
 
-    <!-- RIGHT: Login form -->
+    <!-- ══ RIGHT: Login form ══ -->
     <div class="form-panel">
       <div class="form-panel-inner">
 
-        <!-- Header -->
         <div class="form-header">
           <div class="form-header-logo">
             <div class="form-header-logo-icon">
-              <i data-lucide="utensils" style="width:20px;height:20px;color:#000"></i>
+              <i data-lucide="zap" style="width:20px;height:20px;color:#000"></i>
             </div>
             <div>
               <div class="form-header-logo-name">RestoPro</div>
@@ -413,15 +536,14 @@
           <div class="form-sub">Platformaga kirish uchun rolni tanlang</div>
         </div>
 
-        <!-- Tabs -->
         <div class="login-tabs">
-          <button class="login-tab active" onclick="switchTab('superadmin',event)">
-            <i data-lucide="zap"></i> Super
+          <button class="login-tab active" onclick="switchTab('superadmin',this)">
+            <i data-lucide="shield"></i> Super
           </button>
-          <button class="login-tab" onclick="switchTab('restaurant',event)">
+          <button class="login-tab" onclick="switchTab('restaurant',this)">
             <i data-lucide="store"></i> Admin
           </button>
-          <button class="login-tab" onclick="switchTab('waiter',event)">
+          <button class="login-tab" onclick="switchTab('waiter',this)">
             <i data-lucide="chef-hat"></i> Ofitsiant
           </button>
         </div>
@@ -435,11 +557,16 @@
           </div>
           <div class="form-group">
             <label>Parol</label>
-            <input type="password" class="form-control" id="sa-password"
-                   placeholder="••••••••" autocomplete="current-password">
+            <div class="pw-wrap">
+              <input type="password" class="form-control" id="sa-password"
+                     placeholder="••••••••" autocomplete="current-password">
+              <button type="button" class="pw-toggle" onclick="togglePw('sa-password',this)" tabindex="-1">
+                <i data-lucide="eye"></i>
+              </button>
+            </div>
           </div>
-          <button class="btn btn-neon btn-full btn-lg" onclick="login('superadmin')" id="btn-superadmin">
-            <i data-lucide="log-in" style="width:17px;height:17px"></i> Kirish
+          <button class="btn-login" onclick="login('superadmin')" id="btn-superadmin">
+            <i data-lucide="log-in"></i> Kirish
           </button>
         </div>
 
@@ -452,11 +579,16 @@
           </div>
           <div class="form-group">
             <label>Parol</label>
-            <input type="password" class="form-control" id="ra-password"
-                   placeholder="••••••••" autocomplete="current-password">
+            <div class="pw-wrap">
+              <input type="password" class="form-control" id="ra-password"
+                     placeholder="••••••••" autocomplete="current-password">
+              <button type="button" class="pw-toggle" onclick="togglePw('ra-password',this)" tabindex="-1">
+                <i data-lucide="eye"></i>
+              </button>
+            </div>
           </div>
-          <button class="btn btn-neon btn-full btn-lg" onclick="login('restaurant')" id="btn-restaurant">
-            <i data-lucide="log-in" style="width:17px;height:17px"></i> Kirish
+          <button class="btn-login" onclick="login('restaurant')" id="btn-restaurant">
+            <i data-lucide="log-in"></i> Kirish
           </button>
         </div>
 
@@ -479,39 +611,53 @@
             <input type="password" class="form-control pin-input" id="w-pin"
                    placeholder="• • • •" maxlength="4"
                    inputmode="numeric" pattern="\d{4}"
+                   autocomplete="one-time-code"
                    oninput="updatePinDots(this.value)">
           </div>
-          <button class="btn btn-neon btn-full btn-lg" onclick="login('waiter')" id="btn-waiter">
-            <i data-lucide="log-in" style="width:17px;height:17px"></i> Kirish
+          <button class="btn-login" onclick="login('waiter')" id="btn-waiter">
+            <i data-lucide="log-in"></i> Kirish
           </button>
         </div>
 
-        <div id="login-error" class="alert alert-danger" style="display:none;margin-top:14px"></div>
+        <div class="login-error" id="login-error">
+          <i data-lucide="alert-circle"></i>
+          <span id="login-error-text"></span>
+        </div>
 
-        <p style="text-align:center;margin-top:24px;font-size:0.7rem;color:rgba(255,255,255,0.12)">
-          © 2026 RestoPro · Barcha huquqlar himoyalangan
-        </p>
+        <p class="form-footer">© 2026 RestoPro · Barcha huquqlar himoyalangan</p>
+
       </div>
     </div>
 
   </div>
 
-  <script src="/js/utils.js?v=2.0"></script>
+  <script src="/js/utils.js?v=3.0"></script>
   <script>
     lucide.createIcons();
 
-    function switchTab(type, e) {
+    function switchTab(type, el) {
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
-      document.getElementById(`panel-${type}`).classList.add('active');
-      e.currentTarget.classList.add('active');
+      document.getElementById('panel-' + type).classList.add('active');
+      el.classList.add('active');
       document.getElementById('login-error').style.display = 'none';
       if (type === 'waiter') loadRestaurants();
     }
 
+    function togglePw(inputId, btn) {
+      const inp = document.getElementById(inputId);
+      const show = inp.type === 'password';
+      inp.type = show ? 'text' : 'password';
+      btn.innerHTML = show
+        ? '<i data-lucide="eye-off"></i>'
+        : '<i data-lucide="eye"></i>';
+      lucide.createIcons();
+      inp.focus();
+    }
+
     function updatePinDots(val) {
       for (let i = 0; i < 4; i++)
-        document.getElementById(`pd-${i}`).classList.toggle('filled', i < val.length);
+        document.getElementById('pd-' + i).classList.toggle('filled', i < val.length);
     }
 
     async function loadRestaurants() {
@@ -522,68 +668,74 @@
         list.forEach(r => {
           const opt = document.createElement('option');
           opt.value = r.id;
-          opt.textContent = r.name + (r.location ? ` — ${r.location}` : '');
+          opt.textContent = r.name + (r.location ? ' — ' + r.location : '');
           sel.appendChild(opt);
         });
       } catch {}
     }
 
+    function setLoginLoading(btn, loading) {
+      if (loading) {
+        btn.disabled = true;
+        btn.innerHTML = '<svg style="width:17px;height:17px;animation:spin 0.8s linear infinite" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> Kirish...';
+      } else {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="log-in"></i> Kirish';
+        lucide.createIcons();
+      }
+    }
+
+    function showError(msg) {
+      const el = document.getElementById('login-error');
+      document.getElementById('login-error-text').textContent = msg;
+      el.style.display = 'flex';
+    }
+
     async function login(type) {
-      const errEl = document.getElementById('login-error');
-      const btn   = document.getElementById(`btn-${type}`);
-      errEl.style.display = 'none';
+      const btn = document.getElementById('btn-' + type);
+      document.getElementById('login-error').style.display = 'none';
 
       let body = { loginType: type };
       if (type === 'superadmin') {
         body.email = document.getElementById('sa-email').value.trim();
         body.password = document.getElementById('sa-password').value;
+        if (!body.email || !body.password) return showError('Email va parol kiritish shart');
       } else if (type === 'restaurant') {
         body.email = document.getElementById('ra-email').value.trim();
         body.password = document.getElementById('ra-password').value;
+        if (!body.email || !body.password) return showError('Email va parol kiritish shart');
       } else {
         body.restaurantId = document.getElementById('w-restaurant').value;
         body.pin = document.getElementById('w-pin').value;
+        if (!body.restaurantId) return showError('Restoran tanlang');
+        if (!body.pin || body.pin.length !== 4) return showError('4 xonali PIN kiriting');
       }
 
-      btn.disabled = true;
-      btn.innerHTML = '<svg style="width:17px;height:17px;animation:spin 0.8s linear infinite" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> Kirish...';
-
+      setLoginLoading(btn, true);
       try {
-        const res = await api('/api/auth/login', { method:'POST', body:JSON.stringify(body) });
+        const res = await api('/api/auth/login', { method: 'POST', body: JSON.stringify(body) });
         window.location.href = res.redirect;
       } catch (e) {
-        errEl.textContent = e.message || 'Kirish amalga oshmadi';
-        errEl.style.display = 'flex';
-        btn.disabled = false;
-        btn.innerHTML = '<svg style="width:17px;height:17px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg> Kirish';
+        showError(e.message || 'Kirish amalga oshmadi');
+        setLoginLoading(btn, false);
       }
     }
 
-    document.addEventListener('keypress', e => {
+    document.addEventListener('keydown', e => {
       if (e.key !== 'Enter') return;
-      const type = document.querySelector('.tab-panel.active').id.replace('panel-','');
+      if (e.target.tagName === 'SELECT') return;
+      const type = document.querySelector('.tab-panel.active').id.replace('panel-', '');
       login(type);
     });
 
-    // Auth redirect
+    // Auto-redirect if already logged in
     api('/api/auth/me').then(u => {
-      if (u.role==='superadmin') location.href='/super-admin.html';
-      else if (u.role==='restaurant') location.href='/restaurant-admin.html';
-      else if (u.role==='waiter') location.href='/waiter.html';
-    }).catch(()=>{});
+      if (u.role === 'superadmin') location.href = '/super-admin.html';
+      else if (u.role === 'restaurant') location.href = '/restaurant-admin.html';
+      else if (u.role === 'waiter') location.href = '/waiter.html';
+    }).catch(() => {});
 
-    // Neon
-    function toggleNeon() {
-      const on = document.body.classList.toggle('neon-mode');
-      document.getElementById('neon-btn').classList.toggle('on', on);
-      localStorage.setItem('neonMode', on?'1':'');
-    }
-    if (localStorage.getItem('neonMode')) {
-      document.body.classList.add('neon-mode');
-      document.getElementById('neon-btn')?.classList.add('on');
-    }
-
-    // Particle canvas (brand panel only)
+    // Particle canvas
     (function() {
       const canvas = document.getElementById('brand-canvas');
       if (!canvas) return;
@@ -595,35 +747,33 @@
         W = canvas.width  = panel?.offsetWidth  || window.innerWidth * 0.55;
         H = canvas.height = panel?.offsetHeight || window.innerHeight;
       }
-      window.addEventListener('resize', resize); resize();
+      window.addEventListener('resize', resize);
+      resize();
 
-      function r(a,b){ return Math.random()*(b-a)+a; }
-      function mk(){ return { x:r(0,W),y:r(0,H),rad:r(0.5,1.8),vx:r(-0.08,0.08),vy:r(-0.18,-0.04),a:r(0.08,0.35),da:r(0.001,0.004),fi:true }; }
-      for(let i=0;i<70;i++) P.push(mk());
-
-      const isNeon=()=>document.body.classList.contains('neon-mode');
+      function rnd(a, b) { return Math.random() * (b - a) + a; }
+      function mkParticle() {
+        return { x: rnd(0,W), y: rnd(0,H), rad: rnd(0.5,1.8), vx: rnd(-0.06,0.06), vy: rnd(-0.15,-0.03), a: rnd(0.05,0.3), da: rnd(0.001,0.003), fi: true };
+      }
+      for (let i = 0; i < 80; i++) P.push(mkParticle());
 
       (function draw() {
-        ctx.clearRect(0,0,W,H);
-        const c=isNeon()?'0,245,255':'200,146,42';
-        P.forEach(p=>{
-          ctx.beginPath(); ctx.arc(p.x,p.y,p.rad,0,Math.PI*2);
-          ctx.fillStyle=`rgba(${c},${p.a})`; ctx.fill();
-          p.x+=p.vx; p.y+=p.vy;
-          if(p.fi){p.a+=p.da; if(p.a>=0.35)p.fi=false;}
-          else{p.a-=p.da;}
-          if(p.y<-5||p.a<=0) Object.assign(p,mk(),{y:H+5,a:0,fi:true});
-          if(p.x<0)p.x=W; if(p.x>W)p.x=0;
+        ctx.clearRect(0, 0, W, H);
+        P.forEach(p => {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.rad, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(0,212,255,' + p.a + ')';
+          ctx.fill();
+          p.x += p.vx;
+          p.y += p.vy;
+          if (p.fi) { p.a += p.da; if (p.a >= 0.3) p.fi = false; }
+          else { p.a -= p.da; }
+          if (p.y < -5 || p.a <= 0) Object.assign(p, mkParticle(), { y: H + 5, a: 0, fi: true });
+          if (p.x < 0) p.x = W;
+          if (p.x > W) p.x = 0;
         });
         requestAnimationFrame(draw);
       })();
-
-      const style=document.createElement('style');
-      style.textContent='@keyframes spin{to{transform:rotate(360deg)}}';
-      document.head.appendChild(style);
     })();
   </script>
 </body>
 </html>
-
-

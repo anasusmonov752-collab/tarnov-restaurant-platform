@@ -1827,5 +1827,213 @@ function lvBackToModule() {
 
 init();
 </script>
+
+<!-- ══════════════════ AI CHAT WIDGET ══════════════════ -->
+<style>
+#ai-fab {
+  position: fixed; bottom: 24px; right: 24px; z-index: 1000;
+  width: 56px; height: 56px; border-radius: 50%;
+  background: linear-gradient(135deg, #C8922A, #f0b429);
+  border: none; cursor: pointer; box-shadow: 0 4px 20px rgba(200,146,42,0.5);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .2s, box-shadow .2s;
+}
+#ai-fab:hover { transform: scale(1.1); box-shadow: 0 6px 28px rgba(200,146,42,0.7); }
+#ai-fab svg { width: 26px; height: 26px; stroke: #0A0A0A; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+#ai-fab .ai-badge {
+  position: absolute; top: -4px; right: -4px;
+  background: #E74C3C; color: #fff; font-size: 10px;
+  width: 18px; height: 18px; border-radius: 50%;
+  display: none; align-items: center; justify-content: center; font-weight: 700;
+}
+
+#ai-panel {
+  position: fixed; bottom: 90px; right: 24px; z-index: 999;
+  width: 360px; max-width: calc(100vw - 32px);
+  background: #111; border: 1px solid #2a2a2a;
+  border-radius: 16px; box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+  display: none; flex-direction: column; overflow: hidden;
+  max-height: calc(100vh - 120px);
+}
+#ai-panel.open { display: flex; }
+
+#ai-header {
+  padding: 14px 16px; background: #1a1a1a; border-bottom: 1px solid #2a2a2a;
+  display: flex; align-items: center; gap: 10px;
+}
+#ai-header .ai-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: linear-gradient(135deg, #C8922A, #f0b429);
+  display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
+}
+#ai-header .ai-info { flex: 1; }
+#ai-header .ai-name { font-weight: 700; font-size: 14px; color: #fff; }
+#ai-header .ai-status { font-size: 11px; color: #2ECC71; }
+#ai-close { background: none; border: none; color: #666; cursor: pointer; font-size: 20px; padding: 0 4px; }
+#ai-close:hover { color: #fff; }
+
+#ai-messages {
+  flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px;
+  min-height: 200px;
+}
+#ai-messages::-webkit-scrollbar { width: 4px; }
+#ai-messages::-webkit-scrollbar-track { background: transparent; }
+#ai-messages::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+.ai-msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 1.5; word-break: break-word; }
+.ai-msg.user { align-self: flex-end; background: #C8922A; color: #000; border-bottom-right-radius: 4px; }
+.ai-msg.bot  { align-self: flex-start; background: #1e1e1e; color: #e0e0e0; border: 1px solid #2a2a2a; border-bottom-left-radius: 4px; }
+.ai-msg.typing { color: #666; font-style: italic; }
+.ai-msg.error { background: #2a1010; border-color: #E74C3C; color: #E74C3C; }
+
+.ai-quick-btns { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 16px 12px; }
+.ai-quick-btn {
+  background: #1a1a1a; border: 1px solid #2a2a2a; color: #C8922A;
+  border-radius: 20px; padding: 5px 12px; font-size: 11px; cursor: pointer;
+  transition: background .15s, border-color .15s; white-space: nowrap;
+}
+.ai-quick-btn:hover { background: #222; border-color: #C8922A; }
+
+#ai-input-row {
+  padding: 12px 16px; background: #1a1a1a; border-top: 1px solid #2a2a2a;
+  display: flex; gap: 8px; align-items: flex-end;
+}
+#ai-input {
+  flex: 1; background: #0d0d0d; border: 1px solid #2a2a2a; color: #fff;
+  border-radius: 10px; padding: 9px 12px; font-size: 13px; resize: none;
+  max-height: 100px; outline: none; font-family: inherit; line-height: 1.4;
+}
+#ai-input:focus { border-color: #C8922A; }
+#ai-input::placeholder { color: #444; }
+#ai-send {
+  background: #C8922A; border: none; color: #000; border-radius: 10px;
+  width: 38px; height: 38px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: background .15s;
+}
+#ai-send:hover { background: #f0b429; }
+#ai-send:disabled { background: #333; color: #666; cursor: not-allowed; }
+#ai-send svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+</style>
+
+<!-- Floating button -->
+<button id="ai-fab" onclick="aiToggle()" title="AI Yordamchi">
+  <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+  <span class="ai-badge" id="ai-badge">1</span>
+</button>
+
+<!-- Chat panel -->
+<div id="ai-panel">
+  <div id="ai-header">
+    <div class="ai-avatar">🤖</div>
+    <div class="ai-info">
+      <div class="ai-name">AI Yordamchi</div>
+      <div class="ai-status" id="ai-status-text">● Faol</div>
+    </div>
+    <button id="ai-close" onclick="aiToggle()">✕</button>
+  </div>
+
+  <div id="ai-messages">
+    <div class="ai-msg bot">Salom! Men restoran menyusi, narxlar, ingredientlar va allergenlar bo'yicha savollarga javob beraman. Nima so'rasangiz?</div>
+  </div>
+
+  <div class="ai-quick-btns" id="ai-quick">
+    <button class="ai-quick-btn" onclick="aiQuick('Eng qimmat taom qaysi?')">Eng qimmat taom?</button>
+    <button class="ai-quick-btn" onclick="aiQuick('Glutensiz taomlar bormi?')">Glutensiz taomlar</button>
+    <button class="ai-quick-btn" onclick="aiQuick('Set taomlar narxi qancha?')">Set narxlari</button>
+    <button class="ai-quick-btn" onclick="aiQuick('Vegetarian taomlar qaysilar?')">Vegetarian</button>
+  </div>
+
+  <div id="ai-input-row">
+    <textarea id="ai-input" placeholder="Savol yozing..." rows="1"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();aiSend()}"
+      oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+    <button id="ai-send" onclick="aiSend()">
+      <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+
+<script>
+(function() {
+  let aiHistory = [];
+  let aiLoading = false;
+  let aiOpened = false;
+
+  window.aiToggle = function() {
+    const panel = document.getElementById('ai-panel');
+    const badge = document.getElementById('ai-badge');
+    aiOpened = !aiOpened;
+    panel.classList.toggle('open', aiOpened);
+    badge.style.display = 'none';
+    if (aiOpened) {
+      setTimeout(() => document.getElementById('ai-input')?.focus(), 100);
+    }
+  };
+
+  window.aiQuick = function(text) {
+    document.getElementById('ai-input').value = text;
+    aiSend();
+  };
+
+  function aiAppend(role, text) {
+    const box = document.getElementById('ai-messages');
+    const div = document.createElement('div');
+    div.className = 'ai-msg ' + role;
+    div.textContent = text;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+    return div;
+  }
+
+  window.aiSend = async function() {
+    if (aiLoading) return;
+    const inp = document.getElementById('ai-input');
+    const msg = inp.value.trim();
+    if (!msg) return;
+    inp.value = '';
+    inp.style.height = 'auto';
+
+    // Tez savol tugmalarini yashir
+    document.getElementById('ai-quick').style.display = 'none';
+
+    aiAppend('user', msg);
+    const typingEl = aiAppend('typing', 'Javob yozilmoqda...');
+    aiLoading = true;
+    document.getElementById('ai-send').disabled = true;
+    document.getElementById('ai-status-text').textContent = '● Fikrlamoqda...';
+
+    try {
+      const res = await fetch('/api/waiter/ai-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg, history: aiHistory })
+      });
+      const data = await res.json();
+
+      typingEl.remove();
+
+      if (!res.ok) {
+        aiAppend('error', data.error || 'Xatolik yuz berdi.');
+      } else {
+        aiHistory.push({ role: 'user', content: msg });
+        aiHistory.push({ role: 'assistant', content: data.reply });
+        if (aiHistory.length > 12) aiHistory = aiHistory.slice(-12);
+        aiAppend('bot', data.reply);
+
+        if (!aiOpened) {
+          document.getElementById('ai-badge').style.display = 'flex';
+        }
+      }
+    } catch {
+      typingEl.remove();
+      aiAppend('error', 'Tarmoq xatosi. Internet aloqasini tekshiring.');
+    } finally {
+      aiLoading = false;
+      document.getElementById('ai-send').disabled = false;
+      document.getElementById('ai-status-text').textContent = '● Faol';
+    }
+  };
+})();
+</script>
 </body>
 </html>

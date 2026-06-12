@@ -1,9 +1,21 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
+const rateLimit = require('express-rate-limit');
+const Anthropic = require('@anthropic-ai/sdk');
 const { auth } = require('../middleware/auth');
 const { asyncHandler } = require('../middleware/errorHandler');
 const Restaurant = require('../models/Restaurant');
 const { getPeriodKey, getPeriodLabel } = require('../utils/kpi');
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+const aiChatLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  keyGenerator: (req) => req.cookies?.token || req.ip,
+  message: { error: '1 daqiqada 20 ta savol limitiga yetdingiz. Biroz kuting.' },
+  standardHeaders: true, legacyHeaders: false
+});
 
 const router = express.Router();
 const guard = auth(['waiter']);
@@ -346,6 +358,70 @@ router.get('/leaderboard', guard, asyncHandler(async (req, res) => {
 
   board.sort((a, b) => b.value - a.value);
   res.json(board.slice(0, 20));
+}));
+
+// ── AI CHAT ──────────────────────────────────────────────────
+router.post('/ai-chat', guard, aiChatLimiter, asyncHandler(async (req, res) => {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return res.status(503).json({ error: 'AI xizmati hozircha mavjud emas.' });
+  }
+
+  const { message, history } = req.body;
+  if (!message?.trim()) return res.status(400).json({ error: 'Savol kiritilmagan' });
+
+  const r = await Restaurant.findOne(
+    { id: req.user.restaurantId },
+    'name location menu adaptation announcements'
+  );
+  if (!r) return res.status(404).json({ error: 'Restoran topilmadi' });
+
+  // Menyu konteksti
+  const menuText = r.menu.map(item => {
+    const parts = [`• ${item.name} (${item.category}) — ${item.price.toLocaleString()} so'm`];
+    if (item.description)      parts.push(`  Tavsif: ${item.description}`);
+    if (item.ingredients?.length) parts.push(`  Tarkib: ${item.ingredients.join(', ')}`);
+    if (item.allergens?.length)   parts.push(`  Allergenlar: ${item.allergens.join(', ')}`);
+    if (item.servingSuggestion)   parts.push(`  Tavsiya: ${item.servingSuggestion}`);
+    return parts.join('\n');
+  }).join('\n');
+
+  // Adaptatsiya hujjatlari
+  const docsText = (r.adaptation?.documents || [])
+    .map(d => `### ${d.title}\n${d.content}`)
+    .join('\n\n');
+
+  // So'nggi e'lonlar
+  const annText = (r.announcements || []).slice(0, 5)
+    .map(a => `• ${a.title}: ${a.content}`)
+    .join('\n');
+
+  const systemPrompt = `Siz "${r.name}" restoranining raqamli yordamchisisiz.
+Faqat quyidagi ma'lumotlar asosida ofitsiantlarga yordam bering.
+Javoblar O'zbek tilida, qisqa va aniq bo'lsin.
+Agar savol menyu yoki restoran bilan bog'liq bo'lmasa: "Bu savolga javob bera olmayman, faqat restoran va menyu bo'yicha yordam beraman." deb ayting.
+
+=== MENYU ===
+${menuText}
+
+${docsText ? `=== RESTORAN HAQIDA ===\n${docsText}` : ''}
+
+${annText ? `=== SO'NGGI E'LONLAR ===\n${annText}` : ''}`;
+
+  // Suhbat tarixi (oxirgi 6 xabar)
+  const safeHistory = Array.isArray(history) ? history.slice(-6) : [];
+  const messages = [
+    ...safeHistory.map(m => ({ role: m.role, content: String(m.content) })),
+    { role: 'user', content: message.trim() }
+  ];
+
+  const response = await anthropic.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 512,
+    system: systemPrompt,
+    messages
+  });
+
+  res.json({ reply: response.content[0].text });
 }));
 
 module.exports = router;

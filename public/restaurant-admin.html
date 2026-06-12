@@ -569,50 +569,100 @@
 
     <!-- ADAPTATION -->
     <div id="page-adaptation" class="page" style="display:none">
-      <div class="page-header">
-        <div><h1><i data-lucide="book-open" style="width:22px;height:22px;color:#3498DB;vertical-align:middle;margin-right:8px"></i>Adaptatsiya</h1><p>Yangi xodimlar uchun restoran ma'lumotlari</p></div>
-        <button class="btn btn-neon" id="adapt-save-btn" onclick="saveAdaptation()">
-          <i data-lucide="save"></i> Saqlash
-        </button>
+      <!-- Hero Header -->
+      <div style="background:linear-gradient(135deg,#0d1b2e 0%,#0a2040 40%,#0d2a50 100%);border-radius:16px;padding:32px 28px;margin-bottom:24px;position:relative;overflow:hidden;border:1px solid rgba(52,152,219,0.2)">
+        <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(52,152,219,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(52,152,219,0.04) 1px,transparent 1px);background-size:32px 32px;pointer-events:none"></div>
+        <div style="position:absolute;top:-60px;right:-60px;width:220px;height:220px;background:radial-gradient(circle,rgba(52,152,219,0.18) 0%,transparent 70%);pointer-events:none"></div>
+        <div style="position:absolute;bottom:-40px;left:60px;width:160px;height:160px;background:radial-gradient(circle,rgba(0,212,255,0.1) 0%,transparent 70%);pointer-events:none"></div>
+        <div style="position:relative;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:18px">
+            <div style="width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,rgba(52,152,219,0.25),rgba(0,212,255,0.15));border:1px solid rgba(52,152,219,0.4);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <i data-lucide="book-open" style="width:26px;height:26px;color:#3498DB"></i>
+            </div>
+            <div>
+              <h1 style="margin:0;font-size:1.6rem;font-weight:800;background:linear-gradient(90deg,#ffffff,#3498DB,#00D4FF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Adaptatsiya</h1>
+              <p style="margin:4px 0 0;color:rgba(255,255,255,0.5);font-size:0.88rem">Yangi xodimlar uchun restoran ma'lumotlari</p>
+            </div>
+          </div>
+          <button class="btn btn-neon" id="adapt-save-btn" onclick="saveAdaptation()" style="position:relative;z-index:1">
+            <i data-lucide="save"></i> Saqlash
+          </button>
+        </div>
       </div>
       <div class="page-body">
-        <!-- 4 tabs -->
-        <div class="flex gap-8 mb-24" style="border-bottom:1px solid var(--border);padding-bottom:0;overflow-x:auto;scrollbar-width:none">
-          <button class="adapt-tab active" onclick="switchAdaptTab('info',this)" style="white-space:nowrap;flex-shrink:0">
+        <!-- Pill tabs -->
+        <div style="display:flex;gap:6px;padding:4px;background:rgba(52,152,219,0.06);border:1px solid rgba(52,152,219,0.15);border-radius:14px;margin-bottom:24px;flex-wrap:wrap">
+          <button class="adapt-tab active" onclick="switchAdaptTab('info',this)" style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:10px;border:none;cursor:pointer;font-size:0.85rem;font-weight:600;white-space:nowrap;flex-shrink:0;transition:all 0.2s;background:linear-gradient(135deg,#3498DB,#2980b9);color:#fff;box-shadow:0 2px 8px rgba(52,152,219,0.35)">
             <i data-lucide="book-open" style="width:14px;height:14px"></i> Restoran haqida
           </button>
-          <button class="adapt-tab" onclick="switchAdaptTab('onboarding',this)" style="white-space:nowrap;flex-shrink:0">
+          <button class="adapt-tab" onclick="switchAdaptTab('onboarding',this)" style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:10px;border:none;cursor:pointer;font-size:0.85rem;font-weight:600;white-space:nowrap;flex-shrink:0;transition:all 0.2s;background:transparent;color:var(--text2)">
             <i data-lucide="map" style="width:14px;height:14px"></i> Onboarding
           </button>
-          <button class="adapt-tab" onclick="switchAdaptTab('documents',this)" style="white-space:nowrap;flex-shrink:0">
+          <button class="adapt-tab" onclick="switchAdaptTab('documents',this)" style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:10px;border:none;cursor:pointer;font-size:0.85rem;font-weight:600;white-space:nowrap;flex-shrink:0;transition:all 0.2s;background:transparent;color:var(--text2)">
             <i data-lucide="file-text" style="width:14px;height:14px"></i> Hujjatlar
           </button>
-          <button class="adapt-tab" onclick="switchAdaptTab('management',this)" style="white-space:nowrap;flex-shrink:0">
+          <button class="adapt-tab" onclick="switchAdaptTab('management',this)" style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:10px;border:none;cursor:pointer;font-size:0.85rem;font-weight:600;white-space:nowrap;flex-shrink:0;transition:all 0.2s;background:transparent;color:var(--text2)">
             <i data-lucide="users" style="width:14px;height:14px"></i> Boshqaruv
           </button>
         </div>
 
         <!-- TAB: Restoran haqida -->
         <div id="adapt-tab-info">
-          <div class="card mb-16">
-            <div class="card-header"><h3 class="card-title"><i data-lucide="scroll-text" style="width:15px;height:15px"></i> Restoran tarixi</h3></div>
-            <div class="card-body">
-              <textarea class="form-control" id="adapt-history" rows="6" placeholder="Restoran qachon va qanday tashkil topgani..."></textarea>
+          <!-- Feature card: Tarix -->
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:0;margin-bottom:16px;overflow:hidden">
+            <div style="padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+              <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,rgba(52,152,219,0.2),rgba(52,152,219,0.1));border:1px solid rgba(52,152,219,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <i data-lucide="scroll-text" style="width:17px;height:17px;color:#3498DB"></i>
+              </div>
+              <div>
+                <div style="font-weight:700;font-size:0.95rem">Restoran tarixi</div>
+                <div style="font-size:0.75rem;color:var(--text3);margin-top:1px">Restoran qachon va qanday tashkil topgani haqida</div>
+              </div>
+            </div>
+            <div style="padding:16px 20px">
+              <textarea class="form-control" id="adapt-history" rows="6" placeholder="Restoran qachon va qanday tashkil topgani..." oninput="updateCharCount(this,'adapt-history-count')"></textarea>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+                <span style="font-size:0.72rem;color:var(--text3)" id="adapt-history-count">0 belgi</span>
+                <span style="font-size:0.72rem;color:rgba(52,152,219,0.7)">✦ Avtomatik saqlash</span>
+              </div>
             </div>
           </div>
-          <div class="card mb-16">
-            <div class="card-header"><h3 class="card-title"><i data-lucide="target" style="width:15px;height:15px"></i> Missiya</h3></div>
-            <div class="card-body">
-              <textarea class="form-control" id="adapt-mission" rows="4" placeholder="Restoranning asosiy maqsadi..."></textarea>
+          <!-- Feature card: Missiya -->
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:0;margin-bottom:16px;overflow:hidden">
+            <div style="padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+              <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,rgba(155,89,182,0.2),rgba(155,89,182,0.1));border:1px solid rgba(155,89,182,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <i data-lucide="target" style="width:17px;height:17px;color:#9B59B6"></i>
+              </div>
+              <div>
+                <div style="font-weight:700;font-size:0.95rem">Missiya</div>
+                <div style="font-size:0.75rem;color:var(--text3);margin-top:1px">Restoranning asosiy maqsadi va yo'nalishi</div>
+              </div>
+            </div>
+            <div style="padding:16px 20px">
+              <textarea class="form-control" id="adapt-mission" rows="4" placeholder="Restoranning asosiy maqsadi..." oninput="updateCharCount(this,'adapt-mission-count')"></textarea>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+                <span style="font-size:0.72rem;color:var(--text3)" id="adapt-mission-count">0 belgi</span>
+                <span style="font-size:0.72rem;color:rgba(155,89,182,0.7)">✦ Avtomatik saqlash</span>
+              </div>
             </div>
           </div>
-          <div class="card">
-            <div class="card-header">
-              <h3 class="card-title"><i data-lucide="gem" style="width:15px;height:15px"></i> Qadriyatlar</h3>
-              <span style="font-size:0.78rem;color:var(--text3)">har bir qator — alohida qadriyat</span>
+          <!-- Feature card: Qadriyatlar -->
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:0;overflow:hidden">
+            <div style="padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+              <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,rgba(46,204,113,0.2),rgba(46,204,113,0.1));border:1px solid rgba(46,204,113,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <i data-lucide="gem" style="width:17px;height:17px;color:#2ECC71"></i>
+              </div>
+              <div>
+                <div style="font-weight:700;font-size:0.95rem">Qadriyatlar</div>
+                <div style="font-size:0.75rem;color:var(--text3);margin-top:1px">Har bir qator — alohida qadriyat</div>
+              </div>
             </div>
-            <div class="card-body">
-              <textarea class="form-control" id="adapt-values" rows="5" placeholder="Sifat&#10;Mehmon xizmat&#10;Jamoadosh ruh"></textarea>
+            <div style="padding:16px 20px">
+              <textarea class="form-control" id="adapt-values" rows="5" placeholder="Sifat&#10;Mehmon xizmat&#10;Jamoadosh ruh" oninput="updateCharCount(this,'adapt-values-count')"></textarea>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+                <span style="font-size:0.72rem;color:var(--text3)" id="adapt-values-count">0 belgi</span>
+                <span style="font-size:0.72rem;color:rgba(46,204,113,0.7)">✦ Avtomatik saqlash</span>
+              </div>
             </div>
           </div>
         </div>
@@ -1930,9 +1980,22 @@ function switchAdaptTab(tab, btn) {
   ['info','onboarding','documents','management'].forEach(t =>
     document.getElementById(`adapt-tab-${t}`).style.display = t===tab ? '' : 'none'
   );
-  document.querySelectorAll('#page-adaptation .adapt-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#page-adaptation .adapt-tab').forEach(b => {
+    b.classList.remove('active');
+    b.style.background = 'transparent';
+    b.style.color = 'var(--text2)';
+    b.style.boxShadow = 'none';
+  });
   btn.classList.add('active');
+  btn.style.background = 'linear-gradient(135deg,#3498DB,#2980b9)';
+  btn.style.color = '#fff';
+  btn.style.boxShadow = '0 2px 8px rgba(52,152,219,0.35)';
   document.getElementById('adapt-save-btn').style.display = tab==='info' ? '' : 'none';
+}
+
+function updateCharCount(el, countId) {
+  const el2 = document.getElementById(countId);
+  if (el2) el2.textContent = el.value.length + ' belgi';
 }
 
 // ── DOCUMENTS ────────────────────────────────────
@@ -1940,21 +2003,17 @@ function renderDocuments(list) {
   const el = document.getElementById('documents-list');
   if (!list.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3)">Hali hujjat qo\'shilmagan</div>'; return; }
   const sorted = [...list].sort((a,b) => (a.order||0)-(b.order||0));
-  el.innerHTML = sorted.map(d => `
-    <div style="display:flex;align-items:center;gap:14px;padding:13px 16px;border-bottom:1px solid var(--border)">
-      <div style="font-size:1.5rem;flex-shrink:0">${d.icon||'📄'}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-weight:600;font-size:0.92rem">${d.title}</div>
-        <div style="display:flex;gap:6px;margin-top:3px;flex-wrap:wrap">
-          ${d.required?'<span style="font-size:0.67rem;background:rgba(231,76,60,0.12);color:#E74C3C;border:1px solid rgba(231,76,60,0.25);border-radius:4px;padding:2px 6px;font-weight:700">MAJBURIY</span>':''}
-          ${d.content?`<span style="font-size:0.72rem;color:var(--text3)">${d.content.slice(0,50)}${d.content.length>50?'…':''}</span>`:''}
-        </div>
-      </div>
-      <div style="display:flex;gap:6px;flex-shrink:0">
+  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;padding:16px">` + sorted.map(d => `
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:20px 16px 14px;display:flex;flex-direction:column;align-items:center;gap:10px;transition:border-color 0.2s" onmouseover="this.style.borderColor='rgba(52,152,219,0.35)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="font-size:2.2rem;line-height:1">${d.icon||'📄'}</div>
+      <div style="font-weight:700;font-size:0.93rem;text-align:center">${d.title}</div>
+      ${d.required?'<span style="font-size:0.68rem;background:rgba(231,76,60,0.14);color:#E74C3C;border:1px solid rgba(231,76,60,0.3);border-radius:20px;padding:2px 10px;font-weight:800;letter-spacing:0.04em">MAJBURIY</span>':''}
+      ${d.content?`<div style="font-size:0.75rem;color:var(--text3);text-align:center;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${d.content}</div>`:''}
+      <div style="display:flex;gap:8px;margin-top:auto;padding-top:8px;width:100%;justify-content:center;border-top:1px solid var(--border)">
         <button class="btn btn-ghost btn-sm btn-icon" onclick="openDocModal('${d.id}')"><i data-lucide="pencil"></i></button>
         <button class="btn btn-ghost btn-sm btn-icon" onclick="deleteDoc('${d.id}')"><i data-lucide="trash-2"></i></button>
       </div>
-    </div>`).join('');
+    </div>`).join('') + `</div>`;
   renderIcons();
 }
 
@@ -2004,26 +2063,35 @@ function renderOnboarding(list) {
   const el = document.getElementById('onboarding-list');
   if (!list.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3)">Hali bosqich qo\'shilmagan</div>'; return; }
   const dayColors = {'1-kun':'#3498DB','3-kun':'#9B59B6','1-hafta':'#00D4FF','1-oy':'#2ECC71'};
-  const dayLabels = {'1-kun':'1-kun','3-kun':'3-kun','1-hafta':'1-hafta','1-oy':'1-oy'};
   const sorted = [...list].sort((a,b) => (a.order||0)-(b.order||0));
-  el.innerHTML = sorted.map(s => {
+  el.innerHTML = `<div style="padding:20px 16px;position:relative">` + sorted.map((s, i) => {
     const c = dayColors[s.day] || '#00D4FF';
     const tasks = (s.tasks||[]).filter(Boolean);
-    return `<div style="display:flex;align-items:flex-start;gap:14px;padding:13px 16px;border-bottom:1px solid var(--border)">
-      <div style="width:36px;height:36px;border-radius:50%;background:${c}18;border:2px solid ${c};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">
-        <span style="font-size:0.7rem;font-weight:800;color:${c}">${dayLabels[s.day]||s.day}</span>
+    const isLast = i === sorted.length - 1;
+    return `<div style="display:flex;gap:0;position:relative">
+      <!-- Timeline left column -->
+      <div style="display:flex;flex-direction:column;align-items:center;width:60px;flex-shrink:0">
+        <div style="width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,${c}30,${c}15);border:2px solid ${c};display:flex;align-items:center;justify-content:center;flex-shrink:0;z-index:1;box-shadow:0 0 12px ${c}30">
+          <span style="font-size:0.62rem;font-weight:800;color:${c};text-align:center;line-height:1.2">${s.day||'?'}</span>
+        </div>
+        ${!isLast ? `<div style="width:2px;flex:1;min-height:24px;background:linear-gradient(to bottom,${c},rgba(52,152,219,0.15));margin:4px 0"></div>` : ''}
       </div>
-      <div style="flex:1;min-width:0">
-        <div style="font-weight:600;font-size:0.92rem">${s.title}</div>
-        ${s.description?`<div style="color:var(--text3);font-size:0.78rem;margin-top:2px">${s.description.slice(0,70)}${s.description.length>70?'…':''}</div>`:''}
-        ${tasks.length?`<div style="font-size:0.72rem;color:var(--text3);margin-top:3px">${tasks.length} ta vazifa</div>`:''}
-      </div>
-      <div style="display:flex;gap:6px;flex-shrink:0">
-        <button class="btn btn-ghost btn-sm btn-icon" onclick="openStepModal('${s.id}')"><i data-lucide="pencil"></i></button>
-        <button class="btn btn-ghost btn-sm btn-icon" onclick="deleteStep('${s.id}')"><i data-lucide="trash-2"></i></button>
+      <!-- Content -->
+      <div style="flex:1;min-width:0;padding:0 0 ${isLast?'0':'24px'} 14px">
+        <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;position:relative" onmouseover="this.style.borderColor='${c}40'" onmouseout="this.style.borderColor='var(--border)'">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+            <div style="font-weight:700;font-size:0.93rem">${s.title}</div>
+            <div style="display:flex;gap:6px;flex-shrink:0">
+              <button class="btn btn-ghost btn-sm btn-icon" onclick="openStepModal('${s.id}')"><i data-lucide="pencil"></i></button>
+              <button class="btn btn-ghost btn-sm btn-icon" onclick="deleteStep('${s.id}')"><i data-lucide="trash-2"></i></button>
+            </div>
+          </div>
+          ${s.description?`<div style="color:var(--text3);font-size:0.78rem;margin-top:5px">${s.description}</div>`:''}
+          ${tasks.length?`<div style="margin-top:10px;display:flex;flex-direction:column;gap:4px">${tasks.map(t=>`<div style="font-size:0.78rem;color:var(--text2);display:flex;align-items:center;gap:6px"><span>☑</span><span>${t}</span></div>`).join('')}</div>`:''}
+        </div>
       </div>
     </div>`;
-  }).join('');
+  }).join('') + `</div>`;
   renderIcons();
 }
 
@@ -2072,21 +2140,21 @@ function renderManagement(list) {
   const el = document.getElementById('management-list');
   if (!list.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3)">Hali xodim qo\'shilmagan</div>'; return; }
   const sorted = [...list].sort((a,b) => (a.order||0)-(b.order||0));
-  el.innerHTML = sorted.map(m => `
-    <div style="display:flex;align-items:center;gap:16px;padding:14px 16px;border-bottom:1px solid var(--border)">
-      <div style="width:52px;height:52px;border-radius:50%;overflow:hidden;border:2px solid var(--neon);flex-shrink:0;background:var(--card2);display:flex;align-items:center;justify-content:center">
-        ${m.photo ? `<img src="${m.photo}" style="width:100%;height:100%;object-fit:cover">` : `<i data-lucide="user" style="width:22px;height:22px;opacity:0.5"></i>`}
+  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;padding:16px">` + sorted.map(m => `
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:20px 14px 14px;display:flex;flex-direction:column;align-items:center;gap:10px;transition:border-color 0.2s" onmouseover="this.style.borderColor='rgba(0,212,255,0.35)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="width:60px;height:60px;border-radius:50%;overflow:hidden;border:2px solid var(--neon);background:var(--card);display:flex;align-items:center;justify-content:center;box-shadow:0 0 14px rgba(0,212,255,0.25)">
+        ${m.photo ? `<img src="${m.photo}" style="width:100%;height:100%;object-fit:cover">` : `<i data-lucide="user" style="width:26px;height:26px;opacity:0.45"></i>`}
       </div>
-      <div style="flex:1">
-        <div style="font-weight:600">${m.name}</div>
-        <div style="color:var(--neon);font-size:0.82rem">${m.position}</div>
-        ${m.phone ? `<div style="color:var(--text3);font-size:0.78rem">${m.phone}</div>` : ''}
+      <div style="text-align:center">
+        <div style="font-weight:700;font-size:0.93rem">${m.name}</div>
+        <div style="color:var(--neon);font-size:0.78rem;margin-top:2px">${m.position}</div>
       </div>
-      <div style="display:flex;gap:8px">
+      ${m.phone ? `<div style="font-size:0.75rem;color:var(--text3);display:flex;align-items:center;gap:5px"><span>📞</span><span>${m.phone}</span></div>` : ''}
+      <div style="display:flex;gap:8px;margin-top:auto;padding-top:10px;border-top:1px solid var(--border);width:100%;justify-content:center">
         <button class="btn btn-ghost btn-sm btn-icon" onclick="openMemberModal('${m.id}')"><i data-lucide="pencil"></i></button>
         <button class="btn btn-ghost btn-sm btn-icon" onclick="deleteMember('${m.id}')"><i data-lucide="trash-2"></i></button>
       </div>
-    </div>`).join('');
+    </div>`).join('') + `</div>`;
   renderIcons();
 }
 

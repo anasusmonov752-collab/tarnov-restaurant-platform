@@ -606,65 +606,161 @@
           </button>
         </div>
 
-        <!-- TAB: Restoran haqida -->
+        <!-- TAB: Restoran haqida — Presentation Style -->
         <div id="adapt-tab-info">
-          <!-- Feature card: Tarix -->
-          <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:0;margin-bottom:16px;overflow:hidden">
-            <div style="padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
-              <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,rgba(52,152,219,0.2),rgba(52,152,219,0.1));border:1px solid rgba(52,152,219,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                <i data-lucide="scroll-text" style="width:17px;height:17px;color:#3498DB"></i>
+
+          <!-- Slide nav dots -->
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:20px">
+            <button onclick="showSlide(0)" id="slide-dot-0" style="width:32px;height:8px;border-radius:4px;border:none;cursor:pointer;transition:all 0.3s;background:linear-gradient(90deg,#3498DB,#2980b9);box-shadow:0 0 8px rgba(52,152,219,0.5)"></button>
+            <button onclick="showSlide(1)" id="slide-dot-1" style="width:8px;height:8px;border-radius:50%;border:none;cursor:pointer;transition:all 0.3s;background:rgba(255,255,255,0.15)"></button>
+            <button onclick="showSlide(2)" id="slide-dot-2" style="width:8px;height:8px;border-radius:50%;border:none;cursor:pointer;transition:all 0.3s;background:rgba(255,255,255,0.15)"></button>
+          </div>
+
+          <!-- SLIDE 0: Tarix -->
+          <div class="info-slide" id="info-slide-0" style="display:block">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch">
+              <!-- Preview panel -->
+              <div style="background:linear-gradient(145deg,rgba(52,152,219,0.12),rgba(52,152,219,0.04));border:1px solid rgba(52,152,219,0.25);border-radius:16px;padding:28px 24px;display:flex;flex-direction:column;gap:16px;position:relative;overflow:hidden">
+                <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(52,152,219,0.15),transparent 70%)"></div>
+                <div style="position:absolute;bottom:-20px;left:-20px;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,rgba(52,152,219,0.1),transparent 70%)"></div>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#3498DB,#1a6fa8);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(52,152,219,0.4)">
+                    <i data-lucide="scroll-text" style="width:20px;height:20px;color:#fff"></i>
+                  </div>
+                  <div>
+                    <div style="font-weight:800;font-size:1rem;color:#fff">Restoran tarixi</div>
+                    <div style="font-size:0.72rem;color:rgba(52,152,219,0.8);font-weight:600;text-transform:uppercase;letter-spacing:0.06em">Slide 1 / 3</div>
+                  </div>
+                </div>
+                <div style="flex:1;background:rgba(0,0,0,0.25);border-radius:10px;padding:16px;min-height:140px;border:1px solid rgba(52,152,219,0.15)">
+                  <div id="preview-history" style="font-size:0.82rem;color:var(--text2);line-height:1.7;white-space:pre-wrap;word-break:break-word;max-height:200px;overflow:hidden">
+                    <span style="color:var(--text3);font-style:italic">Hali matn kiritilmagan...</span>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <div style="width:6px;height:6px;border-radius:50%;background:#3498DB;animation:pulse 2s infinite"></div>
+                  <span style="font-size:0.7rem;color:rgba(52,152,219,0.7);font-weight:600">JONLI KO'RINISH</span>
+                </div>
               </div>
-              <div>
-                <div style="font-weight:700;font-size:0.95rem">Restoran tarixi</div>
-                <div style="font-size:0.75rem;color:var(--text3);margin-top:1px">Restoran qachon va qanday tashkil topgani haqida</div>
-              </div>
-            </div>
-            <div style="padding:16px 20px">
-              <textarea class="form-control" id="adapt-history" rows="6" placeholder="Restoran qachon va qanday tashkil topgani..." oninput="updateCharCount(this,'adapt-history-count')"></textarea>
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
-                <span style="font-size:0.72rem;color:var(--text3)" id="adapt-history-count">0 belgi</span>
-                <span style="font-size:0.72rem;color:rgba(52,152,219,0.7)">✦ Avtomatik saqlash</span>
+              <!-- Edit panel -->
+              <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:14px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <i data-lucide="pencil" style="width:15px;height:15px;color:#3498DB"></i>
+                  <span style="font-weight:700;font-size:0.9rem">Tahrirlamoq</span>
+                </div>
+                <textarea class="form-control" id="adapt-history" rows="9" placeholder="Restoran qachon va qanday tashkil topgani haqida yozing...&#10;&#10;Masalan: 2010-yilda tashkil topgan, 4 filial, 600+ xodim..." style="resize:vertical;font-size:0.83rem;line-height:1.6" oninput="updateCharCount(this,'adapt-history-count');updatePreview('history',this.value)"></textarea>
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-size:0.71rem;color:var(--text3)" id="adapt-history-count">0 belgi</span>
+                  <span style="font-size:0.71rem;color:rgba(52,152,219,0.7);display:flex;align-items:center;gap:4px"><span>✦</span> Avtomatik saqlash</span>
+                </div>
+                <button onclick="showSlide(1)" style="margin-top:auto;padding:10px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(135deg,rgba(52,152,219,0.15),rgba(52,152,219,0.08));border:1px solid rgba(52,152,219,0.3);color:#3498DB;font-size:0.83rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s" onmouseover="this.style.background='linear-gradient(135deg,rgba(52,152,219,0.25),rgba(52,152,219,0.15))'" onmouseout="this.style.background='linear-gradient(135deg,rgba(52,152,219,0.15),rgba(52,152,219,0.08))'">
+                  Keyingi: Missiya <i data-lucide="arrow-right" style="width:14px;height:14px"></i>
+                </button>
               </div>
             </div>
           </div>
-          <!-- Feature card: Missiya -->
-          <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:0;margin-bottom:16px;overflow:hidden">
-            <div style="padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
-              <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,rgba(155,89,182,0.2),rgba(155,89,182,0.1));border:1px solid rgba(155,89,182,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                <i data-lucide="target" style="width:17px;height:17px;color:#9B59B6"></i>
+
+          <!-- SLIDE 1: Missiya -->
+          <div class="info-slide" id="info-slide-1" style="display:none">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch">
+              <!-- Preview panel -->
+              <div style="background:linear-gradient(145deg,rgba(155,89,182,0.12),rgba(155,89,182,0.04));border:1px solid rgba(155,89,182,0.25);border-radius:16px;padding:28px 24px;display:flex;flex-direction:column;gap:16px;position:relative;overflow:hidden">
+                <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(155,89,182,0.15),transparent 70%)"></div>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#9B59B6,#6c3483);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(155,89,182,0.4)">
+                    <i data-lucide="target" style="width:20px;height:20px;color:#fff"></i>
+                  </div>
+                  <div>
+                    <div style="font-weight:800;font-size:1rem;color:#fff">Missiya</div>
+                    <div style="font-size:0.72rem;color:rgba(155,89,182,0.8);font-weight:600;text-transform:uppercase;letter-spacing:0.06em">Slide 2 / 3</div>
+                  </div>
+                </div>
+                <!-- Big quote display -->
+                <div style="flex:1;background:rgba(0,0,0,0.25);border-radius:10px;padding:20px;min-height:140px;border:1px solid rgba(155,89,182,0.15);display:flex;flex-direction:column;justify-content:center;position:relative">
+                  <div style="font-size:2.5rem;color:rgba(155,89,182,0.3);line-height:1;position:absolute;top:10px;left:14px">"</div>
+                  <div id="preview-mission" style="font-size:0.88rem;color:var(--text2);line-height:1.7;white-space:pre-wrap;word-break:break-word;padding:8px 8px 0 20px;max-height:180px;overflow:hidden;font-style:italic">
+                    <span style="color:var(--text3)">Missiya matni...</span>
+                  </div>
+                  <div style="font-size:2.5rem;color:rgba(155,89,182,0.3);line-height:1;text-align:right;position:absolute;bottom:4px;right:14px">"</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <div style="width:6px;height:6px;border-radius:50%;background:#9B59B6;animation:pulse 2s infinite"></div>
+                  <span style="font-size:0.7rem;color:rgba(155,89,182,0.7);font-weight:600">JONLI KO'RINISH</span>
+                </div>
               </div>
-              <div>
-                <div style="font-weight:700;font-size:0.95rem">Missiya</div>
-                <div style="font-size:0.75rem;color:var(--text3);margin-top:1px">Restoranning asosiy maqsadi va yo'nalishi</div>
-              </div>
-            </div>
-            <div style="padding:16px 20px">
-              <textarea class="form-control" id="adapt-mission" rows="4" placeholder="Restoranning asosiy maqsadi..." oninput="updateCharCount(this,'adapt-mission-count')"></textarea>
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
-                <span style="font-size:0.72rem;color:var(--text3)" id="adapt-mission-count">0 belgi</span>
-                <span style="font-size:0.72rem;color:rgba(155,89,182,0.7)">✦ Avtomatik saqlash</span>
+              <!-- Edit panel -->
+              <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:14px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <i data-lucide="pencil" style="width:15px;height:15px;color:#9B59B6"></i>
+                  <span style="font-weight:700;font-size:0.9rem">Tahrirlamoq</span>
+                </div>
+                <textarea class="form-control" id="adapt-mission" rows="9" placeholder="Restoranning asosiy maqsadi va yo'nalishi...&#10;&#10;Masalan: Har bir mehmon uchun unutilmas tajriba yaratish." style="resize:vertical;font-size:0.83rem;line-height:1.6" oninput="updateCharCount(this,'adapt-mission-count');updatePreview('mission',this.value)"></textarea>
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-size:0.71rem;color:var(--text3)" id="adapt-mission-count">0 belgi</span>
+                  <span style="font-size:0.71rem;color:rgba(155,89,182,0.7);display:flex;align-items:center;gap:4px"><span>✦</span> Avtomatik saqlash</span>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:auto">
+                  <button onclick="showSlide(0)" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);cursor:pointer;background:transparent;color:var(--text2);font-size:0.83rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s">
+                    <i data-lucide="arrow-left" style="width:14px;height:14px"></i> Orqaga
+                  </button>
+                  <button onclick="showSlide(2)" style="flex:2;padding:10px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(135deg,rgba(155,89,182,0.15),rgba(155,89,182,0.08));border:1px solid rgba(155,89,182,0.3);color:#9B59B6;font-size:0.83rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s" onmouseover="this.style.background='linear-gradient(135deg,rgba(155,89,182,0.25),rgba(155,89,182,0.15))'" onmouseout="this.style.background='linear-gradient(135deg,rgba(155,89,182,0.15),rgba(155,89,182,0.08))'">
+                    Keyingi: Qadriyatlar <i data-lucide="arrow-right" style="width:14px;height:14px"></i>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-          <!-- Feature card: Qadriyatlar -->
-          <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:0;overflow:hidden">
-            <div style="padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
-              <div style="width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,rgba(46,204,113,0.2),rgba(46,204,113,0.1));border:1px solid rgba(46,204,113,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                <i data-lucide="gem" style="width:17px;height:17px;color:#2ECC71"></i>
+
+          <!-- SLIDE 2: Qadriyatlar -->
+          <div class="info-slide" id="info-slide-2" style="display:none">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:stretch">
+              <!-- Preview panel -->
+              <div style="background:linear-gradient(145deg,rgba(46,204,113,0.12),rgba(46,204,113,0.04));border:1px solid rgba(46,204,113,0.25);border-radius:16px;padding:28px 24px;display:flex;flex-direction:column;gap:16px;position:relative;overflow:hidden">
+                <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(46,204,113,0.15),transparent 70%)"></div>
+                <div style="display:flex;align-items:center;gap:10px">
+                  <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#2ECC71,#1a7a43);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(46,204,113,0.4)">
+                    <i data-lucide="gem" style="width:20px;height:20px;color:#fff"></i>
+                  </div>
+                  <div>
+                    <div style="font-weight:800;font-size:1rem;color:#fff">Qadriyatlar</div>
+                    <div style="font-size:0.72rem;color:rgba(46,204,113,0.8);font-weight:600;text-transform:uppercase;letter-spacing:0.06em">Slide 3 / 3</div>
+                  </div>
+                </div>
+                <!-- Values chips -->
+                <div id="preview-values" style="flex:1;background:rgba(0,0,0,0.25);border-radius:10px;padding:16px;min-height:140px;border:1px solid rgba(46,204,113,0.15);display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start">
+                  <span style="color:var(--text3);font-size:0.82rem;font-style:italic">Qadriyatlar...</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <div style="width:6px;height:6px;border-radius:50%;background:#2ECC71;animation:pulse 2s infinite"></div>
+                  <span style="font-size:0.7rem;color:rgba(46,204,113,0.7);font-weight:600">JONLI KO'RINISH</span>
+                </div>
               </div>
-              <div>
-                <div style="font-weight:700;font-size:0.95rem">Qadriyatlar</div>
-                <div style="font-size:0.75rem;color:var(--text3);margin-top:1px">Har bir qator — alohida qadriyat</div>
-              </div>
-            </div>
-            <div style="padding:16px 20px">
-              <textarea class="form-control" id="adapt-values" rows="5" placeholder="Sifat&#10;Mehmon xizmat&#10;Jamoadosh ruh" oninput="updateCharCount(this,'adapt-values-count')"></textarea>
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
-                <span style="font-size:0.72rem;color:var(--text3)" id="adapt-values-count">0 belgi</span>
-                <span style="font-size:0.72rem;color:rgba(46,204,113,0.7)">✦ Avtomatik saqlash</span>
+              <!-- Edit panel -->
+              <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:14px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <i data-lucide="pencil" style="width:15px;height:15px;color:#2ECC71"></i>
+                  <span style="font-weight:700;font-size:0.9rem">Tahrirlamoq</span>
+                </div>
+                <div style="background:rgba(46,204,113,0.06);border:1px solid rgba(46,204,113,0.15);border-radius:8px;padding:8px 12px;font-size:0.75rem;color:rgba(46,204,113,0.8)">
+                  💡 Har bir qator = alohida qadriyat chip
+                </div>
+                <textarea class="form-control" id="adapt-values" rows="8" placeholder="Sifat&#10;Mehmon xizmat&#10;Jamoadosh ruh&#10;Halollik&#10;Innovatsiya" style="resize:vertical;font-size:0.83rem;line-height:1.8" oninput="updateCharCount(this,'adapt-values-count');updatePreview('values',this.value)"></textarea>
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-size:0.71rem;color:var(--text3)" id="adapt-values-count">0 belgi</span>
+                  <span style="font-size:0.71rem;color:rgba(46,204,113,0.7);display:flex;align-items:center;gap:4px"><span>✦</span> Avtomatik saqlash</span>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:auto">
+                  <button onclick="showSlide(1)" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);cursor:pointer;background:transparent;color:var(--text2);font-size:0.83rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.2s">
+                    <i data-lucide="arrow-left" style="width:14px;height:14px"></i> Orqaga
+                  </button>
+                  <button onclick="document.getElementById('adapt-save-btn').click()" style="flex:2;padding:10px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(135deg,#2ECC71,#1a7a43);color:#fff;font-size:0.83rem;font-weight:700;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 12px rgba(46,204,113,0.3);transition:all 0.2s">
+                    <i data-lucide="save" style="width:14px;height:14px"></i> Saqlash
+                  </button>
+                </div>
               </div>
             </div>
           </div>
+
         </div>
 
         <!-- TAB: Onboarding -->
@@ -1956,6 +2052,9 @@ async function loadAdaptation() {
     document.getElementById('adapt-history').value = data.history || '';
     document.getElementById('adapt-mission').value = data.mission || '';
     document.getElementById('adapt-values').value = (data.values || []).join('\n');
+    updatePreview('history', data.history || '');
+    updatePreview('mission', data.mission || '');
+    updatePreview('values', (data.values || []).join('\n'));
     cachedManagement = data.management || [];
     cachedDocs       = data.documents || [];
     cachedSteps      = data.onboardingSteps || [];
@@ -1996,6 +2095,46 @@ function switchAdaptTab(tab, btn) {
 function updateCharCount(el, countId) {
   const el2 = document.getElementById(countId);
   if (el2) el2.textContent = el.value.length + ' belgi';
+}
+
+function showSlide(idx) {
+  [0,1,2].forEach(i => {
+    const slide = document.getElementById(`info-slide-${i}`);
+    const dot   = document.getElementById(`slide-dot-${i}`);
+    if (!slide || !dot) return;
+    const isActive = i === idx;
+    slide.style.display = isActive ? 'block' : 'none';
+    if (isActive) {
+      dot.style.width = '32px'; dot.style.borderRadius = '4px';
+      const colors = ['rgba(52,152,219,0.5)','rgba(155,89,182,0.5)','rgba(46,204,113,0.5)'];
+      const gradients = ['linear-gradient(90deg,#3498DB,#2980b9)','linear-gradient(90deg,#9B59B6,#6c3483)','linear-gradient(90deg,#2ECC71,#1a7a43)'];
+      dot.style.background = gradients[i];
+      dot.style.boxShadow = `0 0 8px ${colors[i]}`;
+    } else {
+      dot.style.width = '8px'; dot.style.borderRadius = '50%';
+      dot.style.background = 'rgba(255,255,255,0.15)';
+      dot.style.boxShadow = 'none';
+    }
+  });
+  renderIcons();
+}
+
+function updatePreview(type, val) {
+  if (type === 'history') {
+    const el = document.getElementById('preview-history');
+    if (el) el.innerHTML = val ? `<span style="color:var(--text2)">${val.replace(/</g,'&lt;')}</span>` : '<span style="color:var(--text3);font-style:italic">Hali matn kiritilmagan...</span>';
+  } else if (type === 'mission') {
+    const el = document.getElementById('preview-mission');
+    if (el) el.innerHTML = val ? `<span style="color:var(--text2)">${val.replace(/</g,'&lt;')}</span>` : '<span style="color:var(--text3)">Missiya matni...</span>';
+  } else if (type === 'values') {
+    const el = document.getElementById('preview-values');
+    if (!el) return;
+    const items = val.split('\n').map(s=>s.trim()).filter(Boolean);
+    const vColors = ['#3498DB','#9B59B6','#2ECC71','#E74C3C','#F39C12','#00D4FF','#E67E22'];
+    el.innerHTML = items.length
+      ? items.map((t,i)=>`<span style="padding:5px 14px;border-radius:20px;font-size:0.78rem;font-weight:700;background:${vColors[i%vColors.length]}22;border:1px solid ${vColors[i%vColors.length]}55;color:${vColors[i%vColors.length]}">${t.replace(/</g,'&lt;')}</span>`).join('')
+      : '<span style="color:var(--text3);font-size:0.82rem;font-style:italic">Qadriyatlar...</span>';
+  }
 }
 
 // ── DOCUMENTS ────────────────────────────────────

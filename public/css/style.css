@@ -1370,12 +1370,6 @@ table tr:hover td { background: rgba(255,255,255,0.02); }
 table tr { transition: background 0.15s; }
 table tr:hover td { background: rgba(0, 212, 255,0.03); }
 
-/* Improved scrollbar */
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: var(--neon-dark); }
-
 /* Waiter nav active indicator */
 .waiter-nav-item {
   position: relative;
@@ -2174,10 +2168,6 @@ body.neon-mode-2 .waiter-avatar-letter { animation: avatarRainbow 3s linear infi
   background: var(--success);
   animation: livePulse 1.5s ease-in-out infinite;
   flex-shrink: 0;
-}
-@keyframes livePulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(46,204,113,0.4); }
-  50%       { box-shadow: 0 0 0 6px rgba(46,204,113,0); }
 }
 /* ========== MORE GRID SHEET ========== */
 .more-grid-item {

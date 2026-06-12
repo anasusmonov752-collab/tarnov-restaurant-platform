@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="RestoPro Admin">
   <link rel="apple-touch-icon" href="/images/icon.svg">
-  <link rel="stylesheet" href="/css/style.css?v=2.0">
+  <link rel="stylesheet" href="/css/style.css?v=3.0">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
@@ -23,7 +23,7 @@
     <div style="width:24px;height:24px;background:linear-gradient(135deg,#00D4FF,#0099CC);border-radius:6px;display:flex;align-items:center;justify-content:center">
       <i data-lucide="zap" style="width:13px;height:13px;color:#000"></i>
     </div>
-    <span style="color:var(--gold);font-weight:800;letter-spacing:0.06em" id="mob-name">RestoPro</span>
+    <span style="color:var(--neon);font-weight:800;letter-spacing:0.06em" id="mob-name">RestoPro</span>
   </div>
   <button class="btn btn-ghost btn-sm" onclick="logout()"><i data-lucide="log-out"></i></button>
 </div>
@@ -187,7 +187,7 @@
         <div class="alert alert-info mb-16" style="font-size:0.82rem">
           <i data-lucide="info" style="width:14px;height:14px"></i>
           Excel/CSV formatda yuklash uchun: <strong>Ism</strong> va <strong>PIN</strong> ustunlari bo'lishi kerak.
-          <a href="#" onclick="downloadTemplate()" style="color:var(--gold)">Shablon yuklab oling</a>.
+          <a href="#" onclick="downloadTemplate()" style="color:var(--neon)">Shablon yuklab oling</a>.
         </div>
         <div id="import-preview" style="display:none" class="card mb-16">
           <div class="card-header">
@@ -710,7 +710,7 @@
       <div class="form-group">
         <label>Foto</label>
         <input type="file" class="form-control" id="member-photo-file" accept="image/*" onchange="previewMemberPhoto(this)">
-        <img id="member-photo-preview" style="display:none;width:80px;height:80px;object-fit:cover;border-radius:50%;margin-top:8px;border:2px solid var(--gold)">
+        <img id="member-photo-preview" style="display:none;width:80px;height:80px;object-fit:cover;border-radius:50%;margin-top:8px;border:2px solid var(--neon)">
         <input type="hidden" id="member-photo">
       </div>
     </div>
@@ -851,7 +851,7 @@
       </div>
       <div class="form-group">
         <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
-          <input type="checkbox" id="doc-required" style="width:16px;height:16px;accent-color:var(--gold)">
+          <input type="checkbox" id="doc-required" style="width:16px;height:16px;accent-color:var(--neon)">
           <span>Majburiy o'qish</span>
         </label>
       </div>
@@ -1063,7 +1063,7 @@
   </div>
 </div>
 
-<script src="/js/utils.js?v=2.0"></script>
+<script src="/js/utils.js?v=3.0"></script>
 <script src="/js/creative.js?v=2.0"></script>
 <script>
 let menuItems = [], waiters = [], questions = [], announcements = [], results = [], testDays = [];
@@ -1139,10 +1139,10 @@ function renderDashboard() {
         </div>` : `
         <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:14px;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
           <div style="display:flex;align-items:center;gap:10px">
-            <i data-lucide="sun" style="width:18px;height:18px;color:var(--gold)"></i>
+            <i data-lucide="sun" style="width:18px;height:18px;color:var(--neon)"></i>
             <span style="font-size:0.9rem;color:var(--text2)">${greeting} — bugun oddiy ish kuni</span>
           </div>
-          ${nextTestDay?`<span style="font-size:0.8rem;color:var(--text3)">Keyingi test: <strong style="color:var(--gold)">${nextTestDay}</strong></span>`:''}
+          ${nextTestDay?`<span style="font-size:0.8rem;color:var(--text3)">Keyingi test: <strong style="color:var(--neon)">${nextTestDay}</strong></span>`:''}
         </div>`}
     </div>`);
 
@@ -1159,7 +1159,7 @@ function renderDashboard() {
   } else {
     annEl.innerHTML = announcements.slice(0,3).map((a,i) => `
       <div style="padding:11px 0;border-bottom:1px solid var(--border2);display:flex;gap:10px;align-items:flex-start">
-        <div style="width:6px;height:6px;border-radius:50%;background:var(--gold);flex-shrink:0;margin-top:6px"></div>
+        <div style="width:6px;height:6px;border-radius:50%;background:var(--neon);flex-shrink:0;margin-top:6px"></div>
         <div style="flex:1;min-width:0">
           <div class="dash-ann-t-${i}" style="font-weight:600;font-size:0.87rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
           <div style="color:var(--text3);font-size:0.74rem;margin-top:2px">${formatDateTime(a.createdAt)}</div>
@@ -1187,7 +1187,7 @@ function renderDashboard() {
           <div style="font-weight:600;font-size:0.87rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.waiterName}</div>
           <div style="color:var(--text3);font-size:0.73rem">${r.date}</div>
         </div>
-        ${r.hasCertificate?'<i data-lucide="award" style="width:15px;height:15px;color:var(--gold);flex-shrink:0"></i>':''}
+        ${r.hasCertificate?'<i data-lucide="award" style="width:15px;height:15px;color:var(--neon);flex-shrink:0"></i>':''}
       </div>`;
     }).join('');
   }
@@ -1455,7 +1455,7 @@ function addOption() {
   div.className = 'flex gap-8 mb-8';
   div.innerHTML = `
     <label style="display:flex;align-items:center;gap:8px;flex:1;padding:10px 12px;border:2px solid var(--border);border-radius:10px;cursor:pointer;transition:border-color 0.15s" id="opt-label-${idx}">
-      <input type="radio" name="correct-answer" value="${idx}" onchange="highlightCorrect(${idx})" style="accent-color:var(--gold)">
+      <input type="radio" name="correct-answer" value="${idx}" onchange="highlightCorrect(${idx})" style="accent-color:var(--neon)">
       <input type="text" class="form-control" id="opt-${idx}" placeholder="Javob varianti ${String.fromCharCode(65+idx)}" style="border:none;background:none;padding:0;outline:none;flex:1">
     </label>
     <button class="btn btn-ghost btn-sm btn-icon" onclick="this.parentElement.remove();reindexOptions()" ${idx===0?'style="visibility:hidden"':''}>
@@ -1467,7 +1467,7 @@ function addOption() {
 
 function highlightCorrect(selectedIdx) {
   document.querySelectorAll('[id^="opt-label-"]').forEach((el, i) => {
-    el.style.borderColor = i === selectedIdx ? 'var(--gold)' : 'var(--border)';
+    el.style.borderColor = i === selectedIdx ? 'var(--neon)' : 'var(--border)';
     el.style.background = i === selectedIdx ? 'rgba(0, 212, 255,0.08)' : 'transparent';
   });
 }
@@ -1567,7 +1567,7 @@ function renderTestDaysList() {
   el.innerHTML = [...testDays].sort().map(d => `
     <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border2)">
       <div style="display:flex;align-items:center;gap:10px">
-        <i data-lucide="calendar" style="width:16px;height:16px;color:var(--gold)"></i>
+        <i data-lucide="calendar" style="width:16px;height:16px;color:var(--neon)"></i>
         <span style="font-weight:600">${formatDate(d)}</span>
         ${d === new Date().toISOString().split('T')[0] ? '<span class="badge badge-warning">Bugun</span>' : ''}
       </div>
@@ -1611,11 +1611,11 @@ function renderAnnouncements() {
     renderIcons(); return;
   }
   el.innerHTML = announcements.map(a => `
-    <div class="card mb-16" style="border-left:3px solid var(--gold)">
+    <div class="card mb-16" style="border-left:3px solid var(--neon)">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
         <div>
           <div style="font-weight:700;font-size:1rem;margin-bottom:6px;display:flex;align-items:center;gap:8px">
-            <i data-lucide="megaphone" style="width:15px;height:15px;color:var(--gold)"></i> ${a.title}
+            <i data-lucide="megaphone" style="width:15px;height:15px;color:var(--neon)"></i> ${a.title}
           </div>
           <div style="color:var(--text2);font-size:0.9rem;line-height:1.6">${a.content}</div>
           <div style="color:var(--text3);font-size:0.75rem;margin-top:8px">${formatDateTime(a.createdAt)}</div>
@@ -1832,7 +1832,7 @@ function renderChecklistProgress(progress) {
   if (!progress.length) { el.innerHTML = '<div style="text-align:center;padding:60px;color:var(--text3)">Ofitsiantlar yo\'q</div>'; return; }
   el.innerHTML = progress.map(p => {
     const pct = p.total ? Math.round((p.completed/p.total)*100) : 0;
-    const color = pct===100 ? 'var(--success)' : pct>=50 ? 'var(--warning)' : 'var(--gold)';
+    const color = pct===100 ? 'var(--success)' : pct>=50 ? 'var(--warning)' : 'var(--neon)';
     return `<div class="card mb-12" style="padding:16px">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
         <div style="font-weight:600;flex:1">${p.waiterName}</div>
@@ -2060,12 +2060,12 @@ function renderManagement(list) {
   const sorted = [...list].sort((a,b) => (a.order||0)-(b.order||0));
   el.innerHTML = sorted.map(m => `
     <div style="display:flex;align-items:center;gap:16px;padding:14px 16px;border-bottom:1px solid var(--border)">
-      <div style="width:52px;height:52px;border-radius:50%;overflow:hidden;border:2px solid var(--gold);flex-shrink:0;background:var(--card2);display:flex;align-items:center;justify-content:center">
+      <div style="width:52px;height:52px;border-radius:50%;overflow:hidden;border:2px solid var(--neon);flex-shrink:0;background:var(--card2);display:flex;align-items:center;justify-content:center">
         ${m.photo ? `<img src="${m.photo}" style="width:100%;height:100%;object-fit:cover">` : `<i data-lucide="user" style="width:22px;height:22px;opacity:0.5"></i>`}
       </div>
       <div style="flex:1">
         <div style="font-weight:600">${m.name}</div>
-        <div style="color:var(--gold);font-size:0.82rem">${m.position}</div>
+        <div style="color:var(--neon);font-size:0.82rem">${m.position}</div>
         ${m.phone ? `<div style="color:var(--text3);font-size:0.78rem">${m.phone}</div>` : ''}
       </div>
       <div style="display:flex;gap:8px">
@@ -2364,7 +2364,7 @@ function renderQuizEditor() {
   el.innerHTML = quizQuestions.map((q,i) => `
     <div class="card mb-12" style="border:1px solid rgba(0, 212, 255,0.2)">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <span style="font-weight:700;color:var(--gold);font-size:0.85rem">${i+1}-savol</span>
+        <span style="font-weight:700;color:var(--neon);font-size:0.85rem">${i+1}-savol</span>
         <button class="btn btn-danger btn-sm" style="padding:4px 8px" onclick="removeQuizQ(${i})"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>
       </div>
       <div class="form-group" style="margin-bottom:10px">
@@ -2373,7 +2373,7 @@ function renderQuizEditor() {
       <div style="display:flex;flex-direction:column;gap:6px">
         ${(q.options||['','','','']).map((opt,oi) => `
           <div style="display:flex;align-items:center;gap:8px">
-            <input type="radio" name="correct_${i}" value="${oi}" ${q.correctAnswer===oi?'checked':''} onchange="quizQuestions[${i}].correctAnswer=${oi}" style="accent-color:var(--gold)">
+            <input type="radio" name="correct_${i}" value="${oi}" ${q.correctAnswer===oi?'checked':''} onchange="quizQuestions[${i}].correctAnswer=${oi}" style="accent-color:var(--neon)">
             <input type="text" class="form-control" style="flex:1" value="${opt||''}" oninput="quizQuestions[${i}].options[${oi}]=this.value" placeholder="${String.fromCharCode(65+oi)} varianti...">
           </div>`).join('')}
       </div>

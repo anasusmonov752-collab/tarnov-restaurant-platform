@@ -3,6 +3,7 @@ const { v4: uuidv4 } = require('uuid');
 const { auth } = require('../middleware/auth');
 const { asyncHandler } = require('../middleware/errorHandler');
 const Restaurant = require('../models/Restaurant');
+const { getPeriodKey, getPeriodLabel } = require('../utils/kpi');
 
 const router = express.Router();
 const guard = auth(['waiter']);
@@ -141,42 +142,18 @@ router.post('/checklist/:itemId/toggle', guard, asyncHandler(async (req, res) =>
   res.json({ success: true, done: !isDone });
 }));
 
+const KPI_DEFAULTS_WAITER = { masterMin:90,masterBonus:15,proMin:75,proBonus:0,goodMin:60,goodBonus:0,warningMin:45,warningPenalty:-10,penaltyMin:30,penaltyFine:-20,periodDays:10 };
+
 router.get('/kpi', guard, asyncHandler(async (req, res) => {
   const r       = await Restaurant.findOne({ id: req.user.restaurantId }, 'testResults kpiSettings');
   const results = (r?.testResults || []).filter(t => t.waiterId === req.user.waiterId);
-  const KPI_DEF = { masterMin:90,masterBonus:15,proMin:75,proBonus:0,goodMin:60,goodBonus:0,warningMin:45,warningPenalty:-10,penaltyMin:30,penaltyFine:-20 };
-  const s = { ...KPI_DEF, ...(r?.kpiSettings?.toObject?.() || r?.kpiSettings || {}) };
-
-  const days   = s.periodDays || 10;
-  const MUZ    = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'];
-
-  function getPeriodKey(date) {
-    const d=new Date(date), y=d.getFullYear(), mo=String(d.getMonth()+1).padStart(2,'0'), day=d.getDate();
-    if(days===7){ const j=new Date(y,0,1),w=Math.ceil(((d-j)/86400000+j.getDay()+1)/7); return `${y}-W${String(w).padStart(2,'0')}`; }
-    if(days===10){ return `${y}-${mo}-P${day<=10?'1':day<=20?'2':'3'}`; }
-    if(days===14){ return `${y}-${mo}-H${day<=14?'1':'2'}`; }
-    if(days===15){ return `${y}-${mo}-Q${day<=15?'1':'2'}`; }
-    return `${y}-${mo}`;
-  }
-  function getPeriodLabel(date) {
-    const d=new Date(date), y=d.getFullYear(), m=MUZ[d.getMonth()], day=d.getDate();
-    const last=new Date(y,d.getMonth()+1,0).getDate();
-    if(days===7){
-      const dow=d.getDay()===0?6:d.getDay()-1;
-      const st=new Date(d); st.setDate(day-dow);
-      const en=new Date(st); en.setDate(st.getDate()+6);
-      return `${st.getDate()} ${MUZ[st.getMonth()]} – ${en.getDate()} ${MUZ[en.getMonth()]} ${y}`;
-    }
-    if(days===10){ if(day<=10) return `1–10 ${m} ${y}`; if(day<=20) return `11–20 ${m} ${y}`; return `21–${last} ${m} ${y}`; }
-    if(days===14){ return day<=14?`1–14 ${m} ${y}`:`15–${last} ${m} ${y}`; }
-    if(days===15){ return day<=15?`1–15 ${m} ${y}`:`16–${last} ${m} ${y}`; }
-    return `${m} ${y}`;
-  }
+  const s = { ...KPI_DEFAULTS_WAITER, ...(r?.kpiSettings?.toObject?.() || r?.kpiSettings || {}) };
+  const days = s.periodDays || 10;
 
   const today      = new Date();
-  const todayKey   = getPeriodKey(today);
-  const periodLabel= getPeriodLabel(today);
-  const current    = results.filter(r => getPeriodKey(r.submittedAt||r.date) === todayKey);
+  const todayKey   = getPeriodKey(today, days);
+  const periodLabel = getPeriodLabel(today, days);
+  const current    = results.filter(res => getPeriodKey(res.submittedAt || res.date, days) === todayKey);
 
   if (!current.length) {
     const prev = [...results].sort((a,b)=>new Date(b.submittedAt)-new Date(a.submittedAt))[0];
@@ -191,10 +168,10 @@ router.get('/kpi', guard, asyncHandler(async (req, res) => {
   const avg = Math.round(current.reduce((s,r)=>s+r.score,0)/current.length);
 
   const byPeriod={};
-  results.forEach(r=>{const k=getPeriodKey(r.submittedAt||r.date);if(byPeriod[k]===undefined||r.score>byPeriod[k])byPeriod[k]=r.score;});
+  results.forEach(res=>{const k=getPeriodKey(res.submittedAt||res.date,days);if(byPeriod[k]===undefined||res.score>byPeriod[k])byPeriod[k]=res.score;});
   let d2=new Date(today), consecutiveLow=0;
   for(let i=0;i<6;i++){
-    const k=getPeriodKey(d2);
+    const k=getPeriodKey(d2,days);
     if(byPeriod[k]!==undefined){ if(byPeriod[k]<s.goodMin)consecutiveLow++; else break; }
     d2.setDate(d2.getDate()-days);
   }

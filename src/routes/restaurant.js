@@ -19,13 +19,19 @@ router.get('/menu', guard, asyncHandler(async (req, res) => {
   res.json(r?.menu || []);
 }));
 
+function parseList(val) {
+  if (!val) return [];
+  if (Array.isArray(val)) return val.map(v => String(v).trim()).filter(Boolean);
+  return String(val).split(',').map(v => v.trim()).filter(Boolean);
+}
+
 router.post('/menu', guard, asyncHandler(async (req, res) => {
   const { name, category, description, ingredients, allergens, price, servingSuggestion, imageBase64 } = req.body;
   if (!name || !category) return res.status(400).json({ error: 'Taom nomi va kategoriya majburiy' });
   const item = {
     id: uuidv4(), name, category, description: description || '',
-    ingredients: ingredients ? ingredients.split(',').map(i => i.trim()).filter(Boolean) : [],
-    allergens: allergens ? allergens.split(',').map(a => a.trim()).filter(Boolean) : [],
+    ingredients: parseList(ingredients),
+    allergens: parseList(allergens),
     price: parseInt(price) || 0, servingSuggestion: servingSuggestion || '',
     image: imageBase64 || null
   };
@@ -39,8 +45,8 @@ router.put('/menu/:itemId', guard, asyncHandler(async (req, res) => {
   if (name) update['menu.$.name'] = name;
   if (category) update['menu.$.category'] = category;
   if (description !== undefined) update['menu.$.description'] = description;
-  if (ingredients !== undefined) update['menu.$.ingredients'] = ingredients.split(',').map(i => i.trim()).filter(Boolean);
-  if (allergens !== undefined) update['menu.$.allergens'] = allergens.split(',').map(a => a.trim()).filter(Boolean);
+  if (ingredients !== undefined) update['menu.$.ingredients'] = parseList(ingredients);
+  if (allergens !== undefined) update['menu.$.allergens'] = parseList(allergens);
   if (price !== undefined) update['menu.$.price'] = parseInt(price) || 0;
   if (servingSuggestion !== undefined) update['menu.$.servingSuggestion'] = servingSuggestion;
   if (imageBase64) update['menu.$.image'] = imageBase64;
@@ -174,80 +180,7 @@ router.get('/results', guard, asyncHandler(async (req, res) => {
 }));
 
 // ---- KPI (dinamik davr tizimi) ----
-
-const MONTHS_UZ = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'];
-
-function getPeriodKey(date, days = 10) {
-  const d   = new Date(date);
-  const y   = d.getFullYear();
-  const m   = String(d.getMonth() + 1).padStart(2, '0');
-  const day = d.getDate();
-
-  if (days === 7) {
-    // ISO hafta raqami
-    const jan1   = new Date(y, 0, 1);
-    const week   = Math.ceil(((d - jan1) / 86400000 + jan1.getDay() + 1) / 7);
-    return `${y}-W${String(week).padStart(2,'0')}`;
-  }
-  if (days === 10) {
-    const p = day <= 10 ? '1' : day <= 20 ? '2' : '3';
-    return `${y}-${m}-P${p}`;
-  }
-  if (days === 14) {
-    const p = day <= 14 ? '1' : '2';
-    return `${y}-${m}-H${p}`;
-  }
-  if (days === 15) {
-    const p = day <= 15 ? '1' : '2';
-    return `${y}-${m}-Q${p}`;
-  }
-  // 30 kun = oylik
-  return `${y}-${m}`;
-}
-
-function getPeriodLabel(date, days = 10) {
-  const d   = new Date(date);
-  const y   = d.getFullYear();
-  const m   = MONTHS_UZ[d.getMonth()];
-  const day = d.getDate();
-  const lastDay = new Date(y, d.getMonth() + 1, 0).getDate();
-
-  if (days === 7) {
-    // Hafta boshi (Dushanba) va oxiri (Yakshanba)
-    const dow   = d.getDay() === 0 ? 6 : d.getDay() - 1; // 0=Dush
-    const start = new Date(d); start.setDate(day - dow);
-    const end   = new Date(start); end.setDate(start.getDate() + 6);
-    const sm = MONTHS_UZ[start.getMonth()];
-    const em = MONTHS_UZ[end.getMonth()];
-    return `${start.getDate()} ${sm} – ${end.getDate()} ${em} ${y}`;
-  }
-  if (days === 10) {
-    if (day <= 10)  return `1–10 ${m} ${y}`;
-    if (day <= 20)  return `11–20 ${m} ${y}`;
-    return `21–${lastDay} ${m} ${y}`;
-  }
-  if (days === 14) {
-    if (day <= 14)  return `1–14 ${m} ${y}`;
-    return `15–${lastDay} ${m} ${y}`;
-  }
-  if (days === 15) {
-    if (day <= 15)  return `1–15 ${m} ${y}`;
-    return `16–${lastDay} ${m} ${y}`;
-  }
-  return `${m} ${y}`;
-}
-
-// Oxirgi N davr keylarini qaytaradi
-function getLastPeriodKeys(n, days = 10) {
-  const keys = [];
-  let d = new Date();
-  while (keys.length < n) {
-    const key = getPeriodKey(d, days);
-    if (!keys.includes(key)) keys.push(key);
-    d.setDate(d.getDate() - days);
-  }
-  return keys;
-}
+const { getPeriodKey, getPeriodLabel, getLastPeriodKeys } = require('../utils/kpi');
 
 const KPI_DEFAULTS = {
   periodDays:10,
@@ -286,7 +219,7 @@ function calcKPI(results, cfg = {}) {
   else if (avg >= s.goodMin)    { level='good';    label='YAXSHI';        color='#2ECC71'; emoji='✅'; penalty=s.goodBonus;      }
   else if (avg >= s.warningMin) { level='warning'; label='OGOHLANTIRISH'; color='#E67E22'; emoji='⚠️'; penalty=s.warningPenalty; }
   else if (avg >= s.penaltyMin) { level='penalty'; label='JAZO';          color='#E74C3C'; emoji='🔴'; penalty=s.penaltyFine;    }
-  else                          { level='fail';    label='NOMUVOFIQ';      color='#9B59B6'; emoji='❌'; penalty:0;                }
+  else                          { level='fail';    label='NOMUVOFIQ';      color='#9B59B6'; emoji='❌'; penalty=0;                }
 
   return { level, label, color, emoji, avg, testCount:current.length, penalty, consecutiveLow, periodLabel };
 }
@@ -296,7 +229,7 @@ router.get('/kpi', guard, asyncHandler(async (req, res) => {
   const waiters = (r?.waiters || []).filter(w => w.active);
   const results = r?.testResults || [];
   const cfg     = r?.kpiSettings?.toObject ? r.kpiSettings.toObject() : (r?.kpiSettings || {});
-  const periodLabel = getPeriodLabel(new Date());
+  const periodLabel = getPeriodLabel(new Date(), cfg.periodDays || KPI_DEFAULTS.periodDays);
 
   const kpiList = waiters.map(w => {
     const wr   = results.filter(r => r.waiterId === w.id);
@@ -515,6 +448,16 @@ router.post('/modules', guard, asyncHandler(async (req, res) => {
   res.json({ success: true, module });
 }));
 
+// Reorder modules — must be BEFORE /:moduleId to avoid route shadowing
+router.put('/modules/reorder', guard, asyncHandler(async (req, res) => {
+  const { orders } = req.body; // [{ id, order }]
+  const bulkOps = orders.map(({ id, order }) => ({
+    updateOne: { filter: { id: req.user.restaurantId, 'modules.id': id }, update: { $set: { 'modules.$.order': order } } }
+  }));
+  await Restaurant.bulkWrite(bulkOps);
+  res.json({ success: true });
+}));
+
 // Update module
 router.put('/modules/:moduleId', guard, asyncHandler(async (req, res) => {
   const { title, description, emoji, color, order, passingScore } = req.body;
@@ -532,16 +475,6 @@ router.put('/modules/:moduleId', guard, asyncHandler(async (req, res) => {
 // Delete module
 router.delete('/modules/:moduleId', guard, asyncHandler(async (req, res) => {
   await Restaurant.updateOne({ id: req.user.restaurantId }, { $pull: { modules: { id: req.params.moduleId } } });
-  res.json({ success: true });
-}));
-
-// Reorder modules
-router.put('/modules/reorder', guard, asyncHandler(async (req, res) => {
-  const { orders } = req.body; // [{ id, order }]
-  const bulkOps = orders.map(({ id, order }) => ({
-    updateOne: { filter: { id: req.user.restaurantId, 'modules.id': id }, update: { $set: { 'modules.$.order': order } } }
-  }));
-  await Restaurant.bulkWrite(bulkOps);
   res.json({ success: true });
 }));
 

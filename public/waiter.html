@@ -838,7 +838,7 @@ function renderMenuCategories() {
   const catIcons = {'Asosiy taomlar':'🍽','Salatlar':'🥗','Sho\'rvalar':'🍲','Ichimliklar':'🥤','Shirinliklar':'🍰','Non mahsulotlari':'🍞','Mazza':'🫙','Alkogolsiz':'🧃'};
   document.getElementById('menu-cats').innerHTML =
     `<button class="safia-pill active" onclick="filterCat('all',this)"><span>🍴</span> Hammasi <span class="pill-count">${menuData.length}</span></button>` +
-    cats.map(c=>`<button class="safia-pill" onclick="filterCat('${c}',this)">${catIcons[c]||'🍴'} ${c} <span class="pill-count">${menuData.filter(m=>m.category===c).length}</span></button>`).join('');
+    cats.map(c=>`<button class="safia-pill" onclick="filterCat(this.dataset.cat,this)" data-cat="${c.replace(/"/g,'&quot;')}">${catIcons[c]||'🍴'} ${c} <span class="pill-count">${menuData.filter(m=>m.category===c).length}</span></button>`).join('');
 }
 
 function filterCat(cat, btn) {

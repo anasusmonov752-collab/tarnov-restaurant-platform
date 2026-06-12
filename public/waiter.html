@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="RestoPro">
   <link rel="apple-touch-icon" href="/images/icon.svg">
-  <link rel="stylesheet" href="/css/style.css?v=3.1">
+  <link rel="stylesheet" href="/css/style.css?v=4.0">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -72,8 +72,8 @@
       </div>
     </div>
     <div id="menu-visible">
-      <div class="category-pills" id="menu-cats"></div>
-      <div class="menu-grid" id="menu-items"></div>
+      <div class="safia-filter-bar" id="menu-cats"></div>
+      <div class="menu-grid" id="menu-items" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px"></div>
     </div>
   </div>
 
@@ -622,7 +622,7 @@ async function init() {
       document.getElementById('home-sub').textContent = 'Bugun test kuni. Omad tilaymiz!';
     }
     renderHomeAnnouncements();
-    loadHistory().then(renderHomeStats);
+    loadHistory().then(() => { renderHomeStats(); renderWelcomeWizard(); });
     loadHomeKPI();
     renderIcons();
   } catch (e) { toast(e.message, 'error'); }
@@ -700,6 +700,68 @@ function calcStreak(history) {
   return streak;
 }
 
+function renderWelcomeWizard() {
+  if (historyData.length > 0) return; // faqat yangi xodimlar uchun
+  if (localStorage.getItem('wizard_dismissed_' + (waiterInfo?.waiter?.id||'x'))) return;
+  const name = waiterInfo?.waiter?.name?.split(' ')[0] || 'Xodim';
+  const el = document.getElementById('home-announcements');
+  const wiz = document.createElement('div');
+  wiz.className = 'welcome-wizard mb-16';
+  wiz.id = 'welcome-wizard';
+  wiz.innerHTML = `
+    <button onclick="document.getElementById('welcome-wizard').remove();localStorage.setItem('wizard_dismissed_${waiterInfo?.waiter?.id||'x'}','1')"
+      style="position:absolute;top:14px;right:14px;background:none;border:none;cursor:pointer;color:var(--text3);font-size:1.1rem;z-index:2">✕</button>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+      <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,var(--neon),#0099CC);display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0">👋</div>
+      <div>
+        <div style="font-weight:800;font-size:1.1rem">Xush kelibsiz, ${name}!</div>
+        <div style="font-size:0.8rem;color:var(--text3);margin-top:2px">Platformadan foydalanishni boshlash uchun 3 qadam</div>
+      </div>
+    </div>
+    <div class="wizard-steps">
+      <div class="wizard-step active">
+        <div class="wizard-step-dot">1</div>
+        <div class="wizard-step-label">Kirish</div>
+      </div>
+      <div class="wizard-step">
+        <div class="wizard-step-dot">2</div>
+        <div class="wizard-step-label">Menyu</div>
+      </div>
+      <div class="wizard-step">
+        <div class="wizard-step-dot">3</div>
+        <div class="wizard-step-label">Test</div>
+      </div>
+    </div>
+    <div style="background:rgba(0,0,0,0.2);border-radius:14px;padding:16px 18px;margin-bottom:20px">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:34px;height:34px;border-radius:10px;background:rgba(0,212,255,0.15);border:1px solid rgba(0,212,255,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0">✅</div>
+          <div><div style="font-weight:700;font-size:0.88rem">Tizimga kirdingiz</div><div style="font-size:0.75rem;color:var(--text3)">PIN kod bilan muvaffaqiyatli</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:34px;height:34px;border-radius:10px;background:rgba(155,89,182,0.12);border:1px solid rgba(155,89,182,0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1rem">📋</div>
+          <div><div style="font-weight:700;font-size:0.88rem">Menyuni o'rganing</div><div style="font-size:0.75rem;color:var(--text3)">Barcha taomlar, narxlar va tarkiblar</div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:34px;height:34px;border-radius:10px;background:rgba(243,156,18,0.12);border:1px solid rgba(243,156,18,0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1rem">🏆</div>
+          <div><div style="font-weight:700;font-size:0.88rem">Test topshiring</div><div style="font-size:0.75rem;color:var(--text3)">90%+ ball → Sertifikat</div></div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button onclick="showWaiterPage('menu',document.getElementById('nav-menu'));document.getElementById('welcome-wizard').remove()"
+        style="flex:1;padding:12px;border-radius:12px;border:none;cursor:pointer;background:linear-gradient(135deg,var(--neon),#0099CC);color:#000;font-weight:800;font-size:0.88rem;display:flex;align-items:center;justify-content:center;gap:6px">
+        📋 Menyuni ko'rish
+      </button>
+      <button onclick="document.getElementById('welcome-wizard').remove();localStorage.setItem('wizard_dismissed_${waiterInfo?.waiter?.id||'x'}','1')"
+        style="padding:12px 18px;border-radius:12px;border:1px solid var(--border);cursor:pointer;background:transparent;color:var(--text2);font-size:0.85rem">
+        Keyinroq
+      </button>
+    </div>`;
+  el.insertAdjacentElement('beforebegin', wiz);
+  renderIcons();
+}
+
 function renderHomeStats() {
   if (!historyData.length) return;
   const best   = Math.max(...historyData.map(r=>r.score));
@@ -773,13 +835,14 @@ async function loadMenu() {
 
 function renderMenuCategories() {
   const cats = [...new Set(menuData.map(m=>m.category))];
+  const catIcons = {'Asosiy taomlar':'🍽','Salatlar':'🥗','Sho\'rvalar':'🍲','Ichimliklar':'🥤','Shirinliklar':'🍰','Non mahsulotlari':'🍞','Mazza':'🫙','Alkogolsiz':'🧃'};
   document.getElementById('menu-cats').innerHTML =
-    `<button class="pill active" onclick="filterCat('all',this)">Hammasi (${menuData.length})</button>` +
-    cats.map(c=>`<button class="pill" onclick="filterCat('${c}',this)">${c} (${menuData.filter(m=>m.category===c).length})</button>`).join('');
+    `<button class="safia-pill active" onclick="filterCat('all',this)"><span>🍴</span> Hammasi <span class="pill-count">${menuData.length}</span></button>` +
+    cats.map(c=>`<button class="safia-pill" onclick="filterCat('${c}',this)">${catIcons[c]||'🍴'} ${c} <span class="pill-count">${menuData.filter(m=>m.category===c).length}</span></button>`).join('');
 }
 
 function filterCat(cat, btn) {
-  document.querySelectorAll('.category-pills .pill').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.safia-pill').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   activeCategory = cat;
   renderMenuItems(cat);
@@ -793,19 +856,24 @@ function renderMenuItems(cat) {
       <div class="empty-icon"><i data-lucide="utensils"></i></div><h3>Taom topilmadi</h3></div>`;
     renderIcons(); return;
   }
-  grid.innerHTML = items.map(item=>`
-    <div class="menu-card" onclick="showMenuDetail('${item.id}')" style="cursor:pointer">
-      <div class="menu-card-img">
-        ${item.image?`<img src="${item.image}" alt="${item.name}" onerror="this.style.display='none'">` : `<i data-lucide="utensils" style="width:36px;height:36px;opacity:0.3"></i>`}
+  const catColors = {'Asosiy taomlar':'#3498DB','Salatlar':'#2ECC71','Sho\'rvalar':'#E67E22','Ichimliklar':'#00D4FF','Shirinliklar':'#E91E8C','Non mahsulotlari':'#F39C12','Mazza':'#9B59B6','Alkogolsiz':'#1ABC9C'};
+  grid.innerHTML = items.map(item=>{
+    const cc = catColors[item.category]||'#00D4FF';
+    return `
+    <div class="food-card" onclick="showMenuDetail('${item.id}')">
+      <div class="food-card-img">
+        ${item.image
+          ? `<img src="${item.image}" alt="${item.name}" onerror="this.parentElement.innerHTML='<div class=food-no-img><i data-lucide=utensils style=width:40px;height:40px></i></div>'">`
+          : `<div class="food-no-img"><i data-lucide="utensils" style="width:40px;height:40px"></i></div>`}
+        <span class="food-card-cat-chip" style="border-color:${cc}55;background:rgba(0,0,0,0.6)">${item.category}</span>
+        ${item.price?`<span class="food-card-price-tag">${formatPrice(item.price)}</span>`:''}
       </div>
-      <div class="menu-card-body">
-        <div class="menu-card-cat">${item.category}</div>
-        <div class="menu-card-name">${item.name}</div>
-        <div class="menu-card-desc">${item.description||'Tavsif yo\'q'}</div>
-        ${item.allergens?.length?`<div style="margin-bottom:6px">${item.allergens.map(a=>`<span class="tag tag-allergen"><i data-lucide="alert-triangle" style="width:10px;height:10px"></i> ${a}</span>`).join('')}</div>`:''}
-        <div class="menu-card-price">${formatPrice(item.price)}</div>
+      <div class="food-card-body">
+        <div class="food-card-name">${item.name}</div>
+        <div class="food-card-desc">${item.description||'Tavsif berilmagan'}</div>
+        ${item.allergens?.length?`<div class="food-card-tags">${item.allergens.map(a=>`<span class="food-card-tag">⚠ ${a}</span>`).join('')}</div>`:''}
       </div>
-    </div>`).join('');
+    </div>`}).join('');
   renderIcons();
   init3DTilt();
 }

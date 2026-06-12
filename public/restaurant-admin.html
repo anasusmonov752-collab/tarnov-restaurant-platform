@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="RestoPro Admin">
   <link rel="apple-touch-icon" href="/images/icon.svg">
-  <link rel="stylesheet" href="/css/style.css?v=3.1">
+  <link rel="stylesheet" href="/css/style.css?v=4.0">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
@@ -1263,17 +1263,15 @@ function renderDashboard() {
     { icon:'award',       value:certCount,           label:'Sertifikatlar',    color:'#F39C12', bg:'rgba(243,156,18,0.1)',  border:'rgba(243,156,18,0.25)'  },
   ];
 
-  document.getElementById('dash-stats').innerHTML = stats.map(s => `
-    <div class="stat-card" style="border-color:${s.border};background:${s.bg}">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
-        <div style="width:40px;height:40px;border-radius:10px;background:${s.color}20;border:1px solid ${s.color}40;display:flex;align-items:center;justify-content:center">
-          <i data-lucide="${s.icon}" style="width:18px;height:18px;color:${s.color}"></i>
-        </div>
-        <div style="font-size:0.65rem;color:${s.color};font-weight:700;letter-spacing:0.08em;opacity:0.7;text-transform:uppercase;margin-top:4px">+0.0%</div>
+  document.getElementById('dash-stats').innerHTML = `<div class="hero-counters">` + stats.map(s => `
+    <div class="hero-counter-card" style="--hc-color:${s.color};background:linear-gradient(145deg,${s.bg},rgba(8,15,26,0.6));border-color:${s.border}">
+      <div class="hero-counter-trend" style="background:${s.color}18;color:${s.color}">LIVE</div>
+      <div class="hero-counter-icon" style="background:${s.color}20;border:1px solid ${s.color}35">
+        <i data-lucide="${s.icon}" style="width:20px;height:20px;color:${s.color}"></i>
       </div>
-      <div class="stat-value" data-target="${s.value}" style="color:${s.color}">0</div>
-      <div class="stat-label">${s.label}</div>
-    </div>`).join('');
+      <div class="hero-counter-num" data-target="${s.value}" style="color:${s.color}">0</div>
+      <div class="hero-counter-label">${s.label}</div>
+    </div>`).join('') + `</div>`;
 
   // Test kuni banneri (bitta bo'lsin)
   document.getElementById('dash-today-bar')?.remove();
@@ -1307,9 +1305,9 @@ function renderDashboard() {
     </div>`);
 
   // Stat counter animatsiyasi
-  document.querySelectorAll('#dash-stats .stat-value[data-target]').forEach(el => {
+  document.querySelectorAll('#dash-stats .hero-counter-num[data-target]').forEach(el => {
     const t = parseInt(el.dataset.target, 10);
-    if (t > 0) animateCounter(el, t, 1100); else el.textContent = t;
+    if (t > 0) animateCounter(el, t, 1200); else el.textContent = t;
   });
 
   // E'lonlar

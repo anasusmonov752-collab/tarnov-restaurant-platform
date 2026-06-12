@@ -3112,3 +3112,201 @@ input:-webkit-autofill:focus {
   .waiter-nav-item span:not(.nav-icon) { display: none; }
   .waiter-nav-item { padding: 8px 6px; }
 }
+
+/* =========================================================
+   MENU CATALOG v5.0 — Safia-style sections + detail sheet
+   ========================================================= */
+
+/* ── MENU SECTION (kategoriya bo'limi) ───────────────── */
+.menu-section { margin-bottom: 32px; }
+
+.menu-section-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 14px; padding: 0 2px;
+}
+.menu-section-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; flex-shrink: 0;
+}
+.menu-section-title {
+  font-weight: 800; font-size: 1.05rem; flex: 1;
+}
+.menu-section-count {
+  font-size: 0.75rem; font-weight: 700;
+  padding: 3px 10px; border-radius: 20px;
+  background: rgba(255,255,255,0.06);
+  color: var(--text3);
+  border: 1px solid var(--border);
+}
+
+/* ── HORIZONTAL SCROLL ROW ───────────────────────────── */
+.menu-hscroll {
+  display: flex; gap: 14px;
+  overflow-x: auto; overflow-y: visible;
+  padding: 4px 2px 12px;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+.menu-hscroll::-webkit-scrollbar { display: none; }
+
+/* ── PORTRAIT FOOD CARD (horizontal scroll) ───────────── */
+.food-card-p {
+  flex-shrink: 0;
+  width: 168px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition: transform 0.25s cubic-bezier(.22,.68,0,1.2), box-shadow 0.25s, border-color 0.2s;
+}
+.food-card-p:hover {
+  transform: translateY(-5px) scale(1.02);
+  border-color: rgba(0,212,255,0.4);
+  box-shadow: 0 14px 36px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,212,255,0.1);
+}
+.food-card-p .fcp-img {
+  width: 100%; height: 150px;
+  position: relative; overflow: hidden;
+  background: var(--card2);
+  display: flex; align-items: center; justify-content: center;
+}
+.food-card-p .fcp-img img {
+  width: 100%; height: 100%; object-fit: cover;
+  transition: transform 0.4s ease;
+}
+.food-card-p:hover .fcp-img img { transform: scale(1.08); }
+.food-card-p .fcp-img::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(8,15,26,0.8) 0%, transparent 55%);
+}
+.food-card-p .fcp-price {
+  position: absolute; bottom: 8px; left: 10px; z-index: 2;
+  font-size: 0.82rem; font-weight: 800;
+  color: var(--neon);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+}
+.food-card-p .fcp-body {
+  padding: 10px 12px 12px;
+}
+.food-card-p .fcp-name {
+  font-weight: 700; font-size: 0.85rem; line-height: 1.3;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.food-card-p .fcp-allergen {
+  margin-top: 5px;
+  font-size: 0.65rem; color: #E74C3C; font-weight: 700;
+}
+
+/* ── DETAIL BOTTOM SHEET ─────────────────────────────── */
+#food-detail-sheet {
+  position: fixed; inset: 0; z-index: 800;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: flex-end;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s;
+}
+#food-detail-sheet.show {
+  opacity: 1; pointer-events: all;
+}
+#food-detail-inner {
+  width: 100%; max-width: 560px;
+  margin: 0 auto;
+  background: var(--card);
+  border-radius: 24px 24px 0 0;
+  max-height: 92vh;
+  overflow-y: auto;
+  transform: translateY(40px);
+  transition: transform 0.35s cubic-bezier(.22,.68,0,1.2);
+  scrollbar-width: none;
+}
+#food-detail-sheet.show #food-detail-inner {
+  transform: translateY(0);
+}
+#food-detail-inner::-webkit-scrollbar { display: none; }
+
+.fds-hero {
+  width: 100%; height: 280px;
+  position: relative; overflow: hidden;
+  background: var(--card2);
+  display: flex; align-items: center; justify-content: center;
+}
+.fds-hero img { width: 100%; height: 100%; object-fit: cover; }
+.fds-hero::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(8,15,26,0.95) 0%, rgba(8,15,26,0.3) 50%, transparent 100%);
+}
+.fds-hero-content {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 20px 24px;
+  z-index: 2;
+}
+.fds-cat-chip {
+  display: inline-block; padding: 3px 12px;
+  border-radius: 20px; font-size: 0.7rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.2); color: #fff;
+  margin-bottom: 8px;
+}
+.fds-name {
+  font-size: 1.4rem; font-weight: 900; color: #fff; line-height: 1.2;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+.fds-price {
+  font-size: 1.2rem; font-weight: 800;
+  color: var(--neon); margin-top: 4px;
+}
+.fds-close {
+  position: absolute; top: 16px; right: 16px; z-index: 3;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(0,0,0,0.55); backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.15);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #fff; font-size: 1rem;
+  transition: background 0.2s;
+}
+.fds-close:hover { background: rgba(0,0,0,0.8); }
+.fds-body { padding: 20px 24px 32px; }
+.fds-handle {
+  width: 40px; height: 4px; border-radius: 2px;
+  background: var(--border); margin: 0 auto 20px;
+}
+.fds-section-title {
+  font-size: 0.72rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--text3); margin-bottom: 10px;
+}
+.fds-desc {
+  color: var(--text2); font-size: 0.9rem; line-height: 1.7;
+  margin-bottom: 20px;
+}
+.fds-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+.fds-chip {
+  padding: 5px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
+  background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.25); color: var(--neon);
+}
+.fds-chip-warn {
+  background: rgba(231,76,60,0.1); border-color: rgba(231,76,60,0.3); color: #E74C3C;
+}
+.fds-suggestion {
+  padding: 14px 16px;
+  background: rgba(0,212,255,0.06);
+  border-left: 3px solid var(--neon);
+  border-radius: 0 10px 10px 0;
+  font-size: 0.85rem; color: var(--text2); font-style: italic; line-height: 1.6;
+}
+.fds-no-img {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  opacity: 0.2; font-size: 3rem;
+}
+
+@media (min-width: 560px) {
+  #food-detail-sheet { align-items: center; padding: 20px; }
+  #food-detail-inner { border-radius: 24px; max-height: 88vh; }
+}

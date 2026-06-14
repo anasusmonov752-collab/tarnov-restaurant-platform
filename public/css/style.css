@@ -428,26 +428,26 @@ textarea.form-control { resize: vertical; min-height: 90px; }
 .sidebar-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 13px;
   margin-bottom: 16px;
 }
 .sidebar-brand-icon {
-  width: 34px; height: 34px;
-  background: linear-gradient(135deg, var(--neon), var(--neon-dark));
-  border-radius: 9px;
+  width: 48px; height: 48px;
+  background: transparent;
+  border-radius: 12px;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(200,146,42,0.35);
 }
-.sidebar-brand-icon svg { width: 17px; height: 17px; color: #fff; stroke: #fff; }
-.sidebar-brand-text { line-height: 1.2; }
+.sidebar-brand-icon svg { width: 48px; height: 48px; }
+.sidebar-brand-text { line-height: 1.25; }
 .sidebar-brand-text .brand-name {
-  font-size: 0.92rem; font-weight: 800;
-  letter-spacing: 0.04em; color: rgba(245,240,229,0.95);
+  font-size: 1.1rem; font-weight: 800;
+  letter-spacing: 0.01em; color: rgba(245,240,229,1);
+  font-family: 'Outfit', sans-serif;
 }
 .sidebar-brand-text .brand-sub {
-  font-size: 0.62rem; color: rgba(245,240,229,0.35);
-  letter-spacing: 0.12em; text-transform: uppercase;
+  font-size: 0.65rem; color: rgba(245,240,229,0.5);
+  letter-spacing: 0.14em; text-transform: uppercase;
 }
 .sidebar-role-badge {
   display: inline-flex; align-items: center; gap: 5px;

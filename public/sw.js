@@ -1,5 +1,5 @@
 // ── RestoPro Training Platform — Service Worker ──
-const VERSION   = 'restopro-v5';
+const VERSION   = 'restopro-v6';
 const STATIC    = 'restopro-static-v5';
 const API_CACHE = 'restopro-api-v5';
 
@@ -9,7 +9,7 @@ const PRECACHE = [
   '/index.html',
   '/waiter.html',
   '/restaurant-admin.html',
-  '/css/style.css?v=5.0',
+  '/css/style.css?v=6.0',
   '/js/utils.js',
   '/images/logo.jpg',
   '/images/logo.svg',

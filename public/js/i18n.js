@@ -178,6 +178,7 @@
     "Bugun test kuni!": "Сегодня день теста!",
     "Menyu ofitsiantlardan yashirilgan": "Меню скрыто от официантов",
     "Menyu test kuni yashiriladi.": "Меню скрывается в день теста.",
+    "Testga tayyorlanish uchun vaqtingizni sarflang.": "Потратьте время на подготовку к тесту.",
 
     // ─── Test (waiter) ───
     "Test topshirish": "Пройти тест",

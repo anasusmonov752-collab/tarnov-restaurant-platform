@@ -3,17 +3,17 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --bg: #080806;
-  --card: #0F0E0A;
-  --card2: #141209;
-  --neon: #C8922A;
-  --neon-light: #DBA543;
-  --neon-dark: #9A6F1A;
-  --border: #241E0E;
-  --border2: #1A1508;
-  --text: #F0E8D8;
-  --text2: #A89070;
-  --text3: #5A4A30;
+  --bg: #0C0B07;
+  --card: #1A1710;
+  --card2: #211E12;
+  --neon: #D4982E;
+  --neon-light: #E8B84B;
+  --neon-dark: #A87420;
+  --border: #2E2714;
+  --border2: #241F0F;
+  --text: #F5EDD8;
+  --text2: #B8A07A;
+  --text3: #6B5838;
   --success: #00FF88;
   --danger: #FF3B5C;
   --warning: #FFB800;
@@ -21,8 +21,8 @@
   --easy: #00FF88;
   --medium: #FFB800;
   --hard: #FF3B5C;
-  --neon-glow: 0 0 20px rgba(200,146,42,0.4), 0 0 40px rgba(200,146,42,0.15);
-  --neon-glow-sm: 0 0 10px rgba(200,146,42,0.3);
+  --neon-glow: 0 0 24px rgba(212,152,46,0.6), 0 0 50px rgba(212,152,46,0.25);
+  --neon-glow-sm: 0 0 14px rgba(212,152,46,0.5);
 }
 
 body {
@@ -56,11 +56,11 @@ h1, h2, h3, h4 { font-weight: 700; letter-spacing: -0.025em; }
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #07060200;
+  background: #0C0A04;
   background-image:
-    radial-gradient(ellipse at 50% -10%, rgba(200,146,42,0.22) 0%, transparent 60%),
-    radial-gradient(ellipse at 0% 100%, rgba(140,80,10,0.10) 0%, transparent 50%),
-    radial-gradient(ellipse at 100% 60%, rgba(180,110,20,0.06) 0%, transparent 45%);
+    radial-gradient(ellipse at 50% -10%, rgba(212,152,46,0.35) 0%, transparent 60%),
+    radial-gradient(ellipse at 0% 100%,  rgba(160,100,15,0.18) 0%, transparent 50%),
+    radial-gradient(ellipse at 100% 60%, rgba(200,130,20,0.10) 0%, transparent 45%);
   padding: 20px;
   position: relative;
   overflow: hidden;
@@ -589,8 +589,8 @@ textarea.form-control { resize: vertical; min-height: 90px; }
 
 .stat-card:hover {
   transform: translateY(-3px) scale(1.01);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 30px rgba(200,146,42,0.08), 0 0 0 1px rgba(200,146,42,0.12);
-  border-color: rgba(200,146,42,0.2);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 30px rgba(212,152,46,0.2), 0 0 0 1px rgba(212,152,46,0.3);
+  border-color: rgba(212,152,46,0.35);
 }
 
 .stat-card::after {
@@ -631,10 +631,10 @@ textarea.form-control { resize: vertical; min-height: 90px; }
   width: 48px;
   height: 48px;
   border-radius: 14px;
-  background: rgba(200,146,42,0.12);
+  background: rgba(212,152,46,0.16);
   color: var(--neon);
-  border: 1px solid rgba(200,146,42,0.2);
-  box-shadow: 0 4px 12px rgba(200,146,42,0.15);
+  border: 1px solid rgba(212,152,46,0.30);
+  box-shadow: 0 4px 16px rgba(212,152,46,0.25);
 }
 
 /* ========== TABLE ========== */
@@ -1496,11 +1496,11 @@ svg.lucide, i[data-lucide] {
 
 /* Glass variables */
 :root {
-  --glass-bg:       rgba(14, 10, 3, 0.58);
-  --glass-border:   rgba(200,146,42, 0.16);
-  --glass-shine:    rgba(255, 210, 100, 0.06);
+  --glass-bg:       rgba(22, 18, 8, 0.65);
+  --glass-border:   rgba(212,152,46, 0.22);
+  --glass-shine:    rgba(255, 220, 120, 0.08);
   --glass-blur:     24px;
-  --glass-shadow:   0 8px 40px rgba(0,0,0,0.5), 0 1px 0 rgba(255,200,80,0.05) inset;
+  --glass-shadow:   0 8px 40px rgba(0,0,0,0.45), 0 1px 0 rgba(255,210,90,0.07) inset;
 }
 
 /* Ambient background glows — give backdrop-filter something to blur */
@@ -1508,23 +1508,23 @@ body {
   position: relative;
   overflow-x: hidden;
   background:
-    radial-gradient(ellipse 60% 40% at 15% 20%, rgba(200,146,42,0.09) 0%, transparent 70%),
-    radial-gradient(ellipse 50% 35% at 85% 75%, rgba(200,146,42,0.07) 0%, transparent 65%),
-    radial-gradient(ellipse 40% 30% at 50% 50%, rgba(200,120,30,0.05) 0%, transparent 60%),
-    #0A0A0A;
+    radial-gradient(ellipse 70% 50% at 20% 15%, rgba(212,152,46,0.18) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 40% at 80% 80%, rgba(180,110,20,0.13) 0%, transparent 60%),
+    radial-gradient(ellipse 45% 35% at 50% 50%, rgba(212,140,30,0.08) 0%, transparent 55%),
+    #0C0B07;
 }
 
 /* ---- GLASS MIXIN (applied via classes & overrides) ---- */
 
 /* Sidebar glass */
 .sidebar {
-  background: rgba(14, 11, 5, 0.6) !important;
+  background: rgba(18, 15, 6, 0.75) !important;
   backdrop-filter: blur(var(--glass-blur)) saturate(160%) !important;
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%) !important;
-  border-right: 1px solid var(--glass-border) !important;
+  border-right: 1px solid rgba(212,152,46,0.2) !important;
   box-shadow:
-    4px 0 40px rgba(0,0,0,0.5),
-    inset -1px 0 0 rgba(200,146,42,0.1),
+    4px 0 40px rgba(0,0,0,0.4),
+    inset -1px 0 0 rgba(212,152,46,0.15),
     inset 1px 0 0 rgba(255,255,255,0.03) !important;
 }
 

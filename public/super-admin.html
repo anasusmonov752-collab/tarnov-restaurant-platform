@@ -187,11 +187,11 @@ async function loadDashboard() {
 function renderStats() {
   const d = dashData;
   const cards = [
-    { icon:'store',        value:d.total,                             label:'Jami restoranlar', color:'#3498DB', bg:'rgba(52,152,219,0.1)',  border:'rgba(52,152,219,0.25)' },
+    { icon:'store',        value:d.total,                             label:'Jami restoranlar', color:'#D4982E', bg:'rgba(212,152,46,0.1)',  border:'rgba(212,152,46,0.25)' },
     { icon:'circle-check', value:d.active,                            label:'Faol restoranlar', color:'#2ECC71', bg:'rgba(46,204,113,0.1)',  border:'rgba(46,204,113,0.25)' },
     { icon:'chef-hat',     value:d.totalWaiters,                      label:'Jami xodimlar',    color:'#9B59B6', bg:'rgba(155,89,182,0.1)', border:'rgba(155,89,182,0.25)' },
     { icon:'utensils',     value:d.totalMenuItems,                    label:'Menyu taomlar',    color:'#F39C12', bg:'rgba(243,156,18,0.1)',  border:'rgba(243,156,18,0.25)' },
-    { icon:'wallet',       value:`${(d.totalRevenue/1000000).toFixed(1)}M`, label:"Oylik daromad", color:'#00D4FF', bg:'rgba(0, 212, 255,0.1)', border:'rgba(0, 212, 255,0.25)' },
+    { icon:'wallet',       value:`${(d.totalRevenue/1000000).toFixed(1)}M`, label:"Oylik daromad", color:'#D4982E', bg:'rgba(212,152,46,0.1)', border:'rgba(212,152,46,0.25)' },
   ];
   document.getElementById('dash-stats').innerHTML = cards.map(c => `
     <div class="stat-card" style="border-color:${c.border};background:linear-gradient(135deg,${c.bg},var(--card))">

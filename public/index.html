@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-title" content="RestoOne">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,800&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -194,11 +194,13 @@
     /* ── HOW IT WORKS (split rows) ── */
     .how-wrap { display:flex; flex-direction:column; gap: 80px; margin-top: 56px; }
     .how-row {
-      display: grid; grid-template-columns: 1fr 1fr;
+      display: flex; flex-direction: row;
       gap: 56px; align-items: center;
     }
-    .how-row.reverse { direction: rtl; }
-    .how-row.reverse > * { direction: ltr; }
+    .how-row .how-text { flex: 1; }
+    .how-row .phone-wrap { flex: 1; display:flex; justify-content:center; }
+    .how-row.reverse .how-text { order: 2; }
+    .how-row.reverse .phone-wrap { order: 1; }
     .how-text {}
     .how-num {
       font-family: 'Playfair Display', serif;
@@ -497,7 +499,7 @@
       <a href="#cases" class="nav-link">Natijalar</a>
     </div>
     <div class="nav-badge"><div class="badge-dot"></div>Faol</div>
-    <button class="nav-btn" onclick="scrollTo('login')">
+    <button class="nav-btn" onclick="gotoSection('login')">
       <i data-lucide="log-in" style="width:15px;height:15px"></i> Kirish
     </button>
   </div>
@@ -520,7 +522,7 @@
         Menyu bilimi, test va sertifikat — barchasi bitta platformada. Xodimlaringiz bilimini oshiring, servis sifatini ko'taring.
       </p>
       <div class="hero-btns">
-        <button class="btn-dark" onclick="scrollTo('login')">
+        <button class="btn-dark" onclick="gotoSection('login')">
           <i data-lucide="arrow-right" style="width:17px;height:17px"></i>
           Hoziroq boshlash
         </button>
@@ -594,7 +596,7 @@
             <span class="chip"><i data-lucide="check" style="width:11px;height:11px;color:var(--gold)"></i> 30 soniya vaqt</span>
           </div>
         </div>
-        <div class="phone-wrap" style="display:flex;justify-content:center">
+        <div class="phone-wrap">
           <div class="phone-frame" style="max-width:240px">
             <div class="phone-notch"><div class="phone-notch-pill"></div></div>
             <div class="phone-screen">
@@ -627,7 +629,7 @@
             <span class="chip"><i data-lucide="check" style="width:11px;height:11px;color:var(--gold)"></i> Kategoriya bo'yicha</span>
           </div>
         </div>
-        <div class="phone-wrap" style="display:flex;justify-content:center">
+        <div class="phone-wrap">
           <div class="phone-frame" style="max-width:240px;background:var(--gold)">
             <div class="phone-notch" style="background:var(--gold)"><div class="phone-notch-pill"></div></div>
             <div class="phone-screen">
@@ -668,7 +670,7 @@
             <span class="chip"><i data-lucide="check" style="width:11px;height:11px;color:var(--gold)"></i> PDF yuklab olish</span>
           </div>
         </div>
-        <div class="phone-wrap" style="display:flex;justify-content:center">
+        <div class="phone-wrap">
           <div class="phone-frame" style="max-width:240px">
             <div class="phone-notch"><div class="phone-notch-pill"></div></div>
             <div class="phone-screen">
@@ -816,7 +818,7 @@
 <script>
   lucide.createIcons();
 
-  function scrollTo(id){ document.getElementById(id).scrollIntoView({behavior:'smooth'}); }
+  function gotoSection(id){ const el=document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth'}); }
 
   function switchRole(type, el) {
     document.querySelectorAll('.role-card').forEach(c=>c.classList.remove('active'));

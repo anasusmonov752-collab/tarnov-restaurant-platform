@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RestoPro — Xodim</title>
+  <title>RestoOne — Xodim</title>
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#C8922A">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="RestoPro">
+  <meta name="apple-mobile-web-app-title" content="RestoOne">
   <link rel="apple-touch-icon" href="/images/icon.svg">
   <link rel="stylesheet" href="/css/style.css?v=6.0">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
@@ -1541,7 +1541,7 @@ async function downloadPDF(r) {
     // Description
     doc.setFontSize(10); doc.setFont('helvetica','normal');
     doc.setTextColor(170,170,170);
-    doc.text(`${waiterInfo?.restaurant?.name || 'Tarnov Restaurant'} restoranida`, W/2, 94, {align:'center'});
+    doc.text(`${waiterInfo?.restaurant?.name || 'RestoOne'} restoranida`, W/2, 94, {align:'center'});
     doc.text("menyu bo'yicha bilimlarini muvaffaqiyatli tasdiqladi", W/2, 101, {align:'center'});
 
     // Score

@@ -450,6 +450,13 @@
   const INDEX = {};
   for (const k in UZ_RU) INDEX[norm(k)] = UZ_RU[k];
 
+  // ── Element override (grammatik to'g'ri yaxlit tarjima) ──
+  // <br> bilan bo'lingan yoki ichki HTML li elementlar uchun — RU rejimda
+  // butun element innerHTML almashtiriladi (so'zma-so'z buzilishni oldini oladi)
+  const EL_OVERRIDES_RU = {
+    '.brand-heading': 'Умная система<br>обучения<br>для персонала'
+  };
+
   let LANG = localStorage.getItem('tarnov_lang') || 'uz';
 
   // ── Bitta matnni tarjima qilish ──
@@ -519,6 +526,19 @@
     // <title> ham
     const tt = tr(document.title);
     if (tt) document.title = tt;
+    applyElOverrides();
+  }
+
+  // Element override larni qo'llash (text node tarjimadan keyin — ustun keladi)
+  function applyElOverrides() {
+    if (LANG !== 'ru') return;
+    for (const sel in EL_OVERRIDES_RU) {
+      document.querySelectorAll(sel).forEach(el => {
+        if (el._i18nOverride) return;
+        el._i18nOverride = el.innerHTML;
+        el.innerHTML = EL_OVERRIDES_RU[sel];
+      });
+    }
   }
 
   // ── MutationObserver — dinamik kontentni avtomatik tarjima ──

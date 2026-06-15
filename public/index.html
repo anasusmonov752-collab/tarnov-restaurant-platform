@@ -223,28 +223,115 @@
     }
     .chip svg { width:12px; height:12px; color:var(--gold); }
 
-    /* phone mockup frame */
+    /* ── REALISTIC PHONE MOCKUP ── */
     .phone-frame {
-      background: var(--green);
-      border-radius: 40px;
-      padding: 14px;
-      box-shadow: 0 32px 64px rgba(13,43,32,0.3), 0 8px 24px rgba(13,43,32,0.15);
-      max-width: 280px;
+      position: relative;
+      max-width: 252px;
       margin: 0 auto;
+    }
+    /* Side buttons - volume */
+    .phone-frame::before {
+      content: '';
+      position: absolute;
+      left: -3px; top: 88px;
+      width: 3px; height: 32px;
+      background: linear-gradient(180deg,#0a2018,#1a4030,#0a2018);
+      border-radius: 3px 0 0 3px;
+      box-shadow: 0 38px 0 linear-gradient(180deg,#0a2018,#1a4030,#0a2018);
+    }
+    /* Power button */
+    .phone-frame::after {
+      content: '';
+      position: absolute;
+      right: -3px; top: 110px;
+      width: 3px; height: 44px;
+      background: linear-gradient(180deg,#0a2018,#1a4030,#0a2018);
+      border-radius: 0 3px 3px 0;
+    }
+    .phone-outer {
+      background: linear-gradient(160deg, #1a4030 0%, #0D2B20 40%, #0a2018 100%);
+      border-radius: 44px;
+      padding: 12px;
+      box-shadow:
+        0 40px 80px rgba(13,43,32,0.45),
+        0 12px 32px rgba(13,43,32,0.25),
+        inset 0 1px 0 rgba(255,255,255,0.08),
+        inset 0 -1px 0 rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    /* Volume buttons via box-shadow on outer */
+    .phone-vol-btn {
+      position: absolute;
+      left: -4px; top: 80px;
+      width: 4px;
+      height: 28px;
+      background: linear-gradient(180deg,#1a4030,#0D2B20);
+      border-radius: 2px 0 0 2px;
+      box-shadow: 0 36px 0 #1a4030, 0 72px 0 #1a4030;
+    }
+    .phone-pwr-btn {
+      position: absolute;
+      right: -4px; top: 106px;
+      width: 4px;
+      height: 52px;
+      background: linear-gradient(180deg,#1a4030,#0D2B20);
+      border-radius: 0 2px 2px 0;
     }
     .phone-screen {
       background: var(--white);
-      border-radius: 28px;
+      border-radius: 34px;
       overflow: hidden;
+      position: relative;
     }
-    .phone-notch {
+    /* Dynamic island */
+    .phone-island {
+      position: absolute;
+      top: 10px; left: 50%;
+      transform: translateX(-50%);
+      width: 90px; height: 28px;
+      background: #0D2B20;
+      border-radius: 20px;
+      z-index: 10;
+      display: flex; align-items: center; justify-content: flex-end;
+      padding-right: 8px; gap: 5px;
+    }
+    .phone-island-cam {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #1a4030;
+      border: 1.5px solid rgba(255,255,255,0.06);
+      position: relative;
+    }
+    .phone-island-cam::after {
+      content:''; position:absolute; top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      width:4px; height:4px; border-radius:50%;
+      background: rgba(255,255,255,0.12);
+    }
+    .phone-status {
+      height: 50px;
       background: var(--green);
+      display: flex; align-items: flex-end; justify-content: space-between;
+      padding: 0 18px 8px;
+    }
+    .phone-status-time {
+      font-size: 11px; font-weight: 700;
+      color: rgba(245,240,229,0.9);
+      font-family: 'Outfit', sans-serif;
+    }
+    .phone-status-icons {
+      display: flex; align-items: center; gap: 4px;
+    }
+    .phone-status-icons svg { color: rgba(245,240,229,0.8); }
+    /* Home bar */
+    .phone-home {
       height: 28px;
       display: flex; align-items: center; justify-content: center;
+      background: var(--white);
     }
-    .phone-notch-pill {
-      width: 80px; height: 10px;
-      background: rgba(255,255,255,0.15); border-radius: 5px;
+    .phone-home-bar {
+      width: 100px; height: 4px;
+      background: rgba(13,43,32,0.2);
+      border-radius: 2px;
     }
 
     /* ── APP SCREEN 1: Test ── */
@@ -537,26 +624,33 @@
     <div class="hero-visual">
       <div class="phone-hero">
         <div class="phone-frame">
-          <div class="phone-notch"><div class="phone-notch-pill"></div></div>
-          <div class="phone-screen">
-            <div class="app-topbar">
-              <div class="app-topbar-back">
-                <i data-lucide="chevron-left" style="width:13px;height:13px;color:rgba(245,240,229,0.7)"></i>
+          <div class="phone-vol-btn"></div>
+          <div class="phone-pwr-btn"></div>
+          <div class="phone-outer">
+            <div class="phone-screen">
+              <div class="phone-island"><div class="phone-island-cam"></div></div>
+              <div class="phone-status">
+                <span class="phone-status-time">9:41</span>
+                <div class="phone-status-icons">
+                  <svg width="12" height="10" viewBox="0 0 12 10" fill="none"><rect x="0" y="3" width="2" height="7" rx="1" fill="currentColor" opacity=".4"/><rect x="3" y="2" width="2" height="8" rx="1" fill="currentColor" opacity=".6"/><rect x="6" y="0" width="2" height="10" rx="1" fill="currentColor" opacity=".8"/><rect x="9" y="0" width="2" height="10" rx="1" fill="currentColor"/></svg>
+                  <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><rect x=".5" y=".5" width="11" height="9" rx="2.5" stroke="currentColor" stroke-opacity=".5"/><rect x="2" y="2" width="7" height="6" rx="1" fill="currentColor"/><path d="M12.5 3.5v3a1.5 1.5 0 0 0 0-3Z" fill="currentColor" fill-opacity=".4"/></svg>
+                </div>
               </div>
-              <span class="app-topbar-title">Menyu testi</span>
-            </div>
-            <div class="app-body">
-              <div class="app-progress-bar"><div class="app-progress-fill" style="width:60%"></div></div>
-              <div class="app-question-num">SAVOL 3 / 5</div>
-              <div class="app-question">"Caesar Salad" tarkibida qaysi sous ishlatiladi?</div>
-              <div class="app-option correct">✓ &nbsp;Caesar sous (limon, parmesan)</div>
-              <div class="app-option wrong">✗ &nbsp;Ranch sous</div>
-              <div class="app-option">Tartar sous</div>
-              <div class="app-option">Balzamik sous</div>
-              <div class="app-timer">
-                <i data-lucide="clock" style="width:11px;height:11px"></i>
-                18 soniya qoldi
+              <div class="app-topbar">
+                <div class="app-topbar-back"><i data-lucide="chevron-left" style="width:13px;height:13px;color:rgba(245,240,229,0.7)"></i></div>
+                <span class="app-topbar-title">Menyu testi</span>
               </div>
+              <div class="app-body">
+                <div class="app-progress-bar"><div class="app-progress-fill" style="width:60%"></div></div>
+                <div class="app-question-num">SAVOL 3 / 5</div>
+                <div class="app-question">"Caesar Salad" tarkibida qaysi sous ishlatiladi?</div>
+                <div class="app-option correct">✓ &nbsp;Caesar sous (limon, parmesan)</div>
+                <div class="app-option wrong">✗ &nbsp;Ranch sous</div>
+                <div class="app-option">Tartar sous</div>
+                <div class="app-option">Balzamik sous</div>
+                <div class="app-timer"><i data-lucide="clock" style="width:11px;height:11px"></i> 18 soniya qoldi</div>
+              </div>
+              <div class="phone-home"><div class="phone-home-bar"></div></div>
             </div>
           </div>
         </div>
@@ -597,20 +691,32 @@
           </div>
         </div>
         <div class="phone-wrap">
-          <div class="phone-frame" style="max-width:240px">
-            <div class="phone-notch"><div class="phone-notch-pill"></div></div>
-            <div class="phone-screen">
-              <div class="app-topbar">
-                <span class="app-topbar-title">Menyu bilimi testi</span>
-              </div>
-              <div class="app-body">
-                <div class="app-progress-bar"><div class="app-progress-fill" style="width:40%"></div></div>
-                <div class="app-question-num">SAVOL 2 / 5</div>
-                <div class="app-question">"Tiramisu" dessertining asosiy ingredienti nima?</div>
-                <div class="app-option">Shokolad</div>
-                <div class="app-option correct">✓ &nbsp;Mascarpone pishloq</div>
-                <div class="app-option">Vanillin krem</div>
-                <div class="app-timer"><i data-lucide="clock" style="width:11px;height:11px"></i> 24 soniya qoldi</div>
+          <div class="phone-frame">
+            <div class="phone-vol-btn"></div>
+            <div class="phone-pwr-btn"></div>
+            <div class="phone-outer">
+              <div class="phone-screen">
+                <div class="phone-island"><div class="phone-island-cam"></div></div>
+                <div class="phone-status">
+                  <span class="phone-status-time">9:41</span>
+                  <div class="phone-status-icons">
+                    <svg width="12" height="10" viewBox="0 0 12 10" fill="none"><rect x="0" y="3" width="2" height="7" rx="1" fill="currentColor" opacity=".4"/><rect x="3" y="2" width="2" height="8" rx="1" fill="currentColor" opacity=".6"/><rect x="6" y="0" width="2" height="10" rx="1" fill="currentColor" opacity=".8"/><rect x="9" y="0" width="2" height="10" rx="1" fill="currentColor"/></svg>
+                    <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><rect x=".5" y=".5" width="11" height="9" rx="2.5" stroke="currentColor" stroke-opacity=".5"/><rect x="2" y="2" width="7" height="6" rx="1" fill="currentColor"/><path d="M12.5 3.5v3a1.5 1.5 0 0 0 0-3Z" fill="currentColor" fill-opacity=".4"/></svg>
+                  </div>
+                </div>
+                <div class="app-topbar">
+                  <span class="app-topbar-title">Menyu bilimi testi</span>
+                </div>
+                <div class="app-body">
+                  <div class="app-progress-bar"><div class="app-progress-fill" style="width:40%"></div></div>
+                  <div class="app-question-num">SAVOL 2 / 5</div>
+                  <div class="app-question">"Tiramisu" dessertining asosiy ingredienti nima?</div>
+                  <div class="app-option">Shokolad</div>
+                  <div class="app-option correct">✓ &nbsp;Mascarpone pishloq</div>
+                  <div class="app-option">Vanillin krem</div>
+                  <div class="app-timer"><i data-lucide="clock" style="width:11px;height:11px"></i> 24 soniya qoldi</div>
+                </div>
+                <div class="phone-home"><div class="phone-home-bar"></div></div>
               </div>
             </div>
           </div>
@@ -630,28 +736,40 @@
           </div>
         </div>
         <div class="phone-wrap">
-          <div class="phone-frame" style="max-width:240px;background:var(--gold)">
-            <div class="phone-notch" style="background:var(--gold)"><div class="phone-notch-pill"></div></div>
-            <div class="phone-screen">
-              <div class="app-topbar" style="background:var(--gold2)">
-                <span class="app-topbar-title" style="color:#1A1407">Menyu</span>
-              </div>
-              <div style="padding:8px 0">
-                <div class="app-menu-item">
-                  <div class="app-menu-img" style="background:linear-gradient(135deg,#FDDCA0,#F5A623);display:flex;align-items:center;justify-content:center;font-size:20px">🍝</div>
-                  <div><div class="app-menu-name">Carbonara pasta</div><div class="app-menu-desc">Bekon, parmesan, tuxum</div></div>
-                  <div class="app-menu-price">48 000</div>
+          <div class="phone-frame">
+            <div class="phone-vol-btn"></div>
+            <div class="phone-pwr-btn"></div>
+            <div class="phone-outer" style="background:linear-gradient(160deg,#C8922A 0%,#9A6E1C 100%)">
+              <div class="phone-screen">
+                <div class="phone-island" style="background:#7A5010"><div class="phone-island-cam"></div></div>
+                <div class="phone-status" style="background:var(--gold2)">
+                  <span class="phone-status-time" style="color:#1A1407">9:41</span>
+                  <div class="phone-status-icons" style="color:#1A1407">
+                    <svg width="12" height="10" viewBox="0 0 12 10" fill="none"><rect x="0" y="3" width="2" height="7" rx="1" fill="currentColor" opacity=".4"/><rect x="3" y="2" width="2" height="8" rx="1" fill="currentColor" opacity=".6"/><rect x="6" y="0" width="2" height="10" rx="1" fill="currentColor" opacity=".8"/><rect x="9" y="0" width="2" height="10" rx="1" fill="currentColor"/></svg>
+                    <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><rect x=".5" y=".5" width="11" height="9" rx="2.5" stroke="currentColor" stroke-opacity=".5"/><rect x="2" y="2" width="7" height="6" rx="1" fill="currentColor"/><path d="M12.5 3.5v3a1.5 1.5 0 0 0 0-3Z" fill="currentColor" fill-opacity=".4"/></svg>
+                  </div>
                 </div>
-                <div class="app-menu-item">
-                  <div class="app-menu-img" style="background:linear-gradient(135deg,#C8E6C9,#66BB6A);display:flex;align-items:center;justify-content:center;font-size:20px">🥗</div>
-                  <div><div class="app-menu-name">Caesar salad</div><div class="app-menu-desc">Parmesan, sous, crouton</div></div>
-                  <div class="app-menu-price">36 000</div>
+                <div class="app-topbar" style="background:var(--gold2)">
+                  <span class="app-topbar-title" style="color:#1A1407">Menyu</span>
                 </div>
-                <div class="app-menu-item">
-                  <div class="app-menu-img" style="background:linear-gradient(135deg,#FFCCBC,#FF7043);display:flex;align-items:center;justify-content:center;font-size:20px">🥩</div>
-                  <div><div class="app-menu-name">Rib-eye steak</div><div class="app-menu-desc">Grill, kartoshka garnir</div></div>
-                  <div class="app-menu-price">120 000</div>
+                <div style="padding:8px 0">
+                  <div class="app-menu-item">
+                    <div class="app-menu-img" style="background:linear-gradient(135deg,#FDDCA0,#F5A623);display:flex;align-items:center;justify-content:center;font-size:20px">🍝</div>
+                    <div><div class="app-menu-name">Carbonara pasta</div><div class="app-menu-desc">Bekon, parmesan, tuxum</div></div>
+                    <div class="app-menu-price">48 000</div>
+                  </div>
+                  <div class="app-menu-item">
+                    <div class="app-menu-img" style="background:linear-gradient(135deg,#C8E6C9,#66BB6A);display:flex;align-items:center;justify-content:center;font-size:20px">🥗</div>
+                    <div><div class="app-menu-name">Caesar salad</div><div class="app-menu-desc">Parmesan, sous, crouton</div></div>
+                    <div class="app-menu-price">36 000</div>
+                  </div>
+                  <div class="app-menu-item">
+                    <div class="app-menu-img" style="background:linear-gradient(135deg,#FFCCBC,#FF7043);display:flex;align-items:center;justify-content:center;font-size:20px">🥩</div>
+                    <div><div class="app-menu-name">Rib-eye steak</div><div class="app-menu-desc">Grill, kartoshka garnir</div></div>
+                    <div class="app-menu-price">120 000</div>
+                  </div>
                 </div>
+                <div class="phone-home" style="background:#fff"><div class="phone-home-bar"></div></div>
               </div>
             </div>
           </div>
@@ -671,18 +789,30 @@
           </div>
         </div>
         <div class="phone-wrap">
-          <div class="phone-frame" style="max-width:240px">
-            <div class="phone-notch"><div class="phone-notch-pill"></div></div>
-            <div class="phone-screen">
-              <div class="app-cert">
-                <div class="app-cert-badge">🏆</div>
-                <div class="app-cert-title">Sertifikat</div>
-                <div class="app-cert-name">Menyu bilimi — 2026</div>
-                <div class="app-cert-score">
-                  <div class="app-cert-score-num">95%</div>
-                  <div class="app-cert-score-lbl">BALL KO'RSATKICH</div>
+          <div class="phone-frame">
+            <div class="phone-vol-btn"></div>
+            <div class="phone-pwr-btn"></div>
+            <div class="phone-outer">
+              <div class="phone-screen">
+                <div class="phone-island"><div class="phone-island-cam"></div></div>
+                <div class="phone-status">
+                  <span class="phone-status-time">9:41</span>
+                  <div class="phone-status-icons">
+                    <svg width="12" height="10" viewBox="0 0 12 10" fill="none"><rect x="0" y="3" width="2" height="7" rx="1" fill="currentColor" opacity=".4"/><rect x="3" y="2" width="2" height="8" rx="1" fill="currentColor" opacity=".6"/><rect x="6" y="0" width="2" height="10" rx="1" fill="currentColor" opacity=".8"/><rect x="9" y="0" width="2" height="10" rx="1" fill="currentColor"/></svg>
+                    <svg width="14" height="10" viewBox="0 0 14 10" fill="none"><rect x=".5" y=".5" width="11" height="9" rx="2.5" stroke="currentColor" stroke-opacity=".5"/><rect x="2" y="2" width="7" height="6" rx="1" fill="currentColor"/><path d="M12.5 3.5v3a1.5 1.5 0 0 0 0-3Z" fill="currentColor" fill-opacity=".4"/></svg>
+                  </div>
                 </div>
-                <div class="app-cert-stars">★★★★★</div>
+                <div class="app-cert">
+                  <div class="app-cert-badge">🏆</div>
+                  <div class="app-cert-title">Sertifikat</div>
+                  <div class="app-cert-name">Menyu bilimi — 2026</div>
+                  <div class="app-cert-score">
+                    <div class="app-cert-score-num">95%</div>
+                    <div class="app-cert-score-lbl">BALL KO'RSATKICH</div>
+                  </div>
+                  <div class="app-cert-stars">★★★★★</div>
+                </div>
+                <div class="phone-home" style="background:#1A4030"><div class="phone-home-bar" style="background:rgba(245,240,229,0.25)"></div></div>
               </div>
             </div>
           </div>

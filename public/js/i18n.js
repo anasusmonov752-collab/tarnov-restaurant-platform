@@ -586,47 +586,87 @@
     const wrap = document.createElement('div');
     wrap.id = 'lang-toggle';
     wrap.innerHTML = `
-      <button data-lang="uz" class="lang-btn">O'ZB</button>
-      <button data-lang="ru" class="lang-btn">РУС</button>`;
+      <button data-lang="uz" class="lang-btn">UZ</button>
+      <button data-lang="ru" class="lang-btn">RU</button>`;
 
     const style = document.createElement('style');
     style.textContent = `
       #lang-toggle {
-        display: inline-flex; gap: 2px; padding: 3px;
-        background: rgba(13,21,32,0.92); backdrop-filter: blur(12px);
-        border: 1px solid rgba(0,212,255,0.25); border-radius: 20px;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+        display: inline-flex; gap: 3px; padding: 4px;
+        background: rgba(0,0,0,0.35);
+        backdrop-filter: blur(12px);
+        border: 1.5px solid rgba(0,255,136,0.35);
+        border-radius: 22px;
+        box-shadow: 0 0 12px rgba(0,255,136,0.15), 0 4px 16px rgba(0,0,0,0.3);
         flex-shrink: 0;
+        align-items: center;
       }
       #lang-toggle.floating {
-        position: fixed; top: 12px; right: 12px; z-index: 9500;
+        position: fixed;
+        bottom: 80px;
+        right: 14px;
+        z-index: 9500;
+      }
+      #lang-toggle.floating-top {
+        position: fixed;
+        top: 14px;
+        right: 14px;
+        z-index: 9500;
       }
       #lang-toggle .lang-btn {
-        border: none; background: transparent; cursor: pointer;
-        color: rgba(255,255,255,0.55);
-        font-size: 0.68rem; font-weight: 700; letter-spacing: 0.03em;
-        padding: 4px 10px; border-radius: 16px; transition: all 0.18s;
-        font-family: inherit; line-height: 1.2;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        color: rgba(255,255,255,0.45);
+        font-size: 0.67rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        padding: 5px 11px;
+        border-radius: 18px;
+        transition: all 0.18s;
+        font-family: inherit;
+        line-height: 1;
+      }
+      #lang-toggle .lang-btn:hover {
+        color: rgba(255,255,255,0.75);
       }
       #lang-toggle .lang-btn.active {
-        background: linear-gradient(135deg,#33DDFF,#00D4FF); color: #002;
-        box-shadow: 0 2px 8px rgba(0,212,255,0.4);
+        background: linear-gradient(135deg, #00FF88, #00D4AA);
+        color: #003322;
+        box-shadow: 0 0 10px rgba(0,255,136,0.5), 0 2px 8px rgba(0,0,0,0.2);
       }
       @media (max-width: 900px) {
-        #lang-toggle.floating { top: 9px; right: 9px; }
-        #lang-toggle .lang-btn { font-size: 0.64rem; padding: 4px 8px; }
+        #lang-toggle .lang-btn { font-size: 0.62rem; padding: 4px 9px; }
       }`;
     document.head.appendChild(style);
 
-    // Logout tugmasi yoniga joylashtirish (admin/waiter), bo'lmasa floating (login)
-    const logoutBtn = [...document.querySelectorAll('[onclick*="logout"]')]
-      .find(b => b.offsetParent !== null) || document.querySelector('[onclick*="logout"]');
+    // Joylashtirish strategiyasi:
+    // 1) nav-inner (index.html) — nav ichiga
+    // 2) sidebar-footer (admin pages) — sidebar pastiga
+    // 3) bottom-nav (waiter) — floating bottom
+    // 4) logout tugmasi yoniga
+    // 5) floating
 
-    if (logoutBtn && logoutBtn.parentElement) {
-      wrap.style.marginRight = '8px';
-      wrap.style.alignSelf = 'center';
-      logoutBtn.parentElement.insertBefore(wrap, logoutBtn);
+    const navInner = document.querySelector('.nav-inner');
+    const sidebarFooter = document.querySelector('.sidebar-footer');
+    const bottomNav = document.querySelector('.bottom-nav');
+
+    if (navInner) {
+      // Login sahifasi: nav ichiga, eng oxiriga
+      wrap.style.marginLeft = '8px';
+      navInner.appendChild(wrap);
+    } else if (sidebarFooter) {
+      // Admin sahifalar: sidebar pastiga alohida qator
+      wrap.style.margin = '12px auto 0';
+      wrap.style.display = 'flex';
+      wrap.style.justifyContent = 'center';
+      sidebarFooter.insertBefore(wrap, sidebarFooter.firstChild);
+    } else if (bottomNav) {
+      // Waiter: floating yuqori o'ngda (bottom-nav bilan to'qnashmaydi)
+      wrap.classList.add('floating-top');
+      document.body.appendChild(wrap);
     } else {
+      // Fallback: floating pastda
       wrap.classList.add('floating');
       document.body.appendChild(wrap);
     }

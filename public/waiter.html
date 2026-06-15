@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RestoOne — Xodim</title>
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#C8922A">
+  <meta name="theme-color" content="#00D4FF">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="RestoOne">
   <link rel="apple-touch-icon" href="/images/icon.svg">
-  <link rel="stylesheet" href="/css/style.css?v=6.0">
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <link rel="stylesheet" href="/css/style.css?v=3.1">
+  <script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body style="background:var(--bg)">
@@ -21,16 +21,12 @@
 <!-- HEADER -->
 <div class="waiter-header">
   <div style="display:flex;align-items:center;gap:10px">
-    <svg width="40" height="40" viewBox="0 0 36 36" style="flex-shrink:0">
-      <defs><linearGradient id="wlg" x1="0%" y1="0%" x2="110%" y2="110%"><stop offset="0%" stop-color="#F0C355"/><stop offset="100%" stop-color="#C8922A"/></linearGradient></defs>
-      <circle cx="18" cy="18" r="18" fill="url(#wlg)"/>
-      <text x="18" y="25" font-family="Georgia,serif" font-size="20" font-weight="900" fill="#fff" text-anchor="middle">R</text>
-      <circle cx="30" cy="7" r="7" fill="#0D2B20"/>
-      <text x="30" y="10.5" font-family="Arial,sans-serif" font-size="8" font-weight="700" fill="#F0C355" text-anchor="middle">1</text>
-    </svg>
+    <div class="waiter-brand-icon">
+      <i data-lucide="zap" style="width:18px;height:18px;color:#000"></i>
+    </div>
     <div>
-      <div style="font-weight:800;color:rgba(245,240,229,1);letter-spacing:0.01em;font-size:1rem;font-family:'Outfit',sans-serif" id="w-restaurant-name">—</div>
-      <div style="font-size:0.72rem;color:rgba(245,240,229,0.5)" id="w-waiter-name">Yuklanmoqda...</div>
+      <div style="font-weight:700;color:var(--neon);letter-spacing:0.06em;font-size:0.9rem" id="w-restaurant-name">—</div>
+      <div style="font-size:0.72rem;color:var(--text3)" id="w-waiter-name">Yuklanmoqda...</div>
     </div>
   </div>
   <div class="flex gap-8 align-center">
@@ -47,9 +43,9 @@
 
   <!-- HOME -->
   <div id="page-home" class="waiter-content">
-    <div class="card mb-16" style="border:1px solid var(--neon);background:radial-gradient(ellipse at top,rgba(212,152,46,0.06),transparent)">
+    <div class="card mb-16" style="border:1px solid var(--neon);background:radial-gradient(ellipse at top,rgba(0, 212, 255,0.06),transparent)">
       <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px">
-        <div id="home-avatar" style="width:52px;height:52px;border-radius:50%;background:rgba(212,152,46,0.15);border:2px solid var(--neon);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <div id="home-avatar" style="width:52px;height:52px;border-radius:50%;background:rgba(0, 212, 255,0.15);border:2px solid var(--neon);display:flex;align-items:center;justify-content:center;flex-shrink:0">
           <span id="home-avatar-letter" class="waiter-avatar-letter" style="font-size:1.5rem">—</span>
         </div>
         <div>
@@ -76,8 +72,8 @@
       </div>
     </div>
     <div id="menu-visible">
-      <div class="safia-filter-bar" id="menu-cats"></div>
-      <div class="menu-grid" id="menu-items" style="grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px"></div>
+      <div class="category-pills" id="menu-cats"></div>
+      <div class="menu-grid" id="menu-items"></div>
     </div>
   </div>
 
@@ -176,7 +172,7 @@
       <div id="lv-lesson-list"></div>
       <!-- Quiz start card (shown when all lessons done) -->
       <div id="lv-quiz-start" style="display:none;margin-top:20px">
-        <div class="card" style="text-align:center;padding:28px;border-color:rgba(212,152,46,0.3);background:rgba(212,152,46,0.04)">
+        <div class="card" style="text-align:center;padding:28px;border-color:rgba(0, 212, 255,0.3);background:rgba(0, 212, 255,0.04)">
           <div style="font-size:2.2rem;margin-bottom:10px">🎯</div>
           <h3 style="margin-bottom:8px">Barcha darslar tugatildi!</h3>
           <div style="color:var(--text2);font-size:0.88rem;margin-bottom:20px">Quiz topshirib badge oling</div>
@@ -328,9 +324,9 @@
     <div id="adapt-view-info">
       <!-- History -->
       <div id="adapt-view-history" style="display:none" class="mb-16">
-        <div style="background:linear-gradient(135deg,rgba(212,152,46,0.1),rgba(212,152,46,0.03));border:1px solid rgba(212,152,46,0.2);border-radius:16px;overflow:hidden">
-          <div style="padding:14px 18px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(212,152,46,0.15)">
-            <div style="width:30px;height:30px;background:rgba(212,152,46,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <div style="background:linear-gradient(135deg,rgba(0, 212, 255,0.1),rgba(0, 212, 255,0.03));border:1px solid rgba(0, 212, 255,0.2);border-radius:16px;overflow:hidden">
+          <div style="padding:14px 18px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(0, 212, 255,0.15)">
+            <div style="width:30px;height:30px;background:rgba(0, 212, 255,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
               <i data-lucide="scroll-text" style="width:15px;height:15px;color:var(--neon)"></i>
             </div>
             <div>
@@ -339,7 +335,7 @@
             </div>
           </div>
           <div style="padding:16px 18px">
-            <div style="font-size:2.2rem;color:rgba(212,152,46,0.25);line-height:1;margin-bottom:-4px;font-family:Georgia,serif">"</div>
+            <div style="font-size:2.2rem;color:rgba(0, 212, 255,0.25);line-height:1;margin-bottom:-4px;font-family:Georgia,serif">"</div>
             <p id="adapt-history-text" style="white-space:pre-wrap;line-height:1.9;color:var(--text2);font-size:0.9rem;margin:0"></p>
           </div>
         </div>
@@ -347,9 +343,9 @@
 
       <!-- Mission -->
       <div id="adapt-view-mission" style="display:none" class="mb-16">
-        <div style="background:rgba(15,10,5,0.6);border:1px solid rgba(212,152,46,0.3);border-radius:16px;padding:22px 18px;text-align:center;position:relative;overflow:hidden">
+        <div style="background:rgba(15,10,5,0.6);border:1px solid rgba(0, 212, 255,0.3);border-radius:16px;padding:22px 18px;text-align:center;position:relative;overflow:hidden">
           <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--neon),transparent)"></div>
-          <div style="width:40px;height:40px;background:rgba(212,152,46,0.12);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+          <div style="width:40px;height:40px;background:rgba(0, 212, 255,0.12);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
             <i data-lucide="target" style="width:18px;height:18px;color:var(--neon)"></i>
           </div>
           <div style="font-size:0.65rem;letter-spacing:0.16em;color:var(--neon);text-transform:uppercase;margin-bottom:10px;font-weight:700">Bizning missiya</div>
@@ -383,7 +379,7 @@
 
     <!-- TAB 3: HUJJATLAR -->
     <div id="adapt-view-docs" style="display:none">
-      <div id="adapt-docs-progress" style="display:none;background:rgba(212,152,46,0.07);border:1px solid rgba(212,152,46,0.18);border-radius:12px;padding:13px 16px;margin-bottom:14px">
+      <div id="adapt-docs-progress" style="display:none;background:rgba(0, 212, 255,0.07);border:1px solid rgba(0, 212, 255,0.18);border-radius:12px;padding:13px 16px;margin-bottom:14px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
           <span style="font-size:0.8rem;color:var(--text2);font-weight:600">O'qilgan hujjatlar</span>
           <span id="adapt-docs-counter" style="font-size:0.8rem;color:var(--neon);font-weight:700">0/0</span>
@@ -436,19 +432,19 @@
 
 <!-- MORE BOTTOM SHEET -->
 <div id="more-backdrop" onclick="closeMoreSheet()" style="
-  display:none; position:fixed; inset:0; background:rgba(13,43,32,0.4);
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5);
   backdrop-filter:blur(4px); z-index:400;
 "></div>
 
 <div id="more-sheet" style="
   position:fixed; bottom:0; left:0; right:0; z-index:401;
-  background:#0D2B20;
+  background:rgba(12,9,4,0.88);
   backdrop-filter:blur(32px) saturate(180%);
   -webkit-backdrop-filter:blur(32px) saturate(180%);
-  border-top:1px solid rgba(200,146,42,0.2);
+  border-top:1px solid rgba(0, 212, 255,0.25);
   border-radius:24px 24px 0 0;
   padding-bottom: calc(20px + env(safe-area-inset-bottom));
-  box-shadow: 0 -20px 60px rgba(13,43,32,0.3), inset 0 1px 0 rgba(245,240,229,0.06);
+  box-shadow: 0 -20px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08);
   transform: translateY(100%);
   transition: transform 0.38s cubic-bezier(0.34,1.2,0.64,1);
 ">
@@ -474,8 +470,8 @@
     </button>
 
     <button class="more-grid-item" onclick="moreNav('ann')" id="more-ann">
-      <div class="more-grid-icon" style="background:rgba(212,152,46,0.15);border-color:rgba(212,152,46,0.25)">
-        <i data-lucide="megaphone" style="width:22px;height:22px;color:#D4982E"></i>
+      <div class="more-grid-icon" style="background:rgba(52,152,219,0.15);border-color:rgba(52,152,219,0.25)">
+        <i data-lucide="megaphone" style="width:22px;height:22px;color:#3498DB"></i>
       </div>
       <span>E'lonlar</span>
     </button>
@@ -488,7 +484,7 @@
     </button>
 
     <button class="more-grid-item" onclick="moreNav('flashcard')" id="more-flashcard">
-      <div class="more-grid-icon" style="background:rgba(212,152,46,0.15);border-color:rgba(212,152,46,0.25)">
+      <div class="more-grid-icon" style="background:rgba(0, 212, 255,0.15);border-color:rgba(0, 212, 255,0.25)">
         <i data-lucide="layers" style="width:22px;height:22px;color:var(--neon)"></i>
       </div>
       <span>Flashcard</span>
@@ -518,26 +514,23 @@
   </div>
 </div>
 
-<!-- MENU ITEM DETAIL — scrollable bottom sheet -->
-<div id="menu-item-modal" onclick="if(event.target===this)this.classList.remove('show')" style="position:fixed;inset:0;z-index:800;background:rgba(13,43,32,0.5);backdrop-filter:blur(4px);display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity 0.25s">
-  <div id="mi-sheet" style="width:100%;max-width:560px;margin:0 auto;background:var(--card);border-radius:22px 22px 0 0;max-height:90vh;display:flex;flex-direction:column;transform:translateY(30px);transition:transform 0.3s cubic-bezier(.22,.68,0,1.2)">
-    <div style="padding:10px 0 0;flex-shrink:0;text-align:center">
-      <div style="width:40px;height:4px;border-radius:2px;background:var(--border);margin:0 auto"></div>
+<!-- MENU ITEM DETAIL MODAL -->
+<div class="modal-overlay" id="menu-item-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="mi-name">—</h3>
+      <button class="modal-close" onclick="document.getElementById('menu-item-modal').classList.remove('show')">
+        <i data-lucide="x"></i>
+      </button>
     </div>
-    <div id="mi-img" style="flex-shrink:0;margin:12px 16px 0;border-radius:16px;overflow:hidden;height:220px;background:var(--card2);display:flex;align-items:center;justify-content:center;position:relative"></div>
-    <div style="overflow-y:auto;flex:1;padding:16px 20px 40px;-webkit-overflow-scrolling:touch">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:6px">
-        <div style="font-weight:800;font-size:1.15rem;line-height:1.3" id="mi-name"></div>
-        <button onclick="document.getElementById('menu-item-modal').classList.remove('show')" style="width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--card2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.95rem;color:var(--text2)">✕</button>
-      </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <span style="font-size:0.75rem;color:var(--neon);font-weight:700;text-transform:uppercase;letter-spacing:0.06em" id="mi-cat"></span>
-        <span style="font-size:1.2rem;font-weight:800;color:var(--neon)" id="mi-price"></span>
-      </div>
-      <div id="mi-desc" style="color:var(--text2);font-size:0.9rem;line-height:1.75;margin-bottom:16px;border-bottom:1px solid var(--border2);padding-bottom:16px"></div>
-      <div id="mi-ingredients" style="margin-bottom:14px"></div>
-      <div id="mi-allergens" style="margin-bottom:14px"></div>
-      <div id="mi-suggestion"></div>
+    <div class="modal-body">
+      <div id="mi-img" style="margin-bottom:16px;border-radius:12px;overflow:hidden;max-height:220px"></div>
+      <div style="color:var(--neon);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px" id="mi-cat"></div>
+      <div style="color:var(--text2);margin-bottom:16px;line-height:1.7" id="mi-desc"></div>
+      <div id="mi-ingredients" style="margin-bottom:12px"></div>
+      <div id="mi-allergens" style="margin-bottom:12px"></div>
+      <div id="mi-suggestion" style="margin-bottom:12px"></div>
+      <div style="font-size:1.4rem;font-weight:700;color:var(--neon)" id="mi-price"></div>
     </div>
   </div>
 </div>
@@ -562,7 +555,6 @@
 
 <script src="/js/utils.js?v=3.1"></script>
 <script src="/js/creative.js?v=2.0"></script>
-<script src="/js/i18n.js?v=1.4"></script>
 <script>
 let waiterInfo = null, menuData = [], activeCategory = 'all';
 let testQuestions = [], currentQIndex = 0, answers = {}, timerInterval = null, timeLeft = 30, selectedOption = null;
@@ -630,7 +622,7 @@ async function init() {
       document.getElementById('home-sub').textContent = 'Bugun test kuni. Omad tilaymiz!';
     }
     renderHomeAnnouncements();
-    loadHistory().then(() => { renderHomeStats(); renderWelcomeWizard(); });
+    loadHistory().then(renderHomeStats);
     loadHomeKPI();
     renderIcons();
   } catch (e) { toast(e.message, 'error'); }
@@ -708,68 +700,6 @@ function calcStreak(history) {
   return streak;
 }
 
-function renderWelcomeWizard() {
-  if (historyData.length > 0) return; // faqat yangi xodimlar uchun
-  if (localStorage.getItem('wizard_dismissed_' + (waiterInfo?.waiter?.id||'x'))) return;
-  const name = waiterInfo?.waiter?.name?.split(' ')[0] || 'Xodim';
-  const el = document.getElementById('home-announcements');
-  const wiz = document.createElement('div');
-  wiz.className = 'welcome-wizard mb-16';
-  wiz.id = 'welcome-wizard';
-  wiz.innerHTML = `
-    <button onclick="document.getElementById('welcome-wizard').remove();localStorage.setItem('wizard_dismissed_${waiterInfo?.waiter?.id||'x'}','1')"
-      style="position:absolute;top:14px;right:14px;background:none;border:none;cursor:pointer;color:var(--text3);font-size:1.1rem;z-index:2">✕</button>
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
-      <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,var(--neon),#9A6F1A);display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0">👋</div>
-      <div>
-        <div style="font-weight:800;font-size:1.1rem">Xush kelibsiz, ${name}!</div>
-        <div style="font-size:0.8rem;color:var(--text3);margin-top:2px">Platformadan foydalanishni boshlash uchun 3 qadam</div>
-      </div>
-    </div>
-    <div class="wizard-steps">
-      <div class="wizard-step active">
-        <div class="wizard-step-dot">1</div>
-        <div class="wizard-step-label">Kirish</div>
-      </div>
-      <div class="wizard-step">
-        <div class="wizard-step-dot">2</div>
-        <div class="wizard-step-label">Menyu</div>
-      </div>
-      <div class="wizard-step">
-        <div class="wizard-step-dot">3</div>
-        <div class="wizard-step-label">Test</div>
-      </div>
-    </div>
-    <div style="background:rgba(13,43,32,0.05);border-radius:14px;padding:16px 18px;margin-bottom:20px">
-      <div style="display:flex;flex-direction:column;gap:12px">
-        <div style="display:flex;align-items:center;gap:12px">
-          <div style="width:34px;height:34px;border-radius:10px;background:rgba(212,152,46,0.15);border:1px solid rgba(212,152,46,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0">✅</div>
-          <div><div style="font-weight:700;font-size:0.88rem">Tizimga kirdingiz</div><div style="font-size:0.75rem;color:var(--text3)">PIN kod bilan muvaffaqiyatli</div></div>
-        </div>
-        <div style="display:flex;align-items:center;gap:12px">
-          <div style="width:34px;height:34px;border-radius:10px;background:rgba(155,89,182,0.12);border:1px solid rgba(155,89,182,0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1rem">📋</div>
-          <div><div style="font-weight:700;font-size:0.88rem">Menyuni o'rganing</div><div style="font-size:0.75rem;color:var(--text3)">Barcha taomlar, narxlar va tarkiblar</div></div>
-        </div>
-        <div style="display:flex;align-items:center;gap:12px">
-          <div style="width:34px;height:34px;border-radius:10px;background:rgba(243,156,18,0.12);border:1px solid rgba(243,156,18,0.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1rem">🏆</div>
-          <div><div style="font-weight:700;font-size:0.88rem">Test topshiring</div><div style="font-size:0.75rem;color:var(--text3)">90%+ ball → Sertifikat</div></div>
-        </div>
-      </div>
-    </div>
-    <div style="display:flex;gap:10px">
-      <button onclick="showWaiterPage('menu',document.getElementById('nav-menu'));document.getElementById('welcome-wizard').remove()"
-        style="flex:1;padding:12px;border-radius:12px;border:none;cursor:pointer;background:linear-gradient(135deg,var(--neon),#9A6F1A);color:#000;font-weight:800;font-size:0.88rem;display:flex;align-items:center;justify-content:center;gap:6px">
-        📋 Menyuni ko'rish
-      </button>
-      <button onclick="document.getElementById('welcome-wizard').remove();localStorage.setItem('wizard_dismissed_${waiterInfo?.waiter?.id||'x'}','1')"
-        style="padding:12px 18px;border-radius:12px;border:1px solid var(--border);cursor:pointer;background:transparent;color:var(--text2);font-size:0.85rem">
-        Keyinroq
-      </button>
-    </div>`;
-  el.insertAdjacentElement('beforebegin', wiz);
-  renderIcons();
-}
-
 function renderHomeStats() {
   if (!historyData.length) return;
   const best   = Math.max(...historyData.map(r=>r.score));
@@ -778,7 +708,7 @@ function renderHomeStats() {
   const streak = calcStreak(historyData);
 
   const stats = [
-    { icon:'bar-chart-2', value:historyData.length, label:'Jami testlar',  color:'#D4982E', suffix:''  },
+    { icon:'bar-chart-2', value:historyData.length, label:'Jami testlar',  color:'#3498DB', suffix:''  },
     { icon:'medal',       value:best,                label:'Eng yaxshi',   color: best>=90?'#F39C12':best>=60?'#2ECC71':'#E67E22', suffix:'%' },
     { icon:'trending-up', value:avg,                 label:'O\'rtacha',    color: avg>=90?'#F39C12':avg>=60?'#2ECC71':'#E67E22',   suffix:'%' },
     { icon:'award',       value:certs,               label:'Sertifikatlar',color:'#F39C12', suffix:''  },
@@ -843,14 +773,13 @@ async function loadMenu() {
 
 function renderMenuCategories() {
   const cats = [...new Set(menuData.map(m=>m.category))];
-  const catIcons = {'Asosiy taomlar':'🍽','Salatlar':'🥗','Sho\'rvalar':'🍲','Ichimliklar':'🥤','Shirinliklar':'🍰','Non mahsulotlari':'🍞','Mazza':'🫙','Alkogolsiz':'🧃'};
   document.getElementById('menu-cats').innerHTML =
-    `<button class="safia-pill active" onclick="filterCat('all',this)"><span>🍴</span> Hammasi <span class="pill-count">${menuData.length}</span></button>` +
-    cats.map(c=>`<button class="safia-pill" onclick="filterCat(this.dataset.cat,this)" data-cat="${c.replace(/"/g,'&quot;')}">${catIcons[c]||'🍴'} ${c} <span class="pill-count">${menuData.filter(m=>m.category===c).length}</span></button>`).join('');
+    `<button class="pill active" onclick="filterCat('all',this)">Hammasi (${menuData.length})</button>` +
+    cats.map(c=>`<button class="pill" onclick="filterCat('${c}',this)">${c} (${menuData.filter(m=>m.category===c).length})</button>`).join('');
 }
 
 function filterCat(cat, btn) {
-  document.querySelectorAll('.safia-pill').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.category-pills .pill').forEach(p=>p.classList.remove('active'));
   btn.classList.add('active');
   activeCategory = cat;
   renderMenuItems(cat);
@@ -864,24 +793,19 @@ function renderMenuItems(cat) {
       <div class="empty-icon"><i data-lucide="utensils"></i></div><h3>Taom topilmadi</h3></div>`;
     renderIcons(); return;
   }
-  const catColors = {'Asosiy taomlar':'#D4982E','Salatlar':'#2ECC71','Sho\'rvalar':'#E67E22','Ichimliklar':'#D4982E','Shirinliklar':'#E91E8C','Non mahsulotlari':'#F39C12','Mazza':'#9B59B6','Alkogolsiz':'#1ABC9C'};
-  grid.innerHTML = items.map(item=>{
-    const cc = catColors[item.category]||'#D4982E';
-    return `
-    <div class="food-card" onclick="showMenuDetail('${item.id}')">
-      <div class="food-card-img">
-        ${item.image
-          ? `<img src="${item.image}" alt="${item.name}" onerror="this.parentElement.innerHTML='<div class=food-no-img><i data-lucide=utensils style=width:40px;height:40px></i></div>'">`
-          : `<div class="food-no-img"><i data-lucide="utensils" style="width:40px;height:40px"></i></div>`}
-        <span class="food-card-cat-chip" style="border-color:${cc}55">${item.category}</span>
-        ${item.price?`<span class="food-card-price-tag">${formatPrice(item.price)}</span>`:''}
+  grid.innerHTML = items.map(item=>`
+    <div class="menu-card" onclick="showMenuDetail('${item.id}')" style="cursor:pointer">
+      <div class="menu-card-img">
+        ${item.image?`<img src="${item.image}" alt="${item.name}" onerror="this.style.display='none'">` : `<i data-lucide="utensils" style="width:36px;height:36px;opacity:0.3"></i>`}
       </div>
-      <div class="food-card-body">
-        <div class="food-card-name">${item.name}</div>
-        <div class="food-card-desc">${item.description||'Tavsif berilmagan'}</div>
-        ${item.allergens?.length?`<div class="food-card-tags">${item.allergens.map(a=>`<span class="food-card-tag">⚠ ${a}</span>`).join('')}</div>`:''}
+      <div class="menu-card-body">
+        <div class="menu-card-cat">${item.category}</div>
+        <div class="menu-card-name">${item.name}</div>
+        <div class="menu-card-desc">${item.description||'Tavsif yo\'q'}</div>
+        ${item.allergens?.length?`<div style="margin-bottom:6px">${item.allergens.map(a=>`<span class="tag tag-allergen"><i data-lucide="alert-triangle" style="width:10px;height:10px"></i> ${a}</span>`).join('')}</div>`:''}
+        <div class="menu-card-price">${formatPrice(item.price)}</div>
       </div>
-    </div>`}).join('');
+    </div>`).join('');
   renderIcons();
   init3DTilt();
 }
@@ -889,59 +813,19 @@ function renderMenuItems(cat) {
 function showMenuDetail(id) {
   const item = menuData.find(m=>m.id===id);
   if (!item) return;
-
   document.getElementById('mi-name').textContent = item.name;
-  document.getElementById('mi-cat').textContent  = item.category;
-  document.getElementById('mi-price').textContent = item.price ? formatPrice(item.price) : '';
-  document.getElementById('mi-desc').textContent  = item.description || '';
-
-  document.getElementById('mi-img').innerHTML = item.image
-    ? `<img src="${item.image}" style="width:100%;height:100%;object-fit:cover">`
-    : `<i data-lucide="utensils" style="width:48px;height:48px;opacity:0.2"></i>`;
-
-  document.getElementById('mi-ingredients').innerHTML = item.ingredients?.length
-    ? `<div style="margin-bottom:8px;font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:var(--text3)">Tarkib</div>
-       <div style="display:flex;flex-wrap:wrap;gap:6px">${item.ingredients.map(i=>`<span class="tag">${i}</span>`).join('')}</div>`
-    : '';
-
-  document.getElementById('mi-allergens').innerHTML = item.allergens?.length
-    ? `<div style="margin-bottom:8px;font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:#E74C3C">⚠ Allergenlar</div>
-       <div style="display:flex;flex-wrap:wrap;gap:6px">${item.allergens.map(a=>`<span class="tag tag-allergen">${a}</span>`).join('')}</div>`
-    : '';
-
-  document.getElementById('mi-suggestion').innerHTML = item.servingSuggestion
-    ? `<div style="padding:12px 14px;background:rgba(212,152,46,0.07);border-radius:10px;border-left:3px solid var(--neon);font-size:0.86rem;color:var(--text2);font-style:italic;line-height:1.6;margin-top:4px">${item.servingSuggestion}</div>`
-    : '';
-
-  const modal = document.getElementById('menu-item-modal');
-  const sheet = document.getElementById('mi-sheet');
-  modal.style.opacity = '0';
-  modal.style.pointerEvents = 'all';
-  modal.style.display = 'flex';
-  sheet.scrollTop = 0;
-  requestAnimationFrame(() => {
-    modal.style.opacity = '1';
-    sheet.style.transform = 'translateY(0)';
-  });
-  renderIcons();
+  document.getElementById('mi-cat').textContent = item.category;
+  document.getElementById('mi-desc').textContent = item.description||'Tavsif berilmagan';
+  document.getElementById('mi-price').textContent = formatPrice(item.price);
+  document.getElementById('mi-img').innerHTML = item.image ? `<img src="${item.image}" style="width:100%;height:220px;object-fit:cover">` : '';
+  document.getElementById('mi-ingredients').innerHTML = item.ingredients?.length ?
+    `<div style="margin-bottom:6px"><strong style="font-size:0.82rem">Tarkib:</strong><br>${item.ingredients.map(i=>`<span class="tag">${i}</span>`).join('')}</div>` : '';
+  document.getElementById('mi-allergens').innerHTML = item.allergens?.length ?
+    `<div style="margin-bottom:6px"><strong style="font-size:0.82rem">Allergiyalar:</strong><br>${item.allergens.map(a=>`<span class="tag tag-allergen">${a}</span>`).join('')}</div>` : '';
+  document.getElementById('mi-suggestion').innerHTML = item.servingSuggestion ?
+    `<div style="padding:12px;background:rgba(0, 212, 255,0.08);border-radius:10px;border-left:3px solid var(--neon);font-size:0.88rem;color:var(--text2);font-style:italic">${item.servingSuggestion}</div>` : '';
+  document.getElementById('menu-item-modal').classList.add('show');
 }
-
-// modal yopish override
-document.addEventListener('DOMContentLoaded', () => {
-  const modal = document.getElementById('menu-item-modal');
-  if (!modal) return;
-  const sheet = document.getElementById('mi-sheet');
-  const closeSheet = () => {
-    modal.style.opacity = '0';
-    sheet.style.transform = 'translateY(30px)';
-    setTimeout(() => { modal.style.display = 'none'; modal.style.pointerEvents = 'none'; }, 280);
-  };
-  modal.addEventListener('click', e => { if (e.target === modal) closeSheet(); });
-  modal.querySelectorAll('button[onclick*="classList.remove"]').forEach(b => {
-    b.addEventListener('click', closeSheet);
-    b.removeAttribute('onclick');
-  });
-});
 
 // ===== TEST =====
 async function loadTestInfo() {
@@ -1199,7 +1083,7 @@ async function loadHomeKPI() {
     if (!card) return;
     if (k.level === 'nodata') { card.style.display='none'; return; }
     const kpiColors = {
-      master:'#F39C12', pro:'#D4982E', good:'#2ECC71',
+      master:'#F39C12', pro:'#3498DB', good:'#2ECC71',
       warning:'#E67E22', penalty:'#E74C3C', fail:'#9B59B6'
     };
     const c = kpiColors[k.level] || '#666';
@@ -1265,7 +1149,7 @@ function renderAdaptInfo(data) {
   }
   if (hasValues) {
     document.getElementById('adapt-view-values').style.display = '';
-    const colors = ['#D4982E','#D4982E','#9B59B6','#2ECC71','#E74C3C','#1ABC9C','#F39C12','#E67E22'];
+    const colors = ['#00D4FF','#3498DB','#9B59B6','#2ECC71','#E74C3C','#1ABC9C','#F39C12','#E67E22'];
     document.getElementById('adapt-values-list').innerHTML = data.values.map((v,i) => {
       const c = colors[i % colors.length];
       return `<div style="display:inline-flex;align-items:center;gap:6px;padding:8px 15px;background:${c}18;border:1px solid ${c}40;border-radius:100px;font-size:0.85rem;font-weight:600;color:${c}">
@@ -1281,10 +1165,10 @@ function renderAdaptJourney(data) {
   const empty = document.getElementById('adapt-journey-empty');
   if (!steps.length) { empty.style.display=''; list.innerHTML=''; return; }
   empty.style.display = 'none';
-  const dayColors  = {'1-kun':'#D4982E','3-kun':'#9B59B6','1-hafta':'#D4982E','1-oy':'#2ECC71'};
+  const dayColors  = {'1-kun':'#3498DB','3-kun':'#9B59B6','1-hafta':'#00D4FF','1-oy':'#2ECC71'};
   const dayLabels  = {'1-kun':'Birinchi kun','3-kun':'Uchinchi kun','1-hafta':'Birinchi hafta','1-oy':'Birinchi oy'};
   list.innerHTML = steps.map((step, idx) => {
-    const col    = dayColors[step.day] || '#D4982E';
+    const col    = dayColors[step.day] || '#00D4FF';
     const label  = dayLabels[step.day] || step.day;
     const isLast = idx === steps.length - 1;
     const tasks  = (step.tasks || []).filter(Boolean);
@@ -1405,7 +1289,7 @@ function init3DTilt() {
       const x = (e.clientX - rect.left) / rect.width  - 0.5;
       const y = (e.clientY - rect.top)  / rect.height - 0.5;
       card.style.transform = `perspective(600px) rotateY(${x*14}deg) rotateX(${-y*10}deg) scale(1.03)`;
-      card.style.boxShadow = `${-x*20}px ${y*20}px 40px rgba(13,43,32,0.12), 0 0 0 1px rgba(200,146,42,0.2)`;
+      card.style.boxShadow = `${-x*20}px ${y*20}px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(0, 212, 255,0.2)`;
     });
     card.addEventListener('mouseleave', () => {
       card.style.transform = '';
@@ -1545,7 +1429,7 @@ async function downloadPDF(r) {
     // Description
     doc.setFontSize(10); doc.setFont('helvetica','normal');
     doc.setTextColor(170,170,170);
-    doc.text(`${waiterInfo?.restaurant?.name || 'RestoOne'} restoranida`, W/2, 94, {align:'center'});
+    doc.text(`${waiterInfo?.restaurant?.name || 'Tarnov Restaurant'} restoranida`, W/2, 94, {align:'center'});
     doc.text("menyu bo'yicha bilimlarini muvaffaqiyatli tasdiqladi", W/2, 101, {align:'center'});
 
     // Score
@@ -1944,9 +1828,217 @@ function lvBackToModule() {
 init();
 </script>
 
-<!-- AI CHAT WIDGET REMOVED -->
+<!-- ══════════════════ AI CHAT WIDGET ══════════════════ -->
+<style>
+#ai-fab {
+  position: fixed; bottom: 24px; right: 24px; z-index: 1000;
+  width: 56px; height: 56px; border-radius: 50%;
+  background: linear-gradient(135deg, #00D4FF, #00EEFF);
+  border: none; cursor: pointer; box-shadow: 0 4px 20px rgba(0, 212, 255,0.5);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .2s, box-shadow .2s;
+}
+#ai-fab:hover { transform: scale(1.1); box-shadow: 0 6px 28px rgba(0, 212, 255,0.7); }
+#ai-fab svg { width: 26px; height: 26px; stroke: #0A0A0A; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+#ai-fab .ai-badge {
+  position: absolute; top: -4px; right: -4px;
+  background: #E74C3C; color: #fff; font-size: 10px;
+  width: 18px; height: 18px; border-radius: 50%;
+  display: none; align-items: center; justify-content: center; font-weight: 700;
+}
+
+#ai-panel {
+  position: fixed; bottom: 90px; right: 24px; z-index: 999;
+  width: 360px; max-width: calc(100vw - 32px);
+  background: #111; border: 1px solid #2a2a2a;
+  border-radius: 16px; box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+  display: none; flex-direction: column; overflow: hidden;
+  max-height: calc(100vh - 120px);
+}
+#ai-panel.open { display: flex; }
+
+#ai-header {
+  padding: 14px 16px; background: #1a1a1a; border-bottom: 1px solid #2a2a2a;
+  display: flex; align-items: center; gap: 10px;
+}
+#ai-header .ai-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: linear-gradient(135deg, #00D4FF, #00EEFF);
+  display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
+}
+#ai-header .ai-info { flex: 1; }
+#ai-header .ai-name { font-weight: 700; font-size: 14px; color: #fff; }
+#ai-header .ai-status { font-size: 11px; color: #2ECC71; }
+#ai-close { background: none; border: none; color: #666; cursor: pointer; font-size: 20px; padding: 0 4px; }
+#ai-close:hover { color: #fff; }
+
+#ai-messages {
+  flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px;
+  min-height: 200px;
+}
+#ai-messages::-webkit-scrollbar { width: 4px; }
+#ai-messages::-webkit-scrollbar-track { background: transparent; }
+#ai-messages::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+.ai-msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 1.5; word-break: break-word; }
+.ai-msg.user { align-self: flex-end; background: #00D4FF; color: #000; border-bottom-right-radius: 4px; }
+.ai-msg.bot  { align-self: flex-start; background: #1e1e1e; color: #e0e0e0; border: 1px solid #2a2a2a; border-bottom-left-radius: 4px; }
+.ai-msg.typing { color: #666; font-style: italic; }
+.ai-msg.error { background: #2a1010; border-color: #E74C3C; color: #E74C3C; }
+
+.ai-quick-btns { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 16px 12px; }
+.ai-quick-btn {
+  background: #1a1a1a; border: 1px solid #2a2a2a; color: #00D4FF;
+  border-radius: 20px; padding: 5px 12px; font-size: 11px; cursor: pointer;
+  transition: background .15s, border-color .15s; white-space: nowrap;
+}
+.ai-quick-btn:hover { background: #222; border-color: #00D4FF; }
+
+#ai-input-row {
+  padding: 12px 16px; background: #1a1a1a; border-top: 1px solid #2a2a2a;
+  display: flex; gap: 8px; align-items: flex-end;
+}
+#ai-input {
+  flex: 1; background: #0d0d0d; border: 1px solid #2a2a2a; color: #fff;
+  border-radius: 10px; padding: 9px 12px; font-size: 13px; resize: none;
+  max-height: 100px; outline: none; font-family: inherit; line-height: 1.4;
+}
+#ai-input:focus { border-color: #00D4FF; }
+#ai-input::placeholder { color: #444; }
+#ai-send {
+  background: #00D4FF; border: none; color: #000; border-radius: 10px;
+  width: 38px; height: 38px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: background .15s;
+}
+#ai-send:hover { background: #00EEFF; }
+#ai-send:disabled { background: #333; color: #666; cursor: not-allowed; }
+#ai-send svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+</style>
+
+<!-- Floating button -->
+<button id="ai-fab" onclick="aiToggle()" title="AI Yordamchi">
+  <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+  <span class="ai-badge" id="ai-badge">1</span>
+</button>
+
+<!-- Chat panel -->
+<div id="ai-panel">
+  <div id="ai-header">
+    <div class="ai-avatar">🤖</div>
+    <div class="ai-info">
+      <div class="ai-name">AI Yordamchi</div>
+      <div class="ai-status" id="ai-status-text">● Faol</div>
+    </div>
+    <button id="ai-close" onclick="aiToggle()">✕</button>
+  </div>
+
+  <div id="ai-messages">
+    <div class="ai-msg bot">Salom! Men restoran menyusi, narxlar, ingredientlar va allergenlar bo'yicha savollarga javob beraman. Nima so'rasangiz?</div>
+  </div>
+
+  <div class="ai-quick-btns" id="ai-quick">
+    <button class="ai-quick-btn" onclick="aiQuick('Eng qimmat taom qaysi?')">Eng qimmat taom?</button>
+    <button class="ai-quick-btn" onclick="aiQuick('Glutensiz taomlar bormi?')">Glutensiz taomlar</button>
+    <button class="ai-quick-btn" onclick="aiQuick('Set taomlar narxi qancha?')">Set narxlari</button>
+    <button class="ai-quick-btn" onclick="aiQuick('Vegetarian taomlar qaysilar?')">Vegetarian</button>
+  </div>
+
+  <div id="ai-input-row">
+    <textarea id="ai-input" placeholder="Savol yozing..." rows="1"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();aiSend()}"
+      oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+    <button id="ai-send" onclick="aiSend()">
+      <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+
+<script>
+(function() {
+  let aiHistory = [];
+  let aiLoading = false;
+  let aiOpened = false;
+
+  window.aiToggle = function() {
+    const panel = document.getElementById('ai-panel');
+    const badge = document.getElementById('ai-badge');
+    aiOpened = !aiOpened;
+    panel.classList.toggle('open', aiOpened);
+    badge.style.display = 'none';
+    if (aiOpened) {
+      setTimeout(() => document.getElementById('ai-input')?.focus(), 100);
+    }
+  };
+
+  window.aiQuick = function(text) {
+    document.getElementById('ai-input').value = text;
+    aiSend();
+  };
+
+  function aiAppend(role, text) {
+    const box = document.getElementById('ai-messages');
+    const div = document.createElement('div');
+    div.className = 'ai-msg ' + role;
+    div.textContent = text;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+    return div;
+  }
+
+  window.aiSend = async function() {
+    if (aiLoading) return;
+    const inp = document.getElementById('ai-input');
+    const msg = inp.value.trim();
+    if (!msg) return;
+    inp.value = '';
+    inp.style.height = 'auto';
+
+    // Tez savol tugmalarini yashir
+    document.getElementById('ai-quick').style.display = 'none';
+
+    aiAppend('user', msg);
+    const typingEl = aiAppend('typing', 'Javob yozilmoqda...');
+    aiLoading = true;
+    document.getElementById('ai-send').disabled = true;
+    document.getElementById('ai-status-text').textContent = '● Fikrlamoqda...';
+
+    try {
+      const res = await fetch('/api/waiter/ai-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg, history: aiHistory })
+      });
+      const data = await res.json();
+
+      typingEl.remove();
+
+      if (!res.ok) {
+        aiAppend('error', data.error || 'Xatolik yuz berdi.');
+      } else {
+        aiHistory.push({ role: 'user', content: msg });
+        aiHistory.push({ role: 'assistant', content: data.reply });
+        if (aiHistory.length > 12) aiHistory = aiHistory.slice(-12);
+        aiAppend('bot', data.reply);
+
+        if (!aiOpened) {
+          document.getElementById('ai-badge').style.display = 'flex';
+        }
+      }
+    } catch {
+      typingEl.remove();
+      aiAppend('error', 'Tarmoq xatosi. Internet aloqasini tekshiring.');
+    } finally {
+      aiLoading = false;
+      document.getElementById('ai-send').disabled = false;
+      document.getElementById('ai-status-text').textContent = '● Faol';
+    }
+  };
+})();
+</script>
 </body>
 </html>
+
+
 
 
 

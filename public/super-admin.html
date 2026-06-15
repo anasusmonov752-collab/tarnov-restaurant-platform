@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RestoOne — Super Admin</title>
-  <link rel="stylesheet" href="/css/style.css?v=6.0">
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <link rel="stylesheet" href="/css/style.css?v=3.1">
+  <script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.min.js"></script>
 </head>
 <body>
 <div id="toast-container"></div>
@@ -15,7 +15,9 @@
     <i data-lucide="menu"></i>
   </button>
   <div style="display:flex;align-items:center;gap:7px">
-    <svg width="24" height="24" viewBox="0 0 36 36"><defs><linearGradient id="mg1" x1="0%" y1="0%" x2="110%" y2="110%"><stop offset="0%" stop-color="#F0C355"/><stop offset="100%" stop-color="#B87818"/></linearGradient></defs><circle cx="18" cy="18" r="18" fill="url(#mg1)"/><text x="18" y="25" font-family="Georgia,serif" font-size="20" font-weight="900" fill="#fff" text-anchor="middle">R</text><circle cx="30" cy="7" r="7" fill="#1A1407"/><text x="30" y="10.5" font-family="Arial,sans-serif" font-size="8" font-weight="700" fill="#DBA543" text-anchor="middle">1</text></svg>
+    <div style="width:24px;height:24px;background:linear-gradient(135deg,#00D4FF,#0099CC);border-radius:6px;display:flex;align-items:center;justify-content:center">
+      <i data-lucide="zap" style="width:13px;height:13px;color:#000"></i>
+    </div>
     <span style="color:var(--neon);font-weight:800;letter-spacing:0.06em">RestoOne</span>
   </div>
   <button class="btn btn-ghost btn-sm" onclick="logout()">
@@ -29,11 +31,11 @@
     <div class="sidebar-header">
       <div class="sidebar-brand">
         <div class="sidebar-brand-icon">
-          <svg width="48" height="48" viewBox="0 0 36 36"><defs><linearGradient id="sg1" x1="0%" y1="0%" x2="110%" y2="110%"><stop offset="0%" stop-color="#F0C355"/><stop offset="100%" stop-color="#C8922A"/></linearGradient></defs><circle cx="18" cy="18" r="18" fill="url(#sg1)"/><text x="18" y="25" font-family="Georgia,serif" font-size="20" font-weight="900" fill="#fff" text-anchor="middle">R</text><circle cx="30" cy="7" r="7" fill="#0D2B20"/><text x="30" y="10.5" font-family="Arial,sans-serif" font-size="8" font-weight="700" fill="#F0C355" text-anchor="middle">1</text></svg>
+          <i data-lucide="zap"></i>
         </div>
         <div class="sidebar-brand-text">
           <div class="brand-name">RestoOne</div>
-          <div class="brand-sub">Learning Platform</div>
+          <div class="brand-sub">HR Platform</div>
         </div>
       </div>
       <div class="sidebar-role-badge super">
@@ -161,7 +163,6 @@
 </div>
 
 <script src="/js/utils.js?v=3.1"></script>
-<script src="/js/i18n.js?v=1.4"></script>
 <script>
 let dashData = null;
 
@@ -185,11 +186,11 @@ async function loadDashboard() {
 function renderStats() {
   const d = dashData;
   const cards = [
-    { icon:'store',        value:d.total,                             label:'Jami restoranlar', color:'#D4982E', bg:'rgba(212,152,46,0.1)',  border:'rgba(212,152,46,0.25)' },
+    { icon:'store',        value:d.total,                             label:'Jami restoranlar', color:'#3498DB', bg:'rgba(52,152,219,0.1)',  border:'rgba(52,152,219,0.25)' },
     { icon:'circle-check', value:d.active,                            label:'Faol restoranlar', color:'#2ECC71', bg:'rgba(46,204,113,0.1)',  border:'rgba(46,204,113,0.25)' },
     { icon:'chef-hat',     value:d.totalWaiters,                      label:'Jami xodimlar',    color:'#9B59B6', bg:'rgba(155,89,182,0.1)', border:'rgba(155,89,182,0.25)' },
     { icon:'utensils',     value:d.totalMenuItems,                    label:'Menyu taomlar',    color:'#F39C12', bg:'rgba(243,156,18,0.1)',  border:'rgba(243,156,18,0.25)' },
-    { icon:'wallet',       value:`${(d.totalRevenue/1000000).toFixed(1)}M`, label:"Oylik daromad", color:'#D4982E', bg:'rgba(212,152,46,0.1)', border:'rgba(212,152,46,0.25)' },
+    { icon:'wallet',       value:`${(d.totalRevenue/1000000).toFixed(1)}M`, label:"Oylik daromad", color:'#00D4FF', bg:'rgba(0, 212, 255,0.1)', border:'rgba(0, 212, 255,0.25)' },
   ];
   document.getElementById('dash-stats').innerHTML = cards.map(c => `
     <div class="stat-card" style="border-color:${c.border};background:linear-gradient(135deg,${c.bg},var(--card))">
@@ -385,5 +386,7 @@ init();
 </script>
 </body>
 </html>
+
+
 
 

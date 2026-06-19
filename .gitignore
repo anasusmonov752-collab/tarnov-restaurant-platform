@@ -20,3 +20,6 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# Claude Code tooling (contains local launch config with secrets)
+.claude/

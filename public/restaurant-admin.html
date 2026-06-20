@@ -5,13 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RestoOne — Admin Panel</title>
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#00D4FF">
+  <meta name="theme-color" content="#14291F">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="RestoOne Admin">
   <link rel="apple-touch-icon" href="/images/icon.svg">
   <link rel="stylesheet" href="/css/style.css?v=3.1">
+  <link rel="stylesheet" href="/css/admin-theme.css?v=1.1">
   <script src="https://unpkg.com/lucide@0.462.0/dist/umd/lucide.min.js"></script>
 </head>
 <body>
@@ -20,8 +21,8 @@
 <div class="mobile-topbar">
   <button class="hamburger" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
   <div style="display:flex;align-items:center;gap:7px">
-    <div style="width:24px;height:24px;background:linear-gradient(135deg,#00D4FF,#0099CC);border-radius:6px;display:flex;align-items:center;justify-content:center">
-      <i data-lucide="zap" style="width:13px;height:13px;color:#000"></i>
+    <div style="width:24px;height:24px;background:linear-gradient(135deg,#C9A84C,#9A7D2F);border-radius:6px;display:flex;align-items:center;justify-content:center">
+      <i data-lucide="zap" style="width:13px;height:13px;color:#14291F"></i>
     </div>
     <span style="color:var(--neon);font-weight:800;letter-spacing:0.06em" id="mob-name">RestoOne</span>
   </div>
@@ -117,10 +118,6 @@
         </div>
         <div style="display:flex;align-items:center;gap:10px">
           <span style="font-size:0.78rem;color:var(--text3)" id="last-refresh"></span>
-          <div style="display:flex;align-items:center;gap:6px;font-size:0.78rem;color:var(--text3)">
-            <span>Neon</span>
-            <button class="neon-toggle" id="neon-btn" onclick="toggleNeon()" title="Neon mode"></button>
-          </div>
         </div>
       </div>
       <div class="page-body">
@@ -169,7 +166,7 @@
     <!-- WAITERS -->
     <div id="page-waiters" class="page" style="display:none">
       <div class="page-header">
-        <div><h1><i data-lucide="users" style="width:22px;height:22px;color:#9B59B6;vertical-align:middle;margin-right:8px"></i>Ofitsiantlar</h1><p>PIN tayinlash va ofitsiantlarni boshqarish</p></div>
+        <div><h1><i data-lucide="users" style="width:22px;height:22px;color:#C9A84C;vertical-align:middle;margin-right:8px"></i>Ofitsiantlar</h1><p>PIN tayinlash va ofitsiantlarni boshqarish</p></div>
         <div class="flex gap-8">
           <button class="btn btn-outline" onclick="downloadTemplate()">
             <i data-lucide="download"></i> Shablon
@@ -218,7 +215,7 @@
     <!-- QUESTIONS -->
     <div id="page-questions" class="page" style="display:none">
       <div class="page-header">
-        <div><h1><i data-lucide="help-circle" style="width:22px;height:22px;color:#3498DB;vertical-align:middle;margin-right:8px"></i>Test savollari</h1><p>Test uchun savollar bazasini boshqarish</p></div>
+        <div><h1><i data-lucide="help-circle" style="width:22px;height:22px;color:#C9A84C;vertical-align:middle;margin-right:8px"></i>Test savollari</h1><p>Test uchun savollar bazasini boshqarish</p></div>
         <button class="btn btn-neon" onclick="openQuestionModal()">
           <i data-lucide="plus"></i> Savol qo'shish
         </button>
@@ -242,7 +239,7 @@
     <!-- TEST DAYS -->
     <div id="page-testdays" class="page" style="display:none">
       <div class="page-header">
-        <div><h1><i data-lucide="calendar" style="width:22px;height:22px;color:#00FF88;vertical-align:middle;margin-right:8px"></i>Test kunlari</h1><p>Ofitsiantlar uchun test kunlarini belgilash</p></div>
+        <div><h1><i data-lucide="calendar" style="width:22px;height:22px;color:#C9A84C;vertical-align:middle;margin-right:8px"></i>Test kunlari</h1><p>Ofitsiantlar uchun test kunlarini belgilash</p></div>
       </div>
       <div class="page-body">
         <div class="grid-2" style="gap:24px;align-items:start">
@@ -277,7 +274,7 @@
     <!-- ANNOUNCEMENTS -->
     <div id="page-announcements" class="page" style="display:none">
       <div class="page-header">
-        <div><h1><i data-lucide="megaphone" style="width:22px;height:22px;color:#FFB800;vertical-align:middle;margin-right:8px"></i>E'lonlar</h1><p>Ofitsiantlarga xabar yuborish</p></div>
+        <div><h1><i data-lucide="megaphone" style="width:22px;height:22px;color:#C9A84C;vertical-align:middle;margin-right:8px"></i>E'lonlar</h1><p>Ofitsiantlarga xabar yuborish</p></div>
         <button class="btn btn-neon" onclick="openAnnModal()">
           <i data-lucide="send"></i> E'lon yuborish
         </button>
@@ -288,7 +285,7 @@
     <!-- KPI -->
     <div id="page-kpi" class="page" style="display:none">
       <div class="page-header">
-        <div><h1><i data-lucide="bar-chart-2" style="width:22px;height:22px;color:#FFB800;vertical-align:middle;margin-right:8px"></i>KPI Hisoboti</h1><p id="kpi-period-title">Xodimlar bilim darajasi — joriy 10 kunlik davr bo'yicha</p></div>
+        <div><h1><i data-lucide="bar-chart-2" style="width:22px;height:22px;color:#C9A84C;vertical-align:middle;margin-right:8px"></i>KPI Hisoboti</h1><p id="kpi-period-title">Xodimlar bilim darajasi — joriy 10 kunlik davr bo'yicha</p></div>
         <div style="display:flex;gap:8px">
           <button class="btn btn-ghost btn-sm" onclick="openKPISettings()" style="gap:6px">
             <i data-lucide="settings-2" style="width:14px;height:14px"></i> Sozlamalar
@@ -343,7 +340,7 @@
         </div>
 
         <!-- Izoh -->
-        <div class="card mt-16" style="background:rgba(0, 212, 255,0.04);border-color:rgba(0, 212, 255,0.15)">
+        <div class="card mt-16" style="background:rgba(201,168,76,0.04);border-color:rgba(201,168,76,0.15)">
           <div class="card-body" style="font-size:0.82rem;color:var(--text3);line-height:1.8">
             <strong style="color:var(--text2)">KPI hisoblash usuli:</strong> Joriy 10 kunlik davrdagi test natijasi asosida (1 davr = 1 test = 1 oylik hisob).<br>
             Davrlar: <strong style="color:var(--text2)">1–10 kun</strong> · <strong style="color:var(--text2)">11–20 kun</strong> · <strong style="color:var(--text2)">21–oy oxiri</strong> — oyiga 3 ta oylik hisob.<br>
@@ -357,7 +354,7 @@
     <!-- RESULTS -->
     <div id="page-results" class="page" style="display:none">
       <div class="page-header">
-        <div><h1><i data-lucide="trophy" style="width:22px;height:22px;color:#F39C12;vertical-align:middle;margin-right:8px"></i>Test natijalari</h1><p>Ofitsiantlar test natijalari va statistika</p></div>
+        <div><h1><i data-lucide="trophy" style="width:22px;height:22px;color:#C9A84C;vertical-align:middle;margin-right:8px"></i>Test natijalari</h1><p>Ofitsiantlar test natijalari va statistika</p></div>
       </div>
       <div class="page-body">
         <div class="card mb-20">
@@ -366,10 +363,10 @@
             <div style="display:flex;align-items:center;gap:8px;font-size:0.75rem;color:var(--text3)">
               kam <span style="display:inline-flex;gap:2px">
                 <span style="width:11px;height:11px;border-radius:2px;background:var(--border);display:inline-block"></span>
-                <span style="width:11px;height:11px;border-radius:2px;background:rgba(0, 212, 255,0.25);display:inline-block"></span>
-                <span style="width:11px;height:11px;border-radius:2px;background:rgba(0, 212, 255,0.55);display:inline-block"></span>
-                <span style="width:11px;height:11px;border-radius:2px;background:rgba(0, 212, 255,0.8);display:inline-block"></span>
-                <span style="width:11px;height:11px;border-radius:2px;background:#00D4FF;display:inline-block"></span>
+                <span style="width:11px;height:11px;border-radius:2px;background:rgba(201,168,76,0.25);display:inline-block"></span>
+                <span style="width:11px;height:11px;border-radius:2px;background:rgba(201,168,76,0.55);display:inline-block"></span>
+                <span style="width:11px;height:11px;border-radius:2px;background:rgba(201,168,76,0.8);display:inline-block"></span>
+                <span style="width:11px;height:11px;border-radius:2px;background:#C9A84C;display:inline-block"></span>
               </span> ko'p
             </div>
           </div>
@@ -396,7 +393,7 @@
     <div id="page-modules" class="page" style="display:none">
       <div class="page-header">
         <div>
-          <h1><i data-lucide="graduation-cap" style="width:28px;height:28px;color:#9B59B6;vertical-align:middle"></i> O'quv Modullar</h1>
+          <h1><i data-lucide="graduation-cap" style="width:28px;height:28px;color:#C9A84C;vertical-align:middle"></i> O'quv Modullar</h1>
           <p>Ofitsiantlar uchun strukturali o'quv kurslari</p>
         </div>
         <button class="btn btn-neon" onclick="openModuleModal()">
@@ -534,7 +531,7 @@
     <!-- CHECKLIST -->
     <div id="page-checklist" class="page" style="display:none">
       <div class="page-header">
-        <div><h1><i data-lucide="clipboard-list" style="width:22px;height:22px;color:#2ECC71;vertical-align:middle;margin-right:8px"></i>Onboarding Checklist</h1><p>Yangi xodimlar uchun vazifalar ro'yxati</p></div>
+        <div><h1><i data-lucide="clipboard-list" style="width:22px;height:22px;color:#C9A84C;vertical-align:middle;margin-right:8px"></i>Onboarding Checklist</h1><p>Yangi xodimlar uchun vazifalar ro'yxati</p></div>
         <button class="btn btn-neon" onclick="openChecklistModal()">
           <i data-lucide="plus"></i> Vazifa qo'shish
         </button>
@@ -556,7 +553,7 @@
     <!-- ADAPTATION -->
     <div id="page-adaptation" class="page" style="display:none">
       <div class="page-header">
-        <div><h1><i data-lucide="book-open" style="width:22px;height:22px;color:#3498DB;vertical-align:middle;margin-right:8px"></i>Adaptatsiya</h1><p>Yangi xodimlar uchun restoran ma'lumotlari</p></div>
+        <div><h1><i data-lucide="book-open" style="width:22px;height:22px;color:#C9A84C;vertical-align:middle;margin-right:8px"></i>Adaptatsiya</h1><p>Yangi xodimlar uchun restoran ma'lumotlari</p></div>
         <button class="btn btn-neon" id="adapt-save-btn" onclick="saveAdaptation()">
           <i data-lucide="save"></i> Saqlash
         </button>
@@ -730,7 +727,7 @@
     </div>
     <div class="modal-body">
       <!-- Hisoblash davri -->
-      <div style="background:rgba(0, 212, 255,0.06);border:1px solid rgba(0, 212, 255,0.2);border-radius:10px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:16px">
+      <div style="background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:10px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:16px">
         <div>
           <div style="font-weight:700;font-size:0.9rem;margin-bottom:3px">📅 KPI hisoblash davri</div>
           <div style="font-size:0.78rem;color:var(--text3)">Bir davr = bir oylik hisob</div>
@@ -1097,10 +1094,10 @@ function renderDashboard() {
 
   // ── Rang-barang stat kartalar ──
   const stats = [
-    { icon:'utensils',    value:menuItems.length,  label:'Menyu taomlar',    color:'#3498DB', bg:'rgba(52,152,219,0.1)',  border:'rgba(52,152,219,0.25)'  },
-    { icon:'chef-hat',    value:activeWaiters,      label:'Faol ofitsiantlar',color:'#9B59B6', bg:'rgba(155,89,182,0.1)',  border:'rgba(155,89,182,0.25)'  },
-    { icon:'help-circle', value:questions.length,   label:'Savollar bazasi',  color:'#E67E22', bg:'rgba(230,126,34,0.1)',  border:'rgba(230,126,34,0.25)'  },
-    { icon:'award',       value:certCount,           label:'Sertifikatlar',    color:'#F39C12', bg:'rgba(243,156,18,0.1)',  border:'rgba(243,156,18,0.25)'  },
+    { icon:'utensils',    value:menuItems.length,  label:'Menyu taomlar',    color:'#1B3A2D', bg:'rgba(27,58,45,0.08)',   border:'rgba(27,58,45,0.18)'   },
+    { icon:'chef-hat',    value:activeWaiters,      label:'Faol ofitsiantlar',color:'#2E7D5B', bg:'rgba(46,125,91,0.1)',   border:'rgba(46,125,91,0.25)'  },
+    { icon:'help-circle', value:questions.length,   label:'Savollar bazasi',  color:'#9A7D2F', bg:'rgba(201,168,76,0.12)', border:'rgba(201,168,76,0.3)'  },
+    { icon:'award',       value:certCount,           label:'Sertifikatlar',    color:'#C9A84C', bg:'rgba(201,168,76,0.14)', border:'rgba(201,168,76,0.32)' },
   ];
 
   document.getElementById('dash-stats').innerHTML = stats.map(s => `
@@ -1468,7 +1465,7 @@ function addOption() {
 function highlightCorrect(selectedIdx) {
   document.querySelectorAll('[id^="opt-label-"]').forEach((el, i) => {
     el.style.borderColor = i === selectedIdx ? 'var(--neon)' : 'var(--border)';
-    el.style.background = i === selectedIdx ? 'rgba(0, 212, 255,0.08)' : 'transparent';
+    el.style.background = i === selectedIdx ? 'rgba(201,168,76,0.08)' : 'transparent';
   });
 }
 
@@ -1989,11 +1986,11 @@ async function deleteDoc(id) {
 function renderOnboarding(list) {
   const el = document.getElementById('onboarding-list');
   if (!list.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3)">Hali bosqich qo\'shilmagan</div>'; return; }
-  const dayColors = {'1-kun':'#3498DB','3-kun':'#9B59B6','1-hafta':'#00D4FF','1-oy':'#2ECC71'};
+  const dayColors = {'1-kun':'#3498DB','3-kun':'#9B59B6','1-hafta':'#C9A84C','1-oy':'#2ECC71'};
   const dayLabels = {'1-kun':'1-kun','3-kun':'3-kun','1-hafta':'1-hafta','1-oy':'1-oy'};
   const sorted = [...list].sort((a,b) => (a.order||0)-(b.order||0));
   el.innerHTML = sorted.map(s => {
-    const c = dayColors[s.day] || '#00D4FF';
+    const c = dayColors[s.day] || '#C9A84C';
     const tasks = (s.tasks||[]).filter(Boolean);
     return `<div style="display:flex;align-items:flex-start;gap:14px;padding:13px 16px;border-bottom:1px solid var(--border)">
       <div style="width:36px;height:36px;border-radius:50%;background:${c}18;border:2px solid ${c};display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">
@@ -2362,7 +2359,7 @@ function openQuizModal(moduleId) {
 function renderQuizEditor() {
   const el = document.getElementById('quiz-questions-list');
   el.innerHTML = quizQuestions.map((q,i) => `
-    <div class="card mb-12" style="border:1px solid rgba(0, 212, 255,0.2)">
+    <div class="card mb-12" style="border:1px solid rgba(201,168,76,0.2)">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <span style="font-weight:700;color:var(--neon);font-size:0.85rem">${i+1}-savol</span>
         <button class="btn btn-danger btn-sm" style="padding:4px 8px" onclick="removeQuizQ(${i})"><i data-lucide="trash-2" style="width:12px;height:12px"></i></button>

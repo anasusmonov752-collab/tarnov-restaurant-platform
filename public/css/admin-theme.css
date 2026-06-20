@@ -1,0 +1,150 @@
+/* ============================================================
+   RestoOne — Admin "Editorial Hospitality" theme override
+   Loaded AFTER style.css. Re-skins the cyan/dark system to the
+   green + gold + cream design (Cormorant + Mulish). Logic untouched.
+   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700&family=Mulish:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --bg: #F5F0E8;          /* content canvas (cream) */
+  --card: #FFFFFF;        /* panels */
+  --card2: #EFE9DB;       /* secondary (table headers) */
+  --neon: #C9A84C;        /* accent → gold */
+  --neon-light: #DBA543;
+  --neon-dark: #9A7D2F;
+  --border: rgba(27,58,45,0.12);
+  --border2: rgba(27,58,45,0.07);
+  --text: #1B3A2D;        /* ink (deep green) */
+  --text2: rgba(27,58,45,0.62);
+  --text3: rgba(27,58,45,0.45);
+  --success: #2E7D5B;
+  --danger: #C0492F;
+  --warning: #C9912A;
+  --info: #2E7D5B;
+  --easy: #2E7D5B;
+  --medium: #C9912A;
+  --hard: #C0492F;
+  --neon-glow: 0 0 0 rgba(0,0,0,0);
+  --neon-glow-sm: 0 0 0 rgba(0,0,0,0);
+}
+
+/* fonts */
+body { font-family: 'Mulish', sans-serif; background: var(--bg); color: var(--text); }
+h1, h2, h3, h4, .page-header h1, .card-title, .stat-value, .modal-title { font-family: 'Cormorant Garamond', serif; letter-spacing: -0.01em; }
+
+/* scrollbar → gold */
+::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.25); }
+::-webkit-scrollbar-thumb:hover { background: rgba(201,168,76,0.5); }
+
+/* ---------- SIDEBAR (stays dark, now forest-green + gold) ---------- */
+.sidebar { background: linear-gradient(180deg, #14291F 0%, #0e1f17 100%) !important; border-right: 1px solid rgba(245,240,232,0.08) !important; box-shadow: 4px 0 32px rgba(0,0,0,0.25) !important; }
+.sidebar-header { border-bottom: 1px solid rgba(245,240,232,0.1) !important; }
+.sidebar-logo h2, .sidebar-brand-text .brand-name { color: #F5F0E8 !important; font-family: 'Cormorant Garamond', serif; }
+.sidebar-logo p, .sidebar-brand-text .brand-sub { color: rgba(245,240,232,0.4) !important; }
+.sidebar-brand-icon { background: linear-gradient(135deg, #C9A84C, #9A7D2F) !important; box-shadow: none !important; }
+.sidebar-brand-icon svg { color: #14291F !important; stroke: #14291F !important; }
+.sidebar-user, .sidebar-restaurant-info { background: rgba(245,240,232,0.05) !important; border: 1px solid rgba(245,240,232,0.1) !important; }
+.sidebar-user .user-name, .sidebar-restaurant-info .res-name { color: #F5F0E8 !important; }
+.sidebar-user .user-role { color: #C9A84C !important; }
+.sidebar-restaurant-info .res-loc { color: rgba(245,240,232,0.5) !important; }
+.sidebar-role-badge { background: rgba(201,168,76,0.15) !important; color: #C9A84C !important; border: 1px solid rgba(201,168,76,0.3) !important; }
+.sidebar-role-badge.super, .sidebar-role-badge.restaurant { background: rgba(201,168,76,0.15) !important; color: #C9A84C !important; }
+.nav-section-title { color: rgba(245,240,232,0.32) !important; }
+.nav-item { color: rgba(245,240,232,0.62) !important; }
+.nav-item:hover { background: rgba(245,240,232,0.06) !important; color: #fff !important; }
+.nav-item.active { background: rgba(201,168,76,0.12) !important; color: #fff !important; border-left: 3px solid #C9A84C !important; box-shadow: none !important; }
+.nav-item .nav-icon { color: inherit !important; }
+.sidebar-footer { border-top: 1px solid rgba(245,240,232,0.08) !important; }
+
+/* mobile topbar */
+.mobile-topbar { background: #14291F !important; border-bottom: 1px solid rgba(245,240,232,0.1) !important; }
+
+/* ---------- HEADINGS / PAGE HEADER ---------- */
+.page-header h1 { font-weight: 600; font-size: 1.9rem; }
+.page-header::after { background: linear-gradient(90deg, #C9A84C, transparent); opacity: 0.35; }
+.neon { color: #C9A84C; }
+
+/* ---------- CARDS ---------- */
+.card, .card-sm { background: #fff; border: 1px solid var(--border); }
+.card:hover { border-color: rgba(201,168,76,0.3); box-shadow: 0 12px 30px rgba(27,58,45,0.08); }
+.card-header { border-bottom: 1px solid var(--border); }
+
+/* ---------- STAT CARDS (editorial serif numerals) ---------- */
+.stat-card { background: #fff; border: 1px solid var(--border); }
+.stat-card:hover { transform: translateY(-3px); box-shadow: 0 14px 36px rgba(27,58,45,0.1); border-color: rgba(201,168,76,0.25); }
+.stat-value { font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 2.6rem; color: var(--text); }
+.stat-label { color: var(--text3); }
+.stat-icon { background: rgba(201,168,76,0.12) !important; color: #C9A84C !important; border: 1px solid rgba(201,168,76,0.22) !important; box-shadow: none !important; }
+
+/* ---------- BUTTONS ---------- */
+.btn-neon, .btn-gold { background: #C9A84C; background-size: auto; color: #14291F; box-shadow: 0 4px 14px rgba(201,168,76,0.3); font-weight: 800; }
+.btn-gold:hover, .btn-neon:hover { box-shadow: 0 8px 22px rgba(201,168,76,0.42); }
+.btn-outline { color: var(--neon-dark); border: 1px solid #C9A84C; }
+.btn-outline:hover { background: rgba(201,168,76,0.1); }
+.btn-ghost { background: #fff; color: var(--text2); border: 1px solid var(--border); }
+.btn-ghost:hover { background: #F5F0E8; color: var(--text); }
+
+/* ---------- TABLES (hairline) ---------- */
+.table-wrap { border: 1px solid var(--border); border-radius: 12px; }
+table th { background: var(--card2); color: var(--text3); border-bottom: 1px solid var(--border); }
+table td { border-bottom: 1px solid var(--border2); }
+table tr:hover td { background: rgba(201,168,76,0.06); }
+
+/* ---------- BADGES ---------- */
+.badge-gold { background: rgba(201,168,76,0.15); color: #9A7D2F; }
+.badge-success { background: rgba(46,125,91,0.14); color: var(--success); }
+.badge-danger { background: rgba(192,73,47,0.14); color: var(--danger); }
+.badge-warning { background: rgba(201,145,42,0.16); color: var(--warning); }
+.badge-info { background: rgba(46,125,91,0.12); color: var(--success); }
+.badge-ghost { background: #F5F0E8; color: var(--text2); border: 1px solid var(--border); }
+
+/* ---------- MODALS ---------- */
+.modal { background: #fff; border: 1px solid var(--border); color: var(--text); }
+.modal-header { border-bottom: 1px solid var(--border); }
+.modal-footer { border-top: 1px solid var(--border); }
+.modal-title { font-weight: 600; }
+
+/* ---------- FORM CONTROLS ---------- */
+.form-control { background: #F5F0E8; border: 1px solid var(--border); color: var(--text); }
+.form-control:focus { border-color: #C9A84C; box-shadow: 0 0 0 3px rgba(201,168,76,0.16); background: #fff; }
+.form-control::placeholder { color: rgba(27,58,45,0.35); }
+.form-group label { color: var(--text2); }
+select.form-control { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23C9A84C' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); }
+
+/* ---------- CALENDAR ---------- */
+.calendar-day:hover { border-color: #C9A84C; background: rgba(201,168,76,0.08); }
+.calendar-day.test-day, .calendar-day.active, .calendar-day.selected { background: #C9A84C !important; color: #14291F !important; border-color: #C9A84C !important; }
+
+/* ---------- ALERTS ---------- */
+.alert-info { background: rgba(46,125,91,0.1); border-color: rgba(46,125,91,0.25); color: var(--text); }
+.alert-success { background: rgba(46,125,91,0.1); border-color: rgba(46,125,91,0.25); }
+.alert-warning { background: rgba(201,145,42,0.1); border-color: rgba(201,145,42,0.25); }
+.alert-danger { background: rgba(192,73,47,0.1); border-color: rgba(192,73,47,0.25); }
+
+/* ---------- CATEGORY PILLS / TABS ---------- */
+.category-pill.active, .adapt-tab.active { background: #C9A84C !important; color: #14291F !important; border-color: #C9A84C !important; }
+
+/* ---------- KPI BARS / HEATMAP ---------- */
+.kpi-bar-fill { background: #C9A84C !important; }
+.heatmap-cell.lvl-1, .heatmap-cell.lvl-2, .heatmap-cell.lvl-3, .heatmap-cell.lvl-4 { filter: hue-rotate(0deg); }
+
+/* ---------- EMPTY STATE ---------- */
+.empty-icon { color: rgba(201,168,76,0.5); }
+
+/* ---------- TOASTS ---------- */
+.toast { background: #1B3A2D; color: #F5F0E8; border: 1px solid rgba(201,168,76,0.3); }
+.toast-icon { color: #C9A84C; }
+
+/* ---------- WAITER (mobile) ---------- */
+.waiter-header { background: #fff !important; border-bottom: 1px solid var(--border) !important; }
+.waiter-nav, .waiter-nav-wrap::after { background: #fff !important; }
+.waiter-nav { border-top: 1px solid var(--border) !important; box-shadow: 0 -8px 24px rgba(20,41,31,0.06); }
+.waiter-brand-icon { background: linear-gradient(135deg, #C9A84C, #9A7D2F) !important; box-shadow: none !important; }
+.waiter-brand-icon svg { color: #14291F !important; stroke: #14291F !important; }
+.waiter-nav-item { color: var(--text3) !important; }
+.waiter-nav-item.active { color: #9A7D2F !important; }
+.waiter-nav-item.active::before { background: #C9A84C !important; box-shadow: 0 2px 8px rgba(201,168,76,0.4) !important; }
+.waiter-nav-item.active svg, .waiter-nav-item.active i { filter: none !important; }
+.waiter-avatar-letter { color: #C9A84C !important; }
+/* score circle / certificate accents */
+.score-circle, .certificate-box { border-color: rgba(201,168,76,0.4) !important; }

@@ -47,7 +47,14 @@ body{font-family:'Mulish',sans-serif;background:#F2ECE1;color:#19241D;height:100
 .sb-item.active .sb-num{color:#C9A84C}
 .sb-label{font-size:13.5px;font-weight:600;white-space:nowrap;transition:opacity .25s,width .3s}
 .sidebar.collapsed .sb-label{opacity:0;width:0;overflow:hidden}
-.sb-footer{padding:14px;border-top:1px solid rgba(201,168,76,.12);display:flex;align-items:center;gap:11px;overflow:hidden}
+.sb-footer{padding:14px;border-top:1px solid rgba(201,168,76,.12);display:flex;flex-direction:column;gap:0;overflow:hidden}
+.sb-user-row{display:flex;align-items:center;gap:11px;width:100%}
+.sb-logout{display:flex;align-items:center;gap:9px;cursor:pointer;padding:9px 12px;border-radius:10px;color:rgba(226,222,210,.4);transition:all .22s;margin-top:6px;width:100%}
+.sb-logout:hover{background:rgba(194,91,76,.12);color:#C25B4C}
+.sb-logout-icon{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8}
+.sb-logout-label{font-size:13px;font-weight:600;white-space:nowrap;transition:opacity .25s,width .3s}
+.sidebar.collapsed .sb-logout{justify-content:center;padding:10px 0}
+.sidebar.collapsed .sb-logout-label{opacity:0;width:0;overflow:hidden}
 .sb-avatar{width:36px;height:36px;flex:none;border-radius:50%;background:#1B3A2D;border:1px solid rgba(201,168,76,.3);display:flex;align-items:center;justify-content:center;font-weight:800;color:#C9A84C;font-size:13px}
 .sb-user{overflow:hidden;white-space:nowrap;transition:opacity .25s}
 .sidebar.collapsed .sb-user{opacity:0;width:0}
@@ -228,10 +235,16 @@ body{font-family:'Mulish',sans-serif;background:#F2ECE1;color:#19241D;height:100
     </div>
     <nav class="sb-nav" id="sbNav"></nav>
     <div class="sb-footer">
-      <div class="sb-avatar" id="sbAvatar">RA</div>
-      <div class="sb-user">
-        <div class="sb-user-name" id="sbName">Admin</div>
-        <div class="sb-user-sub" id="sbSub">Restoran admini</div>
+      <div class="sb-user-row">
+        <div class="sb-avatar" id="sbAvatar">RA</div>
+        <div class="sb-user">
+          <div class="sb-user-name" id="sbName">Admin</div>
+          <div class="sb-user-sub" id="sbSub">Restoran admini</div>
+        </div>
+      </div>
+      <div class="sb-logout" onclick="logout()">
+        <svg class="sb-logout-icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span class="sb-logout-label">Chiqish</span>
       </div>
     </div>
   </aside>
@@ -318,22 +331,24 @@ const S = {
 };
 
 const NAV = [
-  {g:'Asosiy', items:[{k:'dashboard',l:'Boshqaruv paneli',n:'01'}]},
+  {g:'Asosiy', items:[
+    {k:'dashboard',l:'Boshqaruv paneli',n:'01'},
+  ]},
   {g:'Kontent', items:[
     {k:'menyu',l:'Menyu',n:'02'},
+    {k:'ofitsiantlar',l:'Ofitsiantlar',n:'03'},
     {k:'savollar',l:'Savollar bazasi',n:'04'},
+    {k:'testkunlari',l:'Test kunlari',n:'05'},
+  ]},
+  {g:'Natijalar', items:[
+    {k:'natijalar',l:'Natijalar',n:'06'},
+    {k:'elonlar',l:'E\'lonlar',n:'07'},
+    {k:'kpi',l:'KPI & Maosh',n:'08'},
+  ]},
+  {g:'O\'quv', items:[
     {k:'oquv',l:'O\'quv modullar',n:'09'},
     {k:'checklist',l:'Checklist',n:'10'},
     {k:'adaptatsiya',l:'Adaptatsiya',n:'11'},
-  ]},
-  {g:'Jamoa', items:[
-    {k:'ofitsiantlar',l:'Ofitsiantlar',n:'03'},
-    {k:'natijalar',l:'Natijalar',n:'06'},
-    {k:'kpi',l:'KPI & Maosh',n:'08'},
-  ]},
-  {g:'Tadbirlar', items:[
-    {k:'testkunlari',l:'Test kunlari',n:'05'},
-    {k:'elonlar',l:'E\'lonlar',n:'07'},
   ]},
 ];
 
@@ -1292,6 +1307,12 @@ function showToast(msg, type='ok') {
   t.innerHTML=`<span>${type==='ok'?'✓':'!'}</span><span>${msg}</span>`;
   wrap.appendChild(t);
   setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .4s';setTimeout(()=>t.remove(),400);},3000);
+}
+
+// ════════════ LOGOUT ════════════
+async function logout() {
+  await api('/api/auth/logout', {method:'POST'});
+  location.href = '/';
 }
 
 // ════════════ START ════════════

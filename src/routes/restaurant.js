@@ -134,6 +134,11 @@ router.delete('/questions/:qId', guard, asyncHandler(async (req, res) => {
   res.json({ success: true });
 }));
 
+router.delete('/questions', guard, asyncHandler(async (req, res) => {
+  await Restaurant.updateOne({ id: req.user.restaurantId }, { $set: { questions: [] } });
+  res.json({ success: true, message: 'Barcha savollar o\'chirildi' });
+}));
+
 // ---- TEST DAYS ----
 router.get('/testdays', guard, asyncHandler(async (req, res) => {
   const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'testDays');

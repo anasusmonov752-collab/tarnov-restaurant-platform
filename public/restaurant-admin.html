@@ -718,13 +718,34 @@ function rQuestions() {
           <span style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:${g.color}">${g.items.length}</span>
         </div>
         ${g.items.slice(0,4).map(q=>`
-          <div style="padding:11px 12px;border-radius:10px;background:#FBF7EF;margin-bottom:7px;font-size:13px;line-height:1.45;color:#19241D;display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div onclick="openQForm('${q.id}')" style="padding:11px 12px;border-radius:10px;background:#FBF7EF;margin-bottom:7px;font-size:13px;line-height:1.45;color:#19241D;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;cursor:pointer;transition:background .15s" onmouseover="this.style.background='#EDE5D0'" onmouseout="this.style.background='#FBF7EF'">
             <span>${q.question||q.text||''}</span>
-            <span onclick="delQuestion('${q.id}')" style="color:#C25B4C;cursor:pointer;flex:none;font-size:16px">&times;</span>
+            <span onclick="event.stopPropagation();delQuestion('${q.id}')" style="color:#C25B4C;cursor:pointer;flex:none;font-size:16px;padding:0 2px">&times;</span>
           </div>`).join('')}
-        ${g.items.length>4?`<div style="font-size:12px;color:#6B7A6F;padding:4px 0">+${g.items.length-4} ta ko'proq</div>`:''}
+        ${g.items.length>4?`<div onclick="showAllQ('${diff}')" style="font-size:12px;color:#C9A84C;padding:4px 0;cursor:pointer;font-weight:700">+${g.items.length-4} ta ko'proq →</div>`:''}
       </div>`).join('')}
   </div></div>`;
+}
+
+function showAllQ(diff) {
+  const labels = {easy:'Oson', medium:"O'rta", hard:'Qiyin'};
+  const colors = {easy:'#5B9A6B', medium:'#C9A84C', hard:'#C25B4C'};
+  const items = S.questions.filter(q=>q.difficulty===diff);
+  document.getElementById('panelTitle').textContent = labels[diff]+' savollar';
+  document.getElementById('panelBody').innerHTML = `
+    <div style="margin-bottom:16px;display:flex;align-items:center;gap:10px">
+      <div style="width:9px;height:9px;border-radius:50%;background:${colors[diff]}"></div>
+      <span style="font-size:13px;color:#6B7A6F;font-weight:600">${items.length} ta savol</span>
+    </div>
+    ${items.map(q=>`
+      <div onclick="openQForm('${q.id}')" style="padding:12px 13px;border-radius:10px;background:#FBF7EF;margin-bottom:8px;font-size:13px;line-height:1.45;color:#19241D;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;cursor:pointer;transition:background .15s" onmouseover="this.style.background='#EDE5D0'" onmouseout="this.style.background='#FBF7EF'">
+        <span>${q.question||q.text||''}</span>
+        <span onclick="event.stopPropagation();delQuestion('${q.id}')" style="color:#C25B4C;cursor:pointer;flex:none;font-size:16px">&times;</span>
+      </div>`).join('')}
+    <div style="margin-top:16px">
+      <button class="btn-gold" style="width:100%" onclick="closePanel();openQForm()">+ Yangi savol qo'shish</button>
+    </div>`;
+  openPanel();
 }
 
 async function delQuestion(id) {

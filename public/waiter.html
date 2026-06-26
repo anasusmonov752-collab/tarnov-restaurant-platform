@@ -28,6 +28,12 @@
   @keyframes ro-seal{0%{transform:scale(0) rotate(-28deg);opacity:0}60%{transform:scale(1.14) rotate(7deg)}100%{transform:scale(1) rotate(0);opacity:1}}
   @keyframes ro-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
   @keyframes ro-spin{to{transform:rotate(360deg)}}
+  @keyframes q-in{from{transform:translateX(48px);opacity:0}to{transform:translateX(0);opacity:1}}
+  @keyframes q-out{from{transform:translateX(0);opacity:1}to{transform:translateX(-48px);opacity:0}}
+  @keyframes res-score{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+  @keyframes res-row{from{transform:translateY(22px);opacity:0}to{transform:translateY(0);opacity:1}}
+  @keyframes stroke-fill{from{stroke-dashoffset:var(--full)}to{stroke-dashoffset:var(--off)}}
+  @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
   .ro-press{transition:transform .12s}
   .ro-press:active{transform:scale(.96)}
   #toast-container{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:8px;width:max-content;max-width:90vw}
@@ -393,27 +399,61 @@ async function startTest(){
   try {
     const data = await api('/api/waiter/test/start');
     testQuestions=data.questions||[]; qIndex=0; answers={}; selected=null; locked=false;
-    document.getElementById('overlay-running').style.display='block';
-    showQuestion();
+    const ov=document.getElementById('overlay-running');
+    ov.style.display='block';
+    // Build permanent shell once
+    ov.innerHTML=`<div id="q-shell" style="position:absolute;inset:0;background:linear-gradient(170deg,#163326,#0f1f17);display:flex;flex-direction:column;padding:54px 24px 30px">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
+        <div onclick="quitTest()" style="cursor:pointer;flex:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(245,240,232,.6)" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
+        <div style="flex:1;height:7px;border-radius:6px;background:rgba(245,240,232,.1);overflow:hidden"><div id="q-prog" style="height:100%;border-radius:6px;background:linear-gradient(90deg,#C9A84C,#d8bd6a);width:0%;transition:width .5s cubic-bezier(.4,0,.2,1)"></div></div>
+        <div id="q-num" style="font-size:13px;font-weight:700;color:#F5F0E8;white-space:nowrap">1<span style="color:rgba(245,240,232,.4)">/${testQuestions.length}</span></div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;margin:14px 0 18px">
+        <div style="position:relative;width:74px;height:74px;display:flex;align-items:center;justify-content:center">
+          <div id="timer-ring">${ring(100,74,6,C)}</div>
+          <div id="timer-num" style="position:absolute;font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;color:#F5F0E8">30</div>
+        </div>
+      </div>
+      <div id="q-content" style="display:flex;flex-direction:column;flex:1;min-height:0"></div>
+    </div>`;
+    showQuestion(true);
   } catch(e){ toast(e.message,'error'); if((e.message||'').includes('allaqachon')){ renderTestIntro(); } }
 }
-function showQuestion(){
+
+function showQuestion(first){
   const q=testQuestions[qIndex]; selected=null; locked=false; secondsLeft=30;
   const letters=['A','B','C','D'];
-  const ov=document.getElementById('overlay-running');
-  ov.innerHTML = `<div style="position:absolute;inset:0;background:linear-gradient(170deg,#163326,#0f1f17);display:flex;flex-direction:column;padding:54px 24px 30px;animation:ro-fade .3s ease">
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:6px">
-      <div onclick="quitTest()" style="cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(245,240,232,.6)" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
-      <div style="flex:1;height:7px;border-radius:6px;background:rgba(245,240,232,.1);overflow:hidden"><div style="height:100%;border-radius:6px;background:linear-gradient(90deg,#C9A84C,#d8bd6a);width:${Math.round(qIndex/testQuestions.length*100)}%;transition:width .4s ease"></div></div>
-      <div style="font-size:13px;font-weight:700;color:#F5F0E8;white-space:nowrap">${qIndex+1}<span style="color:rgba(245,240,232,.4)">/${testQuestions.length}</span></div></div>
-    <div style="display:flex;flex-direction:column;align-items:center;margin:14px 0 22px"><div style="position:relative;width:74px;height:74px;display:flex;align-items:center;justify-content:center"><div id="timer-ring">${ring(100,74,6,C)}</div><div id="timer-num" style="position:absolute;font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;color:#F5F0E8">30</div></div></div>
-    <div style="font-family:'Cormorant Garamond',serif;font-size:25px;line-height:1.3;color:#F5F0E8;text-align:center;min-height:96px;display:flex;align-items:center;justify-content:center;animation:ro-rise .35s ease both">${esc(q.question)}</div>
-    <div id="opts" style="display:flex;flex-direction:column;gap:11px;margin-top:auto">
-      ${q.options.map((o,i)=>`<div onclick="pickAnswer(${i})" id="opt-${i}" style="display:flex;align-items:center;gap:13px;padding:16px;border-radius:16px;background:rgba(245,240,232,.05);border:1.5px solid rgba(245,240,232,.1);cursor:pointer;transition:all .25s">
-        <div style="width:28px;height:28px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:600;color:#C9A84C;background:rgba(245,240,232,.1)">${letters[i]}</div>
-        <span style="flex:1;font-size:14.5px;font-weight:500;color:#F5F0E8">${esc(o)}</span><div class="opt-icon"></div></div>`).join('')}</div></div>`;
+  // update shell top
+  const prog=document.getElementById('q-prog');
+  const num=document.getElementById('q-num');
+  if(prog) prog.style.width=Math.round((qIndex+1)/testQuestions.length*100)+'%';
+  if(num) num.innerHTML=`${qIndex+1}<span style="color:rgba(245,240,232,.4)">/${testQuestions.length}</span>`;
+
+  const html=`<div style="font-family:'Cormorant Garamond',serif;font-size:24px;line-height:1.35;color:#F5F0E8;text-align:center;flex:1;display:flex;align-items:center;justify-content:center;padding:0 4px">${esc(q.question)}</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:auto">
+      ${q.options.map((o,i)=>`<div onclick="pickAnswer(${i})" id="opt-${i}" style="display:flex;align-items:center;gap:13px;padding:15px;border-radius:16px;background:rgba(245,240,232,.05);border:1.5px solid rgba(245,240,232,.1);cursor:pointer;transition:background .2s,border-color .2s,opacity .2s;animation:res-row .3s ease ${i*0.06}s both">
+        <div style="width:28px;height:28px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:600;color:#C9A84C;background:rgba(245,240,232,.1);transition:background .2s,color .2s">${letters[i]}</div>
+        <span style="flex:1;font-size:14px;font-weight:500;color:#F5F0E8;line-height:1.35">${esc(o)}</span>
+      </div>`).join('')}
+    </div>`;
+
+  const content=document.getElementById('q-content');
+  if(!content) return;
+  if(first){
+    content.style.animation='q-in .35s cubic-bezier(.25,.9,.3,1) both';
+    content.innerHTML=html;
+  } else {
+    // slide out current, then slide in new
+    content.style.animation='q-out .22s ease forwards';
+    setTimeout(()=>{
+      if(!document.getElementById('q-content')) return;
+      content.innerHTML=html;
+      content.style.animation='q-in .3s cubic-bezier(.25,.9,.3,1) both';
+    }, 220);
+  }
   startTimer();
 }
+
 function startTimer(){
   clearInterval(timer); secondsLeft=30; paintTimer();
   timer=setInterval(()=>{ secondsLeft--; paintTimer(); if(secondsLeft<=0){ clearInterval(timer); if(!locked) lockAnswer(-1); } },1000);
@@ -428,18 +468,24 @@ function pickAnswer(i){ if(locked) return; lockAnswer(i); }
 function lockAnswer(i){
   locked=true; selected=i; clearInterval(timer);
   const q=testQuestions[qIndex];
-  if(i>=0) answers[q.id]=i; else answers[q.id]=-1;
-  // visual: just highlight selected (server grades). show gold selected
+  answers[q.id] = i>=0 ? i : -1;
+  // highlight selected, dim others
   for(let k=0;k<q.options.length;k++){
     const el=document.getElementById('opt-'+k); if(!el) continue;
-    if(k===i){ el.style.background='rgba(201,168,76,.18)'; el.style.borderColor=C; el.firstElementChild.style.background=C; el.firstElementChild.style.color='#11241b'; }
-    else { el.style.opacity='.5'; }
     el.style.cursor='default';
+    if(k===i){
+      el.style.background='rgba(201,168,76,.18)';
+      el.style.borderColor=C;
+      el.firstElementChild.style.background=C;
+      el.firstElementChild.style.color='#11241b';
+    } else {
+      el.style.opacity='.35';
+    }
   }
-  setTimeout(advance, 650);
+  setTimeout(advance, 520);
 }
 function advance(){
-  if(qIndex<testQuestions.length-1){ qIndex++; showQuestion(); }
+  if(qIndex<testQuestions.length-1){ qIndex++; showQuestion(false); }
   else { submitTest(); }
 }
 function quitTest(){
@@ -450,45 +496,121 @@ function quitTest(){
 }
 async function submitTest(){
   clearInterval(timer);
-  document.getElementById('overlay-running').style.display='none';
-  document.getElementById('overlay-running').innerHTML='';
+  // Show loading screen (parallel with API call)
+  const ov=document.getElementById('overlay-running');
+  ov.innerHTML=`<div style="position:absolute;inset:0;background:linear-gradient(170deg,#163326,#0f1f17);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;animation:ro-fade .3s ease">
+    <div style="width:54px;height:54px;border-radius:50%;border:3px solid rgba(201,168,76,.2);border-top-color:#C9A84C;animation:ro-spin .8s linear infinite"></div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:rgba(245,240,232,.6)">Natija hisoblanmoqda…</div>
+  </div>`;
   try {
-    const data = await api('/api/waiter/test/submit', { method:'POST', body: JSON.stringify({ answers }) });
+    const [data] = await Promise.all([
+      api('/api/waiter/test/submit', { method:'POST', body: JSON.stringify({ answers }) }),
+      new Promise(r=>setTimeout(r, 600)) // min loading time so it doesn't flash
+    ]);
     const r=data.result; lastResult=r;
     if(waiterInfo) waiterInfo.isTestDay=false;
     try { historyData = await api('/api/waiter/history')||historyData; } catch {}
+    ov.style.display='none'; ov.innerHTML='';
     showResult(r);
-  } catch(e){ toast(e.message,'error'); go('home'); }
+  } catch(e){ toast(e.message,'error'); ov.style.display='none'; ov.innerHTML=''; go('home'); }
 }
 function showResult(r){
   if(!r){ toast('Natija yuklanmadi','error'); go('home'); return; }
   const score = r.score ?? 0;
   const passed = score >= 90;
-  const easyScore = r.easyScore ?? 0, easyTotal = r.easyTotal ?? 0;
-  const mediumScore = r.mediumScore ?? 0, mediumTotal = r.mediumTotal ?? 0;
-  const hardScore = r.hardScore ?? 0, hardTotal = r.hardTotal ?? 0;
-  const totalCorrect = r.totalCorrect ?? (easyScore+mediumScore+hardScore);
-  const totalQuestions = r.totalQuestions ?? (easyTotal+mediumTotal+hardTotal);
+  const easyScore=r.easyScore??0, easyTotal=r.easyTotal??0;
+  const mediumScore=r.mediumScore??0, mediumTotal=r.mediumTotal??0;
+  const hardScore=r.hardScore??0, hardTotal=r.hardTotal??0;
+  const totalCorrect=r.totalCorrect??(easyScore+mediumScore+hardScore);
+  const totalQuestions=r.totalQuestions??(easyTotal+mediumTotal+hardTotal);
+  const ringColor = passed ? C : score>=60 ? '#e3c06a' : '#d9603b';
+  const grade = score>=90?'A\'lo':score>=75?'Yaxshi':score>=60?'Qoniqarli':'Pastroq';
+
+  // confetti only for passing
+  const confettiHtml = passed ? Array.from({length:44},(_,i)=>{
+    const cols=['#C9A84C','#d8bd6a','#F5F0E8','#5fc78f','#e2c879','#f0c5b5'];
+    const w=5+Math.random()*6, h=8+Math.random()*8, delay=Math.random()*0.8;
+    return `<div style="position:absolute;top:-16px;left:${Math.random()*100}%;width:${w}px;height:${h}px;background:${cols[i%cols.length]};border-radius:${Math.random()>.5?'50%':'2px'};transform:rotate(${Math.random()*360}deg);animation:ro-fall ${1.4+Math.random()*1.4}s linear ${delay}s forwards;pointer-events:none"></div>`;
+  }).join('') : '';
+
   const ov=document.getElementById('overlay-result');
   ov.style.display='block';
-  ov.innerHTML = `<div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 18%,rgba(201,168,76,.18),transparent 55%),linear-gradient(170deg,#163326,#0f1f17);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;text-align:center;animation:ro-fade .4s ease;overflow-y:auto">
-    <div style="font-size:12px;letter-spacing:3px;text-transform:uppercase;color:rgba(201,168,76,.8);margin-bottom:8px">${passed?'Tabriklaymiz':'Natija'}</div>
-    <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#F5F0E8;margin-bottom:24px">Xizmat standartlari testi</div>
-    <div style="position:relative;width:200px;height:200px;display:flex;align-items:center;justify-content:center;margin-bottom:8px">${ring(score,200,12,passed?C:'#d9603b')}
-      <div style="position:absolute;text-align:center"><div style="font-family:'Cormorant Garamond',serif;font-size:64px;font-weight:600;color:#F5F0E8;line-height:1">${score}<span style="font-size:28px;color:#C9A84C">%</span></div><div style="font-size:12px;color:rgba(245,240,232,.5)">${totalCorrect}/${totalQuestions} to'g'ri</div></div></div>
-    <div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:${passed?C:'#e07a52'};margin:14px 0 22px">${passed?"A'lo natija!":'Yana mashq qiling'}</div>
-    <div style="display:flex;gap:20px;margin-bottom:24px">
-      <div style="text-align:center"><div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#5fc78f">${easyScore}<span style="font-size:13px;color:rgba(245,240,232,.4)">/${easyTotal}</span></div><div style="font-size:10px;color:rgba(245,240,232,.5);margin-top:2px">Oson</div></div>
-      <div style="width:1px;background:rgba(245,240,232,.1)"></div>
-      <div style="text-align:center"><div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#e3c06a">${mediumScore}<span style="font-size:13px;color:rgba(245,240,232,.4)">/${mediumTotal}</span></div><div style="font-size:10px;color:rgba(245,240,232,.5);margin-top:2px">O'rta</div></div>
-      <div style="width:1px;background:rgba(245,240,232,.1)"></div>
-      <div style="text-align:center"><div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#e07a52">${hardScore}<span style="font-size:13px;color:rgba(245,240,232,.4)">/${hardTotal}</span></div><div style="font-size:10px;color:rgba(245,240,232,.5);margin-top:2px">Qiyin</div></div>
+  ov.innerHTML=`
+  <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none">${confettiHtml}</div>
+  <div style="position:absolute;inset:0;overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:36px 26px 32px;background:radial-gradient(circle at 50% 0%,${passed?'rgba(201,168,76,.22)':'rgba(217,96,59,.14)'},transparent 52%),linear-gradient(170deg,#163326,#0f1f17)">
+
+    <!-- label -->
+    <div style="font-size:10px;letter-spacing:4px;text-transform:uppercase;color:${passed?'rgba(201,168,76,.8)':'rgba(245,240,232,.4)'};animation:ro-fade .5s ease both">${passed?'✦ Tabriklaymiz ✦':'Natija'}</div>
+
+    <!-- ring + score -->
+    <div style="position:relative;width:186px;height:186px;display:flex;align-items:center;justify-content:center;margin:18px 0 10px;animation:res-score .6s cubic-bezier(.2,.9,.25,1) .1s both">
+      <svg width="186" height="186" style="position:absolute;transform:rotate(-90deg)">
+        <circle cx="93" cy="93" r="80" fill="none" stroke="rgba(245,240,232,.07)" stroke-width="11"/>
+        <circle id="res-arc" cx="93" cy="93" r="80" fill="none" stroke="${ringColor}" stroke-width="11" stroke-linecap="round"
+          stroke-dasharray="${2*Math.PI*80}" stroke-dashoffset="${2*Math.PI*80}"
+          style="transition:stroke-dashoffset 1.1s cubic-bezier(.4,0,.2,1) .35s"/>
+      </svg>
+      <div style="position:absolute;text-align:center">
+        <div id="res-num" style="font-family:'Cormorant Garamond',serif;font-size:62px;font-weight:600;color:#F5F0E8;line-height:1;transition:color .4s">0<span style="font-size:24px;color:${ringColor}">%</span></div>
+        <div style="font-size:11px;color:rgba(245,240,232,.4);margin-top:2px">${totalCorrect}/${totalQuestions} to'g'ri</div>
+      </div>
     </div>
-    <div style="width:100%;display:flex;flex-direction:column;gap:11px">
-      ${r.hasCertificate?`<div onclick="openCert()" class="ro-press" style="padding:16px;border-radius:16px;background:linear-gradient(100deg,#C9A84C,#d8bd6a);color:#11241b;font-weight:800;font-size:15px;cursor:pointer;box-shadow:0 14px 30px -12px rgba(201,168,76,.6)">🏆 Sertifikatni olish</div>`:''}
-      <div onclick="closeResult();go('tarix')" class="ro-press" style="padding:15px;border-radius:14px;background:rgba(245,240,232,.08);font-size:14px;color:#F5F0E8;font-weight:600;cursor:pointer">Tarixga o'tish →</div>
-      <div onclick="closeResult();go('home')" style="padding:8px;font-size:13px;color:rgba(245,240,232,.4);cursor:pointer">Bosh sahifa</div>
-    </div></div>`;
+
+    <!-- grade badge -->
+    <div style="padding:6px 20px;border-radius:20px;background:${passed?'rgba(201,168,76,.15)':'rgba(245,240,232,.06)'};border:1px solid ${passed?'rgba(201,168,76,.4)':'rgba(245,240,232,.12)'};font-family:'Cormorant Garamond',serif;font-size:20px;color:${ringColor};animation:ro-rise .5s ease .5s both">${grade}</div>
+
+    <!-- breakdown bars -->
+    <div style="width:100%;margin:22px 0 20px;display:flex;flex-direction:column;gap:10px">
+      ${[
+        ['Oson',    easyScore,   easyTotal,   '#5fc78f', 0.55],
+        ["O'rta",  mediumScore, mediumTotal, '#e3c06a', 0.65],
+        ['Qiyin',   hardScore,   hardTotal,   '#e07a52', 0.75],
+      ].map(([lbl,sc,tot,col,delay])=>{
+        const pct=tot>0?Math.round(sc/tot*100):0;
+        return `<div style="animation:res-row .4s ease ${delay}s both">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px">
+            <span style="font-size:12px;color:rgba(245,240,232,.55);font-weight:600">${lbl}</span>
+            <span style="font-family:'Cormorant Garamond',serif;font-size:17px;color:${col}">${sc}<span style="font-size:11px;color:rgba(245,240,232,.35)">/${tot}</span></span>
+          </div>
+          <div style="height:6px;border-radius:6px;background:rgba(245,240,232,.08);overflow:hidden">
+            <div class="res-bar" data-pct="${pct}" data-col="${col}" style="height:100%;width:0%;border-radius:6px;background:${col};transition:width 1s cubic-bezier(.4,0,.2,1) ${delay+0.1}s"></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <!-- actions -->
+    <div style="width:100%;display:flex;flex-direction:column;gap:10px;animation:res-row .4s ease .9s both">
+      ${r.hasCertificate?`<div onclick="openCert()" class="ro-press" style="padding:16px;border-radius:16px;background:linear-gradient(100deg,#C9A84C,#d8bd6a);color:#11241b;font-weight:800;font-size:15px;cursor:pointer;text-align:center;box-shadow:0 14px 34px -12px rgba(201,168,76,.7)">🏆 Sertifikatni olish</div>`:''}
+      <div onclick="closeResult();go('tarix')" class="ro-press" style="padding:14px;border-radius:14px;background:rgba(245,240,232,.07);border:1px solid rgba(245,240,232,.1);font-size:14px;color:#F5F0E8;font-weight:600;cursor:pointer;text-align:center">Batafsil tarix →</div>
+      <div onclick="closeResult();go('home')" style="padding:8px;font-size:13px;color:rgba(245,240,232,.35);cursor:pointer;text-align:center">Bosh sahifa</div>
+    </div>
+  </div>`;
+
+  // animate ring + score counter after DOM paint
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      // fill ring
+      const arc=document.getElementById('res-arc');
+      if(arc) arc.style.strokeDashoffset = 2*Math.PI*80*(1-score/100);
+      // count up score
+      const numEl=document.getElementById('res-num');
+      if(numEl){
+        const dur=900, t0=performance.now();
+        const scoreColor = passed?C:score>=60?'#e3c06a':'#d9603b';
+        (function tick(now){
+          const p=Math.min(1,(now-t0)/dur), e=1-Math.pow(1-p,3);
+          const v=Math.round(e*score);
+          numEl.innerHTML=`${v}<span style="font-size:24px;color:${ringColor}">%</span>`;
+          if(p<1) requestAnimationFrame(tick);
+        })(performance.now());
+      }
+      // animate bars
+      document.querySelectorAll('.res-bar').forEach(b=>{
+        b.style.width=b.dataset.pct+'%';
+      });
+    });
+  });
 }
 function closeResult(){ document.getElementById('overlay-result').style.display='none'; document.getElementById('overlay-result').innerHTML=''; }
 

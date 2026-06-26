@@ -405,6 +405,10 @@
   }
 
   function initMotion() {
+    // scroll to top on every page load (prevent browser scroll restore)
+    if (history.scrollRestoration) history.scrollRestoration = "manual";
+    window.scrollTo(0, 0);
+
     // typewriter logo
     var tw = root.querySelector(".tw-brand");
     if (tw) tw.setAttribute("data-typed", "");
@@ -422,15 +426,24 @@
     var h1 = root.querySelector("[data-headline]");
     if (h1) setTimeout(function () { h1.setAttribute("data-glitch", ""); }, 1750);
 
-    // 2) scroll reveals via IntersectionObserver
+    // 2) scroll reveals — re-animate every time element enters viewport
+    var countsDone = new WeakSet(); // counts only animate once (numbers shouldn't reset)
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (e) {
-        if (!e.isIntersecting) return;
-        e.target.setAttribute("data-revealed", "");
-        if (e.target.hasAttribute("data-count-group")) runCounts(e.target);
-        io.unobserve(e.target);
+        if (e.isIntersecting) {
+          e.target.setAttribute("data-revealed", "");
+          if (e.target.hasAttribute("data-count-group") && !countsDone.has(e.target)) {
+            countsDone.add(e.target);
+            runCounts(e.target);
+          }
+        } else {
+          // element left viewport — reset so it re-animates on next scroll-in
+          if (!e.target.hasAttribute("data-enter")) {
+            e.target.removeAttribute("data-revealed");
+          }
+        }
       });
-    }, { threshold: 0.16, rootMargin: "0px 0px -8% 0px" });
+    }, { threshold: 0.12, rootMargin: "0px 0px -6% 0px" });
     root.querySelectorAll("[data-reveal]:not([data-enter])").forEach(function (el) { io.observe(el); });
 
     // 3) gallery magnetic tilt

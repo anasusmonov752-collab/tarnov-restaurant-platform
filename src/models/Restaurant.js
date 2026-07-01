@@ -81,11 +81,12 @@ const ManagementMemberSchema = new mongoose.Schema({
 
 // ── Training Videos (erkin nomlangan qisqa standart videolar) ──
 const TrainingVideoSchema = new mongoose.Schema({
-  id:        { type: String, default: () => uuidv4() },
-  title:     { type: String, required: true, trim: true },
-  videoUrl:  { type: String, required: true, trim: true },  // /uploads/training/<file>
-  order:     { type: Number, default: 0 },
-  createdAt: { type: Date, default: Date.now }
+  id:          { type: String, default: () => uuidv4() },
+  title:       { type: String, required: true, trim: true },
+  description: { type: String, default: '', trim: true },
+  videoUrl:    { type: String, required: true, trim: true },  // /uploads/training/<file>
+  order:       { type: Number, default: 0 },
+  createdAt:   { type: Date, default: Date.now }
 });
 
 const WaiterTrainingViewSchema = new mongoose.Schema({

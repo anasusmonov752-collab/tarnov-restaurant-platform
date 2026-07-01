@@ -444,7 +444,7 @@ router.get('/training', guard, asyncHandler(async (req, res) => {
 }));
 
 router.post('/training', guard, trainingVideoUpload.single('video'), asyncHandler(async (req, res) => {
-  const { title } = req.body;
+  const { title, description } = req.body;
   if (!title || !title.trim()) return res.status(400).json({ error: 'Sarlavha majburiy' });
   if (!req.file) return res.status(400).json({ error: 'Video fayl majburiy' });
 
@@ -453,6 +453,7 @@ router.post('/training', guard, trainingVideoUpload.single('video'), asyncHandle
   const video = {
     id: uuidv4(),
     title: title.trim(),
+    description: (description || '').trim(),
     videoUrl: '/uploads/training/' + req.file.filename,
     order: maxOrder + 1
   };
@@ -461,9 +462,10 @@ router.post('/training', guard, trainingVideoUpload.single('video'), asyncHandle
 }));
 
 router.put('/training/:videoId', guard, asyncHandler(async (req, res) => {
-  const { title, order } = req.body;
+  const { title, description, order } = req.body;
   const upd = {};
   if (title !== undefined) upd['trainingVideos.$.title'] = title.trim();
+  if (description !== undefined) upd['trainingVideos.$.description'] = description.trim();
   if (order !== undefined) upd['trainingVideos.$.order'] = order;
   if (!Object.keys(upd).length) return res.json({ success: true });
   await Restaurant.updateOne(

@@ -79,6 +79,20 @@ const ManagementMemberSchema = new mongoose.Schema({
   order: { type: Number, default: 0 }
 });
 
+// ── Training Videos (erkin nomlangan qisqa standart videolar) ──
+const TrainingVideoSchema = new mongoose.Schema({
+  id:        { type: String, default: () => uuidv4() },
+  title:     { type: String, required: true, trim: true },
+  videoUrl:  { type: String, required: true, trim: true },  // /uploads/training/<file>
+  order:     { type: Number, default: 0 },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const WaiterTrainingViewSchema = new mongoose.Schema({
+  waiterId: String,
+  viewedVideoIds: [String]
+}, { _id: false });
+
 // ── Training Modules ──────────────────────────────────────────
 const LessonSchema = new mongoose.Schema({
   id:          { type: String, default: () => uuidv4() },
@@ -189,7 +203,9 @@ const RestaurantSchema = new mongoose.Schema({
   adaptation:   { type: AdaptationSchema,  default: () => ({}) },
   kpiSettings:  { type: KPISettingsSchema, default: () => ({}) },
   modules: [ModuleSchema],
-  moduleProgress: [WaiterModuleProgressSchema]
+  moduleProgress: [WaiterModuleProgressSchema],
+  trainingVideos: [TrainingVideoSchema],
+  waiterTrainingViews: [WaiterTrainingViewSchema]
 });
 
 module.exports = mongoose.model('Restaurant', RestaurantSchema);

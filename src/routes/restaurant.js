@@ -1,4 +1,7 @@
 const express = require('express');
+const path = require('path');
+const fs = require('fs');
+const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const { auth } = require('../middleware/auth');
 const { asyncHandler } = require('../middleware/errorHandler');
@@ -6,6 +9,17 @@ const Restaurant = require('../models/Restaurant');
 
 const router = express.Router();
 const guard = auth(['restaurant']);
+
+const TRAINING_VIDEO_DIR = path.join(__dirname, '..', '..', 'uploads', 'training');
+if (!fs.existsSync(TRAINING_VIDEO_DIR)) fs.mkdirSync(TRAINING_VIDEO_DIR, { recursive: true });
+const trainingVideoUpload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => cb(null, TRAINING_VIDEO_DIR),
+    filename: (req, file, cb) => cb(null, uuidv4() + (path.extname(file.originalname || '') || '.mp4'))
+  }),
+  limits: { fileSize: 25 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => file.mimetype.startsWith('video/') ? cb(null, true) : cb(new Error('Faqat video fayl yuklash mumkin'))
+});
 
 router.get('/info', guard, asyncHandler(async (req, res) => {
   const r = await Restaurant.findOne({ id: req.user.restaurantId }, '-adminPassword');
@@ -418,6 +432,54 @@ router.delete('/adaptation/onboarding/:stepId', guard, asyncHandler(async (req, 
     { id: req.user.restaurantId },
     { $pull: { 'adaptation.onboardingSteps': { id: req.params.stepId } } }
   );
+  res.json({ success: true });
+}));
+
+// ── TRAINING VIDEOS (erkin nomlangan qisqa standart videolar) ─
+
+router.get('/training', guard, asyncHandler(async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'trainingVideos');
+  const videos = (r?.trainingVideos || []).slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+  res.json(videos);
+}));
+
+router.post('/training', guard, trainingVideoUpload.single('video'), asyncHandler(async (req, res) => {
+  const { title } = req.body;
+  if (!title || !title.trim()) return res.status(400).json({ error: 'Sarlavha majburiy' });
+  if (!req.file) return res.status(400).json({ error: 'Video fayl majburiy' });
+
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'trainingVideos');
+  const maxOrder = (r?.trainingVideos || []).reduce((m, v) => Math.max(m, v.order || 0), -1);
+  const video = {
+    id: uuidv4(),
+    title: title.trim(),
+    videoUrl: '/uploads/training/' + req.file.filename,
+    order: maxOrder + 1
+  };
+  await Restaurant.updateOne({ id: req.user.restaurantId }, { $push: { trainingVideos: video } });
+  res.json(video);
+}));
+
+router.put('/training/:videoId', guard, asyncHandler(async (req, res) => {
+  const { title, order } = req.body;
+  const upd = {};
+  if (title !== undefined) upd['trainingVideos.$.title'] = title.trim();
+  if (order !== undefined) upd['trainingVideos.$.order'] = order;
+  if (!Object.keys(upd).length) return res.json({ success: true });
+  await Restaurant.updateOne(
+    { id: req.user.restaurantId, 'trainingVideos.id': req.params.videoId },
+    { $set: upd }
+  );
+  res.json({ success: true });
+}));
+
+router.delete('/training/:videoId', guard, asyncHandler(async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'trainingVideos');
+  const vid = r?.trainingVideos?.find(v => v.id === req.params.videoId);
+  await Restaurant.updateOne({ id: req.user.restaurantId }, { $pull: { trainingVideos: { id: req.params.videoId } } });
+  if (vid?.videoUrl?.startsWith('/uploads/training/')) {
+    fs.unlink(path.join(TRAINING_VIDEO_DIR, path.basename(vid.videoUrl)), () => {});
+  }
   res.json({ success: true });
 }));
 

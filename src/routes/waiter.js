@@ -215,6 +215,32 @@ router.post('/adaptation/documents/:docId/read', guard, asyncHandler(async (req,
   res.json({ success: true });
 }));
 
+// ── TRAINING VIDEOS (erkin nomlangan qisqa standart videolar) ─
+
+router.get('/training', guard, asyncHandler(async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'trainingVideos waiterTrainingViews');
+  const videos = (r?.trainingVideos || []).slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+  const myViews = r?.waiterTrainingViews?.find(v => v.waiterId === req.user.waiterId)?.viewedVideoIds || [];
+  res.json(videos.map(v => ({ ...v.toObject(), viewed: myViews.includes(v.id) })));
+}));
+
+router.post('/training/:videoId/view', guard, asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+  const r = await Restaurant.findOne({ id: req.user.restaurantId, 'waiterTrainingViews.waiterId': req.user.waiterId }, 'waiterTrainingViews');
+  if (!r) {
+    await Restaurant.updateOne(
+      { id: req.user.restaurantId },
+      { $push: { waiterTrainingViews: { waiterId: req.user.waiterId, viewedVideoIds: [videoId] } } }
+    );
+  } else {
+    await Restaurant.updateOne(
+      { id: req.user.restaurantId, 'waiterTrainingViews.waiterId': req.user.waiterId },
+      { $addToSet: { 'waiterTrainingViews.$.viewedVideoIds': videoId } }
+    );
+  }
+  res.json({ success: true });
+}));
+
 // ── TRAINING MODULES ─────────────────────────────────────────
 
 router.get('/modules', guard, asyncHandler(async (req, res) => {

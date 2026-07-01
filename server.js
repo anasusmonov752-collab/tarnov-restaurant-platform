@@ -25,7 +25,9 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // ── Static files ──────────────────────────────────────────────────
-const UPLOADS_DIR = path.join(__dirname, 'uploads');
+// Render'da /app/data persistent disk sifatida ulangan (render.yaml) — bor bo'lsa undan foydalanamiz,
+// aks holda (lokal dev) loyiha ichidagi uploads/ papkasi ishlatiladi.
+const UPLOADS_DIR = fs.existsSync('/app/data') ? '/app/data/uploads' : path.join(__dirname, 'uploads');
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 app.use('/uploads', express.static(UPLOADS_DIR));
 app.use(express.static(path.join(__dirname, 'public'), {

@@ -2,24 +2,49 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
+const ffmpeg = require('fluent-ffmpeg');
+const ffmpegPath = require('ffmpeg-static');
 const { v4: uuidv4 } = require('uuid');
 const { auth } = require('../middleware/auth');
 const { asyncHandler } = require('../middleware/errorHandler');
 const Restaurant = require('../models/Restaurant');
 
+ffmpeg.setFfmpegPath(ffmpegPath);
+
 const router = express.Router();
 const guard = auth(['restaurant']);
 
-const TRAINING_VIDEO_DIR = path.join(__dirname, '..', '..', 'uploads', 'training');
-if (!fs.existsSync(TRAINING_VIDEO_DIR)) fs.mkdirSync(TRAINING_VIDEO_DIR, { recursive: true });
+// Render'da /app/data persistent disk sifatida ulangan (render.yaml) — bor bo'lsa undan foydalanamiz.
+const UPLOADS_ROOT = fs.existsSync('/app/data') ? '/app/data/uploads' : path.join(__dirname, '..', '..', 'uploads');
+const TRAINING_VIDEO_DIR = path.join(UPLOADS_ROOT, 'training');
+const TRAINING_TMP_DIR = path.join(UPLOADS_ROOT, 'training-tmp');
+for (const dir of [TRAINING_VIDEO_DIR, TRAINING_TMP_DIR]) {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+}
+
 const trainingVideoUpload = multer({
   storage: multer.diskStorage({
-    destination: (req, file, cb) => cb(null, TRAINING_VIDEO_DIR),
-    filename: (req, file, cb) => cb(null, uuidv4() + (path.extname(file.originalname || '') || '.mp4'))
+    destination: (req, file, cb) => cb(null, TRAINING_TMP_DIR),
+    filename: (req, file, cb) => cb(null, uuidv4() + (path.extname(file.originalname || '') || '.tmp'))
   }),
-  limits: { fileSize: 25 * 1024 * 1024 },
+  limits: { fileSize: 40 * 1024 * 1024 },
   fileFilter: (req, file, cb) => file.mimetype.startsWith('video/') ? cb(null, true) : cb(new Error('Faqat video fayl yuklash mumkin'))
 });
+
+// Har qanday formatdagi (mov, 3gp, mkv...) videoni brauzerlarda ishonchli
+// ishlaydigan H.264/AAC MP4'ga aylantiradi — ayniqsa iPhone .MOV fayllari
+// Android/Chrome'da ochilmasligining oldini olish uchun.
+function convertToMp4(inputPath, outputPath) {
+  return new Promise((resolve, reject) => {
+    ffmpeg(inputPath)
+      .videoCodec('libx264')
+      .audioCodec('aac')
+      .outputOptions(['-preset veryfast', '-crf 23', '-movflags +faststart', '-pix_fmt yuv420p'])
+      .on('error', reject)
+      .on('end', resolve)
+      .save(outputPath);
+  });
+}
 
 router.get('/info', guard, asyncHandler(async (req, res) => {
   const r = await Restaurant.findOne({ id: req.user.restaurantId }, '-adminPassword');
@@ -445,8 +470,19 @@ router.get('/training', guard, asyncHandler(async (req, res) => {
 
 router.post('/training', guard, trainingVideoUpload.single('video'), asyncHandler(async (req, res) => {
   const { title, description } = req.body;
-  if (!title || !title.trim()) return res.status(400).json({ error: 'Sarlavha majburiy' });
+  if (!title || !title.trim()) { if (req.file) fs.unlink(req.file.path, () => {}); return res.status(400).json({ error: 'Sarlavha majburiy' }); }
   if (!req.file) return res.status(400).json({ error: 'Video fayl majburiy' });
+
+  const outFilename = uuidv4() + '.mp4';
+  const outPath = path.join(TRAINING_VIDEO_DIR, outFilename);
+  try {
+    await convertToMp4(req.file.path, outPath);
+  } catch (err) {
+    fs.unlink(req.file.path, () => {});
+    return res.status(500).json({ error: 'Videoni qayta ishlashda xatolik yuz berdi. Boshqa fayl bilan urinib ko\'ring.' });
+  } finally {
+    fs.unlink(req.file.path, () => {});
+  }
 
   const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'trainingVideos');
   const maxOrder = (r?.trainingVideos || []).reduce((m, v) => Math.max(m, v.order || 0), -1);
@@ -454,7 +490,7 @@ router.post('/training', guard, trainingVideoUpload.single('video'), asyncHandle
     id: uuidv4(),
     title: title.trim(),
     description: (description || '').trim(),
-    videoUrl: '/uploads/training/' + req.file.filename,
+    videoUrl: '/uploads/training/' + outFilename,
     order: maxOrder + 1
   };
   await Restaurant.updateOne({ id: req.user.restaurantId }, { $push: { trainingVideos: video } });

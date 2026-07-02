@@ -53,15 +53,29 @@ function getPeriodLabel(date, days = 10) {
   return `${m} ${y}`;
 }
 
-function getLastPeriodKeys(n, days = 10) {
+function getLastPeriodKeys(n, days = 10, from = new Date()) {
   const keys = [];
-  let d = new Date();
+  let d = new Date(from || new Date());
   while (keys.length < n) {
     const key = getPeriodKey(d, days);
     if (!keys.includes(key)) keys.push(key);
-    d.setDate(d.getDate() - days);
+    // kun-bakun orqaga yuriladi — davr uzunligi o'zgaruvchan bo'lganda (masalan 21-31)
+    // days qadam bilan sakrashda davr tashlab ketilishi mumkin edi
+    d.setDate(d.getDate() - 1);
   }
   return keys;
 }
 
-module.exports = { getPeriodKey, getPeriodLabel, getLastPeriodKeys };
+// offset ta davr orqadagi sanani qaytaradi (0 = joriy davr)
+function getPeriodRefDate(offset, days = 10) {
+  const d = new Date();
+  let currentKey = getPeriodKey(d, days), seen = 0;
+  while (seen < offset) {
+    d.setDate(d.getDate() - 1);
+    const k = getPeriodKey(d, days);
+    if (k !== currentKey) { seen++; currentKey = k; }
+  }
+  return d;
+}
+
+module.exports = { getPeriodKey, getPeriodLabel, getLastPeriodKeys, getPeriodRefDate };

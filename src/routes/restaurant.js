@@ -224,7 +224,7 @@ router.get('/results', guard, asyncHandler(async (req, res) => {
 }));
 
 // ---- KPI (dinamik davr tizimi) ----
-const { getPeriodKey, getPeriodLabel, getLastPeriodKeys } = require('../utils/kpi');
+const { getPeriodKey, getPeriodLabel, getLastPeriodKeys, getPeriodRefDate } = require('../utils/kpi');
 
 const KPI_DEFAULTS = {
   periodDays:10,
@@ -233,11 +233,11 @@ const KPI_DEFAULTS = {
   penaltyMin:30, penaltyFine:-20
 };
 
-function calcKPI(results, cfg = {}) {
+function calcKPI(results, cfg = {}, refDate = new Date()) {
   const s           = { ...KPI_DEFAULTS, ...cfg };
   const days        = s.periodDays || 10;
-  const todayKey    = getPeriodKey(new Date(), days);
-  const periodLabel = getPeriodLabel(new Date(), days);
+  const todayKey    = getPeriodKey(refDate, days);
+  const periodLabel = getPeriodLabel(refDate, days);
   const current     = results.filter(r => getPeriodKey(r.submittedAt || r.date, days) === todayKey);
 
   if (!current.length) {
@@ -248,7 +248,7 @@ function calcKPI(results, cfg = {}) {
 
   const avg = Math.round(current.reduce((s, r) => s + r.score, 0) / current.length);
 
-  const lastKeys = getLastPeriodKeys(6, days);
+  const lastKeys = getLastPeriodKeys(6, days, refDate);
   const byPeriod = {};
   results.forEach(r => { const k=getPeriodKey(r.submittedAt||r.date,days); if(!byPeriod[k]||r.score>byPeriod[k]) byPeriod[k]=r.score; });
   let consecutiveLow = 0;
@@ -273,11 +273,14 @@ router.get('/kpi', guard, asyncHandler(async (req, res) => {
   const waiters = (r?.waiters || []).filter(w => w.active);
   const results = r?.testResults || [];
   const cfg     = r?.kpiSettings?.toObject ? r.kpiSettings.toObject() : (r?.kpiSettings || {});
-  const periodLabel = getPeriodLabel(new Date(), cfg.periodDays || KPI_DEFAULTS.periodDays);
+  const days    = cfg.periodDays || KPI_DEFAULTS.periodDays;
+  const offset  = Math.max(0, Math.min(36, parseInt(req.query.offset) || 0));
+  const refDate = getPeriodRefDate(offset, days);
+  const periodLabel = getPeriodLabel(refDate, days);
 
   const kpiList = waiters.map(w => {
     const wr   = results.filter(r => r.waiterId === w.id);
-    const kpi  = calcKPI(wr, cfg);
+    const kpi  = calcKPI(wr, cfg, refDate);
     const last = [...wr].sort((a,b) => new Date(b.submittedAt) - new Date(a.submittedAt))[0];
     return { waiterId: w.id, waiterName: w.name, ...kpi, lastTestDate: last?.date || null };
   }).sort((a, b) => {
@@ -294,7 +297,7 @@ router.get('/kpi', guard, asyncHandler(async (req, res) => {
     fail:    kpiList.filter(k => k.level==='fail').length,
     nodata:  kpiList.filter(k => k.level==='nodata').length,
   };
-  res.json({ kpiList, summary, periodLabel, settings: { ...KPI_DEFAULTS, ...cfg } });
+  res.json({ kpiList, summary, periodLabel, offset, settings: { ...KPI_DEFAULTS, ...cfg } });
 }));
 
 router.get('/kpi-settings', guard, asyncHandler(async (req, res) => {
@@ -317,11 +320,14 @@ router.get('/kpi/export', guard, asyncHandler(async (req, res) => {
   const waiters = (r?.waiters || []).filter(w => w.active);
   const results = r?.testResults || [];
   const cfg     = r?.kpiSettings?.toObject ? r.kpiSettings.toObject() : (r?.kpiSettings || {});
-  const periodLabel = getPeriodLabel(new Date(), cfg.periodDays || KPI_DEFAULTS.periodDays);
+  const days    = cfg.periodDays || KPI_DEFAULTS.periodDays;
+  const offset  = Math.max(0, Math.min(36, parseInt(req.query.offset) || 0));
+  const refDate = getPeriodRefDate(offset, days);
+  const periodLabel = getPeriodLabel(refDate, days);
 
   const kpiList = waiters.map(w => {
     const wr = results.filter(t => t.waiterId === w.id);
-    return { waiterName: w.name, ...calcKPI(wr, cfg) };
+    return { waiterName: w.name, ...calcKPI(wr, cfg, refDate) };
   }).sort((a, b) => (b.avg ?? -1) - (a.avg ?? -1));
 
   const header = [

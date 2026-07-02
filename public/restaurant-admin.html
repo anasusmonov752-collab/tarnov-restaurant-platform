@@ -924,11 +924,14 @@ function rKpi() {
 async function loadKpiSection() {
   const box = document.getElementById('kpi-sec');
   if (!box) return;
-  const data = await api('/api/restaurant/kpi');
+  S.kpiOffset = S.kpiOffset || 0;
+  const data = await api('/api/restaurant/kpi?offset=' + S.kpiOffset);
   if (!data || !data.kpiList) { box.innerHTML = '<div style="color:#C25B4C;font-size:13px;padding:30px;text-align:center">KPI ma\'lumotlarini yuklashda xatolik. Sahifani yangilang.</div>'; return; }
   S.kpiData = data;
   const st = data.settings || {};
-  const list = data.kpiList || [];
+  const raw = data.kpiList || [];
+  // Natijasi borlar tepada (yomondan yaxshiga), test topshirmaganlar oxirida
+  const list = [...raw.filter(k=>k.level!=='nodata'), ...raw.filter(k=>k.level==='nodata')];
 
   const withData = list.filter(k => k.avg != null);
   const avgAll = withData.length ? Math.round(withData.reduce((a,k)=>a+k.avg,0)/withData.length) : 0;
@@ -946,9 +949,13 @@ async function loadKpiSection() {
 
   box.innerHTML = `
   <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap">
-    <div style="display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:20px;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3)">
-      <span style="font-size:10.5px;color:#9A7D2F;font-weight:800;letter-spacing:.8px">JORIY DAVR</span>
-      <span style="font-size:12.5px;color:#19241D;font-weight:700">${esc(data.periodLabel||'')}</span>
+    <div style="display:inline-flex;align-items:center;gap:4px;padding:5px 6px;border-radius:20px;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3)">
+      <button onclick="kpiShiftPeriod(1)" title="Oldingi davr" style="width:28px;height:28px;border-radius:50%;border:none;background:rgba(201,168,76,.22);color:#19241D;font-size:15px;font-weight:800;cursor:pointer;line-height:1;font-family:'Mulish',sans-serif">‹</button>
+      <div style="text-align:center;padding:0 8px;min-width:170px">
+        <div style="font-size:9.5px;color:#9A7D2F;font-weight:800;letter-spacing:.8px">${S.kpiOffset ? 'OLDINGI DAVR (−'+S.kpiOffset+')' : 'JORIY DAVR'}</div>
+        <div style="font-size:12.5px;color:#19241D;font-weight:700">${esc(data.periodLabel||'')}</div>
+      </div>
+      <button onclick="kpiShiftPeriod(-1)" title="Keyingi davr" ${S.kpiOffset?'':'disabled'} style="width:28px;height:28px;border-radius:50%;border:none;background:${S.kpiOffset?'rgba(201,168,76,.22)':'rgba(20,41,31,.06)'};color:${S.kpiOffset?'#19241D':'#9AA79E'};font-size:15px;font-weight:800;cursor:${S.kpiOffset?'pointer':'default'};line-height:1;font-family:'Mulish',sans-serif">›</button>
     </div>
     <div style="display:flex;gap:9px">
       <button onclick="downloadKpiExcel()" style="height:36px;padding:0 16px;border-radius:9px;border:1px solid rgba(91,154,107,.4);background:rgba(91,154,107,.10);color:#3D7A50;font-weight:700;font-size:12px;cursor:pointer;font-family:'Mulish',sans-serif">⤓ Excel yuklab olish</button>
@@ -1045,13 +1052,18 @@ async function saveKpiSettings() {
   loadKpiSection();
 }
 
+function kpiShiftPeriod(dir) {
+  S.kpiOffset = Math.max(0, (S.kpiOffset || 0) + dir);
+  loadKpiSection();
+}
+
 // ── KPI eksport (Excel serverdan, PDF jsPDF bilan) ──
 function downloadKpiExcel() {
-  window.open('/api/restaurant/kpi/export', '_blank');
+  window.open('/api/restaurant/kpi/export?offset=' + (S.kpiOffset || 0), '_blank');
 }
 
 async function downloadKpiPdf() {
-  const data = await api('/api/restaurant/kpi');
+  const data = await api('/api/restaurant/kpi?offset=' + (S.kpiOffset || 0));
   if (!data?.kpiList) { showToast('KPI ma\'lumotlari yuklanmadi','err'); return; }
   try {
     const { jsPDF } = window.jspdf;

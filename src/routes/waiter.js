@@ -194,7 +194,7 @@ router.get('/kpi', guard, asyncHandler(async (req, res) => {
   else if (avg>=s.goodMin)   {level='good';   label='YAXSHI';        color='#2ECC71';emoji='✅';penalty=s.goodBonus;     advice="Me'yor darajasida. Menyu va ingredientlarni chuqurroq o'rganing.";}
   else if (avg>=s.warningMin){level='warning';label='OGOHLANTIRISH'; color='#E67E22';emoji='⚠️';penalty=s.warningPenalty;advice=`Diqqat! Bu davr uchun ish haqidan ${Math.abs(s.warningPenalty)}% ushlanadi.`;}
   else if (avg>=s.penaltyMin){level='penalty';label='JAZO';          color='#E74C3C';emoji='🔴';penalty=s.penaltyFine;   advice=`Kritik! Bu davr uchun ${Math.abs(s.penaltyFine)}% ushlanma. O'quv modullariga o'ting.`;}
-  else                       {level='fail';   label='NOMUVOFIQ';     color='#9B59B6';emoji='❌';penalty=0;               advice="Qayta o'qitish majburiy. Rahbariyat bilan bog'laning.";}
+  else                       {level='fail';   label='NOMUVOFIQ';     color='#9B59B6';emoji='❌';penalty=s.penaltyFine;  advice=`Kritik past natija! Bu davr uchun ${Math.abs(s.penaltyFine)}% ushlanma. Qayta o'qitish majburiy — rahbariyat bilan bog'laning.`;}
 
   res.json({ level,label,color,emoji,avg,testCount:current.length,penalty,consecutiveLow,periodLabel,advice });
 }));

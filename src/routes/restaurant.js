@@ -263,7 +263,7 @@ function calcKPI(results, cfg = {}) {
   else if (avg >= s.goodMin)    { level='good';    label='YAXSHI';        color='#2ECC71'; emoji='✅'; penalty=s.goodBonus;      }
   else if (avg >= s.warningMin) { level='warning'; label='OGOHLANTIRISH'; color='#E67E22'; emoji='⚠️'; penalty=s.warningPenalty; }
   else if (avg >= s.penaltyMin) { level='penalty'; label='JAZO';          color='#E74C3C'; emoji='🔴'; penalty=s.penaltyFine;    }
-  else                          { level='fail';    label='NOMUVOFIQ';      color='#9B59B6'; emoji='❌'; penalty=0;                }
+  else                          { level='fail';    label='NOMUVOFIQ';      color='#9B59B6'; emoji='❌'; penalty=s.penaltyFine;    }
 
   return { level, label, color, emoji, avg, testCount:current.length, penalty, consecutiveLow, periodLabel };
 }

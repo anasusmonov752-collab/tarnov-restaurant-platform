@@ -646,7 +646,19 @@ function openCert(){
         <div style="text-align:right"><div style="font-size:11px;color:#14291F;font-weight:700">${esc(date)}</div><div style="font-size:9px;color:rgba(20,41,31,.5)">№ RO-2026-${score}</div></div></div></div>
     <div style="display:flex;gap:10px;width:100%;margin-top:18px">
       <div onclick="downloadCert()" class="ro-press" style="flex:1;padding:15px;border-radius:15px;background:linear-gradient(100deg,#C9A84C,#d8bd6a);color:#11241b;font-weight:800;font-size:14px;text-align:center;cursor:pointer">⤓ Yuklab olish</div>
+      <div onclick="shareCert()" class="ro-press" style="flex:1;padding:15px;border-radius:15px;background:rgba(201,168,76,.16);border:1px solid rgba(201,168,76,.45);color:#e2c879;font-weight:800;font-size:14px;text-align:center;cursor:pointer">🔗 Ulashish</div>
       <div onclick="closeCert()" style="flex:none;padding:15px 20px;border-radius:15px;background:rgba(245,240,232,.12);color:#F5F0E8;font-weight:700;font-size:14px;text-align:center;cursor:pointer">Yopish</div></div></div>`;
+}
+
+async function shareCert(){
+  const r=lastResult||historyData.find(h=>h.hasCertificate); if(!r){ return; }
+  const url=location.origin+'/cert/'+r.id;
+  const title=`${r.waiterName||waiterName()} — RestoOne Sertifikat (${r.score}%)`;
+  if (navigator.share) {
+    try { await navigator.share({title, url}); return; } catch(e){ if(e.name==='AbortError') return; }
+  }
+  try { await navigator.clipboard.writeText(url); toast('Havola nusxalandi!','success'); }
+  catch { prompt('Sertifikat havolasi:', url); }
 }
 function closeCert(){ document.getElementById('overlay-cert').style.display='none'; document.getElementById('overlay-cert').innerHTML=''; }
 function downloadCert(){
@@ -667,6 +679,7 @@ function downloadCert(){
     doc.text(`Oson: ${r.easyScore}/${r.easyTotal}   O'rta: ${r.mediumScore}/${r.mediumTotal}   Qiyin: ${r.hardScore}/${r.hardTotal}`, W/2,152,{align:'center'});
     doc.setFontSize(10); doc.setTextColor(201,168,76); doc.text(r.date||todayISO(), W/2,166,{align:'center'});
     doc.setLineWidth(0.3); doc.line(30,240,W-30,240); doc.setFontSize(7); doc.setTextColor(150,140,120); doc.text('✦ RESTOONE PLATFORM ✦', W/2,248,{align:'center'});
+    doc.setFontSize(8); doc.setTextColor(201,168,76); doc.textWithLink('Tekshirish: '+location.origin+'/cert/'+r.id, W/2,256,{align:'center',url:location.origin+'/cert/'+r.id});
     doc.save(`sertifikat-${(r.waiterName||'ofitsiant')}-${r.date||'2026'}.pdf`);
     toast('PDF yuklab olindi!','success');
   } catch(e){ toast('PDF xatosi: '+e.message,'error'); }

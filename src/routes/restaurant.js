@@ -310,6 +310,50 @@ router.put('/kpi-settings', guard, asyncHandler(async (req, res) => {
   res.json({ success: true });
 }));
 
+// KPI hisobotini Excel (buxgalter uchun tayyor fayl) sifatida yuklab olish
+router.get('/kpi/export', guard, asyncHandler(async (req, res) => {
+  const XLSX = require('xlsx');
+  const r       = await Restaurant.findOne({ id: req.user.restaurantId }, 'name waiters testResults kpiSettings');
+  const waiters = (r?.waiters || []).filter(w => w.active);
+  const results = r?.testResults || [];
+  const cfg     = r?.kpiSettings?.toObject ? r.kpiSettings.toObject() : (r?.kpiSettings || {});
+  const periodLabel = getPeriodLabel(new Date(), cfg.periodDays || KPI_DEFAULTS.periodDays);
+
+  const kpiList = waiters.map(w => {
+    const wr = results.filter(t => t.waiterId === w.id);
+    return { waiterName: w.name, ...calcKPI(wr, cfg) };
+  }).sort((a, b) => (b.avg ?? -1) - (a.avg ?? -1));
+
+  const header = [
+    ['KPI & MAOSH HISOBOTI'],
+    [`Restoran: ${r?.name || ''}`],
+    [`Davr: ${periodLabel}`],
+    [`Tuzilgan sana: ${new Date().toISOString().split('T')[0]}`],
+    [],
+    ['№', 'Ofitsiant', 'Daraja', "O'rtacha ball (%)", 'Test soni', 'Bonus/Jarima (%)', 'Izoh']
+  ];
+  const rows = kpiList.map((k, i) => [
+    i + 1,
+    k.waiterName,
+    k.level === 'nodata' ? '—' : k.label,
+    k.avg ?? '',
+    k.testCount,
+    k.level === 'nodata' ? '' : k.penalty,
+    k.level === 'nodata' ? 'Test topshirilmagan' : (k.consecutiveLow >= 2 ? `${k.consecutiveLow} davr ketma-ket past natija` : '')
+  ]);
+
+  const ws = XLSX.utils.aoa_to_sheet([...header, ...rows]);
+  ws['!cols'] = [{ wch: 4 }, { wch: 26 }, { wch: 16 }, { wch: 16 }, { wch: 10 }, { wch: 16 }, { wch: 30 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'KPI');
+  const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+  const fname = `kpi-${(r?.name || 'restoran').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${new Date().toISOString().split('T')[0]}.xlsx`;
+  res.setHeader('Content-Disposition', `attachment; filename="${fname}"`);
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.send(buf);
+}));
+
 // ---- CHECKLIST ----
 router.get('/checklist', guard, asyncHandler(async (req, res) => {
   const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'checklist waiters waiterChecklists');

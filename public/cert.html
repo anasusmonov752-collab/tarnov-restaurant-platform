@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sertifikat — RestoOne</title>
+<meta property="og:title" content="RestoOne Sertifikat">
+<meta property="og:description" content="Xizmat standartlari bo'yicha bilim sertifikati — RestoOne restoran xodimlarini o'qitish platformasi">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Mulish:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  min-height:100vh; font-family:'Mulish',sans-serif;
+  background:linear-gradient(165deg,#1c4030 0%,#13281e 55%,#0e1f17 100%);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:28px 18px;
+}
+.cert {
+  position:relative; width:100%; max-width:420px; border-radius:22px;
+  padding:38px 28px 32px; background:linear-gradient(160deg,#F8F4EC,#efe7d6);
+  box-shadow:0 30px 70px -20px rgba(0,0,0,.6); text-align:center;
+  animation:pop .5s cubic-bezier(.2,.9,.25,1);
+}
+@keyframes pop { from { transform:scale(.94); opacity:0; } to { transform:scale(1); opacity:1; } }
+.cert::before { content:''; position:absolute; inset:9px; border:1.5px solid rgba(201,168,76,.45); border-radius:15px; pointer-events:none; }
+.cert::after  { content:''; position:absolute; inset:14px; border:1px solid rgba(201,168,76,.2); border-radius:11px; pointer-events:none; }
+.brand { font-size:11px; letter-spacing:4px; text-transform:uppercase; color:#9c8233; font-weight:700; }
+h1 { font-family:'Cormorant Garamond',serif; font-size:32px; color:#14291F; margin-top:14px; line-height:1.1; font-weight:600; }
+.sub { font-size:11px; color:rgba(20,41,31,.55); margin-top:4px; }
+.name { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:32px; color:#14291F; margin:14px 0 4px; font-weight:600; }
+.divider { width:120px; height:1px; background:rgba(201,168,76,.5); margin:6px auto 16px; }
+.desc { font-size:12.5px; color:rgba(20,41,31,.62); line-height:1.55; padding:0 6px; }
+.seal { margin:20px auto 0; width:100px; height:100px; position:relative; display:flex; align-items:center; justify-content:center; }
+.seal .bg { position:absolute; inset:0; border-radius:50%; background:radial-gradient(circle at 35% 30%,#e2c879,#C9A84C); box-shadow:0 8px 18px -6px rgba(201,168,76,.7); }
+.seal .ring { position:absolute; inset:8px; border-radius:50%; border:1.5px dashed rgba(17,36,27,.35); }
+.seal .val { position:relative; text-align:center; color:#14291F; }
+.seal .val .pct { font-family:'Cormorant Garamond',serif; font-size:32px; font-weight:700; line-height:1; }
+.seal .val .lbl { font-size:8px; letter-spacing:1px; font-weight:700; }
+.breakdown { display:flex; justify-content:center; gap:16px; margin-top:16px; font-size:11px; color:rgba(20,41,31,.6); }
+.breakdown b { color:#14291F; }
+.foot { display:flex; justify-content:space-between; align-items:flex-end; margin-top:22px; padding:0 4px; }
+.foot .sig { text-align:left; }
+.foot .sig .n { font-family:'Cormorant Garamond',serif; font-style:italic; font-size:17px; color:#14291F; }
+.foot .sig .t { font-size:9px; color:rgba(20,41,31,.5); border-top:1px solid rgba(20,41,31,.2); padding-top:3px; }
+.foot .meta { text-align:right; }
+.foot .meta .d { font-size:11px; color:#14291F; font-weight:700; }
+.foot .meta .no { font-size:9px; color:rgba(20,41,31,.5); }
+.qr-wrap { margin-top:22px; display:flex; align-items:center; gap:14px; justify-content:center; }
+#qr { padding:7px; background:#fff; border-radius:10px; border:1px solid rgba(201,168,76,.35); line-height:0; }
+#qr img, #qr canvas { display:block; }
+.qr-note { font-size:10px; color:rgba(20,41,31,.5); text-align:left; max-width:130px; line-height:1.5; }
+.cta { margin-top:26px; text-align:center; }
+.cta a {
+  display:inline-block; padding:13px 26px; border-radius:14px;
+  background:linear-gradient(100deg,#C9A84C,#d8bd6a); color:#11241b;
+  font-weight:800; font-size:13px; text-decoration:none;
+}
+.cta .tag { margin-top:12px; font-size:11.5px; color:rgba(245,240,232,.55); }
+.cta .tag b { color:#C9A84C; }
+.state { color:#F5F0E8; font-size:14px; text-align:center; padding:40px 20px; }
+@media print {
+  body { background:#fff; padding:0; }
+  .cta { display:none; }
+  .cert { box-shadow:none; max-width:100%; }
+}
+</style>
+</head>
+<body>
+<div id="app"><div class="state">Yuklanmoqda...</div></div>
+<script>
+"use strict";
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+async function init(){
+  const id = location.pathname.split('/').pop();
+  const app = document.getElementById('app');
+  let d = null;
+  try {
+    const r = await fetch('/api/cert/'+encodeURIComponent(id));
+    if (r.ok) d = await r.json();
+  } catch {}
+  if (!d) {
+    app.innerHTML = '<div class="state">Sertifikat topilmadi yoki havola noto\'g\'ri.<div class="cta" style="margin-top:18px"><a href="/">RestoOne haqida</a></div></div>';
+    return;
+  }
+  document.title = `${d.waiterName} — Sertifikat — RestoOne`;
+  app.innerHTML = `
+  <div class="cert">
+    <div class="brand">RestoOne${d.restaurantName ? ' · ' + esc(d.restaurantName) : ''}</div>
+    <h1>Sertifikat</h1>
+    <div class="sub">quyidagiga taqdim etiladi</div>
+    <div class="name">${esc(d.waiterName)}</div>
+    <div class="divider"></div>
+    <div class="desc">Xizmat standartlari bo'yicha bilim testini muvaffaqiyatli yakunlagani uchun</div>
+    <div class="seal">
+      <div class="bg"></div><div class="ring"></div>
+      <div class="val"><div class="pct">${d.score}%</div><div class="lbl">A'LO</div></div>
+    </div>
+    <div class="breakdown">
+      <span>Oson <b>${d.easyScore??'–'}/${d.easyTotal??'–'}</b></span>
+      <span>O'rta <b>${d.mediumScore??'–'}/${d.mediumTotal??'–'}</b></span>
+      <span>Qiyin <b>${d.hardScore??'–'}/${d.hardTotal??'–'}</b></span>
+    </div>
+    <div class="foot">
+      <div class="sig"><div class="n">Administrator</div><div class="t">Bosh menejer</div></div>
+      <div class="meta"><div class="d">${esc(d.date||'')}</div><div class="no">№ ${esc(d.certNo)}</div></div>
+    </div>
+    <div class="qr-wrap">
+      <div id="qr"></div>
+      <div class="qr-note">Haqiqiyligini tekshirish uchun QR kodni skanerlang</div>
+    </div>
+  </div>
+  <div class="cta">
+    <a href="/index-presentation.html">Xodimlaringizni ham o'qiting →</a>
+    <div class="tag">Ushbu sertifikat <b>RestoOne</b> platformasi orqali berilgan</div>
+  </div>`;
+  new QRCode(document.getElementById('qr'), { text: location.href, width: 84, height: 84, colorDark: '#14291F', colorLight: '#ffffff' });
+}
+init();
+</script>
+</body>
+</html>

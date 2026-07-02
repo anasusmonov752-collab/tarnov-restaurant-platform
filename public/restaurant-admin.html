@@ -304,6 +304,7 @@ body{font-family:'Mulish',sans-serif;background:#F2ECE1;color:#19241D;height:100
 <!-- TOAST -->
 <div class="toast-wrap" id="toastWrap"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 // ════════════ STATE ════════════
 const S = {
@@ -941,6 +942,10 @@ function rKpi() {
   }));
 
   return `<div class="sec">
+  <div style="display:flex;justify-content:flex-end;gap:9px;margin-bottom:14px">
+    <button onclick="downloadKpiExcel()" style="height:36px;padding:0 16px;border-radius:9px;border:1px solid rgba(91,154,107,.4);background:rgba(91,154,107,.10);color:#3D7A50;font-weight:700;font-size:12px;cursor:pointer;font-family:'Mulish',sans-serif">⤓ Excel yuklab olish</button>
+    <button onclick="downloadKpiPdf()" style="height:36px;padding:0 16px;border-radius:9px;border:1px solid rgba(194,91,76,.4);background:rgba(194,91,76,.08);color:#A34335;font-weight:700;font-size:12px;cursor:pointer;font-family:'Mulish',sans-serif">⤓ PDF yuklab olish</button>
+  </div>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:15px;margin-bottom:18px">
     <div class="card"><div style="font-size:12px;color:#6B7A6F;font-weight:600;margin-bottom:5px">O'rtacha KPI</div><div style="font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:700;color:#5B9A6B;line-height:1">${avg}<span style="font-size:18px">%</span></div></div>
     <div class="card"><div style="font-size:12px;color:#6B7A6F;font-weight:600;margin-bottom:5px">Jami testlar</div><div style="font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:700;color:#19241D;line-height:1">${S.results.length}</div></div>
@@ -970,6 +975,61 @@ function rKpi() {
         </div>`).join('')}
     </div>
   </div></div>`;
+}
+
+// ── KPI eksport (Excel serverdan, PDF jsPDF bilan) ──
+function downloadKpiExcel() {
+  window.open('/api/restaurant/kpi/export', '_blank');
+}
+
+async function downloadKpiPdf() {
+  const data = await api('/api/restaurant/kpi');
+  if (!data?.kpiList) { showToast('KPI ma\'lumotlari yuklanmadi','err'); return; }
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    const W = doc.internal.pageSize.getWidth();
+
+    doc.setFillColor(20,41,31); doc.rect(0,0,W,34,'F');
+    doc.setTextColor(201,168,76); doc.setFontSize(15); doc.setFont('helvetica','bold');
+    doc.text('KPI & MAOSH HISOBOTI', 14, 15);
+    doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(226,222,210);
+    doc.text(`${S.info?.name||''}  ·  Davr: ${data.periodLabel||''}  ·  ${new Date().toISOString().split('T')[0]}`, 14, 24);
+
+    const cols = [
+      {x:14,  w:9,  t:'No'},
+      {x:23,  w:56, t:'Ofitsiant'},
+      {x:79,  w:34, t:'Daraja'},
+      {x:113, w:26, t:"O'rtacha %"},
+      {x:139, w:20, t:'Testlar'},
+      {x:159, w:37, t:'Bonus/Jarima %'},
+    ];
+    let y = 44;
+    doc.setFillColor(245,240,232); doc.rect(14,y-5,182,8,'F');
+    doc.setFontSize(8.5); doc.setFont('helvetica','bold'); doc.setTextColor(20,41,31);
+    cols.forEach(c=>doc.text(c.t, c.x+1.5, y));
+    y += 8;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9);
+    data.kpiList.forEach((k,i)=>{
+      if (y > 278) { doc.addPage(); y = 20; }
+      if (i%2===1){ doc.setFillColor(250,247,240); doc.rect(14,y-5,182,8,'F'); }
+      doc.setTextColor(40,50,44);
+      doc.text(String(i+1), cols[0].x+1.5, y);
+      doc.text((k.waiterName||'').slice(0,32), cols[1].x+1.5, y);
+      doc.text(k.level==='nodata'?'-':(k.label||''), cols[2].x+1.5, y);
+      doc.text(k.avg==null?'-':String(k.avg), cols[3].x+1.5, y);
+      doc.text(String(k.testCount||0), cols[4].x+1.5, y);
+      const p = k.level==='nodata' ? '-' : (k.penalty>0?'+'+k.penalty:String(k.penalty));
+      if (k.penalty>0) doc.setTextColor(61,122,80); else if (k.penalty<0) doc.setTextColor(163,67,53);
+      doc.text(p, cols[5].x+1.5, y);
+      y += 8;
+    });
+    doc.setDrawColor(201,168,76); doc.setLineWidth(0.3); doc.line(14,282,196,282);
+    doc.setFontSize(7); doc.setTextColor(150,140,120);
+    doc.text('RestoOne platformasi tomonidan avtomatik tuzilgan', 14, 288);
+    doc.save(`kpi-hisobot-${new Date().toISOString().split('T')[0]}.pdf`);
+    showToast('PDF yuklab olindi','ok');
+  } catch(e) { showToast('PDF xatosi: '+e.message,'err'); }
 }
 
 // ════════════ O'QUV MODULLAR — Standart videolar ════════════

@@ -1,3 +1,7 @@
+// Lokal dev: ba'zi tarmoqlarda tizim DNS'i MongoDB Atlas SRV yozuvini topa olmaydi.
+// DNS_OVERRIDE="8.8.8.8,1.1.1.1" berilsa shu serverlar ishlatiladi (prod'da berilmaydi).
+if (process.env.DNS_OVERRIDE) require('dns').setServers(process.env.DNS_OVERRIDE.split(','));
+
 const express = require('express');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
@@ -54,6 +58,26 @@ app.get('/api/restaurants/list', async (req, res, next) => {
     res.json(list.map(r => ({ id: r.id, name: r.name, location: r.location })));
   } catch (err) { next(err); }
 });
+
+// ── Public certificate (ulashiladigan havola, auth talab qilinmaydi) ─
+app.get('/api/cert/:id', async (req, res, next) => {
+  try {
+    const r = await Restaurant.findOne({ 'testResults.id': req.params.id }, 'name testResults');
+    const result = r?.testResults?.find(t => t.id === req.params.id);
+    if (!result || !result.hasCertificate) return res.status(404).json({ error: 'Sertifikat topilmadi' });
+    res.json({
+      waiterName: result.waiterName,
+      restaurantName: r.name,
+      score: result.score,
+      date: result.date,
+      easyScore: result.easyScore, easyTotal: result.easyTotal,
+      mediumScore: result.mediumScore, mediumTotal: result.mediumTotal,
+      hardScore: result.hardScore, hardTotal: result.hardTotal,
+      certNo: 'RO-' + String(result.id).replace(/-/g, '').slice(0, 8).toUpperCase()
+    });
+  } catch (err) { next(err); }
+});
+app.get('/cert/:id', (req, res) => res.sendFile(path.join(__dirname, 'public', 'cert.html')));
 
 // ── API routes ─────────────────────────────────────────────────────
 app.use('/api/auth', require('./src/routes/auth'));

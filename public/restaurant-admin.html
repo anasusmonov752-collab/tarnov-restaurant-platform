@@ -914,67 +914,135 @@ async function delAnn(id) {
 }
 
 // ════════════ KPI ════════════
+const KPI_LEVEL_COLORS = { master:'#C9A84C', pro:'#5B9A6B', good:'#6E83C9', warning:'#C8922A', penalty:'#C25B4C', fail:'#9B59B6', nodata:'#9AA79E' };
+
 function rKpi() {
-  const allSc = S.results.map(r=>r.score||0);
-  const avg = allSc.length ? Math.round(allSc.reduce((a,b)=>a+b,0)/allSc.length) : 0;
-  const certs = S.results.filter(r=>r.hasCertificate||(r.score||0)>=90).length;
-  const warns = S.waiters.filter(w=>{
-    const wr = S.results.filter(r=>r.waiterName===w.name||r.waiterId===w.id);
-    const wa = wr.length ? wr.reduce((a,b)=>a+(b.score||0),0)/wr.length : 100;
-    return wa<70;
-  }).length;
+  setTimeout(loadKpiSection, 0);
+  return `<div class="sec" id="kpi-sec"><div style="font-size:13px;color:#6B7A6F;padding:30px;text-align:center">KPI ma'lumotlari yuklanmoqda...</div></div>`;
+}
 
-  const tiers = [
-    {name:'MASTER', min:95, effect:'+30%', color:'#C9A84C'},
-    {name:'PRO', min:85, effect:'+15%', color:'#5B9A6B'},
-    {name:'YAXSHI', min:75, effect:'+5%', color:'#6E83C9'},
-    {name:'OGOHLANTIRISH', min:60, effect:'0%', color:'#C9A84C'},
-    {name:'JAZO', min:0, effect:'−15%', color:'#C25B4C'},
+async function loadKpiSection() {
+  const box = document.getElementById('kpi-sec');
+  if (!box) return;
+  const data = await api('/api/restaurant/kpi');
+  if (!data || !data.kpiList) { box.innerHTML = '<div style="color:#C25B4C;font-size:13px;padding:30px;text-align:center">KPI ma\'lumotlarini yuklashda xatolik. Sahifani yangilang.</div>'; return; }
+  S.kpiData = data;
+  const st = data.settings || {};
+  const list = data.kpiList || [];
+
+  const withData = list.filter(k => k.avg != null);
+  const avgAll = withData.length ? Math.round(withData.reduce((a,k)=>a+k.avg,0)/withData.length) : 0;
+  const bonusCnt = list.filter(k=>k.penalty>0).length;
+  const fineCnt = list.filter(k=>k.penalty<0).length;
+
+  const tierRows = [
+    {key:'master',  name:'MASTER',        minF:'masterMin',  effF:'masterBonus',    color:'#C9A84C', hint:'bonus'},
+    {key:'pro',     name:'PRO',           minF:'proMin',     effF:'proBonus',       color:'#5B9A6B', hint:'bonus'},
+    {key:'good',    name:'YAXSHI',        minF:'goodMin',    effF:'goodBonus',      color:'#6E83C9', hint:'bonus'},
+    {key:'warning', name:'OGOHLANTIRISH', minF:'warningMin', effF:'warningPenalty', color:'#C8922A', hint:'jarima'},
+    {key:'penalty', name:'JAZO',          minF:'penaltyMin', effF:'penaltyFine',    color:'#C25B4C', hint:'jarima'},
   ];
+  const inpSt = 'width:58px;height:32px;border-radius:8px;border:1px solid rgba(20,41,31,.15);background:#FBF7EF;font-size:12.5px;font-weight:700;color:#19241D;text-align:center;font-family:\'Mulish\',sans-serif;outline:none';
 
-  const heat = Array.from({length:7},(_,wi)=>({
-    cells: Array.from({length:7},(_,di)=>{
-      const d=new Date(); d.setDate(d.getDate()-48+wi*7+di);
-      const ds=d.toISOString().split('T')[0];
-      const cnt=S.results.filter(r=>(r.submittedAt||r.date||'').startsWith(ds)).length;
-      return Math.min(1,0.08+cnt*0.3);
-    })
-  }));
-
-  return `<div class="sec">
-  <div style="display:flex;justify-content:flex-end;gap:9px;margin-bottom:14px">
-    <button onclick="downloadKpiExcel()" style="height:36px;padding:0 16px;border-radius:9px;border:1px solid rgba(91,154,107,.4);background:rgba(91,154,107,.10);color:#3D7A50;font-weight:700;font-size:12px;cursor:pointer;font-family:'Mulish',sans-serif">⤓ Excel yuklab olish</button>
-    <button onclick="downloadKpiPdf()" style="height:36px;padding:0 16px;border-radius:9px;border:1px solid rgba(194,91,76,.4);background:rgba(194,91,76,.08);color:#A34335;font-weight:700;font-size:12px;cursor:pointer;font-family:'Mulish',sans-serif">⤓ PDF yuklab olish</button>
+  box.innerHTML = `
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+    <div style="display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:20px;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3)">
+      <span style="font-size:10.5px;color:#9A7D2F;font-weight:800;letter-spacing:.8px">JORIY DAVR</span>
+      <span style="font-size:12.5px;color:#19241D;font-weight:700">${esc(data.periodLabel||'')}</span>
+    </div>
+    <div style="display:flex;gap:9px">
+      <button onclick="downloadKpiExcel()" style="height:36px;padding:0 16px;border-radius:9px;border:1px solid rgba(91,154,107,.4);background:rgba(91,154,107,.10);color:#3D7A50;font-weight:700;font-size:12px;cursor:pointer;font-family:'Mulish',sans-serif">⤓ Excel yuklab olish</button>
+      <button onclick="downloadKpiPdf()" style="height:36px;padding:0 16px;border-radius:9px;border:1px solid rgba(194,91,76,.4);background:rgba(194,91,76,.08);color:#A34335;font-weight:700;font-size:12px;cursor:pointer;font-family:'Mulish',sans-serif">⤓ PDF yuklab olish</button>
+    </div>
   </div>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:15px;margin-bottom:18px">
-    <div class="card"><div style="font-size:12px;color:#6B7A6F;font-weight:600;margin-bottom:5px">O'rtacha KPI</div><div style="font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:700;color:#5B9A6B;line-height:1">${avg}<span style="font-size:18px">%</span></div></div>
-    <div class="card"><div style="font-size:12px;color:#6B7A6F;font-weight:600;margin-bottom:5px">Jami testlar</div><div style="font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:700;color:#19241D;line-height:1">${S.results.length}</div></div>
-    <div class="card"><div style="font-size:12px;color:#6B7A6F;font-weight:600;margin-bottom:5px">Sertifikatlar</div><div style="font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:700;color:#C9A84C;line-height:1">${certs}</div></div>
-    <div class="card"><div style="font-size:12px;color:#6B7A6F;font-weight:600;margin-bottom:5px">Ogohlantirishlar</div><div style="font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:700;color:#C25B4C;line-height:1">${warns}</div></div>
+    <div class="card"><div style="font-size:12px;color:#6B7A6F;font-weight:600;margin-bottom:5px">O'rtacha ball (davrda)</div><div style="font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:700;color:#5B9A6B;line-height:1">${avgAll}<span style="font-size:18px">%</span></div></div>
+    <div class="card"><div style="font-size:12px;color:#6B7A6F;font-weight:600;margin-bottom:5px">Test topshirdi</div><div style="font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:700;color:#19241D;line-height:1">${withData.length}<span style="font-size:18px;color:#6B7A6F"> / ${list.length}</span></div></div>
+    <div class="card"><div style="font-size:12px;color:#6B7A6F;font-weight:600;margin-bottom:5px">Bonus oladi</div><div style="font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:700;color:#C9A84C;line-height:1">${bonusCnt}</div></div>
+    <div class="card"><div style="font-size:12px;color:#6B7A6F;font-weight:600;margin-bottom:5px">Jarima / ogohlantirish</div><div style="font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:700;color:#C25B4C;line-height:1">${fineCnt}</div></div>
   </div>
-  <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:16px">
-    <div class="card">
-      <div style="font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;color:#19241D;margin-bottom:14px">Oylik faollik xaritasi</div>
-      <div style="display:flex;flex-direction:column;gap:5px">
-        ${heat.map(row=>`
-          <div style="display:flex;gap:5px">
-            ${row.cells.map(op=>`<div style="flex:1;aspect-ratio:1;border-radius:4px;background:#C9A84C;opacity:${op}"></div>`).join('')}
+  <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:16px;align-items:start">
+    <div class="card" style="padding:20px 0 8px">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;color:#19241D;margin:0 20px 4px">Xodimlar KPI</div>
+      <div style="font-size:11.5px;color:#6B7A6F;margin:0 20px 14px">Joriy davr test natijalari va maoshga ta'siri</div>
+      <div style="display:grid;grid-template-columns:1.6fr .7fr .6fr 1fr .9fr;gap:8px;padding:8px 20px;background:#FBF7EF;font-size:10.5px;font-weight:800;color:#9A7D2F;letter-spacing:.5px;text-transform:uppercase">
+        <div>Ofitsiant</div><div style="text-align:center">O'rtacha</div><div style="text-align:center">Testlar</div><div>Daraja</div><div style="text-align:right">Maoshga</div>
+      </div>
+      ${!list.length ? '<div style="padding:24px 20px;font-size:13px;color:#6B7A6F;text-align:center">Faol ofitsiantlar yo\'q</div>' : list.map(k=>{
+        const c = KPI_LEVEL_COLORS[k.level]||'#6B7A6F';
+        const eff = k.level==='nodata' ? '—' : (k.penalty>0?`+${k.penalty}%`:(k.penalty<0?`${k.penalty}%`:'0%'));
+        const effColor = k.penalty>0?'#3D7A50':(k.penalty<0?'#A34335':'#6B7A6F');
+        return `<div style="display:grid;grid-template-columns:1.6fr .7fr .6fr 1fr .9fr;gap:8px;align-items:center;padding:11px 20px;border-bottom:1px solid rgba(20,41,31,.06)">
+          <div style="font-size:13px;font-weight:700;color:#19241D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(k.waiterName)}</div>
+          <div style="text-align:center;font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:${k.avg==null?'#9AA79E':'#19241D'}">${k.avg==null?'—':k.avg+'%'}</div>
+          <div style="text-align:center;font-size:12.5px;color:#6B7A6F">${k.testCount||0}</div>
+          <div><span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:800;letter-spacing:.4px;color:#fff;background:${c}">${k.level==='nodata'?'TEST YO\'Q':esc(k.label)}</span></div>
+          <div style="text-align:right;font-size:14px;font-weight:800;color:${effColor}">${eff}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="card">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;color:#19241D;margin-bottom:4px">Daraja tizimi — sozlash</div>
+        <div style="font-size:11.5px;color:#6B7A6F;line-height:1.5;margin-bottom:14px">Restoraningizga mos qilib o'zgartiring: minimal ball va maoshga ta'sir foizi. Manfiy son — jarima.</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:10px 12px;border-radius:10px;background:#FBF7EF">
+          <span style="font-size:12px;font-weight:700;color:#19241D;flex:1">Baholash davri</span>
+          <select id="kpi-periodDays" style="height:32px;border-radius:8px;border:1px solid rgba(20,41,31,.15);background:#fff;font-size:12.5px;font-weight:700;color:#19241D;padding:0 8px;font-family:'Mulish',sans-serif;outline:none">
+            ${[7,10,14,15,30].map(d=>`<option value="${d}" ${st.periodDays===d?'selected':''}>${d} kun</option>`).join('')}
+          </select>
+        </div>
+        ${tierRows.map(t=>`
+          <div style="display:flex;align-items:center;gap:9px;margin-bottom:9px">
+            <div style="width:4px;height:34px;border-radius:3px;background:${t.color};flex:none"></div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:11.5px;font-weight:800;color:#19241D;letter-spacing:.3px">${t.name}</div>
+              <div style="font-size:10px;color:#6B7A6F">${t.hint}</div>
+            </div>
+            <span style="font-size:10.5px;color:#6B7A6F">min</span>
+            <input id="kpi-${t.minF}" type="number" min="0" max="100" value="${st[t.minF]??''}" style="${inpSt}">
+            <span style="font-size:10.5px;color:#6B7A6F">→</span>
+            <input id="kpi-${t.effF}" type="number" min="-100" max="100" value="${st[t.effF]??''}" style="${inpSt}">
+            <span style="font-size:10.5px;color:#6B7A6F">%</span>
           </div>`).join('')}
+        <div style="font-size:10.5px;color:#6B7A6F;margin:4px 0 14px;line-height:1.5">JAZO darajasidan ham past ball — NOMUVOFIQ (ta'sir 0%, ishdan bo'shatish ko'rib chiqiladi)</div>
+        <button onclick="saveKpiSettings()" style="width:100%;height:40px;border-radius:10px;border:none;background:#C9A84C;color:#19241D;font-weight:800;font-size:13px;cursor:pointer;font-family:'Mulish',sans-serif">Saqlash</button>
+      </div>
+      <div class="card">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;color:#19241D;margin-bottom:14px">Oylik faollik xaritasi</div>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          ${Array.from({length:7},(_,wi)=>`
+            <div style="display:flex;gap:5px">
+              ${Array.from({length:7},(_,di)=>{
+                const d=new Date(); d.setDate(d.getDate()-48+wi*7+di);
+                const ds=d.toISOString().split('T')[0];
+                const cnt=S.results.filter(r=>(r.submittedAt||r.date||'').startsWith(ds)).length;
+                return `<div style="flex:1;aspect-ratio:1;border-radius:4px;background:#C9A84C;opacity:${Math.min(1,0.08+cnt*0.3)}"></div>`;
+              }).join('')}
+            </div>`).join('')}
+        </div>
       </div>
     </div>
-    <div class="card">
-      <div style="font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;color:#19241D;margin-bottom:13px">Daraja tizimi</div>
-      ${tiers.map(t=>`
-        <div class="tier-row">
-          <div class="tier-bar" style="background:${t.color}"></div>
-          <div style="flex:1">
-            <div style="font-size:12.5px;font-weight:800;color:#19241D;letter-spacing:.3px">${t.name}</div>
-            <div style="font-size:11px;color:#6B7A6F">min. ${t.min}%</div>
-          </div>
-          <span class="tier-effect" style="color:${t.color}">${t.effect}</span>
-        </div>`).join('')}
-    </div>
-  </div></div>`;
+  </div>`;
+}
+
+async function saveKpiSettings() {
+  const g = id => Number(document.getElementById('kpi-'+id)?.value);
+  const body = {
+    periodDays: g('periodDays'),
+    masterMin: g('masterMin'), masterBonus: g('masterBonus'),
+    proMin: g('proMin'), proBonus: g('proBonus'),
+    goodMin: g('goodMin'), goodBonus: g('goodBonus'),
+    warningMin: g('warningMin'), warningPenalty: g('warningPenalty'),
+    penaltyMin: g('penaltyMin'), penaltyFine: g('penaltyFine'),
+  };
+  if (Object.values(body).some(v => Number.isNaN(v))) { showToast('Barcha maydonlarni to\'ldiring','err'); return; }
+  if (!(body.masterMin > body.proMin && body.proMin > body.goodMin && body.goodMin > body.warningMin && body.warningMin > body.penaltyMin)) {
+    showToast('Minimal ballar kamayib borishi kerak: MASTER > PRO > YAXSHI > OGOHLANTIRISH > JAZO','err'); return;
+  }
+  const res = await api('/api/restaurant/kpi-settings', { method:'PUT', body: JSON.stringify(body) });
+  if (!res?.success) { showToast('Saqlashda xatolik','err'); return; }
+  showToast('KPI sozlamalari saqlandi','ok');
+  loadKpiSection();
 }
 
 // ── KPI eksport (Excel serverdan, PDF jsPDF bilan) ──

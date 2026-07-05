@@ -405,10 +405,11 @@ router.get('/adaptation', guard, asyncHandler(async (req, res) => {
 }));
 
 router.put('/adaptation', guard, asyncHandler(async (req, res) => {
-  const { history, mission, values } = req.body;
+  const { history, mission, values, image } = req.body;
   const update = {};
   if (history !== undefined) update['adaptation.history'] = history;
   if (mission !== undefined) update['adaptation.mission'] = mission;
+  if (image !== undefined) update['adaptation.image'] = image;
   if (values !== undefined) update['adaptation.values'] = Array.isArray(values) ? values : values.split('\n').map(v => v.trim()).filter(Boolean);
   await Restaurant.updateOne({ id: req.user.restaurantId }, { $set: update });
   res.json({ success: true });

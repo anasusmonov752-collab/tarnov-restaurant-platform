@@ -170,6 +170,7 @@ const OnboardingStepSchema = new mongoose.Schema({
 const AdaptationSchema = new mongoose.Schema({
   history:         { type: String, default: '' },
   mission:         { type: String, default: '' },
+  image:           { type: String, maxlength: 7000000 },   // restoran rasmi (base64)
   values:          [String],
   management:      [ManagementMemberSchema],
   documents:       [AdaptDocumentSchema],

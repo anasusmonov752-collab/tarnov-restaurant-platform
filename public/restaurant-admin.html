@@ -1250,68 +1250,360 @@ function addChk() {
   if (task) { S.checklist.push({task, done:false}); renderSec(); }
 }
 
-// ════════════ ADAPTATSIYA ════════════
+// ════════════ ADAPTATSIYA (to'liq tahrirlanadigan) ════════════
+const AD_INP = "width:100%;border-radius:9px;border:1px solid rgba(20,41,31,.12);background:#FBF7EF;font-size:12.5px;color:#19241D;padding:9px 11px;font-family:'Mulish',sans-serif;outline:none;box-sizing:border-box";
+const AD_BTN = "height:36px;padding:0 18px;border-radius:9px;border:none;background:#C9A84C;color:#19241D;font-weight:800;font-size:12.5px;cursor:pointer;font-family:'Mulish',sans-serif";
+const AD_BTN2 = "height:36px;padding:0 14px;border-radius:9px;border:1px solid rgba(20,41,31,.15);background:transparent;color:#6B7A6F;font-weight:700;font-size:12.5px;cursor:pointer;font-family:'Mulish',sans-serif";
+
 function rAdapt() {
+  setTimeout(loadAdaptSection, 0);
+  return `<div class="sec" id="adapt-sec"><div style="font-size:13px;color:#6B7A6F;padding:30px;text-align:center">Yuklanmoqda...</div></div>`;
+}
+
+async function loadAdaptSection() {
+  const box = document.getElementById('adapt-sec');
+  if (!box) return;
+  const a = await api('/api/restaurant/adaptation');
+  S.adapt = a || {};
+  renderAdaptBody();
+}
+
+function renderAdaptBody() {
+  const box = document.getElementById('adapt-sec');
+  if (!box) return;
   const tabs = [{k:'about',l:'Restoran haqida'},{k:'onboarding',l:'Onboarding'},{k:'docs',l:'Hujjatlar'},{k:'mgmt',l:'Boshqaruv'}];
-  const onbSteps = [
-    {n:'01',title:'Qabul va hujjatlar',text:'Ish kiyimi, forma va identifikatsiya topshirildi. Mehnat shartnomasi imzolandi.'},
-    {n:'02',title:'Restoran qoidalari',text:'Xizmat ko\'rsatish standartlari, kiyim qoidalari va ichki tartib bilan tanishish.'},
-    {n:'03',title:'Menyu treningi',text:'Barcha taomlar, allergenlar va tavsiya qilish uslublari bo\'yicha brifing.'},
-    {n:'04',title:'Birinchi test',text:'Minimal 70% natija bilan birinchi bilim testini topshirish.'},
-  ];
-  const docs = ['Xizmat standartlari','Allergenlar ro\'yxati','Kassa qo\'llanmasi','Ichki qoidalar'];
-  const mgmt = [
-    {tag:(S.info?.adminName||'AD').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(), name:S.info?.adminName||'Admin', role:'Bosh administrator'},
-    {tag:'SM', name:'Servis menejeri', role:'Servis menejeri'},
-    {tag:'OB', name:'Oshxona boshlig\'i', role:'Oshxona boshlig\'i'},
-  ];
+  let body = '';
+  if (S.adaptTab==='about') body = adaptAbout();
+  else if (S.adaptTab==='onboarding') body = adaptOnboarding();
+  else if (S.adaptTab==='docs') body = adaptDocs();
+  else body = adaptMgmt();
+  box.innerHTML = `<div class="adapt-tabs">
+    ${tabs.map(t=>`<div class="adapt-tab ${S.adaptTab===t.k?'on':''}" onclick="S.adaptTab='${t.k}';S.adaptEditId=null;renderAdaptBody()">${t.l}</div>`).join('')}
+  </div>${body}`;
+}
 
-  let body='';
-  if (S.adaptTab==='about') {
-    body=`<div style="display:grid;grid-template-columns:1.3fr 1fr;gap:16px">
-      <div class="card">
-        <div style="font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:#C9A84C;font-weight:700;margin-bottom:5px">Restoran haqida</div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:#19241D;margin-bottom:11px">${S.info?.name||'–'}</div>
-        <div style="font-size:13.5px;color:#6B7A6F;line-height:1.7">Restoran xodimlarini professional darajada o'qitish va bilimlarini baholash platformasi. Har bir ofitsiant menyu, allergenlar va servis standartlari bo'yicha test topshiradi.</div>
-        ${S.info?.email?`<div style="margin-top:14px"><div style="font-size:11px;color:#6B7A6F;font-weight:600">Email</div><div style="font-size:13px;color:#19241D;font-weight:700">${S.info.email}</div></div>`:''}
+function adSel(id){ return document.getElementById(id); }
+function compressToB64(file, maxPx, cb) {
+  const img = new Image();
+  img.onload = () => {
+    const canvas = document.createElement('canvas');
+    const r = Math.min(maxPx/img.width, maxPx/img.height, 1);
+    canvas.width = img.width*r; canvas.height = img.height*r;
+    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+    cb(canvas.toDataURL('image/jpeg', 0.8));
+  };
+  img.src = URL.createObjectURL(file);
+}
+
+// ── TAB 1: Restoran haqida ──
+function adaptAbout() {
+  const a = S.adapt || {};
+  return `<div style="display:grid;grid-template-columns:1.3fr 1fr;gap:16px;align-items:start">
+    <div class="card">
+      <div style="font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:#C9A84C;font-weight:700;margin-bottom:5px">Restoran haqida</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:#19241D;margin-bottom:14px">${esc(S.info?.name||'–')}</div>
+      <div style="font-size:11.5px;font-weight:800;color:#19241D;margin-bottom:5px">Restoran tarixi</div>
+      <textarea id="ad-history" placeholder="Restoraningiz qachon ochilgan, qanday yo'l bosib o'tgan..." style="${AD_INP};min-height:90px;resize:vertical;margin-bottom:12px">${esc(a.history||'')}</textarea>
+      <div style="font-size:11.5px;font-weight:800;color:#19241D;margin-bottom:5px">Missiya</div>
+      <textarea id="ad-mission" placeholder="Restoranning maqsadi va qadriyati..." style="${AD_INP};min-height:60px;resize:vertical;margin-bottom:12px">${esc(a.mission||'')}</textarea>
+      <div style="font-size:11.5px;font-weight:800;color:#19241D;margin-bottom:5px">Qadriyatlar <span style="font-weight:600;color:#6B7A6F">(har qatorda bittadan)</span></div>
+      <textarea id="ad-values" placeholder="Mehmondo'stlik&#10;Sifat&#10;Jamoaviylik" style="${AD_INP};min-height:70px;resize:vertical;margin-bottom:14px">${esc((a.values||[]).join('\n'))}</textarea>
+      <button onclick="saveAdaptAbout()" style="${AD_BTN}">Saqlash</button>
+    </div>
+    <div class="card" style="padding:14px">
+      ${a.image
+        ? `<img src="${a.image}" style="width:100%;border-radius:12px;display:block;margin-bottom:11px">`
+        : `<div style="height:200px;border-radius:12px;background:repeating-linear-gradient(135deg,rgba(20,41,31,.05) 0 14px,rgba(20,41,31,.02) 14px 28px);border:1px solid rgba(20,41,31,.10);display:flex;align-items:center;justify-content:center;margin-bottom:11px"><span style="font-size:11px;color:#6B7A6F;letter-spacing:1px">Rasm yuklanmagan</span></div>`}
+      <input type="file" id="ad-img-file" accept="image/*" style="display:none" onchange="uploadAdaptImage(this)">
+      <div style="display:flex;gap:8px">
+        <button onclick="adSel('ad-img-file').click()" style="${AD_BTN};flex:1">${a.image?'Rasmni almashtirish':'Rasm yuklash'}</button>
+        ${a.image?`<button onclick="removeAdaptImage()" style="${AD_BTN2};color:#A34335;border-color:rgba(194,91,76,.35)">O'chirish</button>`:''}
       </div>
-      <div style="height:220px;border-radius:18px;background:repeating-linear-gradient(135deg,rgba(20,41,31,.05) 0 14px,rgba(20,41,31,.02) 14px 28px);border:1px solid rgba(20,41,31,.10);display:flex;align-items:center;justify-content:center">
-        <span style="font-size:11px;color:#6B7A6F;letter-spacing:1px">[ restoran rasmi ]</span>
+    </div>
+  </div>`;
+}
+
+async function saveAdaptAbout() {
+  const body = {
+    history: adSel('ad-history').value.trim(),
+    mission: adSel('ad-mission').value.trim(),
+    values: adSel('ad-values').value.split('\n').map(v=>v.trim()).filter(Boolean)
+  };
+  const res = await api('/api/restaurant/adaptation', {method:'PUT', body:JSON.stringify(body)});
+  if (!res?.success) { showToast('Saqlashda xatolik','err'); return; }
+  showToast('Saqlandi','ok');
+  loadAdaptSection();
+}
+
+function uploadAdaptImage(input) {
+  const file = input.files[0]; if (!file) return;
+  compressToB64(file, 1000, async b64 => {
+    const res = await api('/api/restaurant/adaptation', {method:'PUT', body:JSON.stringify({image:b64})});
+    if (!res?.success) { showToast('Rasm yuklashda xatolik','err'); return; }
+    showToast('Rasm yuklandi','ok');
+    loadAdaptSection();
+  });
+}
+
+async function removeAdaptImage() {
+  if (!confirm('Rasmni o\'chirmoqchimisiz?')) return;
+  await api('/api/restaurant/adaptation', {method:'PUT', body:JSON.stringify({image:''})});
+  loadAdaptSection();
+}
+
+// ── TAB 2: Onboarding bosqichlari ──
+function adaptOnboarding() {
+  const steps = (S.adapt?.onboardingSteps||[]).slice().sort((a,b)=>(a.order||0)-(b.order||0));
+  return `<div style="max-width:640px">
+    <div class="card" style="margin-bottom:18px">
+      <div style="font-size:12.5px;font-weight:800;color:#19241D;margin-bottom:10px">+ Yangi bosqich qo'shish</div>
+      <div style="display:flex;gap:9px;margin-bottom:9px">
+        <input id="onb-day" placeholder="Muddat (masalan: 1-kun)" style="${AD_INP};flex:.6">
+        <input id="onb-title" placeholder="Bosqich nomi" style="${AD_INP};flex:1">
       </div>
-    </div>`;
-  } else if (S.adaptTab==='onboarding') {
-    body=`<div style="max-width:580px">${onbSteps.map(o=>`
-      <div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:4px">
-        <span style="font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:700;color:#C9A84C;line-height:1;width:46px;flex:none">${o.n}</span>
-        <div class="card" style="flex:1;margin-bottom:11px">
-          <div style="font-size:14.5px;font-weight:700;color:#19241D;margin-bottom:4px">${o.title}</div>
-          <div style="font-size:13px;color:#6B7A6F;line-height:1.55">${o.text}</div>
+      <textarea id="onb-desc" placeholder="Tavsif" style="${AD_INP};min-height:52px;resize:vertical;margin-bottom:9px"></textarea>
+      <textarea id="onb-tasks" placeholder="Vazifalar — har qatorda bittadan (ixtiyoriy)" style="${AD_INP};min-height:52px;resize:vertical;margin-bottom:11px"></textarea>
+      <button onclick="addOnbStep()" style="${AD_BTN}">Qo'shish</button>
+    </div>
+    ${!steps.length ? '<div style="color:#6B7A6F;font-size:13px;text-align:center;padding:20px">Hozircha bosqichlar yo\'q. Yuqoridagi formadan qo\'shing.</div>' : steps.map((o,i)=>
+      S.adaptEditId===o.id ? `
+      <div class="card" style="margin-bottom:11px;border:1.5px solid rgba(201,168,76,.5)">
+        <div style="display:flex;gap:9px;margin-bottom:9px">
+          <input id="eo-day" value="${esc(o.day||'')}" placeholder="Muddat" style="${AD_INP};flex:.6">
+          <input id="eo-title" value="${esc(o.title||'')}" placeholder="Nomi" style="${AD_INP};flex:1">
         </div>
-      </div>`).join('')}</div>`;
-  } else if (S.adaptTab==='docs') {
-    body=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:13px">
-      ${docs.map(d=>`
-        <div class="card" style="display:flex;align-items:center;gap:12px;cursor:pointer;transition:box-shadow .2s" onmouseover="this.style.boxShadow='0 12px 24px rgba(20,41,31,.10)'" onmouseout="this.style.boxShadow=''">
-          <div style="width:38px;height:46px;border-radius:6px;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.22);flex:none"></div>
-          <div><div style="font-size:13.5px;font-weight:700;color:#19241D">${d}</div><div style="font-size:11.5px;color:#6B7A6F">PDF hujjat</div></div>
-        </div>`).join('')}
-    </div>`;
-  } else {
-    body=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:13px">
-      ${mgmt.map(p=>`
-        <div class="card" style="text-align:center;transition:box-shadow .2s" onmouseover="this.style.boxShadow='0 13px 28px rgba(20,41,31,.10)'" onmouseout="this.style.boxShadow=''">
-          <div style="width:70px;height:70px;border-radius:50%;margin:0 auto 12px;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.22);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;color:#9C7E2E">${p.tag}</div>
-          <div style="font-size:15px;font-weight:700;color:#19241D">${p.name}</div>
-          <div style="font-size:12.5px;color:#C9A84C;font-weight:600;margin-top:2px">${p.role}</div>
-        </div>`).join('')}
-    </div>`;
-  }
+        <textarea id="eo-desc" placeholder="Tavsif" style="${AD_INP};min-height:52px;resize:vertical;margin-bottom:9px">${esc(o.description||'')}</textarea>
+        <textarea id="eo-tasks" placeholder="Vazifalar (har qatorda)" style="${AD_INP};min-height:52px;resize:vertical;margin-bottom:11px">${esc((o.tasks||[]).join('\n'))}</textarea>
+        <div style="display:flex;gap:8px"><button onclick="saveOnbStep('${o.id}')" style="${AD_BTN}">Saqlash</button><button onclick="S.adaptEditId=null;renderAdaptBody()" style="${AD_BTN2}">Bekor</button></div>
+      </div>` : `
+      <div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:4px">
+        <span style="font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:700;color:#C9A84C;line-height:1;width:46px;flex:none">${String(i+1).padStart(2,'0')}</span>
+        <div class="card" style="flex:1;margin-bottom:11px">
+          <div style="display:flex;align-items:flex-start;gap:10px">
+            <div style="flex:1">
+              ${o.day?`<span style="display:inline-block;padding:2px 9px;border-radius:11px;background:rgba(201,168,76,.14);color:#9A7D2F;font-size:10px;font-weight:800;letter-spacing:.4px;margin-bottom:5px">${esc(o.day)}</span>`:''}
+              <div style="font-size:14.5px;font-weight:700;color:#19241D;margin-bottom:4px">${esc(o.title)}</div>
+              ${o.description?`<div style="font-size:13px;color:#6B7A6F;line-height:1.55">${esc(o.description)}</div>`:''}
+              ${(o.tasks||[]).length?`<div style="margin-top:8px">${o.tasks.map(t=>`<div style="font-size:12px;color:#6B7A6F;padding:2px 0">• ${esc(t)}</div>`).join('')}</div>`:''}
+            </div>
+            <div style="display:flex;gap:9px;flex:none;font-size:11.5px;font-weight:700">
+              ${i>0?`<span onclick="moveOnbStep('${o.id}',-1)" style="cursor:pointer;color:#6B7A6F" title="Yuqoriga">↑</span>`:''}
+              ${i<steps.length-1?`<span onclick="moveOnbStep('${o.id}',1)" style="cursor:pointer;color:#6B7A6F" title="Pastga">↓</span>`:''}
+              <span onclick="S.adaptEditId='${o.id}';renderAdaptBody()" style="cursor:pointer;color:#9A7D2F">Tahrirlash</span>
+              <span onclick="deleteOnbStep('${o.id}')" style="cursor:pointer;color:#C25B4C">O'chirish</span>
+            </div>
+          </div>
+        </div>
+      </div>`).join('')}
+  </div>`;
+}
 
-  return `<div class="sec">
-  <div class="adapt-tabs">
-    ${tabs.map(t=>`<div class="adapt-tab ${S.adaptTab===t.k?'on':''}" onclick="S.adaptTab='${t.k}';renderSec()">${t.l}</div>`).join('')}
-  </div>
-  ${body}</div>`;
+async function addOnbStep() {
+  const title = adSel('onb-title').value.trim();
+  if (!title) { showToast('Bosqich nomini kiriting','err'); return; }
+  const steps = S.adapt?.onboardingSteps||[];
+  await api('/api/restaurant/adaptation/onboarding', {method:'POST', body:JSON.stringify({
+    day: adSel('onb-day').value.trim(), title,
+    description: adSel('onb-desc').value.trim(),
+    tasks: adSel('onb-tasks').value.split('\n').map(t=>t.trim()).filter(Boolean),
+    order: steps.reduce((m,s)=>Math.max(m,s.order||0),-1)+1
+  })});
+  showToast('Bosqich qo\'shildi','ok');
+  loadAdaptSection();
+}
+
+async function saveOnbStep(id) {
+  const title = adSel('eo-title').value.trim();
+  if (!title) { showToast('Nomini kiriting','err'); return; }
+  await api('/api/restaurant/adaptation/onboarding/'+id, {method:'PUT', body:JSON.stringify({
+    day: adSel('eo-day').value.trim(), title,
+    description: adSel('eo-desc').value.trim(),
+    tasks: adSel('eo-tasks').value.split('\n').map(t=>t.trim()).filter(Boolean)
+  })});
+  S.adaptEditId = null;
+  showToast('Saqlandi','ok');
+  loadAdaptSection();
+}
+
+async function deleteOnbStep(id) {
+  if (!confirm('Bu bosqichni o\'chirmoqchimisiz?')) return;
+  await api('/api/restaurant/adaptation/onboarding/'+id, {method:'DELETE'});
+  showToast('O\'chirildi','ok');
+  loadAdaptSection();
+}
+
+async function moveOnbStep(id, dir) {
+  const steps = (S.adapt?.onboardingSteps||[]).slice().sort((a,b)=>(a.order||0)-(b.order||0));
+  const i = steps.findIndex(s=>s.id===id);
+  if (i<0 || i+dir<0 || i+dir>=steps.length) return;
+  [steps[i], steps[i+dir]] = [steps[i+dir], steps[i]];
+  await Promise.all(steps.map((s,idx)=>api('/api/restaurant/adaptation/onboarding/'+s.id, {method:'PUT', body:JSON.stringify({order:idx})})));
+  loadAdaptSection();
+}
+
+// ── TAB 3: Hujjatlar ──
+function adaptDocs() {
+  const docs = (S.adapt?.documents||[]).slice().sort((a,b)=>(a.order||0)-(b.order||0));
+  return `<div>
+    <div class="card" style="margin-bottom:18px;max-width:640px">
+      <div style="font-size:12.5px;font-weight:800;color:#19241D;margin-bottom:10px">+ Yangi hujjat qo'shish</div>
+      <div style="display:flex;gap:9px;margin-bottom:9px">
+        <input id="doc-icon" placeholder="📄" value="📄" style="${AD_INP};width:64px;flex:none;text-align:center;font-size:16px">
+        <input id="doc-title" placeholder="Hujjat nomi (masalan: Xizmat standartlari)" style="${AD_INP};flex:1">
+      </div>
+      <textarea id="doc-content" placeholder="Hujjat matni — ofitsiantlar shu matnni o'qiydi" style="${AD_INP};min-height:90px;resize:vertical;margin-bottom:10px"></textarea>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#19241D;font-weight:600;margin-bottom:11px;cursor:pointer">
+        <input type="checkbox" id="doc-required" style="width:15px;height:15px;accent-color:#C9A84C"> Majburiy o'qish (ofitsiant o'qiganini belgilashi shart)
+      </label>
+      <button onclick="addAdaptDoc()" style="${AD_BTN}">Qo'shish</button>
+    </div>
+    ${!docs.length ? '<div style="color:#6B7A6F;font-size:13px;text-align:center;padding:20px">Hozircha hujjatlar yo\'q.</div>' : `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:13px">
+      ${docs.map(d=> S.adaptEditId===d.id ? `
+        <div class="card" style="grid-column:1/-1;border:1.5px solid rgba(201,168,76,.5)">
+          <div style="display:flex;gap:9px;margin-bottom:9px">
+            <input id="ed-icon" value="${esc(d.icon||'📄')}" style="${AD_INP};width:64px;flex:none;text-align:center;font-size:16px">
+            <input id="ed-title" value="${esc(d.title||'')}" style="${AD_INP};flex:1">
+          </div>
+          <textarea id="ed-content" style="${AD_INP};min-height:130px;resize:vertical;margin-bottom:10px">${esc(d.content||'')}</textarea>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#19241D;font-weight:600;margin-bottom:11px;cursor:pointer">
+            <input type="checkbox" id="ed-required" ${d.required?'checked':''} style="width:15px;height:15px;accent-color:#C9A84C"> Majburiy o'qish
+          </label>
+          <div style="display:flex;gap:8px"><button onclick="saveAdaptDoc('${d.id}')" style="${AD_BTN}">Saqlash</button><button onclick="S.adaptEditId=null;renderAdaptBody()" style="${AD_BTN2}">Bekor</button></div>
+        </div>` : `
+        <div class="card">
+          <div style="display:flex;align-items:flex-start;gap:12px">
+            <div style="width:40px;height:48px;border-radius:8px;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.22);flex:none;display:flex;align-items:center;justify-content:center;font-size:19px">${esc(d.icon||'📄')}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13.5px;font-weight:700;color:#19241D">${esc(d.title)}</div>
+              ${d.required?'<span style="display:inline-block;margin-top:3px;padding:2px 8px;border-radius:10px;background:rgba(194,91,76,.12);color:#A34335;font-size:9.5px;font-weight:800;letter-spacing:.4px">MAJBURIY</span>':''}
+              <div style="font-size:11.5px;color:#6B7A6F;margin-top:5px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc((d.content||'').slice(0,120))||'Matn kiritilmagan'}</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:11px;margin-top:11px;font-size:11.5px;font-weight:700">
+            <span onclick="S.adaptEditId='${d.id}';renderAdaptBody()" style="cursor:pointer;color:#9A7D2F">Tahrirlash</span>
+            <span onclick="deleteAdaptDoc('${d.id}')" style="cursor:pointer;color:#C25B4C">O'chirish</span>
+          </div>
+        </div>`).join('')}
+    </div>`}
+  </div>`;
+}
+
+async function addAdaptDoc() {
+  const title = adSel('doc-title').value.trim();
+  if (!title) { showToast('Hujjat nomini kiriting','err'); return; }
+  await api('/api/restaurant/adaptation/documents', {method:'POST', body:JSON.stringify({
+    title, icon: adSel('doc-icon').value.trim()||'📄',
+    content: adSel('doc-content').value.trim(),
+    required: adSel('doc-required').checked
+  })});
+  showToast('Hujjat qo\'shildi','ok');
+  loadAdaptSection();
+}
+
+async function saveAdaptDoc(id) {
+  const title = adSel('ed-title').value.trim();
+  if (!title) { showToast('Nomini kiriting','err'); return; }
+  await api('/api/restaurant/adaptation/documents/'+id, {method:'PUT', body:JSON.stringify({
+    title, icon: adSel('ed-icon').value.trim()||'📄',
+    content: adSel('ed-content').value.trim(),
+    required: adSel('ed-required').checked
+  })});
+  S.adaptEditId = null;
+  showToast('Saqlandi','ok');
+  loadAdaptSection();
+}
+
+async function deleteAdaptDoc(id) {
+  if (!confirm('Bu hujjatni o\'chirmoqchimisiz?')) return;
+  await api('/api/restaurant/adaptation/documents/'+id, {method:'DELETE'});
+  showToast('O\'chirildi','ok');
+  loadAdaptSection();
+}
+
+// ── TAB 4: Boshqaruv jamoasi ──
+function adaptMgmt() {
+  const mgmt = (S.adapt?.management||[]).slice().sort((a,b)=>(a.order||0)-(b.order||0));
+  const photoCircle = (p, size) => p.photo
+    ? `<img src="${p.photo}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 12px;border:1px solid rgba(201,168,76,.3)">`
+    : `<div style="width:${size}px;height:${size}px;border-radius:50%;margin:0 auto 12px;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.22);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:${size*0.34}px;font-weight:700;color:#9C7E2E">${esc((p.name||'?').trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase())}</div>`;
+  return `<div>
+    <div class="card" style="margin-bottom:18px;max-width:480px">
+      <div style="font-size:12.5px;font-weight:800;color:#19241D;margin-bottom:10px">+ Jamoa a'zosini qo'shish</div>
+      <div id="mg-photo-preview" style="margin-bottom:10px">${window._mgPhoto?`<img src="${window._mgPhoto}" style="width:64px;height:64px;border-radius:50%;object-fit:cover">`:''}</div>
+      <input type="file" id="mg-photo-file" accept="image/*" style="display:none" onchange="previewMgPhoto(this)">
+      <button onclick="adSel('mg-photo-file').click()" style="${AD_BTN2};margin-bottom:10px">📷 Rasm tanlash (ixtiyoriy)</button>
+      <input id="mg-name" placeholder="Ism familiya" style="${AD_INP};margin-bottom:9px">
+      <input id="mg-position" placeholder="Lavozim (masalan: Servis menejeri)" style="${AD_INP};margin-bottom:9px">
+      <input id="mg-phone" placeholder="Telefon (ixtiyoriy)" style="${AD_INP};margin-bottom:11px">
+      <button onclick="addMgmtMember()" style="${AD_BTN}">Qo'shish</button>
+    </div>
+    ${!mgmt.length ? '<div style="color:#6B7A6F;font-size:13px;text-align:center;padding:20px">Hozircha jamoa a\'zolari kiritilmagan.</div>' : `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:13px">
+      ${mgmt.map(p=> S.adaptEditId===p.id ? `
+        <div class="card" style="grid-column:1/-1;max-width:480px;border:1.5px solid rgba(201,168,76,.5)">
+          <div style="margin-bottom:10px">${window._mgPhotoEdit!==undefined ? (window._mgPhotoEdit?`<img src="${window._mgPhotoEdit}" style="width:64px;height:64px;border-radius:50%;object-fit:cover">`:'') : (p.photo?`<img src="${p.photo}" style="width:64px;height:64px;border-radius:50%;object-fit:cover">`:'')}</div>
+          <input type="file" id="em-photo-file" accept="image/*" style="display:none" onchange="previewMgPhotoEdit(this)">
+          <button onclick="adSel('em-photo-file').click()" style="${AD_BTN2};margin-bottom:10px">📷 Rasmni almashtirish</button>
+          <input id="em-name" value="${esc(p.name||'')}" placeholder="Ism" style="${AD_INP};margin-bottom:9px">
+          <input id="em-position" value="${esc(p.position||'')}" placeholder="Lavozim" style="${AD_INP};margin-bottom:9px">
+          <input id="em-phone" value="${esc(p.phone||'')}" placeholder="Telefon" style="${AD_INP};margin-bottom:11px">
+          <div style="display:flex;gap:8px"><button onclick="saveMgmtMember('${p.id}')" style="${AD_BTN}">Saqlash</button><button onclick="S.adaptEditId=null;window._mgPhotoEdit=undefined;renderAdaptBody()" style="${AD_BTN2}">Bekor</button></div>
+        </div>` : `
+        <div class="card" style="text-align:center">
+          ${photoCircle(p, 70)}
+          <div style="font-size:15px;font-weight:700;color:#19241D">${esc(p.name)}</div>
+          <div style="font-size:12.5px;color:#C9A84C;font-weight:600;margin-top:2px">${esc(p.position)}</div>
+          ${p.phone?`<div style="font-size:11.5px;color:#6B7A6F;margin-top:4px">${esc(p.phone)}</div>`:''}
+          <div style="display:flex;gap:11px;justify-content:center;margin-top:11px;font-size:11.5px;font-weight:700">
+            <span onclick="S.adaptEditId='${p.id}';window._mgPhotoEdit=undefined;renderAdaptBody()" style="cursor:pointer;color:#9A7D2F">Tahrirlash</span>
+            <span onclick="deleteMgmtMember('${p.id}')" style="cursor:pointer;color:#C25B4C">O'chirish</span>
+          </div>
+        </div>`).join('')}
+    </div>`}
+  </div>`;
+}
+
+function previewMgPhoto(input) {
+  const file = input.files[0]; if (!file) return;
+  compressToB64(file, 400, b64 => { window._mgPhoto = b64; renderAdaptBody(); });
+}
+function previewMgPhotoEdit(input) {
+  const file = input.files[0]; if (!file) return;
+  compressToB64(file, 400, b64 => { window._mgPhotoEdit = b64; renderAdaptBody(); });
+}
+
+async function addMgmtMember() {
+  const name = adSel('mg-name').value.trim();
+  const position = adSel('mg-position').value.trim();
+  if (!name || !position) { showToast('Ism va lavozimni kiriting','err'); return; }
+  const mgmt = S.adapt?.management||[];
+  await api('/api/restaurant/adaptation/management', {method:'POST', body:JSON.stringify({
+    name, position, phone: adSel('mg-phone').value.trim(),
+    photo: window._mgPhoto||'', order: mgmt.reduce((m,x)=>Math.max(m,x.order||0),-1)+1
+  })});
+  window._mgPhoto = null;
+  showToast('Qo\'shildi','ok');
+  loadAdaptSection();
+}
+
+async function saveMgmtMember(id) {
+  const name = adSel('em-name').value.trim();
+  const position = adSel('em-position').value.trim();
+  if (!name || !position) { showToast('Ism va lavozimni kiriting','err'); return; }
+  const body = { name, position, phone: adSel('em-phone').value.trim() };
+  if (window._mgPhotoEdit !== undefined) body.photo = window._mgPhotoEdit;
+  await api('/api/restaurant/adaptation/management/'+id, {method:'PUT', body:JSON.stringify(body)});
+  S.adaptEditId = null; window._mgPhotoEdit = undefined;
+  showToast('Saqlandi','ok');
+  loadAdaptSection();
+}
+
+async function deleteMgmtMember(id) {
+  if (!confirm('Bu a\'zoni o\'chirmoqchimisiz?')) return;
+  await api('/api/restaurant/adaptation/management/'+id, {method:'DELETE'});
+  showToast('O\'chirildi','ok');
+  loadAdaptSection();
 }
 
 // ════════════ PANEL (SLIDE-OVER) ════════════

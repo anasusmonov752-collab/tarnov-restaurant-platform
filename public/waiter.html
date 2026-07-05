@@ -330,6 +330,7 @@ async function renderMenu(){
 }
 function paintMenu(){
   const cats=['Barchasi',...Array.from(new Set(menuData.map(m=>m.category).filter(Boolean)))];
+  window._cats = cats;
   let items=menuData.filter(d=>menuCat==='Barchasi'||d.category===menuCat).filter(d=>!menuQuery||(d.name||'').toLowerCase().includes(menuQuery.toLowerCase()));
   document.getElementById('tab-menyu').innerHTML = `
     <div style="font-family:'Cormorant Garamond',serif;font-size:30px;color:#F5F0E8;margin-bottom:4px">Menyu</div>
@@ -338,7 +339,7 @@ function paintMenu(){
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(245,240,232,.5)" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
       <input id="menu-search" value="${esc(menuQuery)}" oninput="onMenuSearch(this.value)" placeholder="Taom qidirish..." style="flex:1;background:transparent;border:none;outline:none;color:#F5F0E8;font-family:'Mulish',sans-serif;font-size:14px"/></div>
     <div style="display:flex;gap:8px;overflow-x:auto;margin:0 -18px 16px;padding:0 18px">
-      ${cats.map(c=>{const a=menuCat===c;return `<div onclick="setCat('${esc(c)}')" style="flex:none;padding:8px 15px;border-radius:20px;font-size:12.5px;font-weight:600;cursor:pointer;color:${a?'#11241b':'rgba(245,240,232,.7)'};background:${a?C:'rgba(245,240,232,.05)'};border:1px solid ${a?C:'rgba(245,240,232,.08)'}">${esc(c)}</div>`;}).join('')}</div>
+      ${cats.map((c,i)=>{const a=menuCat===c;return `<div onclick="setCatIdx(${i})" style="flex:none;padding:8px 15px;border-radius:20px;font-size:12.5px;font-weight:600;cursor:pointer;color:${a?'#11241b':'rgba(245,240,232,.7)'};background:${a?C:'rgba(245,240,232,.05)'};border:1px solid ${a?C:'rgba(245,240,232,.08)'}">${esc(c)}</div>`;}).join('')}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px">
       ${items.length? items.map((d,i)=>`<div onclick="openDish('${esc(d.id)}')" class="ro-press" style="border-radius:18px;overflow:hidden;background:#1b3a2d;border:1px solid rgba(245,240,232,.07);cursor:pointer;animation:ro-rise .45s ease ${Math.min(i*0.04,0.4)}s both">
         <div style="height:104px;position:relative;display:flex;align-items:center;justify-content:center;${d.image?`background:#244635;background-image:url('${esc(d.image)}');background-size:cover;background-position:center`:`background-image:repeating-linear-gradient(135deg,#244635,#244635 9px,#1e3b2c 9px,#1e3b2c 18px)`}">
@@ -349,6 +350,7 @@ function paintMenu(){
 }
 function onMenuSearch(v){ menuQuery=v; const items=document.querySelectorAll('#tab-menyu input'); paintMenu(); const inp=document.getElementById('menu-search'); if(inp){ inp.focus(); inp.setSelectionRange(inp.value.length,inp.value.length);} }
 function setCat(c){ menuCat=c; paintMenu(); }
+function setCatIdx(i){ menuCat=(window._cats||[])[i]||'Barchasi'; paintMenu(); }
 function openDish(id){
   const d=menuData.find(x=>String(x.id)===String(id)); if(!d) return;
   const allergens=(d.allergens&&d.allergens.length)?d.allergens:['Allergen yo\'q'];

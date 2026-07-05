@@ -581,13 +581,16 @@ function animateNums() {
 }
 
 // ════════════ MENYU ════════════
+function setMenuCat(i) { S.menuCat = (window._menuCats||[])[i] || 'Barchasi'; renderSec(); }
+
 function rMenu() {
   const cats = ['Barchasi', ...new Set(S.menu.map(m=>m.category))];
+  window._menuCats = cats;
   const filtered = S.menuCat==='Barchasi' ? S.menu : S.menu.filter(m=>m.category===S.menuCat);
   return `<div class="sec">
   <div style="display:flex;align-items:center;gap:9px;margin-bottom:20px;flex-wrap:wrap">
-    ${cats.map(c=>`
-      <div onclick="S.menuCat='${c}';renderSec()" style="padding:8px 16px;border-radius:30px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid rgba(20,41,31,.12);transition:all .2s;${S.menuCat===c?'background:#14291F;color:#C9A84C;border-color:#14291F':'color:#6B7A6F'}">${c}</div>`).join('')}
+    ${cats.map((c,i)=>`
+      <div onclick="setMenuCat(${i})" style="padding:8px 16px;border-radius:30px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid rgba(20,41,31,.12);transition:all .2s;${S.menuCat===c?'background:#14291F;color:#C9A84C;border-color:#14291F':'color:#6B7A6F'}">${esc(c)}</div>`).join('')}
     <div style="flex:1"></div>
     <button class="btn-gold" onclick="openDishForm()">+ Taom qo'shish</button>
   </div>

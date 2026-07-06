@@ -700,56 +700,117 @@ async function importCSV(input) {
   showToast(`${added} ta qo'shildi${errors?' · '+errors+' xato':''}`, added>0?'ok':'err');
 }
 
-// ════════════ SAVOLLAR ════════════
+// ════════════ SAVOLLAR (dark-green premium dizayn) ════════════
+const Q_DIFF = {
+  easy:   { label:'Oson',  color:'#5B9A6B', chipBg:'rgba(91,154,107,.15)' },
+  medium: { label:"O'rta", color:'#C8922A', chipBg:'rgba(200,146,42,.15)' },
+  hard:   { label:'Qiyin', color:'#C25B4C', chipBg:'rgba(194,91,76,.14)' },
+};
+
 function rQuestions() {
-  const grps = {
-    easy:{label:'Oson', color:'#5B9A6B', items:S.questions.filter(q=>q.difficulty==='easy')},
-    medium:{label:'O\'rta', color:'#C9A84C', items:S.questions.filter(q=>q.difficulty==='medium')},
-    hard:{label:'Qiyin', color:'#C25B4C', items:S.questions.filter(q=>q.difficulty==='hard')},
-  };
+  S.qFilter = S.qFilter || 'all';
+  S.qSearch = S.qSearch || '';
+  const total = S.questions.length;
+  const cnt = k => S.questions.filter(q=>q.difficulty===k).length;
+  const chips = [
+    {k:'all', l:'Barchasi', n:total},
+    {k:'easy', l:'Oson', n:cnt('easy')},
+    {k:'medium', l:"O'rta", n:cnt('medium')},
+    {k:'hard', l:'Qiyin', n:cnt('hard')},
+  ];
+  setTimeout(renderQList, 0);
   return `<div class="sec">
-  <div style="display:flex;justify-content:flex-end;margin-bottom:20px">
-    <button class="btn-gold" onclick="openQForm()">+ Savol qo'shish</button>
-  </div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
-    ${Object.entries(grps).map(([diff,g])=>`
-      <div class="card" style="animation:fadeup .5s ease both">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-          <div style="display:flex;align-items:center;gap:9px">
-            <div style="width:9px;height:9px;border-radius:50%;background:${g.color}"></div>
-            <span style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:#19241D">${g.label}</span>
-          </div>
-          <span style="font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:${g.color}">${g.items.length}</span>
-        </div>
-        ${g.items.slice(0,4).map(q=>`
-          <div onclick="openQForm('${q.id}')" style="padding:11px 12px;border-radius:10px;background:#FBF7EF;margin-bottom:7px;font-size:13px;line-height:1.45;color:#19241D;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;cursor:pointer;transition:background .15s" onmouseover="this.style.background='#EDE5D0'" onmouseout="this.style.background='#FBF7EF'">
-            <span>${q.question||q.text||''}</span>
-            <span onclick="event.stopPropagation();delQuestion('${q.id}')" style="color:#C25B4C;cursor:pointer;flex:none;font-size:16px;padding:0 2px">&times;</span>
+  <div style="border-radius:22px;padding:26px 28px;margin-bottom:18px;background:linear-gradient(165deg,#1c4030 0%,#13281e 55%,#0e1f17 100%);box-shadow:0 22px 50px -22px rgba(14,31,23,.55);display:flex;align-items:center;gap:22px;flex-wrap:wrap">
+    <div style="flex:1;min-width:220px">
+      <div style="font-size:10.5px;letter-spacing:2.5px;text-transform:uppercase;color:#C9A84C;font-weight:700;margin-bottom:7px">Savollar bazasi</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:600;color:#F5F0E8;line-height:1.1">Jami ${total} ta savol</div>
+      <div style="display:flex;gap:9px;margin-top:14px;flex-wrap:wrap">
+        ${Object.entries(Q_DIFF).map(([k,d])=>`
+          <div style="display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:20px;background:rgba(245,240,232,.07);border:1px solid rgba(245,240,232,.1)">
+            <span style="width:8px;height:8px;border-radius:50%;background:${d.color}"></span>
+            <span style="font-size:12px;font-weight:700;color:#F5F0E8">${d.label}</span>
+            <span style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;color:#C9A84C">${cnt(k)}</span>
           </div>`).join('')}
-        ${g.items.length>4?`<div onclick="showAllQ('${diff}')" style="font-size:12px;color:#C9A84C;padding:4px 0;cursor:pointer;font-weight:700">+${g.items.length-4} ta ko'proq →</div>`:''}
-      </div>`).join('')}
-  </div></div>`;
+      </div>
+    </div>
+    <button onclick="openQForm()" style="height:48px;padding:0 26px;border-radius:13px;border:none;background:linear-gradient(100deg,#C9A84C,#d8bd6a);color:#14291F;font-weight:800;font-size:13.5px;cursor:pointer;font-family:'Mulish',sans-serif;box-shadow:0 12px 26px -10px rgba(201,168,76,.65)">+ Savol qo'shish</button>
+  </div>
+
+  <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+    <div style="flex:1;min-width:220px;display:flex;align-items:center;gap:10px;height:44px;padding:0 15px;border-radius:13px;background:#fff;border:1px solid rgba(20,41,31,.12)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7A6F" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+      <input id="q-search" value="${esc(S.qSearch)}" oninput="S.qSearch=this.value;renderQList()" placeholder="Savol yoki javob bo'yicha qidirish..." style="flex:1;border:none;outline:none;background:transparent;font-size:13.5px;color:#19241D;font-family:'Mulish',sans-serif">
+      ${S.qSearch?`<span onclick="S.qSearch='';document.getElementById('q-search').value='';renderQList()" style="cursor:pointer;color:#6B7A6F;font-size:15px;line-height:1">&times;</span>`:''}
+    </div>
+    <div id="q-chips" style="display:flex;gap:8px;flex-wrap:wrap">
+      ${chips.map(c=>`
+        <div onclick="S.qFilter='${c.k}';renderSec()" style="display:inline-flex;align-items:center;gap:7px;height:44px;padding:0 16px;border-radius:13px;cursor:pointer;font-size:12.5px;font-weight:700;font-family:'Mulish',sans-serif;transition:all .18s;${S.qFilter===c.k?'background:#14291F;color:#C9A84C;border:1px solid #14291F':'background:transparent;color:#6B7A6F;border:1px solid rgba(20,41,31,.14)'}">
+          ${c.l} <span style="font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:700">${c.n}</span>
+        </div>`).join('')}
+    </div>
+  </div>
+
+  <div id="q-list"></div>
+  </div>`;
 }
 
-function showAllQ(diff) {
-  const labels = {easy:'Oson', medium:"O'rta", hard:'Qiyin'};
-  const colors = {easy:'#5B9A6B', medium:'#C9A84C', hard:'#C25B4C'};
-  const items = S.questions.filter(q=>q.difficulty===diff);
-  document.getElementById('panelTitle').textContent = labels[diff]+' savollar';
-  document.getElementById('panelBody').innerHTML = `
-    <div style="margin-bottom:16px;display:flex;align-items:center;gap:10px">
-      <div style="width:9px;height:9px;border-radius:50%;background:${colors[diff]}"></div>
-      <span style="font-size:13px;color:#6B7A6F;font-weight:600">${items.length} ta savol</span>
-    </div>
-    ${items.map(q=>`
-      <div onclick="openQForm('${q.id}')" style="padding:12px 13px;border-radius:10px;background:#FBF7EF;margin-bottom:8px;font-size:13px;line-height:1.45;color:#19241D;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;cursor:pointer;transition:background .15s" onmouseover="this.style.background='#EDE5D0'" onmouseout="this.style.background='#FBF7EF'">
-        <span>${q.question||q.text||''}</span>
-        <span onclick="event.stopPropagation();delQuestion('${q.id}')" style="color:#C25B4C;cursor:pointer;flex:none;font-size:16px">&times;</span>
-      </div>`).join('')}
-    <div style="margin-top:16px">
-      <button class="btn-gold" style="width:100%" onclick="closePanel();openQForm()">+ Yangi savol qo'shish</button>
+function renderQList() {
+  const box = document.getElementById('q-list');
+  if (!box) return;
+  const term = (S.qSearch||'').toLowerCase().trim();
+  let items = S.questions.filter(q => S.qFilter==='all' || q.difficulty===S.qFilter);
+  if (term) items = items.filter(q =>
+    (q.question||q.text||'').toLowerCase().includes(term) ||
+    (q.options||[]).some(o=>(o||'').toLowerCase().includes(term))
+  );
+
+  if (!items.length) {
+    box.innerHTML = `<div style="text-align:center;padding:50px 20px;border:1.5px dashed rgba(20,41,31,.15);border-radius:18px">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#19241D;margin-bottom:6px">${term?'Hech narsa topilmadi':'Savollar yo\'q'}</div>
+      <div style="font-size:12.5px;color:#6B7A6F">${term?'Qidiruv so\'zini o\'zgartirib ko\'ring':'Birinchi savolingizni qo\'shing'}</div>
     </div>`;
-  openPanel();
+    return;
+  }
+
+  box.innerHTML = items.map((q,i)=>{
+    const d = Q_DIFF[q.difficulty] || Q_DIFF.easy;
+    const open = S.qExpandedId === q.id;
+    return `<div class="card" style="padding:0;overflow:hidden;margin-bottom:10px;${open?'box-shadow:0 14px 32px -14px rgba(20,41,31,.18);border:1px solid rgba(201,168,76,.35);':''}animation:fadeup .4s ease ${Math.min(i*0.03,0.3)}s both">
+      <div onclick="toggleQExpand('${q.id}')" style="display:flex;align-items:stretch;gap:14px;padding:0;cursor:pointer;min-height:56px">
+        <div style="width:4px;flex:none;background:${d.color}"></div>
+        <div style="flex:1;padding:14px 0;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <span style="flex:none;padding:4px 11px;border-radius:12px;background:${d.chipBg};color:${d.color};font-size:10px;font-weight:800;letter-spacing:.6px">${d.label.toUpperCase()}</span>
+          <span style="flex:1;min-width:200px;font-size:13.5px;font-weight:600;color:#19241D;line-height:1.5">${esc(q.question||q.text||'')}</span>
+        </div>
+        <div style="flex:none;display:flex;align-items:center;gap:6px;padding-right:14px">
+          <span onclick="event.stopPropagation();openQForm('${q.id}')" title="Tahrirlash" style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:10px;cursor:pointer;transition:background .15s" onmouseover="this.style.background='rgba(201,168,76,.14)'" onmouseout="this.style.background='transparent'">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9A7D2F" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+          </span>
+          <span onclick="event.stopPropagation();delQuestion('${q.id}')" title="O'chirish" style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:10px;cursor:pointer;transition:background .15s" onmouseover="this.style.background='rgba(194,91,76,.12)'" onmouseout="this.style.background='transparent'">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#C25B4C" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+          </span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7A6F" stroke-width="2.2" style="transition:transform .22s;transform:rotate(${open?180:0}deg)"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+      </div>
+      ${open?`
+      <div style="padding:4px 18px 16px 22px;background:#FBF7EF;border-top:1px solid rgba(20,41,31,.07)">
+        <div style="font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:#9A7D2F;font-weight:800;margin:12px 0 9px">Javob variantlari</div>
+        ${(q.options||[]).map((o,oi)=>{
+          const ok = oi === q.correctAnswer;
+          return `<div style="display:flex;align-items:center;gap:11px;padding:10px 13px;border-radius:11px;margin-bottom:6px;${ok?'background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.45)':'background:#fff;border:1px solid rgba(20,41,31,.08)'}">
+            <span style="flex:none;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;${ok?'background:#C9A84C;color:#14291F':'background:rgba(20,41,31,.06);color:#6B7A6F'}">${String.fromCharCode(65+oi)}</span>
+            <span style="flex:1;font-size:13px;color:#19241D;${ok?'font-weight:700':''}">${esc(o)}</span>
+            ${ok?`<span style="flex:none;display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;color:#9A7D2F"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9A7D2F" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg> TO'G'RI JAVOB</span>`:''}
+          </div>`;
+        }).join('')}
+      </div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function toggleQExpand(id) {
+  S.qExpandedId = S.qExpandedId === id ? null : id;
+  renderQList();
 }
 
 async function delQuestion(id) {

@@ -143,12 +143,12 @@ router.get('/questions', guard, asyncHandler(async (req, res) => {
 }));
 
 router.post('/questions', guard, asyncHandler(async (req, res) => {
-  let { question, options, correctAnswer, difficulty, menuItemId } = req.body;
+  let { question, options, correctAnswer, difficulty, menuItemId, explanation } = req.body;
   if (!question || !options || correctAnswer === undefined || !difficulty) return res.status(400).json({ error: 'Barcha maydonlar to\'ldirilishi shart' });
   if (typeof options === 'string') { try { options = JSON.parse(options); } catch { options = options.split('|'); } }
   if (!Array.isArray(options) || options.length < 2) return res.status(400).json({ error: 'Kamida 2 ta javob varianti kerak' });
   if (!['easy', 'medium', 'hard'].includes(difficulty)) return res.status(400).json({ error: 'Qiyinlik darajasi noto\'g\'ri' });
-  const q = { id: uuidv4(), question, options, correctAnswer: parseInt(correctAnswer), difficulty, menuItemId: menuItemId || null };
+  const q = { id: uuidv4(), question, options, correctAnswer: parseInt(correctAnswer), difficulty, explanation: (explanation || '').trim(), menuItemId: menuItemId || null };
   await Restaurant.updateOne({ id: req.user.restaurantId }, { $push: { questions: q } });
   res.json({ success: true, question: q });
 }));
@@ -163,6 +163,7 @@ router.put('/questions/:qId', guard, asyncHandler(async (req, res) => {
   }
   if (correctAnswer !== undefined) update['questions.$.correctAnswer'] = parseInt(correctAnswer);
   if (difficulty) update['questions.$.difficulty'] = difficulty;
+  if (req.body.explanation !== undefined) update['questions.$.explanation'] = String(req.body.explanation).trim();
   if (menuItemId !== undefined) update['questions.$.menuItemId'] = menuItemId;
   await Restaurant.updateOne({ id: req.user.restaurantId, 'questions.id': req.params.qId }, { $set: update });
   res.json({ success: true });

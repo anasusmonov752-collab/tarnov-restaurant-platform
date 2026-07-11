@@ -115,6 +115,7 @@
     <div id="overlay-running" style="position:absolute;inset:0;z-index:80;display:none"></div>
     <div id="overlay-result" style="position:absolute;inset:0;z-index:80;display:none"></div>
     <div id="overlay-cert" style="position:absolute;inset:0;z-index:90;display:none"></div>
+    <div id="overlay-analysis" style="position:absolute;inset:0;z-index:88;display:none"></div>
     <div id="overlay-training" style="position:absolute;inset:0;z-index:95;display:none;background:rgba(6,14,10,.96);flex-direction:column;padding:18px"></div>
 
   </div>
@@ -585,6 +586,7 @@ function showResult(r){
     <!-- actions -->
     <div style="width:100%;display:flex;flex-direction:column;gap:10px;animation:res-row .4s ease .9s both">
       ${r.hasCertificate?`<div onclick="openCert()" class="ro-press" style="padding:16px;border-radius:16px;background:linear-gradient(100deg,#C9A84C,#d8bd6a);color:#11241b;font-weight:800;font-size:15px;cursor:pointer;text-align:center;box-shadow:0 14px 34px -12px rgba(201,168,76,.7)">🏆 Sertifikatni olish</div>`:''}
+      ${(r.breakdown||[]).length?`<div onclick="openAnalysis()" class="ro-press" style="padding:14px;border-radius:14px;background:rgba(201,168,76,.14);border:1px solid rgba(201,168,76,.4);font-size:14px;color:#e2c879;font-weight:700;cursor:pointer;text-align:center">📋 Test tahlili — xatolaringizni ko'ring</div>`:''}
       <div onclick="closeResult();go('tarix')" class="ro-press" style="padding:14px;border-radius:14px;background:rgba(245,240,232,.07);border:1px solid rgba(245,240,232,.1);font-size:14px;color:#F5F0E8;font-weight:600;cursor:pointer;text-align:center">Batafsil tarix →</div>
       <div onclick="closeResult();go('home')" style="padding:8px;font-size:13px;color:rgba(245,240,232,.35);cursor:pointer;text-align:center">Bosh sahifa</div>
     </div>
@@ -616,6 +618,64 @@ function showResult(r){
   });
 }
 function closeResult(){ document.getElementById('overlay-result').style.display='none'; document.getElementById('overlay-result').innerHTML=''; }
+
+// ---------- TEST TAHLILI ----------
+function openAnalysisFor(id){ const r=historyData.find(h=>String(h.id)===String(id)); if(r&&(r.breakdown||[]).length){ openAnalysis(r); } else { toast('Bu natija uchun tahlil mavjud emas','error'); } }
+function openAnalysis(r){
+  r = r || lastResult;
+  const items = (r && r.breakdown) || [];
+  if (!items.length) { toast('Tahlil ma\'lumotlari topilmadi','error'); return; }
+  const wrong = items.filter(b=>!b.isCorrect);
+  const right = items.filter(b=>b.isCorrect);
+  const DIFF = { easy:{l:'OSON',c:'#5fc78f'}, medium:{l:"O'RTA",c:'#e3c06a'}, hard:{l:'QIYIN',c:'#e07a52'} };
+
+  const card = (b,i) => {
+    const d = DIFF[b.difficulty] || DIFF.easy;
+    return `<div style="border-radius:16px;background:#1b3a2d;border:1px solid ${b.isCorrect?'rgba(95,199,143,.25)':'rgba(217,96,59,.35)'};padding:15px 16px;margin-bottom:11px;animation:ro-rise .35s ease ${Math.min(i*0.04,0.4)}s both">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px">
+        <span style="width:22px;height:22px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;${b.isCorrect?'background:rgba(95,199,143,.16);color:#5fc78f':'background:rgba(217,96,59,.16);color:#f0876a'}">${b.isCorrect?'✓':'✗'}</span>
+        <span style="flex:none;padding:2px 8px;border-radius:10px;background:rgba(245,240,232,.06);color:${d.c};font-size:9px;font-weight:800;letter-spacing:.5px">${d.l}</span>
+      </div>
+      <div style="font-size:13.5px;font-weight:600;color:#F5F0E8;line-height:1.5;margin-bottom:10px">${esc(b.question)}</div>
+      ${(b.options||[]).map((o,oi)=>{
+        const isSel = oi===b.selectedAnswer, isOk = oi===b.correctAnswer;
+        if (!isSel && !isOk) return '';
+        return `<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 11px;border-radius:10px;margin-bottom:6px;${isOk?'background:rgba(201,168,76,.13);border:1px solid rgba(201,168,76,.4)':'background:rgba(217,96,59,.10);border:1px solid rgba(217,96,59,.3)'}">
+          <span style="flex:none;font-size:11px;font-weight:800;color:${isOk?'#e2c879':'#f0876a'};margin-top:1px">${isOk?"TO'G'RI":'SIZ'}</span>
+          <span style="flex:1;font-size:12.5px;color:${isOk?'#F5F0E8':'rgba(245,240,232,.75)'};line-height:1.45;${!isOk?'text-decoration:line-through;text-decoration-color:rgba(217,96,59,.6)':''}">${esc(o)}</span>
+        </div>`;
+      }).join('')}
+      ${!b.isCorrect && b.explanation ? `<div style="display:flex;gap:9px;padding:10px 12px;border-radius:10px;background:rgba(245,240,232,.05);border-left:3px solid #C9A84C;margin-top:4px">
+        <span style="flex:none;font-size:13px">💡</span>
+        <span style="font-size:12px;color:rgba(245,240,232,.8);line-height:1.55">${esc(b.explanation)}</span>
+      </div>` : ''}
+    </div>`;
+  };
+
+  const ov = document.getElementById('overlay-analysis');
+  ov.style.display='block';
+  ov.innerHTML = `<div style="position:absolute;inset:0;overflow-y:auto;background:linear-gradient(170deg,#163326,#0f1f17);padding:22px 18px 40px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+      <div onclick="closeAnalysis()" style="cursor:pointer;padding:4px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5F0E8" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:26px;color:#F5F0E8">Test tahlili</div>
+    </div>
+    <div style="font-size:12px;color:rgba(245,240,232,.5);margin:0 0 14px 38px">${esc(r.date||'')} · ${r.score??0}%</div>
+    <div style="display:flex;gap:9px;margin-bottom:18px">
+      <div style="flex:1;padding:11px;border-radius:13px;background:rgba(95,199,143,.10);border:1px solid rgba(95,199,143,.25);text-align:center">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:#5fc78f;line-height:1">${right.length}</div>
+        <div style="font-size:10px;color:rgba(245,240,232,.5);margin-top:2px">TO'G'RI</div>
+      </div>
+      <div style="flex:1;padding:11px;border-radius:13px;background:rgba(217,96,59,.10);border:1px solid rgba(217,96,59,.3);text-align:center">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:#f0876a;line-height:1">${wrong.length}</div>
+        <div style="font-size:10px;color:rgba(245,240,232,.5);margin-top:2px">XATO</div>
+      </div>
+    </div>
+    ${wrong.length?`<div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#f0876a;font-weight:700;margin-bottom:10px">Xatolaringiz — o'rganib oling</div>${wrong.map(card).join('')}`:`<div style="padding:18px;border-radius:16px;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.35);text-align:center;font-size:14px;color:#e2c879;font-weight:700;margin-bottom:14px">Barcha savollarga to'g'ri javob berdingiz! 🏆</div>`}
+    ${right.length?`<div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#5fc78f;font-weight:700;margin:18px 0 10px">To'g'ri javoblaringiz</div>${right.map(card).join('')}`:''}
+    <div onclick="closeAnalysis()" style="margin-top:8px;padding:14px;border-radius:14px;background:rgba(245,240,232,.07);border:1px solid rgba(245,240,232,.1);font-size:14px;color:#F5F0E8;font-weight:600;cursor:pointer;text-align:center">Yopish</div>
+  </div>`;
+}
+function closeAnalysis(){ document.getElementById('overlay-analysis').style.display='none'; document.getElementById('overlay-analysis').innerHTML=''; }
 
 // ---------- CERTIFICATE ----------
 function openCert(){
@@ -750,8 +810,9 @@ function renderTarix(){
   box.innerHTML=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:18px"><div onclick="go('home')" style="cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5F0E8" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></div><div style="font-family:'Cormorant Garamond',serif;font-size:28px;color:#F5F0E8">Tarix</div></div>
     ${!historyData.length?'<div style="text-align:center;color:rgba(245,240,232,.4);padding:30px;font-size:13px">Hali test topshirmadingiz</div>':`<div style="position:relative;padding-left:22px"><div style="position:absolute;left:5px;top:6px;bottom:6px;width:1.5px;background:rgba(245,240,232,.12)"></div><div style="display:flex;flex-direction:column;gap:13px">
       ${historyData.map(h=>{const pass=(h.score||0)>=90||h.hasCertificate;const dot=pass?'#3f9c6c':((h.score||0)>=60?'#e3c06a':'#d9603b');return `<div style="position:relative"><div style="position:absolute;left:-21px;top:18px;width:11px;height:11px;border-radius:50%;background:${dot};box-shadow:0 0 0 4px #11241b"></div>
-        <div style="padding:14px 16px;border-radius:16px;background:#1b3a2d;border:1px solid rgba(245,240,232,.06);display:flex;align-items:center;gap:14px"><div style="flex:1"><div style="font-size:14px;font-weight:600;color:#F5F0E8">${esc(h.date||'')}</div><div style="font-size:11px;color:rgba(245,240,232,.45);margin-top:2px">${esc(h.totalCorrect!=null?h.totalCorrect+'/'+h.totalQuestions+" to'g'ri":'')}</div>
-        <div style="display:inline-block;margin-top:7px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.5px;color:${pass?'#5fc78f':'#f0876a'};background:${pass?'rgba(63,156,108,.18)':'rgba(217,96,59,.18)'}">${pass?'O\'TDI':'O\'TMADI'}</div></div>
+        <div onclick="openAnalysisFor('${esc(h.id)}')" class="ro-press" style="padding:14px 16px;border-radius:16px;background:#1b3a2d;border:1px solid rgba(245,240,232,.06);display:flex;align-items:center;gap:14px;cursor:pointer"><div style="flex:1"><div style="font-size:14px;font-weight:600;color:#F5F0E8">${esc(h.date||'')}</div><div style="font-size:11px;color:rgba(245,240,232,.45);margin-top:2px">${esc(h.totalCorrect!=null?h.totalCorrect+'/'+h.totalQuestions+" to'g'ri":'')}</div>
+        <div style="display:inline-block;margin-top:7px;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.5px;color:${pass?'#5fc78f':'#f0876a'};background:${pass?'rgba(63,156,108,.18)':'rgba(217,96,59,.18)'}">${pass?'O\'TDI':'O\'TMADI'}</div>
+        <div style="font-size:10.5px;color:#C9A84C;margin-top:6px;font-weight:600">Tahlilni ko'rish →</div></div>
         <div style="font-family:'Cormorant Garamond',serif;font-size:30px;color:${dot};line-height:1">${h.score}<span style="font-size:14px">%</span></div></div></div>`;}).join('')}
     </div></div>`}`;
 }

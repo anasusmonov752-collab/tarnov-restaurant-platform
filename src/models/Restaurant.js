@@ -29,6 +29,7 @@ const QuestionSchema = new mongoose.Schema({
   options: { type: [String], validate: { validator: v => v.length >= 2, message: 'Kamida 2 ta javob varianti kerak' } },
   correctAnswer: { type: Number, required: true, min: 0 },
   difficulty: { type: String, required: true, enum: ['easy', 'medium', 'hard'] },
+  explanation: { type: String, default: '', trim: true },   // xato javob uchun izoh
   menuItemId: String,
   createdAt: { type: Date, default: Date.now }
 });
@@ -43,7 +44,8 @@ const AnnouncementSchema = new mongoose.Schema({
 const BreakdownItemSchema = new mongoose.Schema({
   questionId: String, question: String,
   selectedAnswer: Number, correctAnswer: Number,
-  isCorrect: Boolean, difficulty: String, options: [String]
+  isCorrect: Boolean, difficulty: String, options: [String],
+  explanation: String
 }, { _id: false });
 
 const TestResultSchema = new mongoose.Schema({

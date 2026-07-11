@@ -81,7 +81,7 @@ router.post('/test/submit', guard, asyncHandler(async (req, res) => {
     const q = r.questions.find(x => x.id === qId);
     if (!q) return;
     const isCorrect = parseInt(selected) === q.correctAnswer;
-    breakdown.push({ questionId: qId, question: q.question, selectedAnswer: parseInt(selected), correctAnswer: q.correctAnswer, isCorrect, difficulty: q.difficulty, options: q.options });
+    breakdown.push({ questionId: qId, question: q.question, selectedAnswer: parseInt(selected), correctAnswer: q.correctAnswer, isCorrect, difficulty: q.difficulty, options: q.options, explanation: q.explanation || '' });
     if (q.difficulty === 'easy') { easyTotal++; if (isCorrect) easyScore++; }
     else if (q.difficulty === 'medium') { mediumTotal++; if (isCorrect) mediumScore++; }
     else if (q.difficulty === 'hard') { hardTotal++; if (isCorrect) hardScore++; }

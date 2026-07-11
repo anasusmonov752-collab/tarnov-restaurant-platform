@@ -803,6 +803,10 @@ function renderQList() {
             ${ok?`<span style="flex:none;display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;color:#9A7D2F"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9A7D2F" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg> TO'G'RI JAVOB</span>`:''}
           </div>`;
         }).join('')}
+        ${q.explanation?`<div style="display:flex;gap:9px;padding:10px 13px;border-radius:11px;background:rgba(201,168,76,.08);border-left:3px solid #C9A84C;margin-top:8px">
+          <span style="flex:none;font-size:13px">💡</span>
+          <span style="font-size:12px;color:#3D4A40;line-height:1.55">${esc(q.explanation)}</span>
+        </div>`:''}
       </div>`:''}
     </div>`;
   }).join('');
@@ -1798,17 +1802,17 @@ let _qDiff='easy', _qCorrect=0;
 function openQForm(id) {
   const q = id ? S.questions.find(x=>x.id===id) : null;
   _qDiff = q?.difficulty||'easy';
-  _qCorrect = q?.correctIndex??0;
+  _qCorrect = q?.correctAnswer??0;
   document.getElementById('panelTitle').textContent = q ? 'Savolni tahrirlash' : 'Savol qo\'shish';
   const opts = q?.options||['','','',''];
   document.getElementById('panelBody').innerHTML = `
-    <div class="f-row"><label class="f-label">Savol matni *</label><textarea class="f-area" id="qText">${q?.question||q?.text||''}</textarea></div>
+    <div class="f-row"><label class="f-label">Savol matni *</label><textarea class="f-area" id="qText">${esc(q?.question||q?.text||'')}</textarea></div>
     <div class="f-row">
       <label class="f-label">Javob variantlari (to'g'risini belgilang)</label>
       ${opts.map((o,i)=>`
         <div class="ans-row">
           <button class="a-radio ${i===_qCorrect?'ok':''}" id="ar${i}" onclick="selectAns(${i})"></button>
-          <input class="f-input" id="ao${i}" value="${o}" placeholder="${i+1}-variant">
+          <input class="f-input" id="ao${i}" value="${esc(o)}" placeholder="${i+1}-variant">
         </div>`).join('')}
     </div>
     <div class="f-row">
@@ -1819,6 +1823,7 @@ function openQForm(id) {
         <div class="diff-b hard ${_qDiff==='hard'?'on':''}" onclick="selDiff('hard')">Qiyin</div>
       </div>
     </div>
+    <div class="f-row"><label class="f-label">Izoh — xato javob berganda ko'rsatiladi (nega aynan shu javob to'g'ri)</label><textarea class="f-area" id="qExpl" style="min-height:70px" placeholder="Masalan: Sezar tarkibida toster non bor — shuning uchun glutenli">${esc(q?.explanation||'')}</textarea></div>
     <div class="f-actions">
       <button class="btn-outline" style="flex:1" onclick="closePanel()">Bekor</button>
       <button class="btn-gold" style="flex:1.4" onclick="saveQ('${id||''}')">Saqlash</button>
@@ -1843,7 +1848,7 @@ async function saveQ(id) {
   if (!text) { showToast('Savol matni majburiy','err'); return; }
   const options=[0,1,2,3].map(i=>document.getElementById('ao'+i)?.value?.trim()||'');
   if (options.some(o=>!o)) { showToast('Barcha variantlarni to\'ldiring','err'); return; }
-  const body={question:text,options,correctIndex:_qCorrect,difficulty:_qDiff};
+  const body={question:text,options,correctAnswer:_qCorrect,difficulty:_qDiff,explanation:document.getElementById('qExpl')?.value?.trim()||''};
   if (id) {
     await api('/api/restaurant/questions/'+id, {method:'PUT', body:JSON.stringify(body)});
     const q=S.questions.find(x=>x.id===id);

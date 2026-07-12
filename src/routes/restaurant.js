@@ -1,7 +1,9 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const multer = require('multer');
+const mongoose = require('mongoose');
 const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require('ffmpeg-static');
 const { v4: uuidv4 } = require('uuid');
@@ -14,12 +16,13 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 const router = express.Router();
 const guard = auth(['restaurant']);
 
-// Render'da /app/data persistent disk sifatida ulangan (render.yaml) — bor bo'lsa undan foydalanamiz.
-const UPLOADS_ROOT = fs.existsSync('/app/data') ? '/app/data/uploads' : path.join(__dirname, '..', '..', 'uploads');
-const TRAINING_VIDEO_DIR = path.join(UPLOADS_ROOT, 'training');
-const TRAINING_TMP_DIR = path.join(UPLOADS_ROOT, 'training-tmp');
-for (const dir of [TRAINING_VIDEO_DIR, TRAINING_TMP_DIR]) {
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+// Videolar MongoDB GridFS'da saqlanadi (Render diski har deploy'da tozalanadi,
+// bepul tarifda doimiy disk yo'q). Vaqtinchalik fayllar OS tmp papkasida.
+const TRAINING_TMP_DIR = path.join(os.tmpdir(), 'restoone-training-tmp');
+if (!fs.existsSync(TRAINING_TMP_DIR)) fs.mkdirSync(TRAINING_TMP_DIR, { recursive: true });
+
+function trainingBucket() {
+  return new mongoose.mongo.GridFSBucket(mongoose.connection.db, { bucketName: 'trainingVideos' });
 }
 
 const trainingVideoUpload = multer({
@@ -525,8 +528,7 @@ router.post('/training', guard, trainingVideoUpload.single('video'), asyncHandle
   if (!title || !title.trim()) { if (req.file) fs.unlink(req.file.path, () => {}); return res.status(400).json({ error: 'Sarlavha majburiy' }); }
   if (!req.file) return res.status(400).json({ error: 'Video fayl majburiy' });
 
-  const outFilename = uuidv4() + '.mp4';
-  const outPath = path.join(TRAINING_VIDEO_DIR, outFilename);
+  const outPath = path.join(TRAINING_TMP_DIR, uuidv4() + '.mp4');
   try {
     await convertToMp4(req.file.path, outPath);
   } catch (err) {
@@ -536,13 +538,27 @@ router.post('/training', guard, trainingVideoUpload.single('video'), asyncHandle
     fs.unlink(req.file.path, () => {});
   }
 
+  // MP4'ni MongoDB GridFS'ga yozamiz — deploy'larda o'chmaydi
+  let fileId;
+  try {
+    fileId = await new Promise((resolve, reject) => {
+      const up = trainingBucket().openUploadStream(uuidv4() + '.mp4', {
+        contentType: 'video/mp4',
+        metadata: { restaurantId: req.user.restaurantId }
+      });
+      fs.createReadStream(outPath).pipe(up).on('error', reject).on('finish', () => resolve(up.id));
+    });
+  } finally {
+    fs.unlink(outPath, () => {});
+  }
+
   const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'trainingVideos');
   const maxOrder = (r?.trainingVideos || []).reduce((m, v) => Math.max(m, v.order || 0), -1);
   const video = {
     id: uuidv4(),
     title: title.trim(),
     description: (description || '').trim(),
-    videoUrl: '/uploads/training/' + outFilename,
+    videoUrl: '/media/training/' + fileId.toString(),
     order: maxOrder + 1
   };
   await Restaurant.updateOne({ id: req.user.restaurantId }, { $push: { trainingVideos: video } });
@@ -567,8 +583,8 @@ router.delete('/training/:videoId', guard, asyncHandler(async (req, res) => {
   const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'trainingVideos');
   const vid = r?.trainingVideos?.find(v => v.id === req.params.videoId);
   await Restaurant.updateOne({ id: req.user.restaurantId }, { $pull: { trainingVideos: { id: req.params.videoId } } });
-  if (vid?.videoUrl?.startsWith('/uploads/training/')) {
-    fs.unlink(path.join(TRAINING_VIDEO_DIR, path.basename(vid.videoUrl)), () => {});
+  if (vid?.videoUrl?.startsWith('/media/training/')) {
+    try { await trainingBucket().delete(new mongoose.mongo.ObjectId(vid.videoUrl.split('/').pop())); } catch {}
   }
   res.json({ success: true });
 }));

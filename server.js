@@ -79,6 +79,38 @@ app.get('/api/cert/:id', async (req, res, next) => {
 });
 app.get('/cert/:id', (req, res) => res.sendFile(path.join(__dirname, 'public', 'cert.html')));
 
+// ── Trening videolar (GridFS'dan striming, Range bilan) ───────────
+const mongooseLib = require('mongoose');
+app.get('/media/training/:id', async (req, res, next) => {
+  try {
+    let oid;
+    try { oid = new mongooseLib.mongo.ObjectId(req.params.id); } catch { return res.status(404).end(); }
+    const bucket = new mongooseLib.mongo.GridFSBucket(mongooseLib.connection.db, { bucketName: 'trainingVideos' });
+    const files = await bucket.find({ _id: oid }).toArray();
+    if (!files.length) return res.status(404).end();
+    const size = files[0].length;
+
+    res.setHeader('Content-Type', 'video/mp4');
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+
+    const range = req.headers.range && req.headers.range.match(/bytes=(\d*)-(\d*)/);
+    if (range) {
+      let start = range[1] ? parseInt(range[1]) : 0;
+      let end = range[2] ? parseInt(range[2]) : size - 1;
+      if (start >= size) { res.status(416).setHeader('Content-Range', `bytes */${size}`); return res.end(); }
+      end = Math.min(end, size - 1);
+      res.status(206);
+      res.setHeader('Content-Range', `bytes ${start}-${end}/${size}`);
+      res.setHeader('Content-Length', end - start + 1);
+      bucket.openDownloadStream(oid, { start, end: end + 1 }).on('error', next).pipe(res);
+    } else {
+      res.setHeader('Content-Length', size);
+      bucket.openDownloadStream(oid).on('error', next).pipe(res);
+    }
+  } catch (err) { next(err); }
+});
+
 // ── API routes ─────────────────────────────────────────────────────
 app.use('/api/auth', require('./src/routes/auth'));
 app.use('/api/super', require('./src/routes/super'));

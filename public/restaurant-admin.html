@@ -1225,7 +1225,7 @@ async function addTrainingVideo() {
   if (!title) { showToast('Sarlavha kiriting','err'); return; }
   if (!file) { showToast('Video fayl tanlang','err'); return; }
 
-  statusEl.textContent = 'Yuklanmoqda...';
+  statusEl.textContent = 'Yuklanmoqda... (video hajmiga qarab 1-2 daqiqa olishi mumkin, sahifani yopmang)';
   const fd = new FormData();
   fd.append('title', title);
   fd.append('description', description);

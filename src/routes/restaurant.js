@@ -12,6 +12,7 @@ const { asyncHandler } = require('../middleware/errorHandler');
 const Restaurant = require('../models/Restaurant');
 
 ffmpeg.setFfmpegPath(ffmpegPath);
+ffmpeg.setFfprobePath(require('@ffprobe-installer/ffprobe').path);
 
 const router = express.Router();
 const guard = auth(['restaurant']);
@@ -34,18 +35,32 @@ const trainingVideoUpload = multer({
   fileFilter: (req, file, cb) => file.mimetype.startsWith('video/') ? cb(null, true) : cb(new Error('Faqat video fayl yuklash mumkin'))
 });
 
-// Har qanday formatdagi (mov, 3gp, mkv...) videoni brauzerlarda ishonchli
-// ishlaydigan H.264/AAC MP4'ga aylantiradi — ayniqsa iPhone .MOV fayllari
-// Android/Chrome'da ochilmasligining oldini olish uchun.
-function convertToMp4(inputPath, outputPath) {
+// Video kodeklarini aniqlash (Render 0.1 CPU'da keraksiz transkodlashdan qochish uchun)
+function probeVideo(p) {
+  return new Promise(resolve => {
+    ffmpeg.ffprobe(p, (err, data) => {
+      if (err || !data) return resolve(null);
+      const v = (data.streams || []).find(s => s.codec_type === 'video');
+      const a = (data.streams || []).find(s => s.codec_type === 'audio');
+      resolve({ vcodec: v?.codec_name, acodec: a?.codec_name });
+    });
+  });
+}
+
+// H.264/AAC bo'lsa — kodeklarni qayta ishlamasdan shunchaki MP4 konteynerga
+// ko'chiradi (bir soniyada, kuchsiz serverda ham). Aks holda (HEVC .MOV va
+// h.k.) brauzerlarda ishlaydigan H.264/AAC'ga engil rejimda transkodlaydi.
+function convertToMp4(inputPath, outputPath, info) {
+  const canCopy = info && info.vcodec === 'h264' && (!info.acodec || info.acodec === 'aac');
   return new Promise((resolve, reject) => {
-    ffmpeg(inputPath)
-      .videoCodec('libx264')
-      .audioCodec('aac')
-      .outputOptions(['-preset veryfast', '-crf 23', '-movflags +faststart', '-pix_fmt yuv420p'])
-      .on('error', reject)
-      .on('end', resolve)
-      .save(outputPath);
+    const cmd = ffmpeg(inputPath);
+    if (canCopy) {
+      cmd.outputOptions(['-c copy', '-movflags +faststart']);
+    } else {
+      cmd.videoCodec('libx264').audioCodec('aac')
+        .outputOptions(['-preset ultrafast', '-crf 26', '-movflags +faststart', '-pix_fmt yuv420p']);
+    }
+    cmd.on('error', reject).on('end', resolve).save(outputPath);
   });
 }
 
@@ -530,7 +545,8 @@ router.post('/training', guard, trainingVideoUpload.single('video'), asyncHandle
 
   const outPath = path.join(TRAINING_TMP_DIR, uuidv4() + '.mp4');
   try {
-    await convertToMp4(req.file.path, outPath);
+    const info = await probeVideo(req.file.path);
+    await convertToMp4(req.file.path, outPath, info);
   } catch (err) {
     fs.unlink(req.file.path, () => {});
     return res.status(500).json({ error: 'Videoni qayta ishlashda xatolik yuz berdi. Boshqa fayl bilan urinib ko\'ring.' });

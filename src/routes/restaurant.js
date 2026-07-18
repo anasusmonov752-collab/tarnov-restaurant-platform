@@ -538,10 +538,31 @@ router.get('/training', guard, asyncHandler(async (req, res) => {
   res.json(videos);
 }));
 
+// YouTube havoladan video ID ajratish (watch?v=, youtu.be, shorts, embed)
+function extractYoutubeId(url) {
+  const m = String(url || '').match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{6,20})/);
+  return m ? m[1] : null;
+}
+
 router.post('/training', guard, trainingVideoUpload.single('video'), asyncHandler(async (req, res) => {
-  const { title, description } = req.body;
+  const { title, description, youtubeUrl } = req.body;
   if (!title || !title.trim()) { if (req.file) fs.unlink(req.file.path, () => {}); return res.status(400).json({ error: 'Sarlavha majburiy' }); }
-  if (!req.file) return res.status(400).json({ error: 'Video fayl majburiy' });
+
+  // Katta videolar uchun: fayl o'rniga YouTube havola
+  if (!req.file && youtubeUrl) {
+    const ytId = extractYoutubeId(youtubeUrl);
+    if (!ytId) return res.status(400).json({ error: 'YouTube havolasi noto\'g\'ri. Masalan: https://youtu.be/XXXXXXX' });
+    const r0 = await Restaurant.findOne({ id: req.user.restaurantId }, 'trainingVideos');
+    const maxOrder0 = (r0?.trainingVideos || []).reduce((m, v) => Math.max(m, v.order || 0), -1);
+    const video0 = {
+      id: uuidv4(), title: title.trim(), description: (description || '').trim(),
+      videoUrl: 'https://www.youtube.com/watch?v=' + ytId, order: maxOrder0 + 1
+    };
+    await Restaurant.updateOne({ id: req.user.restaurantId }, { $push: { trainingVideos: video0 } });
+    return res.json(video0);
+  }
+
+  if (!req.file) return res.status(400).json({ error: 'Video fayl yoki YouTube havola majburiy' });
 
   const outPath = path.join(TRAINING_TMP_DIR, uuidv4() + '.mp4');
   try {

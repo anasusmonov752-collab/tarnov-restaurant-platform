@@ -770,6 +770,11 @@ async function renderOquv(){
     ${renderStandartlarSection(vids)}`;
 }
 
+function ytIdFrom(url){
+  const m = String(url||'').match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{6,20})/);
+  return m ? m[1] : null;
+}
+
 function renderStandartlarSection(vids){
   const withUrl = (vids||[]).filter(v=>v.videoUrl);
   return `<div style="margin-top:24px">
@@ -779,7 +784,9 @@ function renderStandartlarSection(vids){
       `<div style="display:grid;grid-template-columns:1fr 1fr;gap:11px">
         ${withUrl.map((v,i)=>`<div class="ro-press" onclick="openTrainingVideo('${esc(v.id)}')" style="cursor:pointer;border-radius:16px;overflow:hidden;background:#1b3a2d;border:1px solid rgba(245,240,232,.06);position:relative">
           <div style="aspect-ratio:9/13;position:relative;background:#0e1f17">
-            <video src="${esc(v.videoUrl)}" muted preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block"></video>
+            ${ytIdFrom(v.videoUrl)
+              ? `<img src="https://img.youtube.com/vi/${ytIdFrom(v.videoUrl)}/hqdefault.jpg" style="width:100%;height:100%;object-fit:cover;display:block" loading="lazy">`
+              : `<video src="${esc(v.videoUrl)}" muted preload="metadata" style="width:100%;height:100%;object-fit:cover;display:block"></video>`}
             <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><div style="width:34px;height:34px;border-radius:50%;background:rgba(17,36,27,.65);display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="#C9A84C"><path d="M8 5v14l11-7z"/></svg></div></div>
             ${v.viewed?'<div style="position:absolute;top:7px;right:7px;width:20px;height:20px;border-radius:50%;background:rgba(201,168,76,.9);display:flex;align-items:center;justify-content:center"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#14291F" stroke-width="3.5"><path d="M5 12l5 5L20 6"/></svg></div>':''}
           </div>
@@ -794,9 +801,12 @@ function openTrainingVideo(id){
   if (!v || !v.videoUrl) return;
   const box=document.getElementById('overlay-training');
   box.style.display='flex';
+  const yt = ytIdFrom(v.videoUrl);
   box.innerHTML=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div onclick="closeTrainingVideo()" style="cursor:pointer"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F5F0E8" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></div><div style="font-size:14px;font-weight:600;color:#F5F0E8">${esc(v.title||'')}</div></div>
-    <div style="flex:1;display:flex;align-items:center;justify-content:center;min-height:0"><video src="${esc(v.videoUrl)}" controls autoplay playsinline style="max-width:100%;max-height:100%;border-radius:14px"></video></div>
-    ${v.description?`<div style="flex:none;padding:14px 4px 4px;font-size:13px;color:rgba(245,240,232,.7);line-height:1.5">${esc(v.description)}</div>`:''}`;
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;min-height:0">${yt
+      ? `<iframe src="https://www.youtube-nocookie.com/embed/${yt}?autoplay=1&playsinline=1&rel=0" style="width:100%;aspect-ratio:16/9;max-height:100%;border:none;border-radius:14px" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>`
+      : `<video src="${esc(v.videoUrl)}" controls autoplay playsinline style="max-width:100%;max-height:100%;border-radius:14px"></video>`}</div>
+    ${v.description?`<div style="flex:none;padding:14px 4px 4px;font-size:13px;color:rgba(245,240,232,.7);line-height:1.5;overflow-y:auto;max-height:30%">${esc(v.description)}</div>`:''}`;
   api('/api/waiter/training/'+v.id+'/view', {method:'POST'}).then(()=>{ v.viewed=true; });
 }
 function closeTrainingVideo(){

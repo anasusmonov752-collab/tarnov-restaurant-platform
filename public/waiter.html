@@ -799,6 +799,14 @@ function renderStandartlarSection(vids){
 function openTrainingVideo(id){
   const v = (window._trainingVids||[]).find(x=>String(x.id)===String(id));
   if (!v || !v.videoUrl) return;
+  const yt0 = ytIdFrom(v.videoUrl);
+  if (yt0) {
+    // YouTube videolar platформа ichida emas — to'g'ridan-to'g'ri YouTube'da ochiladi
+    api('/api/waiter/training/'+v.id+'/view', {method:'POST'}).then(()=>{ v.viewed=true; renderOquv(); });
+    const w = window.open('https://youtu.be/'+yt0, '_blank');
+    if (!w) location.href = 'https://youtu.be/'+yt0;
+    return;
+  }
   const box=document.getElementById('overlay-training');
   box.style.display='flex';
   const yt = ytIdFrom(v.videoUrl);

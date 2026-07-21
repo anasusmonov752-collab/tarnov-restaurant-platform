@@ -215,6 +215,36 @@ router.post('/adaptation/documents/:docId/read', guard, asyncHandler(async (req,
   res.json({ success: true });
 }));
 
+// ── MENYU YODLASH MASHQI (flashcard progressi) ────────────────
+
+router.get('/menu-progress', guard, asyncHandler(async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'waiterMenuProgress');
+  const p = r?.waiterMenuProgress?.find(x => x.waiterId === req.user.waiterId);
+  res.json({ knownDishIds: p?.knownDishIds || [] });
+}));
+
+// Bitta taomni "bildim" / "takrorlash" deb belgilash
+router.post('/menu-progress/:dishId', guard, asyncHandler(async (req, res) => {
+  const { dishId } = req.params;
+  const known = req.body?.known !== false;   // default: bildim
+  const exists = await Restaurant.findOne(
+    { id: req.user.restaurantId, 'waiterMenuProgress.waiterId': req.user.waiterId }, 'id'
+  );
+  if (!exists) {
+    await Restaurant.updateOne({ id: req.user.restaurantId }, {
+      $push: { waiterMenuProgress: { waiterId: req.user.waiterId, knownDishIds: known ? [dishId] : [], updatedAt: new Date() } }
+    });
+  } else {
+    const op = known ? { $addToSet: { 'waiterMenuProgress.$.knownDishIds': dishId } }
+                     : { $pull:     { 'waiterMenuProgress.$.knownDishIds': dishId } };
+    op.$set = { 'waiterMenuProgress.$.updatedAt': new Date() };
+    await Restaurant.updateOne(
+      { id: req.user.restaurantId, 'waiterMenuProgress.waiterId': req.user.waiterId }, op
+    );
+  }
+  res.json({ success: true });
+}));
+
 // ── TRAINING VIDEOS (erkin nomlangan qisqa standart videolar) ─
 
 router.get('/training', guard, asyncHandler(async (req, res) => {

@@ -116,6 +116,7 @@
     <div id="overlay-result" style="position:absolute;inset:0;z-index:80;display:none"></div>
     <div id="overlay-cert" style="position:absolute;inset:0;z-index:90;display:none"></div>
     <div id="overlay-analysis" style="position:absolute;inset:0;z-index:88;display:none"></div>
+    <div id="overlay-drill" style="position:absolute;inset:0;z-index:86;display:none"></div>
     <div id="overlay-training" style="position:absolute;inset:0;z-index:95;display:none;background:rgba(6,14,10,.96);flex-direction:column;padding:18px"></div>
 
   </div>
@@ -327,18 +328,34 @@ async function renderMenu(){
     }
     menuData = data.menu||[];
     paintMenu();
+    loadDrillProgress();
   } catch(e){ box.innerHTML=`<div style="color:#e07a52;font-size:13px">${esc(e.message)}</div>`; }
 }
 function paintMenu(){
   const cats=['Barchasi',...Array.from(new Set(menuData.map(m=>m.category).filter(Boolean)))];
   window._cats = cats;
-  let items=menuData.filter(d=>menuCat==='Barchasi'||d.category===menuCat).filter(d=>!menuQuery||(d.name||'').toLowerCase().includes(menuQuery.toLowerCase()));
+  const q=(menuQuery||'').toLowerCase().trim();
+  let items=menuData.filter(d=>menuCat==='Barchasi'||d.category===menuCat)
+    .filter(d=>!q
+      || (d.name||'').toLowerCase().includes(q)
+      || (d.description||'').toLowerCase().includes(q)
+      || (d.allergens||[]).some(a=>(a||'').toLowerCase().includes(q)));
   document.getElementById('tab-menyu').innerHTML = `
     <div style="font-family:'Cormorant Garamond',serif;font-size:30px;color:#F5F0E8;margin-bottom:4px">Menyu</div>
-    <div style="font-size:12px;color:rgba(245,240,232,.5);margin-bottom:16px">Restoran taomlarini o'rganing</div>
+    <div style="font-size:12px;color:rgba(245,240,232,.5);margin-bottom:14px">Restoran taomlarini o'rganing</div>
+    <div onclick="openDrill()" class="ro-press" style="display:flex;align-items:center;gap:13px;padding:14px 16px;border-radius:16px;margin-bottom:14px;cursor:pointer;background:linear-gradient(100deg,rgba(201,168,76,.16),rgba(201,168,76,.06));border:1px solid rgba(201,168,76,.35)">
+      <div style="flex:none;width:40px;height:40px;border-radius:12px;background:rgba(201,168,76,.18);display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="1.9"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:700;color:#F5F0E8">Bilim mashqi</div>
+        <div id="drill-sub" style="font-size:11.5px;color:rgba(245,240,232,.5);margin-top:2px">Taomlarni yodlash uchun mashq qiling</div>
+      </div>
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2.2"><path d="M9 6l6 6-6 6"/></svg>
+    </div>
     <div style="display:flex;align-items:center;gap:10px;padding:12px 15px;border-radius:14px;background:#1b3a2d;border:1px solid rgba(245,240,232,.08);margin-bottom:14px">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="rgba(245,240,232,.5)" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
-      <input id="menu-search" value="${esc(menuQuery)}" oninput="onMenuSearch(this.value)" placeholder="Taom qidirish..." style="flex:1;background:transparent;border:none;outline:none;color:#F5F0E8;font-family:'Mulish',sans-serif;font-size:14px"/></div>
+      <input id="menu-search" value="${esc(menuQuery)}" oninput="onMenuSearch(this.value)" placeholder="Taom yoki tarkib bo'yicha qidiring..." style="flex:1;background:transparent;border:none;outline:none;color:#F5F0E8;font-family:'Mulish',sans-serif;font-size:14px"/>
+      ${q?`<span onclick="onMenuSearch('')" style="cursor:pointer;color:rgba(245,240,232,.5);font-size:17px;line-height:1;padding:0 2px">&times;</span>`:''}</div>
+    ${q?`<div style="font-size:11.5px;color:rgba(245,240,232,.45);margin:-6px 0 12px 4px">"${esc(menuQuery)}" bo'yicha ${items.length} ta taom topildi</div>`:''}
     <div style="display:flex;gap:8px;overflow-x:auto;margin:0 -18px 16px;padding:0 18px">
       ${cats.map((c,i)=>{const a=menuCat===c;return `<div onclick="setCatIdx(${i})" style="flex:none;padding:8px 15px;border-radius:20px;font-size:12.5px;font-weight:600;cursor:pointer;color:${a?'#11241b':'rgba(245,240,232,.7)'};background:${a?C:'rgba(245,240,232,.05)'};border:1px solid ${a?C:'rgba(245,240,232,.08)'}">${esc(c)}</div>`;}).join('')}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px">
@@ -349,12 +366,17 @@ function paintMenu(){
         <div style="padding:11px 12px 13px"><div style="font-size:14px;font-weight:700;color:#F5F0E8;line-height:1.25">${esc(d.name)}</div>${d.price?`<div style="font-size:12px;color:#C9A84C;margin-top:4px;font-weight:600">${esc(d.price)}</div>`:''}</div>
       </div>`).join('') : '<div style="grid-column:1/-1;text-align:center;color:rgba(245,240,232,.4);padding:30px;font-size:13px">Taom topilmadi</div>'}</div>`;
 }
-function onMenuSearch(v){ menuQuery=v; const items=document.querySelectorAll('#tab-menyu input'); paintMenu(); const inp=document.getElementById('menu-search'); if(inp){ inp.focus(); inp.setSelectionRange(inp.value.length,inp.value.length);} }
+function onMenuSearch(v){ menuQuery=v; paintMenu(); const inp=document.getElementById('menu-search'); if(inp){ inp.focus(); inp.setSelectionRange(inp.value.length,inp.value.length);} }
 function setCat(c){ menuCat=c; paintMenu(); }
 function setCatIdx(i){ menuCat=(window._cats||[])[i]||'Barchasi'; paintMenu(); }
+function ingChips(desc){
+  return String(desc||'').replace(/\.\s*$/,'').split(/[,;]/).map(s=>s.trim()).filter(Boolean);
+}
+
 function openDish(id){
   const d=menuData.find(x=>String(x.id)===String(id)); if(!d) return;
-  const allergens=(d.allergens&&d.allergens.length)?d.allergens:['Allergen yo\'q'];
+  const hasAllerg = !!(d.allergens && d.allergens.length);
+  const ings = ingChips(d.description);
   const ov=document.getElementById('overlay-dish');
   ov.style.display='block';
   ov.innerHTML = `<div onclick="closeDish()" style="position:absolute;inset:0;background:rgba(8,16,11,.6);animation:ro-fade .3s ease"></div>
@@ -366,12 +388,202 @@ function openDish(id){
         ${d.category?`<div style="position:absolute;left:24px;top:18px;padding:4px 11px;border-radius:20px;background:rgba(201,168,76,.92);font-size:10px;font-weight:800;letter-spacing:.5px;color:#11241b">${esc(d.category)}</div>`:''}</div>
       <div style="padding:4px 24px 28px;margin-top:-30px;position:relative;height:calc(100% - 200px);overflow-y:auto">
         <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px"><div style="font-family:'Cormorant Garamond',serif;font-size:30px;color:#F5F0E8;line-height:1.1">${esc(d.name)}</div>${d.price?`<div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:#C9A84C;white-space:nowrap">${esc(d.price)}</div>`:''}</div>
-        <div style="font-size:13.5px;color:rgba(245,240,232,.62);line-height:1.6;margin-top:14px">${esc(d.description||'Tavsif yo\'q')}</div>
+        <div style="font-size:12px;color:rgba(245,240,232,.5);font-weight:700;letter-spacing:.5px;margin:20px 0 10px;text-transform:uppercase">Tarkibi</div>
+        ${ings.length
+          ? `<div style="display:flex;flex-wrap:wrap;gap:7px">${ings.map(i=>`<span style="padding:7px 12px;border-radius:11px;background:rgba(245,240,232,.06);border:1px solid rgba(245,240,232,.09);font-size:12.5px;color:#F5F0E8">${esc(i)}</span>`).join('')}</div>`
+          : `<div style="font-size:13px;color:rgba(245,240,232,.45);line-height:1.6">Tarkib kiritilmagan — oshpazdan so'rang</div>`}
+
         <div style="font-size:12px;color:rgba(245,240,232,.5);font-weight:700;letter-spacing:.5px;margin:22px 0 10px;text-transform:uppercase">Allergenlar</div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px">${allergens.map(a=>`<div style="display:flex;align-items:center;gap:7px;padding:8px 13px;border-radius:12px;background:rgba(217,96,59,.12);border:1px solid rgba(217,96,59,.25)"><div style="width:7px;height:7px;border-radius:50%;background:#d9603b"></div><span style="font-size:12.5px;color:#f0c5b5;font-weight:600">${esc(a)}</span></div>`).join('')}</div>
+        ${hasAllerg
+          ? `<div style="display:flex;flex-wrap:wrap;gap:8px">${d.allergens.map(a=>`<div style="display:flex;align-items:center;gap:7px;padding:8px 13px;border-radius:12px;background:rgba(217,96,59,.12);border:1px solid rgba(217,96,59,.25)"><div style="width:7px;height:7px;border-radius:50%;background:#d9603b"></div><span style="font-size:12.5px;color:#f0c5b5;font-weight:600">${esc(a)}</span></div>`).join('')}</div>`
+          : `<div style="display:flex;gap:10px;padding:12px 14px;border-radius:13px;background:rgba(227,192,106,.10);border:1px solid rgba(227,192,106,.32)">
+              <span style="flex:none;font-size:15px;line-height:1.2">⚠️</span>
+              <span style="font-size:12.5px;color:#e3c06a;line-height:1.5;font-weight:600">Ma'lumot kiritilmagan. Mehmon allergiya haqida so'rasa — <u>albatta oshpazdan aniqlang</u>, "allergen yo'q" demang!</span>
+            </div>`}
+
+        ${d.servingSuggestion?`
+        <div style="font-size:12px;color:#C9A84C;font-weight:700;letter-spacing:.5px;margin:22px 0 10px;text-transform:uppercase">Nima taklif qilish kerak</div>
+        <div style="display:flex;gap:10px;padding:13px 15px;border-radius:14px;background:rgba(201,168,76,.11);border:1px solid rgba(201,168,76,.3)">
+          <span style="flex:none;font-size:15px;line-height:1.2">💡</span>
+          <span style="font-size:13px;color:#e2c879;line-height:1.55;font-weight:600">${esc(d.servingSuggestion)}</span>
+        </div>`:''}
       </div></div>`;
 }
 function closeDish(){ document.getElementById('overlay-dish').style.display='none'; document.getElementById('overlay-dish').innerHTML=''; }
+
+// ---------- BILIM MASHQI (flashcard) ----------
+let drillKnown = new Set(), drillQueue = [], drillIdx = 0, drillRevealed = false, drillStats = {ok:0, again:0};
+
+async function loadDrillProgress(){
+  try {
+    const p = await api('/api/waiter/menu-progress');
+    drillKnown = new Set(p?.knownDishIds || []);
+  } catch { drillKnown = new Set(); }
+  const sub = document.getElementById('drill-sub');
+  if (sub && menuData.length) {
+    const n = menuData.filter(d=>drillKnown.has(d.id)).length;
+    sub.textContent = `${n} / ${menuData.length} ta taomni bilasiz`;
+  }
+}
+
+async function openDrill(){
+  await loadDrillProgress();
+  const box = document.getElementById('overlay-drill');
+  box.style.display = 'block';
+  drillStart();
+}
+function closeDrill(){
+  const box = document.getElementById('overlay-drill');
+  box.style.display='none'; box.innerHTML='';
+  loadDrillProgress();
+}
+
+function drillStart(){
+  const total = menuData.length;
+  const known = menuData.filter(d=>drillKnown.has(d.id)).length;
+  const pct = total ? Math.round(known/total*100) : 0;
+  const cats = ['Barchasi', ...Array.from(new Set(menuData.map(m=>m.category).filter(Boolean)))];
+  const box = document.getElementById('overlay-drill');
+  box.innerHTML = `<div style="position:absolute;inset:0;overflow-y:auto;background:linear-gradient(170deg,#163326,#0f1f17);padding:22px 18px 40px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+      <div onclick="closeDrill()" style="cursor:pointer;padding:4px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5F0E8" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:26px;color:#F5F0E8">Bilim mashqi</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:18px;padding:18px;border-radius:18px;background:#1b3a2d;border:1px solid rgba(245,240,232,.07);margin-bottom:20px">
+      <div style="position:relative;width:84px;height:84px;flex:none;display:flex;align-items:center;justify-content:center">
+        ${ring(pct,84,8,'#C9A84C')}
+        <div style="position:absolute;font-family:'Cormorant Garamond',serif;font-size:24px;color:#F5F0E8">${pct}<span style="font-size:12px">%</span></div>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#F5F0E8;line-height:1.1">${known} / ${total}</div>
+        <div style="font-size:12px;color:rgba(245,240,232,.5);margin-top:3px;line-height:1.5">taomni bilaman deb belgiladingiz</div>
+      </div>
+    </div>
+    <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#C9A84C;font-weight:700;margin-bottom:10px">Qaysi bo'limni mashq qilamiz?</div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      ${cats.map((c,i)=>{
+        const list = c==='Barchasi' ? menuData : menuData.filter(d=>d.category===c);
+        const k = list.filter(d=>drillKnown.has(d.id)).length;
+        const left = list.length - k;
+        return `<div onclick="drillBegin(${i})" class="ro-press" style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:14px;background:#1b3a2d;border:1px solid rgba(245,240,232,.07);cursor:pointer">
+          <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:600;color:#F5F0E8">${esc(c)}</div>
+          <div style="font-size:11px;color:rgba(245,240,232,.45);margin-top:2px">${left>0?`${left} ta o'rganilmagan`:'hammasi o\'rganilgan ✓'} · jami ${list.length}</div></div>
+          <div style="flex:none;width:44px;height:5px;border-radius:5px;background:rgba(245,240,232,.1);overflow:hidden"><div style="height:100%;width:${list.length?Math.round(k/list.length*100):0}%;background:#C9A84C"></div></div>
+        </div>`;
+      }).join('')}
+    </div></div>`;
+}
+
+function drillBegin(catIdx){
+  const cats = ['Barchasi', ...Array.from(new Set(menuData.map(m=>m.category).filter(Boolean)))];
+  const c = cats[catIdx] || 'Barchasi';
+  const pool = c==='Barchasi' ? menuData.slice() : menuData.filter(d=>d.category===c);
+  const unknown = pool.filter(d=>!drillKnown.has(d.id));
+  let list = (unknown.length ? unknown : pool).slice();
+  for (let i=list.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [list[i],list[j]]=[list[j],list[i]]; }
+  drillQueue = list.slice(0, 20);          // bir seansda 20 tadan — charchatmaydi
+  drillIdx = 0; drillRevealed = false; drillStats = {ok:0, again:0};
+  drillCard();
+}
+
+function drillCard(){
+  const box = document.getElementById('overlay-drill');
+  if (drillIdx >= drillQueue.length) return drillFinish();
+  const d = drillQueue[drillIdx];
+  const ings = ingChips(d.description);
+  const hasAllerg = !!(d.allergens && d.allergens.length);
+  const pct = Math.round(drillIdx / drillQueue.length * 100);
+
+  box.innerHTML = `<div style="position:absolute;inset:0;display:flex;flex-direction:column;background:linear-gradient(170deg,#163326,#0f1f17);padding:18px 18px 22px">
+    <div style="flex:none;display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <div onclick="closeDrill()" style="cursor:pointer;padding:4px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F5F0E8" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
+      <div style="flex:1;height:5px;border-radius:5px;background:rgba(245,240,232,.1);overflow:hidden"><div style="height:100%;width:${pct}%;background:#C9A84C;transition:width .3s"></div></div>
+      <div style="flex:none;font-size:12px;color:rgba(245,240,232,.5);font-weight:600">${drillIdx+1}/${drillQueue.length}</div>
+    </div>
+
+    <div style="flex:1;min-height:0;overflow-y:auto">
+      <div style="border-radius:20px;overflow:hidden;background:#1b3a2d;border:1px solid rgba(245,240,232,.07)">
+        <div style="height:190px;position:relative;${d.image?`background:#244635;background-image:url('${esc(d.image)}');background-size:cover;background-position:center`:`background-image:repeating-linear-gradient(135deg,#244635,#244635 11px,#1e3b2c 11px,#1e3b2c 22px)`}"></div>
+        <div style="padding:16px 18px 18px;text-align:center">
+          <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#C9A84C;font-weight:700">${esc(d.category||'')}</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:26px;color:#F5F0E8;line-height:1.15;margin-top:5px">${esc(d.name)}</div>
+        </div>
+      </div>
+
+      ${!drillRevealed ? `
+        <div style="padding:22px 16px;text-align:center">
+          <div style="font-size:13.5px;color:rgba(245,240,232,.6);line-height:1.6">Tarkibida nima bor?<br>Allergeni bormi? Nima taklif qilasiz?</div>
+          <div style="font-size:11.5px;color:rgba(245,240,232,.35);margin-top:8px">Avval o'zingiz eslang, keyin tekshiring</div>
+        </div>
+      ` : `
+        <div style="margin-top:16px">
+          <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(245,240,232,.45);font-weight:700;margin-bottom:9px">Tarkibi</div>
+          ${ings.length ? `<div style="display:flex;flex-wrap:wrap;gap:7px">${ings.map(i=>`<span style="padding:7px 12px;border-radius:11px;background:rgba(245,240,232,.06);border:1px solid rgba(245,240,232,.09);font-size:12.5px;color:#F5F0E8">${esc(i)}</span>`).join('')}</div>`
+            : `<div style="font-size:12.5px;color:rgba(245,240,232,.4)">Tarkib kiritilmagan</div>`}
+          <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(245,240,232,.45);font-weight:700;margin:18px 0 9px">Allergenlar</div>
+          ${hasAllerg
+            ? `<div style="display:flex;flex-wrap:wrap;gap:7px">${d.allergens.map(a=>`<span style="padding:7px 12px;border-radius:11px;background:rgba(217,96,59,.12);border:1px solid rgba(217,96,59,.25);font-size:12.5px;color:#f0c5b5;font-weight:600">${esc(a)}</span>`).join('')}</div>`
+            : `<div style="font-size:12.5px;color:#e3c06a">⚠️ Ma'lumot kiritilmagan — oshpazdan aniqlang</div>`}
+          ${d.servingSuggestion?`
+            <div style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#C9A84C;font-weight:700;margin:18px 0 9px">Nima taklif qilish kerak</div>
+            <div style="display:flex;gap:9px;padding:12px 14px;border-radius:13px;background:rgba(201,168,76,.11);border:1px solid rgba(201,168,76,.3)">
+              <span style="flex:none;font-size:14px;line-height:1.2">💡</span>
+              <span style="font-size:12.5px;color:#e2c879;line-height:1.5;font-weight:600">${esc(d.servingSuggestion)}</span>
+            </div>`:''}
+        </div>
+      `}
+    </div>
+
+    <div style="flex:none;margin-top:14px">
+      ${!drillRevealed
+        ? `<div onclick="drillReveal()" class="ro-press" style="padding:16px;border-radius:16px;background:linear-gradient(100deg,#C9A84C,#d8bd6a);color:#11241b;font-weight:800;font-size:15px;text-align:center;cursor:pointer">Javobni ko'rish</div>`
+        : `<div style="display:flex;gap:10px">
+            <div onclick="drillAnswer(false)" class="ro-press" style="flex:1;padding:15px;border-radius:15px;background:rgba(217,96,59,.14);border:1px solid rgba(217,96,59,.4);color:#f0876a;font-weight:800;font-size:14px;text-align:center;cursor:pointer">↻ Takrorlash</div>
+            <div onclick="drillAnswer(true)" class="ro-press" style="flex:1;padding:15px;border-radius:15px;background:linear-gradient(100deg,#C9A84C,#d8bd6a);color:#11241b;font-weight:800;font-size:14px;text-align:center;cursor:pointer">✓ Bildim</div>
+          </div>`}
+    </div>
+  </div>`;
+}
+
+function drillReveal(){ drillRevealed = true; drillCard(); }
+
+function drillAnswer(known){
+  const d = drillQueue[drillIdx];
+  if (known) { drillKnown.add(d.id); drillStats.ok++; }
+  else { drillKnown.delete(d.id); drillStats.again++; }
+  api('/api/waiter/menu-progress/'+encodeURIComponent(d.id), {method:'POST', body: JSON.stringify({known})}).catch(()=>{});
+  drillIdx++; drillRevealed = false;
+  drillCard();
+}
+
+function drillFinish(){
+  const total = menuData.length;
+  const known = menuData.filter(d=>drillKnown.has(d.id)).length;
+  const pct = total ? Math.round(known/total*100) : 0;
+  const box = document.getElementById('overlay-drill');
+  box.innerHTML = `<div style="position:absolute;inset:0;overflow-y:auto;background:linear-gradient(170deg,#163326,#0f1f17);padding:34px 22px;display:flex;flex-direction:column;align-items:center;justify-content:center">
+    <div style="font-size:10px;letter-spacing:4px;text-transform:uppercase;color:rgba(201,168,76,.8)">✦ Mashq tugadi ✦</div>
+    <div style="position:relative;width:150px;height:150px;display:flex;align-items:center;justify-content:center;margin:20px 0 10px">
+      ${ring(pct,150,10,'#C9A84C')}
+      <div style="position:absolute;text-align:center">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:44px;color:#F5F0E8;line-height:1">${pct}<span style="font-size:18px;color:#C9A84C">%</span></div>
+        <div style="font-size:11px;color:rgba(245,240,232,.4);margin-top:2px">${known}/${total} taom</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;width:100%;margin:18px 0 24px">
+      <div style="flex:1;padding:13px;border-radius:14px;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);text-align:center">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:26px;color:#C9A84C;line-height:1">${drillStats.ok}</div>
+        <div style="font-size:10px;color:rgba(245,240,232,.5);margin-top:3px">BILDIM</div></div>
+      <div style="flex:1;padding:13px;border-radius:14px;background:rgba(217,96,59,.10);border:1px solid rgba(217,96,59,.28);text-align:center">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:26px;color:#f0876a;line-height:1">${drillStats.again}</div>
+        <div style="font-size:10px;color:rgba(245,240,232,.5);margin-top:3px">TAKRORLASH</div></div>
+    </div>
+    <div style="width:100%;display:flex;flex-direction:column;gap:10px">
+      <div onclick="drillStart()" class="ro-press" style="padding:16px;border-radius:16px;background:linear-gradient(100deg,#C9A84C,#d8bd6a);color:#11241b;font-weight:800;font-size:15px;text-align:center;cursor:pointer">Yana mashq qilish</div>
+      <div onclick="closeDrill()" style="padding:14px;border-radius:14px;background:rgba(245,240,232,.07);border:1px solid rgba(245,240,232,.1);color:#F5F0E8;font-weight:600;font-size:14px;text-align:center;cursor:pointer">Menyuga qaytish</div>
+    </div>
+  </div>`;
+}
 
 // ---------- TEST ----------
 function renderTestIntro(){

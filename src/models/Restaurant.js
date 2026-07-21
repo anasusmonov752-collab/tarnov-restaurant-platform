@@ -96,6 +96,13 @@ const WaiterTrainingViewSchema = new mongoose.Schema({
   viewedVideoIds: [String]
 }, { _id: false });
 
+// Menyu yodlash mashqi — ofitsiant "bildim" deb belgilagan taomlar
+const WaiterMenuProgressSchema = new mongoose.Schema({
+  waiterId: String,
+  knownDishIds: [String],
+  updatedAt: { type: Date, default: Date.now }
+}, { _id: false });
+
 // ── Training Modules ──────────────────────────────────────────
 const LessonSchema = new mongoose.Schema({
   id:          { type: String, default: () => uuidv4() },
@@ -209,7 +216,8 @@ const RestaurantSchema = new mongoose.Schema({
   modules: [ModuleSchema],
   moduleProgress: [WaiterModuleProgressSchema],
   trainingVideos: [TrainingVideoSchema],
-  waiterTrainingViews: [WaiterTrainingViewSchema]
+  waiterTrainingViews: [WaiterTrainingViewSchema],
+  waiterMenuProgress: [WaiterMenuProgressSchema]
 });
 
 module.exports = mongoose.model('Restaurant', RestaurantSchema);

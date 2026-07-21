@@ -332,10 +332,29 @@ router.put('/kpi-settings', guard, asyncHandler(async (req, res) => {
   res.json({ success: true });
 }));
 
+// Menyu o'rganish darajasi (Bilim mashqi progressi) — har ofitsiant bo'yicha
+router.get('/menu-progress', guard, asyncHandler(async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'menu waiters waiterMenuProgress');
+  const totalDishes = (r?.menu || []).length;
+  const validIds = new Set((r?.menu || []).map(m => m.id));
+  const prog = r?.waiterMenuProgress || [];
+  const list = (r?.waiters || []).filter(w => w.active).map(w => {
+    const p = prog.find(x => x.waiterId === w.id);
+    // menyudan o'chirilgan taomlar hisobga olinmasin
+    const known = (p?.knownDishIds || []).filter(id => validIds.has(id)).length;
+    return {
+      waiterId: w.id, waiterName: w.name, known, totalDishes,
+      percent: totalDishes ? Math.round(known / totalDishes * 100) : 0,
+      updatedAt: p?.updatedAt || null
+    };
+  }).sort((a, b) => b.percent - a.percent);
+  res.json({ totalDishes, list });
+}));
+
 // KPI hisobotini Excel (buxgalter uchun tayyor fayl) sifatida yuklab olish
 router.get('/kpi/export', guard, asyncHandler(async (req, res) => {
   const XLSX = require('xlsx');
-  const r       = await Restaurant.findOne({ id: req.user.restaurantId }, 'name waiters testResults kpiSettings');
+  const r       = await Restaurant.findOne({ id: req.user.restaurantId }, 'name menu waiters testResults kpiSettings waiterMenuProgress');
   const waiters = (r?.waiters || []).filter(w => w.active);
   const results = r?.testResults || [];
   const cfg     = r?.kpiSettings?.toObject ? r.kpiSettings.toObject() : (r?.kpiSettings || {});
@@ -344,9 +363,20 @@ router.get('/kpi/export', guard, asyncHandler(async (req, res) => {
   const refDate = getPeriodRefDate(offset, days);
   const periodLabel = getPeriodLabel(refDate, days);
 
+  const totalDishes = (r?.menu || []).length;
+  const validIds = new Set((r?.menu || []).map(m => m.id));
+  const menuProg = r?.waiterMenuProgress || [];
+
   const kpiList = waiters.map(w => {
     const wr = results.filter(t => t.waiterId === w.id);
-    return { waiterName: w.name, ...calcKPI(wr, cfg, refDate) };
+    const mp = menuProg.find(x => x.waiterId === w.id);
+    const known = (mp?.knownDishIds || []).filter(id => validIds.has(id)).length;
+    return {
+      waiterName: w.name,
+      menuKnown: known,
+      menuPct: totalDishes ? Math.round(known / totalDishes * 100) : 0,
+      ...calcKPI(wr, cfg, refDate)
+    };
   }).sort((a, b) => (b.avg ?? -1) - (a.avg ?? -1));
 
   const header = [
@@ -355,7 +385,7 @@ router.get('/kpi/export', guard, asyncHandler(async (req, res) => {
     [`Davr: ${periodLabel}`],
     [`Tuzilgan sana: ${new Date().toISOString().split('T')[0]}`],
     [],
-    ['№', 'Ofitsiant', 'Daraja', "O'rtacha ball (%)", 'Test soni', 'Bonus/Jarima (%)', 'Izoh']
+    ['№', 'Ofitsiant', 'Daraja', "O'rtacha ball (%)", 'Test soni', `Menyu o'rganilgan (%)`, `Bilgan taomlar (${totalDishes} tadan)`, 'Bonus/Jarima (%)', 'Izoh']
   ];
   const rows = kpiList.map((k, i) => [
     i + 1,
@@ -363,12 +393,14 @@ router.get('/kpi/export', guard, asyncHandler(async (req, res) => {
     k.level === 'nodata' ? '—' : k.label,
     k.avg ?? '',
     k.testCount,
+    k.menuPct,
+    k.menuKnown,
     k.level === 'nodata' ? '' : k.penalty,
     k.level === 'nodata' ? 'Test topshirilmagan' : (k.consecutiveLow >= 2 ? `${k.consecutiveLow} davr ketma-ket past natija` : '')
   ]);
 
   const ws = XLSX.utils.aoa_to_sheet([...header, ...rows]);
-  ws['!cols'] = [{ wch: 4 }, { wch: 26 }, { wch: 16 }, { wch: 16 }, { wch: 10 }, { wch: 16 }, { wch: 30 }];
+  ws['!cols'] = [{ wch: 4 }, { wch: 26 }, { wch: 16 }, { wch: 16 }, { wch: 10 }, { wch: 20 }, { wch: 22 }, { wch: 16 }, { wch: 30 }];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'KPI');
   const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });

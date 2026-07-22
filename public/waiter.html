@@ -13,11 +13,11 @@
 <link rel="apple-touch-icon" href="/images/icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Mulish:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,600;0,6..12,700;0,6..12,800;1,6..12,600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;padding:0;font-family:'Mulish',sans-serif}
+  html,body{margin:0;padding:0;font-family:'Nunito Sans',sans-serif}
   ::-webkit-scrollbar{display:none;width:0;height:0}
   *{scrollbar-width:none;-ms-overflow-style:none}
   @keyframes ro-fall{to{transform:translateY(900px) rotate(720deg)}}
@@ -57,8 +57,8 @@
     <div id="screen-login" style="position:absolute;inset:0;z-index:60;background:linear-gradient(165deg,#1c4030 0%,#13281e 55%,#0e1f17 100%);display:flex;flex-direction:column;padding:60px 30px 30px;animation:ro-fade .5s ease;overflow-y:auto">
       <div style="position:absolute;inset:0;background:radial-gradient(circle at 78% 12%,rgba(201,168,76,.16),transparent 42%),radial-gradient(circle at 12% 88%,rgba(201,168,76,.10),transparent 45%);pointer-events:none"></div>
       <div style="position:relative;display:flex;flex-direction:column;align-items:center;gap:7px;margin-bottom:26px;animation:ro-rise .6s ease both">
-        <div style="width:54px;height:54px;border-radius:50%;border:1.5px solid rgba(201,168,76,.55);display:flex;align-items:center;justify-content:center;color:#C9A84C;font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:600">R</div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:34px;color:#F5F0E8;letter-spacing:.5px;line-height:1">RestoOne</div>
+        <div style="width:54px;height:54px;border-radius:50%;border:1.5px solid rgba(201,168,76,.55);display:flex;align-items:center;justify-content:center;color:#C9A84C;font-family:'Nunito Sans',sans-serif;font-size:26px;font-weight:700">R</div>
+        <div style="font-family:'Nunito Sans',sans-serif;font-size:30px;font-weight:700;color:#F5F0E8;letter-spacing:.5px;line-height:1">RestoOne</div>
         <div style="font-size:13px;letter-spacing:3px;text-transform:uppercase;color:rgba(201,168,76,.8)">Ofitsiant maktabi</div>
       </div>
       <div style="position:relative;animation:ro-rise .6s ease .08s both">
@@ -171,7 +171,7 @@ async function loadRestaurants(){
       const on = S.restaurantId===r.id;
       const mark = (r.name||'?').trim().charAt(0).toUpperCase();
       return `<div onclick="pickRestaurant('${r.id}')" style="display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:15px;background:${on?'rgba(201,168,76,.12)':'rgba(245,240,232,.04)'};border:1px solid ${on?'rgba(201,168,76,.5)':'rgba(245,240,232,.08)'};cursor:pointer;transition:all .2s">
-        <div style="width:34px;height:34px;border-radius:9px;background:rgba(201,168,76,.14);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:18px;color:#C9A84C;flex:none">${esc(mark)}</div>
+        <div style="width:34px;height:34px;border-radius:9px;background:rgba(201,168,76,.14);display:flex;align-items:center;justify-content:center;font-family:'Nunito Sans',sans-serif;font-size:16px;font-weight:700;color:#C9A84C;flex:none">${esc(mark)}</div>
         <div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:600;color:#F5F0E8">${esc(r.name)}</div><div style="font-size:13px;color:#97A298">${esc(r.location||'')}</div></div>
         ${on?'<div style="width:9px;height:9px;border-radius:50%;background:#C9A84C;box-shadow:0 0 0 4px rgba(201,168,76,.22)"></div>':''}
       </div>`;
@@ -191,7 +191,7 @@ function renderKeys(){
   document.getElementById('pin-keys').innerHTML=labels.map(l=>{
     const blank=l==='', del=l==='⌫';
     const onclick = blank?'' : del?'onclick="backPin()"' : `onclick="pressPin('${l}')"`;
-    return `<div class="${blank?'':'ro-press'}" ${onclick} style="height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:27px;font-weight:500;color:#F5F0E8;background:${blank?'transparent':'rgba(245,240,232,.07)'};cursor:${blank?'default':'pointer'};user-select:none">${l}</div>`;
+    return `<div class="${blank?'':'ro-press'}" ${onclick} style="height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Nunito Sans',sans-serif;font-size:24px;font-weight:600;color:#F5F0E8;background:${blank?'transparent':'rgba(245,240,232,.07)'};cursor:${blank?'default':'pointer'};user-select:none">${l}</div>`;
   }).join('');
 }
 function pressPin(d){
@@ -272,18 +272,18 @@ async function renderHome(){
     <div style="position:relative;padding:6px 22px 26px;background:radial-gradient(circle at 80% -10%,rgba(201,168,76,.2),transparent 46%),linear-gradient(160deg,#1f4232,#13281e);border-radius:0 0 30px 30px;overflow:hidden;animation:ro-rise .5s ease both">
       <div style="position:absolute;right:-30px;top:-30px;width:150px;height:150px;border-radius:50%;border:1px solid rgba(201,168,76,.18)"></div>
       <div style="display:flex;align-items:center;justify-content:space-between">
-        <div><div style="font-size:15px;color:#C1C4BB">Salom,</div><div style="font-family:'Cormorant Garamond',serif;font-size:32px;color:#F5F0E8;line-height:1.05">${esc(name)} 👋</div></div>
-        <div style="width:46px;height:46px;border-radius:50%;background:rgba(245,240,232,.1);border:1px solid rgba(201,168,76,.4);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:20px;color:#C9A84C">${esc(initial)}</div>
+        <div><div style="font-size:15px;color:#C1C4BB">Salom,</div><div style="font-family:'Nunito Sans',sans-serif;font-size:28px;font-weight:700;color:#F5F0E8;line-height:1.05">${esc(name)} 👋</div></div>
+        <div style="width:46px;height:46px;border-radius:50%;background:rgba(245,240,232,.1);border:1px solid rgba(201,168,76,.4);display:flex;align-items:center;justify-content:center;font-family:'Nunito Sans',sans-serif;font-size:18px;font-weight:700;color:#C9A84C">${esc(initial)}</div>
       </div>
       ${testCta}
     </div>
     <div id="home-kpi" style="margin:18px 18px 0"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 18px 0">
-      <div style="padding:16px;border-radius:18px;background:#1b3a2d;border:1px solid rgba(245,240,232,.07);animation:ro-rise .5s ease .12s both"><div style="font-family:'Cormorant Garamond',serif;font-size:38px;color:#F5F0E8;line-height:1"><span id="ct-avg">0</span><span style="font-size:17px;color:#C9A84C">%</span></div><div style="font-size:13px;color:#97A298;margin-top:2px">O'rtacha ball</div></div>
-      <div style="padding:16px;border-radius:18px;background:#1b3a2d;border:1px solid rgba(245,240,232,.07);animation:ro-rise .5s ease .18s both"><div style="font-family:'Cormorant Garamond',serif;font-size:38px;color:#F5F0E8;line-height:1"><span id="ct-count">0</span></div><div style="font-size:13px;color:#97A298;margin-top:2px">Topshirilgan test</div></div>
+      <div style="padding:16px;border-radius:18px;background:#1b3a2d;border:1px solid rgba(245,240,232,.07);animation:ro-rise .5s ease .12s both"><div style="font-family:'Nunito Sans',sans-serif;font-size:33px;font-weight:700;color:#F5F0E8;line-height:1"><span id="ct-avg">0</span><span style="font-size:17px;color:#C9A84C">%</span></div><div style="font-size:13px;color:#97A298;margin-top:2px">O'rtacha ball</div></div>
+      <div style="padding:16px;border-radius:18px;background:#1b3a2d;border:1px solid rgba(245,240,232,.07);animation:ro-rise .5s ease .18s both"><div style="font-family:'Nunito Sans',sans-serif;font-size:33px;font-weight:700;color:#F5F0E8;line-height:1"><span id="ct-count">0</span></div><div style="font-size:13px;color:#97A298;margin-top:2px">Topshirilgan test</div></div>
     </div>
     <div style="margin:24px 18px 0;animation:ro-rise .5s ease .24s both">
-      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:11px"><div style="font-family:'Cormorant Garamond',serif;font-size:21px;color:#F5F0E8">E'lonlar</div><div onclick="go('koproq')" style="font-size:14px;color:#C9A84C;cursor:pointer">Barchasi</div></div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:11px"><div style="font-family:'Nunito Sans',sans-serif;font-size:18px;font-weight:700;color:#F5F0E8">E'lonlar</div><div onclick="go('koproq')" style="font-size:14px;color:#C9A84C;cursor:pointer">Barchasi</div></div>
       <div style="display:flex;flex-direction:column;gap:10px">
         ${anns.length? anns.slice(0,3).map(a=>`<div style="display:flex;gap:12px;padding:13px 14px;border-radius:16px;background:#1b3a2d;border:1px solid rgba(245,240,232,.06)">
           <div style="width:3px;border-radius:3px;background:${C};flex:none"></div>
@@ -305,12 +305,12 @@ async function loadHomeKPI(){
   if (!k || k.level==='nodata'){ box.innerHTML=''; return; }
   const pct = (k.score!=null? k.score : (historyData.length?Math.round(historyData.reduce((s,r)=>s+(r.score||0),0)/historyData.length):0));
   const pen = k.penalty||0;
-  const bonusLine = pen>0 ? `<div style="font-family:'Cormorant Garamond',serif;font-size:23px;color:#C9A84C;line-height:1.1">+${pen}% <span style="font-size:15px;color:#97A298">bonus 🏆</span></div>`
-    : pen<0 ? `<div style="font-family:'Cormorant Garamond',serif;font-size:23px;color:#F0A98D;line-height:1.1">${pen}% <span style="font-size:15px;color:#97A298">ushlanma</span></div>`
-    : `<div style="font-family:'Cormorant Garamond',serif;font-size:21px;color:#F5F0E8;line-height:1.1">Barqaror</div>`;
+  const bonusLine = pen>0 ? `<div style="font-family:'Nunito Sans',sans-serif;font-size:20px;font-weight:700;color:#C9A84C;line-height:1.1">+${pen}% <span style="font-size:15px;color:#97A298">bonus 🏆</span></div>`
+    : pen<0 ? `<div style="font-family:'Nunito Sans',sans-serif;font-size:20px;font-weight:700;color:#F0A98D;line-height:1.1">${pen}% <span style="font-size:15px;color:#97A298">ushlanma</span></div>`
+    : `<div style="font-family:'Nunito Sans',sans-serif;font-size:18px;font-weight:700;color:#F5F0E8;line-height:1.1">Barqaror</div>`;
   box.innerHTML = `<div style="padding:20px;border-radius:22px;background:linear-gradient(150deg,#21463440,#1b3a2d);border:1px solid rgba(201,168,76,.16);display:flex;align-items:center;gap:20px;animation:ro-rise .5s ease .06s both">
     <div style="position:relative;width:108px;height:108px;flex:none;display:flex;align-items:center;justify-content:center">${ring(pct,108,9,C)}
-      <div style="position:absolute;text-align:center"><div style="font-family:'Cormorant Garamond',serif;font-size:34px;font-weight:600;color:#F5F0E8;line-height:1">${pct}<span style="font-size:16px;color:#C9A84C">%</span></div><div style="font-size:12px;letter-spacing:1.5px;color:#97A298;text-transform:uppercase">Oylik KPI</div></div></div>
+      <div style="position:absolute;text-align:center"><div style="font-family:'Nunito Sans',sans-serif;font-size:30px;font-weight:700;color:#F5F0E8;line-height:1">${pct}<span style="font-size:16px;color:#C9A84C">%</span></div><div style="font-size:12px;letter-spacing:1.5px;color:#97A298;text-transform:uppercase">Oylik KPI</div></div></div>
     <div style="flex:1;display:flex;flex-direction:column;gap:12px"><div><div style="font-size:13px;color:#97A298">${esc(k.periodLabel||'Joriy davr')} · ${esc(k.level||'')}</div>${bonusLine}</div><div style="height:1px;background:rgba(245,240,232,.08)"></div><div style="font-size:13px;color:#C1C4BB;line-height:1.5">KPI ≥ 90% bo'lsa bonus oshadi. Davom eting!</div></div>
   </div>`;
 }
@@ -318,12 +318,12 @@ async function loadHomeKPI(){
 // ---------- MENU ----------
 async function renderMenu(){
   const box=document.getElementById('tab-menyu');
-  box.innerHTML = `<div style="font-family:'Cormorant Garamond',serif;font-size:30px;color:#F5F0E8;margin-bottom:4px">Menyu</div><div style="font-size:14px;color:#97A298;margin-bottom:16px">Yuklanmoqda...</div>`;
+  box.innerHTML = `<div style="font-family:'Nunito Sans',sans-serif;font-size:26px;font-weight:700;color:#F5F0E8;margin-bottom:4px">Menyu</div><div style="font-size:14px;color:#97A298;margin-bottom:16px">Yuklanmoqda...</div>`;
   try {
     const data = await api('/api/waiter/menu');
     menuHidden = !!data.hidden;
     if (menuHidden){
-      box.innerHTML = `<div style="font-family:'Cormorant Garamond',serif;font-size:30px;color:#F5F0E8;margin-bottom:8px">Menyu</div><div style="padding:20px;border-radius:16px;background:#1b3a2d;border:1px solid rgba(201,168,76,.2);color:#C1C4BB;font-size:15px;line-height:1.6">📒 Bugun test kuni — menyu vaqtincha yopilgan. Test topshirgach ochiladi.</div>`;
+      box.innerHTML = `<div style="font-family:'Nunito Sans',sans-serif;font-size:26px;font-weight:700;color:#F5F0E8;margin-bottom:8px">Menyu</div><div style="padding:20px;border-radius:16px;background:#1b3a2d;border:1px solid rgba(201,168,76,.2);color:#C1C4BB;font-size:15px;line-height:1.6">📒 Bugun test kuni — menyu vaqtincha yopilgan. Test topshirgach ochiladi.</div>`;
       return;
     }
     menuData = data.menu||[];
@@ -341,7 +341,7 @@ function paintMenu(){
       || (d.description||'').toLowerCase().includes(q)
       || (d.allergens||[]).some(a=>(a||'').toLowerCase().includes(q)));
   document.getElementById('tab-menyu').innerHTML = `
-    <div style="font-family:'Cormorant Garamond',serif;font-size:30px;color:#F5F0E8;margin-bottom:4px">Menyu</div>
+    <div style="font-family:'Nunito Sans',sans-serif;font-size:26px;font-weight:700;color:#F5F0E8;margin-bottom:4px">Menyu</div>
     <div style="font-size:14px;color:#97A298;margin-bottom:14px">Restoran taomlarini o'rganing</div>
     <div onclick="openDrill()" class="ro-press" style="display:flex;align-items:center;gap:13px;padding:14px 16px;border-radius:16px;margin-bottom:14px;cursor:pointer;background:linear-gradient(100deg,rgba(201,168,76,.16),rgba(201,168,76,.06));border:1px solid rgba(201,168,76,.35)">
       <div style="flex:none;width:40px;height:40px;border-radius:12px;background:rgba(201,168,76,.18);display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="1.9"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg></div>
@@ -353,7 +353,7 @@ function paintMenu(){
     </div>
     <div style="display:flex;align-items:center;gap:10px;padding:12px 15px;border-radius:14px;background:#1b3a2d;border:1px solid rgba(245,240,232,.08);margin-bottom:14px">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#C1C4BB" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
-      <input id="menu-search" value="${esc(menuQuery)}" oninput="onMenuSearch(this.value)" placeholder="Taom yoki tarkib bo'yicha qidiring..." style="flex:1;background:transparent;border:none;outline:none;color:#F5F0E8;font-family:'Mulish',sans-serif;font-size:16px"/>
+      <input id="menu-search" value="${esc(menuQuery)}" oninput="onMenuSearch(this.value)" placeholder="Taom yoki tarkib bo'yicha qidiring..." style="flex:1;background:transparent;border:none;outline:none;color:#F5F0E8;font-family:'Nunito Sans',sans-serif;font-size:16px"/>
       ${q?`<span onclick="onMenuSearch('')" style="cursor:pointer;color:#97A298;font-size:17px;line-height:1;padding:0 2px">&times;</span>`:''}</div>
     ${q?`<div style="font-size:13px;color:#97A298;margin:-6px 0 12px 4px">"${esc(menuQuery)}" bo'yicha ${items.length} ta taom topildi</div>`:''}
     <div style="display:flex;gap:8px;overflow-x:auto;margin:0 -18px 16px;padding:0 18px">
@@ -387,7 +387,7 @@ function openDish(id){
         <div onclick="closeDish()" style="position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;background:rgba(8,16,11,.5);display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F5F0E8" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
         ${d.category?`<div style="position:absolute;left:24px;top:18px;padding:4px 11px;border-radius:20px;background:rgba(201,168,76,.92);font-size:12px;font-weight:800;letter-spacing:.5px;color:#11241b">${esc(d.category)}</div>`:''}</div>
       <div style="padding:4px 24px 28px;margin-top:-30px;position:relative;height:calc(100% - 200px);overflow-y:auto">
-        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px"><div style="font-family:'Cormorant Garamond',serif;font-size:30px;color:#F5F0E8;line-height:1.1">${esc(d.name)}</div>${d.price?`<div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:#C9A84C;white-space:nowrap">${esc(d.price)}</div>`:''}</div>
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px"><div style="font-family:'Nunito Sans',sans-serif;font-size:26px;font-weight:700;color:#F5F0E8;line-height:1.1">${esc(d.name)}</div>${d.price?`<div style="font-family:'Nunito Sans',sans-serif;font-size:21px;font-weight:700;color:#C9A84C;white-space:nowrap">${esc(d.price)}</div>`:''}</div>
         <div style="font-size:14px;color:#97A298;font-weight:700;letter-spacing:.5px;margin:20px 0 10px;text-transform:uppercase">Tarkibi</div>
         ${ings.length
           ? `<div style="display:flex;flex-wrap:wrap;gap:7px">${ings.map(i=>`<span style="padding:7px 12px;border-radius:11px;background:rgba(245,240,232,.06);border:1px solid rgba(245,240,232,.09);font-size:14px;color:#F5F0E8">${esc(i)}</span>`).join('')}</div>`
@@ -447,15 +447,15 @@ function drillStart(){
   box.innerHTML = `<div style="position:absolute;inset:0;overflow-y:auto;background:linear-gradient(170deg,#163326,#0f1f17);padding:22px 18px 40px">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
       <div onclick="closeDrill()" style="cursor:pointer;padding:4px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5F0E8" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:26px;color:#F5F0E8">Bilim mashqi</div>
+      <div style="font-family:'Nunito Sans',sans-serif;font-size:23px;font-weight:700;color:#F5F0E8">Bilim mashqi</div>
     </div>
     <div style="display:flex;align-items:center;gap:18px;padding:18px;border-radius:18px;background:#1b3a2d;border:1px solid rgba(245,240,232,.07);margin-bottom:20px">
       <div style="position:relative;width:84px;height:84px;flex:none;display:flex;align-items:center;justify-content:center">
         ${ring(pct,84,8,'#C9A84C')}
-        <div style="position:absolute;font-family:'Cormorant Garamond',serif;font-size:24px;color:#F5F0E8">${pct}<span style="font-size:14px">%</span></div>
+        <div style="position:absolute;font-family:'Nunito Sans',sans-serif;font-size:21px;font-weight:700;color:#F5F0E8">${pct}<span style="font-size:14px">%</span></div>
       </div>
       <div style="flex:1;min-width:0">
-        <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#F5F0E8;line-height:1.1">${known} / ${total}</div>
+        <div style="font-family:'Nunito Sans',sans-serif;font-size:19px;font-weight:700;color:#F5F0E8;line-height:1.1">${known} / ${total}</div>
         <div style="font-size:14px;color:#97A298;margin-top:3px;line-height:1.5">taomni bilaman deb belgiladingiz</div>
       </div>
     </div>
@@ -506,7 +506,7 @@ function drillCard(){
         <div style="height:190px;position:relative;${d.image?`background:#244635;background-image:url('${esc(d.image)}');background-size:cover;background-position:center`:`background-image:repeating-linear-gradient(135deg,#244635,#244635 11px,#1e3b2c 11px,#1e3b2c 22px)`}"></div>
         <div style="padding:16px 18px 18px;text-align:center">
           <div style="font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:#C9A84C;font-weight:700">${esc(d.category||'')}</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:26px;color:#F5F0E8;line-height:1.15;margin-top:5px">${esc(d.name)}</div>
+          <div style="font-family:'Nunito Sans',sans-serif;font-size:23px;font-weight:700;color:#F5F0E8;line-height:1.15;margin-top:5px">${esc(d.name)}</div>
         </div>
       </div>
 
@@ -566,16 +566,16 @@ function drillFinish(){
     <div style="position:relative;width:150px;height:150px;display:flex;align-items:center;justify-content:center;margin:20px 0 10px">
       ${ring(pct,150,10,'#C9A84C')}
       <div style="position:absolute;text-align:center">
-        <div style="font-family:'Cormorant Garamond',serif;font-size:44px;color:#F5F0E8;line-height:1">${pct}<span style="font-size:18px;color:#C9A84C">%</span></div>
+        <div style="font-family:'Nunito Sans',sans-serif;font-size:39px;font-weight:700;color:#F5F0E8;line-height:1">${pct}<span style="font-size:18px;color:#C9A84C">%</span></div>
         <div style="font-size:13px;color:#97A298;margin-top:2px">${known}/${total} taom</div>
       </div>
     </div>
     <div style="display:flex;gap:10px;width:100%;margin:18px 0 24px">
       <div style="flex:1;padding:13px;border-radius:14px;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);text-align:center">
-        <div style="font-family:'Cormorant Garamond',serif;font-size:26px;color:#C9A84C;line-height:1">${drillStats.ok}</div>
+        <div style="font-family:'Nunito Sans',sans-serif;font-size:23px;font-weight:700;color:#C9A84C;line-height:1">${drillStats.ok}</div>
         <div style="font-size:12px;color:#97A298;margin-top:3px">BILDIM</div></div>
       <div style="flex:1;padding:13px;border-radius:14px;background:rgba(217,96,59,.10);border:1px solid rgba(217,96,59,.28);text-align:center">
-        <div style="font-family:'Cormorant Garamond',serif;font-size:26px;color:#F0A98D;line-height:1">${drillStats.again}</div>
+        <div style="font-family:'Nunito Sans',sans-serif;font-size:23px;font-weight:700;color:#F0A98D;line-height:1">${drillStats.again}</div>
         <div style="font-size:12px;color:#97A298;margin-top:3px">TAKRORLASH</div></div>
     </div>
     <div style="width:100%;display:flex;flex-direction:column;gap:10px">
@@ -595,21 +595,21 @@ function renderTestIntro(){
     inner = `<div style="padding:24px;border-radius:18px;background:#1b3a2d;border:1px solid rgba(245,240,232,.08);color:#C1C4BB;font-size:15px;line-height:1.6;text-align:center">Bugun test kuni emas.<br>Test kunlari restoran admini tomonidan belgilanadi.</div>`;
   } else if (doneToday){
     const r=historyData.find(r=>r.date===todayISO());
-    inner = `<div style="padding:24px;border-radius:18px;background:rgba(63,156,108,.12);border:1px solid rgba(63,156,108,.3);text-align:center"><div style="font-family:'Cormorant Garamond',serif;font-size:46px;color:#8FDDB2">${r?r.score:''}%</div><div style="font-size:15px;color:#C1C4BB;margin-top:6px">Siz bugun testni topshirdingiz ✓${r&&r.hasCertificate?'<br>Sertifikat oldingiz! 🏆':''}</div></div>`;
+    inner = `<div style="padding:24px;border-radius:18px;background:rgba(63,156,108,.12);border:1px solid rgba(63,156,108,.3);text-align:center"><div style="font-family:'Nunito Sans',sans-serif;font-size:40px;font-weight:700;color:#8FDDB2">${r?r.score:''}%</div><div style="font-size:15px;color:#C1C4BB;margin-top:6px">Siz bugun testni topshirdingiz ✓${r&&r.hasCertificate?'<br>Sertifikat oldingiz! 🏆':''}</div></div>`;
   } else {
     inner = `<div style="border-radius:26px;padding:30px 22px;background:radial-gradient(circle at 50% 0%,rgba(201,168,76,.18),transparent 55%),linear-gradient(160deg,#214634,#1b3a2d);border:1px solid rgba(201,168,76,.18);text-align:center">
       <div style="width:84px;height:84px;margin:0 auto 16px;border-radius:50%;border:1.5px solid rgba(201,168,76,.5);display:flex;align-items:center;justify-content:center;animation:ro-breathe 3s ease infinite"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="1.6"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:#F5F0E8;line-height:1.2">Xizmat standartlari</div>
+      <div style="font-family:'Nunito Sans',sans-serif;font-size:21px;font-weight:700;color:#F5F0E8;line-height:1.2">Xizmat standartlari</div>
       <div style="font-size:15px;color:#C1C4BB;margin-top:6px;line-height:1.5">Menyu, allergenlar va xizmat qoidalari bo'yicha</div>
       <div style="display:flex;justify-content:center;gap:22px;margin:22px 0 26px">
-        <div><div style="font-family:'Cormorant Garamond',serif;font-size:26px;color:#C9A84C">20</div><div style="font-size:12px;color:#97A298;letter-spacing:.5px">SAVOL</div></div>
+        <div><div style="font-family:'Nunito Sans',sans-serif;font-size:23px;font-weight:700;color:#C9A84C">20</div><div style="font-size:12px;color:#97A298;letter-spacing:.5px">SAVOL</div></div>
         <div style="width:1px;background:rgba(245,240,232,.12)"></div>
-        <div><div style="font-family:'Cormorant Garamond',serif;font-size:26px;color:#C9A84C">30s</div><div style="font-size:12px;color:#97A298;letter-spacing:.5px">HAR SAVOL</div></div>
+        <div><div style="font-family:'Nunito Sans',sans-serif;font-size:23px;font-weight:700;color:#C9A84C">30s</div><div style="font-size:12px;color:#97A298;letter-spacing:.5px">HAR SAVOL</div></div>
         <div style="width:1px;background:rgba(245,240,232,.12)"></div>
-        <div><div style="font-family:'Cormorant Garamond',serif;font-size:26px;color:#C9A84C">90%</div><div style="font-size:12px;color:#97A298;letter-spacing:.5px">SERTIFIKAT</div></div></div>
+        <div><div style="font-family:'Nunito Sans',sans-serif;font-size:23px;font-weight:700;color:#C9A84C">90%</div><div style="font-size:12px;color:#97A298;letter-spacing:.5px">SERTIFIKAT</div></div></div>
       <div onclick="startTest()" class="ro-press" style="padding:16px;border-radius:16px;background:linear-gradient(100deg,#C9A84C,#d8bd6a);color:#11241b;font-weight:800;font-size:16px;cursor:pointer;box-shadow:0 14px 30px -12px rgba(201,168,76,.6)">Testni boshlash</div></div>`;
   }
-  box.innerHTML = `<div style="font-family:'Cormorant Garamond',serif;font-size:30px;color:#F5F0E8">Bilim testi</div><div style="font-size:14px;color:#97A298;margin-bottom:22px">Bugungi baholash</div>${inner}`;
+  box.innerHTML = `<div style="font-family:'Nunito Sans',sans-serif;font-size:26px;font-weight:700;color:#F5F0E8">Bilim testi</div><div style="font-size:14px;color:#97A298;margin-bottom:22px">Bugungi baholash</div>${inner}`;
 }
 async function startTest(){
   try {
@@ -627,7 +627,7 @@ async function startTest(){
       <div style="display:flex;flex-direction:column;align-items:center;margin:14px 0 18px">
         <div style="position:relative;width:74px;height:74px;display:flex;align-items:center;justify-content:center">
           <div id="timer-ring">${ring(100,74,6,C)}</div>
-          <div id="timer-num" style="position:absolute;font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;color:#F5F0E8">30</div>
+          <div id="timer-num" style="position:absolute;font-family:'Nunito Sans',sans-serif;font-size:25px;font-weight:700;color:#F5F0E8">30</div>
         </div>
       </div>
       <div id="q-content" style="display:flex;flex-direction:column;flex:1;min-height:0"></div>
@@ -645,10 +645,10 @@ function showQuestion(first){
   if(prog) prog.style.width=Math.round((qIndex+1)/testQuestions.length*100)+'%';
   if(num) num.innerHTML=`${qIndex+1}<span style="color:#97A298">/${testQuestions.length}</span>`;
 
-  const html=`<div style="font-family:'Cormorant Garamond',serif;font-size:24px;line-height:1.35;color:#F5F0E8;text-align:center;flex:1;display:flex;align-items:center;justify-content:center;padding:0 4px">${esc(q.question)}</div>
+  const html=`<div style="font-family:'Nunito Sans',sans-serif;font-size:21px;font-weight:700;line-height:1.35;color:#F5F0E8;text-align:center;flex:1;display:flex;align-items:center;justify-content:center;padding:0 4px">${esc(q.question)}</div>
     <div style="display:flex;flex-direction:column;gap:10px;margin-top:auto">
       ${q.options.map((o,i)=>`<div onclick="pickAnswer(${i})" id="opt-${i}" style="display:flex;align-items:center;gap:13px;padding:15px;border-radius:16px;background:rgba(245,240,232,.05);border:1.5px solid rgba(245,240,232,.1);cursor:pointer;transition:background .2s,border-color .2s,opacity .2s;animation:res-row .3s ease ${i*0.06}s both">
-        <div style="width:28px;height:28px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:#C9A84C;background:rgba(245,240,232,.1);transition:background .2s,color .2s">${letters[i]}</div>
+        <div style="width:28px;height:28px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;font-family:'Nunito Sans',sans-serif;font-size:16px;font-weight:700;color:#C9A84C;background:rgba(245,240,232,.1);transition:background .2s,color .2s">${letters[i]}</div>
         <span style="flex:1;font-size:16px;font-weight:500;color:#F5F0E8;line-height:1.35">${esc(o)}</span>
       </div>`).join('')}
     </div>`;
@@ -716,7 +716,7 @@ async function submitTest(){
   const ov=document.getElementById('overlay-running');
   ov.innerHTML=`<div style="position:absolute;inset:0;background:linear-gradient(170deg,#163326,#0f1f17);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;animation:ro-fade .3s ease">
     <div style="width:54px;height:54px;border-radius:50%;border:3px solid rgba(201,168,76,.2);border-top-color:#C9A84C;animation:ro-spin .8s linear infinite"></div>
-    <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:#C1C4BB">Natija hisoblanmoqda…</div>
+    <div style="font-family:'Nunito Sans',sans-serif;font-size:18px;font-weight:700;color:#C1C4BB">Natija hisoblanmoqda…</div>
   </div>`;
   try {
     const [data] = await Promise.all([
@@ -767,13 +767,13 @@ function showResult(r){
           style="transition:stroke-dashoffset 1.1s cubic-bezier(.4,0,.2,1) .35s"/>
       </svg>
       <div style="position:absolute;text-align:center">
-        <div id="res-num" style="font-family:'Cormorant Garamond',serif;font-size:62px;font-weight:600;color:#F5F0E8;line-height:1;transition:color .4s">0<span style="font-size:24px;color:${ringColor}">%</span></div>
+        <div id="res-num" style="font-family:'Nunito Sans',sans-serif;font-size:55px;font-weight:700;color:#F5F0E8;line-height:1;transition:color .4s">0<span style="font-size:24px;color:${ringColor}">%</span></div>
         <div style="font-size:13px;color:#97A298;margin-top:2px">${totalCorrect}/${totalQuestions} to'g'ri</div>
       </div>
     </div>
 
     <!-- grade badge -->
-    <div style="padding:6px 20px;border-radius:20px;background:${passed?'rgba(201,168,76,.15)':'rgba(245,240,232,.06)'};border:1px solid ${passed?'rgba(201,168,76,.4)':'rgba(245,240,232,.12)'};font-family:'Cormorant Garamond',serif;font-size:20px;color:${ringColor};animation:ro-rise .5s ease .5s both">${grade}</div>
+    <div style="padding:6px 20px;border-radius:20px;background:${passed?'rgba(201,168,76,.15)':'rgba(245,240,232,.06)'};border:1px solid ${passed?'rgba(201,168,76,.4)':'rgba(245,240,232,.12)'};font-family:'Nunito Sans',sans-serif;font-size:18px;font-weight:700;color:${ringColor};animation:ro-rise .5s ease .5s both">${grade}</div>
 
     <!-- breakdown bars -->
     <div style="width:100%;margin:22px 0 20px;display:flex;flex-direction:column;gap:10px">
@@ -786,7 +786,7 @@ function showResult(r){
         return `<div style="animation:res-row .4s ease ${delay}s both">
           <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px">
             <span style="font-size:14px;color:#C1C4BB;font-weight:600">${lbl}</span>
-            <span style="font-family:'Cormorant Garamond',serif;font-size:17px;color:${col}">${sc}<span style="font-size:13px;color:#97A298">/${tot}</span></span>
+            <span style="font-family:'Nunito Sans',sans-serif;font-size:16px;font-weight:700;color:${col}">${sc}<span style="font-size:13px;color:#97A298">/${tot}</span></span>
           </div>
           <div style="height:6px;border-radius:6px;background:rgba(245,240,232,.08);overflow:hidden">
             <div class="res-bar" data-pct="${pct}" data-col="${col}" style="height:100%;width:0%;border-radius:6px;background:${col};transition:width 1s cubic-bezier(.4,0,.2,1) ${delay+0.1}s"></div>
@@ -869,16 +869,16 @@ function openAnalysis(r){
   ov.innerHTML = `<div style="position:absolute;inset:0;overflow-y:auto;background:linear-gradient(170deg,#163326,#0f1f17);padding:22px 18px 40px">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
       <div onclick="closeAnalysis()" style="cursor:pointer;padding:4px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5F0E8" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:26px;color:#F5F0E8">Test tahlili</div>
+      <div style="font-family:'Nunito Sans',sans-serif;font-size:23px;font-weight:700;color:#F5F0E8">Test tahlili</div>
     </div>
     <div style="font-size:14px;color:#97A298;margin:0 0 14px 38px">${esc(r.date||'')} · ${r.score??0}%</div>
     <div style="display:flex;gap:9px;margin-bottom:18px">
       <div style="flex:1;padding:11px;border-radius:13px;background:rgba(95,199,143,.10);border:1px solid rgba(95,199,143,.25);text-align:center">
-        <div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:#8FDDB2;line-height:1">${right.length}</div>
+        <div style="font-family:'Nunito Sans',sans-serif;font-size:21px;font-weight:700;color:#8FDDB2;line-height:1">${right.length}</div>
         <div style="font-size:12px;color:#97A298;margin-top:2px">TO'G'RI</div>
       </div>
       <div style="flex:1;padding:11px;border-radius:13px;background:rgba(217,96,59,.10);border:1px solid rgba(217,96,59,.3);text-align:center">
-        <div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:#F0A98D;line-height:1">${wrong.length}</div>
+        <div style="font-family:'Nunito Sans',sans-serif;font-size:21px;font-weight:700;color:#F0A98D;line-height:1">${wrong.length}</div>
         <div style="font-size:12px;color:#97A298;margin-top:2px">XATO</div>
       </div>
     </div>
@@ -906,17 +906,17 @@ function openCert(){
       <div style="position:absolute;inset:9px;border:1.5px solid rgba(201,168,76,.45);border-radius:15px;pointer-events:none"></div>
       <div style="position:absolute;inset:14px;border:1px solid rgba(201,168,76,.2);border-radius:11px;pointer-events:none"></div>
       <div style="font-size:13px;letter-spacing:4px;text-transform:uppercase;color:#9c8233">RestoOne${rest?' · '+esc(rest):''}</div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:30px;color:#14291F;margin-top:14px;line-height:1.1">Sertifikat</div>
+      <div style="font-family:'Nunito Sans',sans-serif;font-size:26px;font-weight:700;color:#14291F;margin-top:14px;line-height:1.1">Sertifikat</div>
       <div style="font-size:13px;color:rgba(20,41,31,.55);margin-top:4px">quyidagiga taqdim etiladi</div>
-      <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:30px;color:#14291F;margin:14px 0 4px">${esc(name)}</div>
+      <div style="font-family:'Nunito Sans',sans-serif;font-style:italic;font-size:30px;color:#14291F;margin:14px 0 4px">${esc(name)}</div>
       <div style="width:120px;height:1px;background:rgba(201,168,76,.5);margin:6px auto 16px"></div>
       <div style="font-size:14px;color:rgba(20,41,31,.62);line-height:1.55;padding:0 6px">Xizmat standartlari bo'yicha bilim testini muvaffaqiyatli yakunlagani uchun</div>
       <div style="margin:20px auto 0;width:96px;height:96px;position:relative;display:flex;align-items:center;justify-content:center;animation:ro-seal .7s cubic-bezier(.2,.9,.25,1) .15s both">
         <div style="position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 35% 30%,#e2c879,#C9A84C);box-shadow:0 8px 18px -6px rgba(201,168,76,.7)"></div>
         <div style="position:absolute;inset:8px;border-radius:50%;border:1.5px dashed rgba(17,36,27,.35)"></div>
-        <div style="position:relative;text-align:center;color:#14291F"><div style="font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:700;line-height:1">${score}%</div><div style="font-size:12px;letter-spacing:1px">A'LO</div></div></div>
+        <div style="position:relative;text-align:center;color:#14291F"><div style="font-family:'Nunito Sans',sans-serif;font-size:26px;font-weight:800;line-height:1">${score}%</div><div style="font-size:12px;letter-spacing:1px">A'LO</div></div></div>
       <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:22px;padding:0 4px">
-        <div style="text-align:left"><div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:17px;color:#14291F">Administrator</div><div style="font-size:12px;color:rgba(20,41,31,.5);border-top:1px solid rgba(20,41,31,.2);padding-top:3px">Bosh menejer</div></div>
+        <div style="text-align:left"><div style="font-family:'Nunito Sans',sans-serif;font-style:italic;font-size:17px;color:#14291F">Administrator</div><div style="font-size:12px;color:rgba(20,41,31,.5);border-top:1px solid rgba(20,41,31,.2);padding-top:3px">Bosh menejer</div></div>
         <div style="text-align:right"><div style="font-size:13px;color:#14291F;font-weight:700">${esc(date)}</div><div style="font-size:12px;color:rgba(20,41,31,.5)">№ RO-2026-${score}</div></div></div></div>
     <div style="display:flex;gap:10px;width:100%;margin-top:18px">
       <div onclick="downloadCert()" class="ro-press" style="flex:1;padding:15px;border-radius:15px;background:linear-gradient(100deg,#C9A84C,#d8bd6a);color:#11241b;font-weight:800;font-size:16px;text-align:center;cursor:pointer">⤓ Yuklab olish</div>
@@ -962,17 +962,17 @@ function downloadCert(){
 // ---------- O'QUV ----------
 async function renderOquv(){
   const box=document.getElementById('tab-oquv');
-  box.innerHTML=`<div style="font-family:'Cormorant Garamond',serif;font-size:30px;color:#F5F0E8">O'quv</div><div style="font-size:14px;color:#97A298;margin-bottom:16px">Yuklanmoqda...</div>`;
+  box.innerHTML=`<div style="font-family:'Nunito Sans',sans-serif;font-size:26px;font-weight:700;color:#F5F0E8">O'quv</div><div style="font-size:14px;color:#97A298;margin-bottom:16px">Yuklanmoqda...</div>`;
   let mods=[]; try { mods = await api('/api/waiter/modules')||[]; } catch {}
   let vids=[]; try { vids = await api('/api/waiter/training')||[]; } catch {}
   window._trainingVids = vids;
   const total=mods.length, done=mods.filter(m=>m.done||m.completed||m.progress>=100).length;
   const pct=total?Math.round(done/total*100):0;
-  box.innerHTML=`<div style="font-family:'Cormorant Garamond',serif;font-size:30px;color:#F5F0E8">O'quv</div>
+  box.innerHTML=`<div style="font-family:'Nunito Sans',sans-serif;font-size:26px;font-weight:700;color:#F5F0E8">O'quv</div>
     <div style="font-size:14px;color:#97A298;margin-bottom:16px">Xizmat standartlari · ${total} dars</div>
     <div style="padding:16px 18px;border-radius:18px;background:linear-gradient(120deg,#1b3a2d,#214634);border:1px solid rgba(245,240,232,.07);margin-bottom:18px">
       <div style="font-size:15px;color:#C1C4BB">Umumiy progress</div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:28px;color:#F5F0E8;line-height:1.1">${done} / ${total} <span style="font-size:16px;color:#C9A84C">dars</span></div>
+      <div style="font-family:'Nunito Sans',sans-serif;font-size:25px;font-weight:700;color:#F5F0E8;line-height:1.1">${done} / ${total} <span style="font-size:16px;color:#C9A84C">dars</span></div>
       <div style="height:7px;border-radius:6px;background:rgba(245,240,232,.1);margin-top:8px;overflow:hidden"><div style="height:100%;width:${pct}%;border-radius:6px;background:linear-gradient(90deg,#C9A84C,#d8bd6a)"></div></div></div>
     <div style="display:flex;flex-direction:column;gap:11px">
       ${total? mods.map((m,i)=>{const isDone=m.done||m.completed||m.progress>=100;return `<div class="ro-press" style="display:flex;gap:13px;align-items:center;padding:11px;border-radius:16px;background:#1b3a2d;border:1px solid rgba(245,240,232,.06);cursor:pointer">
@@ -990,7 +990,7 @@ function ytIdFrom(url){
 function renderStandartlarSection(vids){
   const withUrl = (vids||[]).filter(v=>v.videoUrl);
   return `<div style="margin-top:24px">
-    <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#F5F0E8;margin-bottom:3px">Standartlar</div>
+    <div style="font-family:'Nunito Sans',sans-serif;font-size:19px;font-weight:700;color:#F5F0E8;margin-bottom:3px">Standartlar</div>
     <div style="font-size:14px;color:#97A298;margin-bottom:14px">Qisqa video qo'llanmalar</div>
     ${!withUrl.length ? '<div style="color:#97A298;font-size:15px;text-align:center;padding:24px;border:1px dashed rgba(245,240,232,.14);border-radius:16px">Hozircha video yo\'q</div>' :
       `<div style="display:grid;grid-template-columns:1fr 1fr;gap:11px">
@@ -1037,13 +1037,13 @@ function closeTrainingVideo(){
 // ---------- TARIX ----------
 function renderTarix(){
   const box=document.getElementById('tab-tarix');
-  box.innerHTML=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:18px"><div onclick="go('home')" style="cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5F0E8" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></div><div style="font-family:'Cormorant Garamond',serif;font-size:28px;color:#F5F0E8">Tarix</div></div>
+  box.innerHTML=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:18px"><div onclick="go('home')" style="cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5F0E8" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></div><div style="font-family:'Nunito Sans',sans-serif;font-size:25px;font-weight:700;color:#F5F0E8">Tarix</div></div>
     ${!historyData.length?'<div style="text-align:center;color:#97A298;padding:30px;font-size:15px">Hali test topshirmadingiz</div>':`<div style="position:relative;padding-left:22px"><div style="position:absolute;left:5px;top:6px;bottom:6px;width:1.5px;background:rgba(245,240,232,.12)"></div><div style="display:flex;flex-direction:column;gap:13px">
       ${historyData.map(h=>{const pass=(h.score||0)>=90||h.hasCertificate;const dot=pass?'#3f9c6c':((h.score||0)>=60?'#e3c06a':'#F0A98D');return `<div style="position:relative"><div style="position:absolute;left:-21px;top:18px;width:11px;height:11px;border-radius:50%;background:${dot};box-shadow:0 0 0 4px #11241b"></div>
         <div onclick="openAnalysisFor('${esc(h.id)}')" class="ro-press" style="padding:14px 16px;border-radius:16px;background:#1b3a2d;border:1px solid rgba(245,240,232,.06);display:flex;align-items:center;gap:14px;cursor:pointer"><div style="flex:1"><div style="font-size:16px;font-weight:600;color:#F5F0E8">${esc(h.date||'')}</div><div style="font-size:13px;color:#97A298;margin-top:2px">${esc(h.totalCorrect!=null?h.totalCorrect+'/'+h.totalQuestions+" to'g'ri":'')}</div>
         <div style="display:inline-block;margin-top:7px;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:.5px;color:${pass?'#8FDDB2':'#F0A98D'};background:${pass?'rgba(63,156,108,.18)':'rgba(217,96,59,.18)'}">${pass?'O\'TDI':'O\'TMADI'}</div>
         <div style="font-size:12px;color:#C9A84C;margin-top:6px;font-weight:600">Tahlilni ko'rish →</div></div>
-        <div style="font-family:'Cormorant Garamond',serif;font-size:30px;color:${dot};line-height:1">${h.score}<span style="font-size:16px">%</span></div></div></div>`;}).join('')}
+        <div style="font-family:'Nunito Sans',sans-serif;font-size:26px;font-weight:700;color:${dot};line-height:1">${h.score}<span style="font-size:16px">%</span></div></div></div>`;}).join('')}
     </div></div>`}`;
 }
 
@@ -1051,12 +1051,12 @@ function renderTarix(){
 function renderSertifikat(){
   const box=document.getElementById('tab-sertifikat');
   const certs=historyData.filter(h=>h.hasCertificate);
-  box.innerHTML=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:18px"><div onclick="go('home')" style="cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5F0E8" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></div><div style="font-family:'Cormorant Garamond',serif;font-size:28px;color:#F5F0E8">Sertifikatlar</div></div>
+  box.innerHTML=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:18px"><div onclick="go('home')" style="cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5F0E8" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></div><div style="font-family:'Nunito Sans',sans-serif;font-size:25px;font-weight:700;color:#F5F0E8">Sertifikatlar</div></div>
     ${certs.length? certs.map(r=>`<div onclick="openCertFor('${esc(r.id)}')" class="ro-press" style="cursor:pointer;margin-bottom:12px;border-radius:18px;padding:22px 20px;background:linear-gradient(160deg,#F8F4EC,#efe7d6);position:relative;text-align:center;box-shadow:0 14px 30px -14px rgba(0,0,0,.5)">
       <div style="position:absolute;inset:7px;border:1px solid rgba(201,168,76,.4);border-radius:12px"></div>
       <div style="font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#9c8233">RestoOne</div>
-      <div style="font-family:'Cormorant Garamond',serif;font-size:24px;color:#14291F;margin-top:6px">Xizmat standartlari</div>
-      <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:20px;color:#14291F;margin-top:8px">${esc(r.waiterName||waiterName())}</div>
+      <div style="font-family:'Nunito Sans',sans-serif;font-size:21px;font-weight:700;color:#14291F;margin-top:6px">Xizmat standartlari</div>
+      <div style="font-family:'Nunito Sans',sans-serif;font-style:italic;font-size:20px;color:#14291F;margin-top:8px">${esc(r.waiterName||waiterName())}</div>
       <div style="display:inline-block;margin-top:12px;padding:5px 16px;border-radius:20px;background:#C9A84C;color:#14291F;font-weight:800;font-size:15px">${r.score}% · ${esc(r.date||'')}</div></div>`).join('')
     : `<div style="padding:16px;border-radius:16px;background:#1b3a2d;border:1px dashed rgba(245,240,232,.14);text-align:center"><div style="font-size:15px;color:#97A298;line-height:1.5">Sertifikat ochish uchun<br>testdan <b style="color:#C9A84C">90%+</b> to'plang</div></div>`}`;
 }
@@ -1065,16 +1065,16 @@ function openCertFor(id){ const r=historyData.find(h=>String(h.id)===String(id))
 // ---------- REYTING ----------
 async function renderReyting(){
   const box=document.getElementById('tab-reyting');
-  box.innerHTML=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px"><div onclick="go('home')" style="cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5F0E8" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></div><div style="font-family:'Cormorant Garamond',serif;font-size:28px;color:#F5F0E8">Reyting</div></div><div style="font-size:14px;color:#97A298;margin:0 0 20px 34px">Yuklanmoqda...</div>`;
+  box.innerHTML=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px"><div onclick="go('home')" style="cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5F0E8" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></div><div style="font-family:'Nunito Sans',sans-serif;font-size:25px;font-weight:700;color:#F5F0E8">Reyting</div></div><div style="font-size:14px;color:#97A298;margin:0 0 20px 34px">Yuklanmoqda...</div>`;
   let data=[]; try { data = await api('/api/waiter/leaderboard?filter=best')||[]; } catch {}
   const myId=waiterInfo&&waiterInfo.waiter&&waiterInfo.waiter.id;
-  const head=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px"><div onclick="go('home')" style="cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5F0E8" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></div><div style="font-family:'Cormorant Garamond',serif;font-size:28px;color:#F5F0E8">Reyting</div></div><div style="font-size:14px;color:#97A298;margin:0 0 20px 34px">${esc((waiterInfo&&waiterInfo.restaurant&&waiterInfo.restaurant.name)||'')}</div>`;
+  const head=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px"><div onclick="go('home')" style="cursor:pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5F0E8" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></div><div style="font-family:'Nunito Sans',sans-serif;font-size:25px;font-weight:700;color:#F5F0E8">Reyting</div></div><div style="font-size:14px;color:#97A298;margin:0 0 20px 34px">${esc((waiterInfo&&waiterInfo.restaurant&&waiterInfo.restaurant.name)||'')}</div>`;
   if(!data.length){ box.innerHTML=head+'<div style="text-align:center;color:#97A298;padding:30px;font-size:15px">Hali natijalar yo\'q</div>'; return; }
   box.innerHTML = head + `<div style="display:flex;flex-direction:column;gap:9px">${data.map((l,i)=>{const rank=i+1;const isMe=l.waiterId===myId;const medal=rank<=3?['🥇','🥈','🥉'][rank-1]:rank;return `<div style="display:flex;align-items:center;gap:13px;padding:12px 15px;border-radius:15px;background:${isMe?'rgba(201,168,76,.12)':'#1b3a2d'};border:1px solid ${isMe?'rgba(201,168,76,.5)':'rgba(245,240,232,.06)'}">
-    <div style="font-family:'Cormorant Garamond',serif;font-size:18px;color:${isMe?C:'rgba(245,240,232,.5)'};width:26px;text-align:center">${medal}</div>
-    <div style="width:38px;height:38px;border-radius:50%;background:rgba(245,240,232,.08);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:16px;color:#F5F0E8;flex:none">${esc((l.name||'?').charAt(0).toUpperCase())}</div>
+    <div style="font-family:'Nunito Sans',sans-serif;font-size:16px;font-weight:700;color:${isMe?C:'rgba(245,240,232,.5)'};width:26px;text-align:center">${medal}</div>
+    <div style="width:38px;height:38px;border-radius:50%;background:rgba(245,240,232,.08);display:flex;align-items:center;justify-content:center;font-family:'Nunito Sans',sans-serif;font-size:16px;font-weight:700;color:#F5F0E8;flex:none">${esc((l.name||'?').charAt(0).toUpperCase())}</div>
     <div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:600;color:#F5F0E8">${esc(l.name)}${isMe?' <span style="font-size:13px;color:#C9A84C">(Siz)</span>':''}</div><div style="font-size:12px;color:#97A298">${l.certCount!=null?l.certCount+' sertifikat · '+l.testCount+' test':''}</div></div>
-    <div style="font-family:'Cormorant Garamond',serif;font-size:20px;color:#C9A84C">${l.value!=null?l.value:l.score}<span style="font-size:13px">%</span></div></div>`;}).join('')}</div>`;
+    <div style="font-family:'Nunito Sans',sans-serif;font-size:18px;font-weight:700;color:#C9A84C">${l.value!=null?l.value:l.score}<span style="font-size:13px">%</span></div></div>`;}).join('')}</div>`;
 }
 
 // ---------- KO'PROQ ----------
@@ -1098,23 +1098,23 @@ async function renderKoproq(){
 
   box.innerHTML=`
     <div style="display:flex;align-items:center;gap:14px;padding:18px;border-radius:22px;background:radial-gradient(circle at 85% 0%,rgba(201,168,76,.18),transparent 50%),linear-gradient(150deg,#214634,#1b3a2d);border:1px solid rgba(201,168,76,.14);margin-bottom:6px">
-      <div style="width:56px;height:56px;border-radius:50%;background:rgba(245,240,232,.1);border:1.5px solid rgba(201,168,76,.45);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:26px;color:#C9A84C;flex:none">${esc(initial)}</div>
+      <div style="width:56px;height:56px;border-radius:50%;background:rgba(245,240,232,.1);border:1.5px solid rgba(201,168,76,.45);display:flex;align-items:center;justify-content:center;font-family:'Nunito Sans',sans-serif;font-size:23px;font-weight:700;color:#C9A84C;flex:none">${esc(initial)}</div>
       <div style="flex:1;min-width:0">
-        <div style="font-family:'Cormorant Garamond',serif;font-size:22px;color:#F5F0E8;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(name)}</div>
+        <div style="font-family:'Nunito Sans',sans-serif;font-size:19px;font-weight:700;color:#F5F0E8;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(name)}</div>
         <div style="font-size:14px;color:#97A298;margin-top:2px">Ofitsiant${rest?' · '+esc(rest):''}</div>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:18px">
       <div style="padding:13px 10px;border-radius:16px;background:#1b3a2d;border:1px solid rgba(245,240,232,.06);text-align:center">
-        <div style="font-family:'Cormorant Garamond',serif;font-size:28px;color:#F5F0E8">${avg}<span style="font-size:16px;color:#C9A84C">%</span></div>
+        <div style="font-family:'Nunito Sans',sans-serif;font-size:25px;font-weight:700;color:#F5F0E8">${avg}<span style="font-size:16px;color:#C9A84C">%</span></div>
         <div style="font-size:12px;color:#97A298;margin-top:2px">O'rtacha</div>
       </div>
       <div style="padding:13px 10px;border-radius:16px;background:#1b3a2d;border:1px solid rgba(245,240,232,.06);text-align:center">
-        <div style="font-family:'Cormorant Garamond',serif;font-size:28px;color:#F5F0E8">${historyData.length}</div>
+        <div style="font-family:'Nunito Sans',sans-serif;font-size:25px;font-weight:700;color:#F5F0E8">${historyData.length}</div>
         <div style="font-size:12px;color:#97A298;margin-top:2px">Test</div>
       </div>
       <div style="padding:13px 10px;border-radius:16px;background:#1b3a2d;border:1px solid rgba(245,240,232,.06);text-align:center">
-        <div style="font-family:'Cormorant Garamond',serif;font-size:28px;color:${certCount?C:'rgba(245,240,232,.3)'}">${certCount}</div>
+        <div style="font-family:'Nunito Sans',sans-serif;font-size:25px;font-weight:700;color:${certCount?C:'rgba(245,240,232,.3)'}">${certCount}</div>
         <div style="font-size:12px;color:#97A298;margin-top:2px">Sertifikat</div>
       </div>
     </div>

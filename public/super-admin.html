@@ -7,13 +7,13 @@
 <meta name="theme-color" content="#14291F">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700&family=Mulish:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,600;0,6..12,700;0,6..12,800;1,6..12,600&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
-  body { background: #F5F0E8; color: #1B3A2D; font-family: 'Mulish', sans-serif; }
+  body { background: #F5F0E8; color: #1B3A2D; font-family: 'Nunito Sans',sans-serif; }
   ::selection { background: #C9A84C; color: #14291F; }
-  input, button, select, textarea { font-family: 'Mulish', sans-serif; }
+  input, button, select, textarea { font-family: 'Nunito Sans',sans-serif; }
   input:focus, select:focus, textarea:focus { outline: none; }
 
   /* reveal + stagger */
@@ -93,7 +93,7 @@
   <aside class="sidebar" style="width:240px; flex:none; background:#14291F; color:#F5F0E8; padding:26px 0; display:flex; flex-direction:column;">
     <div style="display:flex; align-items:center; gap:11px; padding:0 24px 30px;">
       <span style="width:9px; height:9px; background:#C9A84C; border-radius:50%; flex:none; box-shadow:0 0 0 4px rgba(201,168,76,.16);"></span>
-      <span style="font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:600;">Resto<span style="color:#C9A84C;">One</span></span>
+      <span style="font-family:'Nunito Sans',sans-serif; font-size:22px; font-weight:600;">Resto<span style="color:#C9A84C;">One</span></span>
     </div>
     <div style="padding:0 24px 10px; font-size:9.5px; letter-spacing:.2em; text-transform:uppercase; color:rgba(245,240,232,.32);">Boshqaruv</div>
     <div style="padding:0 12px; display:flex; flex-direction:column; gap:3px;">
@@ -123,7 +123,7 @@
         <span class="hamburger" onclick="toggleSidebar()" style="cursor:pointer; font-size:20px; color:rgba(27,58,45,.5);">☰</span>
         <div>
           <div style="font-size:10.5px; letter-spacing:.18em; text-transform:uppercase; color:rgba(27,58,45,.45);">Super Admin</div>
-          <div id="page-title" style="font-family:'Cormorant Garamond',serif; font-size:24px; font-weight:600; line-height:1;">Boshqaruv paneli</div>
+          <div id="page-title" style="font-family:'Nunito Sans',sans-serif; font-size:24px; font-weight:600; line-height:1;">Boshqaruv paneli</div>
         </div>
       </div>
       <div style="display:flex; align-items:center; gap:14px;">
@@ -144,32 +144,32 @@
               <span style="color:#C9A84C; font-size:11px; font-weight:700; letter-spacing:.22em; text-transform:uppercase;">Jami restoranlar</span>
             </div>
             <div>
-              <div style="font-family:'Cormorant Garamond',serif; font-size:130px; font-weight:500; line-height:.86; letter-spacing:-2px;"><span id="kpi-total" data-count="0">0</span></div>
+              <div style="font-family:'Nunito Sans',sans-serif; font-size:130px; font-weight:500; line-height:.86; letter-spacing:-2px;"><span id="kpi-total" data-count="0">0</span></div>
               <div style="font-size:13px; color:rgba(245,240,232,.6); margin-top:16px;">Tarmoq bo'ylab ro'yxatdan o'tgan</div>
             </div>
-            <div style="position:absolute; right:-30px; bottom:-40px; font-family:'Cormorant Garamond',serif; font-size:220px; color:rgba(201,168,76,.06); line-height:1;">R</div>
+            <div style="position:absolute; right:-30px; bottom:-40px; font-family:'Nunito Sans',sans-serif; font-size:220px; color:rgba(201,168,76,.06); line-height:1;">R</div>
           </div>
 
           <div data-reveal="up" style="background:#fff; border:1px solid rgba(27,58,45,.1); border-radius:12px; padding:26px 24px;">
             <div style="font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; color:rgba(27,58,45,.45); margin-bottom:14px;">Jami xodimlar</div>
-            <div style="font-family:'Cormorant Garamond',serif; font-size:58px; font-weight:600; line-height:.9;"><span id="kpi-waiters" data-count="0">0</span></div>
+            <div style="font-family:'Nunito Sans',sans-serif; font-size:58px; font-weight:600; line-height:.9;"><span id="kpi-waiters" data-count="0">0</span></div>
             <div style="font-size:12px; color:rgba(27,58,45,.55); margin-top:10px;">Ro'yxatdan o'tgan ofitsiantlar</div>
           </div>
 
           <div data-reveal="up" style="background:#fff; border:1px solid rgba(27,58,45,.1); border-radius:12px; padding:26px 24px;">
             <div style="font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; color:rgba(27,58,45,.45); margin-bottom:14px;">Faol restoranlar</div>
-            <div style="font-family:'Cormorant Garamond',serif; font-size:58px; font-weight:600; line-height:.9;"><span id="kpi-active" data-count="0">0</span></div>
+            <div style="font-family:'Nunito Sans',sans-serif; font-size:58px; font-weight:600; line-height:.9;"><span id="kpi-active" data-count="0">0</span></div>
             <div style="font-size:12px; color:rgba(27,58,45,.55); margin-top:10px;">Hozir ishlamoqda</div>
           </div>
 
           <div data-reveal="up" class="kpi-wide" style="grid-column:2 / 4; background:#fff; border:1px solid rgba(27,58,45,.1); border-radius:12px; padding:24px 26px; display:flex; align-items:center; justify-content:space-between; gap:24px;">
             <div>
               <div style="font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; color:rgba(27,58,45,.45); margin-bottom:10px;">Oylik daromad</div>
-              <div id="kpi-revenue" style="font-family:'Cormorant Garamond',serif; font-size:44px; font-weight:600; line-height:1;">—</div>
+              <div id="kpi-revenue" style="font-family:'Nunito Sans',sans-serif; font-size:44px; font-weight:600; line-height:1;">—</div>
             </div>
             <div style="text-align:right; padding-left:24px; border-left:1px solid rgba(27,58,45,.1);">
               <div style="font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; color:rgba(27,58,45,.45); margin-bottom:10px;">Menyu taomlar</div>
-              <div style="font-family:'Cormorant Garamond',serif; font-size:44px; font-weight:600; line-height:1;"><span id="kpi-menu" data-count="0">0</span></div>
+              <div style="font-family:'Nunito Sans',sans-serif; font-size:44px; font-weight:600; line-height:1;"><span id="kpi-menu" data-count="0">0</span></div>
             </div>
           </div>
         </div>
@@ -177,7 +177,7 @@
         <!-- restoranlar list -->
         <div data-reveal="up" style="background:#fff; border:1px solid rgba(27,58,45,.1); border-radius:12px; padding:8px 0 4px; margin-top:18px;">
           <div style="display:flex; align-items:center; justify-content:space-between; padding:18px 28px 16px;">
-            <div style="display:flex; align-items:center; gap:13px;"><span style="width:28px; height:1px; background:#C9A84C;"></span><span style="font-family:'Cormorant Garamond',serif; font-size:23px; font-weight:600;">Restoranlar</span></div>
+            <div style="display:flex; align-items:center; gap:13px;"><span style="width:28px; height:1px; background:#C9A84C;"></span><span style="font-family:'Nunito Sans',sans-serif; font-size:23px; font-weight:600;">Restoranlar</span></div>
             <span onclick="showPage('restaurants')" style="font-size:12.5px; color:rgba(27,58,45,.55); cursor:pointer;">Barchasini ko'rish →</span>
           </div>
           <div id="rest-table-dashboard"></div>
@@ -203,7 +203,7 @@
     <div style="display:flex; align-items:center; gap:12px;"><span style="width:24px; height:1px; background:#C9A84C;"></span><span style="font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; color:rgba(27,58,45,.45);">Restoran yozuvi</span></div>
     <span onclick="closeModal()" style="cursor:pointer; font-size:20px; color:rgba(27,58,45,.45);">✕</span>
   </div>
-  <h2 id="modal-title" style="font-family:'Cormorant Garamond',serif; font-size:32px; font-weight:600; margin:6px 0 26px;">Restoran qo'shish</h2>
+  <h2 id="modal-title" style="font-family:'Nunito Sans',sans-serif; font-size:32px; font-weight:600; margin:6px 0 26px;">Restoran qo'shish</h2>
   <div style="display:flex; flex-direction:column; gap:20px;">
     <div><label class="field-label">Restoran nomi *</label><input id="r-name" class="field-input" placeholder="Tarnov Chilonzor"></div>
     <div><label class="field-label">Manzil</label><input id="r-location" class="field-input" placeholder="Chilonzor tumani"></div>
@@ -267,12 +267,12 @@ function statusBadge(active){
 
 function restRows(list){
   if (!list.length) {
-    return '<div style="padding:48px 28px; text-align:center; color:rgba(27,58,45,.5);"><div style="font-family:\'Cormorant Garamond\',serif; font-size:26px; color:rgba(27,58,45,.3); margin-bottom:6px;">Hali restoran yo\'q</div><div style="font-size:13px;">Yangi restoran qo\'shish uchun tugmani bosing</div></div>';
+    return '<div style="padding:48px 28px; text-align:center; color:rgba(27,58,45,.5);"><div style="font-family:\'Nunito Sans\',sans-serif; font-size:26px; color:rgba(27,58,45,.3); margin-bottom:6px;">Hali restoran yo\'q</div><div style="font-size:13px;">Yangi restoran qo\'shish uchun tugmani bosing</div></div>';
   }
   var head = '<div style="display:grid; grid-template-columns:46px 1.6fr 1.4fr .9fr .8fr 1fr 110px; padding:0 28px 12px; border-bottom:1px solid rgba(27,58,45,.1); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:rgba(27,58,45,.4);"><span>№</span><span>Restoran</span><span>Admin</span><span>Tarif</span><span>Ofitsiant</span><span>Holat</span><span style="text-align:right;">Amallar</span></div>';
   var rows = list.map(function(r, i){
     return '<div class="rowh rest-row" data-search="'+(r.name+' '+(r.location||'')+' '+r.adminEmail).toLowerCase().replace(/"/g,'')+'" style="display:grid; grid-template-columns:46px 1.6fr 1.4fr .9fr .8fr 1fr 110px; align-items:center; padding:16px 28px; border-bottom:1px solid rgba(27,58,45,.07);">'
-      + '<span style="font-family:\'Cormorant Garamond\',serif; font-size:22px; color:rgba(27,58,45,.22);">'+(i+1)+'</span>'
+      + '<span style="font-family:\'Nunito Sans\',sans-serif; font-size:22px; color:rgba(27,58,45,.22);">'+(i+1)+'</span>'
       + '<span><span style="font-weight:700; font-size:14px;">'+escapeHtml(r.name)+'</span>'+(r.location?'<br><span style="font-size:12px; color:rgba(27,58,45,.5);">'+escapeHtml(r.location)+'</span>':'')+'</span>'
       + '<span style="font-size:13px; color:rgba(27,58,45,.6);">'+escapeHtml(r.adminEmail||'')+'</span>'
       + '<span><span class="badge" style="background:rgba(201,168,76,.15); color:#9a7d2f;">'+escapeHtml(r.plan||'basic')+'</span></span>'
@@ -292,7 +292,7 @@ function renderRestaurants() {
   var html = restRows(dashData.restaurants || []);
   document.getElementById('rest-table-dashboard').innerHTML = html;
   document.getElementById('rest-table-full').innerHTML =
-    '<div style="display:flex; align-items:center; gap:13px; padding:18px 28px 16px;"><span style="width:28px; height:1px; background:#C9A84C;"></span><span style="font-family:\'Cormorant Garamond\',serif; font-size:23px; font-weight:600;">Barcha restoranlar</span></div>' + html;
+    '<div style="display:flex; align-items:center; gap:13px; padding:18px 28px 16px;"><span style="width:28px; height:1px; background:#C9A84C;"></span><span style="font-family:\'Nunito Sans\',sans-serif; font-size:23px; font-weight:600;">Barcha restoranlar</span></div>' + html;
 }
 
 function filterRestaurants(q){

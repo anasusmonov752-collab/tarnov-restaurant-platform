@@ -10,6 +10,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.1",
     "@ffprobe-installer/ffprobe": "^2.1.2",
+    "@google/genai": "^2.15.0",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.6",
     "express": "^4.18.2",

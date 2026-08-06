@@ -1,3 +1,7 @@
+// .env faylidan sozlamalarni o'qiydi (lokal dev uchun).
+// Render'da .env yo'q — u yerda env o'zgaruvchilar dashboard'dan keladi, dotenv jim o'tadi.
+require('dotenv').config({ path: require('path').join(__dirname, '.env') });
+
 // Lokal dev: ba'zi tarmoqlarda tizim DNS'i MongoDB Atlas SRV yozuvini topa olmaydi.
 // DNS_OVERRIDE="8.8.8.8,1.1.1.1" berilsa shu serverlar ishlatiladi (prod'da berilmaydi).
 if (process.env.DNS_OVERRIDE) require('dns').setServers(process.env.DNS_OVERRIDE.split(','));

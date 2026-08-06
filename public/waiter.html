@@ -131,6 +131,8 @@ const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&l
 let S = { restaurantId:null, pin:'', tab:'home' };
 let waiterInfo=null, historyData=[], menuData=[], menuHidden=false, menuCat='Barchasi', menuQuery='';
 let testQuestions=[], qIndex=0, answers={}, selected=null, locked=false, secondsLeft=30, timer=null;
+// Savol turiga qarab vaqt: variantli 30s, yozma javob uzoqroq (serverdan keladi)
+let secPerChoice=30, secPerWritten=120, qDuration=30;
 let lastResult=null;
 
 // ---------- ring helper ----------
@@ -615,6 +617,8 @@ async function startTest(){
   try {
     const data = await api('/api/waiter/test/start');
     testQuestions=data.questions||[]; qIndex=0; answers={}; selected=null; locked=false;
+    secPerChoice  = data.timePerQuestion || 30;
+    secPerWritten = data.timePerWrittenQuestion || 120;
     const ov=document.getElementById('overlay-running');
     ov.style.display='block';
     // Build permanent shell once
@@ -637,7 +641,10 @@ async function startTest(){
 }
 
 function showQuestion(first){
-  const q=testQuestions[qIndex]; selected=null; locked=false; secondsLeft=30;
+  const q=testQuestions[qIndex]; selected=null; locked=false;
+  const written = q.type==='written';
+  qDuration = written ? secPerWritten : secPerChoice;
+  secondsLeft = qDuration;
   const letters=['A','B','C','D'];
   // update shell top
   const prog=document.getElementById('q-prog');
@@ -645,7 +652,17 @@ function showQuestion(first){
   if(prog) prog.style.width=Math.round((qIndex+1)/testQuestions.length*100)+'%';
   if(num) num.innerHTML=`${qIndex+1}<span style="color:#97A298">/${testQuestions.length}</span>`;
 
-  const html=`<div style="font-family:'Nunito Sans',sans-serif;font-size:21px;font-weight:700;line-height:1.35;color:#F5F0E8;text-align:center;flex:1;display:flex;align-items:center;justify-content:center;padding:0 4px">${esc(q.question)}</div>
+  const html = written ? `
+    <div style="font-family:'Nunito Sans',sans-serif;font-size:19px;font-weight:700;line-height:1.35;color:#F5F0E8;padding:0 4px;margin-bottom:6px">${esc(q.question)}</div>
+    <div style="font-size:12.5px;color:#97A298;margin-bottom:12px;padding:0 4px">O'z so'zingiz bilan yozing — imlo xatosi ballga ta'sir qilmaydi</div>
+    <textarea id="q-written" oninput="countWritten()" placeholder="Javobingizni shu yerga yozing…"
+      style="flex:1;min-height:110px;resize:none;padding:15px;border-radius:16px;background:rgba(245,240,232,.05);border:1.5px solid rgba(245,240,232,.14);color:#F5F0E8;font-family:inherit;font-size:16px;line-height:1.45;outline:none"></textarea>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px">
+      <div id="q-count" style="font-size:12.5px;color:#97A298">0 belgi</div>
+    </div>
+    <div onclick="submitWritten()" id="q-send" class="ro-press"
+      style="margin-top:10px;padding:16px;border-radius:16px;background:rgba(245,240,232,.08);color:#97A298;font-weight:800;font-size:16px;text-align:center;cursor:pointer;transition:background .2s,color .2s">Javobni tasdiqlash</div>`
+  : `<div style="font-family:'Nunito Sans',sans-serif;font-size:21px;font-weight:700;line-height:1.35;color:#F5F0E8;text-align:center;flex:1;display:flex;align-items:center;justify-content:center;padding:0 4px">${esc(q.question)}</div>
     <div style="display:flex;flex-direction:column;gap:10px;margin-top:auto">
       ${q.options.map((o,i)=>`<div onclick="pickAnswer(${i})" id="opt-${i}" style="display:flex;align-items:center;gap:13px;padding:15px;border-radius:16px;background:rgba(245,240,232,.05);border:1.5px solid rgba(245,240,232,.1);cursor:pointer;transition:background .2s,border-color .2s,opacity .2s;animation:res-row .3s ease ${i*0.06}s both">
         <div style="width:28px;height:28px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;font-family:'Nunito Sans',sans-serif;font-size:16px;font-weight:700;color:#C9A84C;background:rgba(245,240,232,.1);transition:background .2s,color .2s">${letters[i]}</div>
@@ -670,15 +687,60 @@ function showQuestion(first){
   startTimer();
 }
 
+// Yozma javob: belgilar sonini ko'rsatadi va bo'sh bo'lmasa tugmani yoqadi
+function countWritten(){
+  const ta=document.getElementById('q-written'), cnt=document.getElementById('q-count'), btn=document.getElementById('q-send');
+  if(!ta) return;
+  const n=ta.value.trim().length;
+  if(cnt) cnt.textContent=n+' belgi';
+  if(btn){
+    const ready=n>0;
+    btn.style.background = ready ? 'linear-gradient(100deg,#C9A84C,#d8bd6a)' : 'rgba(245,240,232,.08)';
+    btn.style.color      = ready ? '#11241b' : '#97A298';
+  }
+}
+function submitWritten(){
+  if(locked) return;
+  const ta=document.getElementById('q-written');
+  if(!ta || !ta.value.trim()) return;   // bo'sh javobni tasdiqlab bo'lmaydi
+  lockWritten(ta.value.trim());
+}
+function lockWritten(text){
+  locked=true; clearInterval(timer);
+  answers[testQuestions[qIndex].id]=text;
+  const ta=document.getElementById('q-written'), btn=document.getElementById('q-send');
+  if(ta){ ta.readOnly=true; ta.style.opacity='.55'; }
+  if(btn){ btn.style.opacity='.55'; btn.style.cursor='default'; btn.textContent='Qabul qilindi'; }
+  setTimeout(advance, 420);
+}
+
 function startTimer(){
-  clearInterval(timer); secondsLeft=30; paintTimer();
-  timer=setInterval(()=>{ secondsLeft--; paintTimer(); if(secondsLeft<=0){ clearInterval(timer); if(!locked) lockAnswer(-1); } },1000);
+  clearInterval(timer); secondsLeft=qDuration; paintTimer();
+  timer=setInterval(()=>{ secondsLeft--; paintTimer(); if(secondsLeft<=0){ clearInterval(timer); if(!locked) timeUp(); } },1000);
+}
+// Vaqt tugadi — yozma savolda yozilgani saqlanadi, variantlida javobsiz ketadi
+function timeUp(){
+  const q=testQuestions[qIndex];
+  if(q.type==='written'){
+    const ta=document.getElementById('q-written');
+    lockWritten(ta ? ta.value.trim() : '');
+  } else {
+    lockAnswer(-1);
+  }
 }
 function paintTimer(){
-  const col = secondsLeft<=10?'#F0A98D':C;
+  // Oxirgi 25% qizil — 30s da 8s, 120s da 30s qoladi
+  const warn = secondsLeft <= Math.max(8, Math.round(qDuration*0.25));
+  const col = warn?'#F0A98D':C;
   const rg=document.getElementById('timer-ring'), nm=document.getElementById('timer-num');
-  if(rg) rg.innerHTML=ring(secondsLeft/30*100,74,6,col);
-  if(nm){ nm.textContent=Math.max(secondsLeft,0); nm.style.color=secondsLeft<=10?'#F0A98D':'#F5F0E8'; }
+  if(rg) rg.innerHTML=ring(secondsLeft/qDuration*100,74,6,col);
+  if(nm){
+    // 60s dan oshsa daqiqa:soniya ko'rinishida
+    const s=Math.max(secondsLeft,0);
+    nm.textContent = qDuration>60 ? `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}` : s;
+    nm.style.fontSize = qDuration>60 ? '19px' : '25px';
+    nm.style.color = warn?'#F0A98D':'#F5F0E8';
+  }
 }
 function pickAnswer(i){ if(locked) return; lockAnswer(i); }
 function lockAnswer(i){
@@ -728,8 +790,51 @@ async function submitTest(){
     try { historyData = await api('/api/waiter/history')||historyData; } catch {}
     ov.style.display='none'; ov.innerHTML='';
     showResult(r);
+    // Yozma javoblar fonda baholanadi — natija tayyor bo'lgach ekran yangilanadi
+    if(r.gradingStatus==='pending') pollGrading(r.id);
   } catch(e){ toast(e.message,'error'); ov.style.display='none'; ov.innerHTML=''; go('home'); }
 }
+
+// Yozma javoblar navbatda baholanmoqda. Har 4 soniyada tekshiramiz,
+// 2 daqiqadan keyin to'xtaymiz (natija baribir tarixda yangilanadi).
+let gradePoll=null;
+function pollGrading(resultId){
+  clearInterval(gradePoll);
+  let tries=0;
+  gradePoll=setInterval(async ()=>{
+    tries++;
+    if(tries>30){ clearInterval(gradePoll); return; }
+    try {
+      const d=await api('/api/waiter/test/result/'+encodeURIComponent(resultId));
+      const r=d?.result;
+      if(!r || r.gradingStatus==='pending') return;
+      clearInterval(gradePoll);
+      lastResult=r;
+      try { historyData = await api('/api/waiter/history')||historyData; } catch {}
+      // Foydalanuvchi hali natija ekranida bo'lsa — qayta chizamiz
+      const ov=document.getElementById('overlay-result');
+      if(ov && ov.style.display!=='none') showResult(r);
+      toast(r.gradingStatus==='failed'
+        ? 'Yozma javoblaringiz administrator ko\'rigiga yuborildi'
+        : 'Yozma javoblaringiz baholandi', r.gradingStatus==='failed'?'info':'success');
+    } catch { /* tarmoq uzilishi — keyingi urinishda qayta so'raladi */ }
+  }, 4000);
+}
+// Yozma javoblar hali baholanmagan bo'lsa — ball vaqtinchalik ekanini aytamiz.
+// Busiz ofitsiant past ballni yakuniy deb o'ylab noto'g'ri xulosa chiqaradi.
+function pendingBanner(r){
+  if(r.gradingStatus==='pending') return `
+    <div style="display:flex;align-items:center;gap:10px;margin-top:14px;padding:11px 15px;border-radius:14px;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.28);animation:ro-fade .5s ease both">
+      <div style="width:15px;height:15px;flex:none;border-radius:50%;border:2px solid rgba(201,168,76,.25);border-top-color:#C9A84C;animation:ro-spin .8s linear infinite"></div>
+      <div style="font-size:13px;color:#e3c06a;line-height:1.35">Yozma javoblaringiz baholanmoqda — ball o'zgarishi mumkin</div>
+    </div>`;
+  if(r.gradingStatus==='failed') return `
+    <div style="margin-top:14px;padding:11px 15px;border-radius:14px;background:rgba(240,169,141,.1);border:1px solid rgba(240,169,141,.3);font-size:13px;color:#F0A98D;line-height:1.35;animation:ro-fade .5s ease both">
+      Yozma javoblaringiz administrator ko'rigida — yakuniy ball keyinroq qo'yiladi
+    </div>`;
+  return '';
+}
+
 function showResult(r){
   if(!r){ toast('Natija yuklanmadi','error'); go('home'); return; }
   const score = r.score ?? 0;
@@ -757,6 +862,9 @@ function showResult(r){
 
     <!-- label -->
     <div style="font-size:12px;letter-spacing:4px;text-transform:uppercase;color:${passed?'rgba(201,168,76,.8)':'rgba(245,240,232,.4)'};animation:ro-fade .5s ease both">${passed?'✦ Tabriklaymiz ✦':'Natija'}</div>
+
+    <!-- yozma javoblar holati -->
+    ${pendingBanner(r)}
 
     <!-- ring + score -->
     <div style="position:relative;width:186px;height:186px;display:flex;align-items:center;justify-content:center;margin:18px 0 10px;animation:res-score .6s cubic-bezier(.2,.9,.25,1) .1s both">
@@ -833,6 +941,30 @@ function closeResult(){ document.getElementById('overlay-result').style.display=
 
 // ---------- TEST TAHLILI ----------
 function openAnalysisFor(id){ const r=historyData.find(h=>String(h.id)===String(id)); if(r&&(r.breakdown||[]).length){ openAnalysis(r); } else { toast('Bu natija uchun tahlil mavjud emas','error'); } }
+// Yozma javob kartasi: ofitsiant matni + qo'yilgan ball + izoh.
+// manualScore bo'lsa — admin tuzatgan, shuni ko'rsatamiz (AI ballini emas).
+function writtenBody(b){
+  const score = b.manualScore ?? b.aiScore;
+  const byAdmin = b.manualScore !== null && b.manualScore !== undefined;
+  const col = score===null||score===undefined ? '#97A298' : score>=80?'#8FDDB2' : score>=60?'#e3c06a' : '#F0A98D';
+  return `
+    <div style="padding:10px 12px;border-radius:10px;background:rgba(245,240,232,.05);border:1px solid rgba(245,240,232,.12);margin-bottom:8px">
+      <div style="font-size:12px;font-weight:800;color:#97A298;letter-spacing:.5px;margin-bottom:5px">SIZNING JAVOBINGIZ</div>
+      <div style="font-size:14px;color:#EAE7DF;line-height:1.55;white-space:pre-wrap">${esc(b.writtenAnswer||'(javob yozilmagan)')}</div>
+    </div>
+    ${score===null||score===undefined ? `
+      <div style="padding:9px 12px;border-radius:10px;background:rgba(245,240,232,.05);font-size:13px;color:#97A298">Hali baholanmagan</div>`
+    : `
+      <div style="display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:10px;background:rgba(245,240,232,.05);margin-bottom:${b.aiFeedback?'8px':'0'}">
+        <span style="font-family:'Nunito Sans',sans-serif;font-size:19px;font-weight:700;color:${col};line-height:1">${score}</span>
+        <span style="font-size:13px;color:#97A298">/ 100 ball${byAdmin?' · administrator qo\'ygan':''}</span>
+      </div>`}
+    ${b.aiFeedback ? `<div style="display:flex;gap:9px;padding:10px 12px;border-radius:10px;background:rgba(245,240,232,.05);border-left:3px solid ${col}">
+      <span style="flex:none;font-size:15px">💬</span>
+      <span style="font-size:14px;color:#EAE7DF;line-height:1.55">${esc(b.aiFeedback)}</span>
+    </div>` : ''}`;
+}
+
 function openAnalysis(r){
   r = r || lastResult;
   const items = (r && r.breakdown) || [];
@@ -849,7 +981,7 @@ function openAnalysis(r){
         <span style="flex:none;padding:2px 8px;border-radius:10px;background:rgba(245,240,232,.06);color:${d.c};font-size:12px;font-weight:800;letter-spacing:.5px">${d.l}</span>
       </div>
       <div style="font-size:15px;font-weight:600;color:#F5F0E8;line-height:1.5;margin-bottom:10px">${esc(b.question)}</div>
-      ${(b.options||[]).map((o,oi)=>{
+      ${b.type==='written' ? writtenBody(b) : (b.options||[]).map((o,oi)=>{
         const isSel = oi===b.selectedAnswer, isOk = oi===b.correctAnswer;
         if (!isSel && !isOk) return '';
         return `<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 11px;border-radius:10px;margin-bottom:6px;${isOk?'background:rgba(201,168,76,.13);border:1px solid rgba(201,168,76,.4)':'background:rgba(217,96,59,.10);border:1px solid rgba(217,96,59,.3)'}">

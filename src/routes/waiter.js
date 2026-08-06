@@ -1,18 +1,21 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const rateLimit = require('express-rate-limit');
-const Anthropic = require('@anthropic-ai/sdk');
+const { ipKeyGenerator } = require('express-rate-limit');
 const { auth } = require('../middleware/auth');
 const { asyncHandler } = require('../middleware/errorHandler');
 const Restaurant = require('../models/Restaurant');
 const { getPeriodKey, getPeriodLabel } = require('../utils/kpi');
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const ai = require('../services/ai');
+const grading = require('../services/grading');
 
 const aiChatLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 20,
-  keyGenerator: (req) => req.cookies?.token || req.ip,
+  // ipKeyGenerator — IPv6 manzillarni to'g'ri normallashtiradi.
+  // Busiz IPv6 foydalanuvchi har so'rovda yangi manzil bilan limitni aylanib
+  // o'tishi va bepul AI kvotasini so'rib olishi mumkin edi.
+  keyGenerator: (req) => req.cookies?.token || ipKeyGenerator(req.ip),
   message: { error: '1 daqiqada 20 ta savol limitiga yetdingiz. Biroz kuting.' },
   standardHeaders: true, legacyHeaders: false
 });
@@ -62,8 +65,21 @@ router.get('/test/start', guard, asyncHandler(async (req, res) => {
     ...shuffle(easy).slice(0, 10),
     ...shuffle(medium).slice(0, 5),
     ...shuffle(hard).slice(0, 5)
-  ].map(q => ({ id: q.id, question: q.question, options: q.options, difficulty: q.difficulty }));
-  res.json({ questions: selected, timePerQuestion: 30 });
+  ].map(q => ({
+    id: q.id,
+    question: q.question,
+    type: q.type || 'choice',
+    // Yozma savolda variant yo'q. rubric/keyPoints HECH QACHON yuborilmaydi —
+    // ular to'g'ri javob mezoni, frontendga ketsa ofitsiant ko'chirib oladi.
+    options: q.type === 'written' ? [] : q.options,
+    difficulty: q.difficulty
+  }));
+  // Yozma javob yozishga ko'proq vaqt kerak
+  res.json({
+    questions: selected,
+    timePerQuestion: 30,
+    timePerWrittenQuestion: +(process.env.WRITTEN_QUESTION_SECONDS || 120)
+  });
 }));
 
 router.post('/test/submit', guard, asyncHandler(async (req, res) => {
@@ -75,27 +91,41 @@ router.post('/test/submit', guard, asyncHandler(async (req, res) => {
   if (!answers || typeof answers !== 'object' || Array.isArray(answers)) {
     return res.status(400).json({ error: 'Javoblar noto\'g\'ri formatda' });
   }
-  let easyScore = 0, easyTotal = 0, mediumScore = 0, mediumTotal = 0, hardScore = 0, hardTotal = 0;
   const breakdown = [];
-  Object.entries(answers).forEach(([qId, selected]) => {
+  Object.entries(answers).forEach(([qId, given]) => {
     const q = r.questions.find(x => x.id === qId);
     if (!q) return;
-    const isCorrect = parseInt(selected) === q.correctAnswer;
-    breakdown.push({ questionId: qId, question: q.question, selectedAnswer: parseInt(selected), correctAnswer: q.correctAnswer, isCorrect, difficulty: q.difficulty, options: q.options, explanation: q.explanation || '' });
-    if (q.difficulty === 'easy') { easyTotal++; if (isCorrect) easyScore++; }
-    else if (q.difficulty === 'medium') { mediumTotal++; if (isCorrect) mediumScore++; }
-    else if (q.difficulty === 'hard') { hardTotal++; if (isCorrect) hardScore++; }
+
+    if (q.type === 'written') {
+      // Yozma javob — hozir baholanmaydi, AI navbatiga tushadi.
+      breakdown.push({
+        questionId: qId, question: q.question, type: 'written',
+        writtenAnswer: String(given ?? '').trim().slice(0, grading.MAX_ANSWER_LEN),
+        aiScore: null, aiFeedback: '', manualScore: null,
+        isCorrect: false, difficulty: q.difficulty,
+        explanation: q.explanation || ''
+      });
+    } else {
+      const isCorrect = parseInt(given) === q.correctAnswer;
+      breakdown.push({
+        questionId: qId, question: q.question, type: 'choice',
+        selectedAnswer: parseInt(given), correctAnswer: q.correctAnswer,
+        isCorrect, difficulty: q.difficulty, options: q.options,
+        explanation: q.explanation || ''
+      });
+    }
   });
-  const totalCorrect = easyScore + mediumScore + hardScore;
-  const totalQuestions = easyTotal + mediumTotal + hardTotal;
-  const percentage = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
+
+  const hasWritten = breakdown.some(b => b.type === 'written');
   const waiter = r.waiters.find(w => w.id === req.user.waiterId);
   const result = {
     id: uuidv4(), waiterId: req.user.waiterId, waiterName: waiter?.name || req.user.waiterName,
-    date: today, score: percentage, totalCorrect, totalQuestions,
-    easyScore, easyTotal, mediumScore, mediumTotal, hardScore, hardTotal,
-    hasCertificate: percentage >= 90, breakdown
+    date: today, breakdown,
+    // Yozma javob bo'lsa ball hozircha faqat variantli savollardan hisoblanadi,
+    // AI baholagach qayta hisoblanadi.
+    gradingStatus: hasWritten ? 'pending' : 'complete'
   };
+  grading.recalcScore(result);
   // Atomic update: faqat bu waiter bugun test topshirmagan bo'lsa qo'shadi
   const updateResult = await Restaurant.updateOne(
     { id: req.user.restaurantId, testResults: { $not: { $elemMatch: { waiterId: req.user.waiterId, date: today } } } },
@@ -106,7 +136,74 @@ router.post('/test/submit', guard, asyncHandler(async (req, res) => {
     const taken = existing.testResults.find(x => x.waiterId === req.user.waiterId && x.date === today);
     return res.status(400).json({ error: 'Siz bugun allaqachon test topshirdingiz', result: taken });
   }
+
+  // Ofitsiant natijani DARHOL ko'radi (variantli savollar bo'yicha).
+  // Yozma javoblar fonda navbatda baholanadi — 10 so'rov/daqiqa limiti sabab
+  // hamma bir vaqtda topshirsa ham navbat tiqilib qolmaydi.
   res.json({ success: true, result });
+
+  if (hasWritten) {
+    gradeInBackground(req.user.restaurantId, result.id, r.questions).catch(err =>
+      console.error('[grading] fon baholashda xato:', err.message)
+    );
+  }
+}));
+
+/**
+ * Yozma javoblarni fonda baholab, natijani bazada yangilaydi.
+ * Javob allaqachon yuborilgani uchun bu yerdagi xato foydalanuvchiga
+ * ta'sir qilmaydi — natija 'failed' bo'lib admin ko'rigiga tushadi.
+ */
+async function gradeInBackground(restaurantId, resultId, questions) {
+  let status = 'failed';
+  let graded = null;
+
+  try {
+    const fresh = await Restaurant.findOne({ id: restaurantId }, 'testResults');
+    const result = fresh?.testResults.find(x => x.id === resultId);
+    if (!result) return;
+
+    const out = await grading.gradeTestResult(result.toObject(), questions, restaurantId);
+    graded = out.result;
+    status = out.status;
+  } catch (err) {
+    console.error('[grading] AI baholay olmadi:', err.code || err.message);
+    // Kvota tugagan yoki AI ishlamadi — admin qo'lda baholaydi.
+    return void await Restaurant.updateOne(
+      { id: restaurantId, 'testResults.id': resultId },
+      { $set: { 'testResults.$.gradingStatus': 'failed' } }
+    );
+  }
+
+  await Restaurant.updateOne(
+    { id: restaurantId, 'testResults.id': resultId },
+    { $set: {
+      'testResults.$.breakdown':      graded.breakdown,
+      'testResults.$.score':          graded.score,
+      'testResults.$.totalCorrect':   graded.totalCorrect,
+      'testResults.$.totalQuestions': graded.totalQuestions,
+      'testResults.$.easyScore':      graded.easyScore,
+      'testResults.$.easyTotal':      graded.easyTotal,
+      'testResults.$.mediumScore':    graded.mediumScore,
+      'testResults.$.mediumTotal':    graded.mediumTotal,
+      'testResults.$.hardScore':      graded.hardScore,
+      'testResults.$.hardTotal':      graded.hardTotal,
+      'testResults.$.hasCertificate': graded.hasCertificate,
+      'testResults.$.gradingStatus':  status,
+      'testResults.$.gradedAt':       new Date()
+    } }
+  );
+}
+
+// Yozma javoblar fonda baholanayotganda frontend shu endpoint'ni so'raydi.
+// gradingStatus 'pending' bo'lsa yana so'raydi, 'complete'/'failed' bo'lsa to'xtaydi.
+router.get('/test/result/:id', guard, asyncHandler(async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'testResults');
+  const result = (r?.testResults || []).find(x => x.id === req.params.id);
+  if (!result) return res.status(404).json({ error: 'Natija topilmadi' });
+  // Boshqa ofitsiantning natijasini ko'rsatmaymiz
+  if (result.waiterId !== req.user.waiterId) return res.status(403).json({ error: 'Ruxsat yo\'q' });
+  res.json({ result });
 }));
 
 router.get('/history', guard, asyncHandler(async (req, res) => {
@@ -418,7 +515,7 @@ router.get('/leaderboard', guard, asyncHandler(async (req, res) => {
 
 // ── AI CHAT ──────────────────────────────────────────────────
 router.post('/ai-chat', guard, aiChatLimiter, asyncHandler(async (req, res) => {
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!ai.isConfigured()) {
     return res.status(503).json({ error: 'AI xizmati hozircha mavjud emas.' });
   }
 
@@ -470,14 +567,17 @@ ${annText ? `=== SO'NGGI E'LONLAR ===\n${annText}` : ''}`;
     { role: 'user', content: message.trim() }
   ];
 
-  const response = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 512,
+  // tier 'fast' — chat Flash-Lite'da ketadi (1500 so'rov/kun), shunda
+  // baholash uchun ajratilgan Flash kvotasi (500/kun) tegilmay qoladi.
+  const reply = await ai.complete({
     system: systemPrompt,
-    messages
+    messages,
+    maxTokens: 512,
+    tier: 'fast',
+    restaurantId: req.user.restaurantId
   });
 
-  res.json({ reply: response.content[0].text });
+  res.json({ reply });
 }));
 
 module.exports = router;

@@ -157,6 +157,9 @@ body{font-family:'Nunito Sans',sans-serif;background:#F2ECE1;color:#19241D;heigh
 .diff-b.easy.on{background:rgba(91,154,107,.14);border-color:#5B9A6B;color:#3B7A50}
 .diff-b.medium.on{background:rgba(201,168,76,.14);border-color:#C9A84C;color:#7A5E20}
 .diff-b.hard.on{background:rgba(194,91,76,.12);border-color:#C25B4C;color:#A03020}
+/* Savol turi tanlovi (variantli / yozma) */
+.qt-b{flex:1;text-align:center;padding:10px;border-radius:10px;border:1px solid rgba(20,41,31,.12);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;color:#5A6B5F}
+.qt-b.on{background:rgba(201,168,76,.14);border-color:#C9A84C;color:#7A5E20}
 
 /* ─── CALENDAR ─── */
 .cal-g{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
@@ -780,6 +783,7 @@ function renderQList() {
         <div style="width:4px;flex:none;background:${d.color}"></div>
         <div style="flex:1;padding:14px 0;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
           <span style="flex:none;padding:4px 11px;border-radius:12px;background:${d.chipBg};color:${d.color};font-size:10px;font-weight:800;letter-spacing:.6px">${d.label.toUpperCase()}</span>
+          ${q.type==='written'?`<span style="flex:none;padding:4px 11px;border-radius:12px;background:rgba(90,107,95,.12);color:#4A5C50;font-size:10px;font-weight:800;letter-spacing:.6px">✎ YOZMA</span>`:''}
           <span style="flex:1;min-width:200px;font-size:13.5px;font-weight:600;color:#19241D;line-height:1.5">${esc(q.question||q.text||'')}</span>
         </div>
         <div style="flex:none;display:flex;align-items:center;gap:6px;padding-right:14px">
@@ -794,6 +798,16 @@ function renderQList() {
       </div>
       ${open?`
       <div style="padding:4px 18px 16px 22px;background:#FBF7EF;border-top:1px solid rgba(20,41,31,.07)">
+        ${q.type==='written'?`
+        <div style="font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:#7D6420;font-weight:800;margin:12px 0 9px">Baholash mezoni</div>
+        <div style="padding:11px 13px;border-radius:11px;background:#fff;border:1px solid rgba(20,41,31,.08);font-size:13px;color:#19241D;line-height:1.55">${esc(q.rubric||'—')}</div>
+        ${(q.keyPoints||[]).length?`
+          <div style="font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:#7D6420;font-weight:800;margin:14px 0 9px">Asosiy nuqtalar (${q.keyPoints.length})</div>
+          ${q.keyPoints.map(p=>`<div style="display:flex;gap:9px;align-items:flex-start;padding:8px 13px;border-radius:11px;background:#fff;border:1px solid rgba(20,41,31,.08);margin-bottom:6px">
+            <span style="flex:none;color:#C9A84C;font-weight:800;font-size:13px">•</span>
+            <span style="flex:1;font-size:13px;color:#19241D;line-height:1.5">${esc(p)}</span>
+          </div>`).join('')}`:''}
+        `:`
         <div style="font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:#7D6420;font-weight:800;margin:12px 0 9px">Javob variantlari</div>
         ${(q.options||[]).map((o,oi)=>{
           const ok = oi === q.correctAnswer;
@@ -803,6 +817,7 @@ function renderQList() {
             ${ok?`<span style="flex:none;display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;color:#7D6420"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7D6420" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg> TO'G'RI JAVOB</span>`:''}
           </div>`;
         }).join('')}
+        `}
         ${q.explanation?`<div style="display:flex;gap:9px;padding:10px 13px;border-radius:11px;background:rgba(201,168,76,.08);border-left:3px solid #C9A84C;margin-top:8px">
           <span style="flex:none;font-size:13px">💡</span>
           <span style="font-size:12px;color:#3D4A40;line-height:1.55">${esc(q.explanation)}</span>
@@ -897,7 +912,20 @@ function rResults() {
     return S.sortDir==='desc'?(vb>va?1:-1):(va>vb?1:-1);
   });
   const sort = k => `onclick="S.sortKey='${k}';S.sortDir=S.sortKey==='${k}'&&S.sortDir==='desc'?'asc':'desc';renderSec()"`;
+
+  // Yozma javoblari ko'rik kutayotgan natijalar
+  const queue = sorted.filter(r => r.gradingStatus==='failed' || r.gradingStatus==='pending');
+  const banner = queue.length ? `
+    <div style="display:flex;align-items:center;gap:13px;padding:14px 16px;border-radius:13px;background:rgba(194,91,76,.09);border:1px solid rgba(194,91,76,.25);margin-bottom:14px">
+      <span style="font-size:19px">✎</span>
+      <div style="flex:1">
+        <div style="font-size:13.5px;font-weight:800;color:#19241D">${queue.length} ta natija ko'rikni kutmoqda</div>
+        <div style="font-size:12.5px;color:#5A6B5F;margin-top:2px">Yozma javoblar AI tomonidan baholanmadi yoki hali navbatda. Ball maoshga ta'sir qiladi — ko'rib chiqing.</div>
+      </div>
+    </div>` : '';
+
   return `<div class="sec">
+  ${banner}
   <div class="tbl">
     <div class="tbl-hd" style="grid-template-columns:2fr 1fr 1.6fr 1fr 1fr">
       <div style="cursor:pointer" ${sort('name')}>Ofitsiant ⇅</div>
@@ -913,17 +941,105 @@ function rResults() {
         const cert = r.hasCertificate||sc>=90;
         const date = (r.submittedAt||r.date||'').split('T')[0];
         const data = encodeURIComponent(JSON.stringify({waiterName:r.waiterName||r.name,score:sc,totalCorrect:r.totalCorrect,totalQuestions:r.totalQuestions,submittedAt:r.submittedAt||r.date,hasCertificate:cert}));
-        return `<div class="tbl-row" style="grid-template-columns:2fr 1fr 1.6fr 1fr 1fr;cursor:pointer" onclick="openResultModal('${data}')">
-          <div style="font-size:14px;font-weight:700;color:#19241D">${r.waiterName||r.name||'–'}</div>
+        const hasWritten = (r.breakdown||[]).some(b=>b.type==='written');
+        // Yozma javob bo'lsa — baholash paneliga, aks holda oddiy natija oynasiga
+        const click = hasWritten ? `openGrading('${r.id}')` : `openResultModal('${data}')`;
+        const st = r.gradingStatus;
+        return `<div class="tbl-row" style="grid-template-columns:2fr 1fr 1.6fr 1fr 1fr;cursor:pointer" onclick="${click}">
+          <div style="display:flex;align-items:center;gap:8px;min-width:0">
+            <span style="font-size:14px;font-weight:700;color:#19241D;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.waiterName||r.name||'–'}</span>
+            ${hasWritten?`<span title="Yozma javoblar bor" style="flex:none;font-size:12px;color:#7D6420">✎</span>`:''}
+          </div>
           <div style="font-size:13px;color:#5A6B5F">${date}</div>
           <div style="display:flex;align-items:center;gap:9px">
             <div class="prog" style="flex:1;max-width:100px"><div class="prog-fill" style="width:${sc}%;animation:none"></div></div>
             <span style="font-family:'Nunito Sans',sans-serif;font-size:17px;font-weight:800;color:#19241D">${sc}</span>
           </div>
-          <div><span class="pill ${passed?'pill-g':'pill-r'}">${passed?'O\'tdi':'O\'tmadi'}</span></div>
+          <div>${
+            st==='pending' ? `<span class="pill" style="background:rgba(201,168,76,.16);color:#7A5E20">Baholanmoqda</span>`
+          : st==='failed'  ? `<span class="pill pill-r">Ko'rik kerak</span>`
+          : `<span class="pill ${passed?'pill-g':'pill-r'}">${passed?'O\'tdi':'O\'tmadi'}</span>`}</div>
           <div style="text-align:right"><span style="color:${cert?'#C9A84C':'rgba(20,41,31,.15)'};font-size:20px">★</span></div>
         </div>`}).join('')}
   </div></div>`;
+}
+
+// ── YOZMA JAVOBLARNI KO'RIB CHIQISH (apellyatsiya) ──────────────
+// AI bahosi KPI orqali maoshga ta'sir qiladi, shuning uchun admin
+// har bir ballni qo'lda o'zgartira olishi kerak.
+function openGrading(resultId) {
+  const r = S.results.find(x => x.id === resultId);
+  if (!r) { showToast('Natija topilmadi','err'); return; }
+
+  const written = (r.breakdown||[]).filter(b => b.type==='written');
+  const choice  = (r.breakdown||[]).filter(b => b.type!=='written');
+  const choiceOk = choice.filter(b=>b.isCorrect).length;
+
+  document.getElementById('panelTitle').textContent = (r.waiterName||'–') + ' — yozma javoblar';
+
+  const card = (b,i) => {
+    const ai = b.aiScore, man = b.manualScore;
+    const shown = man ?? ai;
+    const col = shown==null ? '#5A6B5F' : shown>=80 ? '#3B7A50' : shown>=60 ? '#7A5E20' : '#A03020';
+    return `
+    <div style="border:1px solid rgba(20,41,31,.1);border-radius:13px;padding:14px 15px;margin-bottom:12px;background:#fff">
+      <div style="font-size:13.5px;font-weight:700;color:#19241D;line-height:1.5;margin-bottom:10px">${i+1}. ${esc(b.question)}</div>
+
+      <div style="font-size:10.5px;letter-spacing:1.3px;text-transform:uppercase;color:#7D6420;font-weight:800;margin-bottom:6px">Ofitsiant javobi</div>
+      <div style="padding:11px 13px;border-radius:11px;background:#FBF7EF;font-size:13px;color:#19241D;line-height:1.55;white-space:pre-wrap;margin-bottom:11px">${esc(b.writtenAnswer||'(javob yozilmagan)')}</div>
+
+      ${ai==null ? `<div style="padding:9px 12px;border-radius:10px;background:rgba(194,91,76,.08);font-size:12.5px;color:#A03020;margin-bottom:11px">AI baholay olmadi — ballni qo'lda qo'ying</div>`
+      : `<div style="display:flex;align-items:flex-start;gap:9px;padding:10px 12px;border-radius:10px;background:rgba(20,41,31,.04);margin-bottom:11px">
+          <span style="flex:none;font-family:'Nunito Sans',sans-serif;font-size:17px;font-weight:800;color:${man!=null?'#8A9C90':col};${man!=null?'text-decoration:line-through':''}">${ai}</span>
+          <span style="flex:1;font-size:12.5px;color:#3D4A40;line-height:1.5">${esc(b.aiFeedback||'')}</span>
+        </div>`}
+
+      <div style="display:flex;align-items:center;gap:9px">
+        <label style="flex:none;font-size:12.5px;color:#5A6B5F;font-weight:600">Sizning ballingiz</label>
+        <input class="f-input" id="mg-${b.questionId}" type="number" min="0" max="100" value="${man??''}" placeholder="${ai??'0'}" style="flex:none;width:88px;text-align:center;font-weight:700">
+        <button class="btn-gold" style="flex:none;padding:0 16px;height:40px;font-size:12.5px" onclick="saveGrade('${r.id}','${b.questionId}')">Saqlash</button>
+        ${man!=null?`<button class="btn-outline" style="flex:none;padding:0 14px;height:40px;font-size:12.5px" onclick="saveGrade('${r.id}','${b.questionId}',true)">Bekor</button>`:''}
+      </div>
+      ${man!=null?`<div style="font-size:11.5px;color:#3B7A50;margin-top:7px;font-weight:600">✓ Siz qo'ygan ball amal qiladi (${man})</div>`:''}
+    </div>`;
+  };
+
+  document.getElementById('panelBody').innerHTML = `
+    <div style="display:flex;gap:10px;margin-bottom:16px">
+      <div style="flex:1;padding:13px;border-radius:12px;background:#FBF7EF;text-align:center">
+        <div style="font-family:'Nunito Sans',sans-serif;font-size:26px;font-weight:800;color:#19241D;line-height:1">${r.score??0}%</div>
+        <div style="font-size:11px;color:#5A6B5F;margin-top:3px;font-weight:600">Umumiy ball</div>
+      </div>
+      <div style="flex:1;padding:13px;border-radius:12px;background:#FBF7EF;text-align:center">
+        <div style="font-family:'Nunito Sans',sans-serif;font-size:26px;font-weight:800;color:#5B9A6B;line-height:1">${choiceOk}/${choice.length}</div>
+        <div style="font-size:11px;color:#5A6B5F;margin-top:3px;font-weight:600">Variantli savollar</div>
+      </div>
+    </div>
+    ${r.gradingStatus==='pending'?`<div style="padding:11px 13px;border-radius:11px;background:rgba(201,168,76,.12);font-size:12.5px;color:#7A5E20;margin-bottom:14px">AI baholashi hali tugamagan — bir necha daqiqadan keyin yangilanadi.</div>`:''}
+    <div style="font-size:10.5px;letter-spacing:1.3px;text-transform:uppercase;color:#7D6420;font-weight:800;margin-bottom:10px">Yozma javoblar (${written.length})</div>
+    ${written.map(card).join('')}
+    <div class="f-actions"><button class="btn-outline" style="flex:1" onclick="closePanel()">Yopish</button></div>`;
+  openPanel();
+}
+
+async function saveGrade(resultId, questionId, clear) {
+  const el = document.getElementById('mg-'+questionId);
+  const raw = clear ? null : (el?.value ?? '').trim();
+  if (!clear && raw==='') { showToast('Ball kiriting','err'); return; }
+  const n = clear ? null : Number(raw);
+  if (!clear && (!Number.isFinite(n) || n<0 || n>100)) { showToast('Ball 0 dan 100 gacha bo\'lishi kerak','err'); return; }
+
+  const res = await api(`/api/restaurant/results/${resultId}/grade/${questionId}`, {
+    method:'PUT', body: JSON.stringify({ score: n })
+  });
+  // Server qayta hisoblangan natijani qaytaradi — lokal nusxani yangilaymiz
+  if (res?.result) {
+    const i = S.results.findIndex(x=>x.id===resultId);
+    if (i>=0) S.results[i] = res.result;
+  }
+  showToast(clear ? 'Tuzatish bekor qilindi' : 'Ball saqlandi','ok');
+  openGrading(resultId);   // panelni yangi ma'lumot bilan qayta chizamiz
+  renderSec();
 }
 
 function openResultModal(data) {
@@ -1828,16 +1944,28 @@ async function saveWaiter(id) {
 }
 
 // QUESTION FORM
-let _qDiff='easy', _qCorrect=0;
+let _qDiff='easy', _qCorrect=0, _qType='choice';
 function openQForm(id) {
   const q = id ? S.questions.find(x=>x.id===id) : null;
   _qDiff = q?.difficulty||'easy';
   _qCorrect = q?.correctAnswer??0;
+  _qType = q?.type||'choice';
   document.getElementById('panelTitle').textContent = q ? 'Savolni tahrirlash' : 'Savol qo\'shish';
-  const opts = q?.options||['','','',''];
+  const opts = q?.options?.length ? q.options : ['','','',''];
   document.getElementById('panelBody').innerHTML = `
-    <div class="f-row"><label class="f-label">Savol matni *</label><textarea class="f-area" id="qText">${esc(q?.question||q?.text||'')}</textarea></div>
     <div class="f-row">
+      <label class="f-label">Savol turi</label>
+      <div class="diff-g">
+        <div class="qt-b ${_qType==='choice'?'on':''}" data-t="choice" onclick="selQType('choice')">Variantli</div>
+        <div class="qt-b ${_qType==='written'?'on':''}" data-t="written" onclick="selQType('written')">Yozma javob</div>
+      </div>
+      <div id="qTypeHint" style="font-size:12.5px;color:#8A9C90;margin-top:7px;line-height:1.45"></div>
+    </div>
+
+    <div class="f-row"><label class="f-label">Savol matni *</label><textarea class="f-area" id="qText">${esc(q?.question||q?.text||'')}</textarea></div>
+
+    <!-- VARIANTLI -->
+    <div class="f-row" id="qChoiceBlock">
       <label class="f-label">Javob variantlari (to'g'risini belgilang)</label>
       ${opts.map((o,i)=>`
         <div class="ans-row">
@@ -1845,6 +1973,20 @@ function openQForm(id) {
           <input class="f-input" id="ao${i}" value="${esc(o)}" placeholder="${i+1}-variant">
         </div>`).join('')}
     </div>
+
+    <!-- YOZMA -->
+    <div id="qWrittenBlock">
+      <div class="f-row">
+        <label class="f-label">Baholash mezoni — AI shunga qarab ball qo'yadi *</label>
+        <textarea class="f-area" id="qRubric" style="min-height:70px" placeholder="Masalan: To'liq javobda uch narsa bo'lishi kerak — oshpazdan aniqlash, mehmonga aniq javob berish, taxmin qilmaslik.">${esc(q?.rubric||'')}</textarea>
+      </div>
+      <div class="f-row">
+        <label class="f-label">Asosiy nuqtalar — har qatorga bittadan</label>
+        <textarea class="f-area" id="qKeyPoints" style="min-height:80px" placeholder="Oshpazdan aniqlash&#10;Mehmonga aniq javob berish&#10;Taxminan javob bermaslik">${esc((q?.keyPoints||[]).join('\n'))}</textarea>
+        <div style="font-size:12.5px;color:#8A9C90;margin-top:6px;line-height:1.45">Nechta nuqta qamralganiga qarab qisman ball beriladi. 3 nuqtadan 1 tasi ≈ 33 ball.</div>
+      </div>
+    </div>
+
     <div class="f-row">
       <label class="f-label">Qiyinlik darajasi</label>
       <div class="diff-g">
@@ -1858,7 +2000,26 @@ function openQForm(id) {
       <button class="btn-outline" style="flex:1" onclick="closePanel()">Bekor</button>
       <button class="btn-gold" style="flex:1.4" onclick="saveQ('${id||''}')">Saqlash</button>
     </div>`;
+  applyQType();
   openPanel();
+}
+
+function selQType(t) {
+  _qType = t;
+  document.querySelectorAll('.qt-b').forEach(el => el.classList.toggle('on', el.dataset.t === t));
+  applyQType();
+}
+// Tanlangan turga qarab kerakli bloklarni ko'rsatadi
+function applyQType() {
+  const written = _qType === 'written';
+  const ch = document.getElementById('qChoiceBlock');
+  const wr = document.getElementById('qWrittenBlock');
+  const hint = document.getElementById('qTypeHint');
+  if (ch) ch.style.display = written ? 'none' : '';
+  if (wr) wr.style.display = written ? '' : 'none';
+  if (hint) hint.textContent = written
+    ? "Ofitsiant o'z so'zi bilan yozadi, AI baholaydi (0-100 ball). Har testda AI so'rovi sarflanadi."
+    : "Ofitsiant variant tanlaydi. Darhol tekshiriladi, AI so'rovi sarflanmaydi.";
 }
 
 function selectAns(i) {
@@ -1876,9 +2037,20 @@ function selDiff(d) {
 async function saveQ(id) {
   const text=document.getElementById('qText').value.trim();
   if (!text) { showToast('Savol matni majburiy','err'); return; }
-  const options=[0,1,2,3].map(i=>document.getElementById('ao'+i)?.value?.trim()||'');
-  if (options.some(o=>!o)) { showToast('Barcha variantlarni to\'ldiring','err'); return; }
-  const body={question:text,options,correctAnswer:_qCorrect,difficulty:_qDiff,explanation:document.getElementById('qExpl')?.value?.trim()||''};
+
+  const body={question:text,type:_qType,difficulty:_qDiff,explanation:document.getElementById('qExpl')?.value?.trim()||''};
+
+  if (_qType==='written') {
+    const rubric=document.getElementById('qRubric')?.value?.trim()||'';
+    const keyPoints=(document.getElementById('qKeyPoints')?.value||'').split('\n').map(s=>s.trim()).filter(Boolean);
+    // Mezonsiz AI nimaga qarab baholashni bilmaydi
+    if (!rubric && !keyPoints.length) { showToast('Baholash mezoni yoki asosiy nuqtalarni yozing','err'); return; }
+    body.rubric=rubric; body.keyPoints=keyPoints;
+  } else {
+    const options=[0,1,2,3].map(i=>document.getElementById('ao'+i)?.value?.trim()||'');
+    if (options.some(o=>!o)) { showToast('Barcha variantlarni to\'ldiring','err'); return; }
+    body.options=options; body.correctAnswer=_qCorrect;
+  }
   if (id) {
     await api('/api/restaurant/questions/'+id, {method:'PUT', body:JSON.stringify(body)});
     const q=S.questions.find(x=>x.id===id);

@@ -10,6 +10,7 @@ const { v4: uuidv4 } = require('uuid');
 const { auth } = require('../middleware/auth');
 const { asyncHandler } = require('../middleware/errorHandler');
 const Restaurant = require('../models/Restaurant');
+const grading = require('../services/grading');
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(require('@ffprobe-installer/ffprobe').path);
@@ -160,29 +161,75 @@ router.get('/questions', guard, asyncHandler(async (req, res) => {
   res.json(r?.questions || []);
 }));
 
+// keyPoints turli formatda kelishi mumkin (massiv, JSON satr, qator bilan ajratilgan)
+function parseKeyPoints(v) {
+  if (Array.isArray(v)) return v.map(s => String(s).trim()).filter(Boolean);
+  if (typeof v === 'string') {
+    try { const p = JSON.parse(v); if (Array.isArray(p)) return p.map(s => String(s).trim()).filter(Boolean); } catch {}
+    return v.split('\n').map(s => s.trim()).filter(Boolean);
+  }
+  return [];
+}
+
 router.post('/questions', guard, asyncHandler(async (req, res) => {
-  let { question, options, correctAnswer, difficulty, menuItemId, explanation } = req.body;
-  if (!question || !options || correctAnswer === undefined || !difficulty) return res.status(400).json({ error: 'Barcha maydonlar to\'ldirilishi shart' });
-  if (typeof options === 'string') { try { options = JSON.parse(options); } catch { options = options.split('|'); } }
-  if (!Array.isArray(options) || options.length < 2) return res.status(400).json({ error: 'Kamida 2 ta javob varianti kerak' });
+  let { question, options, correctAnswer, difficulty, menuItemId, explanation, type, rubric, keyPoints } = req.body;
+  const isWritten = type === 'written';
+
+  if (!question || !difficulty) return res.status(400).json({ error: 'Savol matni va qiyinlik darajasi majburiy' });
   if (!['easy', 'medium', 'hard'].includes(difficulty)) return res.status(400).json({ error: 'Qiyinlik darajasi noto\'g\'ri' });
-  const q = { id: uuidv4(), question, options, correctAnswer: parseInt(correctAnswer), difficulty, explanation: (explanation || '').trim(), menuItemId: menuItemId || null };
+
+  const q = {
+    id: uuidv4(), question, difficulty,
+    type: isWritten ? 'written' : 'choice',
+    explanation: (explanation || '').trim(),
+    menuItemId: menuItemId || null
+  };
+
+  if (isWritten) {
+    q.rubric    = (rubric || '').trim();
+    q.keyPoints = parseKeyPoints(keyPoints);
+    q.options   = [];
+    // Mezonsiz AI nimaga qarab baholashni bilmaydi — hech bo'lmasa bittasi kerak.
+    if (!q.rubric && !q.keyPoints.length) {
+      return res.status(400).json({ error: 'Yozma savol uchun baholash mezoni yoki asosiy nuqtalar kerak' });
+    }
+  } else {
+    if (correctAnswer === undefined) return res.status(400).json({ error: 'To\'g\'ri javobni belgilang' });
+    if (typeof options === 'string') { try { options = JSON.parse(options); } catch { options = options.split('|'); } }
+    if (!Array.isArray(options) || options.length < 2) return res.status(400).json({ error: 'Kamida 2 ta javob varianti kerak' });
+    q.options = options;
+    q.correctAnswer = parseInt(correctAnswer);
+  }
+
   await Restaurant.updateOne({ id: req.user.restaurantId }, { $push: { questions: q } });
   res.json({ success: true, question: q });
 }));
 
 router.put('/questions/:qId', guard, asyncHandler(async (req, res) => {
-  let { question, options, correctAnswer, difficulty, menuItemId } = req.body;
+  let { question, options, correctAnswer, difficulty, menuItemId, type, rubric, keyPoints } = req.body;
   const update = {};
   if (question) update['questions.$.question'] = question;
-  if (options) {
-    if (typeof options === 'string') { try { options = JSON.parse(options); } catch { options = options.split('|'); } }
-    update['questions.$.options'] = options;
-  }
-  if (correctAnswer !== undefined) update['questions.$.correctAnswer'] = parseInt(correctAnswer);
   if (difficulty) update['questions.$.difficulty'] = difficulty;
   if (req.body.explanation !== undefined) update['questions.$.explanation'] = String(req.body.explanation).trim();
   if (menuItemId !== undefined) update['questions.$.menuItemId'] = menuItemId;
+
+  if (type === 'written') {
+    update['questions.$.type']      = 'written';
+    update['questions.$.rubric']    = (rubric || '').trim();
+    update['questions.$.keyPoints'] = parseKeyPoints(keyPoints);
+    // Variantli qoldiqlarini tozalaymiz, aks holda eski to'g'ri javob osilib qoladi.
+    // (undefined ishlatmaymiz — mongoose uni $set dan tashlab yuboradi va eski qiymat qoladi.)
+    update['questions.$.options']       = [];
+    update['questions.$.correctAnswer'] = null;
+  } else if (type === 'choice' || options || correctAnswer !== undefined) {
+    update['questions.$.type'] = 'choice';
+    if (options) {
+      if (typeof options === 'string') { try { options = JSON.parse(options); } catch { options = options.split('|'); } }
+      update['questions.$.options'] = options;
+    }
+    if (correctAnswer !== undefined) update['questions.$.correctAnswer'] = parseInt(correctAnswer);
+  }
+
   await Restaurant.updateOne({ id: req.user.restaurantId, 'questions.id': req.params.qId }, { $set: update });
   res.json({ success: true });
 }));
@@ -240,6 +287,63 @@ router.delete('/announcements/:id', guard, asyncHandler(async (req, res) => {
 router.get('/results', guard, asyncHandler(async (req, res) => {
   const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'testResults');
   res.json((r?.testResults || []).sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt)));
+}));
+
+// ---- Yozma javoblarni qayta baholash (apellyatsiya) ----
+// AI bahosi KPI orqali maoshga ta'sir qiladi, shuning uchun admin
+// har qanday yozma javob ballini qo'lda o'zgartira olishi SHART.
+
+// Ko'rikni kutayotgan natijalar: AI baholay olmagan yoki navbatda qolgan.
+router.get('/results/review-queue', guard, asyncHandler(async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'testResults');
+  const queue = (r?.testResults || [])
+    .filter(x => x.gradingStatus === 'failed' || x.gradingStatus === 'pending')
+    .map(x => ({
+      id: x.id, waiterName: x.waiterName, date: x.date,
+      score: x.score, gradingStatus: x.gradingStatus,
+      ungraded: x.breakdown.filter(b => b.type === 'written' && b.aiScore === null && b.manualScore === null).length
+    }))
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+  res.json(queue);
+}));
+
+// Bitta yozma javobga admin bahosi. manualScore null bo'lsa — tuzatish bekor qilinadi.
+router.put('/results/:resultId/grade/:questionId', guard, asyncHandler(async (req, res) => {
+  const { score } = req.body;
+  const clear = score === null || score === '';
+  const value = clear ? null : Number(score);
+
+  if (!clear && (!Number.isFinite(value) || value < 0 || value > 100)) {
+    return res.status(400).json({ error: 'Ball 0 dan 100 gacha bo\'lishi kerak' });
+  }
+
+  const r = await Restaurant.findOne({ id: req.user.restaurantId });
+  if (!r) return res.status(404).json({ error: 'Restoran topilmadi' });
+
+  const result = r.testResults.find(x => x.id === req.params.resultId);
+  if (!result) return res.status(404).json({ error: 'Natija topilmadi' });
+
+  const item = result.breakdown.find(b => b.questionId === req.params.questionId);
+  if (!item) return res.status(404).json({ error: 'Savol topilmadi' });
+  if (item.type !== 'written') return res.status(400).json({ error: 'Faqat yozma javoblarni qayta baholash mumkin' });
+
+  item.manualScore = value;
+  item.manualBy    = clear ? undefined : (req.user.email || 'admin');
+  item.manualAt    = clear ? undefined : new Date();
+  if (!clear) item.isCorrect = value >= 60;
+
+  grading.recalcScore(result);
+
+  // Barcha yozma javoblar baholangan bo'lsa — navbatdan chiqaramiz.
+  const stillUngraded = result.breakdown.some(
+    b => b.type === 'written' && b.aiScore === null && b.manualScore === null
+  );
+  result.gradingStatus = stillUngraded ? 'failed' : 'complete';
+
+  r.markModified('testResults');
+  await r.save();
+
+  res.json({ success: true, result });
 }));
 
 // ---- KPI (dinamik davr tizimi) ----

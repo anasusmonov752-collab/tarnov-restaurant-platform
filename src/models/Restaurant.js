@@ -26,8 +26,36 @@ const WaiterSchema = new mongoose.Schema({
 const QuestionSchema = new mongoose.Schema({
   id: { type: String, default: () => uuidv4() },
   question: { type: String, required: true, trim: true },
-  options: { type: [String], validate: { validator: v => v.length >= 2, message: 'Kamida 2 ta javob varianti kerak' } },
-  correctAnswer: { type: Number, required: true, min: 0 },
+
+  // type: 'choice'  — variantli savol, darhol tekshiriladi, AI so'rovi sarflanmaydi
+  //       'written' — yozma javob, AI baholaydi (0-100 qisman ball)
+  type: { type: String, enum: ['choice', 'written'], default: 'choice' },
+
+  // ── faqat 'choice' uchun ──
+  options: {
+    type: [String],
+    validate: {
+      validator: function (v) {
+        // Yozma savolda variant kerak emas
+        return this.type === 'written' || (Array.isArray(v) && v.length >= 2);
+      },
+      message: 'Variantli savolda kamida 2 ta javob varianti kerak'
+    }
+  },
+  correctAnswer: {
+    type: Number,
+    min: 0,
+    required: function () { return this.type !== 'written'; }
+  },
+
+  // ── faqat 'written' uchun ──
+  // rubric — AI shu mezon bo'yicha baholaydi (nima to'g'ri javob hisoblanadi)
+  rubric:    { type: String, default: '', trim: true },
+  // keyPoints — javobda bo'lishi shart bo'lgan asosiy nuqtalar
+  keyPoints: { type: [String], default: [] },
+  // to'liq javob uchun maksimal ball (KPI hisobida vazn sifatida ishlatiladi)
+  maxScore:  { type: Number, default: 100, min: 1 },
+
   difficulty: { type: String, required: true, enum: ['easy', 'medium', 'hard'] },
   explanation: { type: String, default: '', trim: true },   // xato javob uchun izoh
   menuItemId: String,
@@ -45,7 +73,19 @@ const BreakdownItemSchema = new mongoose.Schema({
   questionId: String, question: String,
   selectedAnswer: Number, correctAnswer: Number,
   isCorrect: Boolean, difficulty: String, options: [String],
-  explanation: String
+  explanation: String,
+
+  // ── yozma javob (type: 'written') ──
+  type:          { type: String, default: 'choice' },
+  writtenAnswer: String,                       // ofitsiant yozgan matn
+  aiScore:       { type: Number, default: null },   // 0-100, null = hali baholanmagan
+  aiFeedback:    String,                       // AI izohi (ofitsiantga ko'rsatiladi)
+
+  // Admin qo'lda tuzatgan bo'lsa — apellyatsiya izi.
+  // manualScore null bo'lmasa, hisobda AYNAN shu ishlatiladi.
+  manualScore:   { type: Number, default: null },
+  manualBy:      String,
+  manualAt:      Date
 }, { _id: false });
 
 const TestResultSchema = new mongoose.Schema({
@@ -56,7 +96,15 @@ const TestResultSchema = new mongoose.Schema({
   mediumScore: Number, mediumTotal: Number,
   hardScore: Number, hardTotal: Number,
   hasCertificate: Boolean, breakdown: [BreakdownItemSchema],
-  submittedAt: { type: Date, default: Date.now }
+  submittedAt: { type: Date, default: Date.now },
+
+  // Yozma javoblar AI tomonidan navbatda baholanadi (10 so'rov/daqiqa limiti sabab),
+  // shuning uchun natija ikki bosqichda yakunlanadi:
+  //   'complete' — yozma savol yo'q yoki baholash tugagan (yagona holat eski testlar uchun)
+  //   'pending'  — navbatda, ball hozircha faqat variantli savollardan
+  //   'failed'   — AI baholay olmadi, admin qo'lda qo'yishi kerak
+  gradingStatus: { type: String, enum: ['complete', 'pending', 'failed'], default: 'complete' },
+  gradedAt: Date
 });
 
 const ChecklistItemSchema = new mongoose.Schema({

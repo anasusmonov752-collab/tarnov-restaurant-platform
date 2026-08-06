@@ -8,6 +8,18 @@ uploads/
 # Environment
 .env
 .env.local
+# .env.example — namuna fayl, gitga tushishi KERAK (maxfiy qiymat yo'q)
+!.env.example
+
+# Lokal ish fayllari (menyu importi, cookie, debug dump'lari)
+cookies.txt
+ck*.txt
+*_temp.json
+rlist.json
+all_q.json
+
+# Ichida kirish ma'lumotlari bor lokal hujjat — repo OCHIQ, gitga tushmasin
+TARNOV_PLATFORM_HUJJAT.md
 
 # Logs
 *.log

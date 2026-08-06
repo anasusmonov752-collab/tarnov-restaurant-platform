@@ -11,6 +11,14 @@ services:
         generateValue: true
       - key: NODE_ENV
         value: production
+      # Qiymatlar Render dashboard'ida beriladi (sync: false).
+      # Bu yerga HECH QACHON haqiqiy kalit yozilmasin — repo ochiq.
+      - key: MONGODB_URI
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: AI_PROVIDER
+        value: gemini
     disk:
       name: tarnov-data
       mountPath: /app/data

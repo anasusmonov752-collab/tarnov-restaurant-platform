@@ -8,6 +8,7 @@ const Restaurant = require('../models/Restaurant');
 const { getPeriodKey, getPeriodLabel } = require('../utils/kpi');
 const ai = require('../services/ai');
 const grading = require('../services/grading');
+const mentor = require('../services/mentor');
 
 const aiChatLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -53,19 +54,20 @@ router.get('/test/start', guard, asyncHandler(async (req, res) => {
   if (!r.testDays.includes(today)) return res.status(403).json({ error: 'Bugun test kuni emas' });
   const taken = r.testResults.find(x => x.waiterId === req.user.waiterId && x.date === today);
   if (taken) return res.status(400).json({ error: 'Siz bugun allaqachon test topshirdingiz', result: taken });
-  const easy = r.questions.filter(q => q.difficulty === 'easy');
-  const medium = r.questions.filter(q => q.difficulty === 'medium');
-  const hard = r.questions.filter(q => q.difficulty === 'hard');
-  if (easy.length < 10 || medium.length < 5 || hard.length < 5) {
+  // ADAPTIV: qiyinlik miksi ofitsiantning bilim darajasiga qarab tanlanadi,
+  // oldin xato qilingan savollar ustuvor beriladi (spaced repetition).
+  await ensureMenuLinks(r);
+  const profile = mentor.buildProfile(r, req.user.waiterId);
+  const pool = mentor.checkPool(r.questions, profile.level.key);
+  if (!pool.ok) {
+    const need = Object.entries(pool.missing)
+      .map(([d, n]) => `${n} ta ${({ easy: 'oson', medium: "o'rta", hard: 'qiyin' })[d]}`).join(', ');
     return res.status(400).json({
-      error: `Test uchun yetarli savol yo'q. Kerak: 10 oson, 5 o'rta, 5 qiyin. Mavjud: ${easy.length} oson, ${medium.length} o'rta, ${hard.length} qiyin`
+      error: `Test uchun yetarli savol yo'q. Yetishmayapti: ${need}. ` +
+             `Mavjud: ${pool.have.easy} oson, ${pool.have.medium} o'rta, ${pool.have.hard} qiyin`
     });
   }
-  const selected = [
-    ...shuffle(easy).slice(0, 10),
-    ...shuffle(medium).slice(0, 5),
-    ...shuffle(hard).slice(0, 5)
-  ].map(q => ({
+  const selected = mentor.pickQuestions(r.questions, profile, shuffle).map(q => ({
     id: q.id,
     question: q.question,
     type: q.type || 'choice',
@@ -78,8 +80,62 @@ router.get('/test/start', guard, asyncHandler(async (req, res) => {
   res.json({
     questions: selected,
     timePerQuestion: 30,
-    timePerWrittenQuestion: +(process.env.WRITTEN_QUESTION_SECONDS || 120)
+    timePerWrittenQuestion: +(process.env.WRITTEN_QUESTION_SECONDS || 120),
+    level: profile.level
   });
+}));
+
+// Savollarning ko'pchiligida menuItemId bo'sh, lekin savol matnida taom nomi
+// turadi. Mentorga kategoriya kesimi kerak, shuning uchun bog'lanishni
+// hisoblab, hujjatga qo'llaymiz va fonda bazaga ham yozib qo'yamiz
+// (keyingi so'rovlarda qayta hisoblanmasin).
+async function ensureMenuLinks(r) {
+  const links = mentor.backfillLinks(r.questions, r.menu);
+  if (!links.length) return;
+
+  const byId = new Map(links.map(l => [l.questionId, l.menuItemId]));
+  r.questions.forEach(q => { if (!q.menuItemId && byId.has(q.id)) q.menuItemId = byId.get(q.id); });
+
+  // Kutmaymiz — javobni ushlab turishi shart emas
+  Promise.all(links.map(l => Restaurant.updateOne(
+    { id: r.id, 'questions.id': l.questionId },
+    { $set: { 'questions.$.menuItemId': l.menuItemId } }
+  ))).catch(err => console.warn('[mentor] menyu bog\'lashni yozib bo\'lmadi:', err.message));
+}
+
+// ── MENTOR ────────────────────────────────────────────────────
+// Bilim profili + bugungi shaxsiy vazifalar. AI ishlatilmaydi.
+router.get('/mentor', guard, asyncHandler(async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId });
+  if (!r) return res.status(404).json({ error: 'Restoran topilmadi' });
+
+  await ensureMenuLinks(r);
+  const profile = mentor.buildProfile(r, req.user.waiterId);
+  const tasks   = mentor.dailyTasks(profile, r, req.user.waiterId);
+
+  res.json({ profile, tasks });
+}));
+
+// Takroriy xatolar ustida mashq — test emas, bali qo'yilmaydi, faqat o'rganish.
+router.post('/mentor/practice', guard, asyncHandler(async (req, res) => {
+  const { questionIds } = req.body;
+  if (!Array.isArray(questionIds) || !questionIds.length) {
+    return res.status(400).json({ error: 'Savollar tanlanmagan' });
+  }
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'questions');
+  if (!r) return res.status(404).json({ error: 'Restoran topilmadi' });
+
+  const ids = new Set(questionIds.slice(0, 10));
+  const questions = r.questions.filter(q => ids.has(q.id)).map(q => ({
+    id: q.id, question: q.question, type: q.type || 'choice',
+    options: q.type === 'written' ? [] : q.options,
+    difficulty: q.difficulty,
+    // Mashqda to'g'ri javob KO'RSATILADI — maqsad baholash emas, o'rgatish
+    correctAnswer: q.correctAnswer,
+    explanation: q.explanation || '',
+    rubric: q.type === 'written' ? q.rubric : undefined
+  }));
+  res.json({ questions });
 }));
 
 router.post('/test/submit', guard, asyncHandler(async (req, res) => {

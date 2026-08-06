@@ -280,6 +280,7 @@ async function renderHome(){
       ${testCta}
     </div>
     <div id="home-kpi" style="margin:18px 18px 0"></div>
+    <div id="home-mentor" style="margin:18px 18px 0"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 18px 0">
       <div style="padding:16px;border-radius:18px;background:#1b3a2d;border:1px solid rgba(245,240,232,.07);animation:ro-rise .5s ease .12s both"><div style="font-family:'Nunito Sans',sans-serif;font-size:33px;font-weight:700;color:#F5F0E8;line-height:1"><span id="ct-avg">0</span><span style="font-size:17px;color:#C9A84C">%</span></div><div style="font-size:13px;color:#97A298;margin-top:2px">O'rtacha ball</div></div>
       <div style="padding:16px;border-radius:18px;background:#1b3a2d;border:1px solid rgba(245,240,232,.07);animation:ro-rise .5s ease .18s both"><div style="font-family:'Nunito Sans',sans-serif;font-size:33px;font-weight:700;color:#F5F0E8;line-height:1"><span id="ct-count">0</span></div><div style="font-size:13px;color:#97A298;margin-top:2px">Topshirilgan test</div></div>
@@ -295,6 +296,154 @@ async function renderHome(){
     </div>`;
   countTo('ct-avg', avg); countTo('ct-count', count);
   loadHomeKPI();
+  loadMentor();
+}
+
+// ---------- MENTOR: bugungi vazifalar ----------
+let mentorData=null;
+
+async function loadMentor(){
+  const box=document.getElementById('home-mentor'); if(!box) return;
+  try { mentorData = await api('/api/waiter/mentor'); }
+  catch { box.innerHTML=''; return; }
+  const box2=document.getElementById('home-mentor'); if(!box2) return;   // ekran almashgan bo'lishi mumkin
+  const { profile, tasks } = mentorData;
+  if(!tasks || !tasks.length){ box2.innerHTML=''; return; }
+
+  const lvlCol = { boshlangich:'#F0A98D', orta:'#e3c06a', kuchli:'#8FDDB2' }[profile.level.key] || C;
+
+  box2.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px">
+      <div style="font-family:'Nunito Sans',sans-serif;font-size:18px;font-weight:700;color:#F5F0E8">Bugungi vazifang</div>
+      <div style="display:flex;align-items:center;gap:7px">
+        <span style="font-size:12px;color:#97A298">Daraja</span>
+        <span style="padding:3px 10px;border-radius:11px;background:${lvlCol}22;color:${lvlCol};font-size:12px;font-weight:800">${esc(profile.level.label)}</span>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      ${tasks.map((t,i)=>`
+        <div onclick="doTask(${i})" class="ro-press" style="display:flex;align-items:flex-start;gap:12px;padding:14px;border-radius:16px;background:#1b3a2d;border:1px solid rgba(201,168,76,.18);cursor:pointer;animation:ro-rise .45s ease ${i*0.07}s both">
+          <div style="width:38px;height:38px;flex:none;border-radius:12px;background:rgba(201,168,76,.12);display:flex;align-items:center;justify-content:center;font-size:18px">${t.icon}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:15px;font-weight:700;color:#F5F0E8;line-height:1.35">${esc(t.title)}</div>
+            <div style="font-size:13px;color:#97A298;margin-top:3px;line-height:1.45">${esc(t.detail)}</div>
+            <div style="font-size:13px;color:${C};font-weight:700;margin-top:7px">${esc(t.cta)} →</div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
+// Vazifa bosilganda tegishli ekranga o'tadi
+function doTask(i){
+  const t=mentorData?.tasks?.[i]; if(!t) return;
+  const a=t.action||{};
+  switch(a.screen){
+    case 'practice': startPractice(a.questionIds); break;
+    case 'menu':     go('menyu'); if(a.category) setTimeout(()=>filterMenuCategory(a.category), 350); break;
+    case 'history':  go('tarix'); break;
+    case 'training':
+    case 'module':   go('oquv'); break;
+    default:         go('menyu');
+  }
+}
+
+// Menyuda kategoriyani tanlash (chip mavjud bo'lsa bosamiz)
+function filterMenuCategory(cat){
+  const chips=[...document.querySelectorAll('#tab-menyu [data-cat]')];
+  const hit=chips.find(c=>c.getAttribute('data-cat')===cat);
+  if(hit) hit.click();
+}
+
+// ---------- MASHQ (takroriy xatolar ustida ishlash) ----------
+// Bu TEST EMAS: taymer yo'q, ball qo'yilmaydi, to'g'ri javob darhol ko'rsatiladi.
+// Maqsad — baholash emas, o'rgatish.
+let pQ=[], pIdx=0, pAnswered=false;
+
+async function startPractice(ids){
+  if(!ids || !ids.length) return;
+  try {
+    const d=await api('/api/waiter/mentor/practice',{method:'POST',body:JSON.stringify({questionIds:ids})});
+    pQ=d.questions||[];
+  } catch(e){ toast(e.message,'error'); return; }
+  if(!pQ.length){ toast('Mashq uchun savol topilmadi','error'); return; }
+  pIdx=0;
+  const ov=document.getElementById('overlay-running');
+  ov.style.display='block';
+  showPractice();
+}
+
+function showPractice(){
+  pAnswered=false;
+  const q=pQ[pIdx];
+  const ov=document.getElementById('overlay-running');
+  ov.innerHTML=`<div style="position:absolute;inset:0;background:linear-gradient(170deg,#163326,#0f1f17);display:flex;flex-direction:column;padding:54px 22px 26px;overflow-y:auto">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+      <div onclick="quitPractice()" style="cursor:pointer;flex:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#C1C4BB" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
+      <div style="flex:1">
+        <div style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:rgba(201,168,76,.75);font-weight:700">Mashq — ball qo'yilmaydi</div>
+        <div style="font-size:14px;color:#97A298;margin-top:1px">${pIdx+1} / ${pQ.length}</div>
+      </div>
+    </div>
+    <div style="font-family:'Nunito Sans',sans-serif;font-size:19px;font-weight:700;line-height:1.4;color:#F5F0E8;margin-bottom:16px">${esc(q.question)}</div>
+    <div id="p-body"></div>
+    <div id="p-after" style="margin-top:14px"></div>
+  </div>`;
+
+  const body=document.getElementById('p-body');
+  if(q.type==='written'){
+    body.innerHTML=`<div style="font-size:13px;color:#97A298;margin-bottom:9px">Javobingizni o'ylab, keyin namunani ko'ring</div>
+      <textarea id="p-written" placeholder="Javobingizni yozing…" style="width:100%;min-height:100px;resize:none;padding:14px;border-radius:15px;background:rgba(245,240,232,.05);border:1.5px solid rgba(245,240,232,.14);color:#F5F0E8;font-family:inherit;font-size:15px;line-height:1.45;outline:none"></textarea>
+      <div onclick="revealPractice()" class="ro-press" style="margin-top:11px;padding:15px;border-radius:15px;background:rgba(201,168,76,.16);border:1px solid rgba(201,168,76,.4);color:#e2c879;font-weight:800;font-size:15px;text-align:center;cursor:pointer">Namunani ko'rsatish</div>`;
+  } else {
+    const letters=['A','B','C','D'];
+    body.innerHTML=`<div style="display:flex;flex-direction:column;gap:9px">
+      ${(q.options||[]).map((o,i)=>`<div onclick="answerPractice(${i})" id="po-${i}" style="display:flex;align-items:center;gap:12px;padding:14px;border-radius:15px;background:rgba(245,240,232,.05);border:1.5px solid rgba(245,240,232,.1);cursor:pointer;transition:all .2s">
+        <div style="width:26px;height:26px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;font-family:'Nunito Sans',sans-serif;font-size:15px;font-weight:700;color:#C9A84C;background:rgba(245,240,232,.1)">${letters[i]}</div>
+        <span style="flex:1;font-size:15px;font-weight:500;color:#F5F0E8;line-height:1.35">${esc(o)}</span>
+      </div>`).join('')}
+    </div>`;
+  }
+}
+
+function answerPractice(i){
+  if(pAnswered) return;
+  pAnswered=true;
+  const q=pQ[pIdx], ok=i===q.correctAnswer;
+  (q.options||[]).forEach((_,k)=>{
+    const el=document.getElementById('po-'+k); if(!el) return;
+    el.style.cursor='default';
+    if(k===q.correctAnswer){ el.style.background='rgba(95,199,143,.16)'; el.style.borderColor='#8FDDB2'; }
+    else if(k===i){ el.style.background='rgba(217,96,59,.14)'; el.style.borderColor='#F0A98D'; }
+    else el.style.opacity='.4';
+  });
+  showPracticeAfter(ok ? 'To\'g\'ri! ✓' : 'Xato — to\'g\'ri javob yashil rangda', ok, q.explanation);
+}
+
+function revealPractice(){
+  if(pAnswered) return;
+  pAnswered=true;
+  const q=pQ[pIdx];
+  showPracticeAfter('Namunaviy javob mezoni', null, q.rubric || q.explanation || '');
+}
+
+function showPracticeAfter(title, ok, note){
+  const col = ok===true?'#8FDDB2' : ok===false?'#F0A98D' : '#e2c879';
+  document.getElementById('p-after').innerHTML=`
+    <div style="padding:13px 15px;border-radius:14px;background:rgba(245,240,232,.05);border-left:3px solid ${col};animation:ro-fade .3s ease both">
+      <div style="font-size:14px;font-weight:700;color:${col}">${esc(title)}</div>
+      ${note?`<div style="font-size:14px;color:#EAE7DF;line-height:1.55;margin-top:6px">${esc(note)}</div>`:''}
+    </div>
+    <div onclick="nextPractice()" class="ro-press" style="margin-top:12px;padding:16px;border-radius:16px;background:linear-gradient(100deg,#C9A84C,#d8bd6a);color:#11241b;font-weight:800;font-size:16px;text-align:center;cursor:pointer">${pIdx<pQ.length-1?'Keyingi savol':'Mashqni yakunlash'}</div>`;
+}
+
+function nextPractice(){
+  if(pIdx<pQ.length-1){ pIdx++; showPractice(); }
+  else { quitPractice(); toast('Mashq tugadi — barakalla!','success'); }
+}
+function quitPractice(){
+  const ov=document.getElementById('overlay-running');
+  ov.style.display='none'; ov.innerHTML='';
+  go('home');
 }
 function countTo(id, target){
   const el=document.getElementById(id); if(!el) return;

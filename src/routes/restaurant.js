@@ -9,8 +9,12 @@ const ffmpegPath = require('ffmpeg-static');
 const { v4: uuidv4 } = require('uuid');
 const { auth } = require('../middleware/auth');
 const { asyncHandler } = require('../middleware/errorHandler');
+const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = require('express-rate-limit');
 const Restaurant = require('../models/Restaurant');
 const grading = require('../services/grading');
+const generator = require('../services/generator');
+const ai = require('../services/ai');
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(require('@ffprobe-installer/ffprobe').path);
@@ -232,6 +236,75 @@ router.put('/questions/:qId', guard, asyncHandler(async (req, res) => {
 
   await Restaurant.updateOne({ id: req.user.restaurantId, 'questions.id': req.params.qId }, { $set: update });
   res.json({ success: true });
+}));
+
+// ---- AI savol generatori ----
+// Ikki bosqichli: avval yaratadi (saqlamaydi), admin ko'rib chiqadi,
+// keyin faqat TASDIQLANGANLARI saqlanadi. AI narx yoki allergen bo'yicha
+// xato yozishi mumkin — tekshirilmagan savol bazaga tushmasligi kerak.
+
+const genLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  keyGenerator: (req) => req.user?.restaurantId || ipKeyGenerator(req.ip),
+  message: { error: 'Juda tez-tez so\'rayapsiz. 1 daqiqa kuting.' },
+  standardHeaders: true, legacyHeaders: false
+});
+
+router.post('/questions/generate', guard, genLimiter, asyncHandler(async (req, res) => {
+  if (!ai.isConfigured()) {
+    return res.status(503).json({ error: 'AI xizmati sozlanmagan. Administratorga murojaat qiling.' });
+  }
+  const { count, category, includeWritten } = req.body;
+
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'id menu questions');
+  if (!r) return res.status(404).json({ error: 'Restoran topilmadi' });
+  if (!r.menu.length) return res.status(400).json({ error: 'Avval menyuni to\'ldiring — savollar menyudan yaratiladi' });
+
+  try {
+    const out = await generator.generateQuestions({
+      menu: r.menu,
+      existingQuestions: r.questions,
+      count: Number(count) || 12,
+      category: category || undefined,
+      includeWritten: includeWritten !== false,
+      restaurantId: r.id
+    });
+    res.json(out);
+  } catch (err) {
+    if (err.code === 'QUOTA_EXHAUSTED') {
+      return res.status(429).json({ error: 'Bugungi AI limiti tugadi. Ertaga qayta urinib ko\'ring.' });
+    }
+    if (err.code === 'NO_MENU') return res.status(400).json({ error: err.message });
+    throw err;
+  }
+}));
+
+// Admin tasdiqlagan savollarni saqlaydi. Kelgan ma'lumot QAYTA tekshiriladi —
+// frontendga ishonmaymiz.
+router.post('/questions/generate/save', guard, asyncHandler(async (req, res) => {
+  const { questions } = req.body;
+  if (!Array.isArray(questions) || !questions.length) {
+    return res.status(400).json({ error: 'Saqlash uchun savol tanlanmagan' });
+  }
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'id menu questions');
+  if (!r) return res.status(404).json({ error: 'Restoran topilmadi' });
+
+  const seen = new Set(r.questions.map(q =>
+    String(q.question || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim()));
+
+  const valid = [];
+  for (const q of questions.slice(0, 60)) {
+    const v = generator.validateQuestion(q, r.menu, seen);
+    if (v) valid.push({ id: uuidv4(), ...v, createdAt: new Date() });
+  }
+  if (!valid.length) return res.status(400).json({ error: 'Yaroqli savol topilmadi' });
+
+  // Ko'rsatuv uchun qo'shilgan maydon — sxemada yo'q, saqlashdan oldin olib tashlaymiz
+  valid.forEach(v => delete v.dishName);
+
+  await Restaurant.updateOne({ id: r.id }, { $push: { questions: { $each: valid } } });
+  res.json({ success: true, saved: valid.length, skipped: questions.length - valid.length, questions: valid });
 }));
 
 router.delete('/questions/:qId', guard, asyncHandler(async (req, res) => {

@@ -160,6 +160,10 @@ body{font-family:'Nunito Sans',sans-serif;background:#F2ECE1;color:#19241D;heigh
 /* Savol turi tanlovi (variantli / yozma) */
 .qt-b{flex:1;text-align:center;padding:10px;border-radius:10px;border:1px solid rgba(20,41,31,.12);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;color:#5A6B5F}
 .qt-b.on{background:rgba(201,168,76,.14);border-color:#C9A84C;color:#7A5E20}
+/* AI generator: savol soni tanlovi */
+.gc-b{flex:1;text-align:center;padding:10px;border-radius:10px;border:1px solid rgba(20,41,31,.12);font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;color:#5A6B5F}
+.gc-b.on{background:rgba(201,168,76,.14);border-color:#C9A84C;color:#7A5E20}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* ─── CALENDAR ─── */
 .cal-g{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
@@ -736,7 +740,10 @@ function rQuestions() {
           </div>`).join('')}
       </div>
     </div>
-    <button onclick="openQForm()" style="height:48px;padding:0 26px;border-radius:13px;border:none;background:linear-gradient(100deg,#C9A84C,#d8bd6a);color:#14291F;font-weight:800;font-size:13.5px;cursor:pointer;font-family:'Nunito Sans',sans-serif;box-shadow:0 12px 26px -10px rgba(201,168,76,.65)">+ Savol qo'shish</button>
+    <div style="display:flex;gap:10px;flex:none">
+      <button onclick="openGenForm()" style="height:48px;padding:0 20px;border-radius:13px;border:1px solid rgba(201,168,76,.5);background:rgba(201,168,76,.12);color:#7D6420;font-weight:800;font-size:13.5px;cursor:pointer;font-family:'Nunito Sans',sans-serif">✨ AI bilan yaratish</button>
+      <button onclick="openQForm()" style="height:48px;padding:0 26px;border-radius:13px;border:none;background:linear-gradient(100deg,#C9A84C,#d8bd6a);color:#14291F;font-weight:800;font-size:13.5px;cursor:pointer;font-family:'Nunito Sans',sans-serif;box-shadow:0 12px 26px -10px rgba(201,168,76,.65)">+ Savol qo'shish</button>
+    </div>
   </div>
 
   <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
@@ -1941,6 +1948,137 @@ async function saveWaiter(id) {
     showToast('Ofitsiant qo\'shildi','ok');
   }
   closePanel(); renderSec();
+}
+
+// ── AI SAVOL GENERATORI ─────────────────────────────────────
+// Ikki bosqich: yaratish → admin ko'rib chiqadi → tanlanganlari saqlanadi.
+// AI narx/allergen bo'yicha xato yozishi mumkin, shuning uchun tekshirmasdan
+// bazaga tushirmaymiz.
+let genResult=[], genPicked=new Set();
+
+function openGenForm(){
+  const cats=[...new Set((S.menu||[]).map(m=>m.category))].filter(Boolean).sort();
+  document.getElementById('panelTitle').textContent='AI bilan savol yaratish';
+  document.getElementById('panelBody').innerHTML=`
+    <div style="padding:12px 14px;border-radius:12px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.28);font-size:12.5px;color:#3D4A40;line-height:1.5;margin-bottom:16px">
+      Savollar <b>menyungiz asosida</b> yaratiladi — narx, tarkib, allergen va tavsiyalardan.
+      Yaratilgandan keyin har birini ko'rib chiqasiz, faqat tanlaganlaringiz saqlanadi.
+    </div>
+    <div class="f-row">
+      <label class="f-label">Nechta savol</label>
+      <div class="diff-g">
+        ${[8,12,20,30].map((n,i)=>`<div class="gc-b ${i===1?'on':''}" data-n="${n}" onclick="selGenCount(${n})">${n}</div>`).join('')}
+      </div>
+    </div>
+    <div class="f-row">
+      <label class="f-label">Menyu bo'limi</label>
+      <select class="f-input" id="genCat">
+        <option value="">Butun menyu</option>
+        ${cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')}
+      </select>
+    </div>
+    <div class="f-row">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+        <input type="checkbox" id="genWritten" checked style="width:17px;height:17px;accent-color:#C9A84C;cursor:pointer">
+        <span style="font-size:13.5px;color:#19241D;font-weight:600">Yozma javobli savollar ham qo'shilsin</span>
+      </label>
+      <div style="font-size:12.5px;color:#8A9C90;margin-top:6px;line-height:1.45">Taxminan uchdan biri yozma bo'ladi — mehmon bilan real vaziyatlar.</div>
+    </div>
+    <div class="f-actions">
+      <button class="btn-outline" style="flex:1" onclick="closePanel()">Bekor</button>
+      <button class="btn-gold" style="flex:1.5" id="genBtn" onclick="runGenerate()">Yaratish</button>
+    </div>
+    <div id="genOut" style="margin-top:18px"></div>`;
+  _genCount=12;
+  openPanel();
+}
+
+let _genCount=12;
+function selGenCount(n){
+  _genCount=n;
+  document.querySelectorAll('.gc-b').forEach(el=>el.classList.toggle('on', +el.dataset.n===n));
+}
+
+async function runGenerate(){
+  const btn=document.getElementById('genBtn'), out=document.getElementById('genOut');
+  btn.disabled=true; btn.style.opacity='.6'; btn.textContent='Yaratilmoqda…';
+  out.innerHTML=`<div style="display:flex;align-items:center;gap:12px;padding:16px;border-radius:12px;background:#FBF7EF">
+    <div style="width:20px;height:20px;border-radius:50%;border:2.5px solid rgba(201,168,76,.25);border-top-color:#C9A84C;animation:spin .8s linear infinite"></div>
+    <div style="font-size:13px;color:#5A6B5F">Menyu tahlil qilinmoqda… bu 20-40 soniya olishi mumkin</div>
+  </div>`;
+  try{
+    const body={ count:_genCount, category:document.getElementById('genCat').value||undefined,
+                 includeWritten:document.getElementById('genWritten').checked };
+    const r=await api('/api/restaurant/questions/generate',{method:'POST',body:JSON.stringify(body)});
+    genResult=r.questions||[];
+    genPicked=new Set(genResult.map((_,i)=>i));   // hammasi belgilangan holda boshlanadi
+    renderGenResult(r);
+  }catch(e){
+    out.innerHTML=`<div style="padding:14px;border-radius:12px;background:rgba(194,91,76,.1);border:1px solid rgba(194,91,76,.3);font-size:13px;color:#A03020">${esc(e.message)}</div>`;
+  }finally{
+    btn.disabled=false; btn.style.opacity='1'; btn.textContent='Qaytadan yaratish';
+  }
+}
+
+function renderGenResult(r){
+  const out=document.getElementById('genOut');
+  if(!genResult.length){ out.innerHTML=`<div style="padding:14px;border-radius:12px;background:#FBF7EF;font-size:13px;color:#5A6B5F">Savol yaratilmadi. Menyuda yetarli ma'lumot bo'lmasligi mumkin.</div>`; return; }
+
+  const D={easy:{l:'OSON',c:'#3B7A50'},medium:{l:"O'RTA",c:'#7A5E20'},hard:{l:'QIYIN',c:'#A03020'}};
+  out.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:11px">
+      <div style="font-size:13.5px;font-weight:800;color:#19241D">${genResult.length} ta savol yaratildi${r.dropped?` <span style="font-weight:500;color:#8A9C90">(${r.dropped} tasi tekshiruvdan o'tmadi)</span>`:''}</div>
+      <div onclick="toggleAllGen()" style="font-size:12.5px;color:#7D6420;font-weight:700;cursor:pointer">Belgilashni almashtirish</div>
+    </div>
+    <div id="genList">${genResult.map((q,i)=>genCard(q,i,D)).join('')}</div>
+    <button class="btn-gold" style="width:100%;margin-top:12px;height:46px" onclick="saveGenerated()">
+      <span id="genSaveLbl">Tanlanganlarni saqlash (${genPicked.size})</span>
+    </button>`;
+}
+
+function genCard(q,i,D){
+  const d=D[q.difficulty]||D.easy, on=genPicked.has(i);
+  return `<div id="gen-${i}" style="border:1px solid ${on?'rgba(201,168,76,.5)':'rgba(20,41,31,.1)'};border-radius:12px;padding:12px 13px;margin-bottom:9px;background:${on?'rgba(201,168,76,.06)':'#fff'};transition:all .15s">
+    <div style="display:flex;align-items:flex-start;gap:10px">
+      <input type="checkbox" ${on?'checked':''} onchange="toggleGen(${i})" style="width:17px;height:17px;flex:none;margin-top:2px;accent-color:#C9A84C;cursor:pointer">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;flex-wrap:wrap">
+          <span style="padding:2px 8px;border-radius:9px;background:rgba(20,41,31,.06);color:${d.c};font-size:10px;font-weight:800;letter-spacing:.5px">${d.l}</span>
+          ${q.type==='written'?`<span style="padding:2px 8px;border-radius:9px;background:rgba(90,107,95,.12);color:#4A5C50;font-size:10px;font-weight:800">✎ YOZMA</span>`:''}
+          ${q.dishName?`<span style="font-size:11.5px;color:#8A9C90">${esc(q.dishName)}</span>`:''}
+        </div>
+        <div style="font-size:13px;font-weight:600;color:#19241D;line-height:1.5">${esc(q.question)}</div>
+        ${q.type==='written'
+          ? `<div style="margin-top:7px;font-size:12px;color:#5A6B5F;line-height:1.5"><b>Mezon:</b> ${esc(q.rubric||'')}${(q.keyPoints||[]).length?`<br><b>Nuqtalar:</b> ${esc(q.keyPoints.join(' · '))}`:''}</div>`
+          : `<div style="margin-top:7px">${(q.options||[]).map((o,oi)=>`<div style="font-size:12.5px;color:${oi===q.correctAnswer?'#19241D':'#5A6B5F'};font-weight:${oi===q.correctAnswer?'700':'400'};line-height:1.65">${oi===q.correctAnswer?'✓':'·'} ${esc(o)}</div>`).join('')}</div>`}
+        ${q.explanation?`<div style="margin-top:7px;font-size:12px;color:#5A6B5F;line-height:1.5;padding-left:10px;border-left:2px solid rgba(201,168,76,.4)">${esc(q.explanation)}</div>`:''}
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleGen(i){
+  if(genPicked.has(i)) genPicked.delete(i); else genPicked.add(i);
+  const el=document.getElementById('gen-'+i), on=genPicked.has(i);
+  if(el){ el.style.borderColor=on?'rgba(201,168,76,.5)':'rgba(20,41,31,.1)'; el.style.background=on?'rgba(201,168,76,.06)':'#fff'; }
+  const lbl=document.getElementById('genSaveLbl');
+  if(lbl) lbl.textContent=`Tanlanganlarni saqlash (${genPicked.size})`;
+}
+function toggleAllGen(){
+  const all=genPicked.size===genResult.length;
+  genPicked = all ? new Set() : new Set(genResult.map((_,i)=>i));
+  renderGenResult({dropped:0});
+}
+
+async function saveGenerated(){
+  if(!genPicked.size){ showToast('Hech qanday savol tanlanmadi','err'); return; }
+  const picked=[...genPicked].sort((a,b)=>a-b).map(i=>genResult[i]);
+  try{
+    const r=await api('/api/restaurant/questions/generate/save',{method:'POST',body:JSON.stringify({questions:picked})});
+    (r.questions||[]).forEach(q=>S.questions.push(q));
+    showToast(`${r.saved} ta savol qo'shildi${r.skipped?`, ${r.skipped} tasi o'tkazib yuborildi`:''}`,'ok');
+    closePanel(); renderSec();
+  }catch(e){ showToast(e.message,'err'); }
 }
 
 // QUESTION FORM

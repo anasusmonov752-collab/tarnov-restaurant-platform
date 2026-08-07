@@ -192,6 +192,53 @@ const WaiterModuleProgressSchema = new mongoose.Schema({
   badgeEarned:       { type: Boolean, default: false }
 }, { _id: false });
 
+// ── Bazaviy bilim diagnostikasi ───────────────────────────────
+// Ofitsiant birinchi kirganda topshiradigan servis standartlari testi.
+// Menyu testidan farqli: bir marta topshiriladi, KPI/maoshga TA'SIR QILMAYDI —
+// maqsad baholash emas, o'quv kursini to'g'ri tuzish.
+const AreaScoreSchema = new mongoose.Schema({
+  area:    String,
+  label:   String,
+  icon:    String,
+  correct: Number,
+  total:   Number,
+  score:   Number
+}, { _id: false });
+
+const AssessmentSchema = new mongoose.Schema({
+  waiterId:       String,
+  score:          Number,
+  totalCorrect:   Number,
+  totalQuestions: Number,
+  areaScores:     [AreaScoreSchema],
+  breakdown:      [BreakdownItemSchema],
+  completedAt:    { type: Date, default: Date.now }
+}, { _id: false });
+
+// ── Shaxsiy o'quv kursi ───────────────────────────────────────
+// Diagnostika natijasidan avtomatik tuziladi: zaif yo'nalishlar birinchi.
+const CourseStepSchema = new mongoose.Schema({
+  id:      { type: String, default: () => uuidv4() },
+  area:    String,                       // qaysi kompetensiyani yopadi
+  title:   { type: String, required: true },
+  why:     String,                       // nega aynan shu qadam berilgan
+  // Qadam qayerga olib boradi: mavjud kontent yoki menyu bo'limi
+  sourceType: { type: String, enum: ['module', 'video', 'menu', 'lesson', 'practice'], default: 'lesson' },
+  sourceId:   String,                    // modul/video id
+  category:   String,                    // menyu bo'limi
+  lesson:     String,                    // AI yozgan dars matni (sourceType='lesson')
+  order:   { type: Number, default: 0 },
+  done:    { type: Boolean, default: false },
+  doneAt:  Date
+}, { _id: false });
+
+const WaiterCourseSchema = new mongoose.Schema({
+  waiterId:  String,
+  steps:     [CourseStepSchema],
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+}, { _id: false });
+
 const KPISettingsSchema = new mongoose.Schema({
   periodDays:      { type: Number, default: 10, enum: [7, 10, 14, 15, 30] },
   masterMin:       { type: Number, default: 90  },
@@ -265,7 +312,9 @@ const RestaurantSchema = new mongoose.Schema({
   moduleProgress: [WaiterModuleProgressSchema],
   trainingVideos: [TrainingVideoSchema],
   waiterTrainingViews: [WaiterTrainingViewSchema],
-  waiterMenuProgress: [WaiterMenuProgressSchema]
+  waiterMenuProgress: [WaiterMenuProgressSchema],
+  assessments: [AssessmentSchema],
+  courses: [WaiterCourseSchema]
 });
 
 module.exports = mongoose.model('Restaurant', RestaurantSchema);

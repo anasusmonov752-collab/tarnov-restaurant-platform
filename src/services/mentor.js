@@ -350,7 +350,100 @@ function checkPool(questions, levelKey) {
   return { ok: !missing.length, mix, have, missing: Object.fromEntries(missing) };
 }
 
+// ── SHAXSIY O'QUV KURSI ───────────────────────────────────────
+// Diagnostika natijasidan tuziladi: zaif yo'nalishlar birinchi.
+// Har qadam mavjud kontentga (trening video, modul) bog'lanadi; topilmasa
+// ichki dars matni ishlatiladi. AI so'rovi SARFLANMAYDI — kurs darhol tayyor.
+
+const baseline = require('../data/baseline');
+
+// Bu ballgacha yo'nalish "zaif" hisoblanadi va kursga kiradi
+const WEAK_BELOW = 80;
+const MAX_STEPS = 7;
+
+/** Yo'nalish kalitlari bo'yicha mos trening video yoki modul topadi. */
+function findContent(area, r) {
+  const kws = (baseline.AREAS[area]?.keywords || []).map(norm);
+  const hit = (title) => {
+    const t = norm(title);
+    return kws.some(k => t.includes(k));
+  };
+  const video = (r.trainingVideos || []).find(v => hit(v.title));
+  if (video) return { sourceType: 'video', sourceId: video.id, name: video.title };
+  const mod = (r.modules || []).find(m => hit(m.title) || hit(m.description || ''));
+  if (mod) return { sourceType: 'module', sourceId: mod.id, name: mod.title };
+  return null;
+}
+
+/**
+ * Diagnostika natijasidan o'quv kursi tuzadi.
+ * @param {object} assessment — { areaScores: [{area,label,score,...}] }
+ * @param {object} r          — Restaurant hujjati
+ * @returns {Array} qadamlar
+ */
+function buildCourse(assessment, r) {
+  const steps = [];
+  const areas = [...(assessment.areaScores || [])].sort((a, b) => a.score - b.score);
+
+  for (const a of areas) {
+    if (steps.length >= MAX_STEPS - 1) break;
+    if (a.score >= WEAK_BELOW) continue;
+
+    const meta = baseline.AREAS[a.area];
+    if (!meta) continue;
+
+    const content = findContent(a.area, r);
+    steps.push({
+      area: a.area,
+      title: meta.label,
+      why: `Diagnostikada bu yo'nalishda ${a.score}% to'pladingiz (${a.correct}/${a.total}).`,
+      ...(content
+        ? { sourceType: content.sourceType, sourceId: content.sourceId }
+        : { sourceType: 'lesson', lesson: meta.lesson.join('\n\n') }),
+      order: steps.length
+    });
+  }
+
+  // Menyu bilimi — har doim oxirgi qadam, chunki u uzluksiz ish
+  if ((r.menu || []).length) {
+    steps.push({
+      area: 'menyu',
+      title: 'Menyuni o\'rganish',
+      why: `Restoranda ${r.menu.length} ta taom bor. Har kuni 5 tadan yodlang — bu testdagi savollarning asosi.`,
+      sourceType: 'menu',
+      order: steps.length
+    });
+  }
+
+  // Hamma yo'nalish kuchli chiqsa ham kurs bo'sh qolmasin
+  if (steps.length === 1 && areas.length) {
+    const weakest = areas[0];
+    const meta = baseline.AREAS[weakest.area];
+    if (meta) {
+      steps.unshift({
+        area: weakest.area,
+        title: meta.label,
+        why: `Natijangiz yaxshi. Eng past ball shu yo'nalishda (${weakest.score}%) — mustahkamlab qo'ying.`,
+        sourceType: 'lesson',
+        lesson: meta.lesson.join('\n\n'),
+        order: 0
+      });
+      steps.forEach((s, i) => s.order = i);
+    }
+  }
+
+  return steps;
+}
+
+/** Kurs progressi — nechta qadam bajarilgan. */
+function courseProgress(course) {
+  const steps = course?.steps || [];
+  const done = steps.filter(s => s.done).length;
+  return { done, total: steps.length, pct: steps.length ? Math.round(done / steps.length * 100) : 0 };
+}
+
 module.exports = {
   buildProfile, dailyTasks, pickQuestions, checkPool, mixFor,
-  matchMenuItem, backfillLinks, norm, containsWord, LEVELS, MIX
+  matchMenuItem, backfillLinks, norm, containsWord, LEVELS, MIX,
+  buildCourse, courseProgress, findContent, WEAK_BELOW
 };

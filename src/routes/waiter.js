@@ -9,6 +9,7 @@ const { getPeriodKey, getPeriodLabel } = require('../utils/kpi');
 const ai = require('../services/ai');
 const grading = require('../services/grading');
 const mentor = require('../services/mentor');
+const baseline = require('../data/baseline');
 
 const aiChatLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -113,7 +114,98 @@ router.get('/mentor', guard, asyncHandler(async (req, res) => {
   const profile = mentor.buildProfile(r, req.user.waiterId);
   const tasks   = mentor.dailyTasks(profile, r, req.user.waiterId);
 
-  res.json({ profile, tasks });
+  const assessment = (r.assessments || []).find(a => a.waiterId === req.user.waiterId);
+  const course     = (r.courses || []).find(c => c.waiterId === req.user.waiterId);
+
+  res.json({
+    profile, tasks,
+    assessmentDone: !!assessment,
+    assessmentScore: assessment?.score ?? null,
+    course: course ? { progress: mentor.courseProgress(course) } : null
+  });
+}));
+
+// ── BAZAVIY BILIM DIAGNOSTIKASI ───────────────────────────────
+// Bir marta topshiriladi, KPI va maoshga TA'SIR QILMAYDI — maqsad
+// baholash emas, o'quv kursini to'g'ri tuzish. Savollar oldindan
+// yozilgan (src/data/baseline.js), AI so'rovi sarflanmaydi.
+
+router.get('/assessment', guard, asyncHandler(async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'assessments');
+  const done = (r?.assessments || []).find(a => a.waiterId === req.user.waiterId);
+  if (done) return res.json({ done: true, result: done });
+  res.json({ done: false, questions: baseline.publicQuestions(), total: baseline.COUNT });
+}));
+
+router.post('/assessment', guard, asyncHandler(async (req, res) => {
+  const { answers } = req.body;
+  if (!answers || typeof answers !== 'object') {
+    return res.status(400).json({ error: 'Javoblar noto\'g\'ri formatda' });
+  }
+
+  const r = await Restaurant.findOne({ id: req.user.restaurantId });
+  if (!r) return res.status(404).json({ error: 'Restoran topilmadi' });
+
+  const result = baseline.score(answers);
+  const assessment = { waiterId: req.user.waiterId, ...result, completedAt: new Date() };
+  const steps = mentor.buildCourse(result, r);
+
+  // Diagnostika bir marta topshiriladi — allaqachon bo'lsa qayta yozmaymiz.
+  const already = (r.assessments || []).some(a => a.waiterId === req.user.waiterId);
+  if (already) {
+    const old = r.assessments.find(a => a.waiterId === req.user.waiterId);
+    return res.status(400).json({ error: 'Diagnostikani allaqachon topshirgansiz', result: old });
+  }
+
+  await Restaurant.updateOne(
+    { id: r.id },
+    {
+      $push: {
+        assessments: assessment,
+        courses: { waiterId: req.user.waiterId, steps, createdAt: new Date(), updatedAt: new Date() }
+      }
+    }
+  );
+
+  res.json({ success: true, result: assessment, courseSteps: steps.length });
+}));
+
+// ── SHAXSIY O'QUV KURSI ───────────────────────────────────────
+router.get('/course', guard, asyncHandler(async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'courses assessments trainingVideos modules');
+  const course = (r?.courses || []).find(c => c.waiterId === req.user.waiterId);
+  if (!course) return res.json({ exists: false });
+
+  // Qadam qaysi kontentga ishora qilayotganini nomi bilan qaytaramiz
+  const vids = new Map((r.trainingVideos || []).map(v => [v.id, v.title]));
+  const mods = new Map((r.modules || []).map(m => [m.id, m.title]));
+  const steps = course.steps.map(s => ({
+    ...s.toObject?.() ?? s,
+    sourceName: s.sourceType === 'video' ? vids.get(s.sourceId)
+              : s.sourceType === 'module' ? mods.get(s.sourceId) : null
+  }));
+
+  res.json({ exists: true, steps, progress: mentor.courseProgress(course) });
+}));
+
+router.post('/course/:stepId/done', guard, asyncHandler(async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId });
+  if (!r) return res.status(404).json({ error: 'Restoran topilmadi' });
+
+  const course = (r.courses || []).find(c => c.waiterId === req.user.waiterId);
+  if (!course) return res.status(404).json({ error: 'Kurs topilmadi' });
+
+  const step = course.steps.find(s => s.id === req.params.stepId);
+  if (!step) return res.status(404).json({ error: 'Qadam topilmadi' });
+
+  step.done = req.body?.done !== false;
+  step.doneAt = step.done ? new Date() : undefined;
+  course.updatedAt = new Date();
+
+  r.markModified('courses');
+  await r.save();
+
+  res.json({ success: true, progress: mentor.courseProgress(course) });
 }));
 
 // Takroriy xatolar ustida mashq — test emas, bali qo'yilmaydi, faqat o'rganish.
@@ -578,10 +670,7 @@ router.post('/ai-chat', guard, aiChatLimiter, asyncHandler(async (req, res) => {
   const { message, history } = req.body;
   if (!message?.trim()) return res.status(400).json({ error: 'Savol kiritilmagan' });
 
-  const r = await Restaurant.findOne(
-    { id: req.user.restaurantId },
-    'name location menu adaptation announcements'
-  );
+  const r = await Restaurant.findOne({ id: req.user.restaurantId });
   if (!r) return res.status(404).json({ error: 'Restoran topilmadi' });
 
   // Menyu konteksti
@@ -604,10 +693,48 @@ router.post('/ai-chat', guard, aiChatLimiter, asyncHandler(async (req, res) => {
     .map(a => `• ${a.title}: ${a.content}`)
     .join('\n');
 
-  const systemPrompt = `Siz "${r.name}" restoranining raqamli yordamchisisiz.
-Faqat quyidagi ma'lumotlar asosida ofitsiantlarga yordam bering.
-Javoblar O'zbek tilida, qisqa va aniq bo'lsin.
-Agar savol menyu yoki restoran bilan bog'liq bo'lmasa: "Bu savolga javob bera olmayman, faqat restoran va menyu bo'yicha yordam beraman." deb ayting.
+  // ── Ofitsiantning bilim profili ──
+  // Mentor "sizning natijangizni biladigan murabbiy" bo'lishi uchun kerak.
+  // MAXFIYLIK: ism yuborilmaydi — faqat raqamlar va yo'nalish nomlari.
+  const profile    = mentor.buildProfile(r, req.user.waiterId);
+  const assessment = (r.assessments || []).find(a => a.waiterId === req.user.waiterId);
+  const course     = (r.courses || []).find(c => c.waiterId === req.user.waiterId);
+
+  const profileText = [
+    `Daraja: ${profile.level.label}`,
+    profile.tests.avg !== null ? `Testlar o'rtachasi: ${profile.tests.avg}% (${profile.tests.count} ta test)` : 'Hali test topshirmagan',
+    `Qiyinlik kesimi: oson ${profile.byDifficulty.easy.score ?? '—'}%, o'rta ${profile.byDifficulty.medium.score ?? '—'}%, qiyin ${profile.byDifficulty.hard.score ?? '—'}%`,
+    profile.weakCategories.length ? `Zaif menyu bo'limlari: ${profile.weakCategories.slice(0, 3).map(c => `${c.category} (${c.score}%)`).join(', ')}` : null,
+    profile.repeatedMistakes.length ? `Qayta-qayta xato qilgan savollari: ${profile.repeatedMistakes.slice(0, 3).map(m => `"${m.question.slice(0, 60)}"`).join('; ')}` : null,
+    `Menyu qamrovi: ${profile.menu.known}/${profile.menu.total} taom`,
+    assessment ? `Bazaviy diagnostika: ${assessment.score}% — ${assessment.areaScores.slice(0, 3).map(a => `${a.label} ${a.score}%`).join(', ')}` : 'Bazaviy diagnostikani hali topshirmagan',
+    course ? `Kurs progressi: ${course.steps.filter(s => s.done).length}/${course.steps.length} qadam. Keyingi qadam: ${course.steps.find(s => !s.done)?.title || 'hammasi bajarilgan'}` : null
+  ].filter(Boolean).join('\n');
+
+  const systemPrompt = `Siz "${r.name}" restoranining SHAXSIY MURABBIYSIZ (mentor).
+Oldingizda ofitsiant turibdi va siz uning natijalarini bilasiz.
+
+QANDAY GAPIRASIZ:
+- O'zbek tilida, qisqa va aniq. 4 jumladan oshmasin (savol murakkab bo'lmasa).
+- Do'stona, lekin bo'sh maqtov yo'q. Murabbiy — xushomadgo'y emas.
+- Ofitsiantga "siz" deb murojaat qiling.
+- Bir javobda faqat BITTA amaliy maslahat bering. Ro'yxat yozib tashlamang.
+- Har javobni boshqacha boshlang. Bir xil kirish jumlasini takrorlamang —
+  suhbat jonli bo'lishi kerak, shablon emas.
+- Profildagi raqamni FAQAT kerak bo'lganda va FAQAT bir marta eslatib o'ting.
+  Har javobda ball takrorlansa, ofitsiant unga e'tibor bermay qo'yadi.
+- Savolga to'g'ridan-to'g'ri javob bering. Savol profilga aloqador bo'lmasa,
+  natijalarni umuman eslatmang.
+- Kerak bo'lsa oxirida bitta aniq keyingi qadam taklif qiling.
+
+CHEGARA:
+- Faqat restoran, menyu, servis standartlari va ofitsiantning o'z natijalari haqida gapiring.
+- Bu mavzulardan tashqari savolga: "Bu savolga javob bera olmayman — men sizga restoran
+  va xizmat ko'rsatish bo'yicha murabbiylik qilaman." deb javob bering.
+- Menyuda YO'Q narsani o'ylab topmang. Bilmasangiz "menyuda bu ma'lumot yo'q" deng.
+
+=== SHU OFITSIANT PROFILI ===
+${profileText}
 
 === MENYU ===
 ${menuText}

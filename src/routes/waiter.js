@@ -10,6 +10,7 @@ const ai = require('../services/ai');
 const grading = require('../services/grading');
 const mentor = require('../services/mentor');
 const baseline = require('../data/baseline');
+const mentorChat = require('../services/mentorChat');
 
 const aiChatLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -667,7 +668,7 @@ router.post('/ai-chat', guard, aiChatLimiter, asyncHandler(async (req, res) => {
     return res.status(503).json({ error: 'AI xizmati hozircha mavjud emas.' });
   }
 
-  const { message, history } = req.body;
+  const { message } = req.body;
   if (!message?.trim()) return res.status(400).json({ error: 'Savol kiritilmagan' });
 
   const r = await Restaurant.findOne({ id: req.user.restaurantId });
@@ -696,6 +697,13 @@ router.post('/ai-chat', guard, aiChatLimiter, asyncHandler(async (req, res) => {
   // ── Ofitsiantning bilim profili ──
   // Mentor "sizning natijangizni biladigan murabbiy" bo'lishi uchun kerak.
   // MAXFIYLIK: ism yuborilmaydi — faqat raqamlar va yo'nalish nomlari.
+  // Suhbat tarixi BAZADAN olinadi — frontenddan emas. Shunda mentor
+  // telefon almashtirilsa yoki sahifa yangilansa ham hech narsani unutmaydi,
+  // va foydalanuvchi tarixni o'zgartirib, mentorni chalg'ita olmaydi.
+  // (systemPrompt ichida ishlatilgani uchun undan OLDIN turishi shart.)
+  const chatDoc = await mentorChat.load(r.id, req.user.waiterId);
+  const ctx = mentorChat.buildContext(chatDoc);
+
   const profile    = mentor.buildProfile(r, req.user.waiterId);
   const assessment = (r.assessments || []).find(a => a.waiterId === req.user.waiterId);
   const course     = (r.courses || []).find(c => c.waiterId === req.user.waiterId);
@@ -736,6 +744,13 @@ CHEGARA:
 === SHU OFITSIANT PROFILI ===
 ${profileText}
 
+${ctx.summary ? `=== AVVALGI SUHBATLARINGIZ (qisqacha) ===
+Quyida shu ofitsiant bilan oldin nima gaplashganingiz yozilgan. Bunga tayanib
+javob bering: bergan topshiriqlaringizni eslang, o'zini takrorlamang, agar
+avval kelishilgan narsa bo'lsa uni so'rang.
+
+${ctx.summary}` : ''}
+
 === MENYU ===
 ${menuText}
 
@@ -743,10 +758,8 @@ ${docsText ? `=== RESTORAN HAQIDA ===\n${docsText}` : ''}
 
 ${annText ? `=== SO'NGGI E'LONLAR ===\n${annText}` : ''}`;
 
-  // Suhbat tarixi (oxirgi 6 xabar)
-  const safeHistory = Array.isArray(history) ? history.slice(-6) : [];
   const messages = [
-    ...safeHistory.map(m => ({ role: m.role, content: String(m.content) })),
+    ...ctx.recent,
     { role: 'user', content: message.trim() }
   ];
 
@@ -760,7 +773,27 @@ ${annText ? `=== SO'NGGI E'LONLAR ===\n${annText}` : ''}`;
     restaurantId: req.user.restaurantId
   });
 
+  // Ikkalasini ham saqlaymiz — mentor keyingi safar shularni eslaydi
+  await mentorChat.append(r.id, req.user.waiterId, 'user', message.trim());
+  await mentorChat.append(r.id, req.user.waiterId, 'assistant', reply);
+
   res.json({ reply });
+
+  // Kerak bo'lsa eski suhbatlarni qisqacha mazmunga siqamiz.
+  // Javob allaqachon yuborilgan — foydalanuvchi buni kutmaydi.
+  mentorChat.maybeSummarize(r.id, req.user.waiterId).catch(() => {});
+}));
+
+// Suhbat tarixi — oyna ochilganda yuklanadi
+router.get('/mentor/chat', guard, asyncHandler(async (req, res) => {
+  const messages = await mentorChat.history(req.user.restaurantId, req.user.waiterId);
+  res.json({ messages });
+}));
+
+// Ofitsiant o'z suhbatini tozalashi mumkin
+router.delete('/mentor/chat', guard, asyncHandler(async (req, res) => {
+  await mentorChat.clear(req.user.restaurantId, req.user.waiterId);
+  res.json({ success: true });
 }));
 
 module.exports = router;

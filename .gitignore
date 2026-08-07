@@ -2,7 +2,9 @@
 node_modules/
 
 # Data (JSON files & uploads - server creates these automatically)
-data/
+# Boshida "/" bor — FAQAT loyiha ildizidagi data/ papkasi.
+# Busiz src/data/ ham bloklanadi va deployda server yiqiladi.
+/data/
 uploads/
 
 # Environment

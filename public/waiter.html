@@ -84,6 +84,12 @@
         <div id="tab-tarix" class="tabscreen" style="position:absolute;inset:0;overflow-y:auto;padding:8px 20px 104px;display:none"></div>
         <div id="tab-sertifikat" class="tabscreen" style="position:absolute;inset:0;overflow-y:auto;padding:8px 20px 104px;display:none"></div>
         <div id="tab-reyting" class="tabscreen" style="position:absolute;inset:0;overflow-y:auto;padding:8px 20px 104px;display:none"></div>
+        <!-- O'quv ichidagi alohida oynalar: har bir narsa o'z ekranida ochiladi -->
+        <div id="tab-kurs" class="tabscreen" style="position:absolute;inset:0;overflow-y:auto;padding:8px 18px 104px;display:none"></div>
+        <div id="tab-modullar" class="tabscreen" style="position:absolute;inset:0;overflow-y:auto;padding:8px 18px 104px;display:none"></div>
+        <div id="tab-modul" class="tabscreen" style="position:absolute;inset:0;overflow-y:auto;padding:0 0 104px;display:none"></div>
+        <div id="tab-dars" class="tabscreen" style="position:absolute;inset:0;overflow-y:auto;padding:0 0 104px;display:none"></div>
+        <div id="tab-standartlar" class="tabscreen" style="position:absolute;inset:0;overflow-y:auto;padding:8px 18px 104px;display:none"></div>
         <div id="tab-adaptatsiya" class="tabscreen" style="position:absolute;inset:0;overflow-y:auto;padding:8px 20px 104px;display:none"></div>
         <div id="tab-koproq" class="tabscreen" style="position:absolute;inset:0;overflow-y:auto;padding:8px 18px 104px;display:none"></div>
       </div>
@@ -2016,28 +2022,244 @@ function downloadCert(){
 }
 
 // ---------- O'QUV ----------
+// ════════ O'QUV ════════
+// Avval uchta bog'liqmas narsa (shaxsiy kurs, modullar, standart videolar)
+// bitta scrollda turardi va ikkita progress bir-biriga zid ko'rinardi
+// ("2/3 qadam" va "0/1 dars" butunlay boshqa narsani o'lchaydi).
+//
+// Endi O'quv — MARKAZ. Har bo'lim o'z oynasida ochiladi va har ekranda
+// bitta maqsad, bitta progress bo'ladi.
+
+let oquvMods=null, oquvVids=null, oquvCourse=null;
+
+/** O'quv ma'lumotini parallel oladi (bosh sahifadagi kabi — ketma-ket kutish yo'q). */
+async function loadOquv(force){
+  if(!force && oquvMods && oquvVids) return;
+  const [mods, vids, course] = await Promise.all([
+    api('/api/waiter/modules').catch(()=>null),
+    api('/api/waiter/training').catch(()=>null),
+    api('/api/waiter/course').catch(()=>null)
+  ]);
+  oquvMods = mods||[]; oquvVids = vids||[]; oquvCourse = course;
+  window._trainingVids = oquvVids;
+}
+
+/** Ichki oynani ochadi. Pastki menyuda O'quv yonib turaveradi. */
+function openSub(id){
+  document.querySelectorAll('.tabscreen').forEach(t=>t.style.display='none');
+  const el=document.getElementById(id);
+  if(el){ el.style.display='block'; el.scrollTop=0; }
+}
+
+/** Orqaga qaytish sarlavhasi — har ichki oynada bir xil. */
+function subHeader(title, sub, backFn){
+  return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+    <div onclick="${backFn}" class="ro-press" style="cursor:pointer;padding:4px;flex:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5F0E8" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></div>
+    <div style="flex:1;min-width:0">
+      <div style="font-family:'Nunito Sans',sans-serif;font-size:23px;font-weight:700;color:#F5F0E8;line-height:1.15">${esc(title)}</div>
+      ${sub?`<div style="font-size:13.5px;color:#97A298;margin-top:2px">${esc(sub)}</div>`:''}
+    </div>
+  </div>`;
+}
+
+/** Markazdagi katta karta: halqa + nom + bitta aniq raqam. */
+function hubCard(o){
+  return `<div onclick="${o.onclick}" class="ro-press" style="display:flex;align-items:center;gap:15px;padding:17px;border-radius:20px;background:linear-gradient(125deg,${o.color}1f,#1b3a2d);border:1px solid ${o.color}44;cursor:pointer;animation:ro-rise .45s ease ${o.delay||0}s both">
+    <div style="position:relative;width:62px;height:62px;flex:none;display:flex;align-items:center;justify-content:center">
+      ${ring(o.pct, 62, 6, o.color)}
+      <div style="position:absolute;font-size:22px">${o.icon}</div>
+    </div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:${o.color};font-weight:700">${esc(o.tag)}</div>
+      <div style="font-family:'Nunito Sans',sans-serif;font-size:18px;font-weight:700;color:#F5F0E8;margin-top:2px;line-height:1.2">${esc(o.title)}</div>
+      <div style="font-size:13.5px;color:#97A298;margin-top:4px;line-height:1.4">${esc(o.detail)}</div>
+    </div>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#97A298" stroke-width="2.2" style="flex:none"><path d="M9 6l6 6-6 6"/></svg>
+  </div>`;
+}
+
 async function renderOquv(){
   const box=document.getElementById('tab-oquv');
-  box.innerHTML=`<div style="font-family:'Nunito Sans',sans-serif;font-size:26px;font-weight:700;color:#F5F0E8">O'quv</div><div style="font-size:14px;color:#97A298;margin-bottom:16px">Yuklanmoqda...</div>`;
-  let mods=[]; try { mods = await api('/api/waiter/modules')||[]; } catch {}
-  let vids=[]; try { vids = await api('/api/waiter/training')||[]; } catch {}
-  window._trainingVids = vids;
-  const total=mods.length, done=mods.filter(m=>m.done||m.completed||m.progress>=100).length;
-  const pct=total?Math.round(done/total*100):0;
-  let course=null; try { course = await api('/api/waiter/course'); } catch {}
-  box.innerHTML=`<div style="font-family:'Nunito Sans',sans-serif;font-size:26px;font-weight:700;color:#F5F0E8">O'quv</div>
-    <div style="font-size:14px;color:#97A298;margin-bottom:16px">Xizmat standartlari · ${total} dars</div>
-    ${renderCourse(course)}
-    <div style="padding:16px 18px;border-radius:18px;background:linear-gradient(120deg,#1b3a2d,#214634);border:1px solid rgba(245,240,232,.07);margin-bottom:18px">
-      <div style="font-size:15px;color:#C1C4BB">Umumiy progress</div>
-      <div style="font-family:'Nunito Sans',sans-serif;font-size:25px;font-weight:700;color:#F5F0E8;line-height:1.1">${done} / ${total} <span style="font-size:16px;color:#C9A84C">dars</span></div>
-      <div style="height:7px;border-radius:6px;background:rgba(245,240,232,.1);margin-top:8px;overflow:hidden"><div style="height:100%;width:${pct}%;border-radius:6px;background:linear-gradient(90deg,#C9A84C,#d8bd6a)"></div></div></div>
-    <div style="display:flex;flex-direction:column;gap:11px">
-      ${total? mods.map((m,i)=>{const isDone=m.done||m.completed||m.progress>=100;return `<div class="ro-press" style="display:flex;gap:13px;align-items:center;padding:11px;border-radius:16px;background:#1b3a2d;border:1px solid rgba(245,240,232,.06);cursor:pointer">
-        <div style="width:76px;height:54px;border-radius:11px;flex:none;position:relative;background-image:repeating-linear-gradient(135deg,#244635,#244635 8px,#1e3b2c 8px,#1e3b2c 16px);display:flex;align-items:center;justify-content:center"><div style="width:26px;height:26px;border-radius:50%;background:rgba(17,36,27,.65);display:flex;align-items:center;justify-content:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="#C9A84C"><path d="M8 5v14l11-7z"/></svg></div></div>
-        <div style="flex:1;min-width:0"><div style="font-size:12px;color:#C9A84C;font-weight:700;letter-spacing:.5px">DARS ${String(i+1).padStart(2,'0')}</div><div style="font-size:15px;font-weight:600;color:#F5F0E8;line-height:1.3">${esc(m.title||m.name||'Dars')}</div><div style="font-size:13px;color:#97A298;margin-top:3px">${esc(m.meta||m.description||'')}</div></div>
-        ${isDone?'<div style="width:24px;height:24px;border-radius:50%;background:rgba(201,168,76,.16);display:flex;align-items:center;justify-content:center;flex:none"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg></div>':''}</div>`;}).join('') : '<div style="color:#97A298;font-size:15px;text-align:center;padding:24px">Hozircha dars yo\'q</div>'}</div>
-    ${renderStandartlarSection(vids)}`;
+  if(!oquvMods){
+    box.innerHTML=`<div style="font-family:'Nunito Sans',sans-serif;font-size:26px;font-weight:700;color:#F5F0E8;margin-bottom:16px">O'quv</div>
+      ${[0,1,2].map(()=>`<div style="height:96px;border-radius:20px;background:rgba(245,240,232,.05);margin-bottom:12px;animation:ro-pulse 1.3s ease-in-out infinite"></div>`).join('')}`;
+  }
+  await loadOquv();
+  if(S.tab!=='oquv') return;   // foydalanuvchi boshqa joyga o'tib ketgan bo'lishi mumkin
+
+  // Kurs
+  const cp = oquvCourse?.exists ? oquvCourse.progress : null;
+  // Modullar — DARSLAR bo'yicha o'lchanadi. `completed` faqat modul testi
+  // topshirilganda qo'yiladi, test esa hozircha yo'q — shuning uchun uni
+  // ishlatsak progress abadiy 0 da qotib qolardi.
+  const lTotal = oquvMods.reduce((s,m)=>s+(m.totalLessons||0),0);
+  const lDone  = oquvMods.reduce((s,m)=>s+(m.completedLessons||0),0);
+  // Standartlar
+  const vAll = oquvVids.filter(v=>v.videoUrl);
+  const vSeen = vAll.filter(v=>v.viewed).length;
+
+  box.innerHTML=`
+    <div style="font-family:'Nunito Sans',sans-serif;font-size:26px;font-weight:700;color:#F5F0E8">O'quv</div>
+    <div style="font-size:14px;color:#97A298;margin-bottom:18px">Bo'limni tanlang</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      ${hubCard({ onclick:'openKurs()', color:'#C9A84C', icon:'🎓', tag:'Sizga tuzilgan',
+        title:'Shaxsiy kursim',
+        detail: cp ? `${cp.done}/${cp.total} qadam bajarildi` : 'Diagnostikadan keyin tuziladi',
+        pct: cp ? cp.pct : 0, delay:0 })}
+      ${hubCard({ onclick:'openModullar()', color:'#8FDDB2', icon:'📚', tag:`${oquvMods.length} ta modul`,
+        title:'Darslar',
+        detail: lTotal ? `${lDone}/${lTotal} dars o'qildi` : 'Hozircha dars qo\'shilmagan',
+        pct: lTotal?Math.round(lDone/lTotal*100):0, delay:0.07 })}
+      ${hubCard({ onclick:'openStandartlar()', color:'#E0C368', icon:'🎬', tag:'Video qo\'llanma',
+        title:'Standartlar',
+        detail: vAll.length ? `${vSeen}/${vAll.length} video ko'rildi` : 'Hozircha video yo\'q',
+        pct: vAll.length?Math.round(vSeen/vAll.length*100):0, delay:0.14 })}
+    </div>`;
+}
+
+// ── Shaxsiy kurs (o'z oynasi) ──
+async function openKurs(){
+  openSub('tab-kurs');
+  const box=document.getElementById('tab-kurs');
+  box.innerHTML=subHeader('Shaxsiy kursim','Diagnostika natijasidan tuzilgan',"go('oquv')")+
+    `<div style="height:80px;border-radius:18px;background:rgba(245,240,232,.05);animation:ro-pulse 1.3s ease-in-out infinite"></div>`;
+  let c=oquvCourse;
+  if(!c){ try { c = await api('/api/waiter/course'); oquvCourse=c; } catch {} }
+  box.innerHTML=subHeader('Shaxsiy kursim','Diagnostika natijasidan tuzilgan',"go('oquv')")+renderCourse(c);
+}
+
+// ── Standartlar (o'z oynasi) ──
+async function openStandartlar(){
+  openSub('tab-standartlar');
+  const box=document.getElementById('tab-standartlar');
+  await loadOquv();
+  box.innerHTML=subHeader('Standartlar','Qisqa video qo\'llanmalar',"go('oquv')")+renderStandartlarSection(oquvVids);
+}
+
+// ── Modullar ro'yxati (o'z oynasi) ──
+async function openModullar(){
+  openSub('tab-modullar');
+  const box=document.getElementById('tab-modullar');
+  await loadOquv();
+  const mods=oquvMods||[];
+  box.innerHTML=subHeader('Darslar',`${mods.length} ta modul`,"go('oquv')")+
+    (!mods.length
+      ? `<div style="padding:36px 20px;text-align:center;border-radius:18px;background:#1b3a2d;border:1px solid rgba(245,240,232,.07)">
+          <div style="font-size:30px;margin-bottom:10px">📚</div>
+          <div style="font-size:15px;color:#97A298;line-height:1.5">Hozircha modul qo'shilmagan.<br>Administrator darslarni yuklagach shu yerda ko'rinadi.</div>
+        </div>`
+      : `<div style="display:flex;flex-direction:column;gap:12px">
+          ${mods.map((m,i)=>{
+            const t=m.totalLessons||0, d=m.completedLessons||0;
+            const pct=t?Math.round(d/t*100):0;
+            const col=m.color||'#C9A84C';
+            const allDone = t>0 && d>=t;
+            return `<div onclick="openModul('${esc(m.id)}')" class="ro-press" style="padding:16px;border-radius:19px;background:linear-gradient(125deg,${col}1c,#1b3a2d);border:1px solid ${col}3d;cursor:pointer;animation:ro-rise .4s ease ${Math.min(i*0.06,0.4)}s both">
+              <div style="display:flex;align-items:center;gap:13px">
+                <div style="width:46px;height:46px;flex:none;border-radius:14px;background:${col}26;display:flex;align-items:center;justify-content:center;font-size:22px">${esc(m.emoji||'📚')}</div>
+                <div style="flex:1;min-width:0">
+                  <div style="font-size:11.5px;letter-spacing:1.4px;text-transform:uppercase;color:${col};font-weight:700">Modul ${String(i+1).padStart(2,'0')}</div>
+                  <div style="font-family:'Nunito Sans',sans-serif;font-size:17px;font-weight:700;color:#F5F0E8;line-height:1.25;margin-top:1px">${esc(m.title||'Modul')}</div>
+                </div>
+                ${allDone?`<div style="width:26px;height:26px;flex:none;border-radius:50%;background:${col}2e;display:flex;align-items:center;justify-content:center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${col}" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg></div>`:''}
+              </div>
+              ${m.description?`<div style="font-size:13.5px;color:#97A298;margin-top:9px;line-height:1.45">${esc(m.description)}</div>`:''}
+              <div style="display:flex;align-items:center;gap:10px;margin-top:11px">
+                <div style="flex:1;height:6px;border-radius:4px;background:rgba(245,240,232,.1);overflow:hidden"><div style="height:100%;width:${pct}%;border-radius:4px;background:${col}"></div></div>
+                <span style="font-size:12.5px;color:#97A298;flex:none">${d}/${t} dars</span>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>`);
+}
+
+// ── Bitta modul: darslar ro'yxati (o'z oynasi) ──
+function openModul(id){
+  const m=(oquvMods||[]).find(x=>String(x.id)===String(id)); if(!m) return;
+  openSub('tab-modul');
+  const col=m.color||'#C9A84C';
+  const t=m.totalLessons||0, d=m.completedLessons||0;
+  const pct=t?Math.round(d/t*100):0;
+  const lessons=(m.lessons||[]);
+
+  document.getElementById('tab-modul').innerHTML=`
+    <!-- Modul o'z rangi va belgisi bilan tanilib turadi -->
+    <div style="padding:16px 20px 24px;background:linear-gradient(160deg,${col}30,#13281e);border-radius:0 0 26px 26px">
+      <div onclick="openModullar()" class="ro-press" style="cursor:pointer;padding:4px;width:30px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5F0E8" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div style="display:flex;align-items:center;gap:14px;margin-top:8px">
+        <div style="width:56px;height:56px;flex:none;border-radius:17px;background:${col}2e;display:flex;align-items:center;justify-content:center;font-size:27px">${esc(m.emoji||'📚')}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-family:'Nunito Sans',sans-serif;font-size:22px;font-weight:700;color:#F5F0E8;line-height:1.2">${esc(m.title||'Modul')}</div>
+          <div style="font-size:13.5px;color:#97A298;margin-top:3px">${t} ta dars</div>
+        </div>
+      </div>
+      ${m.description?`<div style="font-size:14.5px;color:#EAE7DF;line-height:1.55;margin-top:14px">${esc(m.description)}</div>`:''}
+      <div style="display:flex;align-items:center;gap:10px;margin-top:16px">
+        <div style="flex:1;height:7px;border-radius:5px;background:rgba(245,240,232,.12);overflow:hidden"><div style="height:100%;width:${pct}%;border-radius:5px;background:${col}"></div></div>
+        <span style="font-size:13px;color:#F5F0E8;font-weight:700;flex:none">${d}/${t}</span>
+      </div>
+    </div>
+
+    <div style="padding:20px 18px 0">
+      <div style="font-size:11.5px;letter-spacing:1.6px;text-transform:uppercase;color:#97A298;font-weight:700;margin-bottom:11px">Darslar</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        ${!lessons.length?`<div style="font-size:15px;color:#97A298;text-align:center;padding:24px">Bu modulda hali dars yo'q</div>`
+        : lessons.map((l,i)=>`
+          <div onclick="openDars('${esc(m.id)}','${esc(l.id)}')" class="ro-press" style="display:flex;align-items:center;gap:13px;padding:14px 15px;border-radius:16px;background:#1b3a2d;border:1px solid ${l.done?col+'3d':'rgba(245,240,232,.06)'};cursor:pointer;animation:ro-rise .4s ease ${Math.min(i*0.05,0.35)}s both">
+            <div style="width:32px;height:32px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;${l.done?`background:${col}2e`:'background:rgba(245,240,232,.06);border:1.5px solid rgba(245,240,232,.16)'}">
+              ${l.done?`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${col}" stroke-width="3"><path d="M5 12l5 5L20 6"/></svg>`:`<span style="font-family:'Nunito Sans',sans-serif;font-size:13px;font-weight:700;color:#97A298">${i+1}</span>`}
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15.5px;font-weight:600;color:${l.done?'rgba(245,240,232,.6)':'#F5F0E8'};line-height:1.3">${esc(l.title||'Dars')}</div>
+              ${(l.hasVideo||l.hasImage)?`<div style="font-size:12.5px;color:#97A298;margin-top:3px">${l.hasVideo?'🎬 video':''}${l.hasVideo&&l.hasImage?' · ':''}${l.hasImage?'🖼 rasm':''}</div>`:''}
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#97A298" stroke-width="2" style="flex:none"><path d="M9 6l6 6-6 6"/></svg>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+// ── Bitta dars (o'z oynasi) ──
+// Ochilishning o'zi darsni "o'qildi" deb belgilaydi — buni server qiladi.
+async function openDars(modId, lessonId){
+  const m=(oquvMods||[]).find(x=>String(x.id)===String(modId));
+  const col=m?.color||'#C9A84C';
+  openSub('tab-dars');
+  const box=document.getElementById('tab-dars');
+  box.innerHTML=`<div style="padding:60px 20px;text-align:center;font-size:14px;color:#97A298">Yuklanmoqda…</div>`;
+
+  let l=null;
+  try { l = await api(`/api/waiter/modules/${encodeURIComponent(modId)}/lessons/${encodeURIComponent(lessonId)}`); }
+  catch(e){ box.innerHTML=`<div style="padding:20px">${subHeader('Dars','',`openModul('${esc(modId)}')`)}<div style="font-size:15px;color:#F0A98D;text-align:center;padding:30px">${esc(e.message)}</div></div>`; return; }
+
+  const yt = l.videoUrl ? ytIdFrom(l.videoUrl) : null;
+  const lessons = m?.lessons||[];
+  const idx = lessons.findIndex(x=>String(x.id)===String(lessonId));
+  const next = idx>=0 ? lessons[idx+1] : null;
+
+  box.innerHTML=`
+    <div style="padding:16px 20px 22px;background:linear-gradient(160deg,${col}2b,#13281e);border-radius:0 0 26px 26px">
+      <div onclick="openModul('${esc(modId)}')" class="ro-press" style="cursor:pointer;padding:4px;width:30px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5F0E8" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div style="font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:${col};font-weight:700;margin-top:10px">Dars ${idx>=0?idx+1:''}${lessons.length?' / '+lessons.length:''}</div>
+      <div style="font-family:'Nunito Sans',sans-serif;font-size:24px;font-weight:700;color:#F5F0E8;line-height:1.2;margin-top:3px">${esc(l.title||'Dars')}</div>
+    </div>
+
+    <div style="padding:20px 20px 0">
+      ${l.image?`<img src="${esc(l.image)}" style="width:100%;border-radius:18px;display:block;margin-bottom:16px" loading="lazy">`:''}
+      ${l.videoUrl?`<div style="border-radius:18px;overflow:hidden;margin-bottom:16px;background:#0f1f17">
+        ${yt?`<iframe src="https://www.youtube.com/embed/${yt}" style="width:100%;aspect-ratio:16/9;border:0;display:block" allowfullscreen></iframe>`
+            :`<video src="${esc(l.videoUrl)}" controls playsinline style="width:100%;display:block"></video>`}
+      </div>`:''}
+      ${l.content?`<div style="font-size:16px;color:#EAE7DF;line-height:1.75;white-space:pre-wrap">${esc(l.content)}</div>`:'<div style="font-size:15px;color:#97A298">Bu darsda matn yo\'q</div>'}
+
+      <div style="display:flex;gap:10px;margin-top:26px">
+        ${next?`<div onclick="openDars('${esc(modId)}','${esc(next.id)}')" class="ro-press" style="flex:1;padding:15px;border-radius:16px;background:${col};color:#11241b;font-weight:800;font-size:16px;text-align:center;cursor:pointer">Keyingi dars →</div>`
+              :`<div onclick="openModul('${esc(modId)}')" class="ro-press" style="flex:1;padding:15px;border-radius:16px;background:${col};color:#11241b;font-weight:800;font-size:16px;text-align:center;cursor:pointer">${l.allLessonsDone?'Modul tugadi ✓':'Modulga qaytish'}</div>`}
+      </div>
+    </div>`;
+
+  // Progress o'zgardi — ro'yxatlar keyingi ochilishda yangi holatni ko'rsatsin
+  loadOquv(true).catch(()=>{});
 }
 
 function ytIdFrom(url){
@@ -2045,11 +2267,11 @@ function ytIdFrom(url){
   return m ? m[1] : null;
 }
 
+// Sarlavha bu yerda yozilmaydi: bo'lim endi o'z ekranida ochiladi va
+// sarlavhani subHeader ko'rsatadi — aks holda ikki marta takrorlanardi.
 function renderStandartlarSection(vids){
   const withUrl = (vids||[]).filter(v=>v.videoUrl);
-  return `<div style="margin-top:24px">
-    <div style="font-family:'Nunito Sans',sans-serif;font-size:19px;font-weight:700;color:#F5F0E8;margin-bottom:3px">Standartlar</div>
-    <div style="font-size:14px;color:#97A298;margin-bottom:14px">Qisqa video qo'llanmalar</div>
+  return `<div>
     ${!withUrl.length ? '<div style="color:#97A298;font-size:15px;text-align:center;padding:24px;border:1px dashed rgba(245,240,232,.14);border-radius:16px">Hozircha video yo\'q</div>' :
       `<div style="display:flex;flex-direction:column;gap:11px">
         ${withUrl.map((v,i)=>{
@@ -2132,7 +2354,9 @@ function playYt(ytId, vid){
 function closeTrainingVideo(){
   const box=document.getElementById('overlay-training');
   box.innerHTML=''; box.style.display='none';
-  renderOquv();
+  // Video Standartlar ekranidan ochilgan — o'sha yerga qaytamiz.
+  // Ro'yxat qayta yuklanadi, shunda "ko'rildi" belgisi darhol chiqadi.
+  loadOquv(true).then(()=>{ if(document.getElementById('tab-standartlar').style.display!=='none') openStandartlar(); });
 }
 
 

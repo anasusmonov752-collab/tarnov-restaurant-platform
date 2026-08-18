@@ -83,6 +83,7 @@
         <div id="tab-tarix" class="tabscreen" style="position:absolute;inset:0;overflow-y:auto;padding:8px 20px 104px;display:none"></div>
         <div id="tab-sertifikat" class="tabscreen" style="position:absolute;inset:0;overflow-y:auto;padding:8px 20px 104px;display:none"></div>
         <div id="tab-reyting" class="tabscreen" style="position:absolute;inset:0;overflow-y:auto;padding:8px 20px 104px;display:none"></div>
+        <div id="tab-adaptatsiya" class="tabscreen" style="position:absolute;inset:0;overflow-y:auto;padding:8px 20px 104px;display:none"></div>
         <div id="tab-koproq" class="tabscreen" style="position:absolute;inset:0;overflow-y:auto;padding:8px 18px 104px;display:none"></div>
       </div>
       <!-- bottom nav -->
@@ -220,7 +221,7 @@ async function enterApp(){
   go('home');
   try { waiterInfo = await api('/api/waiter/info'); } catch {}
   try { historyData = await api('/api/waiter/history') || []; } catch { historyData=[]; }
-  renderHome();
+  renderHome(true);   // birinchi chizishda ma'lumot hali yo'q edi — majburan qayta quramiz
 }
 
 function go(tab){
@@ -245,11 +246,89 @@ function go(tab){
   if (tab==='tarix') renderTarix();
   if (tab==='sertifikat') renderSertifikat();
   if (tab==='reyting') renderReyting();
+  if (tab==='adaptatsiya') renderAdaptatsiya();
   if (tab==='koproq') renderKoproq();
 }
 
 // ---------- HOME ----------
-async function renderHome(){
+// ---------- YIG'ILADIGAN BO'LIM ----------
+// Bosh sahifada 13 tagacha karta to'planib qolardi va hech biri ustuvor
+// emasdi — ofitsiant "hozir nima qilishim kerak" degan savolga javob
+// topolmasdi. Endi ma'lumot yo'qolmaydi, lekin yig'iladi: faqat shu paytda
+// kerak bo'lgani ochiq turadi.
+//
+// Ochiq/yopiq holati localStorage'da saqlanadi — har kirganda qaytadan
+// yopilib qolsa, bu ham xuddi shunday bezovta qilardi.
+
+function secOpen(key, dflt){
+  const v = localStorage.getItem('ro_sec_'+key);
+  return v===null ? !!dflt : v==='1';
+}
+
+function toggleSection(key){
+  const body = document.getElementById('sec-'+key);
+  const chev = document.getElementById('chev-'+key);
+  if(!body) return;
+  const nowOpen = body.style.display==='none';
+  body.style.display = nowOpen ? 'block' : 'none';
+  if(chev) chev.style.transform = nowOpen ? 'rotate(90deg)' : 'rotate(0deg)';
+  localStorage.setItem('ro_sec_'+key, nowOpen ? '1' : '0');
+}
+
+/** @param badge — sarlavha yonidagi qisqa ma'lumot (yopiq turganda ham ko'rinadi) */
+function section(key, title, badge, contentHtml, dflt){
+  const open = secOpen(key, dflt);
+  return `<div style="margin:14px 18px 0">
+    <div onclick="toggleSection('${key}')" class="ro-press" style="display:flex;align-items:center;gap:10px;padding:13px 15px;border-radius:16px;background:#1b3a2d;border:1px solid rgba(245,240,232,.07);cursor:pointer">
+      <div style="flex:1;min-width:0">
+        <div style="font-family:'Nunito Sans',sans-serif;font-size:16px;font-weight:700;color:#F5F0E8">${esc(title)}</div>
+        ${badge?`<div style="font-size:12.5px;color:#97A298;margin-top:2px">${esc(badge)}</div>`:''}
+      </div>
+      <svg id="chev-${key}" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#97A298" stroke-width="2.2" style="flex:none;transition:transform .22s ease;transform:rotate(${open?90:0}deg)"><path d="M9 6l6 6-6 6"/></svg>
+    </div>
+    <div id="sec-${key}" style="display:${open?'block':'none'};margin-top:10px">${contentHtml}</div>
+  </div>`;
+}
+
+// ---------- BOSH SAHIFA HOLATI ----------
+// Avval go('home') har safar butun DOM ni noldan qurardi: animatsiyalar
+// qaytadan o'ynardi, raqamlar noldan sanalardi va har o'tishda ikkita
+// tarmoq so'rovi ketardi (KPI + mentor). Render'ning bepul tarifida server
+// uyquda bo'lsa bu 50 soniyagacha cho'ziladi — ofitsiantga ilova har safar
+// qaytadan yuklanayotgandek ko'rinadi.
+//
+// Endi: bir marta quriladi, ma'lumot eskirgandagina jimgina yangilanadi.
+let homeBuilt=false, homeFetchedAt=0;
+const HOME_TTL=60000;   // shu vaqt ichida qayta so'ralmaydi
+
+/**
+ * Ma'lumot o'zgardi — keyingi ochilishda qaytadan qurilsin.
+ * Kesh HAM tozalanadi: busiz sahifa qayta chizilardi-yu, ichida eski KPI va
+ * eski mentor ma'lumoti turaverardi — masalan testdan keyin yangi topshiriq
+ * umuman ko'rinmasdi.
+ */
+function invalidateHome(){
+  homeBuilt=false; homeFetchedAt=0;
+  mentorData=null; kpiData=null;
+}
+
+/** DOM ga tegmasdan faqat ma'lumotni yangilaydi. */
+function refreshHomeData(){
+  homeFetchedAt=Date.now();
+  mentorData=null; kpiData=null;
+  loadHomeKPI();
+  loadMentor();
+}
+
+async function renderHome(force){
+  if(homeBuilt && !force){
+    if(Date.now()-homeFetchedAt > HOME_TTL) refreshHomeData();
+    return;   // DOM allaqachon joyida — qayta chizmaymiz
+  }
+  buildHome();
+}
+
+function buildHome(){
   const name=waiterName(), initial=name.charAt(0).toUpperCase();
   const avg = historyData.length ? Math.round(historyData.reduce((s,r)=>s+(r.score||0),0)/historyData.length) : 0;
   const count = historyData.length;
@@ -279,41 +358,57 @@ async function renderHome(){
       </div>
       ${testCta}
     </div>
-    <div id="home-kpi" style="margin:18px 18px 0"></div>
-    <div id="home-mentor" style="margin:18px 18px 0"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 18px 0">
-      <div style="padding:16px;border-radius:18px;background:#1b3a2d;border:1px solid rgba(245,240,232,.07);animation:ro-rise .5s ease .12s both"><div style="font-family:'Nunito Sans',sans-serif;font-size:33px;font-weight:700;color:#F5F0E8;line-height:1"><span id="ct-avg">0</span><span style="font-size:17px;color:#C9A84C">%</span></div><div style="font-size:13px;color:#97A298;margin-top:2px">O'rtacha ball</div></div>
-      <div style="padding:16px;border-radius:18px;background:#1b3a2d;border:1px solid rgba(245,240,232,.07);animation:ro-rise .5s ease .18s both"><div style="font-family:'Nunito Sans',sans-serif;font-size:33px;font-weight:700;color:#F5F0E8;line-height:1"><span id="ct-count">0</span></div><div style="font-size:13px;color:#97A298;margin-top:2px">Topshirilgan test</div></div>
-    </div>
-    <div style="margin:24px 18px 0;animation:ro-rise .5s ease .24s both">
-      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:11px"><div style="font-family:'Nunito Sans',sans-serif;font-size:18px;font-weight:700;color:#F5F0E8">E'lonlar</div><div onclick="go('koproq')" style="font-size:14px;color:#C9A84C;cursor:pointer">Barchasi</div></div>
+    <!-- MUHIM: murabbiy talabi va birinchi qadam. Har doim ochiq, yig'ilmaydi —
+         bu ekrandagi yagona "hozir shuni qiling" joyi. -->
+    <div id="home-urgent" style="margin:18px 18px 0"></div>
+
+    ${section('natijalar', 'Natijalarim', `O'rtacha ${avg}% · ${count} ta test`, `
+      <div id="home-kpi"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+        <div style="padding:16px;border-radius:18px;background:#1b3a2d;border:1px solid rgba(245,240,232,.07)"><div style="font-family:'Nunito Sans',sans-serif;font-size:33px;font-weight:700;color:#F5F0E8;line-height:1"><span id="ct-avg">0</span><span style="font-size:17px;color:#C9A84C">%</span></div><div style="font-size:13px;color:#97A298;margin-top:2px">O'rtacha ball</div></div>
+        <div style="padding:16px;border-radius:18px;background:#1b3a2d;border:1px solid rgba(245,240,232,.07)"><div style="font-family:'Nunito Sans',sans-serif;font-size:33px;font-weight:700;color:#F5F0E8;line-height:1"><span id="ct-count">0</span></div><div style="font-size:13px;color:#97A298;margin-top:2px">Topshirilgan test</div></div>
+      </div>
+      <div onclick="go('tarix')" class="ro-press" style="margin-top:12px;padding:13px;border-radius:14px;background:rgba(245,240,232,.05);border:1px solid rgba(245,240,232,.1);font-size:14.5px;color:#F5F0E8;font-weight:600;text-align:center;cursor:pointer">Barcha natijalar va xatolar →</div>
+    `, false)}
+
+    ${section('oquv', "O'quv", 'Kurs, bugungi vazifalar, murabbiy', `<div id="home-learn"></div>`, true)}
+
+    ${section('elonlar', "E'lonlar", anns.length?`${anns.length} ta`:'yangilik yo\'q', `
       <div style="display:flex;flex-direction:column;gap:10px">
         ${anns.length? anns.slice(0,3).map(a=>`<div style="display:flex;gap:12px;padding:13px 14px;border-radius:16px;background:#1b3a2d;border:1px solid rgba(245,240,232,.06)">
           <div style="width:3px;border-radius:3px;background:${C};flex:none"></div>
           <div style="flex:1"><div style="font-size:15px;font-weight:600;color:#F5F0E8">${esc(a.title)}</div><div style="font-size:13px;color:#97A298;margin-top:2px;line-height:1.45">${esc(a.content||a.body||'')}</div></div>
         </div>`).join('') : '<div style="font-size:14px;color:#97A298;padding:8px 0">Hozircha e\'lon yo\'q</div>'}
       </div>
-    </div>`;
+    `, false)}
+
+    <div style="height:16px"></div>`;
   countTo('ct-avg', avg); countTo('ct-count', count);
+  homeBuilt=true; homeFetchedAt=Date.now();
   loadHomeKPI();
   loadMentor();
 }
 
 // ---------- MENTOR: bugungi vazifalar ----------
-let mentorData=null;
+let mentorData=null, kpiData=null;
 
 async function loadMentor(){
-  const box=document.getElementById('home-mentor'); if(!box) return;
-  try { mentorData = await api('/api/waiter/mentor'); }
-  catch { box.innerHTML=''; return; }
-  const box2=document.getElementById('home-mentor'); if(!box2) return;   // ekran almashgan bo'lishi mumkin
+  const box=document.getElementById('home-urgent'); if(!box) return;
+  // Keshdan foydalanamiz — mentorData null bo'lsagina so'rov ketadi.
+  // Yangilash kerak bo'lganda chaqiruvchi uni null qiladi.
+  if(!mentorData){
+    try { mentorData = await api('/api/waiter/mentor'); }
+    catch { box.innerHTML=''; return; }
+  }
+  const urgent=document.getElementById('home-urgent'); if(!urgent) return;   // ekran almashgan bo'lishi mumkin
+  const learn =document.getElementById('home-learn');
   const { profile, tasks } = mentorData;
 
-  // Diagnostika topshirilmagan bo'lsa — hamma narsadan oldin shuni taklif qilamiz.
-  // Kurs aynan shu natijadan tuziladi, shuning uchun birinchi qadam shu.
-  // Bajarilmagan topshiriq diagnostikadan ham muhimroq — u tepada turadi
-  if(!mentorData.assessmentDone){
-    box2.innerHTML=renderAssignments()+`
+  // ── MUHIM qism: yig'ilmaydi, har doim ko'rinadi ──
+  // Bu yerda faqat TALAB turadi: murabbiy topshirig'i va (hali topshirilmagan
+  // bo'lsa) diagnostika. Kunlik vazifalar taklif — ular O'quv guruhiga tushadi.
+  // Sabab: ekranda bir vaqtda bitta "hozir shuni qiling" bo'lishi kerak.
+  urgent.innerHTML = renderAssignments() + (mentorData.assessmentDone ? '' : `
       <div onclick="startAssessment()" class="ro-press" style="display:flex;align-items:center;gap:14px;padding:17px;border-radius:18px;background:linear-gradient(115deg,rgba(201,168,76,.22),rgba(201,168,76,.09));border:1px solid rgba(201,168,76,.45);cursor:pointer;animation:ro-rise .5s ease both">
         <div style="width:46px;height:46px;flex:none;border-radius:14px;background:rgba(201,168,76,.2);display:flex;align-items:center;justify-content:center;font-size:22px">🧭</div>
         <div style="flex:1;min-width:0">
@@ -322,17 +417,19 @@ async function loadMentor(){
           <div style="font-size:13px;color:#97A298;margin-top:4px;line-height:1.45">24 ta savol · 10 daqiqa. Natijaga qarab sizga shaxsiy o'quv kursi tuziladi. Bu test ballga ta'sir qilmaydi.</div>
           <div style="font-size:13.5px;color:${C};font-weight:700;margin-top:8px">Boshlash →</div>
         </div>
-      </div>`;
+      </div>`);
+
+  // ── O'QUV qismi: yig'iladigan guruh ichida ──
+  if(!learn) return;
+  if(!mentorData.assessmentDone || !tasks || !tasks.length){
+    learn.innerHTML = mentorChatButton();
     return;
   }
-
-  if(!tasks || !tasks.length){ box2.innerHTML=renderAssignments(); return; }
 
   const lvlCol = { boshlangich:'#F0A98D', orta:'#e3c06a', kuchli:'#8FDDB2' }[profile.level.key] || C;
   const cp = mentorData.course?.progress;
 
-  box2.innerHTML=`
-    ${renderAssignments()}
+  learn.innerHTML=`
     ${cp && cp.total ? `
     <div onclick="go('oquv')" class="ro-press" style="display:flex;align-items:center;gap:13px;padding:14px 15px;border-radius:16px;background:#1b3a2d;border:1px solid rgba(201,168,76,.22);cursor:pointer;margin-bottom:14px;animation:ro-rise .45s ease both">
       <div style="width:38px;height:38px;flex:none;border-radius:12px;background:rgba(201,168,76,.14);display:flex;align-items:center;justify-content:center;font-size:17px">🎓</div>
@@ -363,14 +460,19 @@ async function loadMentor(){
           </div>
         </div>`).join('')}
     </div>
-    <div onclick="openMentorChat()" class="ro-press" style="display:flex;align-items:center;gap:12px;margin-top:11px;padding:13px 15px;border-radius:16px;background:rgba(245,240,232,.05);border:1px solid rgba(245,240,232,.1);cursor:pointer">
-      <div style="width:34px;height:34px;flex:none;border-radius:50%;background:linear-gradient(135deg,#C9A84C,#8a6f28);display:flex;align-items:center;justify-content:center;font-size:16px">🧑‍🏫</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:14.5px;font-weight:700;color:#F5F0E8">Mentor bilan gaplashish</div>
-        <div style="font-size:12.5px;color:#97A298;margin-top:2px">Savol bering — u natijalaringizni biladi</div>
-      </div>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#97A298" stroke-width="2.2" style="flex:none"><path d="M9 6l6 6-6 6"/></svg>
-    </div>`;
+    ${mentorChatButton()}`;
+}
+
+// Ikki joyda ishlatiladi (vazifalar bor va yo'q holatlarida), shuning uchun alohida
+function mentorChatButton(){
+  return `<div onclick="openMentorChat()" class="ro-press" style="display:flex;align-items:center;gap:12px;margin-top:11px;padding:13px 15px;border-radius:16px;background:rgba(245,240,232,.05);border:1px solid rgba(245,240,232,.1);cursor:pointer">
+    <div style="width:34px;height:34px;flex:none;border-radius:50%;background:linear-gradient(135deg,#C9A84C,#8a6f28);display:flex;align-items:center;justify-content:center;font-size:16px">🧑‍🏫</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:14.5px;font-weight:700;color:#F5F0E8">Mentor bilan gaplashish</div>
+      <div style="font-size:12.5px;color:#97A298;margin-top:2px">Savol bering — u natijalaringizni biladi</div>
+    </div>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#97A298" stroke-width="2.2" style="flex:none"><path d="M9 6l6 6-6 6"/></svg>
+  </div>`;
 }
 
 // ---------- MURABBIY TOPSHIRIQLARI ----------
@@ -834,7 +936,9 @@ function showAssessmentResult(r, courseSteps){
 function closeAResult(){
   const ov=document.getElementById('overlay-result');
   ov.style.display='none'; ov.innerHTML='';
-  mentorData=null;   // profil yangilanishi kerak
+  // Diagnostika endi topshirildi — bosh sahifadagi "Birinchi qadam" kartasi
+  // o'rniga kurs chiqishi kerak, shuning uchun to'liq qayta quramiz.
+  invalidateHome();
 }
 
 // ---------- MASHQ (takroriy xatolar ustida ishlash) ----------
@@ -935,9 +1039,14 @@ function countTo(id, target){
 }
 async function loadHomeKPI(){
   const box=document.getElementById('home-kpi'); if(!box) return;
-  let k=null; try { k = await api('/api/waiter/kpi'); } catch {}
+  // mentorData kabi keshlanadi — bosh sahifaga har o'tishda so'rov ketmasin
+  if(!kpiData){ try { kpiData = await api('/api/waiter/kpi'); } catch {} }
+  const k = kpiData;
   if (!k || k.level==='nodata'){ box.innerHTML=''; return; }
-  const pct = (k.score!=null? k.score : (historyData.length?Math.round(historyData.reduce((s,r)=>s+(r.score||0),0)/historyData.length):0));
+  // Server `avg` qaytaradi, `score` emas. Avval `k.score` o'qilardi — u hech
+  // qachon mavjud bo'lmagani uchun halqa doim BUTUN TARIX o'rtachasini
+  // ko'rsatib kelgan, joriy davrnikini emas.
+  const pct = (k.avg!=null? k.avg : (historyData.length?Math.round(historyData.reduce((s,r)=>s+(r.score||0),0)/historyData.length):0));
   const pen = k.penalty||0;
   const bonusLine = pen>0 ? `<div style="font-family:'Nunito Sans',sans-serif;font-size:20px;font-weight:700;color:#C9A84C;line-height:1.1">+${pen}% <span style="font-size:15px;color:#97A298">bonus 🏆</span></div>`
     : pen<0 ? `<div style="font-family:'Nunito Sans',sans-serif;font-size:20px;font-weight:700;color:#F0A98D;line-height:1.1">${pen}% <span style="font-size:15px;color:#97A298">ushlanma</span></div>`
@@ -945,8 +1054,16 @@ async function loadHomeKPI(){
   box.innerHTML = `<div style="padding:20px;border-radius:22px;background:linear-gradient(150deg,#21463440,#1b3a2d);border:1px solid rgba(201,168,76,.16);display:flex;align-items:center;gap:20px;animation:ro-rise .5s ease .06s both">
     <div style="position:relative;width:108px;height:108px;flex:none;display:flex;align-items:center;justify-content:center">${ring(pct,108,9,C)}
       <div style="position:absolute;text-align:center"><div style="font-family:'Nunito Sans',sans-serif;font-size:30px;font-weight:700;color:#F5F0E8;line-height:1">${pct}<span style="font-size:16px;color:#C9A84C">%</span></div><div style="font-size:12px;letter-spacing:1.5px;color:#97A298;text-transform:uppercase">Oylik KPI</div></div></div>
-    <div style="flex:1;display:flex;flex-direction:column;gap:12px"><div><div style="font-size:13px;color:#97A298">${esc(k.periodLabel||'Joriy davr')} · ${esc(k.level||'')}</div>${bonusLine}</div><div style="height:1px;background:rgba(245,240,232,.08)"></div><div style="font-size:13px;color:#C1C4BB;line-height:1.5">KPI ≥ 90% bo'lsa bonus oshadi. Davom eting!</div></div>
-  </div>`;
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px"><div><div style="font-size:13px;color:#97A298">${esc(k.periodLabel||'Joriy davr')}${k.label?' · '+esc(k.label):''}</div>${bonusLine}</div><div style="height:1px;background:rgba(245,240,232,.08)"></div>
+    <div style="font-size:12.5px;color:#97A298;line-height:1.5">${k.testCount||0} ta test · shu davr o'rtachasi</div></div>
+  </div>
+  <!-- Bonus qanday hisoblangani: avval faqat umumiy foiz ko'rinardi va
+       ofitsiant nima uchun shuncha olgani tushunarsiz edi -->
+  ${k.advice?`<div style="display:flex;gap:10px;margin-top:10px;padding:13px 15px;border-radius:16px;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.22)">
+    <span style="flex:none;font-size:15px;line-height:1.3">${esc(k.emoji||'💡')}</span>
+    <span style="font-size:13.5px;color:#e2c879;line-height:1.55;font-weight:600">${esc(k.advice)}</span>
+  </div>`:''}
+  ${k.consecutiveLow>1?`<div style="margin-top:9px;padding:12px 15px;border-radius:15px;background:rgba(217,96,59,.1);border:1px solid rgba(217,96,59,.3);font-size:13.5px;color:#f0c5b5;line-height:1.5;font-weight:600">Ketma-ket ${k.consecutiveLow} davr past natija. Bu maoshga ta'sir qilyapti.</div>`:''}`;
 }
 
 // ---------- MENU ----------
@@ -1421,6 +1538,7 @@ async function submitTest(){
     ]);
     const r=data.result; lastResult=r;
     if(waiterInfo) waiterInfo.isTestDay=false;
+    invalidateHome();   // ball, KPI va topshiriq o'zgardi — bosh sahifa qayta qurilsin
     try { historyData = await api('/api/waiter/history')||historyData; } catch {}
     ov.style.display='none'; ov.innerHTML='';
     showResult(r);
@@ -2020,6 +2138,97 @@ async function renderReyting(){
 }
 
 // ---------- KO'PROQ ----------
+// ---------- ADAPTATSIYA ----------
+// Restoran haqidagi materiallar: tarix, missiya, qadriyatlar, rahbariyat,
+// hujjatlar. Adminda bu bo'lim bor edi, ofitsiantda esa umuman yo'q edi —
+// yangi xodim restoran haqida hech narsa o'qiy olmasdi.
+let adaptData=null;
+
+async function renderAdaptatsiya(){
+  const box=document.getElementById('tab-adaptatsiya'); if(!box) return;
+  if(!adaptData){
+    box.innerHTML=`<div style="padding:40px 0;text-align:center;font-size:14px;color:#97A298">Yuklanmoqda…</div>`;
+    try { adaptData = await api('/api/waiter/adaptation'); }
+    catch { box.innerHTML=`<div style="padding:40px 0;text-align:center;font-size:14px;color:#F0A98D">Ma'lumotni yuklab bo'lmadi</div>`; return; }
+  }
+  const a=adaptData||{};
+  const docs=(a.documents||[]).slice().sort((x,y)=>(x.order||0)-(y.order||0));
+  const mgmt=(a.management||[]).slice().sort((x,y)=>(x.order||0)-(y.order||0));
+  const vals=a.values||[];
+  const empty = !a.history && !a.mission && !vals.length && !mgmt.length && !docs.length;
+
+  box.innerHTML=`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <div onclick="go('koproq')" class="ro-press" style="cursor:pointer;padding:4px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5F0E8" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div style="font-family:'Nunito Sans',sans-serif;font-size:23px;font-weight:700;color:#F5F0E8">Restoran haqida</div>
+    </div>
+
+    ${empty?`<div style="padding:36px 20px;text-align:center;border-radius:18px;background:#1b3a2d;border:1px solid rgba(245,240,232,.07)">
+      <div style="font-size:30px;margin-bottom:10px">📖</div>
+      <div style="font-size:15px;color:#97A298;line-height:1.5">Bu bo'lim hali to'ldirilmagan.<br>Administrator materiallarni qo'shgach shu yerda ko'rinadi.</div>
+    </div>`:''}
+
+    ${a.image?`<div style="height:150px;border-radius:18px;margin-bottom:14px;background:#244635 url('${esc(a.image)}') center/cover"></div>`:''}
+
+    ${a.mission?`<div style="padding:16px;border-radius:18px;background:linear-gradient(140deg,rgba(201,168,76,.16),rgba(201,168,76,.06));border:1px solid rgba(201,168,76,.3);margin-bottom:12px">
+      <div style="font-size:11.5px;letter-spacing:1.6px;text-transform:uppercase;color:rgba(201,168,76,.9);font-weight:700;margin-bottom:7px">Bizning maqsadimiz</div>
+      <div style="font-size:15px;color:#F5F0E8;line-height:1.6;white-space:pre-wrap">${esc(a.mission)}</div>
+    </div>`:''}
+
+    ${a.history?`<div style="padding:16px;border-radius:18px;background:#1b3a2d;border:1px solid rgba(245,240,232,.07);margin-bottom:12px">
+      <div style="font-size:11.5px;letter-spacing:1.6px;text-transform:uppercase;color:#97A298;font-weight:700;margin-bottom:7px">Tariximiz</div>
+      <div style="font-size:15px;color:#EAE7DF;line-height:1.65;white-space:pre-wrap">${esc(a.history)}</div>
+    </div>`:''}
+
+    ${vals.length?`<div style="padding:16px;border-radius:18px;background:#1b3a2d;border:1px solid rgba(245,240,232,.07);margin-bottom:12px">
+      <div style="font-size:11.5px;letter-spacing:1.6px;text-transform:uppercase;color:#97A298;font-weight:700;margin-bottom:10px">Qadriyatlarimiz</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">${vals.map(v=>`<span style="padding:7px 13px;border-radius:12px;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.28);font-size:14px;color:#e2c879;font-weight:600">${esc(v)}</span>`).join('')}</div>
+    </div>`:''}
+
+    ${mgmt.length?`<div style="margin-bottom:12px">
+      <div style="font-size:11.5px;letter-spacing:1.6px;text-transform:uppercase;color:#97A298;font-weight:700;margin:0 2px 10px">Rahbariyat</div>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        ${mgmt.map(m=>`<div style="display:flex;align-items:center;gap:13px;padding:13px 14px;border-radius:16px;background:#1b3a2d;border:1px solid rgba(245,240,232,.06)">
+          <div style="width:44px;height:44px;border-radius:50%;flex:none;${m.photo?`background:#244635 url('${esc(m.photo)}') center/cover`:'background:rgba(201,168,76,.14);display:flex;align-items:center;justify-content:center;font-family:\'Nunito Sans\',sans-serif;font-size:17px;font-weight:700;color:#C9A84C'}">${m.photo?'':esc((m.name||'?').charAt(0).toUpperCase())}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:15.5px;font-weight:700;color:#F5F0E8">${esc(m.name)}</div>
+            <div style="font-size:13px;color:#97A298;margin-top:1px">${esc(m.position||'')}</div>
+          </div>
+          ${m.phone?`<a href="tel:${esc(m.phone)}" style="flex:none;padding:8px 12px;border-radius:11px;background:rgba(201,168,76,.14);border:1px solid rgba(201,168,76,.3);font-size:13px;color:#e2c879;font-weight:700;text-decoration:none">Qo'ng'iroq</a>`:''}
+        </div>`).join('')}
+      </div>
+    </div>`:''}
+
+    ${docs.length?`<div>
+      <div style="font-size:11.5px;letter-spacing:1.6px;text-transform:uppercase;color:#97A298;font-weight:700;margin:0 2px 10px">Hujjatlar va qoidalar</div>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        ${docs.map(d=>`<div onclick="openAdaptDoc('${esc(d.id)}')" class="ro-press" style="display:flex;align-items:center;gap:13px;padding:14px 15px;border-radius:16px;background:#1b3a2d;border:1px solid ${d.required?'rgba(201,168,76,.3)':'rgba(245,240,232,.06)'};cursor:pointer">
+          <div style="width:38px;height:38px;border-radius:11px;flex:none;background:rgba(201,168,76,.1);display:flex;align-items:center;justify-content:center;font-size:18px">${esc(d.icon||'📄')}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:15.5px;font-weight:600;color:#F5F0E8">${esc(d.title)}</div>
+            ${d.required?`<div style="font-size:12.5px;color:#C9A84C;margin-top:2px;font-weight:700">Majburiy o'qish</div>`:''}
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#97A298" stroke-width="2" style="flex:none"><path d="M9 6l6 6-6 6"/></svg>
+        </div>`).join('')}
+      </div>
+    </div>`:''}`;
+}
+
+function openAdaptDoc(id){
+  const d=(adaptData?.documents||[]).find(x=>String(x.id)===String(id)); if(!d) return;
+  const ov=document.getElementById('overlay-dish');   // umumiy overlay qayta ishlatiladi
+  ov.style.display='block';
+  ov.innerHTML=`<div onclick="closeDish()" style="position:absolute;inset:0;background:rgba(8,16,11,.6);animation:ro-fade .3s ease"></div>
+    <div style="position:absolute;left:0;right:0;bottom:0;height:80%;background:#13281e;border-radius:30px 30px 0 0;overflow:hidden;animation:ro-sheet .42s cubic-bezier(.2,.9,.25,1);display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;gap:12px;padding:20px 22px 14px;flex:none">
+        <div style="width:38px;height:38px;border-radius:11px;flex:none;background:rgba(201,168,76,.14);display:flex;align-items:center;justify-content:center;font-size:18px">${esc(d.icon||'📄')}</div>
+        <div style="flex:1;font-family:'Nunito Sans',sans-serif;font-size:19px;font-weight:700;color:#F5F0E8;line-height:1.2">${esc(d.title)}</div>
+        <div onclick="closeDish()" style="width:34px;height:34px;flex:none;border-radius:50%;background:rgba(245,240,232,.08);display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F5F0E8" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:0 22px 30px;font-size:15px;color:#EAE7DF;line-height:1.7;white-space:pre-wrap">${esc(d.content||'Matn kiritilmagan')}</div>
+    </div>`;
+}
+
 async function renderKoproq(){
   const box=document.getElementById('tab-koproq');
   const name=waiterName(), initial=name.charAt(0).toUpperCase();
@@ -2036,6 +2245,7 @@ async function renderKoproq(){
     { tab:'tarix',       icon:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/>',      label:'Test tarixi' },
     { tab:'sertifikat',  icon:'<path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/>',label:'Sertifikatlarim' },
     { tab:'reyting',     icon:'<path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/>',label:'Reyting' },
+    { tab:'adaptatsiya', icon:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>', label:'Restoran haqida' },
   ];
 
   box.innerHTML=`
@@ -2093,7 +2303,9 @@ async function renderKoproq(){
       document.getElementById('koproq-checklist').innerHTML=`
         <div style="padding:15px;border-radius:18px;background:#1b3a2d;border:1px solid rgba(245,240,232,.06);margin-bottom:14px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-            <span style="font-size:15px;color:#F5F0E8;font-weight:600">Adaptatsiya</span>
+            <!-- "Adaptatsiya" emas: bu onboarding checklist, restoran
+                 materiallari esa alohida "Restoran haqida" bo'limida -->
+            <span style="font-size:15px;color:#F5F0E8;font-weight:600">Ishga kirishish rejasi</span>
             <span style="font-size:14px;color:#C9A84C;font-weight:700">${done}/${items.length}</span>
           </div>
           <div style="height:5px;border-radius:4px;background:rgba(245,240,232,.1);margin-bottom:12px;overflow:hidden"><div style="height:100%;width:${pct}%;border-radius:4px;background:linear-gradient(90deg,#C9A84C,#d8bd6a)"></div></div>

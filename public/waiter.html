@@ -311,8 +311,9 @@ async function loadMentor(){
 
   // Diagnostika topshirilmagan bo'lsa — hamma narsadan oldin shuni taklif qilamiz.
   // Kurs aynan shu natijadan tuziladi, shuning uchun birinchi qadam shu.
+  // Bajarilmagan topshiriq diagnostikadan ham muhimroq — u tepada turadi
   if(!mentorData.assessmentDone){
-    box2.innerHTML=`
+    box2.innerHTML=renderAssignments()+`
       <div onclick="startAssessment()" class="ro-press" style="display:flex;align-items:center;gap:14px;padding:17px;border-radius:18px;background:linear-gradient(115deg,rgba(201,168,76,.22),rgba(201,168,76,.09));border:1px solid rgba(201,168,76,.45);cursor:pointer;animation:ro-rise .5s ease both">
         <div style="width:46px;height:46px;flex:none;border-radius:14px;background:rgba(201,168,76,.2);display:flex;align-items:center;justify-content:center;font-size:22px">🧭</div>
         <div style="flex:1;min-width:0">
@@ -325,12 +326,13 @@ async function loadMentor(){
     return;
   }
 
-  if(!tasks || !tasks.length){ box2.innerHTML=''; return; }
+  if(!tasks || !tasks.length){ box2.innerHTML=renderAssignments(); return; }
 
   const lvlCol = { boshlangich:'#F0A98D', orta:'#e3c06a', kuchli:'#8FDDB2' }[profile.level.key] || C;
   const cp = mentorData.course?.progress;
 
   box2.innerHTML=`
+    ${renderAssignments()}
     ${cp && cp.total ? `
     <div onclick="go('oquv')" class="ro-press" style="display:flex;align-items:center;gap:13px;padding:14px 15px;border-radius:16px;background:#1b3a2d;border:1px solid rgba(201,168,76,.22);cursor:pointer;margin-bottom:14px;animation:ro-rise .45s ease both">
       <div style="width:38px;height:38px;flex:none;border-radius:12px;background:rgba(201,168,76,.14);display:flex;align-items:center;justify-content:center;font-size:17px">🎓</div>
@@ -369,6 +371,82 @@ async function loadMentor(){
       </div>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#97A298" stroke-width="2.2" style="flex:none"><path d="M9 6l6 6-6 6"/></svg>
     </div>`;
+}
+
+// ---------- MURABBIY TOPSHIRIQLARI ----------
+// "Bugungi vazifang" bilan farqi: vazifa — taklif, topshiriq — TALAB.
+// Uni mentor bergan, muddati bor va muddat kelganda o'zi tekshiradi.
+
+function dueLabel(iso){
+  const ms = new Date(iso) - new Date();
+  if(ms < 0) return 'muddati o\'tdi';
+  const h = ms/3600000;
+  if(h < 24) return 'bugun kun oxirigacha';
+  if(h < 48) return 'ertagacha';
+  return Math.ceil(h/24)+' kun qoldi';
+}
+
+function renderAssignments(){
+  const a = mentorData?.assignments;
+  if(!a) return '';
+  let html = '';
+
+  // 1. Bajarilmaganlar — eng tepada. Mentor bu haqda bir marta so'raydi.
+  (a.missed||[]).forEach(m=>{
+    html += `<div style="padding:15px;border-radius:17px;background:rgba(217,96,59,.11);border:1px solid rgba(217,96,59,.4);margin-bottom:12px;animation:ro-rise .45s ease both">
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
+        <div style="width:26px;height:26px;flex:none;border-radius:50%;background:rgba(217,96,59,.2);display:flex;align-items:center;justify-content:center;font-size:14px">🎓</div>
+        <div style="font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:#F0A98D;font-weight:700">Bajarilmadi</div>
+      </div>
+      <div style="font-size:15px;font-weight:700;color:#F5F0E8;line-height:1.35">${esc(m.title)}</div>
+      <div style="font-size:13px;color:#f0c5b5;margin-top:5px;line-height:1.45">Men buni sizdan so'ragandim. ${m.progress}/${m.target} bajarildi. Nima bo'ldi?</div>
+      <div onclick="openMentorChat()" class="ro-press" style="margin-top:11px;padding:11px;border-radius:12px;background:rgba(217,96,59,.18);border:1px solid rgba(217,96,59,.4);font-size:14px;color:#f0c5b5;font-weight:700;text-align:center;cursor:pointer">Murabbiyga javob berish</div>
+    </div>`;
+  });
+
+  // 2. Bajarilgani — bir og'iz tan olish, ortiqcha bayram emas
+  (a.justDone||[]).forEach(d=>{
+    html += `<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:15px;background:rgba(95,199,143,.10);border:1px solid rgba(95,199,143,.3);margin-bottom:12px;animation:ro-rise .45s ease both">
+      <span style="flex:none;font-size:16px">✓</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:700;color:#8FDDB2">Topshiriq bajarildi</div>
+        <div style="font-size:13px;color:#97A298;margin-top:2px;line-height:1.4">${esc(d.title)}</div>
+      </div>
+    </div>`;
+  });
+
+  // 3. Faol topshiriq — progress bilan
+  (a.active||[]).forEach(x=>{
+    const pct = x.target ? Math.min(100, Math.round(x.progress/x.target*100)) : 0;
+    html += `<div style="padding:15px;border-radius:17px;background:#1b3a2d;border:1px solid rgba(201,168,76,.4);margin-bottom:12px;animation:ro-rise .45s ease both">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:9px">
+          <div style="width:26px;height:26px;flex:none;border-radius:50%;background:rgba(201,168,76,.2);display:flex;align-items:center;justify-content:center;font-size:14px">🎓</div>
+          <div style="font-size:11.5px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(201,168,76,.9);font-weight:700">Topshiriq</div>
+        </div>
+        <div style="font-size:12px;color:#97A298;flex:none">${esc(dueLabel(x.dueAt))}</div>
+      </div>
+      <div style="font-size:15px;font-weight:700;color:#F5F0E8;line-height:1.35">${esc(x.title)}</div>
+      ${x.detail?`<div style="font-size:13px;color:#97A298;margin-top:4px;line-height:1.45">${esc(x.detail)}</div>`:''}
+      ${x.manual
+        ? `<div onclick="confirmAssignment('${esc(x.id)}')" class="ro-press" style="margin-top:11px;padding:11px;border-radius:12px;background:rgba(201,168,76,.16);border:1px solid rgba(201,168,76,.45);font-size:14px;color:#e2c879;font-weight:700;text-align:center;cursor:pointer">Bajardim</div>`
+        : `<div style="display:flex;align-items:center;gap:9px;margin-top:10px">
+            <div style="flex:1;height:6px;border-radius:4px;background:rgba(245,240,232,.1);overflow:hidden"><div style="height:100%;width:${pct}%;border-radius:4px;background:linear-gradient(90deg,#C9A84C,#d8bd6a)"></div></div>
+            <span style="font-size:12.5px;color:#97A298;flex:none">${x.progress}/${x.target}</span>
+          </div>`}
+    </div>`;
+  });
+
+  return html;
+}
+
+async function confirmAssignment(id){
+  try {
+    await api('/api/waiter/mentor/assignment/'+encodeURIComponent(id)+'/done',{method:'POST'});
+    toast('Topshiriq yopildi','success');
+    mentorData=null;
+    loadMentor();
+  } catch(e){ toast(e.message,'error'); }
 }
 
 // Vazifa bosilganda tegishli ekranga o'tadi
@@ -944,6 +1022,7 @@ function openDish(id){
         ${d.category?`<div style="position:absolute;left:24px;top:18px;padding:4px 11px;border-radius:20px;background:rgba(201,168,76,.92);font-size:12px;font-weight:800;letter-spacing:.5px;color:#11241b">${esc(d.category)}</div>`:''}</div>
       <div style="padding:4px 24px 28px;margin-top:-30px;position:relative;height:calc(100% - 200px);overflow-y:auto">
         <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px"><div style="font-family:'Nunito Sans',sans-serif;font-size:26px;font-weight:700;color:#F5F0E8;line-height:1.1">${esc(d.name)}</div>${d.price?`<div style="font-family:'Nunito Sans',sans-serif;font-size:21px;font-weight:700;color:#C9A84C;white-space:nowrap">${esc(d.price)}</div>`:''}</div>
+        ${dishNote(d.id)}
         <div style="font-size:14px;color:#97A298;font-weight:700;letter-spacing:.5px;margin:20px 0 10px;text-transform:uppercase">Tarkibi</div>
         ${ings.length
           ? `<div style="display:flex;flex-wrap:wrap;gap:7px">${ings.map(i=>`<span style="padding:7px 12px;border-radius:11px;background:rgba(245,240,232,.06);border:1px solid rgba(245,240,232,.09);font-size:14px;color:#F5F0E8">${esc(i)}</span>`).join('')}</div>`
@@ -1134,7 +1213,8 @@ function drillFinish(){
         <div style="font-family:'Nunito Sans',sans-serif;font-size:23px;font-weight:700;color:#F0A98D;line-height:1">${drillStats.again}</div>
         <div style="font-size:12px;color:#97A298;margin-top:3px">TAKRORLASH</div></div>
     </div>
-    <div style="width:100%;display:flex;flex-direction:column;gap:10px">
+    ${drillNote(drillStats.ok, drillStats.again, pct)}
+    <div style="width:100%;display:flex;flex-direction:column;gap:10px;margin-top:14px">
       <div onclick="drillStart()" class="ro-press" style="padding:16px;border-radius:16px;background:linear-gradient(100deg,#C9A84C,#d8bd6a);color:#11241b;font-weight:800;font-size:16px;text-align:center;cursor:pointer">Yana mashq qilish</div>
       <div onclick="closeDrill()" style="padding:14px;border-radius:14px;background:rgba(245,240,232,.07);border:1px solid rgba(245,240,232,.1);color:#F5F0E8;font-weight:600;font-size:16px;text-align:center;cursor:pointer">Menyuga qaytish</div>
     </div>
@@ -1457,6 +1537,11 @@ function showResult(r){
       }).join('')}
     </div>
 
+    <!-- murabbiy hukmi — ball va kesimdan KEYIN, harakatdan OLDIN:
+         ofitsiant avval raqamni ko'radi, keyin uning ma'nosini eshitadi,
+         keyin nima qilishini biladi -->
+    <div id="res-verdict" style="width:100%"></div>
+
     <!-- actions -->
     <div style="width:100%;display:flex;flex-direction:column;gap:10px;animation:res-row .4s ease .9s both">
       ${r.hasCertificate?`<div onclick="openCert()" class="ro-press" style="padding:16px;border-radius:16px;background:linear-gradient(100deg,#C9A84C,#d8bd6a);color:#11241b;font-weight:800;font-size:16px;cursor:pointer;text-align:center;box-shadow:0 14px 34px -12px rgba(201,168,76,.7)">🏆 Sertifikatni olish</div>`:''}
@@ -1490,8 +1575,101 @@ function showResult(r){
       });
     });
   });
+
+  loadVerdict(r);
 }
+
+// ---------- MURABBIY HUKMI ----------
+// Natija ekrani AI javobini KUTMAYDI: ball darhol chiqadi, murabbiy gapi
+// keyin joyiga tushadi. Kechiksa ham ofitsiant natijasini ko'rib turadi.
+function verdictCard(text){
+  return `<div style="margin:2px 0 20px;padding:16px 17px;border-radius:18px;background:rgba(201,168,76,.09);border:1px solid rgba(201,168,76,.28);animation:ro-rise .45s ease both">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px">
+      <div style="width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#C9A84C,#d8bd6a);display:flex;align-items:center;justify-content:center;font-size:13px;flex:none">🎓</div>
+      <div style="font-size:11.5px;letter-spacing:1.6px;text-transform:uppercase;color:rgba(201,168,76,.85);font-weight:700">Murabbiy</div>
+    </div>
+    <div style="font-size:14.5px;color:#EAE7DF;line-height:1.6;white-space:pre-wrap">${esc(text)}</div>
+  </div>`;
+}
+
+async function loadVerdict(r){
+  const box=document.getElementById('res-verdict');
+  if(!box || !r?.id) return;
+
+  // Ball hali yakuniy emas — hukm yozilsa keyin noto'g'ri bo'lib qoladi.
+  // pollGrading baholash tugagach showResult'ni qayta chizadi, o'shanda yuklanadi.
+  if(r.gradingStatus==='pending') return;
+
+  if(r.mentorVerdict){ box.innerHTML=verdictCard(r.mentorVerdict); return; }
+
+  box.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin:2px 0 20px;padding:15px 17px;border-radius:18px;background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.16)">
+    <div style="width:15px;height:15px;flex:none;border-radius:50%;border:2px solid rgba(201,168,76,.25);border-top-color:#C9A84C;animation:ro-spin .8s linear infinite"></div>
+    <div style="font-size:13px;color:#97A298">Murabbiy natijangizni ko'rib chiqyapti…</div>
+  </div>`;
+
+  try{
+    const d=await api('/api/waiter/test/'+encodeURIComponent(r.id)+'/verdict',{method:'POST'});
+    const el=document.getElementById('res-verdict'); if(!el) return;   // ekran yopilgan bo'lishi mumkin
+    if(d?.verdict){ r.mentorVerdict=d.verdict; el.innerHTML=verdictCard(d.verdict); }
+    else el.innerHTML='';
+  }catch{
+    // Mentor gapira olmadi — bu natijani ko'rsatishga to'sqinlik qilmasin
+    const el=document.getElementById('res-verdict'); if(el) el.innerHTML='';
+  }
+}
+
 function closeResult(){ document.getElementById('overlay-result').style.display='none'; document.getElementById('overlay-result').innerHTML=''; }
+
+// ---------- MURABBIY IZOHLARI (AI'SIZ) ----------
+// Mentor platformaning hamma joyida gapiradi, lekin har gap uchun AI
+// so'ralmaydi: kunlik bepul kvota 25 ofitsiantga yetmay qolardi. Bu yerdagi
+// izohlar bosh ekranda bir marta yuklangan `mentorData.profile` dan qoida
+// asosida hisoblanadi — bir zumda chiqadi va hech narsa sarflamaydi.
+//
+// AI faqat ikki joyda ishlaydi: suhbat va testdan keyingi hukm.
+
+function mentorNote(text, kind){
+  const c = kind==='warn' ? ['rgba(217,96,59,.10)','rgba(217,96,59,.30)','#f0c5b5']
+          : kind==='good' ? ['rgba(95,199,143,.10)','rgba(95,199,143,.28)','#8FDDB2']
+          :                 ['rgba(201,168,76,.10)','rgba(201,168,76,.28)','#e2c879'];
+  // width/box-sizing ataylab yozilgan: bu izoh flex-column konteynerlarda ham
+  // (drill yakuni, sertifikat) to'liq kenglikda turishi kerak.
+  return `<div style="display:flex;gap:9px;width:100%;box-sizing:border-box;padding:11px 13px;border-radius:13px;background:${c[0]};border:1px solid ${c[1]};margin:14px 0 2px">
+    <span style="flex:none;font-size:14px;line-height:1.35">🎓</span>
+    <span style="font-size:13.5px;color:${c[2]};line-height:1.5;font-weight:600">${esc(text)}</span>
+  </div>`;
+}
+
+/** Taom kartochkasi: shu taom bo'yicha testda xato qilganmi. */
+function dishNote(id){
+  const d = mentorData?.profile?.dishes?.[String(id)];
+  if(!d?.wrong) return '';
+  return d.wrong>=2
+    ? mentorNote(`Bu taom testda ${d.asked} marta chiqdi, ${d.wrong} martasida xato qildingiz. Bugun yodlab qo'ying — yana chiqadi.`,'warn')
+    : mentorNote('Bu taom bo\'yicha testda xato qilgansiz. Tarkibini diqqat bilan o\'qing.','warn');
+}
+
+/** questionId -> nechta marta xato qilingan (takroriy xatolarni belgilash uchun). */
+function repeatMap(){
+  const m = new Map();
+  (mentorData?.profile?.repeatedMistakes||[]).forEach(x=>m.set(String(x.questionId), x.wrong));
+  return m;
+}
+
+/** Flashcard mashqi yakuni. */
+function drillNote(ok, again, pct){
+  if(!ok && !again) return '';
+  if(again===0) return mentorNote('Hammasini bildim dedingiz. Lekin kartochkani tanish bilan testda eslash — boshqa narsa. Ertaga qaytadan ko\'ring, o\'shanda ishonaman.','good');
+  if(again>ok)   return mentorNote(`${again} ta taom "takrorlash"da qoldi. Ertaga mashqni aynan shulardan boshlaysiz — yangilariga o'tmang.`,'warn');
+  return mentorNote(`${again} ta taom qoldi. Bugun kun oxirigacha shularni yoping — ertaga yangisiga o'tasiz.`);
+}
+
+/** Sertifikat: tabriklaymiz, lekin darajani darhol ko'taramiz. */
+function certNote(){
+  const certs = (historyData||[]).filter(h=>h.hasCertificate).length;
+  if(certs<=1) return mentorNote('Birinchi sertifikatingiz. Bir marta 90% olish — omad ham bo\'lishi mumkin. Uch marta olsangiz, bu daraja bo\'ladi.','good');
+  return mentorNote(`${certs}-sertifikat. Endi savol boshqacha: buni har oy ushlab tura olasizmi?`,'good');
+}
 
 // ---------- TEST TAHLILI ----------
 function openAnalysisFor(id){ const r=historyData.find(h=>String(h.id)===String(id)); if(r&&(r.breakdown||[]).length){ openAnalysis(r); } else { toast('Bu natija uchun tahlil mavjud emas','error'); } }
@@ -1526,6 +1704,9 @@ function openAnalysis(r){
   const wrong = items.filter(b=>!b.isCorrect);
   const right = items.filter(b=>b.isCorrect);
   const DIFF = { easy:{l:'OSON',c:'#8FDDB2'}, medium:{l:"O'RTA",c:'#e3c06a'}, hard:{l:'QIYIN',c:'#F0A98D'} };
+  // Takroriy xatolar alohida belgilanadi: "yana xato qildim" bilan
+  // "beshinchi marta xato qilyapman" — ofitsiant uchun butunlay boshqa xabar.
+  const reps = repeatMap();
 
   const card = (b,i) => {
     const d = DIFF[b.difficulty] || DIFF.easy;
@@ -1547,6 +1728,9 @@ function openAnalysis(r){
         <span style="flex:none;font-size:15px">💡</span>
         <span style="font-size:14px;color:#EAE7DF;line-height:1.55">${esc(b.explanation)}</span>
       </div>` : ''}
+      ${!b.isCorrect && reps.get(String(b.questionId))>=2
+        ? mentorNote(`Bu savolda ${reps.get(String(b.questionId))}-marta xato qilyapsiz. Izohni o'qib qo'yish yetmayapti — buni yodlab oling.`,'warn')
+        : ''}
     </div>`;
   };
 
@@ -1558,6 +1742,9 @@ function openAnalysis(r){
       <div style="font-family:'Nunito Sans',sans-serif;font-size:23px;font-weight:700;color:#F5F0E8">Test tahlili</div>
     </div>
     <div style="font-size:14px;color:#97A298;margin:0 0 14px 38px">${esc(r.date||'')} · ${r.score??0}%</div>
+    <!-- Testdan keyin aytilgan hukm shu yerda ham turadi: ofitsiant xatolarini
+         qayta ko'rganda murabbiyning o'sha gapini yonida ko'rsin -->
+    ${r.mentorVerdict?verdictCard(r.mentorVerdict):''}
     <div style="display:flex;gap:9px;margin-bottom:18px">
       <div style="flex:1;padding:11px;border-radius:13px;background:rgba(95,199,143,.10);border:1px solid rgba(95,199,143,.25);text-align:center">
         <div style="font-family:'Nunito Sans',sans-serif;font-size:21px;font-weight:700;color:#8FDDB2;line-height:1">${right.length}</div>
@@ -1604,6 +1791,7 @@ function openCert(){
       <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:22px;padding:0 4px">
         <div style="text-align:left"><div style="font-family:'Nunito Sans',sans-serif;font-style:italic;font-size:17px;color:#14291F">Administrator</div><div style="font-size:12px;color:rgba(20,41,31,.5);border-top:1px solid rgba(20,41,31,.2);padding-top:3px">Bosh menejer</div></div>
         <div style="text-align:right"><div style="font-size:13px;color:#14291F;font-weight:700">${esc(date)}</div><div style="font-size:12px;color:rgba(20,41,31,.5)">№ RO-2026-${score}</div></div></div></div>
+    ${certNote()}
     <div style="display:flex;gap:10px;width:100%;margin-top:18px">
       <div onclick="downloadCert()" class="ro-press" style="flex:1;padding:15px;border-radius:15px;background:linear-gradient(100deg,#C9A84C,#d8bd6a);color:#11241b;font-weight:800;font-size:16px;text-align:center;cursor:pointer">⤓ Yuklab olish</div>
       <div onclick="shareCert()" class="ro-press" style="flex:1;padding:15px;border-radius:15px;background:rgba(201,168,76,.16);border:1px solid rgba(201,168,76,.45);color:#e2c879;font-weight:800;font-size:16px;text-align:center;cursor:pointer">🔗 Ulashish</div>

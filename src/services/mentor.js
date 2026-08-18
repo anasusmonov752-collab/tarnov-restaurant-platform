@@ -114,6 +114,9 @@ function buildProfile(r, waiterId, opts = {}) {
   const byDiff = { easy: [0, 0], medium: [0, 0], hard: [0, 0] };
   const mistakes = new Map();   // questionId -> { wrong, total, question }
   const catStats = new Map();   // category  -> [earned, count]
+  // Taom kesimi: mentor menyuni ko'rayotgan ofitsiantga "aynan shu taomda
+  // xato qilgansiz" deya olishi uchun. Faqat xato bo'lganlari saqlanadi.
+  const dishStats = new Map();  // menuItemId -> { asked, wrong }
 
   const qById = new Map((r.questions || []).map(q => [q.id, q]));
   const menuById = new Map((r.menu || []).map(m => [m.id, m]));
@@ -139,6 +142,12 @@ function buildProfile(r, waiterId, opts = {}) {
         const c = catStats.get(cat) || [0, 0];
         c[0] += p; c[1] += 1;
         catStats.set(cat, c);
+      }
+      if (mi) {
+        const ds = dishStats.get(mi.id) || { asked: 0, wrong: 0 };
+        ds.asked += 1;
+        if (p < 0.6) ds.wrong += 1;
+        dishStats.set(mi.id, ds);
       }
     }
   }
@@ -178,6 +187,9 @@ function buildProfile(r, waiterId, opts = {}) {
     },
     weakCategories,
     repeatedMistakes,
+    // Faqat xato bo'lgan taomlar — 300 ta taomning hammasini yuborish
+    // frontendga keraksiz yuk, mentorga esa faqat muammoli joylar kerak.
+    dishes: Object.fromEntries([...dishStats].filter(([, v]) => v.wrong > 0)),
     menu: { known, total: menuTotal, pct: menuTotal ? Math.round(known / menuTotal * 100) : 0 },
     modules: { done: modulesDone, total: (r.modules || []).length }
   };

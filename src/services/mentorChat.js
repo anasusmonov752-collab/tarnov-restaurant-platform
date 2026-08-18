@@ -58,11 +58,15 @@ async function history(restaurantId, waiterId, limit = 100) {
  */
 function buildContext(doc) {
   const msgs = doc?.messages || [];
-  return {
-    recent: msgs.slice(-RECENT_WINDOW).map(m => ({ role: m.role, content: m.content })),
-    summary: doc?.summary || '',
-    total: msgs.length
-  };
+  const recent = msgs.slice(-RECENT_WINDOW).map(m => ({ role: m.role, content: m.content }));
+
+  // Mentor endi o'zi ham gapiradi (masalan testdan keyingi hukm) — savol-javob
+  // juftligi buzilib, oyna 'assistant' dan boshlanib qolishi mumkin. Gemini esa
+  // birinchi xabar 'user' bo'lishini talab qiladi. Boshidagi mentor gaplarini
+  // tashlaymiz: ular baribir summary orqali eslab qolinadi.
+  while (recent.length && recent[0].role === 'assistant') recent.shift();
+
+  return { recent, summary: doc?.summary || '', total: msgs.length };
 }
 
 /** Xabar qo'shadi (yaratilmagan bo'lsa yozuvni ochadi). */

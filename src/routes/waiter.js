@@ -11,6 +11,8 @@ const grading = require('../services/grading');
 const mentor = require('../services/mentor');
 const baseline = require('../data/baseline');
 const mentorChat = require('../services/mentorChat');
+const voice = require('../services/mentorVoice');
+const assignments = require('../services/assignments');
 
 const aiChatLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -118,12 +120,44 @@ router.get('/mentor', guard, asyncHandler(async (req, res) => {
   const assessment = (r.assessments || []).find(a => a.waiterId === req.user.waiterId);
   const course     = (r.courses || []).find(c => c.waiterId === req.user.waiterId);
 
+  // Topshiriqlar shu yerda ko'rib chiqiladi: bosh ekran har ochilganda
+  // mentor aytganini tekshiradi. Bajarilgani yopiladi, muddati o'tgani
+  // "bajarilmagan" bo'ladi va mentor bir marta hisob so'raydi.
+  let asg = { active: [], justDone: [], toAsk: [], overdueCount: 0 };
+  try {
+    asg = await assignments.review(r.id, req.user.waiterId, r);
+  } catch (err) {
+    // Topshiriqlar ishlamasa ham bosh ekran ochilaverishi kerak
+    console.warn('[mentor] topshiriqlarni ko\'rib bo\'lmadi:', err.message);
+  }
+
   res.json({
     profile, tasks,
     assessmentDone: !!assessment,
     assessmentScore: assessment?.score ?? null,
-    course: course ? { progress: mentor.courseProgress(course) } : null
+    course: course ? { progress: mentor.courseProgress(course) } : null,
+    assignments: {
+      active:   asg.active.map(x => ({
+        id: x.doc.id, title: x.doc.title, detail: x.doc.detail,
+        progress: x.progress, target: x.doc.check.target,
+        manual: x.doc.check.type === 'manual', dueAt: x.doc.dueAt
+      })),
+      justDone: asg.justDone.map(a => ({ id: a.id, title: a.title })),
+      missed:   asg.toAsk.map(a => ({
+        id: a.id, title: a.title, progress: a.progressAt, target: a.check.target
+      })),
+      overdueCount: asg.overdueCount
+    }
   });
+}));
+
+// Mashinada tekshirib bo'lmaydigan topshiriqni ofitsiant o'zi tasdiqlaydi
+// (masalan "bu standartni smenada qo'llang"). Mentor bunda so'ziga ishonadi —
+// lekin tasdiq yozib qo'yiladi va keyingi test uni tekshiradi.
+router.post('/mentor/assignment/:id/done', guard, asyncHandler(async (req, res) => {
+  const done = await assignments.confirmManual(req.params.id, req.user.restaurantId, req.user.waiterId);
+  if (!done) return res.status(404).json({ error: 'Topshiriq topilmadi yoki allaqachon yopilgan' });
+  res.json({ success: true });
 }));
 
 // ── BAZAVIY BILIM DIAGNOSTIKASI ───────────────────────────────
@@ -355,6 +389,99 @@ router.get('/test/result/:id', guard, asyncHandler(async (req, res) => {
   res.json({ result });
 }));
 
+// ── MURABBIY HUKMI ────────────────────────────────────────────
+// Test tugagach mentor baho beradi. Alohida endpoint, chunki natija
+// DARHOL ko'rinishi kerak — AI javobini kutib turmasin.
+//
+// Bir marta yoziladi va saqlanadi: ikkinchi ochilishda o'sha gap turadi,
+// kvota qayta sarflanmaydi. Hukm suhbat tarixiga ham yoziladi — shunda
+// mentor keyingi gaplashuvda "testdan keyin nima deganini" eslaydi.
+router.post('/test/:id/verdict', guard, asyncHandler(async (req, res) => {
+  // Rasmlar tashlab yuboriladi: menyu Base64 rasmlar bilan bir necha MB bo'ladi,
+  // hukmga esa faqat kategoriya nomi kerak.
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, '-menu.image');
+  if (!r) return res.status(404).json({ error: 'Restoran topilmadi' });
+
+  const result = (r.testResults || []).find(x => x.id === req.params.id);
+  if (!result) return res.status(404).json({ error: 'Natija topilmadi' });
+  if (result.waiterId !== req.user.waiterId) return res.status(403).json({ error: 'Ruxsat yo\'q' });
+
+  // Allaqachon bor — qayta yozmaymiz
+  if (result.mentorVerdict) return res.json({ verdict: result.mentorVerdict });
+
+  // Yozma javoblar hali baholanmagan — ball yakuniy emas. Yarim ball ustidan
+  // hukm chiqarsak, keyin ball ko'tarilib mentor noto'g'ri gapirgan bo'lib qoladi.
+  if (result.gradingStatus === 'pending') return res.json({ pending: true });
+
+  const profile = mentor.buildProfile(r, req.user.waiterId);
+  const prev = (r.testResults || [])
+    .filter(t => t.waiterId === req.user.waiterId && t.id !== result.id)
+    .sort((a, b) => new Date(b.submittedAt || b.date) - new Date(a.submittedAt || a.date))[0];
+
+  const assessment = (r.assessments || []).find(a => a.waiterId === req.user.waiterId);
+  const course     = (r.courses || []).find(c => c.waiterId === req.user.waiterId);
+
+  // Topshiriq: mentor nimani talab qilishini TIZIM hal qiladi, AI emas.
+  // Sabab — talab keyinchalik avtomatik tekshiriladi, shuning uchun u
+  // o'lchanadigan bo'lishi shart. AI faqat shu talabni o'z so'zi bilan aytadi.
+  // Faol topshiriq bo'lsa yangisini bermaymiz: bir vaqtda bitta talab.
+  const busy = await assignments.hasActive(r.id, req.user.waiterId);
+  const proposal = busy ? null : assignments.proposeFromTest(result, profile, r);
+
+  let verdict;
+  try {
+    if (!ai.isConfigured()) throw new Error('AI sozlanmagan');
+    const chatDoc = await mentorChat.load(r.id, req.user.waiterId);
+
+    verdict = await ai.complete({
+      system: voice.buildSystem({
+        restaurantName: r.name,
+        tone:    voice.toneFor(profile),
+        task:    voice.TASKS.verdict + (proposal
+          ? `\n\nTALABINGIZ AYNAN SHU BO'LSIN (o'zgartirmang, boshqa talab qo'shmang):\n"${proposal.title}" — ${proposal.due}.\nBuni o'z so'zingiz bilan, tabiiy qilib ayting.`
+          : '\n\nYangi talab QO\'YMANG — bu ofitsiantda bajarilmagan topshiriq allaqachon bor. Uni eslatib qo\'ying.'),
+        profile: voice.profileBlock(profile, { assessment, course }),
+        memory:  chatDoc?.summary
+        // Menyu ataylab yuborilmaydi: hukm uchun kerak emas, token esa ko'p yeydi.
+      }),
+      messages: [{ role: 'user', content: `=== HOZIRGI TEST ===\n${voice.testBlock(result, profile, prev)}` }],
+      maxTokens: 400,
+      tier: 'fast',
+      restaurantId: req.user.restaurantId
+    });
+    verdict = String(verdict || '').trim();
+  } catch (err) {
+    // Kvota tugadi yoki AI ishlamadi — mentor baribir jim qolmaydi.
+    console.warn('[mentor] hukmni AI yoza olmadi, zaxira ishlatildi:', err.code || err.message);
+    verdict = voice.fallbackVerdict(result, profile, prev, proposal);
+  }
+
+  if (!verdict) verdict = voice.fallbackVerdict(result, profile, prev, proposal);
+
+  // Topshiriqni hukm muvaffaqiyatli chiqqandan keyin yozamiz — ofitsiant
+  // ko'rmagan talabni keyin undan so'rash noto'g'ri bo'lardi.
+  if (proposal) {
+    await assignments.create({
+      restaurantId: r.id, waiterId: req.user.waiterId,
+      title: proposal.title, detail: proposal.detail, check: proposal.check
+    }, r).catch(err => console.warn('[mentor] topshiriqni yozib bo\'lmadi:', err.message));
+  }
+
+  await Restaurant.updateOne(
+    { id: r.id, 'testResults.id': result.id },
+    { $set: { 'testResults.$.mentorVerdict': verdict, 'testResults.$.mentorVerdictAt': new Date() } }
+  );
+
+  res.json({ verdict });
+
+  // Suhbat xotirasiga yozamiz — mentor o'zi aytgan gapni eslashi uchun.
+  // Prefiks ataylab yo'q: ofitsiant chatni ochganda bu oddiy murabbiy gapi
+  // bo'lib ko'rinadi, texnik yorliq bo'lib emas.
+  // Javob allaqachon yuborilgan, ofitsiant buni kutmaydi.
+  mentorChat.append(r.id, req.user.waiterId, 'assistant', verdict)
+    .catch(err => console.warn('[mentor] hukmni suhbatga yozib bo\'lmadi:', err.message));
+}));
+
 router.get('/history', guard, asyncHandler(async (req, res) => {
   const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'testResults');
   const history = (r?.testResults || []).filter(x => x.waiterId === req.user.waiterId);
@@ -514,7 +641,36 @@ router.post('/training/:videoId/view', guard, asyncHandler(async (req, res) => {
       { $addToSet: { 'waiterTrainingViews.$.viewedVideoIds': videoId } }
     );
   }
-  res.json({ success: true });
+
+  // ── Videoni ko'rish o'zi hech narsani o'rgatmaydi ──
+  // Standart faqat ZALDA qo'llanganda o'rganiladi. Shuning uchun mentor
+  // videoni ko'rgan ofitsiantga uni ishlatishni topshiriq qilib beradi va
+  // ertaga so'raydi. Bu tekshirib bo'lmaydigan topshiriq ('manual') —
+  // ofitsiantning o'zi tasdiqlaydi.
+  //
+  // Faol topshiriq bo'lsa yangisini bermaymiz: bir vaqtda bitta talab,
+  // aks holda ro'yxat to'planib qoladi va hech biri bajarilmaydi.
+  let created = false;
+  try {
+    if (!await assignments.hasActive(req.user.restaurantId, req.user.waiterId)) {
+      const full = await Restaurant.findOne({ id: req.user.restaurantId }, 'trainingVideos');
+      const video = (full?.trainingVideos || []).find(v => v.id === videoId);
+      if (video) {
+        await assignments.create({
+          restaurantId: req.user.restaurantId, waiterId: req.user.waiterId,
+          title: `"${video.title}" standartini bugungi smenada qo'llash`,
+          detail: 'Videoni ko\'rdingiz. Endi uni zalda ishlating — ertaga so\'rayman.',
+          check: { type: 'manual', target: 1 }
+        }, full);
+        created = true;
+      }
+    }
+  } catch (err) {
+    // Topshiriq yozilmasa ham video ko'rilgani saqlanib qolishi kerak
+    console.warn('[mentor] video topshirig\'ini yozib bo\'lmadi:', err.message);
+  }
+
+  res.json({ success: true, assignmentCreated: created });
 }));
 
 // ── TRAINING MODULES ─────────────────────────────────────────
@@ -674,26 +830,6 @@ router.post('/ai-chat', guard, aiChatLimiter, asyncHandler(async (req, res) => {
   const r = await Restaurant.findOne({ id: req.user.restaurantId });
   if (!r) return res.status(404).json({ error: 'Restoran topilmadi' });
 
-  // Menyu konteksti
-  const menuText = r.menu.map(item => {
-    const parts = [`• ${item.name} (${item.category}) — ${item.price.toLocaleString()} so'm`];
-    if (item.description)      parts.push(`  Tavsif: ${item.description}`);
-    if (item.ingredients?.length) parts.push(`  Tarkib: ${item.ingredients.join(', ')}`);
-    if (item.allergens?.length)   parts.push(`  Allergenlar: ${item.allergens.join(', ')}`);
-    if (item.servingSuggestion)   parts.push(`  Tavsiya: ${item.servingSuggestion}`);
-    return parts.join('\n');
-  }).join('\n');
-
-  // Adaptatsiya hujjatlari
-  const docsText = (r.adaptation?.documents || [])
-    .map(d => `### ${d.title}\n${d.content}`)
-    .join('\n\n');
-
-  // So'nggi e'lonlar
-  const annText = (r.announcements || []).slice(0, 5)
-    .map(a => `• ${a.title}: ${a.content}`)
-    .join('\n');
-
   // ── Ofitsiantning bilim profili ──
   // Mentor "sizning natijangizni biladigan murabbiy" bo'lishi uchun kerak.
   // MAXFIYLIK: ism yuborilmaydi — faqat raqamlar va yo'nalish nomlari.
@@ -708,55 +844,29 @@ router.post('/ai-chat', guard, aiChatLimiter, asyncHandler(async (req, res) => {
   const assessment = (r.assessments || []).find(a => a.waiterId === req.user.waiterId);
   const course     = (r.courses || []).find(c => c.waiterId === req.user.waiterId);
 
-  const profileText = [
-    `Daraja: ${profile.level.label}`,
-    profile.tests.avg !== null ? `Testlar o'rtachasi: ${profile.tests.avg}% (${profile.tests.count} ta test)` : 'Hali test topshirmagan',
-    `Qiyinlik kesimi: oson ${profile.byDifficulty.easy.score ?? '—'}%, o'rta ${profile.byDifficulty.medium.score ?? '—'}%, qiyin ${profile.byDifficulty.hard.score ?? '—'}%`,
-    profile.weakCategories.length ? `Zaif menyu bo'limlari: ${profile.weakCategories.slice(0, 3).map(c => `${c.category} (${c.score}%)`).join(', ')}` : null,
-    profile.repeatedMistakes.length ? `Qayta-qayta xato qilgan savollari: ${profile.repeatedMistakes.slice(0, 3).map(m => `"${m.question.slice(0, 60)}"`).join('; ')}` : null,
-    `Menyu qamrovi: ${profile.menu.known}/${profile.menu.total} taom`,
-    assessment ? `Bazaviy diagnostika: ${assessment.score}% — ${assessment.areaScores.slice(0, 3).map(a => `${a.label} ${a.score}%`).join(', ')}` : 'Bazaviy diagnostikani hali topshirmagan',
-    course ? `Kurs progressi: ${course.steps.filter(s => s.done).length}/${course.steps.length} qadam. Keyingi qadam: ${course.steps.find(s => !s.done)?.title || 'hammasi bajarilgan'}` : null
-  ].filter(Boolean).join('\n');
+  // Topshiriqlar FAQAT o'qiladi — holatni bosh ekran o'zgartiradi.
+  let snap = { active: [], toAsk: [], overdueCount: 0 };
+  try {
+    snap = await assignments.snapshot(r.id, req.user.waiterId, r);
+  } catch (err) {
+    console.warn('[mentor] topshiriqlarni o\'qib bo\'lmadi:', err.message);
+  }
 
-  const systemPrompt = `Siz "${r.name}" restoranining SHAXSIY MURABBIYSIZ (mentor).
-Oldingizda ofitsiant turibdi va siz uning natijalarini bilasiz.
-
-QANDAY GAPIRASIZ:
-- O'zbek tilida, qisqa va aniq. 4 jumladan oshmasin (savol murakkab bo'lmasa).
-- Do'stona, lekin bo'sh maqtov yo'q. Murabbiy — xushomadgo'y emas.
-- Ofitsiantga "siz" deb murojaat qiling.
-- Bir javobda faqat BITTA amaliy maslahat bering. Ro'yxat yozib tashlamang.
-- Har javobni boshqacha boshlang. Bir xil kirish jumlasini takrorlamang —
-  suhbat jonli bo'lishi kerak, shablon emas.
-- Profildagi raqamni FAQAT kerak bo'lganda va FAQAT bir marta eslatib o'ting.
-  Har javobda ball takrorlansa, ofitsiant unga e'tibor bermay qo'yadi.
-- Savolga to'g'ridan-to'g'ri javob bering. Savol profilga aloqador bo'lmasa,
-  natijalarni umuman eslatmang.
-- Kerak bo'lsa oxirida bitta aniq keyingi qadam taklif qiling.
-
-CHEGARA:
-- Faqat restoran, menyu, servis standartlari va ofitsiantning o'z natijalari haqida gapiring.
-- Bu mavzulardan tashqari savolga: "Bu savolga javob bera olmayman — men sizga restoran
-  va xizmat ko'rsatish bo'yicha murabbiylik qilaman." deb javob bering.
-- Menyuda YO'Q narsani o'ylab topmang. Bilmasangiz "menyuda bu ma'lumot yo'q" deng.
-
-=== SHU OFITSIANT PROFILI ===
-${profileText}
-
-${ctx.summary ? `=== AVVALGI SUHBATLARINGIZ (qisqacha) ===
-Quyida shu ofitsiant bilan oldin nima gaplashganingiz yozilgan. Bunga tayanib
-javob bering: bergan topshiriqlaringizni eslang, o'zini takrorlamang, agar
-avval kelishilgan narsa bo'lsa uni so'rang.
-
-${ctx.summary}` : ''}
-
-=== MENYU ===
-${menuText}
-
-${docsText ? `=== RESTORAN HAQIDA ===\n${docsText}` : ''}
-
-${annText ? `=== SO'NGGI E'LONLAR ===\n${annText}` : ''}`;
+  // Mentorning xarakteri mentorVoice ichida — chat, test hukmi va boshqa
+  // ekranlar bir xil odam bo'lib gapirishi uchun.
+  // Qattiqlik darajasi bajarilmagan topshiriqlarga qarab ko'tariladi:
+  // mentor bilmaslikka emas, aytilganni bajarmaslikka qattiq turadi.
+  const systemPrompt = voice.buildSystem({
+    restaurantName: r.name,
+    tone:    voice.toneFor(profile, { overdue: snap.overdueCount }),
+    task:    voice.TASKS.chat,
+    profile: voice.profileBlock(profile, { assessment, course }),
+    assignments: assignments.contextBlock(snap),
+    memory:  ctx.summary,
+    menu:    voice.menuBlock(r.menu),
+    docs:    voice.docsBlock(r),
+    announcements: voice.annBlock(r)
+  });
 
   const messages = [
     ...ctx.recent,

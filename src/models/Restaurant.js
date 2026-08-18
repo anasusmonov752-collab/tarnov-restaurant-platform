@@ -104,7 +104,15 @@ const TestResultSchema = new mongoose.Schema({
   //   'pending'  — navbatda, ball hozircha faqat variantli savollardan
   //   'failed'   — AI baholay olmadi, admin qo'lda qo'yishi kerak
   gradingStatus: { type: String, enum: ['complete', 'pending', 'failed'], default: 'complete' },
-  gradedAt: Date
+  gradedAt: Date,
+
+  // ── Murabbiy hukmi ──
+  // Test tugagach mentor beradigan baho. Saqlanadi, chunki:
+  //   1. ofitsiant tarixdan qayta ochganda o'sha gap turishi kerak
+  //   2. har ochilishda qayta yozilsa bepul AI kvotasi behuda ketadi
+  //   3. mentor keyingi suhbatda "testdan keyin aytgandim" deya oladi
+  mentorVerdict:   String,
+  mentorVerdictAt: Date
 });
 
 const ChecklistItemSchema = new mongoose.Schema({

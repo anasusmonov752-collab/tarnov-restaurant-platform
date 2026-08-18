@@ -1592,15 +1592,33 @@ function verdictCard(text){
   </div>`;
 }
 
-async function loadVerdict(r){
-  const box=document.getElementById('res-verdict');
+// Eski natijaga hukm YOZILMAYDI: ofitsiant tarixni varaqlaganda har bir
+// testga AI so'rovi ketsa, bepul kvota bir kunda tugaydi. Yozilgani bo'lsa
+// ko'rsatiladi, yo'q bo'lsa — jim o'tamiz.
+const VERDICT_MAX_AGE_DAYS = 3;
+
+function verdictTooOld(r){
+  const t = new Date(r.submittedAt || r.date);
+  if(isNaN(t)) return false;
+  return (Date.now() - t) > VERDICT_MAX_AGE_DAYS*24*3600*1000;
+}
+
+/**
+ * Hukmni yuklaydi (kerak bo'lsa yaratadi).
+ * @param boxId — qaysi konteynerga chizilsin. Natija ekrani ham, tarixdagi
+ *   tahlil ekrani ham shu funksiyani ishlatadi.
+ */
+async function loadVerdict(r, boxId){
+  boxId = boxId || 'res-verdict';
+  const box=document.getElementById(boxId);
   if(!box || !r?.id) return;
+
+  if(r.mentorVerdict){ box.innerHTML=verdictCard(r.mentorVerdict); return; }
 
   // Ball hali yakuniy emas — hukm yozilsa keyin noto'g'ri bo'lib qoladi.
   // pollGrading baholash tugagach showResult'ni qayta chizadi, o'shanda yuklanadi.
   if(r.gradingStatus==='pending') return;
-
-  if(r.mentorVerdict){ box.innerHTML=verdictCard(r.mentorVerdict); return; }
+  if(verdictTooOld(r)){ box.innerHTML=''; return; }
 
   box.innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin:2px 0 20px;padding:15px 17px;border-radius:18px;background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.16)">
     <div style="width:15px;height:15px;flex:none;border-radius:50%;border:2px solid rgba(201,168,76,.25);border-top-color:#C9A84C;animation:ro-spin .8s linear infinite"></div>
@@ -1609,12 +1627,12 @@ async function loadVerdict(r){
 
   try{
     const d=await api('/api/waiter/test/'+encodeURIComponent(r.id)+'/verdict',{method:'POST'});
-    const el=document.getElementById('res-verdict'); if(!el) return;   // ekran yopilgan bo'lishi mumkin
+    const el=document.getElementById(boxId); if(!el) return;   // ekran yopilgan bo'lishi mumkin
     if(d?.verdict){ r.mentorVerdict=d.verdict; el.innerHTML=verdictCard(d.verdict); }
     else el.innerHTML='';
   }catch{
     // Mentor gapira olmadi — bu natijani ko'rsatishga to'sqinlik qilmasin
-    const el=document.getElementById('res-verdict'); if(el) el.innerHTML='';
+    const el=document.getElementById(boxId); if(el) el.innerHTML='';
   }
 }
 
@@ -1743,8 +1761,10 @@ function openAnalysis(r){
     </div>
     <div style="font-size:14px;color:#97A298;margin:0 0 14px 38px">${esc(r.date||'')} · ${r.score??0}%</div>
     <!-- Testdan keyin aytilgan hukm shu yerda ham turadi: ofitsiant xatolarini
-         qayta ko'rganda murabbiyning o'sha gapini yonida ko'rsin -->
-    ${r.mentorVerdict?verdictCard(r.mentorVerdict):''}
+         qayta ko'rganda murabbiyning o'sha gapini yonida ko'rsin.
+         Hali yozilmagan bo'lsa (natija ekrani yopib yuborilgan, yoki test bu
+         funksiya chiqishidan oldin topshirilgan) — shu yerda yaratiladi. -->
+    <div id="ana-verdict">${r.mentorVerdict?verdictCard(r.mentorVerdict):''}</div>
     <div style="display:flex;gap:9px;margin-bottom:18px">
       <div style="flex:1;padding:11px;border-radius:13px;background:rgba(95,199,143,.10);border:1px solid rgba(95,199,143,.25);text-align:center">
         <div style="font-family:'Nunito Sans',sans-serif;font-size:21px;font-weight:700;color:#8FDDB2;line-height:1">${right.length}</div>
@@ -1759,6 +1779,8 @@ function openAnalysis(r){
     ${right.length?`<div style="font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#8FDDB2;font-weight:700;margin:18px 0 10px">To'g'ri javoblaringiz</div>${right.map(card).join('')}`:''}
     <div onclick="closeAnalysis()" style="margin-top:8px;padding:14px;border-radius:14px;background:rgba(245,240,232,.07);border:1px solid rgba(245,240,232,.1);font-size:16px;color:#F5F0E8;font-weight:600;cursor:pointer;text-align:center">Yopish</div>
   </div>`;
+
+  loadVerdict(r, 'ana-verdict');
 }
 function closeAnalysis(){ document.getElementById('overlay-analysis').style.display='none'; document.getElementById('overlay-analysis').innerHTML=''; }
 

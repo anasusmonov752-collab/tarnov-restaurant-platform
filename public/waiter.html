@@ -28,6 +28,7 @@
   @keyframes ro-seal{0%{transform:scale(0) rotate(-28deg);opacity:0}60%{transform:scale(1.14) rotate(7deg)}100%{transform:scale(1) rotate(0);opacity:1}}
   @keyframes ro-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
   @keyframes ro-spin{to{transform:rotate(360deg)}}
+  @keyframes ro-pulse{0%,100%{opacity:.5}50%{opacity:.22}}
   @keyframes q-in{from{transform:translateX(48px);opacity:0}to{transform:translateX(0);opacity:1}}
   @keyframes q-out{from{transform:translateX(0);opacity:1}to{transform:translateX(-48px);opacity:0}}
   @keyframes res-score{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
@@ -215,13 +216,32 @@ async function doLogin(){
 }
 
 // ================= APP =================
+// Asosiy ma'lumot yuklanmaguncha bosh sahifa chizilmaydi.
+// Busiz sahifa ketma-ket TO'RT marta o'zgarardi (bo'sh chizish → info →
+// history → KPI → mentor) va har safar balandligi o'zgarib, ilova sakrab
+// turgandek, qotib qolgandek ko'rinardi.
+let coreLoaded=false;
+
+/** Barcha asosiy so'rovlar PARALLEL ketadi — ketma-ket kutish yo'q. */
+async function loadCore(){
+  const [info, hist, kpi, mentor] = await Promise.all([
+    api('/api/waiter/info').catch(()=>null),
+    api('/api/waiter/history').catch(()=>null),
+    api('/api/waiter/kpi').catch(()=>null),
+    api('/api/waiter/mentor').catch(()=>null)
+  ]);
+  if(info) waiterInfo=info;
+  historyData = hist || [];
+  kpiData = kpi; mentorData = mentor;
+  coreLoaded = true;
+}
+
 async function enterApp(){
   document.getElementById('screen-login').style.display='none';
   document.getElementById('screen-app').style.display='flex';
-  go('home');
-  try { waiterInfo = await api('/api/waiter/info'); } catch {}
-  try { historyData = await api('/api/waiter/history') || []; } catch { historyData=[]; }
-  renderHome(true);   // birinchi chizishda ma'lumot hali yo'q edi — majburan qayta quramiz
+  go('home');          // skelet ko'rsatiladi (coreLoaded hali false)
+  await loadCore();
+  renderHome(true);    // hamma ma'lumot joyida — sahifa BIR MARTA chiziladi
 }
 
 function go(tab){
@@ -302,33 +322,54 @@ let homeBuilt=false, homeFetchedAt=0;
 const HOME_TTL=60000;   // shu vaqt ichida qayta so'ralmaydi
 
 /**
- * Ma'lumot o'zgardi — keyingi ochilishda qaytadan qurilsin.
- * Kesh HAM tozalanadi: busiz sahifa qayta chizilardi-yu, ichida eski KPI va
- * eski mentor ma'lumoti turaverardi — masalan testdan keyin yangi topshiriq
- * umuman ko'rinmasdi.
+ * Ma'lumot o'zgardi (test topshirildi, diagnostika tugadi, vaqt o'tdi).
+ *
+ * Hamma so'rov PARALLEL ketadi va sahifa faqat SHUNDAN KEYIN, bir marta
+ * chiziladi. Avval har javob kelganda alohida qayta chizilardi — sahifa
+ * balandligi uch-to'rt marta o'zgarib, ilova qotib qolgandek ko'rinardi.
  */
-function invalidateHome(){
-  homeBuilt=false; homeFetchedAt=0;
-  mentorData=null; kpiData=null;
-}
-
-/** DOM ga tegmasdan faqat ma'lumotni yangilaydi. */
-function refreshHomeData(){
-  homeFetchedAt=Date.now();
-  mentorData=null; kpiData=null;
-  loadHomeKPI();
-  loadMentor();
+async function reloadHome(){
+  const [hist, kpi, mentor] = await Promise.all([
+    api('/api/waiter/history').catch(()=>null),
+    api('/api/waiter/kpi').catch(()=>null),
+    api('/api/waiter/mentor').catch(()=>null)
+  ]);
+  if(hist) historyData=hist;
+  kpiData=kpi; mentorData=mentor;
+  homeFetchedAt=Date.now(); homeBuilt=false;
+  // Foydalanuvchi boshqa ekranda bo'lsa chizmaymiz — u bosh sahifaga
+  // qaytganda tayyor ma'lumot bilan bir marta chiziladi.
+  if(S.tab==='home') buildHome();
 }
 
 async function renderHome(force){
   if(homeBuilt && !force){
-    if(Date.now()-homeFetchedAt > HOME_TTL) refreshHomeData();
+    if(Date.now()-homeFetchedAt > HOME_TTL) reloadHome();
     return;   // DOM allaqachon joyida — qayta chizmaymiz
   }
   buildHome();
 }
 
+// Yuklanayotganda bo'sh oq ekran emas, kutilayotgan shakl ko'rsatiladi —
+// va balandligi tayyor sahifaga yaqin, shunda ma'lumot kelganda sahifa
+// sakramaydi.
+function homeSkeleton(){
+  const bar=(w,h,r)=>`<div style="width:${w};height:${h}px;border-radius:${r||8}px;background:rgba(245,240,232,.09);animation:ro-pulse 1.3s ease-in-out infinite"></div>`;
+  const card=(h)=>`<div style="height:${h}px;border-radius:18px;background:rgba(245,240,232,.05);border:1px solid rgba(245,240,232,.05);animation:ro-pulse 1.3s ease-in-out infinite"></div>`;
+  return `
+    <div style="padding:22px 22px 26px;background:linear-gradient(160deg,#1f4232,#13281e);border-radius:0 0 30px 30px">
+      <div style="display:flex;flex-direction:column;gap:9px">${bar('90px',14)}${bar('62%',26,10)}</div>
+      <div style="margin-top:20px">${card(72)}</div>
+    </div>
+    <div style="margin:18px 18px 0;display:flex;flex-direction:column;gap:12px">
+      ${card(104)}${card(58)}${card(58)}
+    </div>`;
+}
+
 function buildHome(){
+  // Ma'lumot hali kelmagan — skelet turadi, keyin bir marta to'liq chiziladi
+  if(!coreLoaded){ document.getElementById('tab-home').innerHTML = homeSkeleton(); return; }
+
   const name=waiterName(), initial=name.charAt(0).toUpperCase();
   const avg = historyData.length ? Math.round(historyData.reduce((s,r)=>s+(r.score||0),0)/historyData.length) : 0;
   const count = historyData.length;
@@ -937,8 +978,8 @@ function closeAResult(){
   const ov=document.getElementById('overlay-result');
   ov.style.display='none'; ov.innerHTML='';
   // Diagnostika endi topshirildi — bosh sahifadagi "Birinchi qadam" kartasi
-  // o'rniga kurs chiqishi kerak, shuning uchun to'liq qayta quramiz.
-  invalidateHome();
+  // o'rniga kurs chiqishi kerak.
+  reloadHome();
 }
 
 // ---------- MASHQ (takroriy xatolar ustida ishlash) ----------
@@ -1538,10 +1579,11 @@ async function submitTest(){
     ]);
     const r=data.result; lastResult=r;
     if(waiterInfo) waiterInfo.isTestDay=false;
-    invalidateHome();   // ball, KPI va topshiriq o'zgardi — bosh sahifa qayta qurilsin
-    try { historyData = await api('/api/waiter/history')||historyData; } catch {}
     ov.style.display='none'; ov.innerHTML='';
     showResult(r);
+    // Ball, KPI va topshiriq o'zgardi. Natija ekrani buni KUTMAYDI —
+    // ofitsiant natijani darhol ko'radi, bosh sahifa esa fonda tayyorlanadi.
+    reloadHome();
     // Yozma javoblar fonda baholanadi — natija tayyor bo'lgach ekran yangilanadi
     if(r.gradingStatus==='pending') pollGrading(r.id);
   } catch(e){ toast(e.message,'error'); ov.style.display='none'; ov.innerHTML=''; go('home'); }

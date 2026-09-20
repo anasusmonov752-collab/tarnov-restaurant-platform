@@ -627,7 +627,7 @@ router.post('/checklist/:itemId/toggle', guard, asyncHandler(async (req, res) =>
 }));
 
 router.get('/kpi', guard, asyncHandler(async (req, res) => {
-  const r   = await Restaurant.findOne({ id: req.user.restaurantId }, 'testResults kpiSettings menu modules waiterMenuProgress moduleProgress evaluations');
+  const r   = await Restaurant.findOne({ id: req.user.restaurantId }, 'testResults kpiSettings menu.id modules.id waiterMenuProgress moduleProgress evaluations');
   const wid = req.user.waiterId;
   const results = (r?.testResults || []).filter(t => t.waiterId === wid);
   const cfg = { ...KPI_DEFAULTS, ...(r?.kpiSettings?.toObject?.() || r?.kpiSettings || {}) };
@@ -729,7 +729,9 @@ router.post('/menu-progress/:dishId', guard, asyncHandler(async (req, res) => {
 // ── Menyu takrori (spaced repetition) ──
 // Muddati kelgan taomlar — flashcard usulida qayta so'raladi
 router.get('/menu-review', guard, asyncHandler(async (req, res) => {
-  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'menu waiterMenuProgress');
+  // Flashcard'da rasm ishlatilmaydi — base64 image'ni yuklamaymiz (tez bo'lsin)
+  const r = await Restaurant.findOne({ id: req.user.restaurantId },
+    'menu.id menu.name menu.category menu.description menu.ingredients menu.allergens menu.price menu.servingSuggestion waiterMenuProgress');
   const p = (r?.waiterMenuProgress || []).find(x => x.waiterId === req.user.waiterId);
   const reviews = p?.reviews || [];
   const menuById = new Map((r?.menu || []).map(m => [m.id, m]));
@@ -740,7 +742,7 @@ router.get('/menu-review', guard, asyncHandler(async (req, res) => {
     return {
       name: m.name, category: m.category, description: m.description,
       ingredients: m.ingredients || [], allergens: m.allergens || [],
-      price: m.price, image: m.image, servingSuggestion: m.servingSuggestion || ''
+      price: m.price, servingSuggestion: m.servingSuggestion || ''
     };
   };
 

@@ -499,7 +499,8 @@ function floorPctFor(waiterId, evaluations, refDate, days) {
 }
 
 router.get('/kpi', guard, asyncHandler(async (req, res) => {
-  const r       = await Restaurant.findOne({ id: req.user.restaurantId }, 'waiters testResults kpiSettings menu modules waiterMenuProgress moduleProgress evaluations');
+  // Faqat kerakli maydonlar — menu/modules'ni TO'LIQ (base64 rasmlar bilan) yuklamaymiz, faqat id'lar
+  const r       = await Restaurant.findOne({ id: req.user.restaurantId }, 'waiters testResults kpiSettings menu.id modules.id waiterMenuProgress moduleProgress evaluations');
   const waiters = (r?.waiters || []).filter(w => w.active);
   const results = r?.testResults || [];
   const cfg     = r?.kpiSettings?.toObject ? r.kpiSettings.toObject() : (r?.kpiSettings || {});
@@ -550,7 +551,7 @@ router.put('/kpi-settings', guard, asyncHandler(async (req, res) => {
 
 // Menyu o'rganish darajasi (Bilim mashqi progressi) — har ofitsiant bo'yicha
 router.get('/menu-progress', guard, asyncHandler(async (req, res) => {
-  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'menu waiters waiterMenuProgress');
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'menu.id waiters waiterMenuProgress');
   const totalDishes = (r?.menu || []).length;
   const validIds = new Set((r?.menu || []).map(m => m.id));
   const prog = r?.waiterMenuProgress || [];
@@ -570,7 +571,7 @@ router.get('/menu-progress', guard, asyncHandler(async (req, res) => {
 // KPI hisobotini Excel (buxgalter uchun tayyor fayl) sifatida yuklab olish
 router.get('/kpi/export', guard, asyncHandler(async (req, res) => {
   const XLSX = require('xlsx');
-  const r       = await Restaurant.findOne({ id: req.user.restaurantId }, 'name menu waiters testResults kpiSettings waiterMenuProgress modules moduleProgress evaluations');
+  const r       = await Restaurant.findOne({ id: req.user.restaurantId }, 'name menu.id waiters testResults kpiSettings waiterMenuProgress modules.id moduleProgress evaluations');
   const waiters = (r?.waiters || []).filter(w => w.active);
   const results = r?.testResults || [];
   const cfg     = r?.kpiSettings?.toObject ? r.kpiSettings.toObject() : (r?.kpiSettings || {});
@@ -705,7 +706,7 @@ router.delete('/evaluations/:id', guard, asyncHandler(async (req, res) => {
 // Jamoaning zaif nuqtalarini bir ekranda ko'rsatadi.
 router.get('/analytics', guard, asyncHandler(async (req, res) => {
   const r = await Restaurant.findOne({ id: req.user.restaurantId },
-    'waiters testResults evaluations assessments modules moduleProgress menu waiterMenuProgress kpiSettings');
+    'waiters testResults evaluations assessments modules.id modules.title modules.emoji moduleProgress menu.id waiterMenuProgress kpiSettings');
   const waiters = (r?.waiters || []).filter(w => w.active !== false);
   const cfg = r?.kpiSettings?.toObject ? r.kpiSettings.toObject() : (r?.kpiSettings || {});
   const days = cfg.periodDays || KPI_DEFAULTS.periodDays;

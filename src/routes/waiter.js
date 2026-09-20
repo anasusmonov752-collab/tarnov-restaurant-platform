@@ -5,7 +5,9 @@ const { ipKeyGenerator } = require('express-rate-limit');
 const { auth } = require('../middleware/auth');
 const { asyncHandler } = require('../middleware/errorHandler');
 const Restaurant = require('../models/Restaurant');
-const { getPeriodKey, getPeriodLabel } = require('../utils/kpi');
+const { calcKPI, KPI_DEFAULTS } = require('../services/kpi');
+const { getPeriodKey } = require('../utils/kpi');
+const { roleLabel } = require('../data/roles');
 const ai = require('../services/ai');
 const grading = require('../services/grading');
 const mentor = require('../services/mentor');
@@ -13,6 +15,14 @@ const baseline = require('../data/baseline');
 const mentorChat = require('../services/mentorChat');
 const voice = require('../services/mentorVoice');
 const assignments = require('../services/assignments');
+const roleplay = require('../data/roleplay');
+
+// ── Spaced repetition (menyu takrori) ──
+// box → keyingi takrorgacha kun soni. box oshgani sayin interval uzayadi.
+const REVIEW_INTERVALS = { 1: 1, 2: 3, 3: 7, 4: 16, 5: 35, 6: 90 };
+const REVIEW_MAX_BOX = 6;
+function addDays(d, days) { const x = new Date(d); x.setDate(x.getDate() + days); return x; }
+function newReview(dishId) { return { dishId, box: 1, dueAt: addDays(new Date(), REVIEW_INTERVALS[1]), lastReviewedAt: null }; }
 
 const aiChatLimiter = rateLimit({
   windowMs: 60 * 1000,
@@ -35,8 +45,11 @@ router.get('/info', guard, asyncHandler(async (req, res) => {
   if (!r) return res.status(404).json({ error: 'Restoran topilmadi' });
   const waiter = r.waiters.find(w => w.id === req.user.waiterId);
   const today = new Date().toISOString().split('T')[0];
+  const role = waiter?.role || 'ofitsiant';
   res.json({
     waiter,
+    role,
+    roleLabel: roleLabel(role),
     restaurant: { id: r.id, name: r.name, location: r.location },
     isTestDay: r.testDays.includes(today),
     announcements: (r.announcements || []).slice(0, 3)
@@ -263,6 +276,92 @@ router.post('/mentor/practice', guard, asyncHandler(async (req, res) => {
     rubric: q.type === 'written' ? q.rubric : undefined
   }));
   res.json({ questions });
+}));
+
+// ── ROL-O'YIN MASHQI ─────────────────────────────────────────
+// AI mijoz rolini o'ynaydi, ofitsiant xizmat qiladi. Suhbat holati
+// clientda saqlanadi (qisqa mashq — bazaga yozilmaydi).
+router.get('/roleplay/scenarios', guard, asyncHandler(async (req, res) => {
+  res.json({ configured: ai.isConfigured(), scenarios: roleplay.publicList() });
+}));
+
+// Mijozning navbatdagi javobi. body: { scenarioId, history:[{role,content}], message }
+router.post('/roleplay/message', guard, asyncHandler(async (req, res) => {
+  if (!ai.isConfigured()) return res.status(503).json({ error: 'AI xizmati hozircha mavjud emas.' });
+  const { scenarioId, message } = req.body;
+  const scenario = roleplay.getScenario(scenarioId);
+  if (!scenario) return res.status(404).json({ error: 'Stsenariy topilmadi' });
+  if (!message?.trim()) return res.status(400).json({ error: 'Xabar bo\'sh' });
+
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'name');
+  const system = roleplay.buildCustomerSystem(scenario, r?.name) +
+    `\n\nSuhbatni siz (mijoz) shunday boshladingiz: "${scenario.opening}"`;
+
+  // Client tarixida assistant = mijoz (AI), user = ofitsiant. Gemini birinchi
+  // xabar 'user' bo'lishini talab qiladi — boshdagi mijoz gaplari tashlanadi
+  // (opening allaqachon system'da).
+  const hist = (Array.isArray(req.body.history) ? req.body.history : [])
+    .slice(-16)
+    .map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: String(m.content || '').slice(0, 1000) }));
+  while (hist.length && hist[0].role === 'assistant') hist.shift();
+
+  const reply = await ai.complete({
+    system,
+    messages: [...hist, { role: 'user', content: message.trim().slice(0, 1000) }],
+    maxTokens: 220,
+    tier: 'fast',
+    restaurantId: req.user.restaurantId
+  });
+  res.json({ reply });
+}));
+
+// Mashq yakuni — murabbiy bahosi. body: { scenarioId, history }
+router.post('/roleplay/evaluate', guard, asyncHandler(async (req, res) => {
+  if (!ai.isConfigured()) return res.status(503).json({ error: 'AI xizmati hozircha mavjud emas.' });
+  const { scenarioId } = req.body;
+  const scenario = roleplay.getScenario(scenarioId);
+  if (!scenario) return res.status(404).json({ error: 'Stsenariy topilmadi' });
+  const history = Array.isArray(req.body.history) ? req.body.history : [];
+  if (history.length < 2) return res.status(400).json({ error: 'Baholash uchun suhbat juda qisqa' });
+
+  const r = await Restaurant.findOne({ id: req.user.restaurantId });
+  const profile = mentor.buildProfile(r, req.user.waiterId);
+  const system = voice.buildSystem({
+    restaurantName: r.name,
+    tone: voice.toneFor(profile),
+    task: voice.TASKS.roleplay,
+    profile: voice.profileBlock(profile),
+    menu: voice.menuBlock(r.menu),
+  });
+
+  const transcript = history
+    .map(m => `${m.role === 'assistant' ? 'Mijoz' : 'Ofitsiant'}: ${String(m.content || '')}`)
+    .join('\n');
+
+  const schema = {
+    type: 'object',
+    properties: {
+      score:    { type: 'number' },
+      feedback: { type: 'string' },
+      good:     { type: 'string' },
+      improve:  { type: 'string' },
+    },
+    required: ['score', 'feedback']
+  };
+
+  const result = await ai.complete({
+    system,
+    messages: [{
+      role: 'user',
+      content: `Stsenariy: ${scenario.title} (${scenario.skill}).\nMijozning boshlang'ich gapi: "${scenario.opening}"\n\nSUHBAT:\n${transcript}\n\nBaholab, JSON qaytaring: {"score": 0-100 son, "feedback": "2-3 jumla umumiy hukm", "good": "aniq nimani yaxshi qildi", "improve": "aniq nimani yaxshilash kerak"}`
+    }],
+    json: true, schema,
+    maxTokens: 600, tier: 'smart',
+    restaurantId: req.user.restaurantId
+  });
+
+  const score = Math.max(0, Math.min(100, Math.round(Number(result.score) || 0)));
+  res.json({ score, feedback: result.feedback || '', good: result.good || '', improve: result.improve || '' });
 }));
 
 router.post('/test/submit', guard, asyncHandler(async (req, res) => {
@@ -527,49 +626,42 @@ router.post('/checklist/:itemId/toggle', guard, asyncHandler(async (req, res) =>
   res.json({ success: true, done: !isDone });
 }));
 
-const KPI_DEFAULTS_WAITER = { masterMin:90,masterBonus:15,proMin:75,proBonus:0,goodMin:60,goodBonus:0,warningMin:45,warningPenalty:-10,penaltyMin:30,penaltyFine:-20,periodDays:10 };
-
 router.get('/kpi', guard, asyncHandler(async (req, res) => {
-  const r       = await Restaurant.findOne({ id: req.user.restaurantId }, 'testResults kpiSettings');
-  const results = (r?.testResults || []).filter(t => t.waiterId === req.user.waiterId);
-  const s = { ...KPI_DEFAULTS_WAITER, ...(r?.kpiSettings?.toObject?.() || r?.kpiSettings || {}) };
-  const days = s.periodDays || 10;
+  const r   = await Restaurant.findOne({ id: req.user.restaurantId }, 'testResults kpiSettings menu modules waiterMenuProgress moduleProgress evaluations');
+  const wid = req.user.waiterId;
+  const results = (r?.testResults || []).filter(t => t.waiterId === wid);
+  const cfg = { ...KPI_DEFAULTS, ...(r?.kpiSettings?.toObject?.() || r?.kpiSettings || {}) };
+  const days = cfg.periodDays || 10;
 
-  const today      = new Date();
-  const todayKey   = getPeriodKey(today, days);
-  const periodLabel = getPeriodLabel(today, days);
-  const current    = results.filter(res => getPeriodKey(res.submittedAt || res.date, days) === todayKey);
+  // ── menyu va modul progressi (%) — kompozit ballning tarkibiy qismlari ──
+  const totalDishes = (r?.menu || []).length;
+  const validIds = new Set((r?.menu || []).map(m => m.id));
+  const mp = (r?.waiterMenuProgress || []).find(x => x.waiterId === wid);
+  const menuPct = totalDishes
+    ? Math.round((mp?.knownDishIds || []).filter(id => validIds.has(id)).length / totalDishes * 100)
+    : null;
+  const totalModules = (r?.modules || []).length;
+  const doneModules  = (r?.moduleProgress || []).filter(x => x.waiterId === wid && x.completed).length;
+  const modulePct = totalModules ? Math.round(Math.min(doneModules, totalModules) / totalModules * 100) : null;
 
-  if (!current.length) {
-    const prev = [...results].sort((a,b)=>new Date(b.submittedAt)-new Date(a.submittedAt))[0];
-    return res.json({
-      level:'nodata', label:'Test topshirilmagan', color:'#666666', emoji:'—',
-      avg:null, testCount:0, penalty:0, consecutiveLow:0, periodLabel,
-      lastScore: prev?.score??null,
-      advice:`Bu ${days} kunlik davrda hali test topshirilmagan. Test kuni e'lonini kuzatib boring.`
-    });
-  }
+  // amaliy baho — joriy davrdagi baholarning o'rtachasi
+  const nowKey = getPeriodKey(new Date(), days);
+  const myEvals = (r?.evaluations || []).filter(e => e.waiterId === wid && e.date && getPeriodKey(e.date, days) === nowKey && typeof e.totalScore === 'number');
+  const floorPct = myEvals.length ? Math.round(myEvals.reduce((a, e) => a + e.totalScore, 0) / myEvals.length) : null;
 
-  const avg = Math.round(current.reduce((s,r)=>s+r.score,0)/current.length);
+  const kpi = calcKPI({ results, menuPct, modulePct, floorPct }, cfg, new Date());
 
-  const byPeriod={};
-  results.forEach(res=>{const k=getPeriodKey(res.submittedAt||res.date,days);if(byPeriod[k]===undefined||res.score>byPeriod[k])byPeriod[k]=res.score;});
-  let d2=new Date(today), consecutiveLow=0;
-  for(let i=0;i<6;i++){
-    const k=getPeriodKey(d2,days);
-    if(byPeriod[k]!==undefined){ if(byPeriod[k]<s.goodMin)consecutiveLow++; else break; }
-    d2.setDate(d2.getDate()-days);
-  }
+  const advice = {
+    master:  `Ajoyib natija! Bu davrda ish haqingizga +${cfg.masterBonus}% bonus qo'shiladi.`,
+    pro:     `Yaxshi natija! Keyingi davrda ${cfg.masterMin}%+ ga yetib MASTER bo'ling.`,
+    good:    "Me'yor darajasida. Menyu va modullarni chuqurroq o'rganing — ball ko'tariladi.",
+    warning: `Diqqat! Bu davr uchun ish haqidan ${Math.abs(cfg.warningPenalty)}% ushlanadi.`,
+    penalty: `Kritik! Bu davr uchun ${Math.abs(cfg.penaltyFine)}% ushlanma. O'quv modullariga o'ting.`,
+    fail:    `Kritik past natija! Bu davr uchun ${Math.abs(cfg.penaltyFine)}% ushlanma. Qayta o'qitish majburiy — rahbariyat bilan bog'laning.`,
+    nodata:  `Bu ${days} kunlik davrda hali test topshirilmagan. Test kuni e'lonini kuzatib boring.`,
+  }[kpi.level];
 
-  let level,label,color,emoji,penalty,advice;
-  if      (avg>=s.masterMin) {level='master'; label='MASTER';        color='#F39C12';emoji='🏆';penalty=s.masterBonus;   advice=`Ajoyib natija! Bu davrda ish haqingizga +${s.masterBonus}% bonus qo'shiladi.`;}
-  else if (avg>=s.proMin)    {level='pro';    label='PRO';           color='#3498DB';emoji='⭐';penalty=s.proBonus;      advice=`Yaxshi natija! Keyingi davrda ${s.masterMin}%+ ga yetib MASTER bo'ling.`;}
-  else if (avg>=s.goodMin)   {level='good';   label='YAXSHI';        color='#2ECC71';emoji='✅';penalty=s.goodBonus;     advice="Me'yor darajasida. Menyu va ingredientlarni chuqurroq o'rganing.";}
-  else if (avg>=s.warningMin){level='warning';label='OGOHLANTIRISH'; color='#E67E22';emoji='⚠️';penalty=s.warningPenalty;advice=`Diqqat! Bu davr uchun ish haqidan ${Math.abs(s.warningPenalty)}% ushlanadi.`;}
-  else if (avg>=s.penaltyMin){level='penalty';label='JAZO';          color='#E74C3C';emoji='🔴';penalty=s.penaltyFine;   advice=`Kritik! Bu davr uchun ${Math.abs(s.penaltyFine)}% ushlanma. O'quv modullariga o'ting.`;}
-  else                       {level='fail';   label='NOMUVOFIQ';     color='#9B59B6';emoji='❌';penalty=s.penaltyFine;  advice=`Kritik past natija! Bu davr uchun ${Math.abs(s.penaltyFine)}% ushlanma. Qayta o'qitish majburiy — rahbariyat bilan bog'laning.`;}
-
-  res.json({ level,label,color,emoji,avg,testCount:current.length,penalty,consecutiveLow,periodLabel,advice });
+  res.json({ ...kpi, advice });
 }));
 
 router.get('/adaptation', guard, asyncHandler(async (req, res) => {
@@ -599,23 +691,111 @@ router.get('/menu-progress', guard, asyncHandler(async (req, res) => {
 // Bitta taomni "bildim" / "takrorlash" deb belgilash
 router.post('/menu-progress/:dishId', guard, asyncHandler(async (req, res) => {
   const { dishId } = req.params;
+  const wid = req.user.waiterId, rid = req.user.restaurantId;
   const known = req.body?.known !== false;   // default: bildim
   const exists = await Restaurant.findOne(
-    { id: req.user.restaurantId, 'waiterMenuProgress.waiterId': req.user.waiterId }, 'id'
+    { id: rid, 'waiterMenuProgress.waiterId': wid }, 'id'
   );
   if (!exists) {
-    await Restaurant.updateOne({ id: req.user.restaurantId }, {
-      $push: { waiterMenuProgress: { waiterId: req.user.waiterId, knownDishIds: known ? [dishId] : [], updatedAt: new Date() } }
+    await Restaurant.updateOne({ id: rid }, {
+      $push: { waiterMenuProgress: {
+        waiterId: wid,
+        knownDishIds: known ? [dishId] : [],
+        reviews: known ? [newReview(dishId)] : [],   // "Bildim" → takror jadvaliga qo'shiladi
+        updatedAt: new Date()
+      } }
     });
+    return res.json({ success: true });
+  }
+  const filter = { id: rid, 'waiterMenuProgress.waiterId': wid };
+  if (known) {
+    // Bildim: known ro'yxatiga qo'shamiz, eski takrorni tozalab yangisini boshlaymiz
+    await Restaurant.updateOne(filter, {
+      $addToSet: { 'waiterMenuProgress.$.knownDishIds': dishId },
+      $pull:     { 'waiterMenuProgress.$.reviews': { dishId } },
+      $set:      { 'waiterMenuProgress.$.updatedAt': new Date() }
+    });
+    await Restaurant.updateOne(filter, { $push: { 'waiterMenuProgress.$.reviews': newReview(dishId) } });
   } else {
-    const op = known ? { $addToSet: { 'waiterMenuProgress.$.knownDishIds': dishId } }
-                     : { $pull:     { 'waiterMenuProgress.$.knownDishIds': dishId } };
-    op.$set = { 'waiterMenuProgress.$.updatedAt': new Date() };
-    await Restaurant.updateOne(
-      { id: req.user.restaurantId, 'waiterMenuProgress.waiterId': req.user.waiterId }, op
-    );
+    // Bilmadim: known'dan ham, takror jadvalidan ham olib tashlaymiz
+    await Restaurant.updateOne(filter, {
+      $pull: { 'waiterMenuProgress.$.knownDishIds': dishId, 'waiterMenuProgress.$.reviews': { dishId } },
+      $set:  { 'waiterMenuProgress.$.updatedAt': new Date() }
+    });
   }
   res.json({ success: true });
+}));
+
+// ── Menyu takrori (spaced repetition) ──
+// Muddati kelgan taomlar — flashcard usulida qayta so'raladi
+router.get('/menu-review', guard, asyncHandler(async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'menu waiterMenuProgress');
+  const p = (r?.waiterMenuProgress || []).find(x => x.waiterId === req.user.waiterId);
+  const reviews = p?.reviews || [];
+  const menuById = new Map((r?.menu || []).map(m => [m.id, m]));
+  const now = Date.now();
+
+  const dishFields = (id) => {
+    const m = menuById.get(id);
+    return {
+      name: m.name, category: m.category, description: m.description,
+      ingredients: m.ingredients || [], allergens: m.allergens || [],
+      price: m.price, image: m.image, servingSuggestion: m.servingSuggestion || ''
+    };
+  };
+
+  const valid = reviews.filter(rv => menuById.has(rv.dishId));   // o'chirilgan taomlar tashlanadi
+  const due = valid
+    .filter(rv => rv.dueAt && new Date(rv.dueAt).getTime() <= now)
+    .map(rv => ({ dishId: rv.dishId, box: rv.box || 1, ...dishFields(rv.dishId) }));
+
+  // Migratsiya: "Bildim" belgilangan, lekin hali jadvalga tushmagan taomlar
+  // (bu funksiyadan oldin belgilanganlari) — darhol takrorga chiqadi.
+  const scheduled = new Set(valid.map(rv => rv.dishId));
+  (p?.knownDishIds || []).forEach(id => {
+    if (menuById.has(id) && !scheduled.has(id)) due.push({ dishId: id, box: 0, ...dishFields(id) });
+  });
+
+  const upcoming = valid
+    .filter(rv => rv.dueAt && new Date(rv.dueAt).getTime() > now)
+    .sort((a, b) => new Date(a.dueAt) - new Date(b.dueAt))[0];
+
+  res.json({ due, dueCount: due.length, scheduled: valid.length, nextDueAt: upcoming ? upcoming.dueAt : null });
+}));
+
+router.post('/menu-review/:dishId', guard, asyncHandler(async (req, res) => {
+  const { dishId } = req.params;
+  const wid = req.user.waiterId;
+  const remembered = req.body?.remembered !== false;
+  const filter = { id: req.user.restaurantId, 'waiterMenuProgress.waiterId': wid };
+
+  const r = await Restaurant.findOne(filter, 'waiterMenuProgress');
+  const p = (r?.waiterMenuProgress || []).find(x => x.waiterId === wid);
+  if (!p) return res.status(404).json({ error: 'Progress topilmadi' });
+  const rv = p.reviews?.find(x => x.dishId === dishId);
+
+  // Esladi → keyingi qutiga (interval uzayadi). Unutdi → 1-qutiga qaytadi.
+  const box = rv
+    ? (remembered ? Math.min(REVIEW_MAX_BOX, (rv.box || 1) + 1) : 1)
+    : (remembered ? 2 : 1);   // jadvalga birinchi marta tushayotgan (eski "Bildim")
+  const dueAt = addDays(new Date(), REVIEW_INTERVALS[box]);
+
+  if (rv) {
+    await Restaurant.updateOne(filter, {
+      $set: {
+        'waiterMenuProgress.$[w].reviews.$[d].box': box,
+        'waiterMenuProgress.$[w].reviews.$[d].dueAt': dueAt,
+        'waiterMenuProgress.$[w].reviews.$[d].lastReviewedAt': new Date(),
+      }
+    }, { arrayFilters: [{ 'w.waiterId': wid }, { 'd.dishId': dishId }] });
+  } else {
+    // hali review yozuvi yo'q — yangi yaratamiz
+    await Restaurant.updateOne(filter, {
+      $push: { 'waiterMenuProgress.$.reviews': { dishId, box, dueAt, lastReviewedAt: new Date() } }
+    });
+  }
+
+  res.json({ success: true, box, dueAt });
 }));
 
 // ── TRAINING VIDEOS (erkin nomlangan qisqa standart videolar) ─
@@ -676,8 +856,13 @@ router.post('/training/:videoId/view', guard, asyncHandler(async (req, res) => {
 // ── TRAINING MODULES ─────────────────────────────────────────
 
 router.get('/modules', guard, asyncHandler(async (req, res) => {
-  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'modules moduleProgress');
-  const modules = (r?.modules || []).sort((a,b) => (a.order||0)-(b.order||0));
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'modules moduleProgress waiters');
+  // Rolni bazadan olamiz — eski JWT'da waiterRole bo'lmasligi mumkin
+  const myRole = (r?.waiters || []).find(w => w.id === req.user.waiterId)?.role || req.user.waiterRole || 'ofitsiant';
+  const modules = (r?.modules || [])
+    // roles bo'sh = hamma ko'radi; aks holda faqat mos rol
+    .filter(m => !Array.isArray(m.roles) || m.roles.length === 0 || m.roles.includes(myRole))
+    .sort((a,b) => (a.order||0)-(b.order||0));
   const myProgress = (r?.moduleProgress || []).filter(p => p.waiterId === req.user.waiterId);
 
   const result = modules.map(m => {

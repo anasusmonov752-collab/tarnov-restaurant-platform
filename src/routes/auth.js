@@ -50,7 +50,7 @@ router.post('/login', loginLimiter, asyncHandler(async (req, res) => {
     const waiter = restaurant.waiters.find(w => w.pin === pin && w.active);
     if (!waiter) return res.status(401).json({ error: 'Noto\'g\'ri PIN' });
     const token = jwt.sign(
-      { role: 'waiter', restaurantId: restaurant.id, restaurantName: restaurant.name, waiterId: waiter.id, waiterName: waiter.name },
+      { role: 'waiter', restaurantId: restaurant.id, restaurantName: restaurant.name, waiterId: waiter.id, waiterName: waiter.name, waiterRole: waiter.role || 'ofitsiant' },
       JWT_SECRET, { expiresIn: '12h' }
     );
     res.cookie('token', token, { httpOnly: true, maxAge: 43200000, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' });

@@ -16,7 +16,8 @@ router.get('/dashboard', guard, asyncHandler(async (req, res) => {
     inactive: restaurants.filter(r => !r.active).length,
     totalWaiters: restaurants.reduce((s, r) => s + r.waiters.length, 0),
     totalMenuItems: restaurants.reduce((s, r) => s + r.menu.length, 0),
-    totalRevenue: restaurants.reduce((s, r) => s + (r.planPrice || 0), 0),
+    // Faol tariflar yig'indisi (rejalashtirilgan oylik / MRR) — haqiqiy kassa emas
+    totalRevenue: restaurants.filter(r => r.active).reduce((s, r) => s + (r.planPrice || 0), 0),
     restaurants: restaurants.map(r => ({
       id: r.id, name: r.name, location: r.location, active: r.active,
       plan: r.plan, planPrice: r.planPrice, adminEmail: r.adminEmail,

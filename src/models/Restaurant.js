@@ -6,6 +6,9 @@ const MenuItemSchema = new mongoose.Schema({
   name: { type: String, required: true, trim: true },
   category: { type: String, required: true, trim: true },
   description: { type: String, default: '', trim: true },
+  // ── Ruscha kontent (rus tilidagi mijoz uchun). Bo'sh bo'lsa UZ ko'rsatiladi. ──
+  nameRu:        { type: String, default: '', trim: true },
+  descriptionRu: { type: String, default: '', trim: true },
   ingredients: [String],
   allergens: [String],
   price: { type: Number, min: 0, default: 0 },
@@ -14,10 +17,31 @@ const MenuItemSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+// ── Xodim hujjati ──
+// Sanitar kitobcha (oshxona xodimi uchun majburiy va MUDDATI O'TADI), mehnat
+// shartnomasi, ID, tibbiy ko'rik. expiryDate bo'lsa — muddat nazorat qilinadi.
+const WaiterDocumentSchema = new mongoose.Schema({
+  id:         { type: String, default: () => uuidv4() },
+  type:       { type: String, default: 'boshqa' },   // sanitar|shartnoma|id|tibbiy|boshqa
+  title:      { type: String, required: true, trim: true },
+  number:     { type: String, default: '' },
+  issueDate:  { type: String, default: '' },         // 'YYYY-MM-DD'
+  expiryDate: { type: String, default: '' },         // 'YYYY-MM-DD' — bo'sh = muddatsiz
+  note:       { type: String, default: '' },
+  createdAt:  { type: Date, default: Date.now }
+}, { _id: false });
+
 const WaiterSchema = new mongoose.Schema({
   id: { type: String, default: () => uuidv4() },
   name: { type: String, required: true, trim: true },
   pin: { type: String, required: true, match: [/^\d{4}$/, 'PIN 4 raqamli bo\'lishi kerak'] },
+  // Lavozim — o'quv fokusini belgilaydi. Eski xodimlar 'ofitsiant' bo'lib qoladi.
+  // Ro'yxat: src/data/roles.js
+  role: { type: String, default: 'ofitsiant' },
+  // ── Profil ──
+  phone:    { type: String, default: '' },
+  hireDate: { type: String, default: '' },           // ishga kirgan sana 'YYYY-MM-DD'
+  documents: [WaiterDocumentSchema],
   active: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now },
   readDocuments: [String]
@@ -153,9 +177,19 @@ const WaiterTrainingViewSchema = new mongoose.Schema({
 }, { _id: false });
 
 // Menyu yodlash mashqi — ofitsiant "bildim" deb belgilagan taomlar
+// Spaced repetition — "Bildim" belgilangan taom unutilmasligi uchun Leitner
+// tizimida qayta so'raladi. box oshgani sayin interval uzayadi.
+const MenuReviewSchema = new mongoose.Schema({
+  dishId:         String,
+  box:            { type: Number, default: 1 },   // 1..6
+  dueAt:          Date,                            // qachon takrorga chiqadi
+  lastReviewedAt: Date
+}, { _id: false });
+
 const WaiterMenuProgressSchema = new mongoose.Schema({
   waiterId: String,
   knownDishIds: [String],
+  reviews: [MenuReviewSchema],
   updatedAt: { type: Date, default: Date.now }
 }, { _id: false });
 
@@ -183,6 +217,9 @@ const ModuleSchema = new mongoose.Schema({
   description: { type: String, default: '', trim: true },
   emoji:       { type: String, default: '📚' },
   color:       { type: String, default: '#C8922A' },        // accent color
+  // Qaysi lavozimlar uchun — bo'sh massiv = HAMMA rol ko'radi.
+  // Ro'yxat: src/data/roles.js
+  roles:       { type: [String], default: [] },
   order:       { type: Number, default: 0 },
   lessons:     [LessonSchema],
   quiz:        [ModuleQuizSchema],                          // mini-quiz at end
@@ -259,7 +296,58 @@ const KPISettingsSchema = new mongoose.Schema({
   warningPenalty:  { type: Number, default: -10 },
   penaltyMin:      { type: Number, default: 30  },
   penaltyFine:     { type: Number, default: -20 },
+
+  // ── Kompozit KPI vaznlari ──
+  // Daraja endi faqat testdan emas, uch komponent aralashmasidan chiqadi.
+  // Vaznni 0 qilib qo'yilsa o'sha komponent hisobga olinmaydi (menuWeight=0 &
+  // moduleWeight=0 → eski faqat-test xulqi).
+  testWeight:      { type: Number, default: 60 },  // test o'rtachasi
+  menuWeight:      { type: Number, default: 25 },  // menyu o'rganilgan %
+  moduleWeight:    { type: Number, default: 15 },  // modul tugatilgan %
+  floorWeight:     { type: Number, default: 20 },  // amaliy (floor) baho — baho bo'lmasa hisobga olinmaydi
 }, { _id: false });
+
+// ── Amaliy (floor) baholash ───────────────────────────────────
+// Servis standartini test bilan o'lchab bo'lmaydi — menejer smenada kuzatib
+// baho beradi. Har mezon 0 (yo'q) / 1 (qisman) / 2 (to'liq) bilan baholanadi.
+const EvalCriterionSchema = new mongoose.Schema({
+  id:    { type: String, default: () => uuidv4() },
+  title: { type: String, required: true, trim: true },
+  order: { type: Number, default: 0 }
+}, { _id: false });
+
+const EvaluationScoreSchema = new mongoose.Schema({
+  criterionId: String,
+  title:       String,   // baho paytidagi mezon matni (keyin o'zgarsa ham saqlanadi)
+  score:       Number    // 0 | 1 | 2
+}, { _id: false });
+
+const EvaluationSchema = new mongoose.Schema({
+  id:         { type: String, default: () => uuidv4() },
+  waiterId:   String,
+  waiterName: String,    // snapshot
+  evaluator:  String,    // baho bergan menejer nomi (ixtiyoriy)
+  date:       String,     // 'YYYY-MM-DD'
+  scores:     [EvaluationScoreSchema],
+  totalScore: Number,    // 0-100 %
+  note:       String,
+  createdAt:  { type: Date, default: Date.now }
+});
+
+// ── Xodim jurnali ─────────────────────────────────────────────
+// Baholash suhbatlari (1-on-1) va intizom yozuvlari — har xodim bo'yicha
+// vaqt tasmasi. KPI'ga ta'sir qilmaydi (bu HR yozuvi, avtomatik baho emas).
+const StaffNoteSchema = new mongoose.Schema({
+  id:         { type: String, default: () => uuidv4() },
+  waiterId:   { type: String, required: true },
+  waiterName: String,    // snapshot
+  kind:       { type: String, enum: ['review', 'praise', 'incident'], default: 'review' },
+  date:       String,     // 'YYYY-MM-DD'
+  title:      { type: String, required: true, trim: true },
+  content:    { type: String, default: '' },
+  author:     String,     // yozib qo'ygan menejer
+  createdAt:  { type: Date, default: Date.now }
+});
 
 const AdaptDocumentSchema = new mongoose.Schema({
   id:       { type: String, default: () => uuidv4() },
@@ -322,7 +410,10 @@ const RestaurantSchema = new mongoose.Schema({
   waiterTrainingViews: [WaiterTrainingViewSchema],
   waiterMenuProgress: [WaiterMenuProgressSchema],
   assessments: [AssessmentSchema],
-  courses: [WaiterCourseSchema]
+  courses: [WaiterCourseSchema],
+  evalCriteria: [EvalCriterionSchema],
+  evaluations:  [EvaluationSchema],
+  staffNotes:   [StaffNoteSchema]
 });
 
 module.exports = mongoose.model('Restaurant', RestaurantSchema);

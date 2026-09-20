@@ -15,6 +15,7 @@ const Restaurant = require('../models/Restaurant');
 const grading = require('../services/grading');
 const generator = require('../services/generator');
 const ai = require('../services/ai');
+const { isValidRole, sanitizeRoles, DEFAULT_ROLE } = require('../data/roles');
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(require('@ffprobe-installer/ffprobe').path);
@@ -88,10 +89,11 @@ function parseList(val) {
 }
 
 router.post('/menu', guard, asyncHandler(async (req, res) => {
-  const { name, category, description, ingredients, allergens, price, servingSuggestion, imageBase64 } = req.body;
+  const { name, category, description, nameRu, descriptionRu, ingredients, allergens, price, servingSuggestion, imageBase64 } = req.body;
   if (!name || !category) return res.status(400).json({ error: 'Taom nomi va kategoriya majburiy' });
   const item = {
     id: uuidv4(), name, category, description: description || '',
+    nameRu: nameRu || '', descriptionRu: descriptionRu || '',
     ingredients: parseList(ingredients),
     allergens: parseList(allergens),
     price: parseInt(price) || 0, servingSuggestion: servingSuggestion || '',
@@ -102,11 +104,13 @@ router.post('/menu', guard, asyncHandler(async (req, res) => {
 }));
 
 router.put('/menu/:itemId', guard, asyncHandler(async (req, res) => {
-  const { name, category, description, ingredients, allergens, price, servingSuggestion, imageBase64 } = req.body;
+  const { name, category, description, nameRu, descriptionRu, ingredients, allergens, price, servingSuggestion, imageBase64 } = req.body;
   const update = {};
   if (name) update['menu.$.name'] = name;
   if (category) update['menu.$.category'] = category;
   if (description !== undefined) update['menu.$.description'] = description;
+  if (nameRu !== undefined) update['menu.$.nameRu'] = nameRu;
+  if (descriptionRu !== undefined) update['menu.$.descriptionRu'] = descriptionRu;
   if (ingredients !== undefined) update['menu.$.ingredients'] = parseList(ingredients);
   if (allergens !== undefined) update['menu.$.allergens'] = parseList(allergens);
   if (price !== undefined) update['menu.$.price'] = parseInt(price) || 0;
@@ -128,19 +132,23 @@ router.get('/waiters', guard, asyncHandler(async (req, res) => {
 }));
 
 router.post('/waiters', guard, asyncHandler(async (req, res) => {
-  const { name, pin } = req.body;
+  const { name, pin, role, phone, hireDate } = req.body;
   if (!name || !pin || !/^\d{4}$/.test(pin)) return res.status(400).json({ error: 'Ism va 4 raqamli PIN kiritish shart' });
   const r = await Restaurant.findOne({ id: req.user.restaurantId });
   if (r.waiters.find(w => w.pin === pin)) return res.status(400).json({ error: 'Bu PIN allaqachon mavjud' });
-  const waiter = { id: uuidv4(), name, pin, active: true };
+  const waiter = { id: uuidv4(), name, pin, active: true, role: isValidRole(role) ? role : DEFAULT_ROLE,
+    phone: (phone || '').trim(), hireDate: (hireDate || '').trim() };
   await Restaurant.updateOne({ id: req.user.restaurantId }, { $push: { waiters: waiter } });
   res.json({ success: true, waiter });
 }));
 
 router.put('/waiters/:waiterId', guard, asyncHandler(async (req, res) => {
-  const { name, pin, active } = req.body;
+  const { name, pin, active, role, phone, hireDate } = req.body;
   const update = {};
   if (name) update['waiters.$.name'] = name;
+  if (role !== undefined && isValidRole(role)) update['waiters.$.role'] = role;
+  if (phone !== undefined)    update['waiters.$.phone']    = String(phone).trim();
+  if (hireDate !== undefined) update['waiters.$.hireDate'] = String(hireDate).trim();
   if (pin) {
     if (!/^\d{4}$/.test(pin)) return res.status(400).json({ error: 'PIN 4 raqamli bo\'lishi kerak' });
     const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'waiters');
@@ -156,6 +164,48 @@ router.put('/waiters/:waiterId', guard, asyncHandler(async (req, res) => {
 
 router.delete('/waiters/:waiterId', guard, asyncHandler(async (req, res) => {
   await Restaurant.updateOne({ id: req.user.restaurantId }, { $pull: { waiters: { id: req.params.waiterId } } });
+  res.json({ success: true });
+}));
+
+// ---- XODIM HUJJATLARI ----
+router.post('/waiters/:waiterId/documents', guard, asyncHandler(async (req, res) => {
+  const { type, title, number, issueDate, expiryDate, note } = req.body;
+  if (!title?.trim()) return res.status(400).json({ error: 'Hujjat nomi kiritish shart' });
+  const doc = {
+    id: uuidv4(),
+    type: (type || 'boshqa').trim(),
+    title: title.trim(),
+    number: (number || '').trim(),
+    issueDate: (issueDate || '').trim(),
+    expiryDate: (expiryDate || '').trim(),
+    note: (note || '').trim(),
+  };
+  const r = await Restaurant.updateOne(
+    { id: req.user.restaurantId, 'waiters.id': req.params.waiterId },
+    { $push: { 'waiters.$.documents': doc } }
+  );
+  if (!r.matchedCount) return res.status(404).json({ error: 'Xodim topilmadi' });
+  res.json({ success: true, document: doc });
+}));
+
+router.put('/waiters/:waiterId/documents/:docId', guard, asyncHandler(async (req, res) => {
+  const fields = ['type', 'title', 'number', 'issueDate', 'expiryDate', 'note'];
+  const set = {};
+  fields.forEach(f => { if (req.body[f] !== undefined) set[`waiters.$[w].documents.$[d].${f}`] = String(req.body[f]).trim(); });
+  if (!Object.keys(set).length) return res.json({ success: true });
+  await Restaurant.updateOne(
+    { id: req.user.restaurantId },
+    { $set: set },
+    { arrayFilters: [{ 'w.id': req.params.waiterId }, { 'd.id': req.params.docId }] }
+  );
+  res.json({ success: true });
+}));
+
+router.delete('/waiters/:waiterId/documents/:docId', guard, asyncHandler(async (req, res) => {
+  await Restaurant.updateOne(
+    { id: req.user.restaurantId, 'waiters.id': req.params.waiterId },
+    { $pull: { 'waiters.$.documents': { id: req.params.docId } } }
+  );
   res.json({ success: true });
 }));
 
@@ -420,52 +470,36 @@ router.put('/results/:resultId/grade/:questionId', guard, asyncHandler(async (re
 }));
 
 // ---- KPI (dinamik davr tizimi) ----
-const { getPeriodKey, getPeriodLabel, getLastPeriodKeys, getPeriodRefDate } = require('../utils/kpi');
+const { getPeriodKey, getPeriodLabel, getPeriodRefDate } = require('../utils/kpi');
+const { KPI_DEFAULTS, calcKPI } = require('../services/kpi');
 
-const KPI_DEFAULTS = {
-  periodDays:10,
-  masterMin:90, masterBonus:15, proMin:75, proBonus:0,
-  goodMin:60, goodBonus:0, warningMin:45, warningPenalty:-10,
-  penaltyMin:30, penaltyFine:-20
-};
-
-function calcKPI(results, cfg = {}, refDate = new Date()) {
-  const s           = { ...KPI_DEFAULTS, ...cfg };
-  const days        = s.periodDays || 10;
-  const todayKey    = getPeriodKey(refDate, days);
-  const periodLabel = getPeriodLabel(refDate, days);
-  const current     = results.filter(r => getPeriodKey(r.submittedAt || r.date, days) === todayKey);
-
-  if (!current.length) {
-    const prev = [...results].sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt))[0];
-    return { level:'nodata', label:'Test topshirilmagan', color:'#666666', emoji:'—',
-             avg:null, testCount:0, penalty:0, consecutiveLow:0, periodLabel, lastScore:prev?.score??null };
-  }
-
-  const avg = Math.round(current.reduce((s, r) => s + r.score, 0) / current.length);
-
-  const lastKeys = getLastPeriodKeys(6, days, refDate);
-  const byPeriod = {};
-  results.forEach(r => { const k=getPeriodKey(r.submittedAt||r.date,days); if(!byPeriod[k]||r.score>byPeriod[k]) byPeriod[k]=r.score; });
-  let consecutiveLow = 0;
-  for (const k of lastKeys) {
-    if (byPeriod[k] !== undefined && byPeriod[k] < s.goodMin) consecutiveLow++;
-    else if (byPeriod[k] !== undefined) break;
-  }
-
-  let level, label, color, emoji, penalty;
-  if      (avg >= s.masterMin)  { level='master';  label='MASTER';        color='#F39C12'; emoji='🏆'; penalty=s.masterBonus;    }
-  else if (avg >= s.proMin)     { level='pro';     label='PRO';           color='#3498DB'; emoji='⭐'; penalty=s.proBonus;       }
-  else if (avg >= s.goodMin)    { level='good';    label='YAXSHI';        color='#2ECC71'; emoji='✅'; penalty=s.goodBonus;      }
-  else if (avg >= s.warningMin) { level='warning'; label='OGOHLANTIRISH'; color='#E67E22'; emoji='⚠️'; penalty=s.warningPenalty; }
-  else if (avg >= s.penaltyMin) { level='penalty'; label='JAZO';          color='#E74C3C'; emoji='🔴'; penalty=s.penaltyFine;    }
-  else                          { level='fail';    label='NOMUVOFIQ';      color='#9B59B6'; emoji='❌'; penalty=s.penaltyFine;    }
-
-  return { level, label, color, emoji, avg, testCount:current.length, penalty, consecutiveLow, periodLabel };
+// menuPct/modulePct — ofitsiantning menyu va modul progressini % da qaytaradi.
+// KPI kompozit ballida ishlatiladi. Komponent umuman mavjud bo'lmasa (menyu/modul
+// yo'q) null qaytadi — o'shanda o'sha komponent hisobga olinmaydi.
+function menuPctFor(waiterId, menu, waiterMenuProgress) {
+  const total = (menu || []).length;
+  if (!total) return null;
+  const validIds = new Set(menu.map(m => m.id));
+  const p = (waiterMenuProgress || []).find(x => x.waiterId === waiterId);
+  const known = (p?.knownDishIds || []).filter(id => validIds.has(id)).length;
+  return Math.round(known / total * 100);
+}
+function modulePctFor(waiterId, modules, moduleProgress) {
+  const total = (modules || []).length;
+  if (!total) return null;
+  const done = (moduleProgress || []).filter(mp => mp.waiterId === waiterId && mp.completed).length;
+  return Math.round(Math.min(done, total) / total * 100);
+}
+// Amaliy baho — davr ichidagi baholarning o'rtachasi. Baho yo'q = null (hisobga olinmaydi).
+function floorPctFor(waiterId, evaluations, refDate, days) {
+  const key = getPeriodKey(refDate, days);
+  const evs = (evaluations || []).filter(e => e.waiterId === waiterId && e.date && getPeriodKey(e.date, days) === key && typeof e.totalScore === 'number');
+  if (!evs.length) return null;
+  return Math.round(evs.reduce((a, e) => a + e.totalScore, 0) / evs.length);
 }
 
 router.get('/kpi', guard, asyncHandler(async (req, res) => {
-  const r       = await Restaurant.findOne({ id: req.user.restaurantId }, 'waiters testResults kpiSettings');
+  const r       = await Restaurant.findOne({ id: req.user.restaurantId }, 'waiters testResults kpiSettings menu modules waiterMenuProgress moduleProgress evaluations');
   const waiters = (r?.waiters || []).filter(w => w.active);
   const results = r?.testResults || [];
   const cfg     = r?.kpiSettings?.toObject ? r.kpiSettings.toObject() : (r?.kpiSettings || {});
@@ -475,8 +509,13 @@ router.get('/kpi', guard, asyncHandler(async (req, res) => {
   const periodLabel = getPeriodLabel(refDate, days);
 
   const kpiList = waiters.map(w => {
-    const wr   = results.filter(r => r.waiterId === w.id);
-    const kpi  = calcKPI(wr, cfg, refDate);
+    const wr   = results.filter(t => t.waiterId === w.id);
+    const kpi  = calcKPI({
+      results:   wr,
+      menuPct:   menuPctFor(w.id, r.menu, r.waiterMenuProgress),
+      modulePct: modulePctFor(w.id, r.modules, r.moduleProgress),
+      floorPct:  floorPctFor(w.id, r.evaluations, refDate, days),
+    }, cfg, refDate);
     const last = [...wr].sort((a,b) => new Date(b.submittedAt) - new Date(a.submittedAt))[0];
     return { waiterId: w.id, waiterName: w.name, ...kpi, lastTestDate: last?.date || null };
   }).sort((a, b) => {
@@ -502,7 +541,7 @@ router.get('/kpi-settings', guard, asyncHandler(async (req, res) => {
 }));
 
 router.put('/kpi-settings', guard, asyncHandler(async (req, res) => {
-  const fields = ['periodDays','masterMin','masterBonus','proMin','proBonus','goodMin','goodBonus','warningMin','warningPenalty','penaltyMin','penaltyFine'];
+  const fields = ['periodDays','masterMin','masterBonus','proMin','proBonus','goodMin','goodBonus','warningMin','warningPenalty','penaltyMin','penaltyFine','testWeight','menuWeight','moduleWeight','floorWeight'];
   const update = {};
   fields.forEach(f => { if (req.body[f] !== undefined) update[`kpiSettings.${f}`] = Number(req.body[f]); });
   await Restaurant.updateOne({ id: req.user.restaurantId }, { $set: update });
@@ -531,7 +570,7 @@ router.get('/menu-progress', guard, asyncHandler(async (req, res) => {
 // KPI hisobotini Excel (buxgalter uchun tayyor fayl) sifatida yuklab olish
 router.get('/kpi/export', guard, asyncHandler(async (req, res) => {
   const XLSX = require('xlsx');
-  const r       = await Restaurant.findOne({ id: req.user.restaurantId }, 'name menu waiters testResults kpiSettings waiterMenuProgress');
+  const r       = await Restaurant.findOne({ id: req.user.restaurantId }, 'name menu waiters testResults kpiSettings waiterMenuProgress modules moduleProgress evaluations');
   const waiters = (r?.waiters || []).filter(w => w.active);
   const results = r?.testResults || [];
   const cfg     = r?.kpiSettings?.toObject ? r.kpiSettings.toObject() : (r?.kpiSettings || {});
@@ -540,9 +579,12 @@ router.get('/kpi/export', guard, asyncHandler(async (req, res) => {
   const refDate = getPeriodRefDate(offset, days);
   const periodLabel = getPeriodLabel(refDate, days);
 
-  const totalDishes = (r?.menu || []).length;
+  const totalDishes  = (r?.menu || []).length;
+  const totalModules = (r?.modules || []).length;
   const validIds = new Set((r?.menu || []).map(m => m.id));
   const menuProg = r?.waiterMenuProgress || [];
+
+  const cfgWeights = { ...KPI_DEFAULTS, ...cfg };
 
   const kpiList = waiters.map(w => {
     const wr = results.filter(t => t.waiterId === w.id);
@@ -551,8 +593,12 @@ router.get('/kpi/export', guard, asyncHandler(async (req, res) => {
     return {
       waiterName: w.name,
       menuKnown: known,
-      menuPct: totalDishes ? Math.round(known / totalDishes * 100) : 0,
-      ...calcKPI(wr, cfg, refDate)
+      ...calcKPI({
+        results:   wr,
+        menuPct:   menuPctFor(w.id, r.menu, r.waiterMenuProgress),
+        modulePct: modulePctFor(w.id, r.modules, r.moduleProgress),
+        floorPct:  floorPctFor(w.id, r.evaluations, refDate, days),
+      }, cfg, refDate)
     };
   }).sort((a, b) => (b.avg ?? -1) - (a.avg ?? -1));
 
@@ -560,24 +606,28 @@ router.get('/kpi/export', guard, asyncHandler(async (req, res) => {
     ['KPI & MAOSH HISOBOTI'],
     [`Restoran: ${r?.name || ''}`],
     [`Davr: ${periodLabel}`],
+    [`Ball tarkibi: test ${cfgWeights.testWeight}% · menyu ${cfgWeights.menuWeight}% · modul ${cfgWeights.moduleWeight}% · amaliy ${cfgWeights.floorWeight}%`],
     [`Tuzilgan sana: ${new Date().toISOString().split('T')[0]}`],
     [],
-    ['№', 'Ofitsiant', 'Daraja', "O'rtacha ball (%)", 'Test soni', `Menyu o'rganilgan (%)`, `Bilgan taomlar (${totalDishes} tadan)`, 'Bonus/Jarima (%)', 'Izoh']
+    ['№', 'Ofitsiant', 'Daraja', 'KPI ball (%)', "Test o'rtacha (%)", 'Test soni', "Menyu o'rganilgan (%)", `Bilgan taomlar (${totalDishes} tadan)`, 'Modul tugatilgan (%)', 'Amaliy baho (%)', 'Bonus/Jarima (%)', 'Izoh']
   ];
   const rows = kpiList.map((k, i) => [
     i + 1,
     k.waiterName,
     k.level === 'nodata' ? '—' : k.label,
     k.avg ?? '',
+    k.testAvg ?? '',
     k.testCount,
-    k.menuPct,
+    k.menuPct == null ? '—' : k.menuPct,
     k.menuKnown,
+    k.modulePct == null ? '—' : k.modulePct,
+    k.floorPct == null ? '—' : k.floorPct,
     k.level === 'nodata' ? '' : k.penalty,
     k.level === 'nodata' ? 'Test topshirilmagan' : (k.consecutiveLow >= 2 ? `${k.consecutiveLow} davr ketma-ket past natija` : '')
   ]);
 
   const ws = XLSX.utils.aoa_to_sheet([...header, ...rows]);
-  ws['!cols'] = [{ wch: 4 }, { wch: 26 }, { wch: 16 }, { wch: 16 }, { wch: 10 }, { wch: 20 }, { wch: 22 }, { wch: 16 }, { wch: 30 }];
+  ws['!cols'] = [{ wch: 4 }, { wch: 26 }, { wch: 16 }, { wch: 12 }, { wch: 15 }, { wch: 10 }, { wch: 20 }, { wch: 22 }, { wch: 18 }, { wch: 16 }, { wch: 16 }, { wch: 30 }];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'KPI');
   const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
@@ -586,6 +636,179 @@ router.get('/kpi/export', guard, asyncHandler(async (req, res) => {
   res.setHeader('Content-Disposition', `attachment; filename="${fname}"`);
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   res.send(buf);
+}));
+
+// ---- AMALIY (FLOOR) BAHOLASH ----
+// Mezonlar (kuzatuv nuqtalari) — bir ro'yxat, admin tahrirlaydi
+router.get('/eval-criteria', guard, asyncHandler(async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'evalCriteria');
+  res.json((r?.evalCriteria || []).sort((a, b) => (a.order || 0) - (b.order || 0)));
+}));
+
+// Butun ro'yxatni almashtiradi (tahrirlash oson bo'lsin). body: { criteria: [{id?, title}] }
+router.put('/eval-criteria', guard, asyncHandler(async (req, res) => {
+  const list = Array.isArray(req.body.criteria) ? req.body.criteria : [];
+  const criteria = list
+    .filter(c => c && String(c.title || '').trim())
+    .map((c, i) => ({ id: c.id || uuidv4(), title: String(c.title).trim(), order: i }));
+  await Restaurant.updateOne({ id: req.user.restaurantId }, { $set: { evalCriteria: criteria } });
+  res.json({ success: true, criteria });
+}));
+
+// Baholar ro'yxati (ixtiyoriy ?waiterId=)
+router.get('/evaluations', guard, asyncHandler(async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'evaluations');
+  let evs = r?.evaluations || [];
+  if (req.query.waiterId) evs = evs.filter(e => e.waiterId === req.query.waiterId);
+  evs = [...evs].sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
+  res.json(evs);
+}));
+
+// Yangi baho. body: { waiterId, evaluator, date, note, scores:[{criterionId,title,score}] }
+router.post('/evaluations', guard, asyncHandler(async (req, res) => {
+  const { waiterId, evaluator, date, note } = req.body;
+  const scoresIn = Array.isArray(req.body.scores) ? req.body.scores : [];
+  if (!waiterId) return res.status(400).json({ error: 'Xodim tanlanmagan' });
+  if (!scoresIn.length) return res.status(400).json({ error: 'Baholanadigan mezon yo\'q' });
+
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'waiters');
+  const waiter = (r?.waiters || []).find(w => w.id === waiterId);
+  if (!waiter) return res.status(404).json({ error: 'Xodim topilmadi' });
+
+  const scores = scoresIn.map(s => ({
+    criterionId: s.criterionId || '',
+    title: String(s.title || '').trim(),
+    score: Math.max(0, Math.min(2, Number(s.score) || 0)),
+  }));
+  const totalScore = Math.round(scores.reduce((a, s) => a + s.score, 0) / (2 * scores.length) * 100);
+
+  const ev = {
+    id: uuidv4(),
+    waiterId,
+    waiterName: waiter.name,
+    evaluator: String(evaluator || '').trim(),
+    date: (date || new Date().toISOString().split('T')[0]),
+    scores, totalScore,
+    note: String(note || '').trim(),
+  };
+  await Restaurant.updateOne({ id: req.user.restaurantId }, { $push: { evaluations: ev } });
+  res.json({ success: true, evaluation: ev });
+}));
+
+router.delete('/evaluations/:id', guard, asyncHandler(async (req, res) => {
+  await Restaurant.updateOne({ id: req.user.restaurantId }, { $pull: { evaluations: { id: req.params.id } } });
+  res.json({ success: true });
+}));
+
+// ---- MENEJER ANALITIKASI ----
+// Barcha manbalarni yig'adi: KPI, amaliy baho, diagnostika, modullar.
+// Jamoaning zaif nuqtalarini bir ekranda ko'rsatadi.
+router.get('/analytics', guard, asyncHandler(async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId },
+    'waiters testResults evaluations assessments modules moduleProgress menu waiterMenuProgress kpiSettings');
+  const waiters = (r?.waiters || []).filter(w => w.active !== false);
+  const cfg = r?.kpiSettings?.toObject ? r.kpiSettings.toObject() : (r?.kpiSettings || {});
+  const days = cfg.periodDays || KPI_DEFAULTS.periodDays;
+  const refDate = getPeriodRefDate(0, days);
+  const avg = arr => arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : null;
+
+  // ── Har ofitsiant kesimida ko'rsatkichlar ──
+  const perWaiter = waiters.map(w => {
+    const menuPct   = menuPctFor(w.id, r.menu, r.waiterMenuProgress);
+    const modulePct = modulePctFor(w.id, r.modules, r.moduleProgress);
+    const floorPct  = floorPctFor(w.id, r.evaluations, refDate, days);
+    const kpi = calcKPI({
+      results: (r.testResults || []).filter(t => t.waiterId === w.id),
+      menuPct, modulePct, floorPct
+    }, cfg, refDate);
+    return { id: w.id, name: w.name, role: w.role || 'ofitsiant', menuPct, modulePct, floorPct, kpi: kpi.avg, level: kpi.level };
+  });
+
+  const overview = {
+    staffCount:   waiters.length,
+    avgKpi:       avg(perWaiter.map(p => p.kpi).filter(v => v != null)),
+    avgMenuPct:   avg(perWaiter.map(p => p.menuPct).filter(v => v != null)),
+    avgModulePct: avg(perWaiter.map(p => p.modulePct).filter(v => v != null)),
+    avgFloor:     avg(perWaiter.map(p => p.floorPct).filter(v => v != null)),
+    evalCount:    (r?.evaluations || []).length,
+  };
+
+  // ── Amaliy baho: mezon bo'yicha zaiflik xaritasi (eng zaif birinchi) ──
+  const critAgg = {};
+  (r?.evaluations || []).forEach(ev => (ev.scores || []).forEach(s => {
+    const key = s.title || s.criterionId; if (!key) return;
+    (critAgg[key] = critAgg[key] || { sum: 0, n: 0 });
+    critAgg[key].sum += (s.score || 0); critAgg[key].n += 1;
+  }));
+  const floorHeatmap = Object.entries(critAgg)
+    .map(([title, v]) => ({ title, pct: Math.round(v.sum / (2 * v.n) * 100), count: v.n }))
+    .sort((a, b) => a.pct - b.pct);
+
+  // ── Diagnostika: yo'nalish bo'yicha kompetensiya ──
+  const areaAgg = {};
+  (r?.assessments || []).forEach(a => (a.areaScores || []).forEach(as => {
+    const key = as.label || as.area; if (!key) return;
+    (areaAgg[key] = areaAgg[key] || { sum: 0, n: 0, icon: as.icon });
+    areaAgg[key].sum += (as.score || 0); areaAgg[key].n += 1;
+  }));
+  const areaCompetency = Object.entries(areaAgg)
+    .map(([label, v]) => ({ label, icon: v.icon || '', pct: Math.round(v.sum / v.n), count: v.n }))
+    .sort((a, b) => a.pct - b.pct);
+
+  // ── Modullar: tugatish darajasi ──
+  const moduleCompletion = (r?.modules || []).map(m => {
+    const done = (r.moduleProgress || []).filter(mp => mp.moduleId === m.id && mp.completed).length;
+    return { title: m.title, emoji: m.emoji || '📚', done, total: waiters.length, pct: waiters.length ? Math.round(done / waiters.length * 100) : 0 };
+  }).sort((a, b) => a.pct - b.pct);
+
+  // ── Rol kesimida ──
+  const byRole = {};
+  perWaiter.forEach(p => { (byRole[p.role] = byRole[p.role] || []).push(p); });
+  const roleBreakdown = Object.entries(byRole).map(([role, arr]) => ({
+    role, count: arr.length,
+    avgKpi:    avg(arr.map(p => p.kpi).filter(v => v != null)),
+    avgMenu:   avg(arr.map(p => p.menuPct).filter(v => v != null)),
+    avgModule: avg(arr.map(p => p.modulePct).filter(v => v != null)),
+  }));
+
+  res.json({ overview, floorHeatmap, areaCompetency, moduleCompletion, roleBreakdown });
+}));
+
+// ---- XODIM JURNALI (1-on-1 suhbat / intizom) ----
+router.get('/staff-notes', guard, asyncHandler(async (req, res) => {
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'staffNotes');
+  let notes = r?.staffNotes || [];
+  if (req.query.waiterId) notes = notes.filter(n => n.waiterId === req.query.waiterId);
+  notes = [...notes].sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date));
+  res.json(notes);
+}));
+
+router.post('/staff-notes', guard, asyncHandler(async (req, res) => {
+  const { waiterId, kind, date, title, content, author } = req.body;
+  if (!waiterId) return res.status(400).json({ error: 'Xodim tanlanmagan' });
+  if (!title?.trim()) return res.status(400).json({ error: 'Sarlavha kiritish shart' });
+
+  const r = await Restaurant.findOne({ id: req.user.restaurantId }, 'waiters');
+  const waiter = (r?.waiters || []).find(w => w.id === waiterId);
+  if (!waiter) return res.status(404).json({ error: 'Xodim topilmadi' });
+
+  const note = {
+    id: uuidv4(),
+    waiterId,
+    waiterName: waiter.name,
+    kind: ['review', 'praise', 'incident'].includes(kind) ? kind : 'review',
+    date: (date || new Date().toISOString().split('T')[0]),
+    title: title.trim(),
+    content: String(content || '').trim(),
+    author: String(author || '').trim(),
+  };
+  await Restaurant.updateOne({ id: req.user.restaurantId }, { $push: { staffNotes: note } });
+  res.json({ success: true, note });
+}));
+
+router.delete('/staff-notes/:id', guard, asyncHandler(async (req, res) => {
+  await Restaurant.updateOne({ id: req.user.restaurantId }, { $pull: { staffNotes: { id: req.params.id } } });
+  res.json({ success: true });
 }));
 
 // ---- CHECKLIST ----
@@ -859,10 +1082,10 @@ router.get('/modules', guard, asyncHandler(async (req, res) => {
 
 // Create module
 router.post('/modules', guard, asyncHandler(async (req, res) => {
-  const { title, description, emoji, color, order } = req.body;
+  const { title, description, emoji, color, order, roles } = req.body;
   if (!title?.trim()) return res.status(400).json({ error: 'Modul nomi kiritilmagan' });
   const module = { id: uuidv4(), title: title.trim(), description: description?.trim()||'',
-    emoji: emoji||'📚', color: color||'#C8922A', order: order||0, lessons: [], quiz: [] };
+    emoji: emoji||'📚', color: color||'#C8922A', roles: sanitizeRoles(roles), order: order||0, lessons: [], quiz: [] };
   await Restaurant.updateOne({ id: req.user.restaurantId }, { $push: { modules: module } });
   res.json({ success: true, module });
 }));
@@ -879,12 +1102,13 @@ router.put('/modules/reorder', guard, asyncHandler(async (req, res) => {
 
 // Update module
 router.put('/modules/:moduleId', guard, asyncHandler(async (req, res) => {
-  const { title, description, emoji, color, order, passingScore } = req.body;
+  const { title, description, emoji, color, order, passingScore, roles } = req.body;
   const upd = {};
   if (title)        upd['modules.$.title']        = title.trim();
   if (description !== undefined) upd['modules.$.description'] = description.trim();
   if (emoji)        upd['modules.$.emoji']        = emoji;
   if (color)        upd['modules.$.color']        = color;
+  if (roles !== undefined) upd['modules.$.roles'] = sanitizeRoles(roles);
   if (order !== undefined) upd['modules.$.order'] = order;
   if (passingScore) upd['modules.$.passingScore'] = passingScore;
   await Restaurant.updateOne({ id: req.user.restaurantId, 'modules.id': req.params.moduleId }, { $set: upd });

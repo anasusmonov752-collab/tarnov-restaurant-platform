@@ -43,25 +43,45 @@ Production values live in the Render dashboard only.
 
 ## Architecture
 
-**Single-file backend** (`server.js`) — all routes, schemas, middleware in one file.
+**Modular backend** — `server.js` is a thin bootstrap (config, static, health, media
+streaming). Real logic lives under `src/`:
+```
+src/
+  config/db.js                 — Mongo connect
+  middleware/auth.js           — JWT + auth([...roles]) guard
+  middleware/errorHandler.js   — asyncHandler + global error handler
+  models/                      — Restaurant, SuperAdmin, MentorChat, MentorAssignment, AiUsage
+  routes/                      — auth, super, restaurant, waiter
+  services/                    — ai, aiQuota, grading, generator, kpi, mentor,
+                                 mentorChat, mentorVoice, mentorVoice, assignments
+  data/                        — roles.js, roleplay.js, baseline.js
+  utils/kpi.js                 — period math (getPeriodKey/Label/RefDate)
+```
+(CLAUDE.md once described a single-file `server.js` — that is outdated; it is now modular.)
 
 **No frontend framework** — vanilla JS + fetch API. Each page is a self-contained HTML file with inline `<script>`.
 
 ### Data Model (MongoDB/Mongoose)
 
-All restaurant data lives in a **single `Restaurant` document** (embedded subdocuments):
+Most data lives in a single `Restaurant` document (embedded subdocuments). Chat history
+and mentor assignments are **separate collections** (they grow unbounded, so they are kept
+out of the per-request Restaurant read).
 ```
 Restaurant
-  ├── menu[]          (MenuItemSchema) — images stored as Base64 strings (max 1.5MB)
-  ├── waiters[]       (WaiterSchema)   — 4-digit PIN authentication
-  ├── questions[]     (QuestionSchema) — difficulty: easy|medium|hard
-  ├── testDays[]      (String[])       — ISO date strings "YYYY-MM-DD"
-  ├── announcements[]
-  ├── testResults[]   (TestResultSchema)
-  └── trainingVideos[] (TrainingVideoSchema) — video URL + description per topic
+  ├── menu[]          (MenuItemSchema) — Base64 images; also nameRu/descriptionRu (RU content)
+  ├── waiters[]       (WaiterSchema)   — 4-digit PIN; role, phone, hireDate, documents[]
+  ├── questions[]     (QuestionSchema) — type: choice|written; difficulty easy|medium|hard
+  ├── testDays[]      (String[])       — ISO "YYYY-MM-DD"
+  ├── announcements[] · testResults[] · checklist[] · waiterChecklists[]
+  ├── modules[]       (ModuleSchema)   — lessons + mini-quiz + roles[] (role targeting)
+  ├── moduleProgress[] · trainingVideos[] · waiterTrainingViews[]
+  ├── waiterMenuProgress[] — knownDishIds[] + reviews[] (spaced repetition, Leitner boxes)
+  ├── assessments[] · courses[]        — baseline diagnostic → personalized course
+  ├── evalCriteria[] · evaluations[]   — floor (practical) evaluation
+  ├── staffNotes[]    (StaffNoteSchema) — 1-on-1 reviews / praise / disciplinary log
+  ├── adaptation{} · kpiSettings{}     — KPI weights: test/menu/module/floor
+Separate collections: SuperAdmin, MentorChat, MentorAssignment, AiUsage
 ```
-
-`SuperAdmin` is a separate collection (single document).
 
 ### Auth System
 
@@ -84,6 +104,35 @@ GET  /api/restaurants/list        — public, for waiter login dropdown
 /api/waiter/training              — training videos list
 /api/restaurant/training          — upload/manage training videos
 ```
+
+Key restaurant-admin endpoints added for the HR/L&D expansion:
+```
+/api/restaurant/kpi[/export]      — composite KPI (test+menu+module+floor weights)
+/api/restaurant/waiters/:id/documents        — employee docs (sanitary book, expiry)
+/api/restaurant/eval-criteria · /evaluations — floor (practical) evaluation
+/api/restaurant/staff-notes                  — 1-on-1 / praise / disciplinary log
+/api/restaurant/analytics                    — team weak-standard heatmap + role breakdown
+```
+Key waiter endpoints:
+```
+/api/waiter/roleplay/scenarios|message|evaluate  — AI customer roleplay (mentor grades)
+/api/waiter/menu-review · /menu-review/:dishId   — spaced repetition (Leitner)
+```
+
+### KPI (composite) — `src/services/kpi.js`
+
+Single source of truth for KPI (was duplicated in routes). Level is driven by a **composite
+score**, not just the menu test: `test`, `menu learned %`, `module completion %`, and
+`floor (practical) eval %`, each with a configurable weight in `kpiSettings`
+(`testWeight/menuWeight/moduleWeight/floorWeight`). A component with no data (e.g. no floor
+eval yet) is dropped and remaining weights re-normalize — so a weight sits dormant until
+data exists. Setting menu/module/floor weights to 0 reverts to test-only.
+
+### Employee roles — `src/data/roles.js`
+
+Waiters have a `role` (ofitsiant/barmen/xostess/oshpaz/kassir/menejer), default `ofitsiant`.
+Modules can target roles via `roles[]` (empty = all). Single source shared by server + both
+frontends (mirror the list in all three if changed).
 
 ### Test System
 

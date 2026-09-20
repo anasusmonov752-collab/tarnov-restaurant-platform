@@ -138,6 +138,7 @@ const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&l
 
 let S = { restaurantId:null, pin:'', tab:'home' };
 let waiterInfo=null, historyData=[], menuData=[], menuHidden=false, menuCat='Barchasi', menuQuery='';
+let menuReview=null;   // spaced repetition: takrorga tayyor taomlar
 let testQuestions=[], qIndex=0, answers={}, selected=null, locked=false, secondsLeft=30, timer=null;
 // Savol turiga qarab vaqt: variantli 30s, yozma javob uzoqroq (serverdan keladi)
 let secPerChoice=30, secPerWritten=120, qDuration=30;
@@ -153,6 +154,16 @@ function ring(pct, size, stroke, color, track){
 function fmtSom(n){ return Number(n||0).toLocaleString('ru-RU').replace(/,/g,' '); }
 function waiterName(){ return (waiterInfo&&(waiterInfo.waiter&&waiterInfo.waiter.name||waiterInfo.name))||'Ofitsiant'; }
 function todayISO(){ return new Date().toISOString().split('T')[0]; }
+// Hujjat muddati holati (ofitsiant tomoni)
+function docStatusW(expiry){
+  if(!expiry) return null;
+  const today=new Date(); today.setHours(0,0,0,0);
+  const exp=new Date(expiry); if(isNaN(exp)) return null;
+  const days=Math.round((exp-today)/86400000);
+  if(days<0)   return {short:"MUDDAT O'TGAN", color:'#F0A98D', days};
+  if(days<=30) return {short:days+' KUN QOLDI', color:'#e3c06a', days};
+  return {short:'AMALDA', color:'#8FDDB2', days};
+}
 
 // ================= INIT / AUTH =================
 async function init(){
@@ -400,7 +411,7 @@ function buildHome(){
     <div style="position:relative;padding:6px 22px 26px;background:radial-gradient(circle at 80% -10%,rgba(201,168,76,.2),transparent 46%),linear-gradient(160deg,#1f4232,#13281e);border-radius:0 0 30px 30px;overflow:hidden;animation:ro-rise .5s ease both">
       <div style="position:absolute;right:-30px;top:-30px;width:150px;height:150px;border-radius:50%;border:1px solid rgba(201,168,76,.18)"></div>
       <div style="display:flex;align-items:center;justify-content:space-between">
-        <div><div style="font-size:15px;color:#C1C4BB">Salom,</div><div style="font-family:'Nunito Sans',sans-serif;font-size:28px;font-weight:700;color:#F5F0E8;line-height:1.05">${esc(name)} 👋</div></div>
+        <div><div style="font-size:15px;color:#C1C4BB">Salom,</div><div style="font-family:'Nunito Sans',sans-serif;font-size:28px;font-weight:700;color:#F5F0E8;line-height:1.05">${esc(name)} 👋</div>${waiterInfo&&waiterInfo.roleLabel?`<div style="display:inline-block;margin-top:7px;font-size:11.5px;font-weight:700;color:#C9A84C;background:rgba(201,168,76,.14);border:1px solid rgba(201,168,76,.3);border-radius:11px;padding:2px 10px">${esc(waiterInfo.roleLabel)}</div>`:''}</div>
         <div style="width:46px;height:46px;border-radius:50%;background:rgba(245,240,232,.1);border:1px solid rgba(201,168,76,.4);display:flex;align-items:center;justify-content:center;font-family:'Nunito Sans',sans-serif;font-size:18px;font-weight:700;color:#C9A84C">${esc(initial)}</div>
       </div>
       ${testCta}
@@ -507,7 +518,8 @@ async function loadMentor(){
           </div>
         </div>`).join('')}
     </div>
-    ${mentorChatButton()}`;
+    ${mentorChatButton()}
+    ${roleplayButton()}`;
 }
 
 // Ikki joyda ishlatiladi (vazifalar bor va yo'q holatlarida), shuning uchun alohida
@@ -623,6 +635,8 @@ function filterMenuCategory(cat){
 // Mavjud /ai-chat endpointi, lekin server tomonda ofitsiantning bilim
 // profili kontekstga qo'shilgan — mentor natijalarni bilib turadi.
 let chatMsgs=[], chatBusy=false;
+// ── Rol-o'yin mashqi holati ──
+let rpScenarios=null, rpConfigured=true, rpScenario=null, rpMsgs=[], rpBusy=false;
 
 function openMentorChat(){
   const ov=document.getElementById('overlay-analysis');
@@ -747,6 +761,134 @@ async function sendChat(){
     chatBusy=false;
     if(btn) btn.style.opacity='1';
   }
+}
+
+// ---------- ROL-O'YIN MASHQI ----------
+// AI mijoz rolini o'ynaydi, ofitsiant xizmat qiladi. Suhbat clientda turadi
+// (qisqa mashq). Oxirida murabbiy baho beradi.
+function roleplayButton(){
+  return `<div onclick="openRoleplay()" class="ro-press" style="display:flex;align-items:center;gap:12px;margin-top:9px;padding:13px 15px;border-radius:16px;background:rgba(245,240,232,.05);border:1px solid rgba(245,240,232,.1);cursor:pointer">
+    <div style="width:34px;height:34px;flex:none;border-radius:50%;background:linear-gradient(135deg,#6E83C9,#455a9e);display:flex;align-items:center;justify-content:center;font-size:16px">🎭</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:14.5px;font-weight:700;color:#F5F0E8">Rol-o'yin mashqi</div>
+      <div style="font-size:12.5px;color:#97A298;margin-top:2px">Mijoz bilan real vaziyatni mashq qiling</div>
+    </div>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#97A298" stroke-width="2.2" style="flex:none"><path d="M9 6l6 6-6 6"/></svg>
+  </div>`;
+}
+const rpBack = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F5F0E8" stroke-width="2"><path d="M15 6l-6 6 6 6"/></svg>`;
+async function openRoleplay(){
+  const ov=document.getElementById('overlay-analysis'); if(!ov) return;
+  ov.style.display='block';
+  ov.innerHTML=`<div style="position:absolute;inset:0;display:flex;flex-direction:column;background:linear-gradient(170deg,#163326,#0f1f17)">
+    <div style="display:flex;align-items:center;gap:12px;padding:44px 18px 14px;border-bottom:1px solid rgba(245,240,232,.07);flex:none">
+      <div onclick="closeAnalysis()" style="cursor:pointer;padding:4px;flex:none">${rpBack}</div>
+      <div style="width:38px;height:38px;flex:none;border-radius:50%;background:linear-gradient(135deg,#6E83C9,#455a9e);display:flex;align-items:center;justify-content:center;font-size:18px">🎭</div>
+      <div style="flex:1;min-width:0"><div style="font-family:'Nunito Sans',sans-serif;font-size:18px;font-weight:700;color:#F5F0E8;line-height:1.2">Rol-o'yin mashqi</div><div style="font-size:12.5px;color:#8FDDB2">Mijoz bilan mashq — murabbiy baholaydi</div></div>
+    </div>
+    <div id="rp-body" style="flex:1;overflow-y:auto;padding:16px"></div>
+  </div>`;
+  const body=document.getElementById('rp-body');
+  body.innerHTML=`<div style="text-align:center;padding:20px;color:#97A298;font-size:13px">Yuklanmoqda…</div>`;
+  if(!rpScenarios){ try{ const d=await api('/api/waiter/roleplay/scenarios'); rpScenarios=d.scenarios||[]; rpConfigured=d.configured!==false; }catch{ rpScenarios=[]; } }
+  const b=document.getElementById('rp-body'); if(!b) return;
+  if(!rpConfigured){ b.innerHTML=`<div style="text-align:center;padding:34px 20px;color:#F0A98D;font-size:14px;line-height:1.6">AI xizmati hozircha mavjud emas.<br>Rol-o'yin mashqi uchun AI kerak.</div>`; return; }
+  b.innerHTML=`<div style="font-size:13px;color:#97A298;margin-bottom:14px;line-height:1.5">Vaziyat tanlang. Mijoz rolini AI o'ynaydi — siz ofitsiant bo'lib xizmat qiling. Oxirida murabbiy baho beradi.</div>`+
+    (rpScenarios||[]).map(s=>`<div onclick="rpStart('${s.id}')" class="ro-press" style="display:flex;align-items:center;gap:13px;padding:15px;border-radius:16px;background:#1b3a2d;border:1px solid rgba(245,240,232,.08);cursor:pointer;margin-bottom:10px">
+      <div style="width:42px;height:42px;flex:none;border-radius:13px;background:rgba(110,131,201,.16);display:flex;align-items:center;justify-content:center;font-size:22px">${s.emoji}</div>
+      <div style="flex:1;min-width:0"><div style="font-size:15px;font-weight:700;color:#F5F0E8">${esc(s.title)}</div><div style="font-size:12.5px;color:#97A298;margin-top:2px;line-height:1.4">${esc(s.desc)}</div><div style="font-size:11.5px;color:#8FA6E8;font-weight:700;margin-top:5px">${esc(s.skill)}</div></div>
+    </div>`).join('');
+}
+function rpStart(id){
+  rpScenario=(rpScenarios||[]).find(s=>s.id===id); if(!rpScenario) return;
+  rpMsgs=[{role:'assistant',content:rpScenario.opening}];
+  renderRpChat();
+}
+function renderRpChat(){
+  const ov=document.getElementById('overlay-analysis'); if(!ov) return;
+  ov.innerHTML=`<div style="position:absolute;inset:0;display:flex;flex-direction:column;background:linear-gradient(170deg,#163326,#0f1f17)">
+    <div style="display:flex;align-items:center;gap:11px;padding:44px 16px 12px;border-bottom:1px solid rgba(245,240,232,.07);flex:none">
+      <div onclick="openRoleplay()" style="cursor:pointer;padding:4px;flex:none">${rpBack}</div>
+      <div style="width:36px;height:36px;flex:none;border-radius:11px;background:rgba(110,131,201,.18);display:flex;align-items:center;justify-content:center;font-size:18px">${rpScenario.emoji}</div>
+      <div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:700;color:#F5F0E8;line-height:1.15">${esc(rpScenario.title)}</div><div style="font-size:12px;color:#8FDDB2">${esc(rpScenario.skill)}</div></div>
+      <div onclick="rpFinish()" class="ro-press" style="flex:none;padding:8px 13px;border-radius:12px;background:rgba(201,168,76,.16);border:1px solid rgba(201,168,76,.35);color:#e2c879;font-size:12.5px;font-weight:800;cursor:pointer">Yakunlash</div>
+    </div>
+    <div id="rp-chat" style="flex:1;overflow-y:auto;padding:16px 16px 8px;display:flex;flex-direction:column;gap:11px"></div>
+    <div style="flex:none;padding:10px 14px 22px;border-top:1px solid rgba(245,240,232,.07);background:rgba(15,31,23,.9)">
+      <div style="display:flex;gap:9px;align-items:flex-end">
+        <textarea id="rp-input" rows="1" placeholder="Mijozga javob bering…" oninput="growRp(this)" onkeydown="rpKey(event)" style="flex:1;resize:none;max-height:110px;padding:12px 14px;border-radius:16px;background:rgba(245,240,232,.06);border:1px solid rgba(245,240,232,.13);color:#F5F0E8;font-family:inherit;font-size:15px;line-height:1.4;outline:none"></textarea>
+        <div onclick="rpSend()" id="rp-send" class="ro-press" style="width:44px;height:44px;flex:none;border-radius:14px;background:linear-gradient(100deg,#6E83C9,#5570b8);display:flex;align-items:center;justify-content:center;cursor:pointer">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  rpMsgs.forEach(m=>rpPaint(m.role,m.content));
+  setTimeout(()=>document.getElementById('rp-input')?.focus(),150);
+}
+function rpPaint(role,text){
+  const body=document.getElementById('rp-chat'); if(!body) return null;
+  const me=role==='user';
+  const el=document.createElement('div');
+  el.style.cssText=`max-width:84%;align-self:${me?'flex-end':'flex-start'};padding:12px 14px;border-radius:${me?'17px 17px 5px 17px':'17px 17px 17px 5px'};background:${me?'linear-gradient(100deg,#C9A84C,#d8bd6a)':'#22324f'};border:${me?'none':'1px solid rgba(110,131,201,.25)'};color:${me?'#11241b':'#EAE7DF'};font-size:15px;line-height:1.55;white-space:pre-wrap;animation:ro-rise .3s ease both`;
+  el.textContent=text;
+  body.appendChild(el);
+  body.scrollTop=body.scrollHeight;
+  return el;
+}
+function growRp(el){ el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,110)+'px'; }
+function rpKey(e){ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); rpSend(); } }
+async function rpSend(){
+  if(rpBusy || !rpScenario) return;
+  const inp=document.getElementById('rp-input'); const text=(inp?.value||'').trim();
+  if(!text) return;
+  inp.value=''; growRp(inp);
+  rpPaint('user',text); rpMsgs.push({role:'user',content:text});
+  rpBusy=true;
+  const typing=rpPaint('assistant','…'); if(typing) typing.style.opacity='.6';
+  try{
+    const d=await api('/api/waiter/roleplay/message',{method:'POST',
+      body:JSON.stringify({ scenarioId:rpScenario.id, history:rpMsgs.slice(0,-1), message:text })});
+    typing?.remove();
+    rpPaint('assistant',d.reply); rpMsgs.push({role:'assistant',content:d.reply});
+  }catch(e){
+    typing?.remove();
+    const el=rpPaint('assistant','Javob olib bo\'lmadi. Qayta urinib ko\'ring.');
+    if(el){ el.style.background='rgba(217,96,59,.12)'; el.style.color='#F0A98D'; }
+  }finally{ rpBusy=false; }
+}
+async function rpFinish(){
+  if(!rpScenario) return;
+  if(rpMsgs.filter(m=>m.role==='user').length < 1){ toast('Avval mijoz bilan gaplashing','error'); return; }
+  const body=document.getElementById('rp-chat');
+  if(body) body.insertAdjacentHTML('beforeend',`<div id="rp-eval" style="align-self:center;padding:14px;font-size:13px;color:#97A298">Murabbiy baholayapti…</div>`),body.scrollTop=body.scrollHeight;
+  try{
+    const d=await api('/api/waiter/roleplay/evaluate',{method:'POST',
+      body:JSON.stringify({ scenarioId:rpScenario.id, history:rpMsgs })});
+    renderRpResult(d);
+  }catch(e){
+    document.getElementById('rp-eval')?.remove();
+    toast('Baholab bo\'lmadi. Qayta urinib ko\'ring.','error');
+  }
+}
+function renderRpResult(d){
+  const ov=document.getElementById('overlay-analysis'); if(!ov) return;
+  const score=Math.max(0,Math.min(100,d.score||0));
+  const col=score>=75?'#8FDDB2':score>=50?'#e3c06a':'#F0A98D';
+  ov.innerHTML=`<div style="position:absolute;inset:0;display:flex;flex-direction:column;background:linear-gradient(170deg,#163326,#0f1f17);overflow-y:auto">
+    <div style="padding:44px 18px 8px;display:flex;align-items:center;gap:12px;flex:none">
+      <div onclick="closeAnalysis()" style="cursor:pointer;padding:4px">${rpBack}</div>
+      <div style="font-size:18px;font-weight:700;color:#F5F0E8">Murabbiy bahosi</div>
+    </div>
+    <div style="padding:8px 20px 34px">
+      <div style="text-align:center;margin-bottom:20px"><div style="font-family:'Nunito Sans',sans-serif;font-size:52px;font-weight:800;color:${col};line-height:1">${score}<span style="font-size:24px">%</span></div><div style="font-size:13px;color:#97A298;margin-top:2px">${esc(rpScenario.title)}</div></div>
+      <div style="padding:15px;border-radius:16px;background:#1b3a2d;border:1px solid rgba(245,240,232,.08);color:#EAE7DF;font-size:14.5px;line-height:1.6;margin-bottom:12px">${esc(d.feedback||'')}</div>
+      ${d.good?`<div style="padding:13px 15px;border-radius:14px;background:rgba(63,156,108,.12);border:1px solid rgba(63,156,108,.3);margin-bottom:10px"><div style="font-size:12px;font-weight:800;color:#8FDDB2;margin-bottom:4px">✓ Yaxshi qildingiz</div><div style="font-size:14px;color:#EAE7DF;line-height:1.5">${esc(d.good)}</div></div>`:''}
+      ${d.improve?`<div style="padding:13px 15px;border-radius:14px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.28)"><div style="font-size:12px;font-weight:800;color:#e2c879;margin-bottom:4px">↑ Yaxshilash kerak</div><div style="font-size:14px;color:#EAE7DF;line-height:1.5">${esc(d.improve)}</div></div>`:''}
+      <div onclick="openRoleplay()" class="ro-press" style="margin-top:22px;padding:15px;border-radius:15px;background:linear-gradient(100deg,#C9A84C,#d8bd6a);color:#11241b;font-weight:800;font-size:15px;text-align:center;cursor:pointer">Boshqa vaziyatni mashq qilish</div>
+      <div onclick="closeAnalysis()" style="margin-top:10px;padding:13px;font-size:15px;color:#97A298;text-align:center;cursor:pointer">Yopish</div>
+    </div>
+  </div>`;
 }
 
 // ---------- SHAXSIY O'QUV KURSI ----------
@@ -1098,11 +1240,18 @@ async function loadHomeKPI(){
   const bonusLine = pen>0 ? `<div style="font-family:'Nunito Sans',sans-serif;font-size:20px;font-weight:700;color:#C9A84C;line-height:1.1">+${pen}% <span style="font-size:15px;color:#97A298">bonus 🏆</span></div>`
     : pen<0 ? `<div style="font-family:'Nunito Sans',sans-serif;font-size:20px;font-weight:700;color:#F0A98D;line-height:1.1">${pen}% <span style="font-size:15px;color:#97A298">ushlanma</span></div>`
     : `<div style="font-family:'Nunito Sans',sans-serif;font-size:18px;font-weight:700;color:#F5F0E8;line-height:1.1">Barqaror</div>`;
+  // KPI ball tarkibi — ofitsiant nima uchun shuncha ball olganini ko'rsin
+  const parts = [];
+  if (k.testAvg!=null)   parts.push(['📝','Test',k.testAvg]);
+  if (k.menuPct!=null)   parts.push(['🍽','Menyu',k.menuPct]);
+  if (k.modulePct!=null) parts.push(['📚','Modul',k.modulePct]);
+  if (k.floorPct!=null)  parts.push(['👀','Amaliy',k.floorPct]);
+  const compHtml = parts.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${parts.map(([e,l,v])=>`<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:11px;background:rgba(245,240,232,.06);font-size:11.5px;color:#C1C4BB;font-weight:600">${e} ${l} <b style="color:#F5F0E8">${v}%</b></span>`).join('')}</div>` : '';
   box.innerHTML = `<div style="padding:20px;border-radius:22px;background:linear-gradient(150deg,#21463440,#1b3a2d);border:1px solid rgba(201,168,76,.16);display:flex;align-items:center;gap:20px;animation:ro-rise .5s ease .06s both">
     <div style="position:relative;width:108px;height:108px;flex:none;display:flex;align-items:center;justify-content:center">${ring(pct,108,9,C)}
       <div style="position:absolute;text-align:center"><div style="font-family:'Nunito Sans',sans-serif;font-size:30px;font-weight:700;color:#F5F0E8;line-height:1">${pct}<span style="font-size:16px;color:#C9A84C">%</span></div><div style="font-size:12px;letter-spacing:1.5px;color:#97A298;text-transform:uppercase">Oylik KPI</div></div></div>
     <div style="flex:1;display:flex;flex-direction:column;gap:12px"><div><div style="font-size:13px;color:#97A298">${esc(k.periodLabel||'Joriy davr')}${k.label?' · '+esc(k.label):''}</div>${bonusLine}</div><div style="height:1px;background:rgba(245,240,232,.08)"></div>
-    <div style="font-size:12.5px;color:#97A298;line-height:1.5">${k.testCount||0} ta test · shu davr o'rtachasi</div></div>
+    <div style="font-size:12.5px;color:#97A298;line-height:1.5">${k.testCount||0} ta test · KPI ball tarkibi:</div>${compHtml}</div>
   </div>
   <!-- Bonus qanday hisoblangani: avval faqat umumiy foiz ko'rinardi va
        ofitsiant nima uchun shuncha olgani tushunarsiz edi -->
@@ -1127,8 +1276,77 @@ async function renderMenu(){
     menuData = data.menu||[];
     paintMenu();
     loadDrillProgress();
+    loadMenuReview();
   } catch(e){ box.innerHTML=`<div style="color:#F0A98D;font-size:15px">${esc(e.message)}</div>`; }
 }
+async function loadMenuReview(){
+  try{ menuReview = await api('/api/waiter/menu-review'); }catch{ menuReview=null; }
+  paintMenu();
+}
+function reviewBannerHtml(){
+  const due = menuReview?.dueCount||0;
+  if(!due) return '';
+  return `<div onclick="openMenuReview()" class="ro-press" style="display:flex;align-items:center;gap:13px;padding:14px 16px;border-radius:16px;margin-bottom:14px;cursor:pointer;background:linear-gradient(100deg,rgba(110,131,201,.2),rgba(110,131,201,.06));border:1px solid rgba(110,131,201,.42)">
+    <div style="flex:none;width:40px;height:40px;border-radius:12px;background:rgba(110,131,201,.22);display:flex;align-items:center;justify-content:center;font-size:20px">🔁</div>
+    <div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:700;color:#F5F0E8">Menyu takrori</div><div style="font-size:13px;color:#97A298;margin-top:2px">${due} ta taom takrorga tayyor — unutmaslik uchun</div></div>
+    <div style="flex:none;min-width:26px;height:26px;padding:0 9px;border-radius:13px;background:#6E83C9;color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center">${due}</div>
+  </div>`;
+}
+// ── Flashcard takror seansi ──
+let revQueue=[], revIdx=0, revStats={remembered:0,forgot:0}, revRevealed=false;
+function openMenuReview(){
+  if(!menuReview?.due?.length){ toast('Takrorga tayyor taom yo\'q','success'); return; }
+  revQueue=menuReview.due.slice(); revIdx=0; revStats={remembered:0,forgot:0}; revRevealed=false;
+  document.getElementById('overlay-analysis').style.display='block';
+  renderReviewCard();
+}
+function renderReviewCard(){
+  const ov=document.getElementById('overlay-analysis'); if(!ov) return;
+  if(revIdx>=revQueue.length){ renderReviewDone(); return; }
+  const d=revQueue[revIdx]; const ings=ingChips(d.description);
+  ov.innerHTML=`<div style="position:absolute;inset:0;display:flex;flex-direction:column;background:linear-gradient(170deg,#163326,#0f1f17)">
+    <div style="display:flex;align-items:center;gap:12px;padding:44px 18px 10px;flex:none">
+      <div onclick="closeReview()" style="cursor:pointer;padding:4px">${rpBack}</div>
+      <div style="flex:1"><div style="font-size:17px;font-weight:700;color:#F5F0E8">Menyu takrori</div><div style="font-size:12.5px;color:#8FDDB2">${revIdx+1} / ${revQueue.length}</div></div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:6px 20px 24px;display:flex;flex-direction:column">
+      <div style="height:4px;border-radius:4px;background:rgba(245,240,232,.08);margin-bottom:20px;overflow:hidden"><div style="height:100%;width:${Math.round(revIdx/revQueue.length*100)}%;background:#6E83C9;transition:width .3s"></div></div>
+      <div style="text-align:center;margin:10px 0 4px"><div style="font-size:12px;color:#97A298;text-transform:uppercase;letter-spacing:1px">${esc(d.category||'')}</div><div style="font-family:'Nunito Sans',sans-serif;font-size:30px;font-weight:800;color:#F5F0E8;margin-top:6px;line-height:1.15">${esc(d.name)}</div></div>
+      <div style="font-size:13.5px;color:#97A298;text-align:center;margin:8px 0 22px">Tarkibini va narxini eslay olasizmi?</div>
+      ${!revRevealed
+        ? `<div onclick="revReveal()" class="ro-press" style="margin-top:auto;padding:16px;border-radius:15px;background:rgba(245,240,232,.06);border:1px solid rgba(245,240,232,.14);color:#F5F0E8;font-weight:700;font-size:16px;text-align:center;cursor:pointer">Javobni ko'rsatish</div>`
+        : `<div style="background:#1b3a2d;border:1px solid rgba(245,240,232,.08);border-radius:16px;padding:16px;margin-bottom:18px">
+            ${d.price?`<div style="font-size:18px;color:#C9A84C;font-weight:700;margin-bottom:10px">${esc(d.price)}</div>`:''}
+            <div style="font-size:12px;color:#97A298;text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px">Tarkibi</div>
+            ${ings.length?`<div style="display:flex;flex-wrap:wrap;gap:6px">${ings.map(i=>`<span style="padding:6px 11px;border-radius:10px;background:rgba(245,240,232,.06);font-size:13.5px;color:#F5F0E8">${esc(i)}</span>`).join('')}</div>`:`<div style="font-size:14px;color:#97A298">Tarkib kiritilmagan</div>`}
+            ${(d.allergens&&d.allergens.length)?`<div style="font-size:12px;color:#97A298;text-transform:uppercase;letter-spacing:.5px;margin:14px 0 7px">Allergenlar</div><div style="display:flex;flex-wrap:wrap;gap:6px">${d.allergens.map(a=>`<span style="padding:6px 11px;border-radius:10px;background:rgba(217,96,59,.14);color:#f0c5b5;font-size:13.5px">${esc(a)}</span>`).join('')}</div>`:''}
+          </div>
+          <div style="display:flex;gap:10px;margin-top:auto">
+            <div onclick="revAnswer(false)" class="ro-press" style="flex:1;padding:15px;border-radius:14px;background:rgba(217,96,59,.14);border:1px solid rgba(217,96,59,.35);color:#F0A98D;font-weight:800;font-size:15px;text-align:center;cursor:pointer">Unutdim</div>
+            <div onclick="revAnswer(true)" class="ro-press" style="flex:1;padding:15px;border-radius:14px;background:linear-gradient(100deg,#3f9c6c,#4fb37e);color:#0c1f16;font-weight:800;font-size:15px;text-align:center;cursor:pointer">Esladim ✓</div>
+          </div>`}
+    </div>
+  </div>`;
+}
+function revReveal(){ revRevealed=true; renderReviewCard(); }
+function revAnswer(remembered){
+  const d=revQueue[revIdx];
+  if(remembered) revStats.remembered++; else revStats.forgot++;
+  api('/api/waiter/menu-review/'+encodeURIComponent(d.dishId),{method:'POST',body:JSON.stringify({remembered})}).catch(()=>{});
+  revIdx++; revRevealed=false;
+  renderReviewCard();
+}
+function renderReviewDone(){
+  const ov=document.getElementById('overlay-analysis'); if(!ov) return;
+  loadMenuReview();   // banner sonini yangilaymiz
+  ov.innerHTML=`<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(170deg,#163326,#0f1f17);padding:30px;text-align:center">
+    <div style="font-size:54px;margin-bottom:10px">🎉</div>
+    <div style="font-family:'Nunito Sans',sans-serif;font-size:24px;font-weight:800;color:#F5F0E8;margin-bottom:8px">Takror tugadi!</div>
+    <div style="font-size:15px;color:#97A298;line-height:1.6;margin-bottom:26px">${revQueue.length} ta taom takrorlandi<br><span style="color:#8FDDB2">${revStats.remembered} esladingiz</span> · <span style="color:#F0A98D">${revStats.forgot} unutildi</span></div>
+    <div onclick="closeReview()" class="ro-press" style="padding:15px 40px;border-radius:15px;background:linear-gradient(100deg,#C9A84C,#d8bd6a);color:#11241b;font-weight:800;font-size:16px;cursor:pointer">Tayyor</div>
+  </div>`;
+}
+function closeReview(){ closeAnalysis(); loadMenuReview(); }
 function paintMenu(){
   const cats=['Barchasi',...Array.from(new Set(menuData.map(m=>m.category).filter(Boolean)))];
   window._cats = cats;
@@ -1149,6 +1367,7 @@ function paintMenu(){
       </div>
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2.2"><path d="M9 6l6 6-6 6"/></svg>
     </div>
+    ${reviewBannerHtml()}
     <div style="display:flex;align-items:center;gap:10px;padding:12px 15px;border-radius:14px;background:#1b3a2d;border:1px solid rgba(245,240,232,.08);margin-bottom:14px">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#C1C4BB" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
       <input id="menu-search" value="${esc(menuQuery)}" oninput="onMenuSearch(this.value)" placeholder="Taom yoki tarkib bo'yicha qidiring..." style="flex:1;background:transparent;border:none;outline:none;color:#F5F0E8;font-family:'Nunito Sans',sans-serif;font-size:16px"/>
@@ -1171,10 +1390,13 @@ function ingChips(desc){
   return String(desc||'').replace(/\.\s*$/,'').split(/[,;]/).map(s=>s.trim()).filter(Boolean);
 }
 
-function openDish(id){
+function openDish(id, lang){
   const d=menuData.find(x=>String(x.id)===String(id)); if(!d) return;
   const hasAllerg = !!(d.allergens && d.allergens.length);
   const ings = ingChips(d.description);
+  const hasRu = !!(d.nameRu || d.descriptionRu);
+  const L = (lang==='ru' && hasRu) ? 'ru' : 'uz';
+  const dispName = L==='ru' ? (d.nameRu||d.name) : d.name;
   const ov=document.getElementById('overlay-dish');
   ov.style.display='block';
   ov.innerHTML = `<div onclick="closeDish()" style="position:absolute;inset:0;background:rgba(8,16,11,.6);animation:ro-fade .3s ease"></div>
@@ -1185,12 +1407,17 @@ function openDish(id){
         <div onclick="closeDish()" style="position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;background:rgba(8,16,11,.5);display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F5F0E8" stroke-width="2.4"><path d="M6 6l12 12M18 6L6 18"/></svg></div>
         ${d.category?`<div style="position:absolute;left:24px;top:18px;padding:4px 11px;border-radius:20px;background:rgba(201,168,76,.92);font-size:12px;font-weight:800;letter-spacing:.5px;color:#11241b">${esc(d.category)}</div>`:''}</div>
       <div style="padding:4px 24px 28px;margin-top:-30px;position:relative;height:calc(100% - 200px);overflow-y:auto">
-        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px"><div style="font-family:'Nunito Sans',sans-serif;font-size:26px;font-weight:700;color:#F5F0E8;line-height:1.1">${esc(d.name)}</div>${d.price?`<div style="font-family:'Nunito Sans',sans-serif;font-size:21px;font-weight:700;color:#C9A84C;white-space:nowrap">${esc(d.price)}</div>`:''}</div>
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px"><div style="font-family:'Nunito Sans',sans-serif;font-size:26px;font-weight:700;color:#F5F0E8;line-height:1.1">${esc(dispName)}</div>${d.price?`<div style="font-family:'Nunito Sans',sans-serif;font-size:21px;font-weight:700;color:#C9A84C;white-space:nowrap">${esc(d.price)}</div>`:''}</div>
+        ${hasRu?`<div style="display:inline-flex;gap:2px;margin-top:12px;padding:3px;border-radius:11px;background:rgba(245,240,232,.06)">
+          <span onclick="openDish('${esc(d.id)}','uz')" style="padding:5px 14px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;background:${L==='uz'?'#C9A84C':'transparent'};color:${L==='uz'?'#11241b':'#97A298'}">O'zbekcha</span>
+          <span onclick="openDish('${esc(d.id)}','ru')" style="padding:5px 14px;border-radius:9px;font-size:12.5px;font-weight:700;cursor:pointer;background:${L==='ru'?'#C9A84C':'transparent'};color:${L==='ru'?'#11241b':'#97A298'}">Русский</span>
+        </div>`:''}
         ${dishNote(d.id)}
-        <div style="font-size:14px;color:#97A298;font-weight:700;letter-spacing:.5px;margin:20px 0 10px;text-transform:uppercase">Tarkibi</div>
-        ${ings.length
-          ? `<div style="display:flex;flex-wrap:wrap;gap:7px">${ings.map(i=>`<span style="padding:7px 12px;border-radius:11px;background:rgba(245,240,232,.06);border:1px solid rgba(245,240,232,.09);font-size:14px;color:#F5F0E8">${esc(i)}</span>`).join('')}</div>`
-          : `<div style="font-size:15px;color:#97A298;line-height:1.6">Tarkib kiritilmagan — oshpazdan so'rang</div>`}
+        ${L==='ru'
+          ? `<div style="font-size:14px;color:#97A298;font-weight:700;letter-spacing:.5px;margin:20px 0 10px;text-transform:uppercase">Описание</div><div style="font-size:15px;color:#F5F0E8;line-height:1.65;white-space:pre-wrap">${esc(d.descriptionRu||'Описание не добавлено')}</div>`
+          : `<div style="font-size:14px;color:#97A298;font-weight:700;letter-spacing:.5px;margin:20px 0 10px;text-transform:uppercase">Tarkibi</div>${ings.length
+              ? `<div style="display:flex;flex-wrap:wrap;gap:7px">${ings.map(i=>`<span style="padding:7px 12px;border-radius:11px;background:rgba(245,240,232,.06);border:1px solid rgba(245,240,232,.09);font-size:14px;color:#F5F0E8">${esc(i)}</span>`).join('')}</div>`
+              : `<div style="font-size:15px;color:#97A298;line-height:1.6">Tarkib kiritilmagan — oshpazdan so'rang</div>`}`}
 
         <div style="font-size:14px;color:#97A298;font-weight:700;letter-spacing:.5px;margin:22px 0 10px;text-transform:uppercase">Allergenlar</div>
         ${hasAllerg
@@ -2519,9 +2746,22 @@ async function renderKoproq(){
       <div style="width:56px;height:56px;border-radius:50%;background:rgba(245,240,232,.1);border:1.5px solid rgba(201,168,76,.45);display:flex;align-items:center;justify-content:center;font-family:'Nunito Sans',sans-serif;font-size:23px;font-weight:700;color:#C9A84C;flex:none">${esc(initial)}</div>
       <div style="flex:1;min-width:0">
         <div style="font-family:'Nunito Sans',sans-serif;font-size:19px;font-weight:700;color:#F5F0E8;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(name)}</div>
-        <div style="font-size:14px;color:#97A298;margin-top:2px">Ofitsiant${rest?' · '+esc(rest):''}</div>
+        <div style="font-size:14px;color:#97A298;margin-top:2px">${esc((waiterInfo&&waiterInfo.roleLabel)||'Ofitsiant')}${rest?' · '+esc(rest):''}</div>
       </div>
     </div>
+    ${(()=>{
+      const docs=(waiterInfo&&waiterInfo.waiter&&waiterInfo.waiter.documents)||[];
+      if(!docs.length) return '';
+      return `<div style="margin-bottom:18px">
+        <div style="font-size:13px;color:#97A298;letter-spacing:1.5px;text-transform:uppercase;margin:0 2px 10px;font-weight:700">Hujjatlarim</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          ${docs.map(d=>{const s=docStatusW(d.expiryDate);return `<div style="display:flex;align-items:center;gap:11px;padding:13px 15px;border-radius:15px;background:#1b3a2d;border:1px solid ${s&&s.days<0?'rgba(217,96,59,.4)':'rgba(245,240,232,.06)'}">
+            <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;color:#F5F0E8">${esc(d.title)}</div><div style="font-size:12px;color:#97A298;margin-top:2px">${d.expiryDate?'Muddat: '+esc(d.expiryDate):'Muddatsiz'}</div></div>
+            ${s?`<span style="font-size:10px;font-weight:800;color:${s.color};background:${s.color}22;border-radius:9px;padding:3px 9px;white-space:nowrap">${s.short}</span>`:''}
+          </div>`;}).join('')}
+        </div>
+      </div>`;
+    })()}
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:18px">
       <div style="padding:13px 10px;border-radius:16px;background:#1b3a2d;border:1px solid rgba(245,240,232,.06);text-align:center">
         <div style="font-family:'Nunito Sans',sans-serif;font-size:25px;font-weight:700;color:#F5F0E8">${avg}<span style="font-size:16px;color:#C9A84C">%</span></div>

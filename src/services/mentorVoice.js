@@ -292,7 +292,13 @@ Sizning vazifangiz — hukm chiqarish. Uch qismdan iborat, jami 4 jumla:
 2. Sabab. Nima uchun aynan shu yerda xato bo'lgan degan taxminingiz.
 3. Bitta aniq talab: nima, qancha, qachongacha.
 Tabriklab ham, achinib ham o'tirmang. Ball 100% bo'lsa ham keyingi darajani
-qo'ying.`
+qo'ying.`,
+
+  roleplay: `HOZIR: ofitsiant siz bilan MIJOZ rolidagi mashq (rol-o'yin) o'tkazdi.
+Quyida stsenariy va suhbat matni beriladi. Ofitsiant mijoz bilan qanday
+muomala qilganini baholang: servis standartlarini qo'lladimi, toni to'g'rimi,
+menyu/tarkib bo'yicha aniq gapirdi mi, yechim/taklif berdimi. Xolis, aniq va
+amaliy bo'ling — maqtov uchun maqtamang, lekin yaxshi qilingan narsani tan oling.`
 };
 
 // ── ZAXIRA HUKM (AI'siz) ─────────────────────────────────────

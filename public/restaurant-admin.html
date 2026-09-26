@@ -360,6 +360,9 @@ const NAV = [
     {k:'checklist',l:'Checklist',n:'12'},
     {k:'adaptatsiya',l:'Adaptatsiya',n:'13'},
   ]},
+  {g:'Rekruting', items:[
+    {k:'nomzodlar',l:'Nomzodlar bazasi',n:'14',href:'/recruitment.html'},
+  ]},
 ];
 
 const TITLES = {
@@ -491,7 +494,7 @@ function buildNav() {
     <div class="sb-group">
       <div class="sb-group-label">${g.g}</div>
       ${g.items.map(it=>`
-        <div class="sb-item ${S.sec===it.k?'active':''}" id="nav_${it.k}" onclick="setSec('${it.k}')">
+        <div class="sb-item ${S.sec===it.k?'active':''}" id="nav_${it.k}" onclick="${it.href?`location.href='${it.href}'`:`setSec('${it.k}')`}">
           <div class="sb-bar"></div>
           <span class="sb-num">${it.n}</span>
           <span class="sb-label">${it.l}</span>

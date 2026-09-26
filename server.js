@@ -119,6 +119,7 @@ app.get('/media/training/:id', async (req, res, next) => {
 app.use('/api/auth', require('./src/routes/auth'));
 app.use('/api/super', require('./src/routes/super'));
 app.use('/api/restaurant', require('./src/routes/restaurant'));
+app.use('/api/recruitment', require('./src/routes/recruitment'));
 app.use('/api/waiter', require('./src/routes/waiter'));
 
 // ── Global error handler ───────────────────────────────────────────

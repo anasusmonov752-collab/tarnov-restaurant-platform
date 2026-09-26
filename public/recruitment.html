@@ -202,6 +202,10 @@ button,input,select,textarea{font-family:inherit}
     <option value="name">Ism (A-Z)</option>
   </select>
   <div class="tool-spacer"></div>
+  <button class="btn btn-ghost" id="reanalyzeBtn" style="display:none" onclick="reanalyzeAll()">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+    Qayta tahlil (<span id="reanalyzeCount">0</span>)
+  </button>
   <button class="btn btn-ghost" onclick="openAnalytics()">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="7"/><rect x="12" y="6" width="3" height="11"/><rect x="17" y="13" width="3" height="4"/></svg>
     Analitika
@@ -435,6 +439,9 @@ async function load(){
     populateBranchFilter(list);                            // filial variantlari branch filtridan OLDIN
     ALL = filters.branch!=='all' ? list.filter(c=>(c.branch||'')===filters.branch) : list;
     document.getElementById('tbTotal').textContent = ALL.length;
+    const unparsed = ALL.filter(c=>!c.aiParsed).length;
+    const rb = document.getElementById('reanalyzeBtn');
+    if(rb){ rb.style.display = unparsed ? 'inline-flex' : 'none'; document.getElementById('reanalyzeCount').textContent = unparsed; }
     renderBoard();
   }catch(e){ toast(e.message,'error'); }
 }
@@ -552,7 +559,7 @@ function renderModal(){
       <div style="flex:1;min-width:0">
         <div class="mh-title">${esc(c.fullName||'Nomsiz')}</div>
         <div class="mh-sub">${ROLE_EMOJI[c.role]||'👤'} ${esc(c.desiredPosition||ROLE_LABELS[c.role]||'')}${d!==null?' · '+(d===0?'Bugun qo\'shildi':d+' kun bu bosqichda'):''}</div>
-        <div style="margin-top:8px">${aiBadge} <button class="ph-btn" onclick="pickPhoto('${c.id}')">${c.hasPhoto?'Rasmni almashtirish':'Rasm yuklash'}</button></div>
+        <div style="margin-top:8px">${aiBadge} <button class="ph-btn" onclick="pickPhoto('${c.id}')">${c.hasPhoto?'Rasmni almashtirish':'Rasm yuklash'}</button>${!c.aiParsed?` <button class="ph-btn" onclick="reanalyzeOne('${c.id}')">🔄 Qayta tahlil</button>`:''}</div>
       </div>
       <button class="modal-x" onclick="closeModal()">✕</button>
     </div>
@@ -733,6 +740,41 @@ document.getElementById('photoInput').addEventListener('change', async function(
     await load();
   }catch(e){ toast('Rasm yuklanmadi','error'); }
 });
+
+// ── AI qayta tahlil ──
+async function reanalyzeOne(id){
+  const up=document.getElementById('uploading'); const bar=document.getElementById('upBar');
+  document.getElementById('upText').textContent='Qayta tahlil qilinmoqda...'; if(bar)bar.style.width='45%';
+  up.classList.add('show');
+  try{
+    await api('/api/recruitment/'+id+'/reanalyze', { method:'POST' });
+    if(bar)bar.style.width='100%';
+    up.classList.remove('show');
+    toast('Qayta tahlil qilindi','success');
+    if(CURRENT && CURRENT.id===id){ CURRENT = await api('/api/recruitment/'+id); curRating=CURRENT.rating||0; renderModal(); }
+    await load();
+  }catch(e){ up.classList.remove('show'); toast(e.message,'error'); }
+}
+async function reanalyzeAll(){
+  const targets = ALL.filter(c=>!c.aiParsed);
+  if(!targets.length){ toast('Hammasi tahlil qilingan','info'); return; }
+  if(!(await askConfirm(targets.length+" ta nomzod AI bilan qayta tahlil qilinsinmi? (biroz vaqt oladi)"))) return;
+  const up=document.getElementById('uploading'); const bar=document.getElementById('upBar');
+  up.classList.add('show');
+  const total=targets.length; let done=0, ok=0, fail=0, stop=false;
+  document.getElementById('upText').textContent=`0 / ${total} qayta tahlil`; if(bar)bar.style.width='0%';
+  for(const c of targets){
+    try{ await api('/api/recruitment/'+c.id+'/reanalyze', { method:'POST' }); ok++; }
+    catch(e){ fail++; if(String(e.message).toLowerCase().includes('limit')){ toast(e.message,'error'); stop=true; } }
+    done++;
+    document.getElementById('upText').textContent=`${done} / ${total} qayta tahlil`;
+    if(bar)bar.style.width=Math.round(done/total*100)+'%';
+    if(stop) break;
+  }
+  up.classList.remove('show');
+  toast(`${ok} ta tahlil qilindi${fail?`, ${fail} qolди/xato`:''}`, fail&&!ok?'error':'success');
+  await load();
+}
 
 // ── Voronka analitikasi ──
 function openAnalytics(){

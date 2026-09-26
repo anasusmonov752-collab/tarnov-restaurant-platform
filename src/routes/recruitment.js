@@ -244,6 +244,28 @@ router.get('/:id/file', guard, asyncHandler(async (req, res) => {
   res.send(buf);
 }));
 
+// ── AI bilan qayta tahlil (o'qilmagan nomzodni qayta yuklamasdan) ──
+router.post('/:id/reanalyze', guard, asyncHandler(async (req, res) => {
+  const doc = await Candidate.findOne({ restaurantId: req.user.restaurantId, id: req.params.id });
+  if (!doc) return res.status(404).json({ error: 'Nomzod topilmadi' });
+  if (!doc.rawText || doc.rawText.length < 20) return res.status(400).json({ error: 'Xom matn saqlanmagan — rezyumeni qayta yuklang' });
+
+  const { fields, aiParsed, error } = await resumeParser.structure(doc.rawText, req.user.restaurantId);
+  if (!aiParsed) {
+    return res.status(503).json({
+      error: error === 'QUOTA_EXHAUSTED'
+        ? 'Kunlik AI limiti tugadi — ertaga qayta urinib ko\'ring'
+        : 'AI hozir javob bermadi — birozdan keyin qayta urining'
+    });
+  }
+  Object.assign(doc, fields); // faqat AI ajratgan profil maydonlari — status/izoh/foto/teg tegilmaydi
+  doc.aiParsed = true;
+  doc.updatedAt = new Date();
+  await doc.save();
+  const o = doc.toObject(); delete o.fileData; delete o.rawText; delete o.photo;
+  res.json(o);
+}));
+
 // ── Tahrirlash (holat, izoh, baho, teg, profil maydonlari) ──
 router.patch('/:id', guard, asyncHandler(async (req, res) => {
   const b = req.body || {};

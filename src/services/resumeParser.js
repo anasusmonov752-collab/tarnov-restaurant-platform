@@ -121,25 +121,33 @@ async function structure(rawText, restaurantId) {
   if (!text.trim()) return { fields: emptyFields(), aiParsed: false };
   if (!ai.isConfigured()) return { fields: fallbackFromText(text), aiParsed: false };
 
-  try {
-    const out = await ai.complete({
-      system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: text }],
-      json: true,
-      tier: 'smart',
-      maxTokens: 900,
-      restaurantId
-    });
-    const fields = normalize(out);
-    const fb = fallbackFromText(text);
-    if (!fields.fullName) fields.fullName = fb.fullName;
-    if (!fields.phone)    fields.phone    = fb.phone;
-    if (!fields.email)    fields.email    = fb.email;
-    return { fields, aiParsed: true };
-  } catch (err) {
-    console.warn('[resumeParser] AI tahlili ishlamadi:', err.message);
-    return { fields: fallbackFromText(text), aiParsed: false };
+  // O'tkinchi xatolar (429/503/AI_BAD_JSON) uchun bir necha marta qayta urinamiz.
+  // Aks holda bitta xato butun rezyumeni "Qo'lda to'ldiring" holatiga tushiradi.
+  let lastErr;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const out = await ai.complete({
+        system: SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: text }],
+        json: true,
+        tier: 'smart',
+        maxTokens: 1200,
+        restaurantId
+      });
+      const fields = normalize(out);
+      const fb = fallbackFromText(text);
+      if (!fields.fullName) fields.fullName = fb.fullName;
+      if (!fields.phone)    fields.phone    = fb.phone;
+      if (!fields.email)    fields.email    = fb.email;
+      return { fields, aiParsed: true };
+    } catch (err) {
+      lastErr = err;
+      if (err.code === 'QUOTA_EXHAUSTED') break;           // kunlik limit — qayta urinish foydasiz
+      if (attempt < 3) await new Promise(r => setTimeout(r, 1200 * attempt));
+    }
   }
+  console.warn('[resumeParser] AI tahlili ishlamadi:', lastErr && lastErr.message);
+  return { fields: fallbackFromText(text), aiParsed: false, error: lastErr && (lastErr.code || lastErr.message) };
 }
 
 /** JPEG o'lchamini (w,h) SOF markeridan o'qiydi — foto-ga o'xshashini tanlash uchun. */

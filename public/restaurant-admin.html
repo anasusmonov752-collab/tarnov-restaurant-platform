@@ -6,10 +6,10 @@
 <title>RestoOne — Admin Panel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,600;0,6..12,700;0,6..12,800;1,6..12,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,600;1,700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Nunito Sans',sans-serif;background:#EEF3FB;color:#16233A;height:100vh;overflow:hidden}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:#EEF3FB;color:#16233A;height:100vh;overflow:hidden}
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-thumb{background:rgba(15, 39, 71,.18);border-radius:6px}
 ::-webkit-scrollbar-track{background:transparent}
@@ -27,10 +27,10 @@ body{font-family:'Nunito Sans',sans-serif;background:#EEF3FB;color:#16233A;heigh
 .sb-logo{padding:22px 16px 18px;display:flex;align-items:center;gap:11px;overflow:hidden}
 .sb-mark{width:40px;height:40px;flex:none;border-radius:11px;background:linear-gradient(135deg,#2563EB,#1D4ED8);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(37, 99, 235,.28);cursor:pointer;transition:transform .2s}
 .sb-mark:hover{transform:scale(1.05)}
-.sb-mark span{font-family:'Nunito Sans',sans-serif;font-style:italic;font-weight:700;font-size:24px;color:#F4F9FF;line-height:1}
+.sb-mark span{font-family:'Inter',system-ui,-apple-system,sans-serif;font-style:italic;font-weight:700;font-size:24px;color:#F4F9FF;line-height:1}
 .sb-brand{overflow:hidden;white-space:nowrap;transition:opacity .25s,width .3s}
 .sidebar.collapsed .sb-brand{opacity:0;width:0}
-.sb-brand-name{font-family:'Nunito Sans',sans-serif;font-size:18px;font-weight:700;color:#F4F9FF;letter-spacing:.5px;line-height:1}
+.sb-brand-name{font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:18px;font-weight:700;color:#F4F9FF;letter-spacing:.5px;line-height:1}
 .sb-brand-sub{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:rgba(37, 99, 235,.7);margin-top:3px;font-weight:600}
 .sb-nav{flex:1;overflow-y:auto;overflow-x:hidden;padding:4px 12px 16px}
 .sb-group{margin-bottom:16px}
@@ -43,7 +43,7 @@ body{font-family:'Nunito Sans',sans-serif;background:#EEF3FB;color:#16233A;heigh
 .sb-bar{position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:0;background:#2563EB;border-radius:2px;transition:height .25s}
 .sb-item.active .sb-bar{height:18px}
 .sidebar.collapsed .sb-bar{display:none}
-.sb-num{font-family:'Nunito Sans',sans-serif;font-size:16px;font-weight:700;width:22px;text-align:center;flex:none;color:rgba(37, 99, 235,.45);transition:color .22s}
+.sb-num{font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:16px;font-weight:700;width:22px;text-align:center;flex:none;color:rgba(37, 99, 235,.45);transition:color .22s}
 .sb-item.active .sb-num{color:#2563EB}
 .sb-ic{width:22px;flex:none;display:flex;align-items:center;justify-content:center}
 .sb-ic svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
@@ -67,8 +67,8 @@ body{font-family:'Nunito Sans',sans-serif;background:#EEF3FB;color:#16233A;heigh
 .main{flex:1;height:100%;display:flex;flex-direction:column;overflow:hidden;min-width:0}
 .topbar{flex:none;height:72px;padding:0 30px;display:flex;align-items:center;gap:18px;border-bottom:1px solid rgba(15, 39, 71,.10);background:#fff}
 .tb-title-group{display:flex;align-items:baseline;gap:11px}
-.tb-num{font-family:'Nunito Sans',sans-serif;font-size:32px;font-weight:800;color:#1E40AF;line-height:1}
-.tb-info .tb-title{font-family:'Nunito Sans',sans-serif;font-size:22px;font-weight:700;color:#16233A;line-height:1}
+.tb-num{font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:32px;font-weight:800;color:#1E40AF;line-height:1}
+.tb-info .tb-title{font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:22px;font-weight:700;color:#16233A;line-height:1}
 .tb-info .tb-sub{font-size:12px;color:#64748B;margin-top:2px}
 .tb-space{flex:1}
 .tb-search{display:flex;align-items:center;gap:9px;background:#FFFFFF;border:1px solid rgba(15, 39, 71,.10);border-radius:30px;padding:9px 17px;min-width:210px;cursor:text}
@@ -83,16 +83,16 @@ body{font-family:'Nunito Sans',sans-serif;background:#EEF3FB;color:#16233A;heigh
 /* ─── CARDS ─── */
 .card{background:#fff;border:1px solid rgba(15, 39, 71,.10);border-radius:18px;padding:22px}
 .card-hd{display:flex;align-items:baseline;gap:8px;margin-bottom:16px}
-.card-hd-n{font-family:'Nunito Sans',sans-serif;font-size:16px;font-weight:700;color:#1E40AF;font-weight:600}
-.card-hd-t{font-family:'Nunito Sans',sans-serif;font-size:18px;font-weight:700;color:#16233A}
+.card-hd-n{font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:16px;font-weight:700;color:#1E40AF;font-weight:600}
+.card-hd-t{font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:18px;font-weight:700;color:#16233A}
 
 /* ─── BUTTONS ─── */
-.btn-gold{padding:10px 20px;border-radius:30px;background:linear-gradient(100deg,#2563EB,#3B6FD4);color:#F4F9FF;font-size:13px;font-weight:800;cursor:pointer;border:none;letter-spacing:.3px;box-shadow:0 6px 18px rgba(37, 99, 235,.25);transition:transform .2s,opacity .2s;font-family:'Nunito Sans',sans-serif;white-space:nowrap}
+.btn-gold{padding:10px 20px;border-radius:30px;background:linear-gradient(100deg,#2563EB,#3B6FD4);color:#F4F9FF;font-size:13px;font-weight:800;cursor:pointer;border:none;letter-spacing:.3px;box-shadow:0 6px 18px rgba(37, 99, 235,.25);transition:transform .2s,opacity .2s;font-family:'Inter',system-ui,-apple-system,sans-serif;white-space:nowrap}
 .btn-gold:hover{opacity:.9;transform:translateY(-1px)}
 .btn-gold:active{transform:scale(.97)}
-.btn-outline{padding:10px 20px;border-radius:30px;border:1px solid rgba(15, 39, 71,.12);color:#16233A;font-size:13px;font-weight:700;cursor:pointer;background:transparent;transition:background .2s;font-family:'Nunito Sans',sans-serif}
+.btn-outline{padding:10px 20px;border-radius:30px;border:1px solid rgba(15, 39, 71,.12);color:#16233A;font-size:13px;font-weight:700;cursor:pointer;background:transparent;transition:background .2s;font-family:'Inter',system-ui,-apple-system,sans-serif}
 .btn-outline:hover{background:#FFFFFF}
-.btn-ghost{padding:10px 20px;border-radius:30px;border:1px dashed rgba(15, 39, 71,.18);color:#64748B;font-size:13px;font-weight:600;cursor:pointer;background:transparent;font-family:'Nunito Sans',sans-serif}
+.btn-ghost{padding:10px 20px;border-radius:30px;border:1px dashed rgba(15, 39, 71,.18);color:#64748B;font-size:13px;font-weight:600;cursor:pointer;background:transparent;font-family:'Inter',system-ui,-apple-system,sans-serif}
 
 /* ─── BADGE ─── */
 .pill{display:inline-flex;align-items:center;padding:3px 11px;border-radius:20px;font-size:12px;font-weight:700}
@@ -125,16 +125,16 @@ body{font-family:'Nunito Sans',sans-serif;background:#EEF3FB;color:#16233A;heigh
 .panel{position:relative;width:440px;max-width:92vw;height:100%;background:#fff;box-shadow:-18px 0 50px rgba(0,0,0,.18);animation:slidein .32s cubic-bezier(.4,0,.2,1);overflow-y:auto;display:flex;flex-direction:column}
 .panel-hd{padding:22px 26px;border-bottom:1px solid rgba(15, 39, 71,.10);display:flex;align-items:center;justify-content:space-between;flex:none}
 .panel-hd-title{display:flex;align-items:baseline;gap:9px}
-.panel-hd-plus{font-family:'Nunito Sans',sans-serif;font-size:18px;font-weight:700;color:#1E40AF;font-weight:600}
-.panel-hd-text{font-family:'Nunito Sans',sans-serif;font-size:20px;font-weight:700;color:#16233A}
+.panel-hd-plus{font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:18px;font-weight:700;color:#1E40AF;font-weight:600}
+.panel-hd-text{font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:20px;font-weight:700;color:#16233A}
 .panel-close{width:32px;height:32px;border-radius:50%;border:1px solid rgba(15, 39, 71,.12);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:#64748B;background:none;line-height:1}
 .panel-body{padding:24px 26px;flex:1}
 .f-label{display:block;font-size:12px;font-weight:700;color:#64748B;margin-bottom:6px;letter-spacing:.3px}
-.f-input{width:100%;height:44px;border-radius:11px;border:1px solid rgba(15, 39, 71,.12);background:#FFFFFF;font-size:14px;color:#16233A;padding:0 15px;font-family:'Nunito Sans',sans-serif;outline:none;transition:border .2s}
+.f-input{width:100%;height:44px;border-radius:11px;border:1px solid rgba(15, 39, 71,.12);background:#FFFFFF;font-size:14px;color:#16233A;padding:0 15px;font-family:'Inter',system-ui,-apple-system,sans-serif;outline:none;transition:border .2s}
 .f-input:focus{border-color:rgba(37, 99, 235,.5)}
-.f-area{width:100%;min-height:80px;border-radius:11px;border:1px solid rgba(15, 39, 71,.12);background:#FFFFFF;font-size:14px;color:#16233A;padding:11px 15px;font-family:'Nunito Sans',sans-serif;resize:vertical;outline:none;transition:border .2s}
+.f-area{width:100%;min-height:80px;border-radius:11px;border:1px solid rgba(15, 39, 71,.12);background:#FFFFFF;font-size:14px;color:#16233A;padding:11px 15px;font-family:'Inter',system-ui,-apple-system,sans-serif;resize:vertical;outline:none;transition:border .2s}
 .f-area:focus{border-color:rgba(37, 99, 235,.5)}
-.f-sel{width:100%;height:44px;border-radius:11px;border:1px solid rgba(15, 39, 71,.12);background:#FFFFFF;font-size:14px;color:#16233A;padding:0 15px;font-family:'Nunito Sans',sans-serif;outline:none;appearance:none}
+.f-sel{width:100%;height:44px;border-radius:11px;border:1px solid rgba(15, 39, 71,.12);background:#FFFFFF;font-size:14px;color:#16233A;padding:0 15px;font-family:'Inter',system-ui,-apple-system,sans-serif;outline:none;appearance:none}
 .f-row{margin-bottom:16px}
 .f-actions{display:flex;gap:10px;margin-top:26px}
 
@@ -143,9 +143,9 @@ body{font-family:'Nunito Sans',sans-serif;background:#EEF3FB;color:#16233A;heigh
 .modal-bg{position:absolute;inset:0;background:rgba(11, 27, 51,.55);backdrop-filter:blur(3px);animation:fade .3s ease}
 .modal{position:relative;width:460px;max-width:100%;background:#fff;border-radius:22px;overflow:hidden;animation:pop .32s cubic-bezier(.2,.7,.3,1);box-shadow:0 28px 70px rgba(0,0,0,.22)}
 .modal-hd{background:linear-gradient(120deg,#0F2747,#1B3559);padding:26px 28px;position:relative;overflow:hidden}
-.modal-ghost{position:absolute;top:-12px;right:16px;font-family:'Nunito Sans',sans-serif;font-size:97px;font-weight:700;color:rgba(37, 99, 235,.08);line-height:1;pointer-events:none}
+.modal-ghost{position:absolute;top:-12px;right:16px;font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:97px;font-weight:700;color:rgba(37, 99, 235,.08);line-height:1;pointer-events:none}
 .modal-eyebrow{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;color:rgba(37, 99, 235,.8);font-weight:700;margin-bottom:5px}
-.modal-title{font-family:'Nunito Sans',sans-serif;font-size:24px;font-weight:700;color:#F4F9FF}
+.modal-title{font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:24px;font-weight:700;color:#F4F9FF}
 .modal-body{padding:24px 28px}
 
 /* ─── ALLERGEN CHIPS ─── */
@@ -203,21 +203,21 @@ body{font-family:'Nunito Sans',sans-serif;background:#EEF3FB;color:#16233A;heigh
 .topic-card:hover{transform:translateY(-4px);box-shadow:0 16px 34px rgba(15, 39, 71,.10)}
 .topic-accent{height:4px}
 .topic-body{padding:18px}
-.topic-num{font-family:'Nunito Sans',sans-serif;font-size:28px;font-weight:800;color:rgba(15, 39, 71,.07);line-height:1;margin-bottom:5px}
+.topic-num{font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:28px;font-weight:800;color:rgba(15, 39, 71,.07);line-height:1;margin-bottom:5px}
 .topic-title{font-size:13.5px;font-weight:700;color:#16233A;margin-bottom:6px;line-height:1.35}
 .topic-sub{font-size:12px;color:#64748B}
-.topic-url{width:100%;height:36px;border-radius:9px;border:1px solid rgba(15, 39, 71,.12);background:#FFFFFF;font-size:12px;color:#16233A;padding:0 11px;font-family:'Nunito Sans',sans-serif;outline:none;margin-top:9px}
+.topic-url{width:100%;height:36px;border-radius:9px;border:1px solid rgba(15, 39, 71,.12);background:#FFFFFF;font-size:12px;color:#16233A;padding:0 11px;font-family:'Inter',system-ui,-apple-system,sans-serif;outline:none;margin-top:9px}
 .topic-url:focus{border-color:rgba(37, 99, 235,.45)}
 
 /* ─── KPI TIER ─── */
 .tier-row{display:flex;align-items:center;gap:13px;padding:11px 0;border-bottom:1px solid rgba(15, 39, 71,.07)}
 .tier-row:last-child{border-bottom:none}
 .tier-bar{width:4px;height:30px;border-radius:3px;flex:none}
-.tier-effect{font-family:'Nunito Sans',sans-serif;font-size:18px;font-weight:800}
+.tier-effect{font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:18px;font-weight:800}
 
 /* ─── RING ─── */
 .ring-wrap{position:relative;width:90px;height:90px;flex:none}
-.ring-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Nunito Sans',sans-serif;font-size:22px;font-weight:800;color:#F4F9FF}
+.ring-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:22px;font-weight:800;color:#F4F9FF}
 
 /* ─── CHECK ─── */
 .chk-item{display:flex;align-items:center;gap:13px;padding:14px 4px;border-bottom:1px solid rgba(15, 39, 71,.07);cursor:pointer}
@@ -589,11 +589,11 @@ function rDash() {
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;margin-bottom:18px">
     ${stats.map((s,i)=>`
       <div class="card" style="position:relative;overflow:hidden;animation:fadeup .5s ease ${i*.07}s both">
-        <div style="position:absolute;top:-12px;right:-6px;font-family:'Nunito Sans',sans-serif;font-size:79px;font-weight:800;color:rgba(15, 39, 71,.04);line-height:1;pointer-events:none">${s.ghost}</div>
+        <div style="position:absolute;top:-12px;right:-6px;font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:79px;font-weight:800;color:rgba(15, 39, 71,.04);line-height:1;pointer-events:none">${s.ghost}</div>
         <div style="width:26px;height:26px;border-radius:8px;background:rgba(37, 99, 235,.14);display:flex;align-items:center;justify-content:center;margin-bottom:14px">
           <div style="width:7px;height:7px;background:#2563EB;border-radius:2px;transform:rotate(45deg)"></div>
         </div>
-        <div style="font-family:'Nunito Sans',sans-serif;font-size:42px;font-weight:800;line-height:1;color:#16233A" id="${s.id}">0</div>
+        <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:42px;font-weight:800;line-height:1;color:#16233A" id="${s.id}">0</div>
         <div style="font-size:13px;font-weight:700;color:#16233A;margin-top:7px">${s.label}</div>
         <div style="font-size:11.5px;color:#64748B;margin-top:2px">${s.sub}</div>
       </div>`).join('')}
@@ -608,7 +608,7 @@ function rDash() {
           return `<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
             <span style="font-size:13px;font-weight:600;color:#16233A;width:88px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.waiterName||r.name||'–'}</span>
             <div class="prog" style="flex:1"><div class="prog-fill" style="width:${sc}%"></div></div>
-            <span style="font-family:'Nunito Sans',sans-serif;font-size:18px;font-weight:700;width:36px;text-align:right;color:#16233A">${sc}</span>
+            <span style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:18px;font-weight:700;width:36px;text-align:right;color:#16233A">${sc}</span>
           </div>`}).join('')}
     </div>
 
@@ -626,13 +626,13 @@ function rDash() {
 
   ${lastAnn?`
   <div style="background:linear-gradient(120deg,#0F2747,#1B3559);border-radius:18px;padding:26px 30px;display:flex;align-items:center;gap:24px;position:relative;overflow:hidden;animation:fadeup .5s ease .5s both">
-    <div style="position:absolute;top:-24px;right:32px;font-family:'Nunito Sans',sans-serif;font-size:114px;font-weight:700;color:rgba(37, 99, 235,.07);line-height:1;pointer-events:none">07</div>
+    <div style="position:absolute;top:-24px;right:32px;font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:114px;font-weight:700;color:rgba(37, 99, 235,.07);line-height:1;pointer-events:none">07</div>
     <div style="flex:none;width:48px;height:48px;border-radius:12px;border:1px solid rgba(37, 99, 235,.35);display:flex;align-items:center;justify-content:center">
       <div style="width:13px;height:13px;border:2px solid #2563EB;border-radius:3px;transform:rotate(45deg)"></div>
     </div>
     <div style="flex:1;position:relative;min-width:0">
       <div style="font-size:10.5px;letter-spacing:2px;text-transform:uppercase;color:rgba(37, 99, 235,.8);font-weight:700;margin-bottom:6px">So'nggi e'lon · ${lastAnn.date||lastAnn.createdAt||''}</div>
-      <div style="font-family:'Nunito Sans',sans-serif;font-size:19px;font-weight:700;color:#F4F9FF;margin-bottom:4px">${lastAnn.title||''}</div>
+      <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:19px;font-weight:700;color:#F4F9FF;margin-bottom:4px">${lastAnn.title||''}</div>
       <div style="font-size:13px;color:rgba(203, 214, 232,.62);line-height:1.6;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${lastAnn.content||lastAnn.text||''}</div>
     </div>
   </div>`:''}
@@ -687,13 +687,13 @@ function rMenu() {
         </div>
         <div style="padding:13px 15px 15px">
           <div style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#1E40AF;font-weight:700;margin-bottom:3px">${d.category||''}</div>
-          <div style="font-family:'Nunito Sans',sans-serif;font-size:18px;font-weight:700;color:#16233A;line-height:1.15;margin-bottom:9px">${d.name}</div>
+          <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:18px;font-weight:700;color:#16233A;line-height:1.15;margin-bottom:9px">${d.name}</div>
           <div style="display:flex;align-items:center;justify-content:space-between;gap:6px">
             <div style="display:flex;align-items:center;gap:5px">
               <div style="width:7px;height:7px;border-radius:50%;background:${(d.allergens||[]).length>0?'#C25B4C':'#5B9A6B'};flex:none"></div>
               <span style="font-size:12px;color:#64748B;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px">${(d.allergens||[]).length>0?(d.allergens||[]).join(', '):'Allergensiz'}</span>
             </div>
-            ${d.price?`<span style="font-family:'Nunito Sans',sans-serif;font-size:16px;font-weight:700;color:#16233A;white-space:nowrap">${Number(d.price).toLocaleString()} so'm</span>`:''}
+            ${d.price?`<span style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:16px;font-weight:700;color:#16233A;white-space:nowrap">${Number(d.price).toLocaleString()} so'm</span>`:''}
           </div>
         </div>
       </div>`).join('')}
@@ -747,7 +747,7 @@ function rWaiters() {
             </div>
           </div>
           <div style="font-family:monospace;font-size:14px;letter-spacing:2px;color:#64748B">${w.pin}</div>
-          <div style="font-family:'Nunito Sans',sans-serif;font-size:19px;font-weight:800;color:${avg>=90?'#5B9A6B':avg>=75?'#2563EB':'#C25B4C'}">${avg}<span style="font-size:13px">%</span></div>
+          <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:19px;font-weight:800;color:${avg>=90?'#5B9A6B':avg>=75?'#2563EB':'#C25B4C'}">${avg}<span style="font-size:13px">%</span></div>
           <div style="font-size:14px;font-weight:600;color:#16233A">${wr.length}</div>
           <div style="display:flex;align-items:center;gap:9px;justify-content:flex-end">
             <span style="font-size:12px;font-weight:700;color:${active?'#5B9A6B':'#C25B4C'}">${active?'Faol':'Nofaol'}</span>
@@ -816,32 +816,32 @@ function rQuestions() {
   <div style="border-radius:22px;padding:26px 28px;margin-bottom:18px;background:linear-gradient(165deg,#1E3A63 0%,#0C2140 55%,#0A1B33 100%);box-shadow:0 22px 50px -22px rgba(10, 27, 51,.55);display:flex;align-items:center;gap:22px;flex-wrap:wrap">
     <div style="flex:1;min-width:220px">
       <div style="font-size:10.5px;letter-spacing:2.5px;text-transform:uppercase;color:#7DA9F0;font-weight:700;margin-bottom:7px">Savollar bazasi</div>
-      <div style="font-family:'Nunito Sans',sans-serif;font-size:30px;font-weight:700;color:#F4F7FC;line-height:1.1">Jami ${total} ta savol</div>
+      <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:30px;font-weight:700;color:#F4F7FC;line-height:1.1">Jami ${total} ta savol</div>
       <div style="display:flex;gap:9px;margin-top:14px;flex-wrap:wrap">
         ${Object.entries(Q_DIFF).map(([k,d])=>`
           <div style="display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:20px;background:rgba(245,240,232,.07);border:1px solid rgba(245,240,232,.1)">
             <span style="width:8px;height:8px;border-radius:50%;background:${d.color}"></span>
             <span style="font-size:12px;font-weight:700;color:#F4F7FC">${d.label}</span>
-            <span style="font-family:'Nunito Sans',sans-serif;font-size:16px;font-weight:800;color:#2563EB">${cnt(k)}</span>
+            <span style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:16px;font-weight:800;color:#2563EB">${cnt(k)}</span>
           </div>`).join('')}
       </div>
     </div>
     <div style="display:flex;gap:10px;flex:none">
-      <button onclick="openGenForm()" style="height:48px;padding:0 20px;border-radius:13px;border:1px solid rgba(37, 99, 235,.5);background:rgba(37, 99, 235,.12);color:#1E40AF;font-weight:800;font-size:13.5px;cursor:pointer;font-family:'Nunito Sans',sans-serif">✨ AI bilan yaratish</button>
-      <button onclick="openQForm()" style="height:48px;padding:0 26px;border-radius:13px;border:none;background:linear-gradient(100deg,#2563EB,#93B7F5);color:#F4F9FF;font-weight:800;font-size:13.5px;cursor:pointer;font-family:'Nunito Sans',sans-serif;box-shadow:0 12px 26px -10px rgba(37, 99, 235,.65)">+ Savol qo'shish</button>
+      <button onclick="openGenForm()" style="height:48px;padding:0 20px;border-radius:13px;border:1px solid rgba(37, 99, 235,.5);background:rgba(37, 99, 235,.12);color:#1E40AF;font-weight:800;font-size:13.5px;cursor:pointer;font-family:'Inter',system-ui,-apple-system,sans-serif">✨ AI bilan yaratish</button>
+      <button onclick="openQForm()" style="height:48px;padding:0 26px;border-radius:13px;border:none;background:linear-gradient(100deg,#2563EB,#93B7F5);color:#F4F9FF;font-weight:800;font-size:13.5px;cursor:pointer;font-family:'Inter',system-ui,-apple-system,sans-serif;box-shadow:0 12px 26px -10px rgba(37, 99, 235,.65)">+ Savol qo'shish</button>
     </div>
   </div>
 
   <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
     <div style="flex:1;min-width:220px;display:flex;align-items:center;gap:10px;height:44px;padding:0 15px;border-radius:13px;background:#fff;border:1px solid rgba(15, 39, 71,.12)">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
-      <input id="q-search" value="${esc(S.qSearch)}" oninput="S.qSearch=this.value;renderQList()" placeholder="Savol yoki javob bo'yicha qidirish..." style="flex:1;border:none;outline:none;background:transparent;font-size:13.5px;color:#16233A;font-family:'Nunito Sans',sans-serif">
+      <input id="q-search" value="${esc(S.qSearch)}" oninput="S.qSearch=this.value;renderQList()" placeholder="Savol yoki javob bo'yicha qidirish..." style="flex:1;border:none;outline:none;background:transparent;font-size:13.5px;color:#16233A;font-family:'Inter',system-ui,-apple-system,sans-serif">
       ${S.qSearch?`<span onclick="S.qSearch='';document.getElementById('q-search').value='';renderQList()" style="cursor:pointer;color:#64748B;font-size:15px;line-height:1">&times;</span>`:''}
     </div>
     <div id="q-chips" style="display:flex;gap:8px;flex-wrap:wrap">
       ${chips.map(c=>`
-        <div onclick="S.qFilter='${c.k}';renderSec()" style="display:inline-flex;align-items:center;gap:7px;height:44px;padding:0 16px;border-radius:13px;cursor:pointer;font-size:12.5px;font-weight:700;font-family:'Nunito Sans',sans-serif;transition:all .18s;${S.qFilter===c.k?'background:#0F2747;color:#F4F9FF;border:1px solid #0F2747':'background:transparent;color:#64748B;border:1px solid rgba(15, 39, 71,.14)'}">
-          ${c.l} <span style="font-family:'Nunito Sans',sans-serif;font-size:16px;font-weight:800">${c.n}</span>
+        <div onclick="S.qFilter='${c.k}';renderSec()" style="display:inline-flex;align-items:center;gap:7px;height:44px;padding:0 16px;border-radius:13px;cursor:pointer;font-size:12.5px;font-weight:700;font-family:'Inter',system-ui,-apple-system,sans-serif;transition:all .18s;${S.qFilter===c.k?'background:#0F2747;color:#F4F9FF;border:1px solid #0F2747':'background:transparent;color:#64748B;border:1px solid rgba(15, 39, 71,.14)'}">
+          ${c.l} <span style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:16px;font-weight:800">${c.n}</span>
         </div>`).join('')}
     </div>
   </div>
@@ -862,7 +862,7 @@ function renderQList() {
 
   if (!items.length) {
     box.innerHTML = `<div style="text-align:center;padding:50px 20px;border:1.5px dashed rgba(15, 39, 71,.15);border-radius:18px">
-      <div style="font-family:'Nunito Sans',sans-serif;font-size:19px;font-weight:700;color:#16233A;margin-bottom:6px">${term?'Hech narsa topilmadi':'Savollar yo\'q'}</div>
+      <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:19px;font-weight:700;color:#16233A;margin-bottom:6px">${term?'Hech narsa topilmadi':'Savollar yo\'q'}</div>
       <div style="font-size:12.5px;color:#64748B">${term?'Qidiruv so\'zini o\'zgartirib ko\'ring':'Birinchi savolingizni qo\'shing'}</div>
     </div>`;
     return;
@@ -956,7 +956,7 @@ function rCalendar() {
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
         <button onclick="S.calOffset--;renderSec()" style="width:36px;height:36px;border-radius:50%;border:1px solid rgba(15, 39, 71,.12);display:flex;align-items:center;justify-content:center;cursor:pointer;background:none;font-size:18px;color:#16233A">‹</button>
-        <span style="font-family:'Nunito Sans',sans-serif;font-size:23px;font-weight:700;color:#16233A">${MONTHS[mo]} ${yr}</span>
+        <span style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:23px;font-weight:700;color:#16233A">${MONTHS[mo]} ${yr}</span>
         <button onclick="S.calOffset++;renderSec()" style="width:36px;height:36px;border-radius:50%;border:1px solid rgba(15, 39, 71,.12);display:flex;align-items:center;justify-content:center;cursor:pointer;background:none;font-size:18px;color:#16233A">›</button>
       </div>
       <div class="cal-g" style="margin-bottom:7px">
@@ -1046,7 +1046,7 @@ function rResults() {
           <div style="font-size:13px;color:#64748B">${date}</div>
           <div style="display:flex;align-items:center;gap:9px">
             <div class="prog" style="flex:1;max-width:100px"><div class="prog-fill" style="width:${sc}%;animation:none"></div></div>
-            <span style="font-family:'Nunito Sans',sans-serif;font-size:17px;font-weight:800;color:#16233A">${sc}</span>
+            <span style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:17px;font-weight:800;color:#16233A">${sc}</span>
           </div>
           <div>${
             st==='pending' ? `<span class="pill" style="background:rgba(37, 99, 235,.16);color:#1E40AF">Baholanmoqda</span>`
@@ -1083,7 +1083,7 @@ function openGrading(resultId) {
 
       ${ai==null ? `<div style="padding:9px 12px;border-radius:10px;background:rgba(194,91,76,.08);font-size:12.5px;color:#A03020;margin-bottom:11px">AI baholay olmadi — ballni qo'lda qo'ying</div>`
       : `<div style="display:flex;align-items:flex-start;gap:9px;padding:10px 12px;border-radius:10px;background:rgba(15, 39, 71,.04);margin-bottom:11px">
-          <span style="flex:none;font-family:'Nunito Sans',sans-serif;font-size:17px;font-weight:800;color:${man!=null?'#94A3B8':col};${man!=null?'text-decoration:line-through':''}">${ai}</span>
+          <span style="flex:none;font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:17px;font-weight:800;color:${man!=null?'#94A3B8':col};${man!=null?'text-decoration:line-through':''}">${ai}</span>
           <span style="flex:1;font-size:12.5px;color:#334155;line-height:1.5">${esc(b.aiFeedback||'')}</span>
         </div>`}
 
@@ -1100,11 +1100,11 @@ function openGrading(resultId) {
   document.getElementById('panelBody').innerHTML = `
     <div style="display:flex;gap:10px;margin-bottom:16px">
       <div style="flex:1;padding:13px;border-radius:12px;background:#FFFFFF;text-align:center">
-        <div style="font-family:'Nunito Sans',sans-serif;font-size:26px;font-weight:800;color:#16233A;line-height:1">${r.score??0}%</div>
+        <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:26px;font-weight:800;color:#16233A;line-height:1">${r.score??0}%</div>
         <div style="font-size:11px;color:#64748B;margin-top:3px;font-weight:600">Umumiy ball</div>
       </div>
       <div style="flex:1;padding:13px;border-radius:12px;background:#FFFFFF;text-align:center">
-        <div style="font-family:'Nunito Sans',sans-serif;font-size:26px;font-weight:800;color:#5B9A6B;line-height:1">${choiceOk}/${choice.length}</div>
+        <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:26px;font-weight:800;color:#5B9A6B;line-height:1">${choiceOk}/${choice.length}</div>
         <div style="font-size:11px;color:#64748B;margin-top:3px;font-weight:600">Variantli savollar</div>
       </div>
     </div>
@@ -1145,11 +1145,11 @@ function openResultModal(data) {
   document.getElementById('mdBody').innerHTML = `
     <div style="display:flex;gap:11px;margin-bottom:18px">
       <div style="flex:1;padding:16px;border-radius:13px;background:#FFFFFF;text-align:center">
-        <div style="font-family:'Nunito Sans',sans-serif;font-size:32px;font-weight:800;color:#16233A;line-height:1">${sc}%</div>
+        <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:32px;font-weight:800;color:#16233A;line-height:1">${sc}%</div>
         <div style="font-size:11px;color:#64748B;margin-top:4px;font-weight:600">Umumiy ball</div>
       </div>
       <div style="flex:1;padding:16px;border-radius:13px;background:#FFFFFF;text-align:center">
-        <div style="font-family:'Nunito Sans',sans-serif;font-size:32px;font-weight:800;color:#5B9A6B;line-height:1">${r.totalCorrect||'–'}</div>
+        <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:32px;font-weight:800;color:#5B9A6B;line-height:1">${r.totalCorrect||'–'}</div>
         <div style="font-size:11px;color:#64748B;margin-top:4px;font-weight:600">To'g'ri javob${r.totalQuestions?' ('+r.totalQuestions+' dan)':''}</div>
       </div>
     </div>
@@ -1157,7 +1157,7 @@ function openResultModal(data) {
       <span style="color:#1E40AF;font-size:24px">★</span>
       <div><div style="font-size:14px;font-weight:800;color:#16233A">Sertifikat berildi</div><div style="font-size:12px;color:#64748B">90% va yuqori natija uchun</div></div>
     </div>`:''}
-    <button onclick="closeModal()" style="width:100%;padding:13px;border-radius:12px;background:#0F2747;color:#F4F9FF;font-size:14px;font-weight:700;cursor:pointer;border:none;font-family:'Nunito Sans',sans-serif">Yopish</button>
+    <button onclick="closeModal()" style="width:100%;padding:13px;border-radius:12px;background:#0F2747;color:#F4F9FF;font-size:14px;font-weight:700;cursor:pointer;border:none;font-family:'Inter',system-ui,-apple-system,sans-serif">Yopish</button>
   `;
   document.getElementById('resultModal').style.display = 'flex';
 }
@@ -1177,7 +1177,7 @@ function rAnn() {
           <span style="font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:#1E40AF;font-weight:700">${a.date||a.createdAt||''}</span>
           <div onclick="delAnn('${a.id}')" style="width:24px;height:24px;border-radius:7px;border:1px solid rgba(194,91,76,.25);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:#C25B4C">&times;</div>
         </div>
-        <div style="font-family:'Nunito Sans',sans-serif;font-size:18px;font-weight:700;color:#16233A;margin-bottom:7px;line-height:1.2">${a.title||''}</div>
+        <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:18px;font-weight:700;color:#16233A;margin-bottom:7px;line-height:1.2">${a.title||''}</div>
         <div style="font-size:13.5px;color:#64748B;line-height:1.6">${a.content||a.text||''}</div>
       </div>`).join('')}
   </div></div>`;
@@ -1230,33 +1230,33 @@ async function loadKpiSection() {
     {key:'warning', name:'OGOHLANTIRISH', minF:'warningMin', effF:'warningPenalty', color:'#2563EB', hint:'jarima'},
     {key:'penalty', name:'JAZO',          minF:'penaltyMin', effF:'penaltyFine',    color:'#C25B4C', hint:'jarima'},
   ];
-  const inpSt = 'width:58px;height:32px;border-radius:8px;border:1px solid rgba(15, 39, 71,.15);background:#FFFFFF;font-size:12.5px;font-weight:700;color:#16233A;text-align:center;font-family:\'Nunito Sans\',sans-serif;outline:none';
+  const inpSt = 'width:58px;height:32px;border-radius:8px;border:1px solid rgba(15, 39, 71,.15);background:#FFFFFF;font-size:12.5px;font-weight:700;color:#16233A;text-align:center;font-family:\'Inter\',sans-serif;outline:none';
 
   box.innerHTML = `
   <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap">
     <div style="display:inline-flex;align-items:center;gap:4px;padding:5px 6px;border-radius:20px;background:rgba(37, 99, 235,.12);border:1px solid rgba(37, 99, 235,.3)">
-      <button onclick="kpiShiftPeriod(1)" title="Oldingi davr" style="width:28px;height:28px;border-radius:50%;border:none;background:rgba(37, 99, 235,.22);color:#16233A;font-size:15px;font-weight:800;cursor:pointer;line-height:1;font-family:'Nunito Sans',sans-serif">‹</button>
+      <button onclick="kpiShiftPeriod(1)" title="Oldingi davr" style="width:28px;height:28px;border-radius:50%;border:none;background:rgba(37, 99, 235,.22);color:#16233A;font-size:15px;font-weight:800;cursor:pointer;line-height:1;font-family:'Inter',system-ui,-apple-system,sans-serif">‹</button>
       <div style="text-align:center;padding:0 8px;min-width:170px">
         <div style="font-size:9.5px;color:#1E40AF;font-weight:800;letter-spacing:.8px">${S.kpiOffset ? 'OLDINGI DAVR (−'+S.kpiOffset+')' : 'JORIY DAVR'}</div>
         <div style="font-size:12.5px;color:#16233A;font-weight:700">${esc(data.periodLabel||'')}</div>
       </div>
-      <button onclick="kpiShiftPeriod(-1)" title="Keyingi davr" ${S.kpiOffset?'':'disabled'} style="width:28px;height:28px;border-radius:50%;border:none;background:${S.kpiOffset?'rgba(37, 99, 235,.22)':'rgba(15, 39, 71,.06)'};color:${S.kpiOffset?'#16233A':'#64748B'};font-size:15px;font-weight:800;cursor:${S.kpiOffset?'pointer':'default'};line-height:1;font-family:'Nunito Sans',sans-serif">›</button>
+      <button onclick="kpiShiftPeriod(-1)" title="Keyingi davr" ${S.kpiOffset?'':'disabled'} style="width:28px;height:28px;border-radius:50%;border:none;background:${S.kpiOffset?'rgba(37, 99, 235,.22)':'rgba(15, 39, 71,.06)'};color:${S.kpiOffset?'#16233A':'#64748B'};font-size:15px;font-weight:800;cursor:${S.kpiOffset?'pointer':'default'};line-height:1;font-family:'Inter',system-ui,-apple-system,sans-serif">›</button>
     </div>
     <div style="display:flex;gap:9px">
-      <button onclick="downloadKpiExcel()" style="height:36px;padding:0 16px;border-radius:9px;border:1px solid rgba(91,154,107,.4);background:rgba(91,154,107,.10);color:#2F6440;font-weight:700;font-size:12px;cursor:pointer;font-family:'Nunito Sans',sans-serif">⤓ Excel yuklab olish</button>
-      <button onclick="downloadKpiPdf()" style="height:36px;padding:0 16px;border-radius:9px;border:1px solid rgba(194,91,76,.4);background:rgba(194,91,76,.08);color:#A34335;font-weight:700;font-size:12px;cursor:pointer;font-family:'Nunito Sans',sans-serif">⤓ PDF yuklab olish</button>
+      <button onclick="downloadKpiExcel()" style="height:36px;padding:0 16px;border-radius:9px;border:1px solid rgba(91,154,107,.4);background:rgba(91,154,107,.10);color:#2F6440;font-weight:700;font-size:12px;cursor:pointer;font-family:'Inter',system-ui,-apple-system,sans-serif">⤓ Excel yuklab olish</button>
+      <button onclick="downloadKpiPdf()" style="height:36px;padding:0 16px;border-radius:9px;border:1px solid rgba(194,91,76,.4);background:rgba(194,91,76,.08);color:#A34335;font-weight:700;font-size:12px;cursor:pointer;font-family:'Inter',system-ui,-apple-system,sans-serif">⤓ PDF yuklab olish</button>
     </div>
   </div>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:15px;margin-bottom:18px">
-    <div class="card"><div style="font-size:12px;color:#64748B;font-weight:600;margin-bottom:5px">O'rtacha KPI ball (davrda)</div><div style="font-family:'Nunito Sans',sans-serif;font-size:37px;font-weight:800;color:#5B9A6B;line-height:1">${avgAll}<span style="font-size:18px">%</span></div><div style="font-size:10.5px;color:#64748B;margin-top:3px">test + menyu + modul</div></div>
-    <div class="card"><div style="font-size:12px;color:#64748B;font-weight:600;margin-bottom:5px">Test topshirdi</div><div style="font-family:'Nunito Sans',sans-serif;font-size:37px;font-weight:800;color:#16233A;line-height:1">${withData.length}<span style="font-size:18px;color:#64748B"> / ${list.length}</span></div></div>
-    <div class="card"><div style="font-size:12px;color:#64748B;font-weight:600;margin-bottom:5px">Bonus oladi</div><div style="font-family:'Nunito Sans',sans-serif;font-size:37px;font-weight:800;color:#1E40AF;line-height:1">${bonusCnt}</div></div>
-    <div class="card"><div style="font-size:12px;color:#64748B;font-weight:600;margin-bottom:5px">Jarima / ogohlantirish</div><div style="font-family:'Nunito Sans',sans-serif;font-size:37px;font-weight:800;color:#C25B4C;line-height:1">${fineCnt}</div></div>
-    <div class="card"><div style="font-size:12px;color:#64748B;font-weight:600;margin-bottom:5px">Menyu o'rganilgan</div><div style="font-family:'Nunito Sans',sans-serif;font-size:37px;font-weight:800;color:#1E40AF;line-height:1">${avgMenuPct}<span style="font-size:18px">%</span></div><div style="font-size:10.5px;color:#64748B;margin-top:3px">jamoa o'rtachasi · ${S.menuProgTotal} taom</div></div>
+    <div class="card"><div style="font-size:12px;color:#64748B;font-weight:600;margin-bottom:5px">O'rtacha KPI ball (davrda)</div><div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:37px;font-weight:800;color:#5B9A6B;line-height:1">${avgAll}<span style="font-size:18px">%</span></div><div style="font-size:10.5px;color:#64748B;margin-top:3px">test + menyu + modul</div></div>
+    <div class="card"><div style="font-size:12px;color:#64748B;font-weight:600;margin-bottom:5px">Test topshirdi</div><div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:37px;font-weight:800;color:#16233A;line-height:1">${withData.length}<span style="font-size:18px;color:#64748B"> / ${list.length}</span></div></div>
+    <div class="card"><div style="font-size:12px;color:#64748B;font-weight:600;margin-bottom:5px">Bonus oladi</div><div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:37px;font-weight:800;color:#1E40AF;line-height:1">${bonusCnt}</div></div>
+    <div class="card"><div style="font-size:12px;color:#64748B;font-weight:600;margin-bottom:5px">Jarima / ogohlantirish</div><div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:37px;font-weight:800;color:#C25B4C;line-height:1">${fineCnt}</div></div>
+    <div class="card"><div style="font-size:12px;color:#64748B;font-weight:600;margin-bottom:5px">Menyu o'rganilgan</div><div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:37px;font-weight:800;color:#1E40AF;line-height:1">${avgMenuPct}<span style="font-size:18px">%</span></div><div style="font-size:10.5px;color:#64748B;margin-top:3px">jamoa o'rtachasi · ${S.menuProgTotal} taom</div></div>
   </div>
   <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:16px;align-items:start">
     <div class="card" style="padding:20px 0 8px">
-      <div style="font-family:'Nunito Sans',sans-serif;font-size:17px;font-weight:700;color:#16233A;margin:0 20px 4px">Xodimlar KPI</div>
+      <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:17px;font-weight:700;color:#16233A;margin:0 20px 4px">Xodimlar KPI</div>
       <div style="font-size:11.5px;color:#64748B;margin:0 20px 14px">Joriy davr KPI balli (test + menyu + modul) va maoshga ta'siri · ballga sichqoncha olib borsangiz tarkibini ko'rasiz</div>
       <div style="display:grid;grid-template-columns:1.45fr .62fr .5fr .8fr .9fr .82fr;gap:8px;padding:8px 20px;background:#FFFFFF;font-size:10.5px;font-weight:800;color:#1E40AF;letter-spacing:.5px;text-transform:uppercase">
         <div>Ofitsiant</div><div style="text-align:center">KPI ball</div><div style="text-align:center">Testlar</div><div style="text-align:center">Menyu</div><div>Daraja</div><div style="text-align:right">Maoshga</div>
@@ -1276,7 +1276,7 @@ async function loadKpiSection() {
         const mpColor = mpc >= 70 ? '#3D7A50' : mpc >= 30 ? '#1E40AF' : '#A34335';
         return `<div style="display:grid;grid-template-columns:1.45fr .62fr .5fr .8fr .9fr .82fr;gap:8px;align-items:center;padding:11px 20px;border-bottom:1px solid rgba(15, 39, 71,.06)">
           <div style="font-size:13px;font-weight:700;color:#16233A;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(k.waiterName)}</div>
-          <div title="${brk}" style="cursor:help;text-align:center;font-family:'Nunito Sans',sans-serif;font-size:18px;font-weight:800;color:${k.avg==null?'#64748B':'#16233A'}">${k.avg==null?'—':k.avg+'%'}</div>
+          <div title="${brk}" style="cursor:help;text-align:center;font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:18px;font-weight:800;color:${k.avg==null?'#64748B':'#16233A'}">${k.avg==null?'—':k.avg+'%'}</div>
           <div style="text-align:center;font-size:12.5px;color:#64748B">${k.testCount||0}</div>
           <div style="text-align:center" title="${mp?`${mp.known} / ${mp.totalDishes} ta taom`:'Mashq boshlanmagan'}">
             <div style="font-size:12px;font-weight:800;color:${mpColor}">${mpc}%</div>
@@ -1289,11 +1289,11 @@ async function loadKpiSection() {
     </div>
     <div style="display:flex;flex-direction:column;gap:16px">
       <div class="card">
-        <div style="font-family:'Nunito Sans',sans-serif;font-size:17px;font-weight:700;color:#16233A;margin-bottom:4px">Daraja tizimi — sozlash</div>
+        <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:17px;font-weight:700;color:#16233A;margin-bottom:4px">Daraja tizimi — sozlash</div>
         <div style="font-size:11.5px;color:#64748B;line-height:1.5;margin-bottom:14px">Restoraningizga mos qilib o'zgartiring: minimal ball va maoshga ta'sir foizi. Manfiy son — jarima.</div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:10px 12px;border-radius:10px;background:#FFFFFF">
           <span style="font-size:12px;font-weight:700;color:#16233A;flex:1">Baholash davri</span>
-          <select id="kpi-periodDays" style="height:32px;border-radius:8px;border:1px solid rgba(15, 39, 71,.15);background:#fff;font-size:12.5px;font-weight:700;color:#16233A;padding:0 8px;font-family:'Nunito Sans',sans-serif;outline:none">
+          <select id="kpi-periodDays" style="height:32px;border-radius:8px;border:1px solid rgba(15, 39, 71,.15);background:#fff;font-size:12.5px;font-weight:700;color:#16233A;padding:0 8px;font-family:'Inter',system-ui,-apple-system,sans-serif;outline:none">
             ${[7,10,14,15,30].map(d=>`<option value="${d}" ${st.periodDays===d?'selected':''}>${d} kun</option>`).join('')}
           </select>
         </div>
@@ -1331,10 +1331,10 @@ async function loadKpiSection() {
             <span style="font-size:10.5px;color:#64748B">%</span>
           </div>`).join('')}
         <div style="font-size:10.5px;color:#64748B;margin:4px 0 14px;line-height:1.5">JAZO darajasidan ham past ball — NOMUVOFIQ: JAZO jarimasi qo'llanadi va ishdan bo'shatish ko'rib chiqiladi</div>
-        <button onclick="saveKpiSettings()" style="width:100%;height:40px;border-radius:10px;border:none;background:#2563EB;color:#EAF1FF;font-weight:800;font-size:13px;cursor:pointer;font-family:'Nunito Sans',sans-serif">Saqlash</button>
+        <button onclick="saveKpiSettings()" style="width:100%;height:40px;border-radius:10px;border:none;background:#2563EB;color:#EAF1FF;font-weight:800;font-size:13px;cursor:pointer;font-family:'Inter',system-ui,-apple-system,sans-serif">Saqlash</button>
       </div>
       <div class="card">
-        <div style="font-family:'Nunito Sans',sans-serif;font-size:17px;font-weight:700;color:#16233A;margin-bottom:14px">Oylik faollik xaritasi</div>
+        <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:17px;font-weight:700;color:#16233A;margin-bottom:14px">Oylik faollik xaritasi</div>
         <div style="display:flex;flex-direction:column;gap:5px">
           ${Array.from({length:7},(_,wi)=>`
             <div style="display:flex;gap:5px">
@@ -1468,7 +1468,7 @@ async function loadAmaliy(){
 
 function evalScoreBtn(critId,val,label,color){
   const sel=(S.evalScores&&S.evalScores[critId])===val;
-  return `<button onclick="setEvalScore('${critId}',${val})" style="flex:1;padding:8px 4px;border-radius:9px;cursor:pointer;font-size:11.5px;font-weight:800;border:1px solid ${color};background:${sel?color:'transparent'};color:${sel?'#fff':color};font-family:'Nunito Sans',sans-serif">${label}</button>`;
+  return `<button onclick="setEvalScore('${critId}',${val})" style="flex:1;padding:8px 4px;border-radius:9px;cursor:pointer;font-size:11.5px;font-weight:800;border:1px solid ${color};background:${sel?color:'transparent'};color:${sel?'#fff':color};font-family:'Inter',system-ui,-apple-system,sans-serif">${label}</button>`;
 }
 function evalScoreGroup(critId){
   return `<div style="display:flex;gap:6px">${evalScoreBtn(critId,0,"Yo'q",'#C25B4C')}${evalScoreBtn(critId,1,'Qisman','#2563EB')}${evalScoreBtn(critId,2,'Ha','#5B9A6B')}</div>`;
@@ -1548,7 +1548,7 @@ function renderAmaliy(){
     </div>` : `
   <div style="display:grid;grid-template-columns:1.3fr .9fr;gap:16px;align-items:start">
     <div class="card" style="padding:20px">
-      <div style="font-family:'Nunito Sans',sans-serif;font-size:17px;font-weight:700;color:#16233A;margin-bottom:4px">Yangi baho</div>
+      <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:17px;font-weight:700;color:#16233A;margin-bottom:4px">Yangi baho</div>
       <div style="font-size:11.5px;color:#64748B;margin-bottom:14px">Har mezon: Yo'q / Qisman / Ha</div>
       <div style="display:flex;gap:9px;margin-bottom:12px;flex-wrap:wrap">
         <select id="evalWaiter" class="f-input" style="flex:1;min-width:150px">${waiters.map(w=>`<option value="${w.id}">${esc(w.name)} · ${roleInfo(w.role).label}</option>`).join('')}</select>
@@ -1561,14 +1561,14 @@ function renderAmaliy(){
       <input id="evalEvaluator" class="f-input" placeholder="Baho bergan (menejer ismi, ixtiyoriy)" style="margin-top:12px">
       <textarea id="evalNote" class="f-input" placeholder="Izoh (ixtiyoriy)" style="margin-top:9px;min-height:52px;resize:vertical"></textarea>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px">
-        <div style="font-size:12.5px;color:#64748B">Umumiy ball: <span id="evalTotal" style="font-family:'Nunito Sans',sans-serif;font-size:20px;font-weight:800;color:#64748B">—</span></div>
+        <div style="font-size:12.5px;color:#64748B">Umumiy ball: <span id="evalTotal" style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:20px;font-weight:800;color:#64748B">—</span></div>
         <button class="btn-gold" onclick="submitEvaluation()">Bahoni saqlash</button>
       </div>
     </div>
     <div style="display:flex;flex-direction:column;gap:16px">
       <div class="card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div style="font-family:'Nunito Sans',sans-serif;font-size:15px;font-weight:700;color:#16233A">Mezonlar (${crit.length})</div>
+          <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:15px;font-weight:700;color:#16233A">Mezonlar (${crit.length})</div>
           <span onclick="addCritRow()" style="font-size:12px;color:#1E40AF;cursor:pointer;font-weight:700">+ qo'shish</span>
         </div>
         <div id="critList">${crit.map(c=>`<div style="display:flex;gap:7px;align-items:center;margin-bottom:7px"><input class="crit-input f-input" data-id="${c.id}" value="${esc(c.title)}" style="flex:1"><span onclick="this.parentNode.remove()" style="cursor:pointer;color:#C25B4C;font-size:16px">&times;</span></div>`).join('')}</div>
@@ -1577,10 +1577,10 @@ function renderAmaliy(){
     </div>
   </div>
   <div class="card" style="margin-top:16px">
-    <div style="font-family:'Nunito Sans',sans-serif;font-size:15px;font-weight:700;color:#16233A;margin-bottom:12px">So'nggi baholar (${evals.length})</div>
+    <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:15px;font-weight:700;color:#16233A;margin-bottom:12px">So'nggi baholar (${evals.length})</div>
     ${!evals.length ? '<div style="font-size:12.5px;color:#64748B;padding:10px 0">Hali baho berilmagan</div>' :
       evals.slice(0,40).map(e=>`<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(15, 39, 71,.06)">
-        <div style="width:44px;text-align:center"><div style="font-family:'Nunito Sans',sans-serif;font-size:18px;font-weight:800;color:${scoreColor(e.totalScore)}">${e.totalScore}<span style="font-size:11px">%</span></div></div>
+        <div style="width:44px;text-align:center"><div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:18px;font-weight:800;color:${scoreColor(e.totalScore)}">${e.totalScore}<span style="font-size:11px">%</span></div></div>
         <div style="flex:1;min-width:0">
           <div style="font-size:13px;font-weight:700;color:#16233A">${esc(e.waiterName||'')}</div>
           <div style="font-size:11px;color:#64748B">${esc(e.date||'')}${e.evaluator?' · '+esc(e.evaluator):''}${e.note?' · '+esc(e.note):''}</div>
@@ -1611,7 +1611,7 @@ function anEmpty(t){ return `<div style="font-size:12.5px;color:#64748B;padding:
 function renderAnalytics(){
   const box=document.getElementById('analytics-sec'); if(!box) return;
   const d=S.analytics||{}; const o=d.overview||{};
-  const tile=(label,val,suf,color)=>`<div class="card"><div style="font-size:12px;color:#64748B;font-weight:600;margin-bottom:5px">${label}</div><div style="font-family:'Nunito Sans',sans-serif;font-size:32px;font-weight:800;color:${color||'#16233A'};line-height:1">${val==null?'—':val}${val==null?'':(suf||'')}</div></div>`;
+  const tile=(label,val,suf,color)=>`<div class="card"><div style="font-size:12px;color:#64748B;font-weight:600;margin-bottom:5px">${label}</div><div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:32px;font-weight:800;color:${color||'#16233A'};line-height:1">${val==null?'—':val}${val==null?'':(suf||'')}</div></div>`;
   box.innerHTML=`
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:20px">
     ${tile("Faol xodim", o.staffCount, '', '#16233A')}
@@ -1622,22 +1622,22 @@ function renderAnalytics(){
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
     <div class="card">
-      <div style="font-family:'Nunito Sans',sans-serif;font-size:16px;font-weight:700;color:#16233A;margin-bottom:3px">Zaif servis standartlari</div>
+      <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:16px;font-weight:700;color:#16233A;margin-bottom:3px">Zaif servis standartlari</div>
       <div style="font-size:11.5px;color:#64748B;margin-bottom:14px">Amaliy bahodan — eng past ball tepada</div>
       ${(d.floorHeatmap||[]).length ? d.floorHeatmap.map(f=>anBar(esc(f.title),f.pct,`${f.count} baho`)).join('') : anEmpty('Hali amaliy baho berilmagan')}
     </div>
     <div class="card">
-      <div style="font-family:'Nunito Sans',sans-serif;font-size:16px;font-weight:700;color:#16233A;margin-bottom:3px">Kompetensiya (diagnostika)</div>
+      <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:16px;font-weight:700;color:#16233A;margin-bottom:3px">Kompetensiya (diagnostika)</div>
       <div style="font-size:11.5px;color:#64748B;margin-bottom:14px">Bazaviy bilim testidan — yo'nalish bo'yicha</div>
       ${(d.areaCompetency||[]).length ? d.areaCompetency.map(a=>anBar(`${a.icon||''} ${esc(a.label)}`,a.pct,`${a.count} kishi`)).join('') : anEmpty('Diagnostika topshirilmagan')}
     </div>
     <div class="card">
-      <div style="font-family:'Nunito Sans',sans-serif;font-size:16px;font-weight:700;color:#16233A;margin-bottom:3px">Modullar — tugatish darajasi</div>
+      <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:16px;font-weight:700;color:#16233A;margin-bottom:3px">Modullar — tugatish darajasi</div>
       <div style="font-size:11.5px;color:#64748B;margin-bottom:14px">Jamoaning necha foizi tugatgani</div>
       ${(d.moduleCompletion||[]).length ? d.moduleCompletion.map(m=>anBar(`${m.emoji||''} ${esc(m.title)}`,m.pct,`${m.done}/${m.total}`)).join('') : anEmpty('Modul yaratilmagan')}
     </div>
     <div class="card">
-      <div style="font-family:'Nunito Sans',sans-serif;font-size:16px;font-weight:700;color:#16233A;margin-bottom:14px">Rol kesimida</div>
+      <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:16px;font-weight:700;color:#16233A;margin-bottom:14px">Rol kesimida</div>
       <div style="display:grid;grid-template-columns:1.5fr .6fr .7fr .7fr;gap:6px;font-size:10.5px;font-weight:800;color:#1E40AF;text-transform:uppercase;letter-spacing:.4px;padding-bottom:8px;border-bottom:1px solid rgba(15, 39, 71,.08)">
         <div>Rol</div><div style="text-align:center">Soni</div><div style="text-align:center">KPI</div><div style="text-align:center">Menyu</div>
       </div>
@@ -1657,11 +1657,11 @@ function rOquv() {
   <div style="margin-bottom:18px;font-size:13px;color:#64748B">Qisqa standart videolarni o'zingiz nomlab yuklang (8-10 soniyalik kliplar mos)</div>
   <div class="card" style="margin-bottom:18px;max-width:420px">
     <div style="font-size:12.5px;font-weight:700;color:#16233A;margin-bottom:10px">+ Yangi video qo'shish</div>
-    <input id="newTrainTitle" type="text" placeholder="Sarlavha (masalan: Mehmonni kutib olish)" style="width:100%;height:38px;border-radius:9px;border:1px solid rgba(15, 39, 71,.12);background:#FFFFFF;font-size:12.5px;color:#16233A;padding:0 11px;font-family:'Nunito Sans',sans-serif;outline:none;margin-bottom:9px;box-sizing:border-box">
-    <textarea id="newTrainDesc" placeholder="Izoh / tushuntirish (ixtiyoriy)" style="width:100%;min-height:56px;border-radius:9px;border:1px solid rgba(15, 39, 71,.12);background:#FFFFFF;font-size:12.5px;color:#16233A;padding:9px 11px;font-family:'Nunito Sans',sans-serif;outline:none;margin-bottom:9px;box-sizing:border-box;resize:vertical"></textarea>
+    <input id="newTrainTitle" type="text" placeholder="Sarlavha (masalan: Mehmonni kutib olish)" style="width:100%;height:38px;border-radius:9px;border:1px solid rgba(15, 39, 71,.12);background:#FFFFFF;font-size:12.5px;color:#16233A;padding:0 11px;font-family:'Inter',system-ui,-apple-system,sans-serif;outline:none;margin-bottom:9px;box-sizing:border-box">
+    <textarea id="newTrainDesc" placeholder="Izoh / tushuntirish (ixtiyoriy)" style="width:100%;min-height:56px;border-radius:9px;border:1px solid rgba(15, 39, 71,.12);background:#FFFFFF;font-size:12.5px;color:#16233A;padding:9px 11px;font-family:'Inter',system-ui,-apple-system,sans-serif;outline:none;margin-bottom:9px;box-sizing:border-box;resize:vertical"></textarea>
     <input id="newTrainFile" type="file" accept="video/*" style="width:100%;font-size:12px;color:#64748B;margin-bottom:9px">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:9px"><div style="flex:1;height:1px;background:rgba(15, 39, 71,.12)"></div><span style="font-size:10.5px;color:#64748B;font-weight:700">YOKI</span><div style="flex:1;height:1px;background:rgba(15, 39, 71,.12)"></div></div>
-    <input id="newTrainYt" type="url" placeholder="YouTube havola (katta videolar uchun) — https://youtu.be/..." style="width:100%;height:38px;border-radius:9px;border:1px solid rgba(15, 39, 71,.12);background:#FFFFFF;font-size:12px;color:#16233A;padding:0 11px;font-family:'Nunito Sans',sans-serif;outline:none;margin-bottom:6px;box-sizing:border-box">
+    <input id="newTrainYt" type="url" placeholder="YouTube havola (katta videolar uchun) — https://youtu.be/..." style="width:100%;height:38px;border-radius:9px;border:1px solid rgba(15, 39, 71,.12);background:#FFFFFF;font-size:12px;color:#16233A;padding:0 11px;font-family:'Inter',system-ui,-apple-system,sans-serif;outline:none;margin-bottom:6px;box-sizing:border-box">
     <div style="font-size:10.5px;color:#64748B;line-height:1.5;margin-bottom:11px">Uzun/katta videolarni YouTube'ga <b>"Unlisted" (havola orqali)</b> qilib yuklang va havolasini shu yerga qo'ying — joy cheksiz va bepul.</div>
     <button class="btn-gold" onclick="addTrainingVideo()" style="width:100%;height:38px;border-radius:9px;border:none;background:#2563EB;color:#EAF1FF;font-weight:700;font-size:12.5px;cursor:pointer">Yuklash</button>
     <div id="trainUploadStatus" style="font-size:11.5px;color:#64748B;margin-top:7px"></div>
@@ -1780,7 +1780,7 @@ function rChecklist() {
       <div class="ring-pct">${pct}%</div>
     </div>
     <div>
-      <div style="font-family:'Nunito Sans',sans-serif;font-size:19px;font-weight:700;color:#F4F9FF;margin-bottom:4px">Onboarding jarayoni</div>
+      <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:19px;font-weight:700;color:#F4F9FF;margin-bottom:4px">Onboarding jarayoni</div>
       <div style="font-size:13.5px;color:rgba(203, 214, 232,.62)">${done} / ${total} bosqich bajarildi</div>
     </div>
   </div>
@@ -1803,9 +1803,9 @@ function addChk() {
 }
 
 // ════════════ ADAPTATSIYA (to'liq tahrirlanadigan) ════════════
-const AD_INP = "width:100%;border-radius:9px;border:1px solid rgba(15, 39, 71,.12);background:#FFFFFF;font-size:12.5px;color:#16233A;padding:9px 11px;font-family:'Nunito Sans',sans-serif;outline:none;box-sizing:border-box";
-const AD_BTN = "height:36px;padding:0 18px;border-radius:9px;border:none;background:#2563EB;color:#EAF1FF;font-weight:800;font-size:12.5px;cursor:pointer;font-family:'Nunito Sans',sans-serif";
-const AD_BTN2 = "height:36px;padding:0 14px;border-radius:9px;border:1px solid rgba(15, 39, 71,.15);background:transparent;color:#64748B;font-weight:700;font-size:12.5px;cursor:pointer;font-family:'Nunito Sans',sans-serif";
+const AD_INP = "width:100%;border-radius:9px;border:1px solid rgba(15, 39, 71,.12);background:#FFFFFF;font-size:12.5px;color:#16233A;padding:9px 11px;font-family:'Inter',system-ui,-apple-system,sans-serif;outline:none;box-sizing:border-box";
+const AD_BTN = "height:36px;padding:0 18px;border-radius:9px;border:none;background:#2563EB;color:#EAF1FF;font-weight:800;font-size:12.5px;cursor:pointer;font-family:'Inter',system-ui,-apple-system,sans-serif";
+const AD_BTN2 = "height:36px;padding:0 14px;border-radius:9px;border:1px solid rgba(15, 39, 71,.15);background:transparent;color:#64748B;font-weight:700;font-size:12.5px;cursor:pointer;font-family:'Inter',system-ui,-apple-system,sans-serif";
 
 function rAdapt() {
   setTimeout(loadAdaptSection, 0);
@@ -1853,7 +1853,7 @@ function adaptAbout() {
   return `<div style="display:grid;grid-template-columns:1.3fr 1fr;gap:16px;align-items:start">
     <div class="card">
       <div style="font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:#1E40AF;font-weight:700;margin-bottom:5px">Restoran haqida</div>
-      <div style="font-family:'Nunito Sans',sans-serif;font-size:23px;font-weight:700;color:#16233A;margin-bottom:14px">${esc(S.info?.name||'–')}</div>
+      <div style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:23px;font-weight:700;color:#16233A;margin-bottom:14px">${esc(S.info?.name||'–')}</div>
       <div style="font-size:11.5px;font-weight:800;color:#16233A;margin-bottom:5px">Restoran tarixi</div>
       <textarea id="ad-history" placeholder="Restoraningiz qachon ochilgan, qanday yo'l bosib o'tgan..." style="${AD_INP};min-height:90px;resize:vertical;margin-bottom:12px">${esc(a.history||'')}</textarea>
       <div style="font-size:11.5px;font-weight:800;color:#16233A;margin-bottom:5px">Missiya</div>
@@ -1929,7 +1929,7 @@ function adaptOnboarding() {
         <div style="display:flex;gap:8px"><button onclick="saveOnbStep('${o.id}')" style="${AD_BTN}">Saqlash</button><button onclick="S.adaptEditId=null;renderAdaptBody()" style="${AD_BTN2}">Bekor</button></div>
       </div>` : `
       <div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:4px">
-        <span style="font-family:'Nunito Sans',sans-serif;font-size:32px;font-weight:800;color:#1E40AF;line-height:1;width:46px;flex:none">${String(i+1).padStart(2,'0')}</span>
+        <span style="font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:32px;font-weight:800;color:#1E40AF;line-height:1;width:46px;flex:none">${String(i+1).padStart(2,'0')}</span>
         <div class="card" style="flex:1;margin-bottom:11px">
           <div style="display:flex;align-items:flex-start;gap:10px">
             <div style="flex:1">
@@ -2078,7 +2078,7 @@ function adaptMgmt() {
   const mgmt = (S.adapt?.management||[]).slice().sort((a,b)=>(a.order||0)-(b.order||0));
   const photoCircle = (p, size) => p.photo
     ? `<img src="${p.photo}" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 12px;border:1px solid rgba(37, 99, 235,.3)">`
-    : `<div style="width:${size}px;height:${size}px;border-radius:50%;margin:0 auto 12px;background:rgba(37, 99, 235,.12);border:1px solid rgba(37, 99, 235,.22);display:flex;align-items:center;justify-content:center;font-family:'Nunito Sans',sans-serif;font-size:${size*0.34}px;font-weight:700;color:#1D4ED8">${esc((p.name||'?').trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase())}</div>`;
+    : `<div style="width:${size}px;height:${size}px;border-radius:50%;margin:0 auto 12px;background:rgba(37, 99, 235,.12);border:1px solid rgba(37, 99, 235,.22);display:flex;align-items:center;justify-content:center;font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:${size*0.34}px;font-weight:700;color:#1D4ED8">${esc((p.name||'?').trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase())}</div>`;
   return `<div>
     <div class="card" style="margin-bottom:18px;max-width:480px">
       <div style="font-size:12.5px;font-weight:800;color:#16233A;margin-bottom:10px">+ Jamoa a'zosini qo'shish</div>

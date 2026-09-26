@@ -142,4 +142,57 @@ async function structure(rawText, restaurantId) {
   }
 }
 
-module.exports = { extractText, structure, emptyFields };
+/** JPEG o'lchamini (w,h) SOF markeridan o'qiydi — foto-ga o'xshashini tanlash uchun. */
+function jpegSize(buf, start, end) {
+  let p = start + 2;
+  while (p < end - 8) {
+    if (buf[p] !== 0xFF) { p++; continue; }
+    const m = buf[p + 1];
+    if ((m >= 0xC0 && m <= 0xC3) || (m >= 0xC5 && m <= 0xC7) || (m >= 0xC9 && m <= 0xCB) || (m >= 0xCD && m <= 0xCF)) {
+      const h = (buf[p + 5] << 8) | buf[p + 6];
+      const w = (buf[p + 7] << 8) | buf[p + 8];
+      return { w, h };
+    }
+    if (m === 0xD8 || m === 0xD9 || (m >= 0xD0 && m <= 0xD7)) { p += 2; continue; }
+    const len = (buf[p + 2] << 8) | buf[p + 3];
+    if (len < 2) break;
+    p += 2 + len;
+  }
+  return null;
+}
+
+/**
+ * PDF ichidagi eng mos JPEG rasmni (odatda nomzod fotosi) topib base64 dataURL qaytaradi.
+ * hh.uz rezyumelarida foto DCTDecode (JPEG) sifatida ichma-ich saqlanadi — buni
+ * FF D8 ... FF D9 (JPEG boshi/oxiri) belgilaridan qidiramiz. Kutubxona kerak emas.
+ */
+function extractPhoto(buffer) {
+  try {
+    if (!buffer || buffer.length < 100) return '';
+    const n = buffer.length;
+    const found = [];
+    let i = 0;
+    while (i < n - 3) {
+      if (buffer[i] === 0xFF && buffer[i + 1] === 0xD8 && buffer[i + 2] === 0xFF) {
+        let j = i + 3;
+        while (j < n - 1 && !(buffer[j] === 0xFF && buffer[j + 1] === 0xD9)) j++;
+        if (j < n - 1) {
+          const end = j + 2, len = end - i;
+          if (len > 2500 && len < 900 * 1024) found.push({ start: i, end, len, dim: jpegSize(buffer, i, end) });
+          i = end; continue;
+        }
+      }
+      i++;
+    }
+    if (!found.length) return '';
+    // Foto-ga o'xshashlar: o'lchami ma'lum, kichik emas, portret/kvadrat nisbatda (banner/varaqni chetlab o'tamiz)
+    const photoLike = found.filter(f => f.dim && Math.min(f.dim.w, f.dim.h) >= 80 && Math.max(f.dim.w, f.dim.h) <= 1400 && f.dim.w <= f.dim.h * 1.5);
+    const pool = photoLike.length ? photoLike : found;
+    pool.sort((a, b) => b.len - a.len);
+    const best = pool[0];
+    if (best.len > 600 * 1024) return ''; // juda katta — hujjat shishmasligi uchun o'tkazib yuboramiz
+    return 'data:image/jpeg;base64,' + buffer.slice(best.start, best.end).toString('base64');
+  } catch { return ''; }
+}
+
+module.exports = { extractText, structure, emptyFields, extractPhoto };

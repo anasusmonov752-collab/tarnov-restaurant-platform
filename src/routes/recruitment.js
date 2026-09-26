@@ -45,6 +45,8 @@ async function buildAndSave({ restaurantId, rawText, fileName, fileType, fileBuf
   }
 
   const storeFile = fileBuffer && fileBuffer.length <= MAX_FILE_STORE;
+  // Rezyume PDF ichidan nomzod fotosini avtomat ajratamiz (bo'lsa)
+  const photo = (fileBuffer && /pdf/i.test(fileType || '')) ? resumeParser.extractPhoto(fileBuffer) : '';
   const doc = await Candidate.create({
     id: uuidv4(),
     restaurantId,
@@ -53,6 +55,8 @@ async function buildAndSave({ restaurantId, rawText, fileName, fileType, fileBuf
     fileName: fileName || '',
     fileData: storeFile ? fileBuffer.toString('base64') : '',
     fileType: fileType || '',
+    photo,
+    hasPhoto: !!photo,
     branch: String(branch || '').slice(0, 80),
     source: VALID_SOURCE.includes(source) ? source : 'hh',
     status: 'new',
@@ -123,6 +127,7 @@ router.post('/manual', guard, asyncHandler(async (req, res) => {
     id: uuidv4(),
     restaurantId: req.user.restaurantId,
     photo: String(b.photo || '').slice(0, 400000),
+    hasPhoto: !!(b.photo && String(b.photo).length),
     fullName: fullName.slice(0, 120),
     phone: String(b.phone || '').slice(0, 40),
     email: String(b.email || '').slice(0, 120),
@@ -165,7 +170,7 @@ router.get('/', guard, asyncHandler(async (req, res) => {
     new: { createdAt: -1 }, old: { createdAt: 1 },
     exp: { experienceYears: -1 }, name: { fullName: 1 }, rating: { rating: -1, createdAt: -1 }
   };
-  const list = await Candidate.find(query, '-fileData -rawText')
+  const list = await Candidate.find(query, '-fileData -rawText -photo')
     .sort(sortMap[sort] || sortMap.new)
     .limit(1000)
     .lean();
@@ -212,10 +217,21 @@ router.get('/analytics', guard, asyncHandler(async (req, res) => {
 
 // ── Bitta nomzod (to'liq, xom matn bilan, fayl base64'siz) ──
 router.get('/:id', guard, asyncHandler(async (req, res) => {
-  const c = await Candidate.findOne({ restaurantId: req.user.restaurantId, id: req.params.id }, '-fileData').lean();
+  const c = await Candidate.findOne({ restaurantId: req.user.restaurantId, id: req.params.id }, '-fileData -photo').lean();
   if (!c) return res.status(404).json({ error: 'Nomzod topilmadi' });
   c.hasFile = await Candidate.exists({ restaurantId: req.user.restaurantId, id: req.params.id, fileData: { $ne: '' } }) ? true : false;
   res.json(c);
+}));
+
+// ── Nomzod fotosi (rasm sifatida) ──
+router.get('/:id/photo', guard, asyncHandler(async (req, res) => {
+  const c = await Candidate.findOne({ restaurantId: req.user.restaurantId, id: req.params.id }, 'photo').lean();
+  if (!c || !c.photo) return res.status(404).end();
+  const m = /^data:(image\/[\w.+-]+);base64,(.*)$/i.exec(c.photo);
+  if (!m) return res.status(404).end();
+  res.setHeader('Content-Type', m[1]);
+  res.setHeader('Cache-Control', 'private, max-age=86400');
+  res.send(Buffer.from(m[2], 'base64'));
 }));
 
 // ── Original faylni yuklab olish/ko'rish ──
@@ -241,7 +257,7 @@ router.patch('/:id', guard, asyncHandler(async (req, res) => {
   if (b.source !== undefined)  doc.source = VALID_SOURCE.includes(b.source) ? b.source : 'hh';
   if (b.role !== undefined)    doc.role = isValidRole(b.role) ? b.role : 'boshqa';
   if (b.branch !== undefined)  doc.branch = String(b.branch).slice(0, 80);
-  if (b.photo !== undefined)   doc.photo = String(b.photo).slice(0, 400000); // ~kichik dataURL
+  if (b.photo !== undefined)   { doc.photo = String(b.photo).slice(0, 400000); doc.hasPhoto = !!doc.photo; }
   if (b.notes !== undefined)   doc.notes = String(b.notes).slice(0, 2000);
   if (b.rating !== undefined)  doc.rating = Math.max(0, Math.min(5, parseInt(b.rating, 10) || 0));
   if (b.fullName !== undefined)        doc.fullName = String(b.fullName).slice(0, 120);

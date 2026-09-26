@@ -18,7 +18,8 @@ const guard = auth(['restaurant']);
 
 const MAX_RAW = 20000;                 // saqlanadigan xom matn chegarasi
 const MAX_FILE_STORE = 5 * 1024 * 1024; // 5 MB dan katta faylni base64 saqlmaymiz
-const VALID_STATUS = ['new', 'contacted', 'interview', 'trial', 'hired', 'rejected', 'reserve'];
+// Kanban bosqichlari (recruiting voronka) — frontend ustunlari shu tartibda.
+const VALID_STATUS = ['new', 'phone', 'interview', 'interview2', 'trial', 'hired', 'reserve', 'rejected'];
 const VALID_SOURCE = ['hh', 'manual', 'referral', 'telegram', 'other'];
 
 // Fayllar xotirada (buffer) — PDF matnini ajratamiz va (kerak bo'lsa) base64 saqlaymiz.
@@ -34,7 +35,7 @@ const upload = multer({
 function escapeRegex(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
 // Bitta xom matndan (yoki fayldan) Candidate hujjati yasaydi va saqlaydi.
-async function buildAndSave({ restaurantId, rawText, fileName, fileType, fileBuffer, source }) {
+async function buildAndSave({ restaurantId, rawText, fileName, fileType, fileBuffer, source, branch }) {
   const { fields, aiParsed } = await resumeParser.structure(rawText, restaurantId);
 
   // Dublikat tekshiruvi (telefon bo'yicha) — bir nomzod ikki marta kirmasin.
@@ -52,8 +53,10 @@ async function buildAndSave({ restaurantId, rawText, fileName, fileType, fileBuf
     fileName: fileName || '',
     fileData: storeFile ? fileBuffer.toString('base64') : '',
     fileType: fileType || '',
+    branch: String(branch || '').slice(0, 80),
     source: VALID_SOURCE.includes(source) ? source : 'hh',
     status: 'new',
+    statusChangedAt: new Date(),
     aiParsed
   });
   return { created: true, id: doc.id, name: doc.fullName || fileName, aiParsed };
@@ -64,6 +67,7 @@ router.post('/upload', guard, upload.array('files', 30), asyncHandler(async (req
   const files = req.files || [];
   if (!files.length) return res.status(400).json({ error: 'Fayl yuklanmadi' });
   const source = (req.body && req.body.source) || 'hh';
+  const branch = (req.body && req.body.branch) || '';
 
   const results = { created: 0, duplicates: 0, failed: 0, items: [] };
   for (const file of files) {
@@ -80,7 +84,8 @@ router.post('/upload', guard, upload.array('files', 30), asyncHandler(async (req
         fileName: file.originalname,
         fileType: file.mimetype,
         fileBuffer: file.buffer,
-        source
+        source,
+        branch
       });
       if (r.duplicate) { results.duplicates++; results.items.push({ file: file.originalname, ok: true, duplicate: true, name: r.name }); }
       else { results.created++; results.items.push({ file: file.originalname, ok: true, id: r.id, name: r.name, aiParsed: r.aiParsed }); }
@@ -102,10 +107,37 @@ router.post('/upload-text', guard, asyncHandler(async (req, res) => {
     fileName: (req.body && req.body.fileName) || 'Qo\'lda kiritilgan',
     fileType: 'text/plain',
     fileBuffer: null,
-    source: (req.body && req.body.source) || 'manual'
+    source: (req.body && req.body.source) || 'manual',
+    branch: (req.body && req.body.branch) || ''
   });
   if (r.duplicate) return res.json({ duplicate: true, name: r.name });
   res.json({ created: true, id: r.id, name: r.name, aiParsed: r.aiParsed });
+}));
+
+// ── Qo'lda nomzod qo'shish (rezyumesiz, to'g'ridan-to'g'ri maydonlar) ──
+router.post('/manual', guard, asyncHandler(async (req, res) => {
+  const b = req.body || {};
+  const fullName = String(b.fullName || '').trim();
+  if (!fullName) return res.status(400).json({ error: 'Ism kiritilishi shart' });
+  const doc = await Candidate.create({
+    id: uuidv4(),
+    restaurantId: req.user.restaurantId,
+    fullName: fullName.slice(0, 120),
+    phone: String(b.phone || '').slice(0, 40),
+    email: String(b.email || '').slice(0, 120),
+    desiredPosition: String(b.desiredPosition || '').slice(0, 160),
+    role: isValidRole(b.role) ? b.role : 'boshqa',
+    experienceYears: Math.max(0, Math.min(60, parseInt(b.experienceYears, 10) || 0)),
+    location: String(b.location || '').slice(0, 80),
+    branch: String(b.branch || '').slice(0, 80),
+    languages: Array.isArray(b.languages) ? b.languages.map(s => String(s).trim()).filter(Boolean).slice(0, 25) : [],
+    notes: String(b.notes || '').slice(0, 2000),
+    source: VALID_SOURCE.includes(b.source) ? b.source : 'manual',
+    status: VALID_STATUS.includes(b.status) ? b.status : 'new',
+    statusChangedAt: new Date(),
+    aiParsed: false
+  });
+  res.json({ created: true, id: doc.id, name: doc.fullName });
 }));
 
 // ── Ro'yxat (filtr bilan) ──
@@ -172,30 +204,33 @@ router.get('/:id/file', guard, asyncHandler(async (req, res) => {
 // ── Tahrirlash (holat, izoh, baho, teg, profil maydonlari) ──
 router.patch('/:id', guard, asyncHandler(async (req, res) => {
   const b = req.body || {};
-  const set = { updatedAt: new Date() };
+  const doc = await Candidate.findOne({ restaurantId: req.user.restaurantId, id: req.params.id });
+  if (!doc) return res.status(404).json({ error: 'Nomzod topilmadi' });
 
-  if (b.status !== undefined)  set.status = VALID_STATUS.includes(b.status) ? b.status : 'new';
-  if (b.source !== undefined)  set.source = VALID_SOURCE.includes(b.source) ? b.source : 'hh';
-  if (b.role !== undefined)    set.role = isValidRole(b.role) ? b.role : 'boshqa';
-  if (b.notes !== undefined)   set.notes = String(b.notes).slice(0, 2000);
-  if (b.rating !== undefined)  set.rating = Math.max(0, Math.min(5, parseInt(b.rating, 10) || 0));
-  if (b.fullName !== undefined)        set.fullName = String(b.fullName).slice(0, 120);
-  if (b.phone !== undefined)           set.phone = String(b.phone).slice(0, 40);
-  if (b.email !== undefined)           set.email = String(b.email).slice(0, 120);
-  if (b.desiredPosition !== undefined) set.desiredPosition = String(b.desiredPosition).slice(0, 160);
-  if (b.location !== undefined)        set.location = String(b.location).slice(0, 80);
-  if (b.experienceYears !== undefined) set.experienceYears = Math.max(0, Math.min(60, parseInt(b.experienceYears, 10) || 0));
-  if (Array.isArray(b.tags))      set.tags = b.tags.map(t => String(t).trim()).filter(Boolean).slice(0, 20);
-  if (Array.isArray(b.languages)) set.languages = b.languages.map(t => String(t).trim()).filter(Boolean).slice(0, 25);
-  if (Array.isArray(b.skills))    set.skills = b.skills.map(t => String(t).trim()).filter(Boolean).slice(0, 25);
+  if (b.status !== undefined && VALID_STATUS.includes(b.status)) {
+    if (b.status !== doc.status) doc.statusChangedAt = new Date(); // yangi bosqichga o'tdi — taymer qayta boshlanadi
+    doc.status = b.status;
+  }
+  if (b.source !== undefined)  doc.source = VALID_SOURCE.includes(b.source) ? b.source : 'hh';
+  if (b.role !== undefined)    doc.role = isValidRole(b.role) ? b.role : 'boshqa';
+  if (b.branch !== undefined)  doc.branch = String(b.branch).slice(0, 80);
+  if (b.notes !== undefined)   doc.notes = String(b.notes).slice(0, 2000);
+  if (b.rating !== undefined)  doc.rating = Math.max(0, Math.min(5, parseInt(b.rating, 10) || 0));
+  if (b.fullName !== undefined)        doc.fullName = String(b.fullName).slice(0, 120);
+  if (b.phone !== undefined)           doc.phone = String(b.phone).slice(0, 40);
+  if (b.email !== undefined)           doc.email = String(b.email).slice(0, 120);
+  if (b.desiredPosition !== undefined) doc.desiredPosition = String(b.desiredPosition).slice(0, 160);
+  if (b.location !== undefined)        doc.location = String(b.location).slice(0, 80);
+  if (b.experienceYears !== undefined) doc.experienceYears = Math.max(0, Math.min(60, parseInt(b.experienceYears, 10) || 0));
+  if (Array.isArray(b.tags))      doc.tags = b.tags.map(t => String(t).trim()).filter(Boolean).slice(0, 20);
+  if (Array.isArray(b.languages)) doc.languages = b.languages.map(t => String(t).trim()).filter(Boolean).slice(0, 25);
+  if (Array.isArray(b.skills))    doc.skills = b.skills.map(t => String(t).trim()).filter(Boolean).slice(0, 25);
+  doc.updatedAt = new Date();
+  await doc.save();
 
-  const c = await Candidate.findOneAndUpdate(
-    { restaurantId: req.user.restaurantId, id: req.params.id },
-    { $set: set },
-    { new: true }
-  ).select('-fileData -rawText').lean();
-  if (!c) return res.status(404).json({ error: 'Nomzod topilmadi' });
-  res.json(c);
+  const o = doc.toObject();
+  delete o.fileData; delete o.rawText;
+  res.json(o);
 }));
 
 // ── O'chirish ──

@@ -9,123 +9,148 @@
 <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,600;0,6..12,700;0,6..12,800;1,6..12,600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#F2ECE1; --ink:#19241D; --green:#16291F; --green2:#102018;
-  --gold:#C9A84C; --gold-d:#9C7E2E; --card:#FBF9F3; --line:rgba(20,41,31,.12);
-  --muted:#6B7A70; --danger:#C25B4C; --ok:#2E9E5B;
+  --bg:#EFEBE2; --ink:#1B2620; --green:#16291F; --green2:#0F1E16;
+  --gold:#C9A84C; --gold-d:#9C7E2E; --card:#FFFFFF; --line:#E4DDCF;
+  --line2:rgba(20,41,31,.08); --muted:#7A857C; --danger:#C25B4C; --ok:#2E9E5B;
+  --shadow:0 1px 3px rgba(16,32,24,.06),0 1px 2px rgba(16,32,24,.04);
+  --shadow-lg:0 12px 34px rgba(16,32,24,.16);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
-::-webkit-scrollbar{width:8px;height:8px}
-::-webkit-scrollbar-thumb{background:rgba(20,41,31,.2);border-radius:6px}
+html,body{height:100%}
+body{font-family:'Nunito Sans',sans-serif;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:rgba(20,41,31,.22);border-radius:6px}
+::-webkit-scrollbar-thumb:hover{background:rgba(20,41,31,.35)}
 ::-webkit-scrollbar-track{background:transparent}
-@keyframes fadeup{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-@keyframes pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+@keyframes pop{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+@keyframes fadeup{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 @keyframes spin{to{transform:rotate(360deg)}}
-a{color:inherit}
+button,input,select,textarea{font-family:inherit}
 
 /* ── Topbar ── */
-.topbar{background:linear-gradient(180deg,var(--green),var(--green2));color:#F5EFDF;padding:16px 22px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:30;box-shadow:0 4px 20px rgba(16,32,24,.18)}
-.back{display:flex;align-items:center;gap:8px;background:rgba(201,168,76,.14);border:1px solid rgba(201,168,76,.3);color:#F5EFDF;padding:8px 14px;border-radius:10px;cursor:pointer;font-family:inherit;font-size:13.5px;font-weight:600;text-decoration:none;transition:all .2s}
-.back:hover{background:rgba(201,168,76,.24)}
-.tb-title{font-size:19px;font-weight:800;letter-spacing:.3px}
-.tb-sub{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(201,168,76,.8);font-weight:700;margin-top:2px}
-.tb-mark{width:40px;height:40px;flex:none;border-radius:11px;background:linear-gradient(135deg,var(--gold),var(--gold-d));display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(201,168,76,.28)}
-.tb-mark span{font-style:italic;font-weight:700;font-size:23px;color:#14291F}
+.topbar{flex:none;background:linear-gradient(180deg,var(--green),var(--green2));color:#F5EFDF;padding:13px 20px;display:flex;align-items:center;gap:14px;box-shadow:0 3px 16px rgba(16,32,24,.2);z-index:40}
+.back{display:flex;align-items:center;gap:7px;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);color:#F5EFDF;padding:8px 13px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;text-decoration:none;transition:.2s;white-space:nowrap}
+.back:hover{background:rgba(201,168,76,.26)}
+.tb-mark{width:38px;height:38px;flex:none;border-radius:10px;background:linear-gradient(135deg,var(--gold),var(--gold-d));display:flex;align-items:center;justify-content:center;box-shadow:0 5px 15px rgba(201,168,76,.3)}
+.tb-mark span{font-style:italic;font-weight:700;font-size:21px;color:#14291F}
+.tb-title{font-size:17px;font-weight:800;letter-spacing:.2px;line-height:1}
+.tb-sub{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(201,168,76,.85);font-weight:700;margin-top:3px}
+.tb-spacer{flex:1}
+.tb-total{font-size:13px;color:rgba(245,239,223,.8);font-weight:700}
+.tb-total b{color:var(--gold);font-size:16px}
 
-.wrap{max-width:1180px;margin:0 auto;padding:22px 18px 60px}
-
-/* ── Upload zone ── */
-.dropzone{background:var(--card);border:2px dashed rgba(201,168,76,.5);border-radius:18px;padding:26px;text-align:center;transition:all .2s;cursor:pointer;animation:fadeup .4s}
-.dropzone.drag{border-color:var(--gold);background:#FBF4E2;transform:scale(1.005)}
-.dz-ic{width:52px;height:52px;margin:0 auto 12px;border-radius:14px;background:rgba(201,168,76,.14);display:flex;align-items:center;justify-content:center;color:var(--gold-d)}
-.dz-title{font-size:16px;font-weight:800}
-.dz-sub{font-size:13px;color:var(--muted);margin-top:4px}
-.dz-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}
-.btn{font-family:inherit;font-weight:700;font-size:13.5px;border-radius:10px;padding:10px 16px;cursor:pointer;border:1px solid transparent;transition:all .18s;display:inline-flex;align-items:center;gap:7px}
-.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-d));color:#14291F;box-shadow:0 4px 14px rgba(201,168,76,.3)}
-.btn-gold:hover{filter:brightness(1.05)}
-.btn-ghost{background:transparent;border-color:var(--line);color:var(--ink)}
-.btn-ghost:hover{background:rgba(20,41,31,.05)}
-.btn-danger{background:rgba(194,91,76,.12);color:var(--danger);border-color:rgba(194,91,76,.3)}
-.btn-danger:hover{background:rgba(194,91,76,.2)}
+/* ── Buttons ── */
+.btn{font-weight:700;font-size:13px;border-radius:10px;padding:9px 15px;cursor:pointer;border:1px solid transparent;transition:.16s;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold-d));color:#14291F;box-shadow:0 3px 12px rgba(201,168,76,.32)}
+.btn-gold:hover{filter:brightness(1.06)}
+.btn-green{background:var(--green);color:#F5EFDF}
+.btn-green:hover{background:#1d3627}
+.btn-ghost{background:#fff;border-color:var(--line);color:var(--ink)}
+.btn-ghost:hover{background:#faf7f0;border-color:var(--gold)}
+.btn-danger{background:rgba(194,91,76,.1);color:var(--danger);border-color:rgba(194,91,76,.28)}
+.btn-danger:hover{background:rgba(194,91,76,.18)}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 
-/* ── Stats ── */
-.stats{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
-.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;min-width:110px;flex:1;animation:fadeup .4s}
-.stat b{display:block;font-size:24px;font-weight:800;line-height:1}
-.stat span{font-size:12px;color:var(--muted);font-weight:600}
+/* ── Toolbar ── */
+.toolbar{flex:none;display:flex;align-items:center;gap:9px;padding:12px 20px;background:var(--bg);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.search{flex:1;min-width:190px;max-width:340px;position:relative}
+.search input{width:100%;padding:9px 12px 9px 36px;border-radius:10px;border:1px solid var(--line);background:#fff;font-size:13.5px;color:var(--ink)}
+.search input:focus{outline:none;border-color:var(--gold)}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.sel{padding:9px 11px;border-radius:10px;border:1px solid var(--line);background:#fff;font-size:13px;color:var(--ink);cursor:pointer;font-weight:600}
+.sel:focus{outline:none;border-color:var(--gold)}
+.tool-spacer{flex:1}
 
-/* ── Filters ── */
-.filters{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:18px;animation:fadeup .4s}
-.search{flex:1;min-width:200px;position:relative}
-.search input{width:100%;padding:10px 12px 10px 38px;border-radius:10px;border:1px solid var(--line);background:#fff;font-family:inherit;font-size:14px;color:var(--ink)}
-.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted)}
-select,input[type=number]{padding:9px 11px;border-radius:10px;border:1px solid var(--line);background:#fff;font-family:inherit;font-size:13.5px;color:var(--ink);cursor:pointer}
-input[type=number]{width:120px;cursor:text}
-.f-lbl{font-size:11px;color:var(--muted);font-weight:700;margin-right:-4px}
+/* ── Board ── */
+.board{flex:1;display:flex;gap:14px;padding:16px 20px 20px;overflow-x:auto;overflow-y:hidden;align-items:stretch;min-height:0}
+.col{flex:none;width:290px;height:100%;display:flex;flex-direction:column;background:rgba(255,255,255,.5);border:1px solid var(--line);border-radius:14px;max-height:100%}
+.col-head{flex:none;padding:12px 14px;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--line2);position:relative}
+.col-dot{width:9px;height:9px;border-radius:50%;flex:none}
+.col-name{font-size:13.5px;font-weight:800;color:var(--ink)}
+.col-count{margin-left:auto;font-size:12px;font-weight:800;color:var(--muted);background:rgba(20,41,31,.06);border-radius:20px;padding:2px 9px;min-width:26px;text-align:center}
+.col-body{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:10px;transition:background .15s}
+.col-body.drop-hover{background:rgba(201,168,76,.12);outline:2px dashed rgba(201,168,76,.5);outline-offset:-6px;border-radius:10px}
+.col-empty{text-align:center;color:var(--muted);font-size:12.5px;padding:22px 8px;font-weight:600;opacity:.7}
 
-/* ── Candidate cards ── */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;cursor:pointer;transition:all .18s;animation:pop .3s;position:relative;overflow:hidden}
-.card:hover{border-color:rgba(201,168,76,.55);box-shadow:0 8px 24px rgba(16,32,24,.1);transform:translateY(-2px)}
-.card-top{display:flex;align-items:flex-start;gap:12px}
-.avatar{width:46px;height:46px;flex:none;border-radius:12px;background:linear-gradient(135deg,#1B3A2D,#16291F);color:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px}
-.c-name{font-size:15.5px;font-weight:800;line-height:1.2}
-.c-pos{font-size:12.5px;color:var(--muted);margin-top:2px;font-weight:600}
-.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;padding:3px 9px;border-radius:20px}
-.c-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
-.chip{font-size:11.5px;font-weight:700;color:var(--ink);background:rgba(20,41,31,.06);border-radius:8px;padding:4px 9px;display:inline-flex;align-items:center;gap:5px}
-.c-foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:11px;border-top:1px solid var(--line)}
-.c-phone{font-size:13px;font-weight:700;color:var(--green)}
-.stars{color:var(--gold);font-size:13px;letter-spacing:1px}
-.stars .off{color:rgba(20,41,31,.16)}
-
-.empty{text-align:center;padding:60px 20px;color:var(--muted);animation:fadeup .4s}
-.empty svg{opacity:.4;margin-bottom:14px}
-.empty h3{font-size:17px;color:var(--ink);font-weight:800;margin-bottom:6px}
+/* ── Card ── */
+.kcard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;box-shadow:var(--shadow);transition:transform .12s,box-shadow .12s,border-color .12s;animation:pop .25s;position:relative}
+.kcard:hover{border-color:var(--gold);box-shadow:0 6px 18px rgba(16,32,24,.12);transform:translateY(-2px)}
+.kcard.dragging{opacity:.4}
+.kc-top{display:flex;gap:10px;align-items:flex-start}
+.kc-av{width:42px;height:42px;flex:none;border-radius:11px;background:linear-gradient(135deg,#1f4232,#16291F);color:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;position:relative}
+.kc-rate{position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);background:#fff;border:1px solid var(--line);border-radius:20px;font-size:9.5px;font-weight:800;color:var(--gold-d);padding:0 5px;line-height:15px;box-shadow:var(--shadow);white-space:nowrap}
+.kc-name{font-size:14px;font-weight:800;line-height:1.2;color:var(--ink)}
+.kc-role{font-size:12px;color:var(--muted);margin-top:2px;font-weight:700;display:flex;align-items:center;gap:4px}
+.kc-src{position:absolute;top:11px;right:11px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);background:rgba(20,41,31,.05);border-radius:6px;padding:2px 6px}
+.kc-rows{margin-top:11px;display:flex;flex-direction:column;gap:5px}
+.kc-row{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink)}
+.kc-row svg{color:var(--muted);flex:none}
+.kc-row .val{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kc-foot{display:flex;justify-content:space-between;align-items:center;margin-top:11px;padding-top:9px;border-top:1px solid var(--line2);font-size:11px;color:var(--muted);font-weight:700}
+.kc-days{display:inline-flex;align-items:center;gap:4px}
+.kc-days.warn{color:var(--danger)}
 
 /* ── Modal ── */
-.overlay{position:fixed;inset:0;background:rgba(16,32,24,.55);backdrop-filter:blur(4px);z-index:100;display:none;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto}
+.overlay{position:fixed;inset:0;background:rgba(16,32,24,.55);backdrop-filter:blur(4px);z-index:100;display:none;align-items:flex-start;justify-content:center;padding:28px 16px;overflow-y:auto}
 .overlay.show{display:flex}
-.modal{background:var(--bg);border-radius:20px;max-width:640px;width:100%;box-shadow:0 30px 80px rgba(16,32,24,.4);animation:pop .3s;overflow:hidden}
-.modal-head{background:linear-gradient(180deg,var(--green),var(--green2));color:#F5EFDF;padding:20px 22px;display:flex;align-items:flex-start;gap:14px}
-.modal-head .avatar{width:54px;height:54px;font-size:20px;background:rgba(201,168,76,.18);color:var(--gold)}
-.modal-x{margin-left:auto;background:rgba(255,255,255,.1);border:none;color:#F5EFDF;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;flex:none}
-.modal-body{padding:20px 22px;max-height:62vh;overflow-y:auto}
-.mb-sec{margin-bottom:18px}
-.mb-sec h4{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold-d);font-weight:800;margin-bottom:9px}
-.field{margin-bottom:11px}
-.field label{display:block;font-size:12px;color:var(--muted);font-weight:700;margin-bottom:4px}
-.field input,.field select,.field textarea{width:100%;padding:9px 11px;border-radius:9px;border:1px solid var(--line);background:#fff;font-family:inherit;font-size:14px;color:var(--ink)}
-.field textarea{resize:vertical;min-height:70px}
+.modal{background:var(--bg);border-radius:18px;max-width:600px;width:100%;box-shadow:var(--shadow-lg);animation:pop .25s;overflow:hidden}
+.modal.sm{max-width:480px}
+.modal-head{background:linear-gradient(180deg,var(--green),var(--green2));color:#F5EFDF;padding:18px 20px;display:flex;align-items:flex-start;gap:13px}
+.modal-head .kc-av{width:52px;height:52px;font-size:19px;background:rgba(201,168,76,.18)}
+.mh-title{font-size:18px;font-weight:800}
+.mh-sub{font-size:12px;color:rgba(245,239,223,.75);margin-top:3px}
+.modal-x{margin-left:auto;background:rgba(255,255,255,.1);border:none;color:#F5EFDF;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;flex:none}
+.modal-x:hover{background:rgba(255,255,255,.2)}
+.modal-body{padding:18px 20px;max-height:64vh;overflow-y:auto}
+.mb-sec{margin-bottom:16px}
+.mb-sec h4{font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--gold-d);font-weight:800;margin-bottom:8px}
+.field{margin-bottom:10px}
+.field label{display:block;font-size:11.5px;color:var(--muted);font-weight:700;margin-bottom:4px}
+.field input,.field select,.field textarea{width:100%;padding:9px 11px;border-radius:9px;border:1px solid var(--line);background:#fff;font-size:14px;color:var(--ink)}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--gold)}
+.field textarea{resize:vertical;min-height:64px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.summary-box{background:rgba(201,168,76,.09);border:1px solid rgba(201,168,76,.25);border-radius:10px;padding:12px;font-size:13.5px;line-height:1.5}
-.raw-toggle{font-size:12.5px;color:var(--gold-d);font-weight:700;cursor:pointer;text-decoration:underline}
-.raw-box{white-space:pre-wrap;font-size:12px;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:9px;padding:12px;max-height:220px;overflow-y:auto;margin-top:8px;display:none}
-.modal-foot{padding:14px 22px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:space-between;align-items:center;background:var(--card)}
-.tag-badge{font-size:11px;font-weight:700;background:rgba(20,41,31,.06);border-radius:7px;padding:3px 8px}
-.ai-flag{font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:20px;background:rgba(46,158,91,.14);color:var(--ok)}
-.ai-flag.no{background:rgba(194,91,76,.14);color:var(--danger)}
-.star-input span{cursor:pointer;font-size:22px;color:rgba(20,41,31,.16);transition:color .1s}
+.summary-box{background:rgba(201,168,76,.09);border:1px solid rgba(201,168,76,.25);border-radius:10px;padding:11px 12px;font-size:13.5px;line-height:1.5}
+.raw-toggle{font-size:12px;color:var(--gold-d);font-weight:700;cursor:pointer;text-decoration:underline}
+.raw-box{white-space:pre-wrap;font-size:12px;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:9px;padding:11px;max-height:200px;overflow-y:auto;margin-top:8px;display:none}
+.modal-foot{padding:13px 20px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:space-between;align-items:center;background:var(--card)}
+.tag-badge{font-size:11px;font-weight:700;background:rgba(20,41,31,.06);border-radius:7px;padding:3px 8px;display:inline-block;margin:2px}
+.ai-flag{font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;background:rgba(46,158,91,.16);color:#1f7a44}
+.ai-flag.no{background:rgba(194,91,76,.16);color:var(--danger)}
+.star-input span{cursor:pointer;font-size:21px;color:rgba(20,41,31,.16);transition:color .1s}
 .star-input span.on{color:var(--gold)}
 
-/* ── Upload progress ── */
+/* ── Dropzone (upload modal) ── */
+.dropzone{border:2px dashed rgba(201,168,76,.55);border-radius:14px;padding:26px;text-align:center;cursor:pointer;transition:.18s;background:#fff}
+.dropzone.drag{border-color:var(--gold);background:#FBF4E2}
+.dz-ic{width:48px;height:48px;margin:0 auto 10px;border-radius:13px;background:rgba(201,168,76,.14);display:flex;align-items:center;justify-content:center;color:var(--gold-d)}
+.dz-title{font-size:15px;font-weight:800}
+.dz-sub{font-size:12.5px;color:var(--muted);margin-top:4px}
+.tabs{display:flex;gap:6px;margin-bottom:14px;background:rgba(20,41,31,.05);padding:4px;border-radius:11px}
+.tab{flex:1;text-align:center;padding:8px;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;color:var(--muted)}
+.tab.on{background:#fff;color:var(--ink);box-shadow:var(--shadow)}
+
+/* ── Upload spinner ── */
 .uploading{position:fixed;inset:0;background:rgba(16,32,24,.6);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center}
 .uploading.show{display:flex}
-.up-card{background:var(--bg);border-radius:18px;padding:30px 40px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)}
-.spinner{width:44px;height:44px;border:4px solid rgba(201,168,76,.25);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+.up-card{background:var(--bg);border-radius:16px;padding:28px 40px;text-align:center;box-shadow:var(--shadow-lg)}
+.spinner{width:42px;height:42px;border:4px solid rgba(201,168,76,.25);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px}
 
 #toast-container{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:300;display:flex;flex-direction:column;gap:8px;align-items:center}
-.toast{background:var(--green);color:#F5EFDF;padding:11px 18px;border-radius:11px;font-size:13.5px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.25);display:flex;align-items:center;gap:9px;animation:fadeup .3s}
+.toast{background:var(--green);color:#F5EFDF;padding:11px 18px;border-radius:11px;font-size:13.5px;font-weight:700;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:9px;animation:fadeup .3s}
 .toast-success{background:var(--ok)}
 .toast-error{background:var(--danger)}
 .toast-icon{display:flex}
 
-@media(max-width:560px){
+.empty-board{margin:auto;text-align:center;color:var(--muted);animation:fadeup .4s;padding:40px}
+.empty-board svg{opacity:.35;margin-bottom:14px}
+.empty-board h3{font-size:17px;color:var(--ink);font-weight:800;margin-bottom:6px}
+
+@media(max-width:600px){
   .row2{grid-template-columns:1fr}
-  .stat{min-width:calc(50% - 5px)}
-  .wrap{padding:16px 12px 50px}
+  .toolbar{padding:10px 12px}
+  .board{padding:12px}
+  .tb-total{display:none}
 }
 </style>
 </head>
@@ -133,85 +158,112 @@ input[type=number]{width:120px;cursor:text}
 
 <div class="topbar">
   <a class="back" href="/restaurant-admin.html">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-    Admin panel
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Admin
   </a>
   <div class="tb-mark"><span>R</span></div>
   <div>
     <div class="tb-title">Nomzodlar bazasi</div>
-    <div class="tb-sub">Rekruting · Rezyume filtri</div>
+    <div class="tb-sub">Rekruting · Voronka</div>
   </div>
+  <div class="tb-spacer"></div>
+  <div class="tb-total">Jami: <b id="tbTotal">0</b></div>
 </div>
 
-<div class="wrap">
-
-  <!-- Upload -->
-  <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
-    <div class="dz-ic">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-    </div>
-    <div class="dz-title">Rezyumelarni yuklang</div>
-    <div class="dz-sub">PDF fayllarni bu yerga tashlang yoki tanlang — AI o'qib, maydonlarga ajratadi</div>
-    <div class="dz-actions" onclick="event.stopPropagation()">
-      <button class="btn btn-gold" onclick="document.getElementById('fileInput').click()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Fayl tanlash (PDF)
-      </button>
-      <button class="btn btn-ghost" onclick="openText()">Matn joylash</button>
-      <select id="srcSelect" title="Manba">
-        <option value="hh">Manba: hh.uz</option>
-        <option value="manual">Qo'lda</option>
-        <option value="referral">Tavsiya</option>
-        <option value="telegram">Telegram</option>
-        <option value="other">Boshqa</option>
-      </select>
-    </div>
-    <input type="file" id="fileInput" accept=".pdf,.txt,application/pdf,text/plain" multiple style="display:none" onchange="onFilePick(this.files)">
+<div class="toolbar">
+  <div class="search">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input id="q" placeholder="Ism, telefon, ko'nikma bo'yicha qidirish...">
   </div>
-
-  <!-- Stats -->
-  <div class="stats" id="stats"></div>
-
-  <!-- Filters -->
-  <div class="filters">
-    <div class="search">
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input id="q" placeholder="Ism, telefon, lavozim, ko'nikma yoki matn bo'yicha qidirish...">
-    </div>
-    <select id="fRole"><option value="all">Barcha lavozim</option></select>
-    <select id="fStatus"><option value="all">Barcha holat</option></select>
-    <select id="fLang"><option value="all">Barcha til</option></select>
-    <input type="number" id="fExp" min="0" placeholder="Min tajriba (yil)">
-    <select id="fSort">
-      <option value="new">Yangi avval</option>
-      <option value="old">Eski avval</option>
-      <option value="exp">Ko'p tajriba</option>
-      <option value="rating">Yuqori baho</option>
-      <option value="name">Ism (A-Z)</option>
-    </select>
-    <button class="btn btn-ghost" onclick="resetFilters()">Tozalash</button>
-  </div>
-
-  <!-- List -->
-  <div id="list"></div>
+  <select class="sel" id="fRole"><option value="all">Barcha lavozim</option></select>
+  <select class="sel" id="fBranch"><option value="all">Barcha filial</option></select>
+  <select class="sel" id="fSort">
+    <option value="new">Yangi avval</option>
+    <option value="old">Eski avval</option>
+    <option value="exp">Ko'p tajriba</option>
+    <option value="rating">Yuqori baho</option>
+    <option value="name">Ism (A-Z)</option>
+  </select>
+  <div class="tool-spacer"></div>
+  <button class="btn btn-ghost" onclick="openUpload()">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Rezyume yuklash
+  </button>
+  <button class="btn btn-gold" onclick="openManual()">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Yangi nomzod
+  </button>
 </div>
+
+<div class="board" id="board"></div>
 
 <!-- Detail modal -->
 <div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
   <div class="modal" id="modal"></div>
 </div>
 
-<!-- Text paste modal -->
-<div class="overlay" id="textOverlay" onclick="if(event.target===this)closeText()">
-  <div class="modal" style="max-width:560px">
-    <div class="modal-head"><div><div class="tb-title">Rezyume matnini joylang</div><div class="tb-sub" style="color:rgba(201,168,76,.8)">AI tahlil qiladi</div></div><button class="modal-x" onclick="closeText()">✕</button></div>
+<!-- Upload modal -->
+<div class="overlay" id="uploadOverlay" onclick="if(event.target===this)closeUpload()">
+  <div class="modal sm">
+    <div class="modal-head"><div><div class="mh-title">Rezyume yuklash</div><div class="mh-sub">AI o'qib maydonlarga ajratadi</div></div><button class="modal-x" onclick="closeUpload()">✕</button></div>
     <div class="modal-body">
-      <div class="field"><label>Ism (ixtiyoriy)</label><input id="txtName" placeholder="Fayl nomi o'rniga"></div>
-      <div class="field"><label>Rezyume matni</label><textarea id="txtBody" style="min-height:200px" placeholder="hh.uz rezyume matnini shu yerga nusxalab joylang..."></textarea></div>
+      <div class="tabs">
+        <div class="tab on" id="tabFile" onclick="switchTab('file')">PDF fayl</div>
+        <div class="tab" id="tabText" onclick="switchTab('text')">Matn joylash</div>
+      </div>
+      <div class="row2" style="margin-bottom:14px">
+        <div class="field" style="margin:0"><label>Manba</label>
+          <select id="uSource">
+            <option value="hh">hh.uz</option><option value="manual">Qo'lda</option>
+            <option value="referral">Tavsiya</option><option value="telegram">Telegram</option><option value="other">Boshqa</option>
+          </select>
+        </div>
+        <div class="field" style="margin:0"><label>Filial (ixtiyoriy)</label><input id="uBranch" placeholder="masalan: Chorsu"></div>
+      </div>
+      <div id="paneFile">
+        <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+          <div class="dz-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+          <div class="dz-title">PDF fayllarni tashlang yoki tanlang</div>
+          <div class="dz-sub">Bir vaqtda bir nechta fayl mumkin</div>
+          <input type="file" id="fileInput" accept=".pdf,.txt,application/pdf,text/plain" multiple style="display:none" onchange="onFilePick(this.files)">
+        </div>
+      </div>
+      <div id="paneText" style="display:none">
+        <div class="field"><label>Ism (ixtiyoriy)</label><input id="txtName" placeholder="Fayl nomi o'rniga"></div>
+        <div class="field"><label>Rezyume matni</label><textarea id="txtBody" style="min-height:170px" placeholder="hh.uz rezyume matnini shu yerga nusxalab joylang..."></textarea></div>
+        <button class="btn btn-gold" style="width:100%;justify-content:center" onclick="submitText()">Qo'shish</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Manual create modal -->
+<div class="overlay" id="manualOverlay" onclick="if(event.target===this)closeManual()">
+  <div class="modal">
+    <div class="modal-head"><div><div class="mh-title">Yangi nomzod</div><div class="mh-sub">Rezyumesiz, qo'lda kiritish</div></div><button class="modal-x" onclick="closeManual()">✕</button></div>
+    <div class="modal-body">
+      <div class="row2">
+        <div class="field"><label>To'liq ism *</label><input id="mnName" placeholder="Ism Familiya"></div>
+        <div class="field"><label>Telefon</label><input id="mnPhone" placeholder="+998..."></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Lavozim</label><input id="mnPos" placeholder="masalan: Ofitsiant"></div>
+        <div class="field"><label>Rol</label><select id="mnRole"></select></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Filial</label><input id="mnBranch" placeholder="masalan: Chorsu"></div>
+        <div class="field"><label>Tajriba (yil)</label><input type="number" id="mnExp" min="0" value="0"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Hudud</label><input id="mnLoc" placeholder="Shahar"></div>
+        <div class="field"><label>Bosqich</label><select id="mnStatus"></select></div>
+      </div>
+      <div class="field"><label>Tillar (vergul bilan)</label><input id="mnLangs" placeholder="Rus, O'zbek"></div>
+      <div class="field"><label>Izoh</label><textarea id="mnNotes" placeholder="Qo'shimcha ma'lumot..."></textarea></div>
     </div>
     <div class="modal-foot" style="justify-content:flex-end">
-      <button class="btn btn-ghost" onclick="closeText()">Bekor</button>
-      <button class="btn btn-gold" onclick="submitText()">Qo'shish</button>
+      <button class="btn btn-ghost" onclick="closeManual()">Bekor</button>
+      <button class="btn btn-gold" onclick="submitManual()">Qo'shish</button>
     </div>
   </div>
 </div>
@@ -229,129 +281,172 @@ input[type=number]{width:120px;cursor:text}
 
 <script src="/js/utils.js"></script>
 <script>
+const STAGES = [
+  { k:'new',        l:'Yangi',         c:'#C9A84C' },
+  { k:'phone',      l:'Tel. suhbat',   c:'#3B82C4' },
+  { k:'interview',  l:'Suhbat',        c:'#7C5CBF' },
+  { k:'interview2', l:'2-bosqich',     c:'#B5539C' },
+  { k:'trial',      l:'Sinov muddati', c:'#D98E2B' },
+  { k:'hired',      l:'Ishga olindi',  c:'#2E9E5B' },
+  { k:'reserve',    l:'Zaxira',        c:'#6B7A70' },
+  { k:'rejected',   l:'Rad etildi',    c:'#C25B4C' },
+];
+const STAGE_MAP = Object.fromEntries(STAGES.map(s=>[s.k,s]));
 const ROLE_LABELS = { ofitsiant:'Ofitsiant', barmen:'Barmen', xostess:'Xostess', oshpaz:'Oshpaz', kassir:'Kassir', menejer:'Menejer', boshqa:'Boshqa' };
 const ROLE_EMOJI  = { ofitsiant:'🍽', barmen:'🍸', xostess:'💁', oshpaz:'👨‍🍳', kassir:'🧾', menejer:'📋', boshqa:'👤' };
-const STATUS = {
-  new:      {l:'Yangi',        c:'#C9A84C'},
-  contacted:{l:"Bog'lanildi",  c:'#3B82C4'},
-  interview:{l:'Suhbat',       c:'#7C5CBF'},
-  trial:    {l:'Sinovda',      c:'#D98E2B'},
-  hired:    {l:'Ishga olindi', c:'#2E9E5B'},
-  rejected: {l:'Rad etildi',   c:'#C25B4C'},
-  reserve:  {l:'Zaxira',       c:'#6B7A70'},
-};
-const SOURCE_LABELS = { hh:'hh.uz', manual:"Qo'lda", referral:'Tavsiya', telegram:'Telegram', other:'Boshqa' };
+const SOURCE_LABELS = { hh:'hh.uz', manual:"Qo'lda", referral:'Tavsiya', telegram:'TG', other:'Boshqa' };
 
-let CANDIDATES = [];
+let ALL = [];
 let CURRENT = null;
 let curRating = 0;
-const filters = { q:'', role:'all', status:'all', language:'all', minExp:'', sort:'new' };
+let dragId = null;
+const filters = { q:'', role:'all', branch:'all', sort:'new' };
 
 const esc = s => String(s==null?'':s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const initials = n => String(n||'?').trim().split(/\s+/).map(w=>w[0]).join('').toUpperCase().slice(0,2) || '?';
-function stars(n){ n=n||0; let s=''; for(let i=1;i<=5;i++) s+=`<span class="${i<=n?'':'off'}">★</span>`; return s; }
+function daysAt(c){
+  const d = c.statusChangedAt || c.createdAt;
+  if(!d) return null;
+  return Math.max(0, Math.floor((Date.now()-new Date(d).getTime())/86400000));
+}
+function shortDate(d){ if(!d) return ''; const x=new Date(d); return x.toLocaleDateString('uz-UZ',{day:'2-digit',month:'short'}); }
 
 // ── Init ──
 (async function(){
   await requireRole('restaurant');
-  // Role filter options
-  const rSel = document.getElementById('fRole');
-  Object.keys(ROLE_LABELS).forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=ROLE_EMOJI[k]+' '+ROLE_LABELS[k]; rSel.appendChild(o); });
-  const sSel = document.getElementById('fStatus');
-  Object.keys(STATUS).forEach(k=>{ const o=document.createElement('option'); o.value=k; o.textContent=STATUS[k].l; sSel.appendChild(o); });
+  // Role filter + manual role select
+  const rSel = document.getElementById('fRole'), mnRole = document.getElementById('mnRole');
+  Object.keys(ROLE_LABELS).forEach(k=>{
+    rSel.insertAdjacentHTML('beforeend', `<option value="${k}">${ROLE_EMOJI[k]} ${ROLE_LABELS[k]}</option>`);
+    mnRole.insertAdjacentHTML('beforeend', `<option value="${k}">${ROLE_EMOJI[k]} ${ROLE_LABELS[k]}</option>`);
+  });
+  const mnStatus = document.getElementById('mnStatus');
+  STAGES.forEach(s=>mnStatus.insertAdjacentHTML('beforeend', `<option value="${s.k}">${s.l}</option>`));
 
-  // Listeners
   let t;
-  document.getElementById('q').addEventListener('input', e=>{ clearTimeout(t); t=setTimeout(()=>{ filters.q=e.target.value; loadList(); },350); });
-  document.getElementById('fRole').addEventListener('change', e=>{ filters.role=e.target.value; loadList(); });
-  document.getElementById('fStatus').addEventListener('change', e=>{ filters.status=e.target.value; loadList(); });
-  document.getElementById('fLang').addEventListener('change', e=>{ filters.language=e.target.value; loadList(); });
-  document.getElementById('fExp').addEventListener('input', e=>{ clearTimeout(t); t=setTimeout(()=>{ filters.minExp=e.target.value; loadList(); },350); });
-  document.getElementById('fSort').addEventListener('change', e=>{ filters.sort=e.target.value; loadList(); });
+  document.getElementById('q').addEventListener('input', e=>{ clearTimeout(t); t=setTimeout(()=>{ filters.q=e.target.value; load(); },320); });
+  document.getElementById('fRole').addEventListener('change', e=>{ filters.role=e.target.value; load(); });
+  document.getElementById('fBranch').addEventListener('change', e=>{ filters.branch=e.target.value; load(); });
+  document.getElementById('fSort').addEventListener('change', e=>{ filters.sort=e.target.value; load(); });
 
-  // Drag & drop
+  // Dropzone drag
   const dz = document.getElementById('dropzone');
   ['dragover','dragenter'].forEach(ev=>dz.addEventListener(ev, e=>{ e.preventDefault(); dz.classList.add('drag'); }));
   ['dragleave','dragend'].forEach(ev=>dz.addEventListener(ev, e=>{ e.preventDefault(); dz.classList.remove('drag'); }));
   dz.addEventListener('drop', e=>{ e.preventDefault(); dz.classList.remove('drag'); onFilePick(e.dataTransfer.files); });
-  document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeModal(); closeText(); } });
 
-  await Promise.all([loadStats(), loadList()]);
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeModal(); closeUpload(); closeManual(); } });
+
+  await load();
 })();
 
-// ── Load ──
+// ── Load & render ──
 function qs(){
   const p = new URLSearchParams();
-  Object.entries(filters).forEach(([k,v])=>{ if(v!=='' && v!=='all' && v!=null) p.set(k,v); });
+  if(filters.q) p.set('q', filters.q);
+  if(filters.role!=='all') p.set('role', filters.role);
+  if(filters.branch!=='all') p.set('branch', filters.branch); // (server branch filtri yo'q — client'da ham filtrlaymiz)
+  if(filters.sort) p.set('sort', filters.sort);
   return p.toString();
 }
-async function loadList(){
+async function load(){
   try{
-    CANDIDATES = await api('/api/recruitment?'+qs());
-    populateLangFilter();
-    renderList();
+    const list = await api('/api/recruitment?'+qs());     // server: q/role/sort bo'yicha
+    populateBranchFilter(list);                            // filial variantlari branch filtridan OLDIN
+    ALL = filters.branch!=='all' ? list.filter(c=>(c.branch||'')===filters.branch) : list;
+    document.getElementById('tbTotal').textContent = ALL.length;
+    renderBoard();
   }catch(e){ toast(e.message,'error'); }
 }
-async function loadStats(){
-  try{
-    const s = await api('/api/recruitment/stats');
-    renderStats(s);
-  }catch(e){ /* silent */ }
-}
-function renderStats(s){
-  const order = ['new','contacted','interview','trial','hired'];
-  const el = document.getElementById('stats');
-  let html = `<div class="stat" style="border-color:rgba(201,168,76,.4)"><b>${s.total||0}</b><span>Jami nomzod</span></div>`;
-  order.forEach(k=>{ html += `<div class="stat"><b style="color:${STATUS[k].c}">${s.byStatus?.[k]||0}</b><span>${STATUS[k].l}</span></div>`; });
-  el.innerHTML = html;
-}
-function populateLangFilter(){
-  const langs = new Set();
-  CANDIDATES.forEach(c=>(c.languages||[]).forEach(l=>l&&langs.add(l.trim())));
-  const sel = document.getElementById('fLang');
-  const cur = filters.language;
-  sel.innerHTML = '<option value="all">Barcha til</option>' + [...langs].sort().map(l=>`<option value="${esc(l)}" ${cur===l?'selected':''}>${esc(l)}</option>`).join('');
+function populateBranchFilter(list){
+  const set = new Set();
+  list.forEach(c=>{ if(c.branch) set.add(c.branch.trim()); });
+  const sel = document.getElementById('fBranch'), cur = filters.branch;
+  sel.innerHTML = '<option value="all">Barcha filial</option>' + [...set].sort().map(b=>`<option value="${esc(b)}" ${cur===b?'selected':''}>${esc(b)}</option>`).join('');
 }
 
-// ── Render list ──
-function renderList(){
-  const el = document.getElementById('list');
-  if(!CANDIDATES.length){
-    el.innerHTML = `<div class="empty">
-      <svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+function renderBoard(){
+  const board = document.getElementById('board');
+  if(!ALL.length){
+    board.innerHTML = `<div class="empty-board">
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       <h3>Hozircha nomzod yo'q</h3>
-      <p>Yuqoridan rezyume PDF fayllarini yuklang — AI ularni avtomat o'qib bazaga qo'shadi.</p>
+      <p>"Rezyume yuklash" yoki "Yangi nomzod" tugmasidan boshlang.</p>
     </div>`;
     return;
   }
-  el.innerHTML = '<div class="grid">' + CANDIDATES.map(cardHtml).join('') + '</div>';
-}
-function cardHtml(c){
-  const st = STATUS[c.status] || STATUS.new;
-  const role = ROLE_LABELS[c.role] || 'Boshqa';
-  const meta = [];
-  if(c.experienceYears) meta.push(`<span class="chip">⏱ ${c.experienceYears} yil</span>`);
-  if(c.location) meta.push(`<span class="chip">📍 ${esc(c.location)}</span>`);
-  (c.languages||[]).slice(0,3).forEach(l=>meta.push(`<span class="chip">${esc(l)}</span>`));
-  return `<div class="card" onclick="openDetail('${c.id}')">
-    <div class="card-top">
-      <div class="avatar">${esc(initials(c.fullName))}</div>
-      <div style="flex:1;min-width:0">
-        <div class="c-name">${esc(c.fullName||'Nomsiz')}</div>
-        <div class="c-pos">${ROLE_EMOJI[c.role]||'👤'} ${esc(c.desiredPosition||role)}</div>
+  board.innerHTML = STAGES.map(s=>{
+    const items = ALL.filter(c=>c.status===s.k);
+    const cards = items.length
+      ? items.map(cardHtml).join('')
+      : `<div class="col-empty">Bo'sh</div>`;
+    return `<div class="col">
+      <div class="col-head">
+        <span class="col-dot" style="background:${s.c}"></span>
+        <span class="col-name">${s.l}</span>
+        <span class="col-count">${items.length}</span>
       </div>
-      <span class="badge" style="background:${st.c}22;color:${st.c}">${st.l}</span>
+      <div class="col-body" data-stage="${s.k}"
+           ondragover="allowDrop(event,this)" ondragleave="leaveDrop(this)" ondrop="doDrop(event,'${s.k}')">
+        ${cards}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function cardHtml(c){
+  const role = ROLE_LABELS[c.role]||'Boshqa';
+  const d = daysAt(c);
+  const daysTxt = d===null ? '' : (d===0 ? 'Bugun' : d+' kun');
+  const warn = d!==null && d>=10 ? 'warn' : '';
+  const rate = c.rating>0 ? `<span class="kc-rate">★ ${c.rating.toFixed ? c.rating.toFixed(1) : c.rating}</span>` : '';
+  const rows = [];
+  if(c.branch) rows.push(`<div class="kc-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/></svg><span class="val">${esc(c.branch)}</span></div>`);
+  rows.push(`<div class="kc-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span class="val">${esc(c.phone||'—')}</span></div>`);
+  if(c.experienceYears) rows.push(`<div class="kc-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="val">${c.experienceYears} yil tajriba</span></div>`);
+  return `<div class="kcard" draggable="true" id="card_${c.id}"
+      ondragstart="startDrag(event,'${c.id}')" ondragend="endDrag()" onclick="openDetail('${c.id}')">
+    <span class="kc-src">${SOURCE_LABELS[c.source]||c.source||''}</span>
+    <div class="kc-top">
+      <div class="kc-av">${esc(initials(c.fullName))}${rate}</div>
+      <div style="flex:1;min-width:0;padding-right:38px">
+        <div class="kc-name">${esc(c.fullName||'Nomsiz')}</div>
+        <div class="kc-role">${ROLE_EMOJI[c.role]||'👤'} ${esc(c.desiredPosition||role)}</div>
+      </div>
     </div>
-    <div class="c-meta">${meta.join('')}</div>
-    <div class="c-foot">
-      <span class="c-phone">${esc(c.phone||'—')}</span>
-      <span class="stars">${stars(c.rating)}</span>
+    <div class="kc-rows">${rows.join('')}</div>
+    <div class="kc-foot">
+      <span class="kc-days ${warn}">⏱ ${daysTxt}</span>
+      <span>${shortDate(c.createdAt)}</span>
     </div>
   </div>`;
 }
 
+// ── Drag & drop ──
+function startDrag(ev,id){ dragId=id; ev.dataTransfer.effectAllowed='move'; ev.dataTransfer.setData('text/plain',id); setTimeout(()=>{ const el=document.getElementById('card_'+id); if(el)el.classList.add('dragging'); },0); }
+function endDrag(){ if(dragId){ const el=document.getElementById('card_'+dragId); if(el)el.classList.remove('dragging'); } dragId=null; document.querySelectorAll('.col-body').forEach(e=>e.classList.remove('drop-hover')); }
+function allowDrop(ev,el){ ev.preventDefault(); el.classList.add('drop-hover'); }
+function leaveDrop(el){ el.classList.remove('drop-hover'); }
+function doDrop(ev,stage){ ev.preventDefault(); document.querySelectorAll('.col-body').forEach(e=>e.classList.remove('drop-hover')); const id=dragId||ev.dataTransfer.getData('text/plain'); moveCard(id, stage); }
+
+async function moveCard(id, newStatus){
+  const c = ALL.find(x=>x.id===id);
+  if(!c || c.status===newStatus) return;
+  const prevStatus = c.status, prevChanged = c.statusChangedAt;
+  c.status = newStatus; c.statusChangedAt = new Date().toISOString();
+  renderBoard();
+  try{
+    await api('/api/recruitment/'+id, { method:'PATCH', body: JSON.stringify({ status:newStatus }) });
+    toast(STAGE_MAP[newStatus].l+'ga o\'tkazildi','success');
+  }catch(e){
+    c.status = prevStatus; c.statusChangedAt = prevChanged; renderBoard();
+    toast(e.message,'error');
+  }
+}
+
 // ── Detail ──
 async function openDetail(id){
+  if(dragId) return; // drag paytida ochilmasin
   try{
     CURRENT = await api('/api/recruitment/'+id);
     curRating = CURRENT.rating||0;
@@ -366,16 +461,17 @@ function setRating(n){ curRating=n; document.querySelectorAll('.star-input span'
 function renderModal(){
   const c = CURRENT;
   const roleOpts = Object.keys(ROLE_LABELS).map(k=>`<option value="${k}" ${c.role===k?'selected':''}>${ROLE_EMOJI[k]} ${ROLE_LABELS[k]}</option>`).join('');
-  const statusOpts = Object.keys(STATUS).map(k=>`<option value="${k}" ${c.status===k?'selected':''}>${STATUS[k].l}</option>`).join('');
+  const statusOpts = STAGES.map(s=>`<option value="${s.k}" ${c.status===s.k?'selected':''}>${s.l}</option>`).join('');
   const srcOpts = Object.keys(SOURCE_LABELS).map(k=>`<option value="${k}" ${c.source===k?'selected':''}>${SOURCE_LABELS[k]}</option>`).join('');
-  const aiBadge = c.aiParsed ? '<span class="ai-flag">AI tahlil qildi</span>' : '<span class="ai-flag no">AI o\'qiy olmadi — qo\'lda to\'ldiring</span>';
+  const aiBadge = c.aiParsed ? '<span class="ai-flag">AI tahlil qildi</span>' : '<span class="ai-flag no">Qo\'lda to\'ldiring</span>';
+  const d = daysAt(c);
 
   document.getElementById('modal').innerHTML = `
     <div class="modal-head">
-      <div class="avatar">${esc(initials(c.fullName))}</div>
+      <div class="kc-av">${esc(initials(c.fullName))}</div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:19px;font-weight:800">${esc(c.fullName||'Nomsiz')}</div>
-        <div style="font-size:12.5px;color:rgba(245,239,223,.75);margin-top:3px">${ROLE_EMOJI[c.role]||'👤'} ${esc(c.desiredPosition||ROLE_LABELS[c.role]||'')}</div>
+        <div class="mh-title">${esc(c.fullName||'Nomsiz')}</div>
+        <div class="mh-sub">${ROLE_EMOJI[c.role]||'👤'} ${esc(c.desiredPosition||ROLE_LABELS[c.role]||'')}${d!==null?' · '+(d===0?'Bugun qo\'shildi':d+' kun bu bosqichda'):''}</div>
         <div style="margin-top:8px">${aiBadge}</div>
       </div>
       <button class="modal-x" onclick="closeModal()">✕</button>
@@ -384,48 +480,47 @@ function renderModal(){
       ${c.summary ? `<div class="mb-sec"><div class="summary-box">${esc(c.summary)}</div></div>` : ''}
 
       <div class="mb-sec">
-        <h4>Holat va baho</h4>
+        <h4>Bosqich va baho</h4>
         <div class="row2">
-          <div class="field"><label>Holat</label><select id="mStatus">${statusOpts}</select></div>
+          <div class="field"><label>Bosqich</label><select id="mStatus">${statusOpts}</select></div>
           <div class="field"><label>Rol</label><select id="mRole">${roleOpts}</select></div>
         </div>
         <div class="field"><label>Baho</label><div class="star-input" id="mStars">${[1,2,3,4,5].map(i=>`<span class="${i<=curRating?'on':''}" onclick="setRating(${i})">★</span>`).join('')}</div></div>
       </div>
 
       <div class="mb-sec">
-        <h4>Aloqa</h4>
+        <h4>Aloqa va tafsilot</h4>
         <div class="row2">
           <div class="field"><label>Telefon</label><input id="mPhone" value="${esc(c.phone)}"></div>
           <div class="field"><label>Email</label><input id="mEmail" value="${esc(c.email)}"></div>
         </div>
         <div class="row2">
           <div class="field"><label>Lavozim</label><input id="mPos" value="${esc(c.desiredPosition)}"></div>
-          <div class="field"><label>Hudud</label><input id="mLoc" value="${esc(c.location)}"></div>
+          <div class="field"><label>Filial</label><input id="mBranch" value="${esc(c.branch)}"></div>
         </div>
         <div class="row2">
+          <div class="field"><label>Hudud</label><input id="mLoc" value="${esc(c.location)}"></div>
           <div class="field"><label>Tajriba (yil)</label><input type="number" id="mExp" min="0" value="${c.experienceYears||0}"></div>
+        </div>
+        <div class="row2">
           <div class="field"><label>Manba</label><select id="mSrc">${srcOpts}</select></div>
+          <div class="field"><label>Tillar (vergul bilan)</label><input id="mLangs" value="${esc((c.languages||[]).join(', '))}"></div>
         </div>
       </div>
 
       <div class="mb-sec">
-        <h4>Ma'lumot</h4>
+        <h4>Qo'shimcha</h4>
         ${c.experienceSummary ? `<div class="field"><label>Tajriba</label><div style="font-size:13.5px">${esc(c.experienceSummary)}</div></div>` : ''}
         ${c.education ? `<div class="field"><label>Ta'lim</label><div style="font-size:13.5px">${esc(c.education)}</div></div>` : ''}
         ${c.age ? `<div class="field"><label>Yosh</label><div style="font-size:13.5px">${c.age}</div></div>` : ''}
         ${c.salaryExpectation ? `<div class="field"><label>Kutilgan maosh</label><div style="font-size:13.5px">${esc(c.salaryExpectation)}</div></div>` : ''}
-        ${(c.skills&&c.skills.length) ? `<div class="field"><label>Ko'nikmalar</label><div>${c.skills.map(s=>`<span class="tag-badge" style="margin:2px">${esc(s)}</span>`).join(' ')}</div></div>` : ''}
-        <div class="field"><label>Tillar (vergul bilan)</label><input id="mLangs" value="${esc((c.languages||[]).join(', '))}"></div>
+        ${(c.skills&&c.skills.length) ? `<div class="field"><label>Ko'nikmalar</label><div>${c.skills.map(s=>`<span class="tag-badge">${esc(s)}</span>`).join('')}</div></div>` : ''}
         <div class="field"><label>Teglar (vergul bilan)</label><input id="mTags" value="${esc((c.tags||[]).join(', '))}"></div>
+        <div class="field"><label>Izohlar</label><textarea id="mNotes" placeholder="Suhbat, kuzatuv, kelishuvlar...">${esc(c.notes)}</textarea></div>
       </div>
 
       <div class="mb-sec">
-        <h4>Izohlar</h4>
-        <div class="field"><textarea id="mNotes" placeholder="Suhbat, kuzatuv, kelishuvlar...">${esc(c.notes)}</textarea></div>
-      </div>
-
-      <div class="mb-sec">
-        <span class="raw-toggle" onclick="const b=document.getElementById('rawBox'); b.style.display=b.style.display==='block'?'none':'block'">Original rezyume matnini ko'rsatish/yashirish</span>
+        <span class="raw-toggle" onclick="const b=document.getElementById('rawBox'); b.style.display=b.style.display==='block'?'none':'block'">Original rezyume matni</span>
         <div class="raw-box" id="rawBox">${esc(c.rawText||'(matn saqlanmagan)')}</div>
         ${c.hasFile ? `<div style="margin-top:10px"><a class="btn btn-ghost" href="/api/recruitment/${c.id}/file" target="_blank">📄 Original faylni ochish</a></div>` : ''}
       </div>
@@ -439,45 +534,41 @@ function renderModal(){
 async function saveDetail(id){
   const g = i => document.getElementById(i);
   const payload = {
-    status: g('mStatus').value,
-    role: g('mRole').value,
-    source: g('mSrc').value,
-    rating: curRating,
-    phone: g('mPhone').value,
-    email: g('mEmail').value,
-    desiredPosition: g('mPos').value,
-    location: g('mLoc').value,
-    experienceYears: g('mExp').value,
-    notes: g('mNotes').value,
-    languages: g('mLangs').value.split(',').map(s=>s.trim()).filter(Boolean),
-    tags: g('mTags').value.split(',').map(s=>s.trim()).filter(Boolean)
+    status:g('mStatus').value, role:g('mRole').value, source:g('mSrc').value, rating:curRating,
+    phone:g('mPhone').value, email:g('mEmail').value, desiredPosition:g('mPos').value,
+    location:g('mLoc').value, branch:g('mBranch').value, experienceYears:g('mExp').value, notes:g('mNotes').value,
+    languages:g('mLangs').value.split(',').map(s=>s.trim()).filter(Boolean),
+    tags:g('mTags').value.split(',').map(s=>s.trim()).filter(Boolean)
   };
   try{
     await api('/api/recruitment/'+id, { method:'PATCH', body: JSON.stringify(payload) });
-    toast('Saqlandi','success');
-    closeModal();
-    await Promise.all([loadStats(), loadList()]);
+    toast('Saqlandi','success'); closeModal(); await load();
   }catch(e){ toast(e.message,'error'); }
 }
 async function delCandidate(id){
   if(!confirm("Bu nomzodni o'chirishni tasdiqlaysizmi?")) return;
-  try{
-    await api('/api/recruitment/'+id, { method:'DELETE' });
-    toast("O'chirildi",'success');
-    closeModal();
-    await Promise.all([loadStats(), loadList()]);
-  }catch(e){ toast(e.message,'error'); }
+  try{ await api('/api/recruitment/'+id, { method:'DELETE' }); toast("O'chirildi",'success'); closeModal(); await load(); }
+  catch(e){ toast(e.message,'error'); }
 }
 
 // ── Upload ──
+function openUpload(){ document.getElementById('uploadOverlay').classList.add('show'); document.body.style.overflow='hidden'; }
+function closeUpload(){ document.getElementById('uploadOverlay').classList.remove('show'); document.body.style.overflow=''; }
+function switchTab(t){
+  document.getElementById('tabFile').classList.toggle('on', t==='file');
+  document.getElementById('tabText').classList.toggle('on', t==='text');
+  document.getElementById('paneFile').style.display = t==='file'?'block':'none';
+  document.getElementById('paneText').style.display = t==='text'?'block':'none';
+}
 async function onFilePick(fileList){
   const files = [...(fileList||[])];
   document.getElementById('fileInput').value='';
   if(!files.length) return;
   const fd = new FormData();
   files.forEach(f=>fd.append('files', f));
-  fd.append('source', document.getElementById('srcSelect').value);
-
+  fd.append('source', document.getElementById('uSource').value);
+  fd.append('branch', document.getElementById('uBranch').value);
+  closeUpload();
   const up = document.getElementById('uploading');
   document.getElementById('upText').textContent = files.length+' ta fayl yuklanmoqda...';
   up.classList.add('show');
@@ -485,42 +576,49 @@ async function onFilePick(fileList){
     const r = await apiForm('/api/recruitment/upload', fd);
     up.classList.remove('show');
     let msg = `${r.created} ta qo'shildi`;
-    if(r.duplicates) msg += `, ${r.duplicates} ta takror`;
-    if(r.failed) msg += `, ${r.failed} ta xato`;
-    toast(msg, r.failed && !r.created ? 'error' : 'success');
-    if(r.failed){
-      const bad = (r.items||[]).filter(i=>!i.ok);
-      if(bad.length) console.warn('Yuklanmagan fayllar:', bad);
-    }
-    await Promise.all([loadStats(), loadList()]);
+    if(r.duplicates) msg += `, ${r.duplicates} takror`;
+    if(r.failed) msg += `, ${r.failed} xato`;
+    toast(msg, r.failed && !r.created ? 'error':'success');
+    if(r.failed) console.warn('Yuklanmadi:', (r.items||[]).filter(i=>!i.ok));
+    await load();
   }catch(e){ up.classList.remove('show'); toast(e.message,'error'); }
 }
-
-function openText(){ document.getElementById('textOverlay').classList.add('show'); document.body.style.overflow='hidden'; }
-function closeText(){ document.getElementById('textOverlay').classList.remove('show'); document.body.style.overflow=''; document.getElementById('txtBody').value=''; document.getElementById('txtName').value=''; }
 async function submitText(){
   const text = document.getElementById('txtBody').value.trim();
   if(text.length<20){ toast('Matn juda qisqa','error'); return; }
+  const payload = { text, fileName:document.getElementById('txtName').value, source:document.getElementById('uSource').value, branch:document.getElementById('uBranch').value };
+  closeUpload();
+  document.getElementById('txtBody').value=''; document.getElementById('txtName').value='';
   const up = document.getElementById('uploading');
-  document.getElementById('upText').textContent = 'Tahlil qilinmoqda...';
-  closeText(); up.classList.add('show');
+  document.getElementById('upText').textContent = 'Tahlil qilinmoqda...'; up.classList.add('show');
   try{
-    const r = await api('/api/recruitment/upload-text', { method:'POST', body: JSON.stringify({ text, fileName: document.getElementById('txtName').value, source: document.getElementById('srcSelect').value }) });
+    const r = await api('/api/recruitment/upload-text', { method:'POST', body: JSON.stringify(payload) });
     up.classList.remove('show');
-    toast(r.duplicate ? 'Bu nomzod allaqachon bor (takror)' : "Nomzod qo'shildi", 'success');
-    await Promise.all([loadStats(), loadList()]);
+    toast(r.duplicate ? 'Bu nomzod allaqachon bor':'Nomzod qo\'shildi','success');
+    await load();
   }catch(e){ up.classList.remove('show'); toast(e.message,'error'); }
 }
 
-function resetFilters(){
-  filters.q=''; filters.role='all'; filters.status='all'; filters.language='all'; filters.minExp=''; filters.sort='new';
-  document.getElementById('q').value='';
-  document.getElementById('fRole').value='all';
-  document.getElementById('fStatus').value='all';
-  document.getElementById('fLang').value='all';
-  document.getElementById('fExp').value='';
-  document.getElementById('fSort').value='new';
-  loadList();
+// ── Manual create ──
+function openManual(){ document.getElementById('manualOverlay').classList.add('show'); document.body.style.overflow='hidden'; }
+function closeManual(){
+  document.getElementById('manualOverlay').classList.remove('show'); document.body.style.overflow='';
+  ['mnName','mnPhone','mnPos','mnBranch','mnLoc','mnLangs','mnNotes'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('mnExp').value='0';
+}
+async function submitManual(){
+  const g = i => document.getElementById(i);
+  const name = g('mnName').value.trim();
+  if(!name){ toast('Ism kiritilishi shart','error'); return; }
+  const payload = {
+    fullName:name, phone:g('mnPhone').value, desiredPosition:g('mnPos').value, role:g('mnRole').value,
+    branch:g('mnBranch').value, experienceYears:g('mnExp').value, location:g('mnLoc').value,
+    status:g('mnStatus').value, languages:g('mnLangs').value.split(',').map(s=>s.trim()).filter(Boolean), notes:g('mnNotes').value
+  };
+  try{
+    await api('/api/recruitment/manual', { method:'POST', body: JSON.stringify(payload) });
+    toast('Nomzod qo\'shildi','success'); closeManual(); await load();
+  }catch(e){ toast(e.message,'error'); }
 }
 </script>
 </body>

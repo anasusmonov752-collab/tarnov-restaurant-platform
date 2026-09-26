@@ -37,9 +37,11 @@ const CandidateSchema = new mongoose.Schema({
   fileType: { type: String, default: '' },
 
   // ── Admin boshqaruvi ──
-  source:  { type: String, default: 'hh' },           // hh | manual | referral | telegram | other
-  status:  { type: String, default: 'new' },          // new|contacted|interview|trial|hired|rejected|reserve
-  rating:  { type: Number, default: 0 },              // 0-5 qo'lda baho
+  branch:  { type: String, default: '' },              // filial/bo'lim (Podrazdelenie)
+  source:  { type: String, default: 'hh' },            // hh | manual | referral | telegram | other
+  status:  { type: String, default: 'new' },           // kanban bosqichi (VALID_STATUS)
+  statusChangedAt: { type: Date, default: Date.now },  // shu bosqichga qachon o'tgan ("N kun bu bosqichda")
+  rating:  { type: Number, default: 0 },               // 0-5 qo'lda baho
   notes:   { type: String, default: '' },
   tags:    { type: [String], default: [] },
   aiParsed:{ type: Boolean, default: false },          // AI tahlili muvaffaqiyatli bo'ldimi

@@ -122,6 +122,7 @@ router.post('/manual', guard, asyncHandler(async (req, res) => {
   const doc = await Candidate.create({
     id: uuidv4(),
     restaurantId: req.user.restaurantId,
+    photo: String(b.photo || '').slice(0, 400000),
     fullName: fullName.slice(0, 120),
     phone: String(b.phone || '').slice(0, 40),
     email: String(b.email || '').slice(0, 120),
@@ -183,6 +184,32 @@ router.get('/stats', guard, asyncHandler(async (req, res) => {
   res.json({ total, byStatus });
 }));
 
+// ── Voronka analitikasi ──
+router.get('/analytics', guard, asyncHandler(async (req, res) => {
+  const rid = req.user.restaurantId;
+  const [byStatusRows, bySourceRows, byRoleRows, hireRows] = await Promise.all([
+    Candidate.aggregate([{ $match: { restaurantId: rid } }, { $group: { _id: '$status', n: { $sum: 1 } } }]),
+    Candidate.aggregate([{ $match: { restaurantId: rid } }, { $group: { _id: '$source', n: { $sum: 1 } } }]),
+    Candidate.aggregate([{ $match: { restaurantId: rid } }, { $group: { _id: '$role',   n: { $sum: 1 } } }]),
+    Candidate.aggregate([
+      { $match: { restaurantId: rid, status: 'hired' } },
+      { $project: { days: { $divide: [{ $subtract: ['$statusChangedAt', '$createdAt'] }, 86400000] } } },
+      { $group: { _id: null, avg: { $avg: '$days' }, n: { $sum: 1 } } }
+    ])
+  ]);
+  const toMap = rows => { const m = {}; let t = 0; for (const r of rows) { m[r._id || 'boshqa'] = r.n; t += r.n; } return { map: m, total: t }; };
+  const st = toMap(byStatusRows);
+  res.json({
+    total: st.total,
+    byStatus: st.map,
+    bySource: toMap(bySourceRows).map,
+    byRole: toMap(byRoleRows).map,
+    hired: st.map.hired || 0,
+    rejected: st.map.rejected || 0,
+    avgDaysToHire: hireRows.length ? Math.round(hireRows[0].avg) : null
+  });
+}));
+
 // ── Bitta nomzod (to'liq, xom matn bilan, fayl base64'siz) ──
 router.get('/:id', guard, asyncHandler(async (req, res) => {
   const c = await Candidate.findOne({ restaurantId: req.user.restaurantId, id: req.params.id }, '-fileData').lean();
@@ -214,6 +241,7 @@ router.patch('/:id', guard, asyncHandler(async (req, res) => {
   if (b.source !== undefined)  doc.source = VALID_SOURCE.includes(b.source) ? b.source : 'hh';
   if (b.role !== undefined)    doc.role = isValidRole(b.role) ? b.role : 'boshqa';
   if (b.branch !== undefined)  doc.branch = String(b.branch).slice(0, 80);
+  if (b.photo !== undefined)   doc.photo = String(b.photo).slice(0, 400000); // ~kichik dataURL
   if (b.notes !== undefined)   doc.notes = String(b.notes).slice(0, 2000);
   if (b.rating !== undefined)  doc.rating = Math.max(0, Math.min(5, parseInt(b.rating, 10) || 0));
   if (b.fullName !== undefined)        doc.fullName = String(b.fullName).slice(0, 120);

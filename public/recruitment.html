@@ -146,11 +146,28 @@ button,input,select,textarea{font-family:inherit}
 .empty-board svg{opacity:.35;margin-bottom:14px}
 .empty-board h3{font-size:17px;color:var(--ink);font-weight:800;margin-bottom:6px}
 
+/* Skeleton loader */
+.sk-col{flex:none;width:290px;background:rgba(255,255,255,.5);border:1px solid var(--line);border-radius:14px;padding:12px;height:100%}
+.sk{background:linear-gradient(90deg,#E7EDF6 25%,#F3F7FC 37%,#E7EDF6 63%);background-size:400% 100%;animation:shim 1.3s ease infinite;border-radius:8px}
+@keyframes shim{0%{background-position:100% 0}100%{background-position:0 0}}
+.sk-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
+/* Analytics */
+.an-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px}
+.an-stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 13px}
+.an-stat b{font-size:24px;font-weight:800;display:block;line-height:1.1}
+.an-stat span{font-size:11.5px;color:var(--muted);font-weight:600}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:7px;font-size:12.5px}
+.bar-row .lbl{width:100px;flex:none;font-weight:700;color:var(--ink);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-track{flex:1;background:rgba(15,39,71,.06);border-radius:6px;height:22px;position:relative;overflow:hidden}
+.bar-fill{height:100%;border-radius:6px;min-width:3px}
+.bar-val{position:absolute;right:8px;top:0;line-height:22px;font-weight:800;font-size:11.5px;color:var(--ink)}
+.ph-btn{font-size:12px;color:#EAF1FF;font-weight:700;cursor:pointer;text-decoration:underline;background:rgba(255,255,255,.12);border:none;padding:5px 10px;border-radius:8px;margin-top:6px}
 @media(max-width:600px){
   .row2{grid-template-columns:1fr}
   .toolbar{padding:10px 12px}
   .board{padding:12px}
   .tb-total{display:none}
+  .an-grid{grid-template-columns:1fr 1fr}
 }
 </style>
 </head>
@@ -185,6 +202,10 @@ button,input,select,textarea{font-family:inherit}
     <option value="name">Ism (A-Z)</option>
   </select>
   <div class="tool-spacer"></div>
+  <button class="btn btn-ghost" onclick="openAnalytics()">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="7"/><rect x="12" y="6" width="3" height="11"/><rect x="17" y="13" width="3" height="4"/></svg>
+    Analitika
+  </button>
   <button class="btn btn-ghost" onclick="openUpload()">
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
     Rezyume yuklash
@@ -277,6 +298,16 @@ button,input,select,textarea{font-family:inherit}
   </div>
 </div>
 
+<!-- Analytics modal -->
+<div class="overlay" id="anOverlay" onclick="if(event.target===this)closeAnalytics()">
+  <div class="modal">
+    <div class="modal-head"><div><div class="mh-title">Voronka analitikasi</div><div class="mh-sub">Rekruting ko'rsatkichlari</div></div><button class="modal-x" onclick="closeAnalytics()">✕</button></div>
+    <div class="modal-body" id="anBody"></div>
+  </div>
+</div>
+
+<input type="file" id="photoInput" accept="image/*" style="display:none">
+
 <div id="toast-container"></div>
 
 <script src="/js/utils.js"></script>
@@ -311,6 +342,47 @@ function daysAt(c){
 }
 function shortDate(d){ if(!d) return ''; const x=new Date(d); return x.toLocaleDateString('uz-UZ',{day:'2-digit',month:'short'}); }
 
+// Ismdan barqaror (deterministik) avatar rangi — ro'yxatni jonlantiradi
+const AV_COLORS = ['#2563EB','#7C3AED','#DB2777','#0891B2','#0F766E','#C2410C','#B91C1C','#4F46E5','#0D9488','#9333EA','#E11D48','#2E7D32','#B45309','#0369A1'];
+function avatarColor(name){ let h=0; const s=String(name||'?'); for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return AV_COLORS[h%AV_COLORS.length]; }
+function avatarStyle(c){ return c.photo ? '' : `background:${avatarColor(c.fullName)};color:#fff`; }
+function avatarInner(c){ return c.photo ? `<img src="${esc(c.photo)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">` : esc(initials(c.fullName)); }
+
+// Chiroyli tasdiq oynasi (window.confirm o'rniga)
+function askConfirm(msg){
+  return new Promise(resolve=>{
+    const ov = document.createElement('div');
+    ov.className='overlay show';
+    ov.style.alignItems='center';
+    ov.innerHTML=`<div class="modal sm" style="max-width:380px">
+      <div style="padding:22px 22px 8px;font-size:15px;font-weight:700;color:var(--ink)">${esc(msg)}</div>
+      <div class="modal-foot" style="justify-content:flex-end;background:transparent;border-top:none">
+        <button class="btn btn-ghost" data-no>Bekor</button>
+        <button class="btn btn-danger" data-yes>Ha, o'chir</button>
+      </div></div>`;
+    document.body.appendChild(ov);
+    ov.querySelector('[data-yes]').onclick=()=>{ ov.remove(); resolve(true); };
+    ov.querySelector('[data-no]').onclick=()=>{ ov.remove(); resolve(false); };
+    ov.onclick=e=>{ if(e.target===ov){ ov.remove(); resolve(false); } };
+  });
+}
+
+// Rasmni kichraytirib base64 dataURL qaytaradi (~160px, JPEG)
+function compressImage(file, max=160){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    img.onload=()=>{
+      const scale=Math.min(1, max/Math.max(img.width,img.height));
+      const w=Math.round(img.width*scale), h=Math.round(img.height*scale);
+      const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      resolve(cv.toDataURL('image/jpeg',0.72));
+    };
+    img.onerror=reject;
+    const fr=new FileReader(); fr.onload=()=>img.src=fr.result; fr.onerror=reject; fr.readAsDataURL(file);
+  });
+}
+
 // ── Init ──
 (async function(){
   await requireRole('restaurant');
@@ -335,7 +407,7 @@ function shortDate(d){ if(!d) return ''; const x=new Date(d); return x.toLocaleD
   ['dragleave','dragend'].forEach(ev=>dz.addEventListener(ev, e=>{ e.preventDefault(); dz.classList.remove('drag'); }));
   dz.addEventListener('drop', e=>{ e.preventDefault(); dz.classList.remove('drag'); onFilePick(e.dataTransfer.files); });
 
-  document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeModal(); closeUpload(); closeManual(); } });
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeModal(); closeUpload(); closeManual(); closeAnalytics(); } });
 
   await load();
 })();
@@ -349,7 +421,14 @@ function qs(){
   if(filters.sort) p.set('sort', filters.sort);
   return p.toString();
 }
+function renderSkeleton(){
+  const board = document.getElementById('board');
+  if(board.querySelector('.kcard') || board.querySelector('.sk-col')) return; // faqat birinchi yuklashda
+  const card = '<div class="sk-card"><div style="display:flex;gap:10px"><div class="sk" style="width:42px;height:42px;border-radius:11px"></div><div style="flex:1"><div class="sk" style="height:12px;width:70%;margin-bottom:6px"></div><div class="sk" style="height:10px;width:45%"></div></div></div><div class="sk" style="height:10px;margin-top:12px"></div><div class="sk" style="height:10px;width:60%;margin-top:6px"></div></div>';
+  board.innerHTML = Array.from({length:4}).map((_,i)=>`<div class="sk-col"><div class="sk" style="height:14px;width:55%;margin-bottom:14px"></div>${card.repeat(i===0?3:2)}</div>`).join('');
+}
 async function load(){
+  renderSkeleton();
   try{
     const list = await api('/api/recruitment?'+qs());     // server: q/role/sort bo'yicha
     populateBranchFilter(list);                            // filial variantlari branch filtridan OLDIN
@@ -408,7 +487,7 @@ function cardHtml(c){
       ondragstart="startDrag(event,'${c.id}')" ondragend="endDrag()" onclick="openDetail('${c.id}')">
     <span class="kc-src">${SOURCE_LABELS[c.source]||c.source||''}</span>
     <div class="kc-top">
-      <div class="kc-av">${esc(initials(c.fullName))}${rate}</div>
+      <div class="kc-av" style="${avatarStyle(c)}">${avatarInner(c)}${rate}</div>
       <div style="flex:1;min-width:0;padding-right:38px">
         <div class="kc-name">${esc(c.fullName||'Nomsiz')}</div>
         <div class="kc-role">${ROLE_EMOJI[c.role]||'👤'} ${esc(c.desiredPosition||role)}</div>
@@ -468,11 +547,11 @@ function renderModal(){
 
   document.getElementById('modal').innerHTML = `
     <div class="modal-head">
-      <div class="kc-av">${esc(initials(c.fullName))}</div>
+      <div class="kc-av" style="${avatarStyle(c)}">${avatarInner(c)}</div>
       <div style="flex:1;min-width:0">
         <div class="mh-title">${esc(c.fullName||'Nomsiz')}</div>
         <div class="mh-sub">${ROLE_EMOJI[c.role]||'👤'} ${esc(c.desiredPosition||ROLE_LABELS[c.role]||'')}${d!==null?' · '+(d===0?'Bugun qo\'shildi':d+' kun bu bosqichda'):''}</div>
-        <div style="margin-top:8px">${aiBadge}</div>
+        <div style="margin-top:8px">${aiBadge} <button class="ph-btn" onclick="pickPhoto('${c.id}')">${c.photo?'Rasmni almashtirish':'Rasm yuklash'}</button></div>
       </div>
       <button class="modal-x" onclick="closeModal()">✕</button>
     </div>
@@ -546,7 +625,7 @@ async function saveDetail(id){
   }catch(e){ toast(e.message,'error'); }
 }
 async function delCandidate(id){
-  if(!confirm("Bu nomzodni o'chirishni tasdiqlaysizmi?")) return;
+  if(!(await askConfirm("Bu nomzodni o'chirishni tasdiqlaysizmi?"))) return;
   try{ await api('/api/recruitment/'+id, { method:'DELETE' }); toast("O'chirildi",'success'); closeModal(); await load(); }
   catch(e){ toast(e.message,'error'); }
 }
@@ -619,6 +698,63 @@ async function submitManual(){
     await api('/api/recruitment/manual', { method:'POST', body: JSON.stringify(payload) });
     toast('Nomzod qo\'shildi','success'); closeManual(); await load();
   }catch(e){ toast(e.message,'error'); }
+}
+
+// ── Foto yuklash ──
+let photoTargetId = null;
+function pickPhoto(id){ photoTargetId=id; document.getElementById('photoInput').click(); }
+document.getElementById('photoInput').addEventListener('change', async function(){
+  const file = this.files && this.files[0]; this.value='';
+  if(!file || !photoTargetId) return;
+  try{
+    const dataUrl = await compressImage(file, 160);
+    await api('/api/recruitment/'+photoTargetId, { method:'PATCH', body: JSON.stringify({ photo: dataUrl }) });
+    if(CURRENT && CURRENT.id===photoTargetId){ CURRENT.photo=dataUrl; renderModal(); }
+    toast('Rasm saqlandi','success');
+    await load();
+  }catch(e){ toast('Rasm yuklanmadi','error'); }
+});
+
+// ── Voronka analitikasi ──
+function openAnalytics(){
+  document.getElementById('anOverlay').classList.add('show');
+  document.body.style.overflow='hidden';
+  document.getElementById('anBody').innerHTML='<div style="text-align:center;padding:30px;color:var(--muted)">Yuklanmoqda...</div>';
+  api('/api/recruitment/analytics').then(renderAnalytics).catch(e=>{
+    document.getElementById('anBody').innerHTML='<div style="text-align:center;padding:30px;color:var(--danger)">'+esc(e.message)+'</div>';
+  });
+}
+function closeAnalytics(){ document.getElementById('anOverlay').classList.remove('show'); document.body.style.overflow=''; }
+
+function bars(obj, labelMap, colorMap){
+  const entries = Object.entries(obj||{}).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  if(!entries.length) return '<div style="color:var(--muted);font-size:12.5px">Ma\'lumot yo\'q</div>';
+  const mx = Math.max(...entries.map(e=>e[1]));
+  return entries.map(([k,v])=>{
+    const w = Math.round((v/mx)*100);
+    const col = (colorMap && colorMap[k]) || '#2563EB';
+    const lbl = (labelMap && labelMap[k]) || k;
+    return `<div class="bar-row"><span class="lbl">${esc(lbl)}</span><div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${col}"></div><span class="bar-val">${v}</span></div></div>`;
+  }).join('');
+}
+function renderAnalytics(a){
+  const stageColors = Object.fromEntries(STAGES.map(s=>[s.k,s.c]));
+  const stageLabels = Object.fromEntries(STAGES.map(s=>[s.k,s.l]));
+  const roleLabels = ROLE_LABELS;
+  const conv = a.total ? Math.round((a.hired/a.total)*100) : 0;
+  // Voronka bosqichlar tartibida (rad etilganni alohida ko'rsatamiz)
+  const funnelObj = {};
+  STAGES.filter(s=>s.k!=='rejected').forEach(s=>{ if((a.byStatus[s.k]||0)>0) funnelObj[s.k]=a.byStatus[s.k]; });
+  document.getElementById('anBody').innerHTML = `
+    <div class="an-grid">
+      <div class="an-stat"><b>${a.total}</b><span>Jami nomzod</span></div>
+      <div class="an-stat"><b style="color:#2E9E5B">${a.hired}</b><span>Ishga olindi (${conv}%)</span></div>
+      <div class="an-stat"><b>${a.avgDaysToHire==null?'—':a.avgDaysToHire}</b><span>O'rtacha yollash (kun)</span></div>
+    </div>
+    <div class="mb-sec"><h4>Bosqichlar bo'yicha (voronka)</h4>${bars(funnelObj, stageLabels, stageColors)}</div>
+    <div class="mb-sec"><h4>Manba bo'yicha</h4>${bars(a.bySource, SOURCE_LABELS)}</div>
+    <div class="mb-sec"><h4>Lavozim bo'yicha</h4>${bars(a.byRole, roleLabels)}</div>
+    ${a.rejected?`<div class="mb-sec"><h4>Rad etilgan</h4><div style="font-size:13px;color:var(--danger);font-weight:700">${a.rejected} ta nomzod</div></div>`:''}`;
 }
 </script>
 </body>

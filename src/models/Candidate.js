@@ -14,6 +14,8 @@ const CandidateSchema = new mongoose.Schema({
   id:           { type: String, required: true },     // uuid
   restaurantId: { type: String, required: true },
 
+  photo:             { type: String, default: '' },   // ixtiyoriy avatar (kichik base64 dataURL)
+
   // ── AI ajratib olgan maydonlar ──
   fullName:          { type: String, default: '' },
   phone:             { type: String, default: '' },

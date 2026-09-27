@@ -101,7 +101,7 @@ button,input,select,textarea{font-family:inherit}
 .mh-sub{font-size:12px;color:rgba(245,239,223,.75);margin-top:3px}
 .modal-x{margin-left:auto;background:rgba(255,255,255,.1);border:none;color:#F5EFDF;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;flex:none}
 .modal-x:hover{background:rgba(255,255,255,.2)}
-.modal-body{padding:18px 20px;max-height:64vh;overflow-y:auto}
+.modal-body{padding:22px 26px;max-height:68vh;overflow-y:auto}
 .mb-sec{margin-bottom:16px}
 .mb-sec h4{font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--gold-d);font-weight:800;margin-bottom:8px}
 .field{margin-bottom:10px}
@@ -163,9 +163,12 @@ button,input,select,textarea{font-family:inherit}
 .bar-val{position:absolute;right:8px;top:0;line-height:22px;font-weight:800;font-size:11.5px;color:var(--ink)}
 .ph-btn{font-size:12px;color:#EAF1FF;font-weight:700;cursor:pointer;text-decoration:underline;background:rgba(255,255,255,.12);border:none;padding:5px 10px;border-radius:8px;margin-top:6px}
 .fit-pill{font-size:11.5px;font-weight:800;padding:3px 10px;border-radius:20px;color:#fff;white-space:nowrap}
-.kv-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px 16px;margin-top:6px}
-.kv-l{font-size:11px;color:var(--muted);font-weight:700}
-.kv-v{font-size:13.5px;font-weight:700;color:var(--ink);margin-top:2px;word-break:break-word}
+#modal{max-width:820px}
+.glance{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 20px}
+.kv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px 26px}
+.kv-l{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--muted);font-weight:600}
+.kv-l svg{width:15px;height:15px;stroke:var(--gold-d);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.kv-v{font-size:14.5px;font-weight:700;color:var(--ink);margin-top:4px;word-break:break-word;line-height:1.35}
 .zone-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--gold-d);font-weight:800;padding:4px 0}
 .wh-row{display:grid;grid-template-columns:1fr 1fr 0.75fr auto;gap:6px;margin-bottom:6px;align-items:center}
 .wh-row input{padding:7px 9px;border:1px solid var(--line);border-radius:8px;font-size:12.5px;background:#fff;color:var(--ink);width:100%}
@@ -344,7 +347,18 @@ const STAGES = [
 ];
 const STAGE_MAP = Object.fromEntries(STAGES.map(s=>[s.k,s]));
 const ROLE_LABELS = { ofitsiant:'Ofitsiant', barmen:'Barmen', xostess:'Xostess', oshpaz:'Oshpaz', kassir:'Kassir', menejer:'Menejer', boshqa:'Boshqa' };
-const ROLE_EMOJI  = { ofitsiant:'🍽', barmen:'🍸', xostess:'💁', oshpaz:'👨‍🍳', kassir:'🧾', menejer:'📋', boshqa:'👤' };
+// Toza chiziqli ikonkalar (emoji o'rniga) — "Bir qarashda" faktlari uchun
+const FIC = {
+  lang:'<circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+  exp:'<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
+  age:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  shift:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  loc:'<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
+  branch:'<path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/>',
+  salary:'<path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+  phone:'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.98.36 1.92.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.89.34 1.83.57 2.81.7A2 2 0 0 1 22 16.92z"/>'
+};
+function fic(k){ return `<svg viewBox="0 0 24 24">${FIC[k]||''}</svg>`; }
 const SOURCE_LABELS = { hh:'hh.uz', manual:"Qo'lda", referral:'Tavsiya', telegram:'TG', other:'Boshqa' };
 const SHIFT = { kunduzgi:'Kunduzgi', kechki:'Kechki', ikkalasi:"Farqi yo'q" };
 function fitColor(s){ return s>=4 ? '#1E7A46' : s>=2.5 ? '#B4770F' : '#B91C1C'; }
@@ -412,8 +426,8 @@ function compressImage(file, max=160){
   // Role filter + manual role select
   const rSel = document.getElementById('fRole'), mnRole = document.getElementById('mnRole');
   Object.keys(ROLE_LABELS).forEach(k=>{
-    rSel.insertAdjacentHTML('beforeend', `<option value="${k}">${ROLE_EMOJI[k]} ${ROLE_LABELS[k]}</option>`);
-    mnRole.insertAdjacentHTML('beforeend', `<option value="${k}">${ROLE_EMOJI[k]} ${ROLE_LABELS[k]}</option>`);
+    rSel.insertAdjacentHTML('beforeend', `<option value="${k}">${ROLE_LABELS[k]}</option>`);
+    mnRole.insertAdjacentHTML('beforeend', `<option value="${k}">${ROLE_LABELS[k]}</option>`);
   });
   const mnStatus = document.getElementById('mnStatus');
   STAGES.forEach(s=>mnStatus.insertAdjacentHTML('beforeend', `<option value="${s.k}">${s.l}</option>`));
@@ -518,13 +532,13 @@ function cardHtml(c){
       <div class="kc-av" style="${avatarStyle(c)}">${avatarInner(c)}${rate}</div>
       <div style="flex:1;min-width:0;padding-right:38px">
         <div class="kc-name">${esc(c.fullName||'Nomsiz')}</div>
-        <div class="kc-role">${ROLE_EMOJI[c.role]||'👤'} ${esc(c.desiredPosition||role)}</div>
+        <div class="kc-role">${esc(c.desiredPosition||role)}</div>
         ${fitBadge}
       </div>
     </div>
     <div class="kc-rows">${rows.join('')}</div>
     <div class="kc-foot">
-      <span class="kc-days ${warn}">⏱ ${daysTxt}</span>
+      <span class="kc-days ${warn}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> ${daysTxt}</span>
       <span>${shortDate(c.createdAt)}</span>
     </div>
   </div>`;
@@ -582,7 +596,7 @@ function addWH(){ WH.push({company:'',position:'',period:''}); renderWH(); const
 function renderModal(){
   const c = CURRENT;
   WH = (c.workHistory||[]).map(w=>({ company:w.company||'', position:w.position||'', period:w.period||'' }));
-  const roleOpts = Object.keys(ROLE_LABELS).map(k=>`<option value="${k}" ${c.role===k?'selected':''}>${ROLE_EMOJI[k]} ${ROLE_LABELS[k]}</option>`).join('');
+  const roleOpts = Object.keys(ROLE_LABELS).map(k=>`<option value="${k}" ${c.role===k?'selected':''}>${ROLE_LABELS[k]}</option>`).join('');
   const statusOpts = STAGES.map(s=>`<option value="${s.k}" ${c.status===s.k?'selected':''}>${s.l}</option>`).join('');
   const srcOpts = Object.keys(SOURCE_LABELS).map(k=>`<option value="${k}" ${c.source===k?'selected':''}>${SOURCE_LABELS[k]}</option>`).join('');
   const aiBadge = c.aiParsed ? '<span class="ai-flag">AI tahlil qildi</span>' : '<span class="ai-flag no">Qo\'lda to\'ldiring</span>';
@@ -590,15 +604,15 @@ function renderModal(){
 
   const shiftOpts = ['','kunduzgi','kechki','ikkalasi'].map(k=>`<option value="${k}" ${c.shift===k?'selected':''}>${k?SHIFT[k]:'—'}</option>`).join('');
   const fitPill = c.fitScore>0 ? `<span class="fit-pill" style="background:${fitColor(c.fitScore)}">AI moslik ${c.fitScore}/5</span>` : '';
-  const kv = (label,val) => `<div><div class="kv-l">${label}</div><div class="kv-v">${val||'—'}</div></div>`;
+  const kv = (icon,label,val) => `<div><div class="kv-l">${fic(icon)} ${label}</div><div class="kv-v">${val||'—'}</div></div>`;
 
   document.getElementById('modal').innerHTML = `
     <div class="modal-head">
       <div class="kc-av" style="${avatarStyle(c)}">${avatarInner(c)}</div>
       <div style="flex:1;min-width:0">
         <div class="mh-title">${esc(c.fullName||'Nomsiz')}</div>
-        <div class="mh-sub">${ROLE_EMOJI[c.role]||'👤'} ${esc(c.desiredPosition||ROLE_LABELS[c.role]||'')}${d!==null?' · '+(d===0?'Bugun qo\'shildi':d+' kun bu bosqichda'):''}</div>
-        <div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">${fitPill} ${aiBadge} <button class="ph-btn" onclick="pickPhoto('${c.id}')">${c.hasPhoto?'Rasmni almashtirish':'Rasm yuklash'}</button>${!c.aiParsed?` <button class="ph-btn" onclick="reanalyzeOne('${c.id}')">🔄 Qayta tahlil</button>`:''}</div>
+        <div class="mh-sub">${esc(c.desiredPosition||ROLE_LABELS[c.role]||'')}${d!==null?' · '+(d===0?'Bugun qo\'shildi':d+' kun bu bosqichda'):''}</div>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">${fitPill} ${aiBadge} <button class="ph-btn" onclick="pickPhoto('${c.id}')">${c.hasPhoto?'Rasmni almashtirish':'Rasm yuklash'}</button>${!c.aiParsed?` <button class="ph-btn" onclick="reanalyzeOne('${c.id}')">Qayta tahlil</button>`:''}</div>
       </div>
       <button class="modal-x" onclick="closeModal()">✕</button>
     </div>
@@ -608,15 +622,17 @@ function renderModal(){
       ${c.fitReason ? `<div style="font-size:12.5px;color:var(--muted);margin-top:8px"><b style="color:${fitColor(c.fitScore)}">Moslik:</b> ${esc(c.fitReason)}</div>` : ''}
       <div class="mb-sec" style="margin-top:14px">
         <h4>Bir qarashda</h4>
-        <div class="kv-grid">
-          ${kv('🗣 Tillar', esc((c.languages||[]).join(', ')))}
-          ${kv('💼 Tajriba', c.experienceYears?c.experienceYears+' yil':'')}
-          ${kv('🎂 Yosh', c.age||'')}
-          ${kv('🕐 Smena', SHIFT[c.shift]||'')}
-          ${kv('📍 Hudud', esc(c.location))}
-          ${kv('🏢 Filial', esc(c.branch))}
-          ${kv('💰 Maosh', esc(c.salaryExpectation))}
-          ${kv('📞 Telefon', esc(c.phone))}
+        <div class="glance">
+          <div class="kv-grid">
+            ${kv('lang','Tillar', esc((c.languages||[]).join(', ')))}
+            ${kv('exp','Tajriba', c.experienceYears?c.experienceYears+' yil':'')}
+            ${kv('age','Yosh', c.age||'')}
+            ${kv('shift','Smena', SHIFT[c.shift]||'')}
+            ${kv('loc','Hudud', esc(c.location))}
+            ${kv('branch','Filial', esc(c.branch))}
+            ${kv('salary','Maosh', esc(c.salaryExpectation))}
+            ${kv('phone','Telefon', esc(c.phone))}
+          </div>
         </div>
       </div>
 
@@ -666,7 +682,7 @@ function renderModal(){
           <span class="raw-toggle" onclick="const b=document.getElementById('rawBox'); b.style.display=b.style.display==='block'?'none':'block'">Original rezyume matni</span>
           <div class="raw-box" id="rawBox">${esc(c.rawText||'(matn saqlanmagan)')}</div>
         </div>
-        ${c.hasFile ? `<div style="margin-top:10px"><a class="btn btn-ghost" href="/api/recruitment/${c.id}/file" target="_blank">📄 Original faylni ochish</a></div>` : ''}
+        ${c.hasFile ? `<div style="margin-top:10px"><a class="btn btn-ghost" href="/api/recruitment/${c.id}/file" target="_blank">Original faylni ochish</a></div>` : ''}
       </div>
     </div>
     <div class="modal-foot">

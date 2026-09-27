@@ -10,6 +10,13 @@ const mongoose = require('mongoose');
 // yuklab olgan rezyume fayllari. Platforma faqat o'qiydi, saralaydi va
 // saqlaydi — hech qanday tashqi saytga ulanmaydi.
 
+// Ish tarixi bandi — qaysi kompaniya, qaysi lavozimda, qancha muddat
+const WorkSchema = new mongoose.Schema({
+  company:  { type: String, default: '' },
+  position: { type: String, default: '' },
+  period:   { type: String, default: '' }   // masalan "2021-2023" yoki "2 yil"
+}, { _id: false });
+
 const CandidateSchema = new mongoose.Schema({
   id:           { type: String, required: true },     // uuid
   restaurantId: { type: String, required: true },
@@ -25,6 +32,7 @@ const CandidateSchema = new mongoose.Schema({
   role:              { type: String, default: 'boshqa' }, // normallashtirilgan: ROLE_KEYS yoki 'boshqa'
   experienceYears:   { type: Number, default: 0 },
   experienceSummary: { type: String, default: '' },
+  workHistory:       { type: [WorkSchema], default: [] }, // ish tarixi (kompaniya/lavozim/muddat)
   shift:             { type: String, default: '' },   // kunduzgi | kechki | ikkalasi
   fitScore:          { type: Number, default: 0 },    // AI moslik bahosi 0-5
   fitReason:         { type: String, default: '' },   // moslik sababi (qisqa, UZ)

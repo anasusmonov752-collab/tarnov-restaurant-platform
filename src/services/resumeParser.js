@@ -51,6 +51,7 @@ const SYSTEM_PROMPT = 'Sen HR yordamchisisan. Senga rezyume matni beriladi (rus 
 '  "location": "shahar yoki hudud",\n' +
 '  "age": "yoshi (son yoki null)",\n' +
 '  "education": "ta\'lim (qisqa)",\n' +
+'  "workHistory": [{"company":"kompaniya nomi","position":"lavozim","period":"ishlagan muddati (masalan: 2021-2023 yoki 2 yil)"}],\n' +
 '  "salaryExpectation": "kutilayotgan maosh (matn, bo\'lsa)",\n' +
 '  "shift": "ish smenasi — matndan aniqlansa faqat shulardan biri: kunduzgi | kechki | ikkalasi, aniqlanmasa bo\'sh",\n' +
 '  "fitScore": "nomzodning istagan lavozimiga (role/desiredPosition) umumiy mosligi 1 dan 5 gacha (yarim ball mumkin, masalan 4.5) — tajriba, til, ko\'nikma va ta\'limga qarab",\n' +
@@ -65,7 +66,7 @@ function emptyFields() {
     fullName: '', phone: '', email: '', desiredPosition: '', role: 'boshqa',
     experienceYears: 0, experienceSummary: '', skills: [], languages: [],
     location: '', age: null, education: '', salaryExpectation: '',
-    shift: '', fitScore: 0, fitReason: '', summary: ''
+    workHistory: [], shift: '', fitScore: 0, fitReason: '', summary: ''
   };
 }
 
@@ -97,6 +98,13 @@ function normalize(raw) {
   const age = toNum(raw.age);
   f.age               = (age >= 14 && age <= 90) ? age : null;
   f.education         = toStr(raw.education).slice(0, 200);
+  f.workHistory       = Array.isArray(raw.workHistory)
+    ? raw.workHistory.slice(0, 8).map(w => ({
+        company:  toStr(w && w.company).slice(0, 100),
+        position: toStr(w && w.position).slice(0, 100),
+        period:   toStr(w && w.period).slice(0, 60)
+      })).filter(w => w.company || w.position || w.period)
+    : [];
   f.salaryExpectation = toStr(raw.salaryExpectation).slice(0, 80);
   const sh = toStr(raw.shift).toLowerCase();
   f.shift             = ['kunduzgi', 'kechki', 'ikkalasi'].includes(sh) ? sh : '';

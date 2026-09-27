@@ -34,6 +34,16 @@ const upload = multer({
 
 function escapeRegex(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
+// Ish tarixi massivini tozalab, tipli qiladi (PATCH va qo'lda qo'shishda ishlatiladi)
+function sanitizeWork(arr) {
+  if (!Array.isArray(arr)) return null;
+  return arr.slice(0, 12).map(w => ({
+    company:  String((w && w.company)  || '').slice(0, 100),
+    position: String((w && w.position) || '').slice(0, 100),
+    period:   String((w && w.period)   || '').slice(0, 60)
+  })).filter(w => w.company || w.position || w.period);
+}
+
 // Bitta xom matndan (yoki fayldan) Candidate hujjati yasaydi va saqlaydi.
 async function buildAndSave({ restaurantId, rawText, fileName, fileType, fileBuffer, source, branch }) {
   const { fields, aiParsed } = await resumeParser.structure(rawText, restaurantId);
@@ -138,6 +148,7 @@ router.post('/manual', guard, asyncHandler(async (req, res) => {
     shift: ['kunduzgi', 'kechki', 'ikkalasi'].includes(b.shift) ? b.shift : '',
     branch: String(b.branch || '').slice(0, 80),
     languages: Array.isArray(b.languages) ? b.languages.map(s => String(s).trim()).filter(Boolean).slice(0, 25) : [],
+    workHistory: sanitizeWork(b.workHistory) || [],
     notes: String(b.notes || '').slice(0, 2000),
     source: VALID_SOURCE.includes(b.source) ? b.source : 'manual',
     status: VALID_STATUS.includes(b.status) ? b.status : 'new',
@@ -172,7 +183,7 @@ router.get('/', guard, asyncHandler(async (req, res) => {
     exp: { experienceYears: -1 }, name: { fullName: 1 }, rating: { rating: -1, createdAt: -1 },
     fit: { fitScore: -1, createdAt: -1 }
   };
-  const list = await Candidate.find(query, '-fileData -rawText -photo')
+  const list = await Candidate.find(query, '-fileData -rawText -photo -workHistory')
     .sort(sortMap[sort] || sortMap.new)
     .limit(1000)
     .lean();
@@ -294,6 +305,7 @@ router.patch('/:id', guard, asyncHandler(async (req, res) => {
   if (Array.isArray(b.tags))      doc.tags = b.tags.map(t => String(t).trim()).filter(Boolean).slice(0, 20);
   if (Array.isArray(b.languages)) doc.languages = b.languages.map(t => String(t).trim()).filter(Boolean).slice(0, 25);
   if (Array.isArray(b.skills))    doc.skills = b.skills.map(t => String(t).trim()).filter(Boolean).slice(0, 25);
+  if (Array.isArray(b.workHistory)) doc.workHistory = sanitizeWork(b.workHistory);
   doc.updatedAt = new Date();
   await doc.save();
 

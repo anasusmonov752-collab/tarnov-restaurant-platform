@@ -162,6 +162,11 @@ button,input,select,textarea{font-family:inherit}
 .bar-fill{height:100%;border-radius:6px;min-width:3px}
 .bar-val{position:absolute;right:8px;top:0;line-height:22px;font-weight:800;font-size:11.5px;color:var(--ink)}
 .ph-btn{font-size:12px;color:#EAF1FF;font-weight:700;cursor:pointer;text-decoration:underline;background:rgba(255,255,255,.12);border:none;padding:5px 10px;border-radius:8px;margin-top:6px}
+.fit-pill{font-size:11.5px;font-weight:800;padding:3px 10px;border-radius:20px;color:#fff;white-space:nowrap}
+.kv-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px 16px;margin-top:6px}
+.kv-l{font-size:11px;color:var(--muted);font-weight:700}
+.kv-v{font-size:13.5px;font-weight:700;color:var(--ink);margin-top:2px;word-break:break-word}
+.zone-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--gold-d);font-weight:800;padding:4px 0}
 @media(max-width:600px){
   .row2{grid-template-columns:1fr}
   .toolbar{padding:10px 12px}
@@ -197,6 +202,7 @@ button,input,select,textarea{font-family:inherit}
   <select class="sel" id="fSort">
     <option value="new">Yangi avval</option>
     <option value="old">Eski avval</option>
+    <option value="fit">AI moslik (yuqori)</option>
     <option value="exp">Ko'p tajriba</option>
     <option value="rating">Yuqori baho</option>
     <option value="name">Ism (A-Z)</option>
@@ -331,6 +337,8 @@ const STAGE_MAP = Object.fromEntries(STAGES.map(s=>[s.k,s]));
 const ROLE_LABELS = { ofitsiant:'Ofitsiant', barmen:'Barmen', xostess:'Xostess', oshpaz:'Oshpaz', kassir:'Kassir', menejer:'Menejer', boshqa:'Boshqa' };
 const ROLE_EMOJI  = { ofitsiant:'🍽', barmen:'🍸', xostess:'💁', oshpaz:'👨‍🍳', kassir:'🧾', menejer:'📋', boshqa:'👤' };
 const SOURCE_LABELS = { hh:'hh.uz', manual:"Qo'lda", referral:'Tavsiya', telegram:'TG', other:'Boshqa' };
+const SHIFT = { kunduzgi:'Kunduzgi', kechki:'Kechki', ikkalasi:"Farqi yo'q" };
+function fitColor(s){ return s>=4 ? '#1E7A46' : s>=2.5 ? '#B4770F' : '#B91C1C'; }
 
 let ALL = [];
 let CURRENT = null;
@@ -491,6 +499,8 @@ function cardHtml(c){
   if(c.branch) rows.push(`<div class="kc-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/></svg><span class="val">${esc(c.branch)}</span></div>`);
   rows.push(`<div class="kc-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span class="val">${esc(c.phone||'—')}</span></div>`);
   if(c.experienceYears) rows.push(`<div class="kc-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="val">${c.experienceYears} yil tajriba</span></div>`);
+  if(c.shift) rows.push(`<div class="kc-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="val">${SHIFT[c.shift]} smena</span></div>`);
+  const fitBadge = c.fitScore>0 ? `<div style="margin-top:6px"><span class="fit-pill" style="background:${fitColor(c.fitScore)};font-size:10px;padding:2px 8px">AI moslik ${c.fitScore}</span></div>` : '';
   return `<div class="kcard" draggable="true" id="card_${c.id}"
       ondragstart="startDrag(event,'${c.id}')" ondragend="endDrag()" onclick="openDetail('${c.id}')">
     <span class="kc-src">${SOURCE_LABELS[c.source]||c.source||''}</span>
@@ -499,6 +509,7 @@ function cardHtml(c){
       <div style="flex:1;min-width:0;padding-right:38px">
         <div class="kc-name">${esc(c.fullName||'Nomsiz')}</div>
         <div class="kc-role">${ROLE_EMOJI[c.role]||'👤'} ${esc(c.desiredPosition||role)}</div>
+        ${fitBadge}
       </div>
     </div>
     <div class="kc-rows">${rows.join('')}</div>
@@ -553,62 +564,77 @@ function renderModal(){
   const aiBadge = c.aiParsed ? '<span class="ai-flag">AI tahlil qildi</span>' : '<span class="ai-flag no">Qo\'lda to\'ldiring</span>';
   const d = daysAt(c);
 
+  const shiftOpts = ['','kunduzgi','kechki','ikkalasi'].map(k=>`<option value="${k}" ${c.shift===k?'selected':''}>${k?SHIFT[k]:'—'}</option>`).join('');
+  const fitPill = c.fitScore>0 ? `<span class="fit-pill" style="background:${fitColor(c.fitScore)}">AI moslik ${c.fitScore}/5</span>` : '';
+  const kv = (label,val) => `<div><div class="kv-l">${label}</div><div class="kv-v">${val||'—'}</div></div>`;
+
   document.getElementById('modal').innerHTML = `
     <div class="modal-head">
       <div class="kc-av" style="${avatarStyle(c)}">${avatarInner(c)}</div>
       <div style="flex:1;min-width:0">
         <div class="mh-title">${esc(c.fullName||'Nomsiz')}</div>
         <div class="mh-sub">${ROLE_EMOJI[c.role]||'👤'} ${esc(c.desiredPosition||ROLE_LABELS[c.role]||'')}${d!==null?' · '+(d===0?'Bugun qo\'shildi':d+' kun bu bosqichda'):''}</div>
-        <div style="margin-top:8px">${aiBadge} <button class="ph-btn" onclick="pickPhoto('${c.id}')">${c.hasPhoto?'Rasmni almashtirish':'Rasm yuklash'}</button>${!c.aiParsed?` <button class="ph-btn" onclick="reanalyzeOne('${c.id}')">🔄 Qayta tahlil</button>`:''}</div>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">${fitPill} ${aiBadge} <button class="ph-btn" onclick="pickPhoto('${c.id}')">${c.hasPhoto?'Rasmni almashtirish':'Rasm yuklash'}</button>${!c.aiParsed?` <button class="ph-btn" onclick="reanalyzeOne('${c.id}')">🔄 Qayta tahlil</button>`:''}</div>
       </div>
       <button class="modal-x" onclick="closeModal()">✕</button>
     </div>
     <div class="modal-body">
-      ${c.summary ? `<div class="mb-sec"><div class="summary-box">${esc(c.summary)}</div></div>` : ''}
-
-      <div class="mb-sec">
-        <h4>Bosqich va baho</h4>
-        <div class="row2">
-          <div class="field"><label>Bosqich</label><select id="mStatus">${statusOpts}</select></div>
-          <div class="field"><label>Rol</label><select id="mRole">${roleOpts}</select></div>
+      <!-- ZONA 1: BIR QARASHDA (o'qish uchun) -->
+      ${c.summary ? `<div class="summary-box">${esc(c.summary)}</div>` : ''}
+      ${c.fitReason ? `<div style="font-size:12.5px;color:var(--muted);margin-top:8px"><b style="color:${fitColor(c.fitScore)}">Moslik:</b> ${esc(c.fitReason)}</div>` : ''}
+      <div class="mb-sec" style="margin-top:14px">
+        <h4>Bir qarashda</h4>
+        <div class="kv-grid">
+          ${kv('🗣 Tillar', esc((c.languages||[]).join(', ')))}
+          ${kv('💼 Tajriba', c.experienceYears?c.experienceYears+' yil':'')}
+          ${kv('🎂 Yosh', c.age||'')}
+          ${kv('🕐 Smena', SHIFT[c.shift]||'')}
+          ${kv('📍 Hudud', esc(c.location))}
+          ${kv('🏢 Filial', esc(c.branch))}
+          ${kv('💰 Maosh', esc(c.salaryExpectation))}
+          ${kv('📞 Telefon', esc(c.phone))}
         </div>
-        <div class="field"><label>Baho</label><div class="star-input" id="mStars">${[1,2,3,4,5].map(i=>`<span class="${i<=curRating?'on':''}" onclick="setRating(${i})">★</span>`).join('')}</div></div>
       </div>
 
+      <!-- ZONA 2: REKRUTER QARORI -->
       <div class="mb-sec">
-        <h4>Aloqa va tafsilot</h4>
+        <h4>Rekruter qarori</h4>
+        <div class="row2">
+          <div class="field"><label>Bosqich</label><select id="mStatus">${statusOpts}</select></div>
+          <div class="field"><label>Smena</label><select id="mShift">${shiftOpts}</select></div>
+        </div>
+        <div class="field"><label>Baho</label><div class="star-input" id="mStars">${[1,2,3,4,5].map(i=>`<span class="${i<=curRating?'on':''}" onclick="setRating(${i})">★</span>`).join('')}</div></div>
+        <div class="field"><label>Teglar (vergul bilan)</label><input id="mTags" value="${esc((c.tags||[]).join(', '))}"></div>
+        <div class="field"><label>Izohlar</label><textarea id="mNotes" placeholder="Suhbat, kuzatuv, kelishuvlar...">${esc(c.notes)}</textarea></div>
+      </div>
+
+      <!-- ZONA 3: BATAFSIL / TAHRIRLASH (yig'iladigan) -->
+      <div class="zone-toggle" onclick="toggleZone('zoneEdit', this)"><span id="zoneEdit_ic">▸</span> Ma'lumotni tahrirlash va batafsil</div>
+      <div id="zoneEdit" style="display:none">
         <div class="row2">
           <div class="field"><label>Telefon</label><input id="mPhone" value="${esc(c.phone)}"></div>
           <div class="field"><label>Email</label><input id="mEmail" value="${esc(c.email)}"></div>
         </div>
         <div class="row2">
           <div class="field"><label>Lavozim</label><input id="mPos" value="${esc(c.desiredPosition)}"></div>
-          <div class="field"><label>Filial</label><input id="mBranch" value="${esc(c.branch)}"></div>
+          <div class="field"><label>Rol</label><select id="mRole">${roleOpts}</select></div>
         </div>
         <div class="row2">
           <div class="field"><label>Hudud</label><input id="mLoc" value="${esc(c.location)}"></div>
-          <div class="field"><label>Tajriba (yil)</label><input type="number" id="mExp" min="0" value="${c.experienceYears||0}"></div>
+          <div class="field"><label>Filial</label><input id="mBranch" value="${esc(c.branch)}"></div>
         </div>
         <div class="row2">
+          <div class="field"><label>Tajriba (yil)</label><input type="number" id="mExp" min="0" value="${c.experienceYears||0}"></div>
           <div class="field"><label>Manba</label><select id="mSrc">${srcOpts}</select></div>
-          <div class="field"><label>Tillar (vergul bilan)</label><input id="mLangs" value="${esc((c.languages||[]).join(', '))}"></div>
         </div>
-      </div>
-
-      <div class="mb-sec">
-        <h4>Qo'shimcha</h4>
-        ${c.experienceSummary ? `<div class="field"><label>Tajriba</label><div style="font-size:13.5px">${esc(c.experienceSummary)}</div></div>` : ''}
+        <div class="field"><label>Tillar (vergul bilan)</label><input id="mLangs" value="${esc((c.languages||[]).join(', '))}"></div>
+        ${c.experienceSummary ? `<div class="field"><label>Tajriba tafsiloti</label><div style="font-size:13.5px">${esc(c.experienceSummary)}</div></div>` : ''}
         ${c.education ? `<div class="field"><label>Ta'lim</label><div style="font-size:13.5px">${esc(c.education)}</div></div>` : ''}
-        ${c.age ? `<div class="field"><label>Yosh</label><div style="font-size:13.5px">${c.age}</div></div>` : ''}
-        ${c.salaryExpectation ? `<div class="field"><label>Kutilgan maosh</label><div style="font-size:13.5px">${esc(c.salaryExpectation)}</div></div>` : ''}
         ${(c.skills&&c.skills.length) ? `<div class="field"><label>Ko'nikmalar</label><div>${c.skills.map(s=>`<span class="tag-badge">${esc(s)}</span>`).join('')}</div></div>` : ''}
-        <div class="field"><label>Teglar (vergul bilan)</label><input id="mTags" value="${esc((c.tags||[]).join(', '))}"></div>
-        <div class="field"><label>Izohlar</label><textarea id="mNotes" placeholder="Suhbat, kuzatuv, kelishuvlar...">${esc(c.notes)}</textarea></div>
-      </div>
-
-      <div class="mb-sec">
-        <span class="raw-toggle" onclick="const b=document.getElementById('rawBox'); b.style.display=b.style.display==='block'?'none':'block'">Original rezyume matni</span>
-        <div class="raw-box" id="rawBox">${esc(c.rawText||'(matn saqlanmagan)')}</div>
+        <div style="margin-top:10px">
+          <span class="raw-toggle" onclick="const b=document.getElementById('rawBox'); b.style.display=b.style.display==='block'?'none':'block'">Original rezyume matni</span>
+          <div class="raw-box" id="rawBox">${esc(c.rawText||'(matn saqlanmagan)')}</div>
+        </div>
         ${c.hasFile ? `<div style="margin-top:10px"><a class="btn btn-ghost" href="/api/recruitment/${c.id}/file" target="_blank">📄 Original faylni ochish</a></div>` : ''}
       </div>
     </div>
@@ -617,11 +643,18 @@ function renderModal(){
       <button class="btn btn-gold" onclick="saveDetail('${c.id}')">Saqlash</button>
     </div>`;
 }
+function toggleZone(id, el){
+  const z = document.getElementById(id);
+  const open = z.style.display==='none';
+  z.style.display = open ? 'block' : 'none';
+  const ic = document.getElementById(id+'_ic'); if(ic) ic.textContent = open ? '▾' : '▸';
+}
 
 async function saveDetail(id){
   const g = i => document.getElementById(i);
   const payload = {
     status:g('mStatus').value, role:g('mRole').value, source:g('mSrc').value, rating:curRating,
+    shift:g('mShift').value,
     phone:g('mPhone').value, email:g('mEmail').value, desiredPosition:g('mPos').value,
     location:g('mLoc').value, branch:g('mBranch').value, experienceYears:g('mExp').value, notes:g('mNotes').value,
     languages:g('mLangs').value.split(',').map(s=>s.trim()).filter(Boolean),
@@ -772,7 +805,7 @@ async function reanalyzeAll(){
     if(stop) break;
   }
   up.classList.remove('show');
-  toast(`${ok} ta tahlil qilindi${fail?`, ${fail} qolди/xato`:''}`, fail&&!ok?'error':'success');
+  toast(`${ok} ta tahlil qilindi${fail?`, ${fail} qoldi/xato`:''}`, fail&&!ok?'error':'success');
   await load();
 }
 

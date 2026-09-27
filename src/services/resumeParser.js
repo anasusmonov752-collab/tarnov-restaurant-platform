@@ -52,6 +52,9 @@ const SYSTEM_PROMPT = 'Sen HR yordamchisisan. Senga rezyume matni beriladi (rus 
 '  "age": "yoshi (son yoki null)",\n' +
 '  "education": "ta\'lim (qisqa)",\n' +
 '  "salaryExpectation": "kutilayotgan maosh (matn, bo\'lsa)",\n' +
+'  "shift": "ish smenasi — matndan aniqlansa faqat shulardan biri: kunduzgi | kechki | ikkalasi, aniqlanmasa bo\'sh",\n' +
+'  "fitScore": "nomzodning istagan lavozimiga (role/desiredPosition) umumiy mosligi 1 dan 5 gacha (yarim ball mumkin, masalan 4.5) — tajriba, til, ko\'nikma va ta\'limga qarab",\n' +
+'  "fitReason": "moslik bahosi sababi — 1 qisqa jumla (o\'zbekcha)",\n' +
 '  "summary": "nomzod haqida 1-2 jumlalik qisqa xulosa (o\'zbekcha)"\n' +
 '}\n\n' +
 'Faqat JSON qaytar, boshqa matnsiz.';
@@ -61,7 +64,8 @@ function emptyFields() {
   return {
     fullName: '', phone: '', email: '', desiredPosition: '', role: 'boshqa',
     experienceYears: 0, experienceSummary: '', skills: [], languages: [],
-    location: '', age: null, education: '', salaryExpectation: '', summary: ''
+    location: '', age: null, education: '', salaryExpectation: '',
+    shift: '', fitScore: 0, fitReason: '', summary: ''
   };
 }
 
@@ -94,6 +98,11 @@ function normalize(raw) {
   f.age               = (age >= 14 && age <= 90) ? age : null;
   f.education         = toStr(raw.education).slice(0, 200);
   f.salaryExpectation = toStr(raw.salaryExpectation).slice(0, 80);
+  const sh = toStr(raw.shift).toLowerCase();
+  f.shift             = ['kunduzgi', 'kechki', 'ikkalasi'].includes(sh) ? sh : '';
+  const fs = parseFloat(String(raw.fitScore).replace(',', '.'));
+  f.fitScore          = Number.isFinite(fs) ? Math.round(Math.max(0, Math.min(5, fs)) * 10) / 10 : 0;
+  f.fitReason         = toStr(raw.fitReason).slice(0, 300);
   f.summary           = toStr(raw.summary).slice(0, 400);
   return f;
 }

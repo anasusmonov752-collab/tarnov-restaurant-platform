@@ -25,6 +25,9 @@ const CandidateSchema = new mongoose.Schema({
   role:              { type: String, default: 'boshqa' }, // normallashtirilgan: ROLE_KEYS yoki 'boshqa'
   experienceYears:   { type: Number, default: 0 },
   experienceSummary: { type: String, default: '' },
+  shift:             { type: String, default: '' },   // kunduzgi | kechki | ikkalasi
+  fitScore:          { type: Number, default: 0 },    // AI moslik bahosi 0-5
+  fitReason:         { type: String, default: '' },   // moslik sababi (qisqa, UZ)
   skills:            { type: [String], default: [] },
   languages:         { type: [String], default: [] },
   location:          { type: String, default: '' },

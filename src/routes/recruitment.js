@@ -135,6 +135,7 @@ router.post('/manual', guard, asyncHandler(async (req, res) => {
     role: isValidRole(b.role) ? b.role : 'boshqa',
     experienceYears: Math.max(0, Math.min(60, parseInt(b.experienceYears, 10) || 0)),
     location: String(b.location || '').slice(0, 80),
+    shift: ['kunduzgi', 'kechki', 'ikkalasi'].includes(b.shift) ? b.shift : '',
     branch: String(b.branch || '').slice(0, 80),
     languages: Array.isArray(b.languages) ? b.languages.map(s => String(s).trim()).filter(Boolean).slice(0, 25) : [],
     notes: String(b.notes || '').slice(0, 2000),
@@ -168,7 +169,8 @@ router.get('/', guard, asyncHandler(async (req, res) => {
 
   const sortMap = {
     new: { createdAt: -1 }, old: { createdAt: 1 },
-    exp: { experienceYears: -1 }, name: { fullName: 1 }, rating: { rating: -1, createdAt: -1 }
+    exp: { experienceYears: -1 }, name: { fullName: 1 }, rating: { rating: -1, createdAt: -1 },
+    fit: { fitScore: -1, createdAt: -1 }
   };
   const list = await Candidate.find(query, '-fileData -rawText -photo')
     .sort(sortMap[sort] || sortMap.new)
@@ -279,6 +281,7 @@ router.patch('/:id', guard, asyncHandler(async (req, res) => {
   if (b.source !== undefined)  doc.source = VALID_SOURCE.includes(b.source) ? b.source : 'hh';
   if (b.role !== undefined)    doc.role = isValidRole(b.role) ? b.role : 'boshqa';
   if (b.branch !== undefined)  doc.branch = String(b.branch).slice(0, 80);
+  if (b.shift !== undefined)   doc.shift = ['kunduzgi', 'kechki', 'ikkalasi'].includes(b.shift) ? b.shift : '';
   if (b.photo !== undefined)   { doc.photo = String(b.photo).slice(0, 400000); doc.hasPhoto = !!doc.photo; }
   if (b.notes !== undefined)   doc.notes = String(b.notes).slice(0, 2000);
   if (b.rating !== undefined)  doc.rating = Math.max(0, Math.min(5, parseInt(b.rating, 10) || 0));

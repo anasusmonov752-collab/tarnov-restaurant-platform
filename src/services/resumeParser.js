@@ -10,7 +10,7 @@
 const ai = require('./ai');
 const { ROLES, isValidRole } = require('../data/roles');
 
-const MAX_TEXT = 9000; // AI'ga yuboriladigan matn chegarasi (token nazorati)
+const MAX_TEXT = 15000; // AI'ga yuboriladigan matn chegarasi — ish tajribasi bo'limi ham sig'sin
 
 /** PDF buffer'dan matn ajratadi. pdf-parse lazy require — o'rnatilmagan bo'lsa aniq xato. */
 async function extractPdfText(buffer) {
@@ -51,7 +51,7 @@ const SYSTEM_PROMPT = 'Sen HR yordamchisisan. Senga rezyume matni beriladi (rus 
 '  "location": "shahar yoki hudud",\n' +
 '  "age": "yoshi (son yoki null)",\n' +
 '  "education": "ta\'lim (qisqa)",\n' +
-'  "workHistory": [{"company":"kompaniya nomi","position":"lavozim","period":"ishlagan muddati (masalan: 2021-2023 yoki 2 yil)"}],\n' +
+'  "workHistory": [{"company":"kompaniya nomi","position":"lavozim","period":"ishlagan muddati (masalan: 2021-2023 yoki 2 yil)"}],  // rezyumening "Опыт работы"/"Ish tajribasi" bo\'limidagi HAR BIR ish joyini, oxirgisidan boshlab, alohida band qilib yoz\n' +
 '  "salaryExpectation": "kutilayotgan maosh (matn, bo\'lsa)",\n' +
 '  "shift": "ish smenasi — matndan aniqlansa faqat shulardan biri: kunduzgi | kechki | ikkalasi, aniqlanmasa bo\'sh",\n' +
 '  "fitScore": "nomzodning istagan lavozimiga (role/desiredPosition) umumiy mosligi 1 dan 5 gacha (yarim ball mumkin, masalan 4.5) — tajriba, til, ko\'nikma va ta\'limga qarab",\n' +
@@ -148,7 +148,7 @@ async function structure(rawText, restaurantId) {
         messages: [{ role: 'user', content: text }],
         json: true,
         tier: 'smart',
-        maxTokens: 1200,
+        maxTokens: 1600,
         restaurantId
       });
       const fields = normalize(out);

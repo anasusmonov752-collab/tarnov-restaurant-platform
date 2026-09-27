@@ -12,9 +12,10 @@ const mongoose = require('mongoose');
 
 // Ish tarixi bandi — qaysi kompaniya, qaysi lavozimda, qancha muddat
 const WorkSchema = new mongoose.Schema({
-  company:  { type: String, default: '' },
-  position: { type: String, default: '' },
-  period:   { type: String, default: '' }   // masalan "2021-2023" yoki "2 yil"
+  company:     { type: String, default: '' },
+  position:    { type: String, default: '' },
+  period:      { type: String, default: '' },  // masalan "2021-2023" yoki "2 yil"
+  description: { type: String, default: '' }   // shu ish joyidagi majburiyatlar (rezyumeda yozilgani)
 }, { _id: false });
 
 const CandidateSchema = new mongoose.Schema({

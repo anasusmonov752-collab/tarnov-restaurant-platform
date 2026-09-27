@@ -38,10 +38,11 @@ function escapeRegex(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'
 function sanitizeWork(arr) {
   if (!Array.isArray(arr)) return null;
   return arr.slice(0, 12).map(w => ({
-    company:  String((w && w.company)  || '').slice(0, 100),
-    position: String((w && w.position) || '').slice(0, 100),
-    period:   String((w && w.period)   || '').slice(0, 60)
-  })).filter(w => w.company || w.position || w.period);
+    company:     String((w && w.company)     || '').slice(0, 100),
+    position:    String((w && w.position)    || '').slice(0, 100),
+    period:      String((w && w.period)      || '').slice(0, 60),
+    description: String((w && w.description) || '').slice(0, 600)
+  })).filter(w => w.company || w.position || w.period || w.description);
 }
 
 // Bitta xom matndan (yoki fayldan) Candidate hujjati yasaydi va saqlaydi.

@@ -170,15 +170,19 @@ button,input,select,textarea{font-family:inherit}
 .kv-l svg{width:15px;height:15px;stroke:var(--gold-d);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .kv-v{font-size:14.5px;font-weight:700;color:var(--ink);margin-top:4px;word-break:break-word;line-height:1.35}
 .zone-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--gold-d);font-weight:800;padding:4px 0}
-.wh-row{display:grid;grid-template-columns:1fr 1fr 0.75fr auto;gap:6px;margin-bottom:6px;align-items:center}
-.wh-row input{padding:7px 9px;border:1px solid var(--line);border-radius:8px;font-size:12.5px;background:#fff;color:var(--ink);width:100%}
-.wh-row input:focus{outline:none;border-color:var(--gold)}
-.wh-x{background:rgba(194,91,76,.1);color:var(--danger);border:none;border-radius:7px;width:28px;height:32px;cursor:pointer;font-size:15px;flex:none}
-.wh-add{font-size:12px;color:var(--gold-d);font-weight:700;cursor:pointer;background:none;border:1px dashed var(--line);border-radius:8px;padding:7px 11px;margin-top:2px}
+.wh-card{background:#fff;border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:10px;padding:12px 13px;margin-bottom:10px}
+.wh-head{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.wh-card input,.wh-card textarea{border:1px solid var(--line);border-radius:8px;font-size:13px;background:#fff;color:var(--ink);padding:8px 10px;font-family:inherit}
+.wh-card input:focus,.wh-card textarea:focus{outline:none;border-color:var(--gold)}
+.wh-pos{flex:1;font-weight:700}
+.wh-per{width:150px;flex:none}
+.wh-co{width:100%;margin-bottom:8px;color:var(--muted);font-weight:600}
+.wh-desc{width:100%;min-height:56px;resize:vertical;line-height:1.5}
+.wh-x{background:rgba(194,91,76,.1);color:var(--danger);border:none;border-radius:7px;width:30px;height:34px;cursor:pointer;font-size:14px;flex:none}
+.wh-x:hover{background:rgba(194,91,76,.2)}
+.wh-add{font-size:12.5px;color:var(--gold-d);font-weight:700;cursor:pointer;background:none;border:1px dashed var(--line);border-radius:8px;padding:8px 12px;margin-top:2px}
 .wh-add:hover{border-color:var(--gold)}
-.wh-view{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--line2)}
-.wh-dot{width:9px;height:9px;border-radius:50%;background:var(--gold);flex:none;margin-top:5px}
-@media(max-width:600px){ .wh-row{grid-template-columns:1fr 1fr auto} }
+@media(max-width:600px){ .wh-head{flex-wrap:wrap} .wh-per{width:100%} }
 @media(max-width:600px){
   .row2{grid-template-columns:1fr}
   .toolbar{padding:10px 12px}
@@ -584,18 +588,21 @@ function setRating(n){ curRating=n; document.querySelectorAll('.star-input span'
 function renderWH(){
   const el = document.getElementById('whList');
   if(!el) return;
-  el.innerHTML = WH.length ? WH.map((w,i)=>`<div class="wh-row">
-    <input placeholder="Kompaniya" value="${esc(w.company)}" oninput="WH[${i}].company=this.value">
-    <input placeholder="Lavozim" value="${esc(w.position)}" oninput="WH[${i}].position=this.value">
-    <input placeholder="Muddat" value="${esc(w.period)}" oninput="WH[${i}].period=this.value">
-    <button class="wh-x" title="O'chirish" onclick="WH.splice(${i},1);renderWH()">✕</button>
+  el.innerHTML = WH.length ? WH.map((w,i)=>`<div class="wh-card">
+    <div class="wh-head">
+      <input class="wh-pos" placeholder="Lavozim" value="${esc(w.position)}" oninput="WH[${i}].position=this.value">
+      <input class="wh-per" placeholder="Muddat (2021-2023)" value="${esc(w.period)}" oninput="WH[${i}].period=this.value">
+      <button class="wh-x" title="O'chirish" onclick="WH.splice(${i},1);renderWH()">✕</button>
+    </div>
+    <input class="wh-co" placeholder="Kompaniya" value="${esc(w.company)}" oninput="WH[${i}].company=this.value">
+    <textarea class="wh-desc" placeholder="Ish haqida — majburiyat va vazifalar" oninput="WH[${i}].description=this.value">${esc(w.description)}</textarea>
   </div>`).join('') : '<div style="font-size:12.5px;color:var(--muted);margin-bottom:6px">Ish tarixi kiritilmagan</div>';
 }
-function addWH(){ WH.push({company:'',position:'',period:''}); renderWH(); const el=document.getElementById('whList'); if(el){ const inp=el.querySelector('.wh-row:last-child input'); if(inp) inp.focus(); } }
+function addWH(){ WH.push({company:'',position:'',period:'',description:''}); renderWH(); const el=document.getElementById('whList'); if(el){ const inp=el.querySelector('.wh-card:last-child .wh-pos'); if(inp) inp.focus(); } }
 
 function renderModal(){
   const c = CURRENT;
-  WH = (c.workHistory||[]).map(w=>({ company:w.company||'', position:w.position||'', period:w.period||'' }));
+  WH = (c.workHistory||[]).map(w=>({ company:w.company||'', position:w.position||'', period:w.period||'', description:w.description||'' }));
   const roleOpts = Object.keys(ROLE_LABELS).map(k=>`<option value="${k}" ${c.role===k?'selected':''}>${ROLE_LABELS[k]}</option>`).join('');
   const statusOpts = STAGES.map(s=>`<option value="${s.k}" ${c.status===s.k?'selected':''}>${s.l}</option>`).join('');
   const srcOpts = Object.keys(SOURCE_LABELS).map(k=>`<option value="${k}" ${c.source===k?'selected':''}>${SOURCE_LABELS[k]}</option>`).join('');

@@ -193,6 +193,29 @@ router.get('/', guard, asyncHandler(async (req, res) => {
   res.json(list);
 }));
 
+// ── VAQTINCHA AI diagnostikasi (ochiq, sirlarni oshkor qilmaydi; tekshirilgach o'chiriladi) ──
+router.get('/ai-diag', asyncHandler(async (req, res) => {
+  const out = {
+    configured: ai.isConfigured(),
+    provider: ai.activeProvider(),
+    hasGeminiKey: !!process.env.GEMINI_API_KEY,
+    hasAnthropicKey: !!process.env.ANTHROPIC_API_KEY,
+    aiProviderEnv: process.env.AI_PROVIDER || null,
+    models: { fast: ai.MODELS.gemini.fast.id, smart: ai.MODELS.gemini.smart.id },
+    at: new Date().toISOString()
+  };
+  try { out.quota = await aiQuota.statusAll(); } catch (e) { out.quotaError = e.message; }
+  if (req.query.test === '1') {
+    try {
+      const r = await ai.complete({ messages: [{ role: 'user', content: 'Reply with the single word OK' }], maxTokens: 10, tier: 'smart' });
+      out.test = { ok: true, reply: String(r).slice(0, 120) };
+    } catch (e) {
+      out.test = { ok: false, code: e.code || null, error: String(e.message).slice(0, 400) };
+    }
+  }
+  res.json(out);
+}));
+
 // ── Statistika (holatlar bo'yicha, filtrsiz umumiy) ──
 router.get('/stats', guard, asyncHandler(async (req, res) => {
   const rows = await Candidate.aggregate([

@@ -7,6 +7,7 @@
 // prompt ikkalasini ham tushunadi. AI ishlamasa (kvota/xato) tahlil
 // aiParsed:false bilan qaytadi, lekin xom matn baribir saqlanadi.
 
+const zlib = require('zlib');
 const ai = require('./ai');
 const { ROLES, isValidRole } = require('../data/roles');
 
@@ -187,37 +188,135 @@ function jpegSize(buf, start, end) {
   return null;
 }
 
+/** PDF ichidan JPEG (DCTDecode) fotoni FF D8 ... FF D9 belgilaridan topadi. */
+function extractJpegPhoto(buffer) {
+  const n = buffer.length;
+  const found = [];
+  let i = 0;
+  while (i < n - 3) {
+    if (buffer[i] === 0xFF && buffer[i + 1] === 0xD8 && buffer[i + 2] === 0xFF) {
+      let j = i + 3;
+      while (j < n - 1 && !(buffer[j] === 0xFF && buffer[j + 1] === 0xD9)) j++;
+      if (j < n - 1) {
+        const end = j + 2, len = end - i;
+        if (len > 2500 && len < 900 * 1024) found.push({ start: i, end, len, dim: jpegSize(buffer, i, end) });
+        i = end; continue;
+      }
+    }
+    i++;
+  }
+  if (!found.length) return '';
+  const photoLike = found.filter(f => f.dim && Math.min(f.dim.w, f.dim.h) >= 80 && Math.max(f.dim.w, f.dim.h) <= 1400 && f.dim.w <= f.dim.h * 1.5);
+  const pool = photoLike.length ? photoLike : found;
+  pool.sort((a, b) => b.len - a.len);
+  const best = pool[0];
+  if (best.len > 600 * 1024) return '';
+  return 'data:image/jpeg;base64,' + buffer.slice(best.start, best.end).toString('base64');
+}
+
+// ── PNG yasash yordamchilari (xom pikseldan) ──
+function crc32(buf) {
+  let c = ~0;
+  for (let i = 0; i < buf.length; i++) {
+    c ^= buf[i];
+    for (let k = 0; k < 8; k++) c = (c >>> 1) ^ (0xEDB88320 & -(c & 1));
+  }
+  return (~c) >>> 0;
+}
+function pngChunk(type, data) {
+  const len = Buffer.alloc(4); len.writeUInt32BE(data.length, 0);
+  const body = Buffer.concat([Buffer.from(type, 'latin1'), data]);
+  const crc = Buffer.alloc(4); crc.writeUInt32BE(crc32(body), 0);
+  return Buffer.concat([len, body, crc]);
+}
+/** Xom pikselni (RGB/Gray) nearest-neighbor bilan kichraytiradi. */
+function downscale(raw, w, h, ch, maxDim) {
+  if (Math.max(w, h) <= maxDim) return { raw, w, h };
+  const scale = maxDim / Math.max(w, h);
+  const nw = Math.max(1, Math.round(w * scale)), nh = Math.max(1, Math.round(h * scale));
+  const out = Buffer.alloc(nw * nh * ch);
+  for (let y = 0; y < nh; y++) {
+    const sy = Math.min(h - 1, Math.floor(y / scale));
+    for (let x = 0; x < nw; x++) {
+      const sx = Math.min(w - 1, Math.floor(x / scale));
+      const si = (sy * w + sx) * ch, di = (y * nw + x) * ch;
+      for (let c = 0; c < ch; c++) out[di + c] = raw[si + c];
+    }
+  }
+  return { raw: out, w: nw, h: nh };
+}
+function rawToPng(raw, w, h, ch) {
+  const colorType = ch === 1 ? 0 : ch === 4 ? 6 : 2;
+  const rowLen = w * ch;
+  const filtered = Buffer.alloc((rowLen + 1) * h);
+  for (let y = 0; y < h; y++) {
+    filtered[y * (rowLen + 1)] = 0;
+    raw.copy(filtered, y * (rowLen + 1) + 1, y * rowLen, (y + 1) * rowLen);
+  }
+  const idat = zlib.deflateSync(filtered, { level: 9 });
+  const sig = Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(w, 0); ihdr.writeUInt32BE(h, 4);
+  ihdr[8] = 8; ihdr[9] = colorType;
+  return Buffer.concat([sig, pngChunk('IHDR', ihdr), pngChunk('IDAT', idat), pngChunk('IEND', Buffer.alloc(0))]);
+}
+
 /**
- * PDF ichidagi eng mos JPEG rasmni (odatda nomzod fotosi) topib base64 dataURL qaytaradi.
- * hh.uz rezyumelarida foto DCTDecode (JPEG) sifatida ichma-ich saqlanadi — buni
- * FF D8 ... FF D9 (JPEG boshi/oxiri) belgilaridan qidiramiz. Kutubxona kerak emas.
+ * PDF ichidagi FlateDecode rasm XObject'ni (hh fotosi shunday saqlanadi) topadi:
+ * zlib bilan ochib, xom pikseldan PNG yasaydi. 8-bit DeviceRGB/DeviceGray,
+ * predictorsiz holatni qo'llab-quvvatlaydi (hh rezyumelari aynan shunday).
+ */
+function extractFlatePhoto(buffer) {
+  const s = buffer.toString('latin1');
+  const rx = /\/Subtype\s*\/Image/g;
+  let m, best = null;
+  while ((m = rx.exec(s)) !== null) {
+    const streamKw = s.indexOf('stream', m.index);
+    if (streamKw < 0) continue;
+    const dict = s.slice(Math.max(0, m.index - 500), streamKw);
+    if (!/\/FlateDecode/.test(dict)) continue;
+    if (/\/Predictor/.test(dict)) continue;             // predictorli holat hozircha o'tkaziladi
+    if (/\/ImageMask\s*true/.test(dict)) continue;
+    const wM = dict.match(/\/Width\s+(\d+)/);
+    const hM = dict.match(/\/Height\s+(\d+)/);
+    if (!wM || !hM) continue;
+    const w = +wM[1], h = +hM[1];
+    const bpc = dict.match(/\/BitsPerComponent\s+(\d+)/);
+    if (bpc && +bpc[1] !== 8) continue;
+    if (Math.min(w, h) < 100 || Math.max(w, h) > 2000) continue;   // ikonka/banner emas
+    const ch = /\/DeviceRGB/.test(dict) ? 3 : /\/DeviceGray/.test(dict) ? 1 : /\/DeviceCMYK/.test(dict) ? 4 : 3;
+    if (ch === 4) continue;                              // CMYK'ni hozircha o'tkazamiz
+    let ds = streamKw + 6;
+    if (s[ds] === '\r') ds++;
+    if (s[ds] === '\n') ds++;
+    const endIdx = s.indexOf('endstream', ds);
+    if (endIdx < 0) continue;
+    const comp = buffer.slice(ds, endIdx);
+    let raw;
+    try { raw = zlib.inflateSync(comp); }
+    catch { try { raw = zlib.inflateRawSync(comp); } catch { continue; } }
+    const expected = w * h * ch;
+    if (raw.length < expected) continue;
+    const score = w * h * (ch === 3 ? 2 : 1);            // rangli fotoni afzal ko'ramiz
+    if (!best || score > best.score) best = { raw: raw.slice(0, expected), w, h, ch, score };
+  }
+  if (!best) return '';
+  try {
+    const d = downscale(best.raw, best.w, best.h, best.ch, 220);
+    const png = rawToPng(d.raw, d.w, d.h, best.ch);
+    if (png.length > 500 * 1024) return '';
+    return 'data:image/png;base64,' + png.toString('base64');
+  } catch { return ''; }
+}
+
+/**
+ * PDF ichidagi nomzod fotosini topib base64 dataURL qaytaradi.
+ * Avval JPEG (DCTDecode), topilmasa FlateDecode (xom RGB -> PNG). Kutubxonasiz.
  */
 function extractPhoto(buffer) {
   try {
     if (!buffer || buffer.length < 100) return '';
-    const n = buffer.length;
-    const found = [];
-    let i = 0;
-    while (i < n - 3) {
-      if (buffer[i] === 0xFF && buffer[i + 1] === 0xD8 && buffer[i + 2] === 0xFF) {
-        let j = i + 3;
-        while (j < n - 1 && !(buffer[j] === 0xFF && buffer[j + 1] === 0xD9)) j++;
-        if (j < n - 1) {
-          const end = j + 2, len = end - i;
-          if (len > 2500 && len < 900 * 1024) found.push({ start: i, end, len, dim: jpegSize(buffer, i, end) });
-          i = end; continue;
-        }
-      }
-      i++;
-    }
-    if (!found.length) return '';
-    // Foto-ga o'xshashlar: o'lchami ma'lum, kichik emas, portret/kvadrat nisbatda (banner/varaqni chetlab o'tamiz)
-    const photoLike = found.filter(f => f.dim && Math.min(f.dim.w, f.dim.h) >= 80 && Math.max(f.dim.w, f.dim.h) <= 1400 && f.dim.w <= f.dim.h * 1.5);
-    const pool = photoLike.length ? photoLike : found;
-    pool.sort((a, b) => b.len - a.len);
-    const best = pool[0];
-    if (best.len > 600 * 1024) return ''; // juda katta — hujjat shishmasligi uchun o'tkazib yuboramiz
-    return 'data:image/jpeg;base64,' + buffer.slice(best.start, best.end).toString('base64');
+    return extractJpegPhoto(buffer) || extractFlatePhoto(buffer) || '';
   } catch { return ''; }
 }
 

@@ -193,6 +193,22 @@ router.get('/', guard, asyncHandler(async (req, res) => {
   res.json(list);
 }));
 
+// ── VAQTINCHA: foto ajratish testi (ochiq; tekshirilgach o'chiriladi) ──
+router.post('/photo-test', upload.single('file'), asyncHandler(async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'fayl yo\'q' });
+  const photo = resumeParser.extractPhoto(req.file.buffer);
+  let textLen = 0;
+  try { textLen = (await resumeParser.extractText(req.file.buffer, req.file.mimetype, req.file.originalname) || '').length; } catch {}
+  res.json({
+    file: req.file.originalname,
+    sizeKB: Math.round(req.file.size / 1024),
+    photoFound: !!photo,
+    photoType: photo ? photo.slice(5, photo.indexOf(';')) : null,
+    photoB64KB: photo ? Math.round(photo.length / 1024) : 0,
+    textLen
+  });
+}));
+
 // ── Statistika (holatlar bo'yicha, filtrsiz umumiy) ──
 router.get('/stats', guard, asyncHandler(async (req, res) => {
   const rows = await Candidate.aggregate([

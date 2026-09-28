@@ -182,6 +182,29 @@ button,input,select,textarea{font-family:inherit}
 .wh-x:hover{background:rgba(194,91,76,.2)}
 .wh-add{font-size:12.5px;color:var(--gold-d);font-weight:700;cursor:pointer;background:none;border:1px dashed var(--line);border-radius:8px;padding:8px 12px;margin-top:2px}
 .wh-add:hover{border-color:var(--gold)}
+/* hh-uslub profil */
+.hh-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:14px 18px}
+.hh-btn{border-radius:10px;padding:9px 15px;font-size:13.5px;font-weight:700;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink);transition:.15s;white-space:nowrap}
+.hh-btn:hover{background:#F1F5FB;border-color:var(--gold)}
+.hh-btn.primary{background:#2563EB;color:#fff;border-color:#2563EB}
+.hh-btn.primary:hover{filter:brightness(1.06)}
+.hh-btn.danger{color:var(--danger);border-color:rgba(194,91,76,.3)}
+.hh-btn.danger:hover{background:rgba(194,91,76,.1)}
+.hh-spacer{flex:1}
+.hh-x{background:#fff;border:1px solid var(--line);color:var(--muted);width:36px;height:36px;border-radius:10px;cursor:pointer;font-size:16px;flex:none}
+.hh-x:hover{background:#F1F5FB}
+.hh-scroll{max-height:72vh;overflow-y:auto;padding:0 0 18px}
+.hh-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:12px 18px 0}
+.hh-h{font-size:15px;font-weight:800;color:var(--ink);margin-bottom:13px}
+.hh-name{font-size:22px;font-weight:800;color:var(--ink);line-height:1.2}
+.hh-photo{width:92px;height:92px;border-radius:14px;flex:none;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;color:#fff;overflow:hidden}
+.hh-chip{font-size:12px;font-weight:700;padding:5px 11px;border-radius:20px}
+.hh-sumbox{background:#F7F9FC;border:1px solid #EAEEF4;border-radius:12px;padding:13px 15px;margin-top:16px;font-size:13.5px;color:#2B303B;line-height:1.55}
+.tl-item{display:flex;gap:14px}
+.tl-l{display:flex;flex-direction:column;align-items:center;flex:none}
+.tl-dot{width:11px;height:11px;border-radius:50%;background:var(--gold);margin-top:5px;flex:none}
+.tl-bar{width:2px;flex:1;background:var(--line);margin:4px 0}
+.tl-body{flex:1;padding-bottom:16px}
 @media(max-width:600px){ .wh-head{flex-wrap:wrap} .wh-per{width:100%} }
 @media(max-width:600px){
   .row2{grid-template-columns:1fr}
@@ -606,103 +629,155 @@ function renderModal(){
   const roleOpts = Object.keys(ROLE_LABELS).map(k=>`<option value="${k}" ${c.role===k?'selected':''}>${ROLE_LABELS[k]}</option>`).join('');
   const statusOpts = STAGES.map(s=>`<option value="${s.k}" ${c.status===s.k?'selected':''}>${s.l}</option>`).join('');
   const srcOpts = Object.keys(SOURCE_LABELS).map(k=>`<option value="${k}" ${c.source===k?'selected':''}>${SOURCE_LABELS[k]}</option>`).join('');
-  const aiBadge = c.aiParsed ? '<span class="ai-flag">AI tahlil qildi</span>' : '<span class="ai-flag no">Qo\'lda to\'ldiring</span>';
   const d = daysAt(c);
-
+  const st = STAGE_MAP[c.status] || STAGES[0];
   const shiftOpts = ['','kunduzgi','kechki','ikkalasi'].map(k=>`<option value="${k}" ${c.shift===k?'selected':''}>${k?SHIFT[k]:'—'}</option>`).join('');
-  const fitPill = c.fitScore>0 ? `<span class="fit-pill" style="background:${fitColor(c.fitScore)}">AI moslik ${c.fitScore}/5</span>` : '';
+  const fitPill = c.fitScore>0 ? `<span class="hh-chip" style="background:${fitColor(c.fitScore)}22;color:${fitColor(c.fitScore)}">AI moslik ${c.fitScore}/5</span>` : '';
   const kv = (icon,label,val) => `<div><div class="kv-l">${fic(icon)} ${label}</div><div class="kv-v">${val||'—'}</div></div>`;
+  const tl = (c.workHistory&&c.workHistory.length) ? c.workHistory.map((w,i,arr)=>`
+    <div class="tl-item">
+      <div class="tl-l"><div class="tl-dot" style="${i>0?'background:#CBD2DC':''}"></div>${i<arr.length-1?'<div class="tl-bar"></div>':''}</div>
+      <div class="tl-body">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div style="font-size:15px;font-weight:800;color:var(--ink)">${esc(w.position||'—')}</div><div style="font-size:12.5px;color:var(--muted)">${esc(w.period||'')}</div></div>
+        ${w.company?`<div style="font-size:13.5px;color:var(--muted);margin-top:2px">${esc(w.company)}</div>`:''}
+        ${w.description?`<div style="font-size:13.5px;color:#3D4453;margin-top:7px;line-height:1.55">${esc(w.description)}</div>`:''}
+      </div>
+    </div>`).join('') : '<div style="font-size:13px;color:var(--muted)">Ish tarixi yo\'q</div>';
 
   document.getElementById('modal').innerHTML = `
-    <div class="modal-head">
-      <div class="kc-av" style="${avatarStyle(c)}">${avatarInner(c)}</div>
-      <div style="flex:1;min-width:0">
-        <div class="mh-title">${esc(c.fullName||'Nomsiz')}</div>
-        <div class="mh-sub">${esc(c.desiredPosition||ROLE_LABELS[c.role]||'')}${d!==null?' · '+(d===0?'Bugun qo\'shildi':d+' kun bu bosqichda'):''}</div>
-        <div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">${fitPill} ${aiBadge} <button class="ph-btn" onclick="pickPhoto('${c.id}')">${c.hasPhoto?'Rasmni almashtirish':'Rasm yuklash'}</button>${!c.aiParsed?` <button class="ph-btn" onclick="reanalyzeOne('${c.id}')">Qayta tahlil</button>`:''}</div>
-      </div>
-      <button class="modal-x" onclick="closeModal()">✕</button>
+    <div class="hh-top">
+      <button class="hh-btn primary" onclick="quickStage('${c.id}','interview')">Suhbatga chaqirish</button>
+      <button class="hh-btn" onclick="quickStage('${c.id}','reserve')">Zaxiraga</button>
+      <button class="hh-btn danger" onclick="quickStage('${c.id}','rejected')">Rad etish</button>
+      <div class="hh-spacer"></div>
+      ${!c.aiParsed?`<button class="hh-btn" onclick="reanalyzeOne('${c.id}')">Qayta tahlil</button>`:''}
+      <button class="hh-btn" onclick="showEdit()">Tahrirlash</button>
+      <button class="hh-x" onclick="closeModal()">✕</button>
     </div>
-    <div class="modal-body">
-      <!-- ZONA 1: BIR QARASHDA (o'qish uchun) -->
-      ${c.summary ? `<div class="summary-box">${esc(c.summary)}</div>` : ''}
-      ${c.fitReason ? `<div style="font-size:12.5px;color:var(--muted);margin-top:8px"><b style="color:${fitColor(c.fitScore)}">Moslik:</b> ${esc(c.fitReason)}</div>` : ''}
-      <div class="mb-sec" style="margin-top:14px">
-        <h4>Bir qarashda</h4>
-        <div class="glance">
+    <div class="hh-scroll">
+      <!-- O'QISH KO'RINISHI -->
+      <div id="viewRead">
+        <div class="hh-card">
+          <div style="display:flex;gap:18px">
+            <div class="hh-photo" style="${c.hasPhoto?'':`background:${avatarColor(c.fullName)}`}">${c.hasPhoto?`<img src="/api/recruitment/${c.id}/photo?v=${encodeURIComponent(c.updatedAt||'')}" style="width:100%;height:100%;object-fit:cover">`:esc(initials(c.fullName))}</div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                <div>
+                  <div class="hh-name">${esc(c.fullName||'Nomsiz')}</div>
+                  <div style="font-size:14px;color:var(--muted);margin-top:5px">${[c.age?c.age+' yosh':'', esc(c.desiredPosition||ROLE_LABELS[c.role]||'')].filter(Boolean).join(' · ')}</div>
+                  ${c.location?`<div style="font-size:14px;color:var(--muted);margin-top:4px;display:flex;align-items:center;gap:6px"><span class="kv-l" style="display:inline-flex">${fic('loc')}</span> ${esc(c.location)}</div>`:''}
+                </div>
+                ${c.salaryExpectation?`<div style="text-align:right"><div style="font-size:19px;font-weight:800;color:var(--ink)">${esc(c.salaryExpectation)}</div><div style="font-size:12px;color:var(--muted)">kutilayotgan maosh</div></div>`:''}
+              </div>
+              <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:12px">
+                ${fitPill}
+                <span class="hh-chip" style="background:${st.c}22;color:${st.c}">Bosqich: ${st.l}</span>
+                <span class="hh-chip" style="background:rgba(15,39,71,.06);color:var(--muted)">${SOURCE_LABELS[c.source]||c.source||''}</span>
+                ${d!==null?`<span class="hh-chip" style="background:rgba(15,39,71,.06);color:var(--muted)">${d===0?'Bugun qo\'shildi':d+' kun bu bosqichda'}</span>`:''}
+              </div>
+              <button class="ph-btn" style="background:rgba(37,99,235,.1);color:var(--gold-d);margin-top:12px" onclick="pickPhoto('${c.id}')">${c.hasPhoto?'Rasmni almashtirish':'Rasm yuklash'}</button>
+            </div>
+          </div>
+          ${c.summary?`<div class="hh-sumbox"><span style="color:#1D4ED8;font-weight:700">AI xulosa:</span> ${esc(c.summary)}</div>`:''}
+          ${c.fitReason?`<div style="font-size:13px;color:var(--muted);margin-top:10px"><b style="color:${fitColor(c.fitScore)}">Moslik:</b> ${esc(c.fitReason)}</div>`:''}
+        </div>
+
+        <div class="hh-card">
+          <div class="hh-h">Kontaktlar</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px 24px">
+            <div style="display:flex;align-items:center;gap:9px;font-size:14px;font-weight:700;color:var(--ink)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none">${FIC.phone}</svg> ${esc(c.phone||'—')}</div>
+            ${c.email?`<div style="display:flex;align-items:center;gap:9px;font-size:14px;font-weight:700;color:var(--ink)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg> ${esc(c.email)}</div>`:''}
+          </div>
+        </div>
+
+        <div class="hh-card">
+          <div class="hh-h">Bir qarashda</div>
           <div class="kv-grid">
             ${kv('lang','Tillar', esc((c.languages||[]).join(', ')))}
             ${kv('exp','Tajriba', c.experienceYears?c.experienceYears+' yil':'')}
             ${kv('age','Yosh', c.age||'')}
             ${kv('shift','Smena', SHIFT[c.shift]||'')}
-            ${kv('loc','Hudud', esc(c.location))}
             ${kv('branch','Filial', esc(c.branch))}
             ${kv('salary','Maosh', esc(c.salaryExpectation))}
-            ${kv('phone','Telefon', esc(c.phone))}
+          </div>
+        </div>
+
+        <div class="hh-card">
+          <div class="hh-h">Ish tajribasi</div>
+          ${tl}
+        </div>
+
+        ${(c.education||(c.skills&&c.skills.length))?`<div class="hh-card">
+          <div class="hh-h">Ta'lim va ko'nikmalar</div>
+          ${c.education?`<div style="font-size:13.5px;color:var(--ink);margin-bottom:${(c.skills&&c.skills.length)?'10px':'0'}">${esc(c.education)}</div>`:''}
+          ${(c.skills&&c.skills.length)?`<div>${c.skills.map(s=>`<span class="tag-badge">${esc(s)}</span>`).join('')}</div>`:''}
+        </div>`:''}
+
+        <div class="hh-card">
+          <div class="hh-h">Rezyume</div>
+          <span class="raw-toggle" onclick="const b=document.getElementById('rawBox'); b.style.display=b.style.display==='block'?'none':'block'">Original matnni ko'rsatish</span>
+          <div class="raw-box" id="rawBox">${esc(c.rawText||'(matn saqlanmagan)')}</div>
+          ${c.hasFile?`<div style="margin-top:10px"><a class="btn btn-ghost" href="/api/recruitment/${c.id}/file" target="_blank">Original faylni ochish</a></div>`:''}
+        </div>
+      </div>
+
+      <!-- TAHRIRLASH KO'RINISHI -->
+      <div id="viewEdit" style="display:none">
+        <div class="hh-card">
+          <div class="hh-h">Rekruter qarori</div>
+          <div class="row2">
+            <div class="field"><label>Bosqich</label><select id="mStatus">${statusOpts}</select></div>
+            <div class="field"><label>Smena</label><select id="mShift">${shiftOpts}</select></div>
+          </div>
+          <div class="field"><label>Baho</label><div class="star-input" id="mStars">${[1,2,3,4,5].map(i=>`<span class="${i<=curRating?'on':''}" onclick="setRating(${i})">★</span>`).join('')}</div></div>
+          <div class="field"><label>Teglar (vergul bilan)</label><input id="mTags" value="${esc((c.tags||[]).join(', '))}"></div>
+          <div class="field"><label>Izohlar</label><textarea id="mNotes" placeholder="Suhbat, kuzatuv, kelishuvlar...">${esc(c.notes)}</textarea></div>
+        </div>
+        <div class="hh-card">
+          <div class="hh-h">Ma'lumot</div>
+          <div class="row2">
+            <div class="field"><label>Telefon</label><input id="mPhone" value="${esc(c.phone)}"></div>
+            <div class="field"><label>Email</label><input id="mEmail" value="${esc(c.email)}"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label>Lavozim</label><input id="mPos" value="${esc(c.desiredPosition)}"></div>
+            <div class="field"><label>Rol</label><select id="mRole">${roleOpts}</select></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label>Hudud</label><input id="mLoc" value="${esc(c.location)}"></div>
+            <div class="field"><label>Filial</label><input id="mBranch" value="${esc(c.branch)}"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label>Tajriba (yil)</label><input type="number" id="mExp" min="0" value="${c.experienceYears||0}"></div>
+            <div class="field"><label>Manba</label><select id="mSrc">${srcOpts}</select></div>
+          </div>
+          <div class="field"><label>Tillar (vergul bilan)</label><input id="mLangs" value="${esc((c.languages||[]).join(', '))}"></div>
+        </div>
+        <div class="hh-card">
+          <div class="hh-h">Ish tajribasi</div>
+          <div id="whList"></div>
+          <button class="wh-add" onclick="addWH()">+ Ish joyi qo'shish</button>
+        </div>
+        <div style="display:flex;gap:10px;justify-content:space-between;padding:14px 18px 4px">
+          <button class="hh-btn danger" onclick="delCandidate('${c.id}')">O'chirish</button>
+          <div style="display:flex;gap:10px">
+            <button class="hh-btn" onclick="showRead()">Bekor</button>
+            <button class="hh-btn primary" onclick="saveDetail('${c.id}')">Saqlash</button>
           </div>
         </div>
       </div>
-
-      <!-- ISH TAJRIBASI (tarix) -->
-      <div class="mb-sec">
-        <h4>Ish tajribasi — kompaniya · lavozim · muddat</h4>
-        <div id="whList"></div>
-        <button class="wh-add" onclick="addWH()">+ Ish joyi qo'shish</button>
-      </div>
-
-      <!-- ZONA 2: REKRUTER QARORI -->
-      <div class="mb-sec">
-        <h4>Rekruter qarori</h4>
-        <div class="row2">
-          <div class="field"><label>Bosqich</label><select id="mStatus">${statusOpts}</select></div>
-          <div class="field"><label>Smena</label><select id="mShift">${shiftOpts}</select></div>
-        </div>
-        <div class="field"><label>Baho</label><div class="star-input" id="mStars">${[1,2,3,4,5].map(i=>`<span class="${i<=curRating?'on':''}" onclick="setRating(${i})">★</span>`).join('')}</div></div>
-        <div class="field"><label>Teglar (vergul bilan)</label><input id="mTags" value="${esc((c.tags||[]).join(', '))}"></div>
-        <div class="field"><label>Izohlar</label><textarea id="mNotes" placeholder="Suhbat, kuzatuv, kelishuvlar...">${esc(c.notes)}</textarea></div>
-      </div>
-
-      <!-- ZONA 3: BATAFSIL / TAHRIRLASH (yig'iladigan) -->
-      <div class="zone-toggle" onclick="toggleZone('zoneEdit', this)"><span id="zoneEdit_ic">▸</span> Ma'lumotni tahrirlash va batafsil</div>
-      <div id="zoneEdit" style="display:none">
-        <div class="row2">
-          <div class="field"><label>Telefon</label><input id="mPhone" value="${esc(c.phone)}"></div>
-          <div class="field"><label>Email</label><input id="mEmail" value="${esc(c.email)}"></div>
-        </div>
-        <div class="row2">
-          <div class="field"><label>Lavozim</label><input id="mPos" value="${esc(c.desiredPosition)}"></div>
-          <div class="field"><label>Rol</label><select id="mRole">${roleOpts}</select></div>
-        </div>
-        <div class="row2">
-          <div class="field"><label>Hudud</label><input id="mLoc" value="${esc(c.location)}"></div>
-          <div class="field"><label>Filial</label><input id="mBranch" value="${esc(c.branch)}"></div>
-        </div>
-        <div class="row2">
-          <div class="field"><label>Tajriba (yil)</label><input type="number" id="mExp" min="0" value="${c.experienceYears||0}"></div>
-          <div class="field"><label>Manba</label><select id="mSrc">${srcOpts}</select></div>
-        </div>
-        <div class="field"><label>Tillar (vergul bilan)</label><input id="mLangs" value="${esc((c.languages||[]).join(', '))}"></div>
-        ${c.experienceSummary ? `<div class="field"><label>Tajriba tafsiloti</label><div style="font-size:13.5px">${esc(c.experienceSummary)}</div></div>` : ''}
-        ${c.education ? `<div class="field"><label>Ta'lim</label><div style="font-size:13.5px">${esc(c.education)}</div></div>` : ''}
-        ${(c.skills&&c.skills.length) ? `<div class="field"><label>Ko'nikmalar</label><div>${c.skills.map(s=>`<span class="tag-badge">${esc(s)}</span>`).join('')}</div></div>` : ''}
-        <div style="margin-top:10px">
-          <span class="raw-toggle" onclick="const b=document.getElementById('rawBox'); b.style.display=b.style.display==='block'?'none':'block'">Original rezyume matni</span>
-          <div class="raw-box" id="rawBox">${esc(c.rawText||'(matn saqlanmagan)')}</div>
-        </div>
-        ${c.hasFile ? `<div style="margin-top:10px"><a class="btn btn-ghost" href="/api/recruitment/${c.id}/file" target="_blank">Original faylni ochish</a></div>` : ''}
-      </div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-danger" onclick="delCandidate('${c.id}')">O'chirish</button>
-      <button class="btn btn-gold" onclick="saveDetail('${c.id}')">Saqlash</button>
     </div>`;
   renderWH();
 }
-function toggleZone(id, el){
-  const z = document.getElementById(id);
-  const open = z.style.display==='none';
-  z.style.display = open ? 'block' : 'none';
-  const ic = document.getElementById(id+'_ic'); if(ic) ic.textContent = open ? '▾' : '▸';
+function showEdit(){ document.getElementById('viewRead').style.display='none'; document.getElementById('viewEdit').style.display='block'; const s=document.querySelector('.hh-scroll'); if(s)s.scrollTop=0; }
+function showRead(){ document.getElementById('viewEdit').style.display='none'; document.getElementById('viewRead').style.display='block'; }
+async function quickStage(id, status){
+  try{
+    await api('/api/recruitment/'+id, { method:'PATCH', body: JSON.stringify({ status }) });
+    toast((STAGE_MAP[status]?STAGE_MAP[status].l:status)+"ga o'tkazildi",'success');
+    CURRENT = await api('/api/recruitment/'+id); curRating=CURRENT.rating||0; renderModal();
+    await load();
+  }catch(e){ toast(e.message,'error'); }
 }
 
 async function saveDetail(id){

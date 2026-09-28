@@ -342,4 +342,22 @@ router.delete('/:id', guard, asyncHandler(async (req, res) => {
   res.json({ ok: true });
 }));
 
+// ── Guruh amallari (bir nechta nomzodni birdaniga) ──
+router.post('/bulk', guard, asyncHandler(async (req, res) => {
+  const b = req.body || {};
+  const ids = Array.isArray(b.ids) ? b.ids.slice(0, 500) : [];
+  if (!ids.length) return res.status(400).json({ error: 'Nomzod tanlanmagan' });
+  const q = { restaurantId: req.user.restaurantId, id: { $in: ids } };
+
+  if (b.action === 'delete') {
+    const r = await Candidate.deleteMany(q);
+    return res.json({ ok: true, deleted: r.deletedCount });
+  }
+  if (b.action === 'status' && VALID_STATUS.includes(b.status)) {
+    const r = await Candidate.updateMany(q, { $set: { status: b.status, statusChangedAt: new Date(), updatedAt: new Date() } });
+    return res.json({ ok: true, updated: r.modifiedCount });
+  }
+  return res.status(400).json({ error: 'Noto\'g\'ri amal' });
+}));
+
 module.exports = router;

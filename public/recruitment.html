@@ -76,6 +76,18 @@ button,input,select,textarea{font-family:inherit}
 .kcard{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;box-shadow:var(--shadow);transition:transform .12s,box-shadow .12s,border-color .12s;animation:pop .25s;position:relative}
 .kcard:hover{border-color:var(--gold);box-shadow:0 6px 18px rgba(16,32,24,.12);transform:translateY(-2px)}
 .kcard.dragging{opacity:.4}
+.kcard.sel{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold)}
+.kc-check{position:absolute;top:8px;left:8px;width:20px;height:20px;border-radius:6px;border:2px solid var(--line);background:#fff;z-index:6;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .12s}
+.kcard:hover .kc-check{opacity:1}
+.kcard.sel .kc-check{opacity:1;background:var(--gold);border-color:var(--gold)}
+.col-check{width:18px;height:18px;border-radius:5px;border:2px solid var(--line);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none}
+.col-check.on{background:var(--gold);border-color:var(--gold)}
+.bulk-bar{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:250;background:var(--green);color:#fff;border-radius:14px;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:10px;padding:10px 14px;animation:fadeup .2s;flex-wrap:wrap;max-width:94vw}
+.bulk-bar b{font-size:14px;font-weight:800}
+.bulk-bar .sep{width:1px;height:22px;background:rgba(255,255,255,.2)}
+.bulk-bar select{background:#0b1c33;color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:9px;padding:8px 10px;font-size:13px;cursor:pointer}
+.bulk-bar .bb-del{background:var(--danger);color:#fff;border:none;border-radius:9px;padding:8px 13px;font-size:13px;font-weight:700;cursor:pointer}
+.bulk-bar .bb-x{background:rgba(255,255,255,.12);color:#fff;border:none;border-radius:9px;padding:8px 12px;font-size:13px;font-weight:700;cursor:pointer}
 .kc-top{display:flex;gap:10px;align-items:flex-start}
 .kc-av{width:42px;height:42px;flex:none;border-radius:11px;background:linear-gradient(135deg,#1B3559,#0F2747);color:#9DBBF0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;position:relative}
 .kc-rate{position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);background:#fff;border:1px solid var(--line);border-radius:20px;font-size:9.5px;font-weight:800;color:var(--gold-d);padding:0 5px;line-height:15px;box-shadow:var(--shadow);white-space:nowrap}
@@ -358,6 +370,8 @@ button,input,select,textarea{font-family:inherit}
 
 <input type="file" id="photoInput" accept="image/*" style="display:none">
 
+<div id="bulkBar" class="bulk-bar" style="display:none"></div>
+
 <div id="toast-container"></div>
 
 <script src="/js/utils.js"></script>
@@ -395,6 +409,7 @@ let CURRENT = null;
 let curRating = 0;
 let WH = [];            // modaldagi ish tarixining ishchi nusxasi
 let dragId = null;
+let SEL = new Set();    // guruh amallari uchun tanlangan nomzodlar
 const filters = { q:'', role:'all', branch:'all', sort:'new' };
 
 const esc = s => String(s==null?'':s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -493,6 +508,7 @@ function renderSkeleton(){
 }
 async function load(){
   renderSkeleton();
+  SEL.clear();
   try{
     const list = await api('/api/recruitment?'+qs());     // server: q/role/sort bo'yicha
     populateBranchFilter(list);                            // filial variantlari branch filtridan OLDIN
@@ -526,11 +542,13 @@ function renderBoard(){
     const cards = items.length
       ? items.map(cardHtml).join('')
       : `<div class="col-empty">Bo'sh</div>`;
+    const allSel = items.length && items.every(c=>SEL.has(c.id));
     return `<div class="col">
       <div class="col-head">
         <span class="col-dot" style="background:${s.c}"></span>
         <span class="col-name">${s.l}</span>
         <span class="col-count">${items.length}</span>
+        ${items.length?`<span class="col-check ${allSel?'on':''}" onclick="toggleColSel('${s.k}')" title="Ustundagilarni tanlash">${allSel?'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>':''}</span>`:''}
       </div>
       <div class="col-body" data-stage="${s.k}"
            ondragover="allowDrop(event,this)" ondragleave="leaveDrop(this)" ondrop="doDrop(event,'${s.k}')">
@@ -538,6 +556,7 @@ function renderBoard(){
       </div>
     </div>`;
   }).join('');
+  renderBulkBar();
 }
 
 function cardHtml(c){
@@ -552,8 +571,9 @@ function cardHtml(c){
   if(c.experienceYears) rows.push(`<div class="kc-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="val">${c.experienceYears} yil tajriba</span></div>`);
   if(c.shift) rows.push(`<div class="kc-row"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="val">${SHIFT[c.shift]} smena</span></div>`);
   const fitBadge = c.fitScore>0 ? `<div style="margin-top:6px"><span class="fit-pill" style="background:${fitColor(c.fitScore)};font-size:10px;padding:2px 8px">AI moslik ${c.fitScore}</span></div>` : '';
-  return `<div class="kcard" draggable="true" id="card_${c.id}"
+  return `<div class="kcard ${SEL.has(c.id)?'sel':''}" draggable="true" id="card_${c.id}"
       ondragstart="startDrag(event,'${c.id}')" ondragend="endDrag()" onclick="openDetail('${c.id}')">
+    <span class="kc-check" onclick="toggleSel(event,'${c.id}')" title="Tanlash">${SEL.has(c.id)?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>':''}</span>
     <span class="kc-src">${SOURCE_LABELS[c.source]||c.source||''}</span>
     <div class="kc-top">
       <div class="kc-av" style="${avatarStyle(c)}">${avatarInner(c)}${rate}</div>
@@ -591,6 +611,53 @@ async function moveCard(id, newStatus){
     c.status = prevStatus; c.statusChangedAt = prevChanged; renderBoard();
     toast(e.message,'error');
   }
+}
+
+// ── Guruh tanlash (bulk) ──
+function toggleSel(ev, id){
+  ev.stopPropagation();
+  if(SEL.has(id)) SEL.delete(id); else SEL.add(id);
+  renderBoard(); renderBulkBar();
+}
+function toggleColSel(stage){
+  const items = ALL.filter(c=>c.status===stage);
+  const allSel = items.length && items.every(c=>SEL.has(c.id));
+  items.forEach(c=> allSel ? SEL.delete(c.id) : SEL.add(c.id));
+  renderBoard(); renderBulkBar();
+}
+function clearSel(){ SEL.clear(); renderBoard(); renderBulkBar(); }
+function renderBulkBar(){
+  const bar = document.getElementById('bulkBar');
+  if(!bar) return;
+  if(!SEL.size){ bar.style.display='none'; bar.innerHTML=''; return; }
+  const opts = STAGES.map(s=>`<option value="${s.k}">${s.l}</option>`).join('');
+  bar.innerHTML = `<b>${SEL.size} tanlandi</b>
+    <span class="sep"></span>
+    <select onchange="bulkStatus(this.value); this.selectedIndex=0">
+      <option value="">Bosqichga ko'chir…</option>${opts}
+    </select>
+    <button class="bb-del" onclick="bulkDelete()">O'chirish</button>
+    <button class="bb-x" onclick="clearSel()">Bekor</button>`;
+  bar.style.display='flex';
+}
+async function bulkStatus(stage){
+  if(!stage || !SEL.size) return;
+  const ids = [...SEL];
+  try{
+    await api('/api/recruitment/bulk', { method:'POST', body: JSON.stringify({ ids, action:'status', status:stage }) });
+    toast(`${ids.length} ta → ${STAGE_MAP[stage].l}`,'success');
+    SEL.clear(); await load();
+  }catch(e){ toast(e.message,'error'); }
+}
+async function bulkDelete(){
+  if(!SEL.size) return;
+  const ids = [...SEL];
+  if(!(await askConfirm(`${ids.length} ta nomzod o'chirilsinmi? Bu amalni qaytarib bo'lmaydi.`))) return;
+  try{
+    await api('/api/recruitment/bulk', { method:'POST', body: JSON.stringify({ ids, action:'delete' }) });
+    toast(`${ids.length} ta o'chirildi`,'success');
+    SEL.clear(); await load();
+  }catch(e){ toast(e.message,'error'); }
 }
 
 // ── Detail ──

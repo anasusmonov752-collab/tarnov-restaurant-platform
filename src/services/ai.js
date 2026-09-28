@@ -141,11 +141,32 @@ async function complete({ system, messages, json = false, schema, maxTokens = 10
       restaurantId
     );
   } catch (err) {
-    // Gemini kvotasi tugadi yoki xato berdi — Anthropic kaliti bo'lsa, unga o'tamiz.
-    const canFallback = provider === 'gemini' && process.env.ANTHROPIC_API_KEY;
-    if (!canFallback) throw err;
-    console.warn('[ai] Gemini ishlamadi, Anthropic zaxirasiga o\'tildi:', err.message);
-    text = await aiQuota.run(MODELS.anthropic[tier].id, () => completeAnthropic(args), restaurantId);
+    let recovered = false;
+    // 1) Gemini bo'lsa — boshqa Gemini modeliga o'tamiz (flash <-> flash-lite).
+    //    Ko'pincha bitta model 429 (kvota) beradi, ikkinchisida kvota qoladi.
+    if (provider === 'gemini') {
+      const otherTier = tier === 'smart' ? 'fast' : 'smart';
+      try {
+        console.warn(`[ai] ${MODELS.gemini[tier].id} ishlamadi (${err.message}) — ${MODELS.gemini[otherTier].id} ga o'tildi`);
+        text = await aiQuota.run(
+          MODELS.gemini[otherTier].id,
+          () => completeGemini({ ...args, tier: otherTier }),
+          restaurantId
+        );
+        recovered = true;
+      } catch (err2) {
+        console.warn('[ai] ikkinchi Gemini modeli ham ishlamadi:', err2.message);
+      }
+    }
+    // 2) Hali ham bo'lmasa — Anthropic zaxirasi (kalit bo'lsa).
+    if (!recovered) {
+      if (provider === 'gemini' && process.env.ANTHROPIC_API_KEY) {
+        console.warn('[ai] Anthropic zaxirasiga o\'tildi');
+        text = await aiQuota.run(MODELS.anthropic[tier].id, () => completeAnthropic(args), restaurantId);
+      } else {
+        throw err;
+      }
+    }
   }
 
   if (!json) return text;

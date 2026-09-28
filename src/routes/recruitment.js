@@ -206,11 +206,12 @@ router.get('/ai-diag', asyncHandler(async (req, res) => {
   };
   try { out.quota = await aiQuota.statusAll(); } catch (e) { out.quotaError = e.message; }
   if (req.query.test === '1') {
+    const tier = req.query.tier === 'fast' ? 'fast' : 'smart';
     try {
-      const r = await ai.complete({ messages: [{ role: 'user', content: 'Reply with the single word OK' }], maxTokens: 10, tier: 'smart' });
-      out.test = { ok: true, reply: String(r).slice(0, 120) };
+      const r = await ai.complete({ messages: [{ role: 'user', content: 'Reply with the single word OK' }], maxTokens: 10, tier });
+      out.test = { ok: true, tier, reply: String(r).slice(0, 120) };
     } catch (e) {
-      out.test = { ok: false, code: e.code || null, error: String(e.message).slice(0, 400) };
+      out.test = { ok: false, tier, code: e.code || null, error: String(e.message).slice(0, 400) };
     }
   }
   res.json(out);

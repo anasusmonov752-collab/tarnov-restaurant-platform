@@ -11,6 +11,8 @@ const { auth } = require('../middleware/auth');
 const { asyncHandler } = require('../middleware/errorHandler');
 const Candidate = require('../models/Candidate');
 const resumeParser = require('../services/resumeParser');
+const ai = require('../services/ai');
+const aiQuota = require('../services/aiQuota');
 const { isValidRole } = require('../data/roles');
 
 const router = express.Router();
@@ -218,6 +220,10 @@ router.get('/analytics', guard, asyncHandler(async (req, res) => {
   ]);
   const toMap = rows => { const m = {}; let t = 0; for (const r of rows) { m[r._id || 'boshqa'] = r.n; t += r.n; } return { map: m, total: t }; };
   const st = toMap(byStatusRows);
+  // AI diagnostikasi — nega tahlil ishlamayotganini ko'rish uchun
+  let aiInfo = { configured: ai.isConfigured(), provider: ai.activeProvider() };
+  try { aiInfo.quota = await aiQuota.statusAll(); } catch (e) { aiInfo.quotaError = e.message; }
+  const unparsed = await Candidate.countDocuments({ restaurantId: rid, aiParsed: false });
   res.json({
     total: st.total,
     byStatus: st.map,
@@ -225,7 +231,9 @@ router.get('/analytics', guard, asyncHandler(async (req, res) => {
     byRole: toMap(byRoleRows).map,
     hired: st.map.hired || 0,
     rejected: st.map.rejected || 0,
-    avgDaysToHire: hireRows.length ? Math.round(hireRows[0].avg) : null
+    avgDaysToHire: hireRows.length ? Math.round(hireRows[0].avg) : null,
+    ai: aiInfo,
+    unparsed
   });
 }));
 

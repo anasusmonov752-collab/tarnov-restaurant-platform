@@ -981,7 +981,17 @@ function renderAnalytics(a){
   // Voronka bosqichlar tartibida (rad etilganni alohida ko'rsatamiz)
   const funnelObj = {};
   STAGES.filter(s=>s.k!=='rejected').forEach(s=>{ if((a.byStatus[s.k]||0)>0) funnelObj[s.k]=a.byStatus[s.k]; });
+  const ai = a.ai || {};
+  const smart = (ai.quota||[]).find(q=>/flash$/.test(q.model)) || (ai.quota||[])[0];
+  let aiLine, aiColor;
+  if(!ai.configured){ aiLine = 'AI sozlanmagan — GEMINI_API_KEY yo\'q (Render sozlamalari)'; aiColor='#B91C1C'; }
+  else if(smart && smart.exhausted){ aiLine = `Kunlik AI limiti tugagan (${smart.used}/${smart.limit}) — ertaga tiklanadi`; aiColor='#B4770F'; }
+  else if(smart){ aiLine = `AI ishlayapti (${ai.provider}) · bugun ${smart.used}/${smart.limit||'∞'} so'rov`; aiColor='#1E7A46'; }
+  else { aiLine = `AI: ${ai.provider||'nomaʼlum'}`; aiColor='#1E7A46'; }
+  const aiBox = `<div style="background:${aiColor}14;border:1px solid ${aiColor}44;border-radius:10px;padding:11px 13px;margin-bottom:14px;font-size:13px;color:${aiColor};font-weight:700">AI holati: ${aiLine}${a.unparsed?` · o'qilmagan: ${a.unparsed}`:''}</div>`;
+
   document.getElementById('anBody').innerHTML = `
+    ${aiBox}
     <div class="an-grid">
       <div class="an-stat"><b>${a.total}</b><span>Jami nomzod</span></div>
       <div class="an-stat"><b style="color:#2E9E5B">${a.hired}</b><span>Ishga olindi (${conv}%)</span></div>

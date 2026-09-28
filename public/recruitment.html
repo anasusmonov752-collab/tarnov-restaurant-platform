@@ -498,9 +498,9 @@ async function load(){
     populateBranchFilter(list);                            // filial variantlari branch filtridan OLDIN
     ALL = filters.branch!=='all' ? list.filter(c=>(c.branch||'')===filters.branch) : list;
     document.getElementById('tbTotal').textContent = ALL.length;
-    const unparsed = ALL.filter(c=>!c.aiParsed).length;
+    const need = ALL.filter(c=>!c.aiParsed || !c.hasPhoto).length;
     const rb = document.getElementById('reanalyzeBtn');
-    if(rb){ rb.style.display = unparsed ? 'inline-flex' : 'none'; document.getElementById('reanalyzeCount').textContent = unparsed; }
+    if(rb){ rb.style.display = need ? 'inline-flex' : 'none'; document.getElementById('reanalyzeCount').textContent = need; }
     renderBoard();
   }catch(e){ toast(e.message,'error'); }
 }
@@ -659,7 +659,7 @@ function renderModal(){
       <button class="hh-btn" onclick="quickStage('${c.id}','reserve')">Zaxiraga</button>
       <button class="hh-btn danger" onclick="quickStage('${c.id}','rejected')">Rad etish</button>
       <div class="hh-spacer"></div>
-      ${!c.aiParsed?`<button class="hh-btn" onclick="reanalyzeOne('${c.id}')">Qayta tahlil</button>`:''}
+      <button class="hh-btn" onclick="reanalyzeOne('${c.id}')">Qayta tahlil</button>
       <button class="hh-btn" onclick="showEdit()">Tahrirlash</button>
       <button class="hh-x" onclick="closeModal()">✕</button>
     </div>
@@ -931,9 +931,9 @@ async function reanalyzeOne(id){
   }
 }
 async function reanalyzeAll(){
-  const targets = ALL.filter(c=>!c.aiParsed);
+  const targets = ALL.filter(c=>!c.aiParsed || !c.hasPhoto);
   if(!targets.length){ toast('Hammasi tahlil qilingan','info'); return; }
-  if(!(await askConfirm(targets.length+" ta nomzod AI bilan qayta tahlil qilinsinmi? (biroz vaqt oladi)"))) return;
+  if(!(await askConfirm(targets.length+" ta nomzod qayta tahlil qilinsinmi? Foto va ma'lumot yangilanadi (biroz vaqt oladi)"))) return;
   const up=document.getElementById('uploading'); const bar=document.getElementById('upBar');
   up.classList.add('show');
   const total=targets.length; let done=0, ok=0, fail=0, stop=false;

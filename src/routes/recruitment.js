@@ -264,19 +264,31 @@ router.post('/:id/reanalyze', guard, asyncHandler(async (req, res) => {
   if (!doc) return res.status(404).json({ error: 'Nomzod topilmadi' });
   if (!doc.rawText || doc.rawText.length < 20) return res.status(400).json({ error: 'Xom matn saqlanmagan — rezyumeni qayta yuklang' });
 
+  // Foto hali yo'q bo'lsa — saqlangan PDF'dan ajratishga urinamiz (AI'dan mustaqil)
+  let photoAdded = false;
+  if (!doc.hasPhoto && doc.fileData && /pdf/i.test(doc.fileType || '')) {
+    try {
+      const p = resumeParser.extractPhoto(Buffer.from(doc.fileData, 'base64'));
+      if (p) { doc.photo = p; doc.hasPhoto = true; photoAdded = true; }
+    } catch { /* e'tiborsiz */ }
+  }
+
   const { fields, aiParsed, error } = await resumeParser.structure(doc.rawText, req.user.restaurantId);
+  if (aiParsed) { Object.assign(doc, fields); doc.aiParsed = true; }
+
+  // Foto yoki AI natijasi bo'lsa — saqlaymiz
+  if (aiParsed || photoAdded) { doc.updatedAt = new Date(); await doc.save(); }
+
   if (!aiParsed) {
     return res.status(503).json({
+      photoAdded,
       error: error === 'QUOTA_EXHAUSTED'
         ? 'Kunlik AI limiti tugadi — ertaga qayta urinib ko\'ring'
         : 'AI hozir javob bermadi — birozdan keyin qayta urining'
     });
   }
-  Object.assign(doc, fields); // faqat AI ajratgan profil maydonlari — status/izoh/foto/teg tegilmaydi
-  doc.aiParsed = true;
-  doc.updatedAt = new Date();
-  await doc.save();
   const o = doc.toObject(); delete o.fileData; delete o.rawText; delete o.photo;
+  o.photoAdded = photoAdded;
   res.json(o);
 }));
 

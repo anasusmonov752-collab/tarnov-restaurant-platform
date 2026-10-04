@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RestoOne — Nomzodlar (hh ko'rinishi)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF3FB; --ink:#16233A; --green:#0F2747; --green2:#0A1B33;
+  --gold:#2563EB; --gold-d:#1D4ED8; --card:#FFFFFF; --line:#E1E8F2;
+  --muted:#64748B; --danger:#C25B4C; --ok:#2E9E5B;
+  --shadow:0 1px 3px rgba(16,32,24,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:rgba(15,39,71,.22);border-radius:6px}
+::-webkit-scrollbar-track{background:transparent}
+button,input,select{font-family:inherit}
+
+.topbar{flex:none;background:linear-gradient(180deg,var(--green),var(--green2));color:#F5EFDF;padding:13px 20px;display:flex;align-items:center;gap:14px;z-index:40}
+.back{display:flex;align-items:center;gap:7px;background:rgba(37,99,235,.15);border:1px solid rgba(37,99,235,.3);color:#F5EFDF;padding:8px 13px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;text-decoration:none}
+.back:hover{background:rgba(37,99,235,.26)}
+.tb-mark{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--gold),var(--gold-d));display:flex;align-items:center;justify-content:center}
+.tb-mark span{font-style:italic;font-weight:700;font-size:21px;color:#F4F9FF}
+.tb-title{font-size:17px;font-weight:800;line-height:1}
+.tb-sub{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(37,99,235,.85);font-weight:700;margin-top:3px}
+.tb-spacer{flex:1}
+.pv-flag{background:rgba(217,142,43,.18);border:1px solid rgba(217,142,43,.4);color:#F0C27A;font-size:11.5px;font-weight:700;padding:5px 11px;border-radius:8px}
+
+.wrap{flex:1;display:grid;grid-template-columns:252px 1fr;gap:16px;padding:16px 20px;overflow:hidden}
+
+/* ── Chap voronka ── */
+.side{overflow-y:auto;display:flex;flex-direction:column;gap:12px}
+.sbox{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}
+.sbox h3{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:9px;padding:0 4px}
+.sitem{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:9px;cursor:pointer;font-size:13.5px;font-weight:600;border:1px solid transparent}
+.sitem:hover{background:#F3F7FD}
+.sitem.on{background:rgba(37,99,235,.09);border-color:rgba(37,99,235,.25);color:var(--gold-d)}
+.sitem .dot{width:8px;height:8px;border-radius:50%;flex:none}
+.sitem .lbl{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sitem .cnt{font-size:12.5px;color:var(--muted);font-weight:700}
+.sitem.on .cnt{color:var(--gold-d)}
+.sitem.sub{padding-left:22px;font-weight:500;font-size:13px}
+
+/* ── O'ng ustun ── */
+.main{display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.hint{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 16px;font-size:14px;display:flex;align-items:center;gap:8px}
+.hint b{color:var(--gold-d)}
+.bulk{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.btn{font-weight:700;font-size:13px;border-radius:10px;padding:9px 15px;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink);display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.btn:hover{border-color:var(--gold);background:#F5F9FF}
+.btn-p{background:var(--gold);border-color:var(--gold);color:#fff}
+.btn-p:hover{background:var(--gold-d);border-color:var(--gold-d)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-sm{padding:7px 12px;font-size:12.5px}
+
+.list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding-right:4px}
+
+/* ── hh uslubidagi karta ── */
+.rc{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.rc.sel{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.rc-body{display:flex;gap:16px;padding:16px 18px}
+.rc-ph{width:112px;height:140px;flex:none;border-radius:10px;overflow:hidden;background:#E8EEF7;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:#8597AE;cursor:zoom-in}
+.rc-ph img{width:100%;height:100%;object-fit:cover}
+.rc-main{flex:1;min-width:0}
+.rc-pos{font-size:17px;font-weight:700;color:var(--gold-d);cursor:pointer;display:inline-block}
+.rc-pos:hover{text-decoration:underline}
+.rc-meta{font-size:13.5px;color:var(--ink);margin-top:4px}
+.rc-meta .sep{color:#C3CEDD;margin:0 7px}
+.rc-meta .dim{color:var(--muted)}
+.rc-tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+.tag{font-size:12px;font-weight:600;padding:4px 9px;border-radius:7px;background:#F1F5FA;color:var(--muted)}
+.tag.ok{background:rgba(46,158,91,.1);color:#1E7A46}
+.tag.ai{background:rgba(37,99,235,.1);color:var(--gold-d)}
+.rc-rows{margin-top:13px;border-top:1px solid var(--line)}
+.rc-row{display:grid;grid-template-columns:142px 1fr;gap:14px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px;align-items:baseline}
+.rc-row:last-child{border-bottom:none}
+.rc-k{color:var(--muted);font-weight:600}
+.rc-v{min-width:0}
+.rc-v .pt{color:#C3CEDD;margin:0 7px}
+.lnk{color:var(--gold-d);cursor:pointer;font-weight:600}
+.lnk:hover{text-decoration:underline}
+.rc-foot{display:flex;align-items:center;gap:9px;padding:11px 18px;background:#F8FAFD;border-top:1px solid var(--line);flex-wrap:wrap}
+.cb{width:19px;height:19px;border-radius:5px;border:2px solid #C3CEDD;background:#fff;cursor:pointer;flex:none;display:flex;align-items:center;justify-content:center}
+.cb.on{background:var(--gold);border-color:var(--gold)}
+.cb.on::after{content:'';width:5px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.foot-sp{flex:1}
+.icb{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);flex:none}
+.icb:hover{border-color:var(--gold);color:var(--gold-d)}
+.empty{text-align:center;padding:60px 20px;color:var(--muted);font-size:14px}
+.sk{background:var(--card);border:1px solid var(--line);border-radius:12px;height:230px;animation:pulse 1.4s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+
+/* ── Modal (tafsilot + tarix) ── */
+.ov{position:fixed;inset:0;background:rgba(16,32,24,.55);z-index:100;display:none;align-items:flex-start;justify-content:center;padding:28px 16px;overflow-y:auto}
+.ov.on{display:flex}
+.md{background:var(--card);border-radius:14px;width:100%;max-width:1000px;overflow:hidden}
+.md-top{display:flex;align-items:center;gap:9px;padding:14px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.md-x{margin-left:auto;width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:16px;color:var(--muted)}
+.md-grid{display:grid;grid-template-columns:1fr 290px;gap:18px;padding:18px}
+.md-box{border:1px solid var(--line);border-radius:12px;padding:15px}
+.md-box h4{font-size:15px;font-weight:700;margin-bottom:11px}
+.tl{position:relative;padding-left:18px}
+.tl::before{content:'';position:absolute;left:4px;top:5px;bottom:5px;width:2px;background:var(--line)}
+.tl-i{position:relative;padding-bottom:14px}
+.tl-i:last-child{padding-bottom:0}
+.tl-i::before{content:'';position:absolute;left:-18px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--gold);border:2px solid #fff}
+.tl-t{font-size:13.5px;font-weight:600}
+.tl-d{font-size:12px;color:var(--muted);margin-top:2px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:300;background:var(--green);color:#F5EFDF;padding:11px 18px;border-radius:11px;font-size:13.5px;font-weight:600;display:none}
+@media(max-width:1000px){.wrap{grid-template-columns:1fr}.side{display:none}.md-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="/recruitment.html" class="back">← Kanban</a>
+  <div class="tb-mark"><span>R</span></div>
+  <div><div class="tb-title">Nomzodlar bazasi</div><div class="tb-sub">hh ko'rinishi</div></div>
+  <div class="tb-spacer"></div>
+  <span class="pv-flag">PREVIEW</span>
+</div>
+
+<div class="wrap">
+  <aside class="side">
+    <div class="sbox">
+      <h3>Tanlov voronkasi</h3>
+      <div id="funnel"></div>
+    </div>
+    <div class="sbox">
+      <h3>Lavozim</h3>
+      <div id="roles"></div>
+    </div>
+  </aside>
+
+  <section class="main">
+    <div class="hint" id="hint">Yuklanmoqda…</div>
+    <div class="bulk">
+      <button class="btn btn-sm" id="bSelAll">Barchasini tanlash</button>
+      <button class="btn btn-sm btn-p" id="bInvite" disabled>Suhbatga chaqirish</button>
+      <button class="btn btn-sm" id="bReserve" disabled>Zaxiraga</button>
+      <button class="btn btn-sm" id="bReject" disabled>Rad etish</button>
+      <span style="font-size:12.5px;color:var(--muted);font-weight:600" id="selCnt"></span>
+    </div>
+    <div class="list" id="list">
+      <div class="sk"></div><div class="sk"></div><div class="sk"></div>
+    </div>
+  </section>
+</div>
+
+<div class="ov" id="ov"><div class="md" id="md"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const STAGES = [
+  { k:'new', l:'Yangi', c:'#2563EB' },
+  { k:'phone', l:'Tel. suhbat', c:'#3B82C4' },
+  { k:'interview', l:'Suhbat', c:'#7C5CBF' },
+  { k:'interview2', l:'2-bosqich', c:'#B5539C' },
+  { k:'trial', l:'Sinov muddati', c:'#D98E2B' },
+  { k:'hired', l:'Ishga olindi', c:'#2E9E5B' },
+  { k:'reserve', l:'Zaxira', c:'#6B7A70' },
+  { k:'rejected', l:'Rad etildi', c:'#C25B4C' },
+];
+const SMAP = Object.fromEntries(STAGES.map(s=>[s.k,s]));
+const ROLES = { ofitsiant:'Ofitsiant', barmen:'Barmen', xostess:'Xostess', oshpaz:'Oshpaz', kassir:'Kassir', menejer:'Menejer', boshqa:'Boshqa' };
+const SRC = { hh:'hh.uz', manual:"Qo'lda", referral:'Tavsiya', telegram:'Telegram', other:'Boshqa' };
+
+let ALL = [], FS = 'new', FR = '', SEL = new Set();
+
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const toast = m => { const t=document.getElementById('toast'); t.textContent=m; t.style.display='block'; setTimeout(()=>t.style.display='none',2200); };
+
+function initials(n){ return (n||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase() || '?'; }
+function dayAgo(d){
+  if(!d) return '';
+  const n = Math.floor((Date.now()-new Date(d))/864e5);
+  return n<=0 ? 'bugun' : n===1 ? 'kecha' : n+' kun oldin';
+}
+
+async function api(url, opt){
+  const r = await fetch(url, Object.assign({ headers:{'Content-Type':'application/json'} }, opt));
+  if(r.status===401){ location.href='/index.html'; throw new Error('auth'); }
+  if(!r.ok) throw new Error((await r.json().catch(()=>({}))).error || 'Xato');
+  return r.json();
+}
+
+function renderSide(){
+  const byStage = {}, byRole = {};
+  ALL.forEach(c=>{
+    byStage[c.status||'new'] = (byStage[c.status||'new']||0)+1;
+    if((c.status||'new')===FS) byRole[c.role||'boshqa'] = (byRole[c.role||'boshqa']||0)+1;
+  });
+  document.getElementById('funnel').innerHTML = STAGES.map(s=>`
+    <div class="sitem ${FS===s.k?'on':''}" data-stage="${s.k}">
+      <span class="dot" style="background:${s.c}"></span>
+      <span class="lbl">${s.l}</span>
+      <span class="cnt">${byStage[s.k]||0}</span>
+    </div>`).join('');
+
+  const rs = Object.keys(byRole).sort((a,b)=>byRole[b]-byRole[a]);
+  document.getElementById('roles').innerHTML =
+    `<div class="sitem ${FR===''?'on':''}" data-role=""><span class="lbl">Barchasi</span><span class="cnt">${ALL.filter(c=>(c.status||'new')===FS).length}</span></div>` +
+    rs.map(r=>`<div class="sitem sub ${FR===r?'on':''}" data-role="${r}"><span class="lbl">${ROLES[r]||r}</span><span class="cnt">${byRole[r]}</span></div>`).join('');
+
+  document.querySelectorAll('[data-stage]').forEach(el=>el.onclick=()=>{ FS=el.dataset.stage; FR=''; SEL.clear(); render(); });
+  document.querySelectorAll('[data-role]').forEach(el=>el.onclick=()=>{ FR=el.dataset.role; SEL.clear(); render(); });
+}
+
+function visible(){
+  return ALL.filter(c=>(c.status||'new')===FS && (!FR || (c.role||'boshqa')===FR));
+}
+
+function card(c){
+  const st = SMAP[c.status] || STAGES[0];
+  const ph = c.hasPhoto
+    ? `<img src="/api/recruitment/${c.id}/photo?v=${encodeURIComponent(c.updatedAt||'')}" alt="">`
+    : esc(initials(c.fullName));
+  const skills = (c.skills||[]).slice(0,5).map(esc).join('<span class="pt">•</span>') || '<span style="color:var(--muted)">—</span>';
+  const langs  = (c.languages||[]).slice(0,5).map(esc).join('<span class="pt">•</span>');
+  const exp = c.experienceYears ? c.experienceYears+' yil tajriba' : 'Tajribasiz';
+  const contacts = [
+    c.phone ? `<span class="lnk">${esc(c.phone)}</span>` : '',
+    c.email ? `<span>${esc(c.email)}</span>` : ''
+  ].filter(Boolean).join('<span class="pt">•</span>') || '<span style="color:var(--muted)">Ko\'rsatilmagan</span>';
+
+  return `<article class="rc ${SEL.has(c.id)?'sel':''}" data-id="${c.id}">
+    <div class="rc-body">
+      <div class="rc-ph" data-photo="${c.hasPhoto?c.id:''}">${ph}</div>
+      <div class="rc-main">
+        <span class="rc-pos" data-open="${c.id}">${esc(c.desiredPosition || ROLES[c.role] || 'Nomzod')}</span>
+        <div class="rc-meta">
+          ${esc(c.fullName||'Nomsiz')}${c.age?`, ${c.age} yosh`:''}
+          <span class="sep">•</span><span class="dim">${esc(SRC[c.source]||c.source||'')}</span>
+          <span class="sep">•</span><span class="dim">${dayAgo(c.createdAt)} qo'shildi</span>
+        </div>
+        <div class="rc-tags">
+          ${c.fitScore ? `<span class="tag ai">AI moslik ${c.fitScore}</span>` : ''}
+          <span class="tag" style="background:${st.c}1A;color:${st.c}">${st.l}</span>
+          ${c.aiParsed ? '<span class="tag ok">Tahlil qilingan</span>' : '<span class="tag">Tahlil kutilmoqda</span>'}
+        </div>
+        <div class="rc-rows">
+          <div class="rc-row"><div class="rc-k">Asosiy ko'nikmalar</div><div class="rc-v">${skills}</div></div>
+          <div class="rc-row"><div class="rc-k">Tajriba</div><div class="rc-v">${esc(exp)}${c.experienceSummary?`<span class="pt">•</span><span style="color:var(--muted)">${esc(c.experienceSummary.slice(0,110))}${c.experienceSummary.length>110?'…':''}</span>`:''}</div></div>
+          ${langs?`<div class="rc-row"><div class="rc-k">Tillar</div><div class="rc-v">${langs}</div></div>`:''}
+          <div class="rc-row"><div class="rc-k">Qayerda yashaydi</div><div class="rc-v">${esc(c.location||'—')}${c.salaryExpectation?`<span class="pt">•</span>${esc(c.salaryExpectation)}`:''}</div></div>
+          <div class="rc-row"><div class="rc-k">Kontaktlar</div><div class="rc-v">${contacts}</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="rc-foot">
+      <div class="cb ${SEL.has(c.id)?'on':''}" data-sel="${c.id}"></div>
+      <button class="btn btn-sm btn-p" data-mv="interview|${c.id}">Suhbatga chaqirish</button>
+      <button class="btn btn-sm" data-mv="reserve|${c.id}">Zaxiraga</button>
+      <button class="btn btn-sm" data-mv="rejected|${c.id}">Rad etish</button>
+      <div class="foot-sp"></div>
+      <button class="icb" data-open="${c.id}" title="To'liq ko'rish">⤢</button>
+    </div>
+  </article>`;
+}
+
+function render(){
+  renderSide();
+  const v = visible();
+  const st = SMAP[FS];
+  document.getElementById('hint').innerHTML = v.length
+    ? `<b>${v.length} ta</b> nomzod — <b>${st.l}</b> bosqichida${FR?` · ${ROLES[FR]}`:''}`
+    : `<b>${st.l}</b> bosqichida nomzod yo'q`;
+  document.getElementById('list').innerHTML = v.length ? v.map(card).join('') : '<div class="empty">Bu bosqich bo\'sh</div>';
+
+  const n = SEL.size;
+  document.getElementById('selCnt').textContent = n ? `${n} ta tanlandi` : '';
+  ['bInvite','bReserve','bReject'].forEach(id=>document.getElementById(id).disabled = !n);
+
+  document.querySelectorAll('[data-sel]').forEach(el=>el.onclick=e=>{
+    e.stopPropagation();
+    const id = el.dataset.sel;
+    SEL.has(id) ? SEL.delete(id) : SEL.add(id);
+    render();
+  });
+  document.querySelectorAll('[data-open]').forEach(el=>el.onclick=()=>openCard(el.dataset.open));
+  document.querySelectorAll('[data-photo]').forEach(el=>{ if(el.dataset.photo) el.onclick=()=>openPhoto(el.dataset.photo); });
+  document.querySelectorAll('[data-mv]').forEach(el=>el.onclick=()=>{
+    const [stage,id] = el.dataset.mv.split('|');
+    move([id], stage);
+  });
+}
+
+async function move(ids, stage){
+  try{
+    await Promise.all(ids.map(id=>api('/api/recruitment/'+id,{ method:'PATCH', body: JSON.stringify({ status: stage }) })));
+    ids.forEach(id=>{ const c = ALL.find(x=>x.id===id); if(c){ c.status=stage; c.statusChangedAt=new Date().toISOString(); } SEL.delete(id); });
+    toast(`${ids.length} ta → ${SMAP[stage].l}`);
+    render();
+  }catch(e){ toast('Xato: '+e.message); }
+}
+
+function openPhoto(id){
+  const src = `/api/recruitment/${id}/photo?v=${Date.now()}`;
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(8,16,28,.94);z-index:400;display:flex;align-items:center;justify-content:center;padding:40px 24px;cursor:zoom-out';
+  ov.innerHTML = `<img src="${src}" style="height:86vh;width:auto;max-width:94vw;object-fit:contain;border-radius:14px">
+    <button style="position:absolute;top:18px;right:22px;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.22);font-size:22px;cursor:pointer">✕</button>`;
+  const close = () => { ov.remove(); document.removeEventListener('keydown', k); };
+  function k(e){ if(e.key==='Escape') close(); }
+  ov.onclick = close; document.addEventListener('keydown', k); document.body.appendChild(ov);
+}
+
+function openCard(id){
+  const c = ALL.find(x=>x.id===id); if(!c) return;
+  const st = SMAP[c.status] || STAGES[0];
+  const hist = [
+    { t:`${SRC[c.source]||c.source} dan qo'shildi`, d:c.createdAt },
+    c.aiParsed ? { t:'AI tahlil qilindi · moslik '+(c.fitScore||'—'), d:c.createdAt } : null,
+    c.statusChangedAt && c.status!=='new' ? { t:st.l+' bosqichiga o\'tkazildi', d:c.statusChangedAt } : null
+  ].filter(Boolean);
+
+  document.getElementById('md').innerHTML = `
+    <div class="md-top">
+      <button class="btn btn-p" data-mv2="interview">Suhbatga chaqirish</button>
+      <button class="btn" data-mv2="reserve">Zaxiraga</button>
+      <button class="btn" data-mv2="rejected">Rad etish</button>
+      <button class="md-x" id="mdX">✕</button>
+    </div>
+    <div class="md-grid">
+      <div>
+        <div class="md-box" style="display:flex;gap:16px">
+          <div class="rc-ph" style="width:120px;height:150px" ${c.hasPhoto?`onclick="openPhoto('${c.id}')"`:''}>
+            ${c.hasPhoto?`<img src="/api/recruitment/${c.id}/photo?v=${encodeURIComponent(c.updatedAt||'')}">`:esc(initials(c.fullName))}
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:19px;font-weight:700">${esc(c.fullName||'Nomsiz')}</div>
+            <div style="font-size:13.5px;color:var(--muted);margin-top:4px">
+              ${[c.age?c.age+' yosh':'', esc(c.desiredPosition||ROLES[c.role]||''), esc(c.location||'')].filter(Boolean).join(' · ')}
+            </div>
+            <div class="rc-tags" style="margin-top:10px">
+              ${c.fitScore?`<span class="tag ai">AI moslik ${c.fitScore}</span>`:''}
+              <span class="tag" style="background:${st.c}1A;color:${st.c}">${st.l}</span>
+              ${c.salaryExpectation?`<span class="tag">${esc(c.salaryExpectation)}</span>`:''}
+            </div>
+            ${c.summary?`<div style="margin-top:12px;font-size:13.5px;line-height:1.6;background:#F3F7FD;border-radius:9px;padding:11px 13px"><b style="color:var(--gold-d)">AI xulosa:</b> ${esc(c.summary)}</div>`:''}
+            ${c.fitReason?`<div style="margin-top:9px;font-size:13px;color:var(--muted)"><b style="color:#1E7A46">Moslik:</b> ${esc(c.fitReason)}</div>`:''}
+          </div>
+        </div>
+        <div class="md-box" style="margin-top:14px">
+          <h4>Kontaktlar</h4>
+          <div class="rc-row"><div class="rc-k">Telefon</div><div class="rc-v">${c.phone?`<span class="lnk">${esc(c.phone)}</span>`:'<span style="color:var(--muted)">—</span>'}</div></div>
+          <div class="rc-row"><div class="rc-k">Email</div><div class="rc-v">${c.email?esc(c.email):'<span style="color:var(--muted)">—</span>'}</div></div>
+          <div class="rc-row"><div class="rc-k">Ta'lim</div><div class="rc-v">${esc(c.education||'—')}</div></div>
+          <div class="rc-row"><div class="rc-k">Tillar</div><div class="rc-v">${(c.languages||[]).map(esc).join(', ')||'—'}</div></div>
+          <div class="rc-row"><div class="rc-k">Ko'nikmalar</div><div class="rc-v">${(c.skills||[]).map(esc).join(', ')||'—'}</div></div>
+          <div class="rc-row"><div class="rc-k">Tajriba</div><div class="rc-v">${esc(c.experienceSummary||'—')}</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="md-box">
+          <h4>Tarix</h4>
+          <div class="tl">
+            ${hist.map(h=>`<div class="tl-i"><div class="tl-t">${esc(h.t)}</div><div class="tl-d">${new Date(h.d).toLocaleDateString('uz')} · ${dayAgo(h.d)}</div></div>`).join('')}
+          </div>
+        </div>
+        <div class="md-box" style="margin-top:14px">
+          <h4>Fayl</h4>
+          <div style="font-size:13px;color:var(--muted)">${esc(c.fileName||'—')}</div>
+        </div>
+      </div>
+    </div>`;
+
+  document.getElementById('ov').classList.add('on');
+  document.getElementById('mdX').onclick = closeMd;
+  document.querySelectorAll('[data-mv2]').forEach(el=>el.onclick=async()=>{ await move([c.id], el.dataset.mv2); closeMd(); });
+}
+function closeMd(){ document.getElementById('ov').classList.remove('on'); }
+document.getElementById('ov').onclick = e => { if(e.target.id==='ov') closeMd(); };
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeMd(); });
+
+document.getElementById('bSelAll').onclick = ()=>{
+  const v = visible();
+  if(SEL.size === v.length) SEL.clear(); else v.forEach(c=>SEL.add(c.id));
+  render();
+};
+document.getElementById('bInvite').onclick  = ()=>move([...SEL],'interview');
+document.getElementById('bReserve').onclick = ()=>move([...SEL],'reserve');
+document.getElementById('bReject').onclick  = ()=>move([...SEL],'rejected');
+
+(async function(){
+  try{
+    ALL = await api('/api/recruitment');
+    render();
+  }catch(e){
+    document.getElementById('list').innerHTML = '<div class="empty">Yuklab bo\'lmadi: '+esc(e.message)+'</div>';
+  }
+})();
+</script>
+</body>
+</html>

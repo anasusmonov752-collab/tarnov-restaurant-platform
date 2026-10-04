@@ -14,6 +14,7 @@ const ROLES = [
   { key: 'oshpaz',    label: 'Oshpaz',    emoji: '👨‍🍳' },
   { key: 'kassir',    label: 'Kassir',    emoji: '🧾' },
   { key: 'menejer',   label: 'Menejer',   emoji: '📋' },
+  { key: 'operator',  label: 'Call operator', emoji: '📞' },
 ];
 
 const ROLE_KEYS = ROLES.map(r => r.key);

@@ -62,7 +62,7 @@ button,input,select{font-family:inherit}
 .list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding-right:4px}
 
 /* ── hh uslubidagi karta ── */
-.rc{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.rc{flex:none;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .rc.sel{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
 .rc-body{display:flex;gap:16px;padding:16px 18px}
 .rc-ph{width:112px;height:140px;flex:none;border-radius:10px;overflow:hidden;background:#E8EEF7;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:#8597AE;cursor:zoom-in}
@@ -177,6 +177,8 @@ const esc = s => String(s==null?'':s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'
 const toast = m => { const t=document.getElementById('toast'); t.textContent=m; t.style.display='block'; setTimeout(()=>t.style.display='none',2200); };
 
 function initials(n){ return (n||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase() || '?'; }
+// hh PDF'lari anonim — ism o'rniga "Женщина, 21 год, ..." kelishi mumkin; yoshni ikki marta yozmaymiz
+function hasAge(n){ return /\d+\s*(год|года|лет|yosh)/i.test(n||''); }
 function dayAgo(d){
   if(!d) return '';
   const n = Math.floor((Date.now()-new Date(d))/864e5);
@@ -235,7 +237,7 @@ function card(c){
       <div class="rc-main">
         <span class="rc-pos" data-open="${c.id}">${esc(c.desiredPosition || ROLES[c.role] || 'Nomzod')}</span>
         <div class="rc-meta">
-          ${esc(c.fullName||'Nomsiz')}${c.age?`, ${c.age} yosh`:''}
+          ${esc(c.fullName||'Nomsiz')}${c.age && !hasAge(c.fullName) ? `, ${c.age} yosh` : ''}
           <span class="sep">•</span><span class="dim">${esc(SRC[c.source]||c.source||'')}</span>
           <span class="sep">•</span><span class="dim">${dayAgo(c.createdAt)} qo'shildi</span>
         </div>
@@ -336,7 +338,7 @@ function openCard(id){
           <div style="flex:1;min-width:0">
             <div style="font-size:19px;font-weight:700">${esc(c.fullName||'Nomsiz')}</div>
             <div style="font-size:13.5px;color:var(--muted);margin-top:4px">
-              ${[c.age?c.age+' yosh':'', esc(c.desiredPosition||ROLES[c.role]||''), esc(c.location||'')].filter(Boolean).join(' · ')}
+              ${[c.age && !hasAge(c.fullName) ? c.age+' yosh' : '', esc(c.desiredPosition||ROLES[c.role]||''), esc(c.location||'')].filter(Boolean).join(' · ')}
             </div>
             <div class="rc-tags" style="margin-top:10px">
               ${c.fitScore?`<span class="tag ai">AI moslik ${c.fitScore}</span>`:''}

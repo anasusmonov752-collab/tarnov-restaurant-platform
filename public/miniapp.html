@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TalentHub — Nomzodlar</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+/* Telegram o'z mavzusini CSS o'zgaruvchilar orqali beradi — ularga
+   tayanamiz, shunda ilova foydalanuvchining kunduzgi/tungi rejimiga
+   o'zi moslashadi. Qiymat kelmasa zaxira rang ishlatiladi. */
+:root{
+  --bg: var(--tg-theme-bg-color, #fff);
+  --card: var(--tg-theme-secondary-bg-color, #f4f4f5);
+  --ink: var(--tg-theme-text-color, #16233A);
+  --muted: var(--tg-theme-hint-color, #8696a7);
+  --link: var(--tg-theme-link-color, #2563EB);
+  --btn: var(--tg-theme-button-color, #2563EB);
+  --btn-ink: var(--tg-theme-button-text-color, #fff);
+  --line: rgba(128,140,160,.22);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--bg);color:var(--ink);padding:12px 12px 90px;font-size:15px}
+.top{position:sticky;top:0;background:var(--bg);padding:6px 0 10px;z-index:5}
+.sum{font-size:13.5px;color:var(--muted);line-height:1.45}
+.cnt{font-size:13px;color:var(--muted);margin-top:4px}
+
+.c{background:var(--card);border-radius:14px;padding:12px;margin-bottom:10px;
+  display:flex;gap:11px;position:relative;cursor:pointer;
+  border:2px solid transparent;transition:border-color .12s}
+.c.on{border-color:var(--btn)}
+.ph{width:68px;height:84px;border-radius:10px;flex:none;overflow:hidden;
+  background:var(--line);display:flex;align-items:center;justify-content:center;
+  font-size:15px;font-weight:600;color:var(--muted)}
+.ph img{width:100%;height:100%;object-fit:cover}
+.b{flex:1;min-width:0}
+.code{font-size:12px;color:var(--muted);font-family:ui-monospace,monospace}
+.pos{font-size:15.5px;font-weight:600;margin-top:1px;line-height:1.25}
+.meta{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.45}
+.tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+.t{font-size:11.5px;padding:3px 8px;border-radius:7px;background:var(--bg);color:var(--muted)}
+.t.ai{color:#1E7A46}
+.t.act{color:#1E7A46}
+.t.no{color:#B4542B}
+.tick{position:absolute;top:10px;right:10px;width:23px;height:23px;border-radius:50%;
+  border:2px solid var(--line);background:var(--bg);display:flex;align-items:center;justify-content:center}
+.c.on .tick{background:var(--btn);border-color:var(--btn)}
+.c.on .tick::after{content:'';width:6px;height:11px;border:solid var(--btn-ink);
+  border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.more{font-size:12.5px;color:var(--link);margin-top:7px;display:inline-block}
+.det{display:none;margin-top:9px;padding-top:9px;border-top:1px solid var(--line);font-size:13px;line-height:1.55}
+.det.on{display:block}
+.det b{font-weight:600}
+.det .r{margin-bottom:5px}
+.det .k{color:var(--muted);font-size:12px}
+
+.bar{position:fixed;left:0;right:0;bottom:0;padding:11px 12px calc(11px + env(safe-area-inset-bottom));
+  background:var(--bg);border-top:1px solid var(--line)}
+.send{width:100%;padding:14px;border:none;border-radius:12px;background:var(--btn);
+  color:var(--btn-ink);font-size:16px;font-weight:600;cursor:pointer;font-family:inherit}
+.send:disabled{opacity:.45}
+.msg{text-align:center;padding:50px 20px;color:var(--muted);font-size:14px;line-height:1.6}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="sum" id="sum">Yuklanmoqda…</div>
+  <div class="cnt" id="cnt"></div>
+</div>
+<div id="list"></div>
+
+<div class="bar" id="bar" style="display:none">
+  <button class="send" id="send" disabled>Tanlang</button>
+</div>
+
+<script>
+const TG = window.Telegram && window.Telegram.WebApp;
+if (TG) { TG.ready(); TG.expand(); }
+
+const KEY = new URLSearchParams(location.search).get('s') || '';
+const INIT = (TG && TG.initData) || '';
+const SEL = new Set();
+let ROWS = [];
+
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const show = h => { document.getElementById('list').innerHTML = `<div class="msg">${h}</div>`; };
+
+async function api(path, opt){
+  const r = await fetch(path, Object.assign({
+    headers: { 'Content-Type':'application/json', 'X-Telegram-Init-Data': INIT }
+  }, opt));
+  const d = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(d.error || 'Xato');
+  return d;
+}
+
+function initials(c){ return (c.publicCode||'—').replace('A-','').slice(0,2); }
+
+function card(c, i){
+  const bits = [];
+  if (c.experienceYears) bits.push(c.experienceYears + ' yil tajriba');
+  else bits.push('Tajribasiz');
+  if (c.age) bits.push(c.age + ' yosh');
+  if (c.location) bits.push(esc(c.location));
+
+  const st = c.jobStatus === 'active' ? 'act' : (c.jobStatus === 'not_looking' ? 'no' : '');
+  const photo = c.hasPhoto
+    ? `<img src="/api/ma/photo/${encodeURIComponent(KEY)}/${encodeURIComponent(c.id)}?i=${encodeURIComponent(INIT)}" alt="">`
+    : esc(initials(c));
+
+  const work = (c.workHistory||[]).slice(0,3).map(w =>
+    `<div class="r"><b>${esc(w.position||'')}</b>${w.company?' — '+esc(w.company):''}
+     <div class="k">${esc(w.period||'')}</div></div>`).join('');
+
+  return `<div class="c ${SEL.has(c.id)?'on':''}" data-id="${c.id}">
+    <div class="ph">${photo}</div>
+    <div class="b">
+      <div class="code">${esc(c.publicCode)}</div>
+      <div class="pos">${esc(c.desiredPosition || c.roleLabel || 'Nomzod')}</div>
+      <div class="meta">${bits.join(' · ')}</div>
+      <div class="tags">
+        ${c.fitScore ? `<span class="t ai">AI ${c.fitScore}/5</span>` : ''}
+        ${c.jobStatusLabel ? `<span class="t ${st}">${esc(c.jobStatusLabel)}</span>` : ''}
+        ${c.salaryExpectation ? `<span class="t">${esc(c.salaryExpectation)}</span>` : ''}
+      </div>
+      <span class="more" data-more="${c.id}">Batafsil</span>
+      <div class="det" id="d-${c.id}">
+        ${c.summary ? `<div class="r">${esc(c.summary)}</div>` : ''}
+        ${(c.languages||[]).length ? `<div class="r"><span class="k">Tillar:</span> ${c.languages.map(esc).join(', ')}</div>` : ''}
+        ${(c.skills||[]).length ? `<div class="r"><span class="k">Ko'nikmalar:</span> ${c.skills.slice(0,10).map(esc).join(', ')}</div>` : ''}
+        ${c.education ? `<div class="r"><span class="k">Ta'lim:</span> ${esc(c.education)}</div>` : ''}
+        ${work ? `<div class="r" style="margin-top:8px"><span class="k">Ish tajribasi:</span></div>${work}` : ''}
+      </div>
+    </div>
+    <div class="tick"></div>
+  </div>`;
+}
+
+function render(){
+  document.getElementById('list').innerHTML = ROWS.map(card).join('');
+  document.getElementById('cnt').textContent =
+    `${ROWS.length} ta nomzod` + (SEL.size ? ` · ${SEL.size} ta tanlandi` : '');
+
+  const b = document.getElementById('send');
+  b.disabled = !SEL.size;
+  b.textContent = SEL.size ? `${SEL.size} ta nomzodni yuborish` : 'Tanlang';
+
+  document.querySelectorAll('.c').forEach(el=>{
+    el.onclick = e => {
+      if (e.target.dataset.more) return;
+      const id = el.dataset.id;
+      SEL.has(id) ? SEL.delete(id) : SEL.add(id);
+      el.classList.toggle('on');
+      const d = document.getElementById('cnt');
+      d.textContent = `${ROWS.length} ta nomzod` + (SEL.size ? ` · ${SEL.size} ta tanlandi` : '');
+      const bb = document.getElementById('send');
+      bb.disabled = !SEL.size;
+      bb.textContent = SEL.size ? `${SEL.size} ta nomzodni yuborish` : 'Tanlang';
+      if (TG && TG.HapticFeedback) TG.HapticFeedback.selectionChanged();
+    };
+  });
+  document.querySelectorAll('[data-more]').forEach(el=>{
+    el.onclick = e => {
+      e.stopPropagation();
+      const d = document.getElementById('d-' + el.dataset.more);
+      d.classList.toggle('on');
+      el.textContent = d.classList.contains('on') ? 'Yopish' : 'Batafsil';
+    };
+  });
+}
+
+document.getElementById('send').onclick = async ()=>{
+  const b = document.getElementById('send');
+  b.disabled = true; b.textContent = 'Yuborilmoqda…';
+  try{
+    const r = await api('/api/ma/shortlist', {
+      method:'POST', body: JSON.stringify({ key: KEY, ids: [...SEL] })
+    });
+    document.getElementById('bar').style.display = 'none';
+    show(`<b>${r.count} ta nomzod yuborildi.</b><br><br>
+      HR ular bilan bog'lanadi va kontaktlarni ochib beradi.<br>
+      Natija haqida botda xabar olasiz.`);
+    document.getElementById('sum').textContent = '';
+    document.getElementById('cnt').textContent = '';
+    if (TG) { TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); setTimeout(()=>TG.close(), 2500); }
+  }catch(e){
+    b.disabled = false; b.textContent = 'Qayta urinish';
+    show('Yuborilmadi: ' + esc(e.message));
+  }
+};
+
+(async function(){
+  if (!KEY)  { show('Havola noto\'g\'ri.'); return; }
+  if (!INIT) { show('Bu sahifa Telegram ichida ochilishi kerak.'); return; }
+  try{
+    const d = await api('/api/ma/session/' + encodeURIComponent(KEY), { method:'POST', body:'{}' });
+    ROWS = d.candidates || [];
+    document.getElementById('sum').textContent = d.summary || '';
+    if (!ROWS.length) { show('Nomzod topilmadi.'); return; }
+    document.getElementById('bar').style.display = 'block';
+    render();
+  }catch(e){ show(esc(e.message)); }
+})();
+</script>
+</body>
+</html>

@@ -13,6 +13,7 @@ const Candidate = require('../models/Candidate');
 const Restaurant = require('../models/Restaurant');
 const BotMessage = require('../models/BotMessage');
 const relay = require('../services/botRelay');
+const candidateSearch = require('../services/candidateSearch');
 const resumeParser = require('../services/resumeParser');
 const ai = require('../services/ai');
 const aiQuota = require('../services/aiQuota');
@@ -424,6 +425,21 @@ router.get('/:id/tg/thread', guard, asyncHandler(async (req, res) => {
       error: m.error, createdAt: m.createdAt
     }))
   });
+}));
+
+// Tabiiy tilda qidiruv — botdagi mantiqning HTTP ko'rinishi.
+// Botda ovoz orqali ham ishlaydi; bu yerda matn. Mini App ham shuni ishlatadi.
+router.post('/search', guard, asyncHandler(async (req, res) => {
+  const text = String((req.body && req.body.text) || '').trim();
+  if (text.length < 3) return res.status(400).json({ error: 'So\'rov juda qisqa' });
+
+  try {
+    const criteria = await candidateSearch.parseQuery({ text }, req.user.restaurantId);
+    const rows = await candidateSearch.search(criteria, req.user.restaurantId);
+    res.json({ criteria, count: rows.length, candidates: rows });
+  } catch (e) {
+    res.status(e.code === 'AI_NOT_CONFIGURED' ? 503 : 400).json({ error: e.message });
+  }
 }));
 
 // Guruh taklifi — ro'yxatdan belgilangan nomzodlarga

@@ -74,6 +74,15 @@ const CandidateSchema = new mongoose.Schema({
   tgUnread:       { type: Number, default: 0 },       // o'qilmagan kiruvchi xabarlar
   tgLastMsgAt:    { type: Date,   default: null },
 
+  // ── Mijozga ko'rsatish (TalentHub) ──
+  // Mijoz ism va kontaktni ko'rmaydi, shuning uchun nomzodga suhbatda
+  // murojaat qilish uchun qisqa kod kerak ("A-3F7C haqida gaplashaylik").
+  publicCode:  { type: String, default: '' },
+  // hh.uz'dagidek: mijoz eski nomzodga vaqt sarflamasligi uchun
+  jobStatus:   { type: String, default: 'unknown' },  // active|considering|not_looking|unknown
+  jobStatusAt: { type: Date,   default: null },
+  shownToClients: { type: [String], default: [] },    // takror ko'rsatmaslik uchun
+
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
@@ -84,5 +93,7 @@ CandidateSchema.index({ restaurantId: 1, id: 1 }, { unique: true });
 CandidateSchema.index({ tgInviteToken: 1 }, { sparse: true });
 // Kiruvchi Telegram xabarini nomzodga bog'lash
 CandidateSchema.index({ restaurantId: 1, tgChatId: 1 }, { sparse: true });
+// Mijoz ko'rgan qisqa kod bo'yicha topish
+CandidateSchema.index({ restaurantId: 1, publicCode: 1 }, { sparse: true });
 
 module.exports = mongoose.model('Candidate', CandidateSchema);

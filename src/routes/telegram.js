@@ -13,6 +13,8 @@ const { asyncHandler } = require('../middleware/errorHandler');
 const Restaurant = require('../models/Restaurant');
 const Candidate = require('../models/Candidate');
 const BotMessage = require('../models/BotMessage');
+const Client = require('../models/Client');
+const SearchSession = require('../models/SearchSession');
 const tg = require('../services/telegram');
 const relay = require('../services/botRelay');
 const outreach = require('../services/outreach');
@@ -77,6 +79,35 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
       if (!payload) {
         await tg.sendMessage(token, chatId,
           'Salom! Bu TalentHub HR boti.\n\nBog\'lanish uchun sizga yuborilgan havoladan kiring.');
+        return;
+      }
+
+      // Mijoz menejeri o'zini bog'layapti
+      if (payload.startsWith('client_')) {
+        const linkToken = payload.slice(7);
+        const cl = linkToken && await Client.findOne({ tgLinkToken: linkToken });
+        if (!cl) {
+          await tg.sendMessage(token, chatId, 'Havola eskirgan. HR bilan bog\'laning.');
+          return;
+        }
+        cl.tgChatId    = chatId;
+        cl.tgUsername  = (msg.from && msg.from.username) || '';
+        cl.tgLinkToken = '';                    // bir martalik
+        cl.lastSeenAt  = new Date();
+        if (cl.status === 'pending') cl.status = 'active';
+        await cl.save();
+
+        await tg.sendMessage(token, chatId,
+          `Xush kelibsiz, ${cl.name}!\n\n` +
+          `Nomzod kerak bo'lsa shu yerga yozing yoki ovozli xabar yuboring.\n` +
+          `Masalan: "xostes kerak, 2 yildan ortiq tajribali"\n\n` +
+          `Kredit: ${cl.credits} ta kontakt`);
+
+        const ag = await Restaurant.findOne({ id: cl.agencyId });
+        if (ag && ag.telegram && ag.telegram.adminChatId) {
+          await tg.sendMessage(token, ag.telegram.adminChatId,
+            `${cl.name} Telegramga ulandi.`);
+        }
         return;
       }
 
@@ -169,6 +200,24 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
       return;
     }
 
+    // ── Mijoz menejeri ──
+    // Rol ustunligi: siz > mijoz > nomzod. Bir odam ikki rolda bo'lsa
+    // (menejer o'zi ham ish qidirsa), to'lov munosabati ustun turadi.
+    const client = await Client.findOne({ tgChatId: chatId });
+    if (client) {
+      if (client.status !== 'active') {
+        await tg.sendMessage(token, chatId,
+          client.status === 'blocked'
+            ? 'Hisobingiz to\'xtatilgan. HR bilan bog\'laning.'
+            : 'Hisobingiz hali tasdiqlanmagan. Tez orada faollashtiriladi.');
+        return;
+      }
+      client.lastSeenAt = new Date();
+      await client.save();
+      await handleClientSearch(client, chatId, { text, voice }, publicBase(req));
+      return;
+    }
+
     // ── Nomzoddan oddiy xabar ──
     const cand = await Candidate.findOne({ tgChatId: chatId });
     if (!cand) return;
@@ -227,6 +276,79 @@ async function handleSearch(restaurant, chatId, { text, voice }) {
       ? 'AI sozlanmagan — qidiruv ishlamaydi.'
       : `Qidirib bo'lmadi: ${e.message}`;
     await tg.sendMessage(token, chatId, msg);
+  }
+}
+
+// ── Mijoz qidiruvi ───────────────────────────────────────────
+// Bir xil qidiruv mexanizmi, lekin natija ANONIM va tanlash Mini App'da.
+// Chatda 12 ta kartani belgilab, qaysi birini tanlaganini eslab turish
+// qiyin — shuning uchun bot faqat sonini aytadi va tugma beradi.
+// Qidiruv natijasini saqlab, Mini App ochadigan kalit qaytaradi
+async function saveSearch(client, criteria, rows) {
+  const key = relay.makeToken();
+  await SearchSession.create({
+    key,
+    agencyId: client.agencyId,
+    clientId: client.id,
+    criteria: {
+      role: criteria.role, minExp: criteria.minExp,
+      languages: criteria.languages, location: criteria.location,
+      keywords: criteria.keywords
+    },
+    summary: criteria.summary,
+    candidateIds: rows.map(r => r.id)
+  });
+  return key;
+}
+
+async function handleClientSearch(client, chatId, { text, voice }, appBase) {
+  const token = tg.platformToken();
+
+  if (text && text.startsWith('/')) {
+    await tg.sendMessage(token, chatId,
+      `Nomzod qidirish uchun shunchaki yozing yoki ovozli xabar yuboring.\n\n` +
+      `Masalan: "xostes kerak, 2 yildan ortiq tajribali, ingliz tili bilan"\n\n` +
+      `Kredit: ${client.credits} ta kontakt`);
+    return;
+  }
+
+  await tg.sendMessage(token, chatId, voice ? 'Ovoz tinglanmoqda…' : 'Qidirilmoqda…');
+
+  try {
+    let input;
+    if (voice) {
+      const f = await tg.getFileBase64(token, voice.file_id, { maxBytes: 10 * 1024 * 1024 });
+      input = { audio: { mimeType: voice.mime_type || 'audio/ogg', data: f.base64 } };
+    } else {
+      input = { text };
+    }
+
+    const criteria = await candidateSearch.parseQuery(input, client.agencyId);
+    const result = await candidateSearch.search(criteria, client.agencyId, { limit: 15 });
+
+    if (!result.rows.length) {
+      await tg.sendMessage(token, chatId,
+        `So'rov: ${criteria.summary}\n\nAyni paytda mos nomzod yo'q. ` +
+        `Yangi nomzod kelganda xabar beramiz.`);
+      return;
+    }
+
+    const note = result.relaxed.length
+      ? `\nQat'iy mos kelmadi — ${result.relaxed.join(', ')} hisobga olinmadi.` : '';
+
+    // Mini App havolasi — qidiruv natijasini saqlab, kalit bilan ochamiz
+    const key = await saveSearch(client, criteria, result.rows);
+    await tg.sendMessage(token, chatId,
+      `So'rov: ${criteria.summary}\n` +
+      `Topildi: ${result.rows.length} ta nomzod${note}\n\n` +
+      `Ko'rib chiqish va tanlash uchun pastdagi tugmani bosing.`,
+      { reply_markup: { inline_keyboard: [[
+        { text: `Ko'rish (${result.rows.length} ta)`, web_app: { url: `${appBase}/miniapp.html?s=${key}` } }
+      ]]}});
+
+  } catch (e) {
+    console.error('[TG] mijoz qidiruvi xatosi:', e.message);
+    await tg.sendMessage(token, chatId, `Qidirib bo'lmadi: ${e.message}`);
   }
 }
 

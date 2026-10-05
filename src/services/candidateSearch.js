@@ -91,7 +91,6 @@ async function parseQuery(input, restaurantId) {
     restaurantId
   });
 
-  r._raw = { role: r.role, location: r.location, limit: r.limit };  // diagnostika
   r.role = normalizeRole(r.role);
   if (!Array.isArray(r.languages)) r.languages = [];
   if (!Array.isArray(r.keywords))  r.keywords = [];

@@ -10,6 +10,9 @@ const { v4: uuidv4 } = require('uuid');
 const { auth } = require('../middleware/auth');
 const { asyncHandler } = require('../middleware/errorHandler');
 const Candidate = require('../models/Candidate');
+const Restaurant = require('../models/Restaurant');
+const BotMessage = require('../models/BotMessage');
+const relay = require('../services/botRelay');
 const resumeParser = require('../services/resumeParser');
 const ai = require('../services/ai');
 const aiQuota = require('../services/aiQuota');
@@ -358,6 +361,95 @@ router.post('/bulk', guard, asyncHandler(async (req, res) => {
     return res.json({ ok: true, updated: r.modifiedCount });
   }
   return res.status(400).json({ error: 'Noto\'g\'ri amal' });
+}));
+
+// ══ TELEGRAM ════════════════════════════════════════════════
+// Bot sozlamalari /api/tg/* da, bu yerda nomzodga tegishli amallar.
+
+async function loadPair(req) {
+  const restaurant = await Restaurant.findOne({ id: req.user.restaurantId });
+  const candidate = await Candidate.findOne({ restaurantId: req.user.restaurantId, id: req.params.id });
+  return { restaurant, candidate };
+}
+
+// Taklif: deep link yaratib, tanlangan kanal orqali yuborish
+router.post('/:id/tg/invite', guard, asyncHandler(async (req, res) => {
+  const { restaurant, candidate } = await loadPair(req);
+  if (!restaurant) return res.status(404).json({ error: 'Restoran topilmadi' });
+  if (!candidate) return res.status(404).json({ error: 'Nomzod topilmadi' });
+
+  try {
+    const r = await relay.invite(restaurant, candidate, { channel: req.body && req.body.channel });
+    res.json({ ok: true, ...r, tgState: candidate.tgState });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+}));
+
+// Bog'langan nomzodga xabar
+router.post('/:id/tg/message', guard, asyncHandler(async (req, res) => {
+  const text = String((req.body && req.body.text) || '').trim();
+  if (!text) return res.status(400).json({ error: 'Xabar matni bo\'sh' });
+
+  const { restaurant, candidate } = await loadPair(req);
+  if (!restaurant) return res.status(404).json({ error: 'Restoran topilmadi' });
+  if (!candidate) return res.status(404).json({ error: 'Nomzod topilmadi' });
+
+  try {
+    await relay.sendToCandidate(restaurant, candidate, text, 'panel');
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(400).json({ error: e.message, tgState: candidate.tgState });
+  }
+}));
+
+// Yozishma tarixi (va o'qilgan deb belgilash)
+router.get('/:id/tg/thread', guard, asyncHandler(async (req, res) => {
+  const candidate = await Candidate.findOne({ restaurantId: req.user.restaurantId, id: req.params.id });
+  if (!candidate) return res.status(404).json({ error: 'Nomzod topilmadi' });
+
+  const messages = await BotMessage
+    .find({ restaurantId: req.user.restaurantId, candidateId: candidate.id })
+    .sort({ createdAt: 1 }).limit(300).lean();
+
+  if (candidate.tgUnread) { candidate.tgUnread = 0; await candidate.save(); }
+
+  res.json({
+    tgState: candidate.tgState,
+    tgLinkedAt: candidate.tgLinkedAt,
+    messages: messages.map(m => ({
+      direction: m.direction, text: m.text, kind: m.kind,
+      error: m.error, createdAt: m.createdAt
+    }))
+  });
+}));
+
+// Guruh taklifi — ro'yxatdan belgilangan nomzodlarga
+router.post('/tg/broadcast', guard, asyncHandler(async (req, res) => {
+  const ids = Array.isArray(req.body && req.body.ids) ? req.body.ids.slice(0, 100) : [];
+  if (!ids.length) return res.status(400).json({ error: 'Nomzod tanlanmadi' });
+
+  const restaurant = await Restaurant.findOne({ id: req.user.restaurantId });
+  if (!restaurant) return res.status(404).json({ error: 'Restoran topilmadi' });
+
+  const channel = req.body && req.body.channel;
+  const out = { sent: 0, failed: 0, items: [] };
+
+  for (const id of ids) {
+    const c = await Candidate.findOne({ restaurantId: req.user.restaurantId, id });
+    if (!c) { out.failed++; continue; }
+    try {
+      const r = await relay.invite(restaurant, c, { channel });
+      out.sent++;
+      out.items.push({ id, ok: true, link: r.link, manual: r.manual });
+    } catch (e) {
+      out.failed++;
+      out.items.push({ id, ok: false, error: e.message });
+    }
+    // Telegram/SMS provayderini bo'g'masligimiz uchun kichik oraliq
+    await new Promise(r => setTimeout(r, 120));
+  }
+  res.json(out);
 }));
 
 module.exports = router;

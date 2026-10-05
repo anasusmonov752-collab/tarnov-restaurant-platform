@@ -377,6 +377,20 @@ const AdaptationSchema = new mongoose.Schema({
   onboardingSteps: [OnboardingStepSchema]
 }, { _id: false });
 
+// ── TELEGRAM BOT SOZLAMALARI ─────────────────────────────────
+// Har restoranga O'Z boti (BotFather'dan). Sabab: nomzod umumiy "RestoOne"
+// emas, o'zi ariza bergan restoran nomini ko'rishi kerak. Bitta webhook
+// endpoint hammasiga xizmat qiladi — manzilda restaurantId bor.
+const TelegramSchema = new mongoose.Schema({
+  botToken:      { type: String, default: '' },   // API javoblarida HECH QACHON qaytarilmaydi
+  botUsername:   { type: String, default: '' },   // getMe orqali olinadi, deep link uchun
+  webhookSecret: { type: String, default: '' },   // URL va header tekshiruvi
+  adminChatId:   { type: String, default: '' },   // nomzod javoblari shu chatga keladi
+  adminLinkToken:{ type: String, default: '' },   // admin o'zini bog'lash uchun bir martalik
+  enabled:       { type: Boolean, default: false },
+  connectedAt:   { type: Date, default: null }
+}, { _id: false });
+
 const RestaurantSchema = new mongoose.Schema({
   id: { type: String, default: () => uuidv4(), unique: true },
   name: { type: String, required: true, trim: true },
@@ -413,7 +427,8 @@ const RestaurantSchema = new mongoose.Schema({
   courses: [WaiterCourseSchema],
   evalCriteria: [EvalCriterionSchema],
   evaluations:  [EvaluationSchema],
-  staffNotes:   [StaffNoteSchema]
+  staffNotes:   [StaffNoteSchema],
+  telegram:     { type: TelegramSchema, default: () => ({}) }
 });
 
 module.exports = mongoose.model('Restaurant', RestaurantSchema);

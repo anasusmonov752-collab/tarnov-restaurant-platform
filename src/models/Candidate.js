@@ -61,11 +61,28 @@ const CandidateSchema = new mongoose.Schema({
   tags:    { type: [String], default: [] },
   aiParsed:{ type: Boolean, default: false },          // AI tahlili muvaffaqiyatli bo'ldimi
 
+  // ── Telegram aloqasi ──
+  // Bot o'zi birinchi bo'lib yoza olmaydi (Telegram qoidasi), shuning uchun
+  // nomzodga SMS/email orqali deep link yuboriladi. U bosgach chatId bog'lanadi.
+  tgChatId:       { type: String, default: '' },
+  tgUsername:     { type: String, default: '' },
+  tgState:        { type: String, default: 'none' },  // none|invited|linked|blocked|stopped
+  tgInviteToken:  { type: String, default: '' },      // deep link payload, bir martalik
+  tgInviteSentAt: { type: Date,   default: null },
+  tgInviteChannel:{ type: String, default: '' },      // sms | email | hh | manual
+  tgLinkedAt:     { type: Date,   default: null },
+  tgUnread:       { type: Number, default: 0 },       // o'qilmagan kiruvchi xabarlar
+  tgLastMsgAt:    { type: Date,   default: null },
+
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
 
 CandidateSchema.index({ restaurantId: 1, createdAt: -1 });
 CandidateSchema.index({ restaurantId: 1, id: 1 }, { unique: true });
+// Deep link tokenini yechish (sparse — ko'pchilikda bo'sh)
+CandidateSchema.index({ tgInviteToken: 1 }, { sparse: true });
+// Kiruvchi Telegram xabarini nomzodga bog'lash
+CandidateSchema.index({ restaurantId: 1, tgChatId: 1 }, { sparse: true });
 
 module.exports = mongoose.model('Candidate', CandidateSchema);

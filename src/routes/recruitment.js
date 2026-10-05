@@ -435,8 +435,8 @@ router.post('/search', guard, asyncHandler(async (req, res) => {
 
   try {
     const criteria = await candidateSearch.parseQuery({ text }, req.user.restaurantId);
-    const rows = await candidateSearch.search(criteria, req.user.restaurantId);
-    res.json({ criteria, count: rows.length, candidates: rows });
+    const r = await candidateSearch.search(criteria, req.user.restaurantId);
+    res.json({ criteria, count: r.rows.length, relaxed: r.relaxed, candidates: r.rows });
   } catch (e) {
     res.status(e.code === 'AI_NOT_CONFIGURED' ? 503 : 400).json({ error: e.message });
   }

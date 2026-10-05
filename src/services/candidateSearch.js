@@ -146,50 +146,94 @@ function langPattern(lang) {
   return parts.map(escapeRegex).join('|');
 }
 
-/** Kriteriyadan Mongo so'rovini quradi va nomzodlarni qaytaradi. */
-async function search(criteria, restaurantId, { limit = 8 } = {}) {
-  const q = { restaurantId };
+const FIELDS = 'id fullName phone email role desiredPosition experienceYears languages location salaryExpectation fitScore fitReason summary status tgState';
+
+// Shartlarni bosqichma-bosqich yumshatish tartibi.
+// Rol — asosiy niyat, u hech qachon tashlanmaydi. Qolganlari
+// ishonchsizligi bo'yicha: kalit so'zlar AI o'ylab topishi oson
+// ("zal menejeri" dan "zal" chiqib, hamma natijani o'ldirgan edi),
+// shahar ham xato aniqlanishi mumkin.
+const RELAX_ORDER = ['keywords', 'location', 'languages', 'minExp'];
+const RELAX_LABEL = {
+  keywords:  'kalit so\'zlar',
+  location:  'hudud',
+  languages: 'til',
+  minExp:    'tajriba yili'
+};
+
+function buildQuery(criteria, restaurantId, skip) {
+  const q = { restaurantId, status: { $ne: 'rejected' } };  // rad etilganlar chiqmaydi
   const and = [];
 
   if (criteria.role) q.role = criteria.role;
-  if (Number.isFinite(criteria.minExp) && criteria.minExp > 0) {
+
+  if (!skip.has('minExp') && Number.isFinite(criteria.minExp) && criteria.minExp > 0) {
     q.experienceYears = { $gte: criteria.minExp };
   }
-  if (criteria.location) {
+  if (!skip.has('location') && criteria.location) {
     q.location = { $regex: escapeRegex(criteria.location), $options: 'i' };
   }
-  // Har bir til ALOHIDA shart — "ingliz va rus" ikkalasini ham talab qiladi.
-  // Rezyumelar aralash tilda kelgani uchun baza bir tilni ikki xil yozadi
-  // ("Ingliz" va "Английский"), shuning uchun barcha yozuvlarini izlaymiz.
-  for (const lang of criteria.languages.slice(0, 4)) {
-    and.push({ languages: { $elemMatch: { $regex: langPattern(lang), $options: 'i' } } });
+  if (!skip.has('languages')) {
+    // Har bir til ALOHIDA shart — "ingliz va rus" ikkalasi ham talab qilinadi.
+    // Baza bir tilni ikki xil yozadi ("Ingliz" / "Английский") — ikkalasini izlaymiz.
+    for (const lang of criteria.languages.slice(0, 4)) {
+      and.push({ languages: { $elemMatch: { $regex: langPattern(lang), $options: 'i' } } });
+    }
   }
-  // Kalit so'zlar — istalgan joyda uchrasa bo'ladi
-  for (const kw of criteria.keywords.slice(0, 4)) {
-    const rx = { $regex: escapeRegex(kw), $options: 'i' };
-    and.push({ $or: [
-      { skills: rx }, { desiredPosition: rx }, { experienceSummary: rx },
-      { summary: rx }, { education: rx }, { rawText: rx }
-    ]});
+  if (!skip.has('keywords')) {
+    for (const kw of criteria.keywords.slice(0, 4)) {
+      const rx = { $regex: escapeRegex(kw), $options: 'i' };
+      and.push({ $or: [
+        { skills: rx }, { desiredPosition: rx }, { experienceSummary: rx },
+        { summary: rx }, { education: rx }, { rawText: rx }
+      ]});
+    }
   }
   if (and.length) q.$and = and;
+  return q;
+}
 
-  // Rad etilganlarni chiqarmaymiz — ular bo'yicha qaror qabul qilingan
-  q.status = { $ne: 'rejected' };
-
+/**
+ * Nomzodlarni qidiradi. Qattiq shartlar bilan hech narsa topilmasa,
+ * ularni birin-ketin yumshatadi — "topilmadi" deyishdan ko'ra, nimani
+ * hisobga olmaganini aytib natija bergan foydaliroq.
+ * @returns {{rows:Array, relaxed:string[]}}
+ */
+async function search(criteria, restaurantId, { limit = 8 } = {}) {
   const n = Math.min(Math.max(criteria.limit || limit, 1), 15);
-  return Candidate.find(q, 'id fullName phone email role desiredPosition experienceYears languages location salaryExpectation fitScore fitReason summary status tgState')
-    .sort({ fitScore: -1, experienceYears: -1, createdAt: -1 })
-    .limit(n)
-    .lean();
+  const skip = new Set();
+  const relaxed = [];
+
+  for (let step = 0; step <= RELAX_ORDER.length; step++) {
+    const rows = await Candidate
+      .find(buildQuery(criteria, restaurantId, skip), FIELDS)
+      .sort({ fitScore: -1, experienceYears: -1, createdAt: -1 })
+      .limit(n)
+      .lean();
+
+    if (rows.length) return { rows, relaxed };
+    if (step === RELAX_ORDER.length) return { rows: [], relaxed };
+
+    // Keyingi shartni tashlaymiz — faqat u haqiqatan qo'llangan bo'lsa
+    const field = RELAX_ORDER[step];
+    const used = field === 'keywords'  ? criteria.keywords.length
+               : field === 'languages' ? criteria.languages.length
+               : field === 'location'  ? !!criteria.location
+               : Number.isFinite(criteria.minExp) && criteria.minExp > 0;
+    skip.add(field);
+    if (used) relaxed.push(RELAX_LABEL[field]);
+  }
+  return { rows: [], relaxed };
 }
 
 /** Natijani Telegram uchun matnga aylantiradi. */
-function format(criteria, rows) {
+function format(criteria, result) {
+  const rows = result.rows || [];
+  const relaxed = result.relaxed || [];
+
   if (!rows.length) {
     return `Topilmadi.\n\nSo'rov: ${criteria.summary}\n\n`
-         + `Shartlarni yumshatib ko'ring — masalan tajriba yilini kamaytiring `
-         + `yoki tilni olib tashlang.`;
+         + `Bazada bu lavozimda mos nomzod yo'q. Boshqacha so'rab ko'ring.`;
   }
 
   const lines = rows.map((c, i) => {
@@ -206,8 +250,11 @@ function format(criteria, rows) {
          + (c.fitScore ? `   AI moslik ${c.fitScore}/5\n` : '');
   });
 
+  const note = relaxed.length
+    ? `\nQat'iy mos kelmadi — ${relaxed.join(', ')} hisobga olinmadi.\n` : '';
+
   return `So'rov: ${criteria.summary}\n`
-       + `Topildi: ${rows.length} ta\n`
+       + `Topildi: ${rows.length} ta${note}\n`
        + `${'—'.repeat(22)}\n\n`
        + lines.join('\n');
 }

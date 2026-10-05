@@ -218,8 +218,8 @@ async function handleSearch(restaurant, chatId, { text, voice }) {
     }
 
     const criteria = await candidateSearch.parseQuery(input, restaurant.id);
-    const rows = await candidateSearch.search(criteria, restaurant.id);
-    await tg.sendMessage(token, chatId, candidateSearch.format(criteria, rows));
+    const result = await candidateSearch.search(criteria, restaurant.id);
+    await tg.sendMessage(token, chatId, candidateSearch.format(criteria, result));
 
   } catch (e) {
     console.error('[TG] qidiruv xatosi:', e.message);

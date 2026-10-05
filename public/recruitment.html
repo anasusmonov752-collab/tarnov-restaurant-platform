@@ -77,6 +77,28 @@ button,input,select{font-family:inherit}
 .prog-b{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:13px}
 .prog-b i{display:block;height:100%;width:0;background:var(--gold);transition:width .25s}
 
+/* ── Telegram ── */
+.tgb{position:relative}
+.tgb.on{background:#229ED9;border-color:#229ED9;color:#fff}
+.tgb.on:hover{background:#1b87ba;border-color:#1b87ba}
+.tgb.wait{background:#FFF7E8;border-color:#E8D5A8;color:#9A6B10}
+.tgb.off{opacity:.5;cursor:not-allowed}
+.tgb .dot{position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;border-radius:9px;background:var(--danger);color:#fff;font-size:10.5px;line-height:17px;text-align:center;padding:0 4px;font-weight:700}
+.tg-head{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-bottom:10px;flex-wrap:wrap}
+.tg-pill{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:7px}
+.chat{max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px 2px;margin-bottom:11px}
+.bub{max-width:78%;padding:8px 12px;border-radius:12px;font-size:13.5px;line-height:1.45;white-space:pre-wrap;word-break:break-word}
+.bub.in{align-self:flex-start;background:#F1F5FA;border-bottom-left-radius:4px}
+.bub.out{align-self:flex-end;background:#229ED9;color:#fff;border-bottom-right-radius:4px}
+.bub.sys{align-self:center;background:transparent;color:var(--muted);font-size:12px;padding:3px 0;max-width:100%;text-align:center}
+.bub.err{align-self:flex-end;background:rgba(194,91,76,.12);color:var(--danger);border:1px solid rgba(194,91,76,.3)}
+.bub .t{font-size:10.5px;opacity:.65;margin-top:3px}
+.tg-send{display:flex;gap:8px}
+.tg-send textarea{flex:1;min-height:40px;max-height:110px;padding:9px 12px;border-radius:10px;border:1px solid var(--line);font-size:13.5px;font-family:inherit;resize:vertical;color:var(--ink)}
+.tg-send textarea:focus{outline:none;border-color:var(--gold)}
+.linkbox{display:flex;gap:8px;align-items:center;background:#F3F7FD;border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-top:9px}
+.linkbox code{flex:1;font-size:12px;word-break:break-all;color:var(--gold-d);font-family:ui-monospace,monospace}
+
 .list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding-right:4px}
 
 /* ── hh uslubidagi karta ── */
@@ -142,6 +164,7 @@ button,input,select{font-family:inherit}
   <div><div class="tb-title">Nomzodlar bazasi</div><div class="tb-sub">Rekruting · Ro'yxat</div></div>
   <div class="tb-spacer"></div>
   <span class="tb-total">Jami: <b id="tbTotal">—</b></span>
+  <button class="view-sw" id="tgStatusBtn" title="Telegram bot holati">Telegram</button>
   <a class="view-sw" href="/recruitment-kanban.html" title="Kanban ko'rinishiga o'tish">⊞ Kanban</a>
 </div>
 
@@ -167,6 +190,7 @@ button,input,select{font-family:inherit}
       <button class="btn btn-sm btn-p" id="bInvite" disabled>Suhbatga chaqirish</button>
       <button class="btn btn-sm" id="bReserve" disabled>Zaxiraga</button>
       <button class="btn btn-sm" id="bReject" disabled>Rad etish</button>
+      <button class="btn btn-sm tgb" id="bTgInvite" disabled>Telegramga taklif</button>
       <span style="font-size:12.5px;color:var(--muted);font-weight:600" id="selCnt"></span>
     </div>
     <div class="list" id="list">
@@ -267,6 +291,18 @@ function renderSide(){
   document.querySelectorAll('[data-role]').forEach(el=>el.onclick=()=>{ FR=el.dataset.role; SEL.clear(); render(); });
 }
 
+// ── Telegram holati ──
+// Bot o'zi birinchi yoza olmaydi, shuning uchun nomzod havolani bosmaguncha
+// yozib bo'lmaydi. Tugma shu holatni ko'rsatadi.
+const TG = {
+  none:    { cls:'',     lbl:'Telegramga taklif', can:true,  hint:'Havola yaratiladi' },
+  invited: { cls:'wait', lbl:'Taklif yuborilgan', can:true,  hint:'Nomzod hali bosmagan' },
+  linked:  { cls:'on',   lbl:'Yozish',            can:true,  hint:'Ulangan' },
+  blocked: { cls:'off',  lbl:'Bloklagan',         can:false, hint:'Nomzod botni bloklagan' },
+  stopped: { cls:'off',  lbl:'Chiqib ketgan',     can:false, hint:'Nomzod /stop yuborgan' }
+};
+function tgInfo(c){ return TG[c.tgState] || TG.none; }
+
 function matchQ(c){
   if(!Q) return true;
   const hay = [c.fullName, c.desiredPosition, c.phone, c.email, c.location, c.experienceSummary,
@@ -281,6 +317,7 @@ function visible(){
 
 function card(c){
   const st = SMAP[c.status] || STAGES[0];
+  const tg = tgInfo(c);
   const ph = c.hasPhoto
     ? `<img src="/api/recruitment/${c.id}/photo?v=${encodeURIComponent(c.updatedAt||'')}" alt="">`
     : esc(initials(c.fullName));
@@ -322,6 +359,9 @@ function card(c){
       <button class="btn btn-sm" data-mv="reserve|${c.id}">Zaxiraga</button>
       <button class="btn btn-sm" data-mv="rejected|${c.id}">Rad etish</button>
       <div class="foot-sp"></div>
+      <button class="btn btn-sm tgb ${tg.cls}" data-tg="${c.id}" title="${esc(tg.hint)}" ${tg.can?'':'disabled'}>
+        ${esc(tg.lbl)}${c.tgUnread ? `<span class="dot">${c.tgUnread}</span>` : ''}
+      </button>
       <button class="icb" data-open="${c.id}" title="To'liq ko'rish">⤢</button>
     </div>
   </article>`;
@@ -341,7 +381,7 @@ function render(){
 
   const n = SEL.size;
   document.getElementById('selCnt').textContent = n ? `${n} ta tanlandi` : '';
-  ['bInvite','bReserve','bReject'].forEach(id=>document.getElementById(id).disabled = !n);
+  ['bInvite','bReserve','bReject','bTgInvite'].forEach(id=>document.getElementById(id).disabled = !n);
 
   document.querySelectorAll('[data-sel]').forEach(el=>el.onclick=e=>{
     e.stopPropagation();
@@ -355,6 +395,116 @@ function render(){
     const [stage,id] = el.dataset.mv.split('|');
     move([id], stage);
   });
+  document.querySelectorAll('[data-tg]').forEach(el=>el.onclick=()=>openTg(el.dataset.tg));
+}
+
+// ══ TELEGRAM ════════════════════════════════════════════════
+
+function openTg(id){
+  const c = ALL.find(x=>x.id===id); if(!c) return;
+  const tg = tgInfo(c);
+  if(!tg.can){ toast(tg.hint); return; }
+  (c.tgState === 'linked' ? openThread : openInvite)(c);
+}
+
+// Hali ulanmagan: havola yaratish
+function openInvite(c){
+  const sent = c.tgInviteSentAt
+    ? `<div class="tg-head">Oxirgi taklif: ${new Date(c.tgInviteSentAt).toLocaleString('uz')} · ${esc(c.tgInviteChannel||'')}</div>` : '';
+  document.getElementById('md').innerHTML = `
+    <div class="md-top"><b style="font-size:16px">Telegramga taklif</b><button class="md-x" id="mdX">✕</button></div>
+    <div style="padding:18px">
+      <div style="font-size:14px;margin-bottom:4px"><b>${esc(c.fullName||'Nomzod')}</b></div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:14px">${esc(c.phone||'telefon yo\'q')}</div>
+      ${sent}
+      <div style="font-size:13.5px;line-height:1.6;color:var(--muted);margin-bottom:14px">
+        Bot o'zi birinchi bo'lib yoza olmaydi — bu Telegram qoidasi. Nomzodga
+        havola yuboriladi, u bosgach yozishma ochiladi.
+      </div>
+      <div id="tgInvBox"></div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+        <button class="btn btn-p" id="tgGen">Havola yaratish</button>
+      </div>
+    </div>`;
+  document.getElementById('ov').classList.add('on');
+  document.getElementById('mdX').onclick = closeMd;
+  document.getElementById('tgGen').onclick = async ()=>{
+    const btn = document.getElementById('tgGen');
+    btn.disabled = true; btn.textContent = 'Yaratilmoqda…';
+    try{
+      const r = await api(`/api/recruitment/${c.id}/tg/invite`, { method:'POST', body: JSON.stringify({}) });
+      c.tgState = 'invited'; c.tgInviteSentAt = new Date().toISOString(); c.tgInviteChannel = r.channel;
+      document.getElementById('tgInvBox').innerHTML = r.manual
+        ? `<div style="font-size:13.5px;margin-bottom:6px">Havola tayyor — nomzodga hh chati, WhatsApp yoki boshqa yo'l bilan yuboring:</div>
+           <div class="linkbox"><code id="tgLink">${esc(r.link)}</code><button class="btn btn-sm" id="tgCopy">Nusxalash</button></div>`
+        : `<div style="font-size:13.5px;color:var(--ok)">SMS yuborildi (${esc(r.channel)}).</div>`;
+      const cp = document.getElementById('tgCopy');
+      if(cp) cp.onclick = ()=>{ navigator.clipboard.writeText(r.link).then(()=>toast('Nusxalandi')); };
+      btn.style.display = 'none';
+      render();
+    }catch(e){
+      toast(e.message);
+      btn.disabled = false; btn.textContent = 'Havola yaratish';
+    }
+  };
+}
+
+// Ulangan: yozishma
+async function openThread(c){
+  document.getElementById('md').innerHTML = `
+    <div class="md-top"><b style="font-size:16px">${esc(c.fullName||'Nomzod')}</b><button class="md-x" id="mdX">✕</button></div>
+    <div style="padding:18px">
+      <div class="tg-head">
+        <span class="tg-pill" style="background:rgba(34,158,217,.12);color:#1b87ba">Telegramga ulangan</span>
+        ${c.tgUsername ? `<span>@${esc(c.tgUsername)}</span>` : ''}
+      </div>
+      <div class="chat" id="tgChat">Yuklanmoqda…</div>
+      <div class="tg-send">
+        <textarea id="tgText" placeholder="Xabar yozing… (Enter — yuborish)"></textarea>
+        <button class="btn btn-p" id="tgSend">Yuborish</button>
+      </div>
+    </div>`;
+  document.getElementById('ov').classList.add('on');
+  document.getElementById('mdX').onclick = closeMd;
+
+  async function load(){
+    try{
+      const r = await api(`/api/recruitment/${c.id}/tg/thread`);
+      const box = document.getElementById('tgChat');
+      if(!box) return;
+      box.innerHTML = r.messages.length ? r.messages.map(m=>{
+        const t = new Date(m.createdAt).toLocaleString('uz',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+        if(m.kind === 'system') return `<div class="bub sys">${esc(m.text)} · ${t}</div>`;
+        const cls = m.error ? 'err' : (m.direction === 'in' ? 'in' : 'out');
+        return `<div class="bub ${cls}">${esc(m.text)}${m.error?`\n⚠ ${esc(m.error)}`:''}<div class="t">${t}</div></div>`;
+      }).join('') : '<div class="bub sys">Hali xabar yo\'q</div>';
+      box.scrollTop = box.scrollHeight;
+      c.tgUnread = 0;
+    }catch(e){ toast(e.message); }
+  }
+  await load();
+
+  async function send(){
+    const ta = document.getElementById('tgText');
+    const text = ta.value.trim();
+    if(!text) return;
+    const btn = document.getElementById('tgSend');
+    btn.disabled = true; ta.disabled = true;
+    try{
+      await api(`/api/recruitment/${c.id}/tg/message`, { method:'POST', body: JSON.stringify({ text }) });
+      ta.value = '';
+      await load();
+      render();
+    }catch(e){
+      toast(e.message);
+      if(/bloklagan|chiqqan/i.test(e.message)){ c.tgState = /bloklagan/i.test(e.message)?'blocked':'stopped'; render(); closeMd(); }
+    }finally{ btn.disabled = false; ta.disabled = false; ta.focus(); }
+  }
+  document.getElementById('tgSend').onclick = send;
+  document.getElementById('tgText').onkeydown = e => {
+    if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); send(); }
+  };
+  document.getElementById('tgText').focus();
 }
 
 async function move(ids, stage){
@@ -458,6 +608,58 @@ document.getElementById('bInvite').onclick  = ()=>move([...SEL],'interview');
 document.getElementById('bReserve').onclick = ()=>move([...SEL],'reserve');
 document.getElementById('bReject').onclick  = ()=>move([...SEL],'rejected');
 
+// Guruh taklifi — allaqachon ulanganlarni o'tkazib yuboramiz
+document.getElementById('bTgInvite').onclick = async ()=>{
+  const ids = [...SEL].filter(id=>{
+    const c = ALL.find(x=>x.id===id);
+    return c && c.tgState !== 'linked' && c.tgState !== 'blocked' && c.tgState !== 'stopped';
+  });
+  if(!ids.length){ toast('Tanlanganlar allaqachon ulangan yoki yozib bo\'lmaydi'); return; }
+  if(!confirm(`${ids.length} ta nomzodga Telegram taklifi yaratilsinmi?`)) return;
+
+  document.getElementById('prog').classList.add('on');
+  prog(`${ids.length} ta nomzod…`, 30);
+  try{
+    const r = await api('/api/recruitment/tg/broadcast', { method:'POST', body: JSON.stringify({ ids }) });
+    document.getElementById('prog').classList.remove('on');
+    const links = (r.items||[]).filter(x=>x.ok && x.link);
+    toast(`${r.sent} ta tayyor${r.failed?`, ${r.failed} xato`:''}`);
+    if(links.length) showLinks(links);
+    ALL = await api('/api/recruitment');
+    SEL.clear(); render();
+  }catch(e){
+    document.getElementById('prog').classList.remove('on');
+    toast(e.message);
+  }
+};
+
+// SMS hali yo'q — havolalarni ro'yxat qilib beramiz, qo'lda yuborish uchun
+function showLinks(items){
+  const rows = items.map(x=>{
+    const c = ALL.find(y=>y.id===x.id) || {};
+    return `<div class="linkbox"><div style="min-width:130px;font-size:13px">${esc((c.fullName||'—').slice(0,22))}<div style="color:var(--muted);font-size:11.5px">${esc(c.phone||'')}</div></div><code>${esc(x.link)}</code></div>`;
+  }).join('');
+  document.getElementById('md').innerHTML = `
+    <div class="md-top"><b style="font-size:16px">${items.length} ta havola tayyor</b><button class="md-x" id="mdX">✕</button></div>
+    <div style="padding:18px">
+      <div style="font-size:13.5px;color:var(--muted);margin-bottom:12px">
+        SMS hali ulanmagan, shuning uchun havolalar shu yerda. Har birini nomzodga
+        hh chati yoki WhatsApp orqali yuboring. Nomzod bosgach yozishma ochiladi.
+      </div>
+      <div style="max-height:380px;overflow-y:auto">${rows}</div>
+      <button class="btn btn-p" id="tgCopyAll" style="margin-top:12px">Hammasini nusxalash</button>
+    </div>`;
+  document.getElementById('ov').classList.add('on');
+  document.getElementById('mdX').onclick = closeMd;
+  document.getElementById('tgCopyAll').onclick = ()=>{
+    const txt = items.map(x=>{
+      const c = ALL.find(y=>y.id===x.id) || {};
+      return `${c.fullName||'—'}\t${c.phone||''}\t${x.link}`;
+    }).join('\n');
+    navigator.clipboard.writeText(txt).then(()=>toast('Nusxalandi'));
+  };
+}
+
 let qt;
 document.getElementById('q').oninput = e => {
   clearTimeout(qt);
@@ -512,6 +714,46 @@ async function doUpload(fileList){
   ALL = await api('/api/recruitment');
   render();
 }
+
+// ── Bot holati ──
+document.getElementById('tgStatusBtn').onclick = async ()=>{
+  let s;
+  try { s = await api('/api/tg/status'); } catch(e){ toast(e.message); return; }
+
+  const row = (k,v,ok) => `<div class="rc-row"><div class="rc-k">${k}</div><div class="rc-v" style="color:${ok===undefined?'var(--ink)':(ok?'var(--ok)':'var(--danger)')}">${v}</div></div>`;
+  const whOk = s.webhook && s.webhook.set && !s.webhook.lastError;
+
+  document.getElementById('md').innerHTML = `
+    <div class="md-top"><b style="font-size:16px">Telegram bot</b><button class="md-x" id="mdX">✕</button></div>
+    <div style="padding:18px">
+      ${row('Bot', s.botUsername ? '@'+esc(s.botUsername) : 'sozlanmagan', s.platformReady)}
+      ${row('Webhook', whOk ? 'ishlayapti' : (s.webhook && s.webhook.lastError ? esc(s.webhook.lastError) : 'o\'rnatilmagan'), whOk)}
+      ${row('Sizning Telegramingiz', s.adminLinked ? 'ulangan' : 'ulanmagan', s.adminLinked)}
+      ${row('Xabar yuborish kanali', (s.channels||[]).includes('sms') ? 'SMS + qo\'lda' : 'faqat qo\'lda (SMS ulanmagan)')}
+      ${s.smsBalance != null ? row('SMS balans', esc(String(s.smsBalance))) : ''}
+      <div id="tgAdminBox" style="margin-top:14px"></div>
+      ${s.adminLinked ? '' : '<button class="btn btn-p" id="tgLinkMe" style="margin-top:12px">Telegramimni ulash</button>'}
+      ${s.adminLinked ? `<div style="font-size:13px;color:var(--muted);margin-top:12px;line-height:1.6">
+        Nomzodlar javobi Telegramingizga keladi. Javob berish uchun nomzod
+        xabariga <b>reply</b> qiling.</div>` : ''}
+    </div>`;
+  document.getElementById('ov').classList.add('on');
+  document.getElementById('mdX').onclick = closeMd;
+
+  const lb = document.getElementById('tgLinkMe');
+  if(lb) lb.onclick = async ()=>{
+    lb.disabled = true;
+    try{
+      const r = await api('/api/tg/admin-link');
+      document.getElementById('tgAdminBox').innerHTML =
+        `<div style="font-size:13.5px;margin-bottom:6px">Shu havolani Telegramda oching:</div>
+         <div class="linkbox"><code>${esc(r.link)}</code><button class="btn btn-sm" id="tgAdmCopy">Nusxalash</button></div>
+         <div style="font-size:12.5px;color:var(--muted);margin-top:6px">Havola bir martalik.</div>`;
+      document.getElementById('tgAdmCopy').onclick = ()=>navigator.clipboard.writeText(r.link).then(()=>toast('Nusxalandi'));
+      lb.style.display = 'none';
+    }catch(e){ toast(e.message); lb.disabled = false; }
+  };
+};
 
 (async function(){
   try{

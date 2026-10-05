@@ -189,7 +189,9 @@ router.get('/', guard, asyncHandler(async (req, res) => {
     exp: { experienceYears: -1 }, name: { fullName: 1 }, rating: { rating: -1, createdAt: -1 },
     fit: { fitScore: -1, createdAt: -1 }
   };
-  const list = await Candidate.find(query, '-fileData -rawText -photo -workHistory')
+  // tgInviteToken frontendga chiqmaydi — kim uni bilsa, o'sha nomzod
+  // sifatida botga ulanib oladi.
+  const list = await Candidate.find(query, '-fileData -rawText -photo -workHistory -tgInviteToken')
     .sort(sortMap[sort] || sortMap.new)
     .limit(1000)
     .lean();

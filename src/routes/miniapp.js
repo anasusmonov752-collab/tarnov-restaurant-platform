@@ -47,6 +47,31 @@ const clientGuard = asyncHandler(async (req, res, next) => {
   next();
 });
 
+// Kodi yo'q nomzodlarga qisqa kod beradi ("A-3F7C").
+// Kod takrorlanmasligi kerak — unikal indeks yo'q, shuning uchun
+// bandligini tekshirib, bir necha marta urinamiz.
+async function assignCodes(agencyId, rows) {
+  const need = rows.filter(r => !r.publicCode);
+  if (!need.length) return;
+
+  const taken = new Set(
+    (await Candidate.find({ restaurantId: agencyId, publicCode: { $ne: '' } }, 'publicCode').lean())
+      .map(c => c.publicCode)
+  );
+
+  for (const r of need) {
+    let code = null;
+    for (let i = 0; i < 12 && !code; i++) {
+      const c = anonymize.makeCode();
+      if (!taken.has(c)) code = c;
+    }
+    if (!code) continue;                       // juda kam ehtimol; kodsiz qoladi
+    taken.add(code);
+    r.publicCode = code;
+    await Candidate.updateOne({ restaurantId: agencyId, id: r.id }, { $set: { publicCode: code } });
+  }
+}
+
 // ── Qidiruv seansi: anonim kartalar ──
 router.post('/session/:key', clientGuard, asyncHandler(async (req, res) => {
   const ses = await SearchSession.findOne({ key: req.params.key, clientId: req.client.id });
@@ -56,6 +81,10 @@ router.post('/session/:key', clientGuard, asyncHandler(async (req, res) => {
     { restaurantId: ses.agencyId, id: { $in: ses.candidateIds } },
     '-fileData -rawText -photo -tgInviteToken'
   ).lean();
+
+  // Qisqa kodni KO'RSATILGANDA beramiz — migratsiya kerak emas, va kod
+  // faqat mijoz haqiqatan ko'rgan nomzodlarda paydo bo'ladi.
+  await assignCodes(ses.agencyId, rows);
 
   // Tartib seansdagidek bo'lsin — bot aytgan tartib saqlanadi
   const byId = {};

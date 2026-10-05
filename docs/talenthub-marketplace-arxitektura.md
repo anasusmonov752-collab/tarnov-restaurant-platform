@@ -117,40 +117,43 @@ ko'rinadi. `Client.credits` — shu jurnalning yig'indisi (tezlik uchun saqlanad
 
 ```js
 publicCode,                     // mijozga ko'rsatiladigan kod: "A-128"
-available,                      // hali ish qidiryaptimi
-availabilityAskedAt,
-availabilityAnsweredAt,
-anonSummary,                    // ish joyi nomlarisiz xulosa (pastga qarang)
+jobStatus,                      // qidirmoqda | ko'rib chiqmoqda | qidirmayapti
+jobStatusAt,                    // qachon belgilangan/tasdiqlangan
 shownToClients: [clientId]      // kimga ko'rsatilgan (takrorlamaslik uchun)
 ```
 
+`jobStatus` — hh.uz'dagidek uch holat ("Активно ищет работу" / "Рассматривает
+предложения" / "Не ищет"). Dastlab rezyumedan olinadi, keyin bot orqali
+nomzodning o'zidan so'ralib yangilanadi. Mijoz kartada shuni ko'radi —
+eski nomzodga vaqt sarflamaydi.
+
 ---
 
-## 4. Anonim karta — eng nozik joy
+## 4. Anonim karta
 
-**Xavf:** "Xostes, 21 yosh, Benedict'da 1 yil, ingliz+rus" — mijoz buni hh.uz'da
-ikki daqiqada topadi. Nomzodlar hh'dan kelgan, mijozning ham hh'ga kirishi bor.
+### Yashiriladi — faqat ikki narsa
+**ism-familiya** · **telefon va email**
 
-### Ko'rsatiladi
-kod (A-128) · lavozim · tajriba yili · ko'nikmalar · tillar · yosh **oralig'i**
-(20-25) · hudud (shahar, aniq manzil emas) · maosh **oralig'i** · AI moslik ·
-tiriklik belgisi ("bu hafta tasdiqlangan")
+### Qolgani ochiq
+lavozim · tajriba · ish joylari (nomi bilan) · ko'nikmalar · tillar · yosh ·
+hudud · maosh talabi · ta'lim · AI moslik · foto · holat
 
-### Ko'rsatilmaydi
-ism · telefon · email · **foto** · ish joyi **nomlari** · rezyume PDF
+### Nega to'liq niqoblash shart emas
+Dastlab ish joyi nomlarini ham yashirish rejalashtirilgandi — mijoz nomzodni
+hh.uz'da topib olmasin deb. **Bu keraksiz ekan:** hh'da kontakt ochishning eng
+arzon tarifi ~18 mln so'm. Mijoz bitta ofitsiant uchun bunga kirmaydi.
 
-### `anonSummary` kerakligi
-Mavjud `experienceSummary` ichida kompaniya nomlari bor ("Benedict'da ishlagan").
-Shuning uchun AI tahlilida **ikkinchi, niqoblangan variant** ham yaratiladi:
+Ya'ni himoya sir saqlashda emas — **narx to'sig'ida**. Mijoz nomzodni taniy
+oladi, lekin unga chiqishning yo'li baribir siz orqali, chunki muqobili
+qimmatroq.
 
-> "Premium restoranda 1 yil xostes, bron tizimi va mehmon kutib olish tajribasi"
+Bu qaror ishni ancha soddalashtiradi: `anonSummary` kerak emas, rezyumeni
+qayta ishlash shart emas, mavjud maydonlar shundayligicha ishlatiladi.
+Anonimlashtirish — bitta funksiya, ikki maydonni olib tashlaydi.
 
-Bu rezyume yuklanganda bir marta hisoblanadi, qayta ishlov kerak emas.
-
-### Haqiqiy himoya — sir emas, qiymat
+### Haqiqiy qiymat
 Telefon raqamining o'zi arzon. Mijoz **tekshirilgan tayyorlik** uchun to'laydi:
 siz gaplashgansiz, nomzod bo'sh, maoshni aytgan, chiqish sanasi ma'lum.
-Raqam sizib chiqsa ham bu yo'qolmaydi.
 
 ---
 
@@ -209,6 +212,36 @@ Bu sizning asosiy ustunligingiz: raqobatchilar eski ro'yxat sotadi.
 
 ---
 
+## 6.5 Hammasi bitta botdami
+
+**Ha — bitta bot, @TalentHubUzBot.**
+
+Sabablari:
+- Rol ajratish allaqachon ishlayapti (`chatId` bo'yicha), uchinchi rol
+  qo'shish — bir nechta qator
+- Bitta token, bitta webhook, bitta deploy — xato qidirish bir joyda
+- Telegram har foydalanuvchiga **alohida buyruqlar menyusi** beradi
+  (`setMyCommands` + `scope: chat_id`), demak nomzod va mijoz har xil
+  menyu ko'radi, bot bitta bo'lsa ham
+- Brend bitta joyda to'planadi
+
+**Yagona jiddiy e'tiroz:** bitta bot — bitta nuqtadan buzilish. Bot
+cheklansa (masalan nomzodlardan spam shikoyati), hammasi to'xtaydi:
+nomzodlar ham, mijozlar ham. Lekin bizning oqim roziliкka asoslangan
+(nomzod havolani o'zi bosadi), shuning uchun bu xavf past.
+
+### Rol ustunligi
+Bir odam ikki rolda bo'lishi mumkin (masalan menejer o'zi ham ish
+qidiryapti). Shuning uchun tartib qat'iy:
+
+```
+1. adminChatId    -> siz
+2. Client.tgChatId -> mijoz menejeri     <- to'lov munosabati ustun
+3. Candidate.tgChatId -> nomzod
+```
+
+---
+
 ## 7. Bot uch rolni qanday ajratadi
 
 `chatId` bo'yicha, shu tartibda:
@@ -247,9 +280,9 @@ src/
     Vacancy.js           yangi
     Shortlist.js         yangi
     CreditLedger.js      yangi
-    Candidate.js         publicCode, available, anonSummary qo'shiladi
+    Candidate.js         publicCode, jobStatus qo'shiladi
   services/
-    anonymize.js         yangi - nomzodni mijoz uchun tozalaydi
+    anonymize.js         yangi - ism va kontaktni olib tashlaydi
     credits.js           yangi - yechish/qaytarish, jurnal bilan
     clientBot.js         yangi - mijoz tomonidagi suhbat
     candidateSearch.js   mavjud, vakansiya kriteriyasi bilan ishlatiladi
@@ -269,7 +302,7 @@ public/
 |---|-----|-----------|
 | 1 | `Client` modeli + siz uchun mijoz boshqaruvi | — |
 | 2 | Botda mijoz roli: bog'lanish, so'rov | 1 |
-| 3 | `anonymize.js` + `anonSummary` | — |
+| 3 | `anonymize.js` (ism + kontaktni olib tashlaydi) | — |
 | 4 | Mini App: anonim ro'yxat, tanlash | 3 |
 | 5 | `Shortlist` + sizga bildirishnoma | 2, 4 |
 | 6 | `credits.js` + ochish/qaytarish | 5 |
@@ -292,10 +325,11 @@ integratsiyasi keyinroq, mijozlar paydo bo'lgandan keyin.
 (xizmat uxlaydi). Variantlar: tashqi cron xizmati, yoki har so'rovda
 "eskirgan" nomzodlarni tekshirish. Starter tarifga o'tilsa muammo yo'qoladi.
 
-**Nomzod roziligi.** Nomzodlar rezyumeni hh.uz'ga yuklagan, sizga emas.
-Botga ulanganlar rozilik bergan hisoblanadi. Ulanmaganlarni mijozga ko'rsatish
-— huquqiy jihatdan noaniq. Xavfsiz yo'l: faqat ulangan va `available`
-nomzodlarni ko'rsatish. Bu sifatni ham oshiradi.
+**Qaysi nomzodlar ko'rsatiladi.** Dastlab "faqat botga ulanganlar" deb
+o'ylangandi, lekin hozir 245 tadan atigi bittasi ulangan — bu bazani
+ishlatib bo'lmas qilardi. **Qaror: hammasi ko'rsatiladi**, kartada
+`jobStatus` belgisi bilan. Nomzodlar bot orqali ulangani sayin status
+aniqlashib boradi.
 
 **RestoOne bilan aloqa.** Mijoz TalentHub orqali xodim oldi -> o'sha xodim
 RestoOne'ga o'quvga tushadi. Rekruting bir martalik, o'qitish oylik. Ikkala

@@ -173,7 +173,7 @@ function cardHtml(c){
 
 function renderList(){
   cur = -1;
-  document.getElementById('listView').style.display = '';
+  document.getElementById('listView').style.display = 'block';
   document.getElementById('detail').style.display = 'none';
   if (TG && TG.BackButton) TG.BackButton.hide();
 
@@ -205,7 +205,9 @@ function openDetail(i){
 
   document.getElementById('listView').style.display = 'none';
   const d = document.getElementById('detail');
-  d.style.display = '';
+  // 'block' aniq yoziladi: bo'sh qiymat inline stilni olib tashlaydi va
+  // CSS'dagi #detail{display:none} qaytib kuchga kiradi — sahifa yashirin qolardi.
+  d.style.display = 'block';
   window.scrollTo(0, 0);
 
   if (TG && TG.BackButton) { TG.BackButton.show(); TG.BackButton.onClick(renderList); }

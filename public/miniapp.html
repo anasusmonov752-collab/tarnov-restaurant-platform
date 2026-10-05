@@ -6,9 +6,8 @@
 <title>TalentHub — Nomzodlar</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-/* Telegram o'z mavzusini CSS o'zgaruvchilar orqali beradi — ularga
-   tayanamiz, shunda ilova foydalanuvchining kunduzgi/tungi rejimiga
-   o'zi moslashadi. Qiymat kelmasa zaxira rang ishlatiladi. */
+/* Telegram o'z mavzusini CSS o'zgaruvchilar orqali beradi — ularga tayanamiz,
+   shunda ilova foydalanuvchining kunduzgi/tungi rejimiga o'zi moslashadi. */
 :root{
   --bg: var(--tg-theme-bg-color, #fff);
   --card: var(--tg-theme-secondary-bg-color, #f4f4f5);
@@ -21,15 +20,19 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-  background:var(--bg);color:var(--ink);padding:12px 12px 90px;font-size:15px}
-.top{position:sticky;top:0;background:var(--bg);padding:6px 0 10px;z-index:5}
+  background:var(--bg);color:var(--ink);font-size:15px;padding-bottom:84px}
+.wrap{padding:12px}
+
+/* ── Ro'yxat ── */
+.top{position:sticky;top:0;background:var(--bg);padding:10px 12px;z-index:5;border-bottom:1px solid var(--line)}
 .sum{font-size:13.5px;color:var(--muted);line-height:1.45}
-.cnt{font-size:13px;color:var(--muted);margin-top:4px}
+.cnt{font-size:13px;color:var(--muted);margin-top:3px}
 
 .c{background:var(--card);border-radius:14px;padding:12px;margin-bottom:10px;
   display:flex;gap:11px;position:relative;cursor:pointer;
   border:2px solid transparent;transition:border-color .12s}
 .c.on{border-color:var(--btn)}
+.c.seen .pos::after{content:' ·';color:var(--muted)}
 .ph{width:68px;height:84px;border-radius:10px;flex:none;overflow:hidden;
   background:var(--line);display:flex;align-items:center;justify-content:center;
   font-size:15px;font-weight:600;color:var(--muted)}
@@ -43,37 +46,67 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .t.ai{color:#1E7A46}
 .t.act{color:#1E7A46}
 .t.no{color:#B4542B}
+.seenmark{font-size:11.5px;color:var(--muted);margin-top:6px;display:none}
+.c.seen .seenmark{display:block}
 .tick{position:absolute;top:10px;right:10px;width:23px;height:23px;border-radius:50%;
   border:2px solid var(--line);background:var(--bg);display:flex;align-items:center;justify-content:center}
 .c.on .tick{background:var(--btn);border-color:var(--btn)}
 .c.on .tick::after{content:'';width:6px;height:11px;border:solid var(--btn-ink);
   border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
-.more{font-size:12.5px;color:var(--link);margin-top:7px;display:inline-block}
-.det{display:none;margin-top:9px;padding-top:9px;border-top:1px solid var(--line);font-size:13px;line-height:1.55}
-.det.on{display:block}
-.det b{font-weight:600}
-.det .r{margin-bottom:5px}
-.det .k{color:var(--muted);font-size:12px}
 
-.bar{position:fixed;left:0;right:0;bottom:0;padding:11px 12px calc(11px + env(safe-area-inset-bottom));
-  background:var(--bg);border-top:1px solid var(--line)}
-.send{width:100%;padding:14px;border:none;border-radius:12px;background:var(--btn);
+/* ── Alohida sahifa ── */
+#detail{display:none}
+.d-ph{width:100%;max-height:300px;object-fit:cover;display:block;background:var(--card)}
+.d-ph-none{height:150px;background:var(--card);display:flex;align-items:center;
+  justify-content:center;font-size:30px;font-weight:600;color:var(--muted)}
+.d-head{padding:14px 12px 0}
+.d-code{font-size:12.5px;color:var(--muted);font-family:ui-monospace,monospace}
+.d-pos{font-size:21px;font-weight:600;line-height:1.2;margin-top:2px}
+.d-meta{font-size:14px;color:var(--muted);margin-top:6px}
+.sec{padding:14px 12px 0}
+.sec h3{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.5px;margin-bottom:7px}
+.sec p{font-size:14.5px;line-height:1.6}
+.ai{background:var(--card);border-radius:12px;padding:12px;font-size:14px;line-height:1.55}
+.ai b{color:var(--link)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:13px;padding:5px 11px;border-radius:9px;background:var(--card)}
+.w{background:var(--card);border-radius:12px;padding:11px 13px;margin-bottom:8px}
+.w-p{font-size:15px;font-weight:600}
+.w-c{font-size:13.5px;color:var(--muted);margin-top:1px}
+.w-d{font-size:13.5px;margin-top:6px;line-height:1.5}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}
+.kv:last-child{border-bottom:none}
+.kv .k{color:var(--muted);flex:none}
+.kv .v{text-align:right}
+
+/* ── Pastki panel ── */
+.bar{position:fixed;left:0;right:0;bottom:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+  background:var(--bg);border-top:1px solid var(--line);display:flex;gap:8px;align-items:center}
+.btn{flex:1;padding:14px;border:none;border-radius:12px;background:var(--btn);
   color:var(--btn-ink);font-size:16px;font-weight:600;cursor:pointer;font-family:inherit}
-.send:disabled{opacity:.45}
+.btn:disabled{opacity:.45}
+.btn.ghost{background:var(--card);color:var(--ink)}
+.nav{width:52px;flex:none;padding:14px 0;border:none;border-radius:12px;
+  background:var(--card);color:var(--ink);font-size:17px;cursor:pointer}
+.nav:disabled{opacity:.3}
+.pg{font-size:13px;color:var(--muted);flex:none;min-width:48px;text-align:center}
 .msg{text-align:center;padding:50px 20px;color:var(--muted);font-size:14px;line-height:1.6}
 </style>
 </head>
 <body>
 
-<div class="top">
-  <div class="sum" id="sum">Yuklanmoqda…</div>
-  <div class="cnt" id="cnt"></div>
+<div id="listView">
+  <div class="top">
+    <div class="sum" id="sum">Yuklanmoqda…</div>
+    <div class="cnt" id="cnt"></div>
+  </div>
+  <div class="wrap" id="list"></div>
 </div>
-<div id="list"></div>
 
-<div class="bar" id="bar" style="display:none">
-  <button class="send" id="send" disabled>Tanlang</button>
-</div>
+<div id="detail"></div>
+
+<div class="bar" id="bar" style="display:none"></div>
 
 <script>
 const TG = window.Telegram && window.Telegram.WebApp;
@@ -82,10 +115,13 @@ if (TG) { TG.ready(); TG.expand(); }
 const KEY = new URLSearchParams(location.search).get('s') || '';
 const INIT = (TG && TG.initData) || '';
 const SEL = new Set();
+const SEEN = new Set();
 let ROWS = [];
+let cur = -1;          // -1 = ro'yxat, >=0 = alohida sahifa
 
 const esc = s => String(s==null?'':s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const show = h => { document.getElementById('list').innerHTML = `<div class="msg">${h}</div>`; };
+const haptic = t => { try { TG && TG.HapticFeedback && TG.HapticFeedback[t==='sel'?'selectionChanged':'impactOccurred'](t==='sel'?undefined:'light'); } catch(e){} };
 
 async function api(path, opt){
   const r = await fetch(path, Object.assign({
@@ -96,82 +132,156 @@ async function api(path, opt){
   return d;
 }
 
+function photoUrl(c){
+  return `/api/ma/photo/${encodeURIComponent(KEY)}/${encodeURIComponent(c.id)}?i=${encodeURIComponent(INIT)}`;
+}
 function initials(c){ return (c.publicCode||'—').replace('A-','').slice(0,2); }
 
-function card(c, i){
-  const bits = [];
-  if (c.experienceYears) bits.push(c.experienceYears + ' yil tajriba');
-  else bits.push('Tajribasiz');
-  if (c.age) bits.push(c.age + ' yosh');
-  if (c.location) bits.push(esc(c.location));
+// Holat noma'lum bo'lsa ko'rsatmaymiz — har kartada "Holati noma'lum"
+// yozilsa bu foydali ma'lumot emas, shovqin.
+function statusChip(c){
+  if (!c.jobStatus || c.jobStatus === 'unknown') return '';
+  const cls = c.jobStatus === 'active' ? 'act' : (c.jobStatus === 'not_looking' ? 'no' : '');
+  return `<span class="t ${cls}">${esc(c.jobStatusLabel)}</span>`;
+}
+function factLine(c){
+  const b = [];
+  b.push(c.experienceYears ? c.experienceYears + ' yil tajriba' : 'Tajribasiz');
+  if (c.age) b.push(c.age + ' yosh');
+  if (c.location) b.push(c.location);
+  return b.join(' · ');
+}
 
-  const st = c.jobStatus === 'active' ? 'act' : (c.jobStatus === 'not_looking' ? 'no' : '');
-  const photo = c.hasPhoto
-    ? `<img src="/api/ma/photo/${encodeURIComponent(KEY)}/${encodeURIComponent(c.id)}?i=${encodeURIComponent(INIT)}" alt="">`
-    : esc(initials(c));
-
-  const work = (c.workHistory||[]).slice(0,3).map(w =>
-    `<div class="r"><b>${esc(w.position||'')}</b>${w.company?' — '+esc(w.company):''}
-     <div class="k">${esc(w.period||'')}</div></div>`).join('');
-
-  return `<div class="c ${SEL.has(c.id)?'on':''}" data-id="${c.id}">
-    <div class="ph">${photo}</div>
+// ══ RO'YXAT ══
+function cardHtml(c){
+  return `<div class="c ${SEL.has(c.id)?'on':''} ${SEEN.has(c.id)?'seen':''}" data-id="${c.id}">
+    <div class="ph">${c.hasPhoto ? `<img src="${photoUrl(c)}" alt="">` : esc(initials(c))}</div>
     <div class="b">
       <div class="code">${esc(c.publicCode)}</div>
       <div class="pos">${esc(c.desiredPosition || c.roleLabel || 'Nomzod')}</div>
-      <div class="meta">${bits.join(' · ')}</div>
+      <div class="meta">${esc(factLine(c))}</div>
       <div class="tags">
         ${c.fitScore ? `<span class="t ai">AI ${c.fitScore}/5</span>` : ''}
-        ${c.jobStatusLabel ? `<span class="t ${st}">${esc(c.jobStatusLabel)}</span>` : ''}
+        ${statusChip(c)}
         ${c.salaryExpectation ? `<span class="t">${esc(c.salaryExpectation)}</span>` : ''}
       </div>
-      <span class="more" data-more="${c.id}">Batafsil</span>
-      <div class="det" id="d-${c.id}">
-        ${c.summary ? `<div class="r">${esc(c.summary)}</div>` : ''}
-        ${(c.languages||[]).length ? `<div class="r"><span class="k">Tillar:</span> ${c.languages.map(esc).join(', ')}</div>` : ''}
-        ${(c.skills||[]).length ? `<div class="r"><span class="k">Ko'nikmalar:</span> ${c.skills.slice(0,10).map(esc).join(', ')}</div>` : ''}
-        ${c.education ? `<div class="r"><span class="k">Ta'lim:</span> ${esc(c.education)}</div>` : ''}
-        ${work ? `<div class="r" style="margin-top:8px"><span class="k">Ish tajribasi:</span></div>${work}` : ''}
-      </div>
+      <div class="seenmark">Ko'rib chiqilgan</div>
     </div>
     <div class="tick"></div>
   </div>`;
 }
 
-function render(){
-  document.getElementById('list').innerHTML = ROWS.map(card).join('');
-  document.getElementById('cnt').textContent =
-    `${ROWS.length} ta nomzod` + (SEL.size ? ` · ${SEL.size} ta tanlandi` : '');
+function renderList(){
+  cur = -1;
+  document.getElementById('listView').style.display = '';
+  document.getElementById('detail').style.display = 'none';
+  if (TG && TG.BackButton) TG.BackButton.hide();
 
-  const b = document.getElementById('send');
-  b.disabled = !SEL.size;
-  b.textContent = SEL.size ? `${SEL.size} ta nomzodni yuborish` : 'Tanlang';
-
+  document.getElementById('list').innerHTML = ROWS.map(cardHtml).join('');
   document.querySelectorAll('.c').forEach(el=>{
     el.onclick = e => {
-      if (e.target.dataset.more) return;
-      const id = el.dataset.id;
-      SEL.has(id) ? SEL.delete(id) : SEL.add(id);
-      el.classList.toggle('on');
-      const d = document.getElementById('cnt');
-      d.textContent = `${ROWS.length} ta nomzod` + (SEL.size ? ` · ${SEL.size} ta tanlandi` : '');
-      const bb = document.getElementById('send');
-      bb.disabled = !SEL.size;
-      bb.textContent = SEL.size ? `${SEL.size} ta nomzodni yuborish` : 'Tanlang';
-      if (TG && TG.HapticFeedback) TG.HapticFeedback.selectionChanged();
+      // Belgi ustiga bosilsa — tanlash, aks holda sahifani ochish
+      if (e.target.classList.contains('tick')) { toggle(el.dataset.id); return; }
+      openDetail(ROWS.findIndex(r => r.id === el.dataset.id));
     };
   });
-  document.querySelectorAll('[data-more]').forEach(el=>{
-    el.onclick = e => {
-      e.stopPropagation();
-      const d = document.getElementById('d-' + el.dataset.more);
-      d.classList.toggle('on');
-      el.textContent = d.classList.contains('on') ? 'Yopish' : 'Batafsil';
-    };
-  });
+  updateBar();
 }
 
-document.getElementById('send').onclick = async ()=>{
+function toggle(id){
+  SEL.has(id) ? SEL.delete(id) : SEL.add(id);
+  haptic('sel');
+  const el = document.querySelector(`.c[data-id="${id}"]`);
+  if (el) el.classList.toggle('on');
+  updateBar();
+}
+
+// ══ ALOHIDA SAHIFA ══
+function openDetail(i){
+  if (i < 0 || i >= ROWS.length) return;
+  cur = i;
+  const c = ROWS[i];
+  SEEN.add(c.id);
+
+  document.getElementById('listView').style.display = 'none';
+  const d = document.getElementById('detail');
+  d.style.display = '';
+  window.scrollTo(0, 0);
+
+  if (TG && TG.BackButton) { TG.BackButton.show(); TG.BackButton.onClick(renderList); }
+
+  const work = (c.workHistory||[]).map(w => `
+    <div class="w">
+      <div class="w-p">${esc(w.position||'Lavozim ko\'rsatilmagan')}</div>
+      ${w.company ? `<div class="w-c">${esc(w.company)}</div>` : ''}
+      ${w.period ? `<div class="w-c">${esc(w.period)}</div>` : ''}
+      ${w.description ? `<div class="w-d">${esc(w.description)}</div>` : ''}
+    </div>`).join('');
+
+  d.innerHTML = `
+    ${c.hasPhoto ? `<img class="d-ph" src="${photoUrl(c)}" alt="">`
+                 : `<div class="d-ph-none">${esc(initials(c))}</div>`}
+    <div class="d-head">
+      <div class="d-code">${esc(c.publicCode)}</div>
+      <div class="d-pos">${esc(c.desiredPosition || c.roleLabel || 'Nomzod')}</div>
+      <div class="d-meta">${esc(factLine(c))}</div>
+      <div class="tags" style="margin-top:9px">
+        ${c.fitScore ? `<span class="t ai">AI moslik ${c.fitScore}/5</span>` : ''}
+        ${statusChip(c)}
+      </div>
+    </div>
+
+    ${c.summary ? `<div class="sec"><h3>Qisqacha</h3><div class="ai">${esc(c.summary)}</div></div>` : ''}
+    ${c.fitReason ? `<div class="sec"><div class="ai"><b>Nega mos:</b> ${esc(c.fitReason)}</div></div>` : ''}
+
+    <div class="sec"><h3>Ma'lumot</h3>
+      ${c.salaryExpectation ? `<div class="kv"><span class="k">Kutilayotgan maosh</span><span class="v">${esc(c.salaryExpectation)}</span></div>` : ''}
+      ${c.experienceYears ? `<div class="kv"><span class="k">Umumiy tajriba</span><span class="v">${c.experienceYears} yil</span></div>` : ''}
+      ${c.education ? `<div class="kv"><span class="k">Ta'lim</span><span class="v">${esc(c.education)}</span></div>` : ''}
+      ${c.location ? `<div class="kv"><span class="k">Hudud</span><span class="v">${esc(c.location)}</span></div>` : ''}
+      ${c.shift ? `<div class="kv"><span class="k">Smena</span><span class="v">${esc(c.shift)}</span></div>` : ''}
+    </div>
+
+    ${(c.languages||[]).length ? `<div class="sec"><h3>Tillar</h3><div class="chips">${c.languages.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}</div></div>` : ''}
+    ${(c.skills||[]).length ? `<div class="sec"><h3>Ko'nikmalar</h3><div class="chips">${c.skills.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}</div></div>` : ''}
+    ${c.experienceSummary ? `<div class="sec"><h3>Tajriba haqida</h3><p>${esc(c.experienceSummary)}</p></div>` : ''}
+    ${work ? `<div class="sec"><h3>Ish tarixi</h3>${work}</div>` : ''}
+    <div style="height:14px"></div>`;
+
+  updateBar();
+}
+
+// ══ PASTKI PANEL ══
+function updateBar(){
+  const bar = document.getElementById('bar');
+  bar.style.display = ROWS.length ? 'flex' : 'none';
+
+  if (cur < 0) {
+    document.getElementById('cnt').textContent =
+      `${ROWS.length} ta nomzod` + (SEL.size ? ` · ${SEL.size} ta tanlandi` : '');
+    bar.innerHTML = `<button class="btn" id="send" ${SEL.size?'':'disabled'}>
+      ${SEL.size ? SEL.size + ' ta nomzodni yuborish' : 'Nomzod tanlang'}</button>`;
+    if (SEL.size) document.getElementById('send').onclick = submit;
+    return;
+  }
+
+  const c = ROWS[cur];
+  const on = SEL.has(c.id);
+  bar.innerHTML = `
+    <button class="nav" id="prev" ${cur===0?'disabled':''}>&#9664;</button>
+    <span class="pg">${cur+1} / ${ROWS.length}</span>
+    <button class="btn ${on?'ghost':''}" id="pick">${on?'Tanlangan':'Tanlash'}</button>
+    <button class="nav" id="next" ${cur===ROWS.length-1?'disabled':''}>&#9654;</button>`;
+  document.getElementById('prev').onclick = ()=>openDetail(cur-1);
+  document.getElementById('next').onclick = ()=>openDetail(cur+1);
+  document.getElementById('pick').onclick = ()=>{
+    SEL.has(c.id) ? SEL.delete(c.id) : SEL.add(c.id);
+    haptic('sel');
+    updateBar();
+  };
+}
+
+async function submit(){
   const b = document.getElementById('send');
   b.disabled = true; b.textContent = 'Yuborilmoqda…';
   try{
@@ -179,17 +289,18 @@ document.getElementById('send').onclick = async ()=>{
       method:'POST', body: JSON.stringify({ key: KEY, ids: [...SEL] })
     });
     document.getElementById('bar').style.display = 'none';
+    document.getElementById('sum').textContent = '';
+    document.getElementById('cnt').textContent = '';
     show(`<b>${r.count} ta nomzod yuborildi.</b><br><br>
       HR ular bilan bog'lanadi va kontaktlarni ochib beradi.<br>
       Natija haqida botda xabar olasiz.`);
-    document.getElementById('sum').textContent = '';
-    document.getElementById('cnt').textContent = '';
-    if (TG) { TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); setTimeout(()=>TG.close(), 2500); }
+    try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
+    if (TG) setTimeout(()=>TG.close(), 2500);
   }catch(e){
     b.disabled = false; b.textContent = 'Qayta urinish';
     show('Yuborilmadi: ' + esc(e.message));
   }
-};
+}
 
 (async function(){
   if (!KEY)  { show('Havola noto\'g\'ri.'); return; }
@@ -199,8 +310,7 @@ document.getElementById('send').onclick = async ()=>{
     ROWS = d.candidates || [];
     document.getElementById('sum').textContent = d.summary || '';
     if (!ROWS.length) { show('Nomzod topilmadi.'); return; }
-    document.getElementById('bar').style.display = 'block';
-    render();
+    renderList();
   }catch(e){ show(esc(e.message)); }
 })();
 </script>

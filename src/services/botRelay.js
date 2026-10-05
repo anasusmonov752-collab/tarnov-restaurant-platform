@@ -44,8 +44,7 @@ async function logMsg(fields) {
 // channel='manual' bo'lsa hech narsa yuborilmaydi — havola qaytariladi,
 // admin uni hh chati yoki WhatsApp orqali o'zi tashlaydi.
 async function invite(restaurant, candidate, { channel } = {}) {
-  const t = restaurant.telegram || {};
-  if (!t.enabled || !t.botUsername) throw new Error('Bot sozlanmagan');
+  if (!tg.isPlatformReady()) throw new Error('Bot sozlanmagan (TELEGRAM_BOT_TOKEN yo\'q)');
 
   // 24 soatda bir martadan ko'p taklif yubormaymiz (spam himoyasi)
   if (candidate.tgInviteSentAt && Date.now() - candidate.tgInviteSentAt < 24 * 3600e3) {
@@ -54,7 +53,7 @@ async function invite(restaurant, candidate, { channel } = {}) {
   if (candidate.tgState === 'linked') throw new Error('Nomzod allaqachon ulangan');
 
   const token = makeToken();
-  const link = tg.deepLink(t.botUsername, token);
+  const link = tg.deepLink(await tg.platformUsername(), token);
   const ch = channel || outreach.defaultChannel();
 
   // SMS matni moderatsiyadan o'tgan shabloga mos bo'lishi kerak
@@ -92,9 +91,12 @@ async function forwardToAdmin(restaurant, candidate, text) {
   const t = restaurant.telegram || {};
   if (!t.adminChatId) return null;
 
-  const header = `${displayName(candidate)} — ${roleLabel(candidate.role)}`;
+  // Bot bitta (TalentHub), lekin mijoz restoranlar ko'p — sarlavhada
+  // restoran nomi ham bo'lishi kerak, aks holda admin kimdan kelganini
+  // bilmaydi (bir admin bir nechta restoranni boshqarishi mumkin).
+  const header = `${restaurant.name} · ${displayName(candidate)} — ${roleLabel(candidate.role)}`;
   const sent = await tg.sendMessage(
-    t.botToken, t.adminChatId,
+    tg.platformToken(), t.adminChatId,
     `${header}\n${'—'.repeat(20)}\n${text}\n\nJavob berish uchun shu xabarga reply qiling.`
   );
   return sent && sent.message_id;
@@ -105,9 +107,8 @@ async function sendToCandidate(restaurant, candidate, text, sentBy = 'panel') {
   const err = canSend(candidate);
   if (err) throw new Error(err);
 
-  const t = restaurant.telegram || {};
   try {
-    const sent = await tg.sendMessage(t.botToken, candidate.tgChatId, text);
+    const sent = await tg.sendMessage(tg.platformToken(), candidate.tgChatId, text);
     await logMsg({
       restaurantId: restaurant.id, candidateId: candidate.id,
       direction: 'out', kind: 'text', sentBy,

@@ -377,18 +377,18 @@ const AdaptationSchema = new mongoose.Schema({
   onboardingSteps: [OnboardingStepSchema]
 }, { _id: false });
 
-// ── TELEGRAM BOT SOZLAMALARI ─────────────────────────────────
-// Har restoranga O'Z boti (BotFather'dan). Sabab: nomzod umumiy "RestoOne"
-// emas, o'zi ariza bergan restoran nomini ko'rishi kerak. Bitta webhook
-// endpoint hammasiga xizmat qiladi — manzilda restaurantId bor.
+// ── TELEGRAM (restoran darajasidagi qism) ────────────────────
+// Bot BITTA — platforma boti (TalentHub), tokeni muhit o'zgaruvchisida
+// turadi va bazaga YOZILMAYDI. Bu yerda faqat shu restoranga tegishli
+// narsa: qaysi chatga nomzod javoblari borishi.
+//
+// Ya'ni bot bitta, adminlar ko'p: nomzod javobi o'sha nomzod tegishli
+// restoran adminiga yo'naltiriladi.
 const TelegramSchema = new mongoose.Schema({
-  botToken:      { type: String, default: '' },   // API javoblarida HECH QACHON qaytarilmaydi
-  botUsername:   { type: String, default: '' },   // getMe orqali olinadi, deep link uchun
-  webhookSecret: { type: String, default: '' },   // URL va header tekshiruvi
-  adminChatId:   { type: String, default: '' },   // nomzod javoblari shu chatga keladi
-  adminLinkToken:{ type: String, default: '' },   // admin o'zini bog'lash uchun bir martalik
-  enabled:       { type: Boolean, default: false },
-  connectedAt:   { type: Date, default: null }
+  adminChatId:    { type: String, default: '' },  // javoblar shu chatga keladi
+  adminLinkToken: { type: String, default: '' },  // adminni bog'lash, bir martalik
+  enabled:        { type: Boolean, default: false },
+  connectedAt:    { type: Date, default: null }
 }, { _id: false });
 
 const RestaurantSchema = new mongoose.Schema({

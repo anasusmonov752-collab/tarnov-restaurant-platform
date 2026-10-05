@@ -98,7 +98,27 @@ function deepLink(botUsername, payload) {
   return `https://t.me/${botUsername}?start=${payload}`;
 }
 
+// ── PLATFORMA BOTI ───────────────────────────────────────────
+// Bitta bot (TalentHub) barcha mijoz restoranlarga xizmat qiladi.
+// Token muhit o'zgaruvchisida — bazada saqlanmaydi, API javoblarida
+// chiqmaydi, mijoz admini uni ko'rmaydi.
+
+function platformToken()  { return process.env.TELEGRAM_BOT_TOKEN || ''; }
+function platformSecret() { return process.env.TELEGRAM_WEBHOOK_SECRET || ''; }
+function isPlatformReady() { return !!(platformToken() && platformSecret()); }
+
+// Username deep link uchun kerak. Env'da berilmasa getMe'dan olinadi
+// va xotirada saqlanadi (jarayon qayta ishga tushsa qayta so'raladi).
+let cachedUsername = process.env.TELEGRAM_BOT_USERNAME || '';
+async function platformUsername() {
+  if (cachedUsername) return cachedUsername;
+  const me = await getMe(platformToken());
+  cachedUsername = me.username;
+  return cachedUsername;
+}
+
 module.exports = {
   getMe, sendMessage, setWebhook, deleteWebhook, getWebhookInfo,
-  deepLink, TelegramError, MAX_LEN
+  deepLink, TelegramError, MAX_LEN,
+  platformToken, platformSecret, platformUsername, isPlatformReady
 };

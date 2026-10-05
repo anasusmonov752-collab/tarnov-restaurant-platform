@@ -28,7 +28,22 @@ Maydonlar:
   maxSalary   - maosh shifti (son, so'mda) yoki null
   keywords    - qolgan muhim so'zlar (ko'nikma, kompaniya nomi) massivi
   limit       - nechta nomzod so'ralgan (son) yoki null
-  summary     - so'rovni o'zbekcha bir jumlada qaytarib ayt (tasdiqlash uchun)`;
+  summary     - so'rovni o'zbekcha bir jumlada qaytarib ayt (tasdiqlash uchun)
+
+HAR BIR maydonni qaytar. Ma'lumot bo'lmasa null (yoki massiv uchun []) qo'y.
+
+Misollar:
+  "menga xostes kerak, 2 yildan ortiq tajribali"
+  -> role:"xostess", minExp:2, languages:[], location:null, limit:null
+
+  "ingliz tili biladigan zal menejeri topib ber, Toshkentdan 5 ta"
+  -> role:"menejer", minExp:null, languages:["ingliz"], location:"Toshkent", limit:5
+
+  "call operator kerak"
+  -> role:"operator", minExp:null, languages:[], location:null, limit:null
+
+  "kim bor umuman"
+  -> role:null, minExp:null, languages:[], location:null, limit:null`;
 
 const SCHEMA = {
   type: 'object',
@@ -43,7 +58,10 @@ const SCHEMA = {
     limit:      { type: 'integer', nullable: true },
     summary:    { type: 'string' }
   },
-  required: ['transcript', 'summary']
+  // HAMMASI required — Gemini majburiy bo'lmagan maydonni tashlab ketardi,
+  // shuning uchun rol/hudud/limit doim bo'sh kelardi. Noma'lum bo'lsa
+  // model null qo'yadi.
+  required: ['transcript','role','minExp','languages','location','maxSalary','keywords','limit','summary']
 };
 
 /**
@@ -65,11 +83,32 @@ async function parseQuery(input, restaurantId) {
     restaurantId
   });
 
-  // Model mavjud bo'lmagan rol qaytarishi mumkin — tozalaymiz
-  if (r.role && !ROLE_KEYS.includes(r.role)) r.role = null;
+  r._raw = { role: r.role, location: r.location, limit: r.limit };  // diagnostika
+  r.role = normalizeRole(r.role);
   if (!Array.isArray(r.languages)) r.languages = [];
   if (!Array.isArray(r.keywords))  r.keywords = [];
   return r;
+}
+
+// Model lavozimni har xil yozishi mumkin: "xostes", "Хостес", "hostess".
+// Hammasini bitta kalitga keltiramiz — aks holda filtr ishlamaydi.
+const ROLE_ALIAS = {
+  ofitsiant: ['ofitsiant','ofitsiyant','официант','оффициант','waiter','waitress'],
+  barmen:    ['barmen','бармен','bartender','barista','бариста'],
+  xostess:   ['xostess','xostes','hostess','хостес','хостесс','host'],
+  oshpaz:    ['oshpaz','повар','cook','chef','shef'],
+  kassir:    ['kassir','кассир','cashier'],
+  menejer:   ['menejer','manager','менеджер','administrator','administrator zali','админ','администратор','zal menejeri','supervayzer','супервайзер'],
+  operator:  ['operator','оператор','call operator','call-operator','call markaz','колл-центр','call center','call-центра','callcenter']
+};
+function normalizeRole(v) {
+  if (!v) return null;
+  const s = String(v).toLowerCase().trim();
+  if (ROLE_KEYS.includes(s)) return s;
+  for (const key of Object.keys(ROLE_ALIAS)) {
+    if (ROLE_ALIAS[key].some(a => s === a || s.includes(a))) return key;
+  }
+  return null;
 }
 
 function escapeRegex(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }

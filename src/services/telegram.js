@@ -98,6 +98,36 @@ function deepLink(botUsername, payload) {
   return `https://t.me/${botUsername}?start=${payload}`;
 }
 
+// ── Fayl yuklab olish ────────────────────────────────────────
+// Ovozli xabar uchun: getFile -> file_path -> yuklab olish.
+// Telegram Bot API orqali 20 MB gacha fayl olish mumkin; ovozli xabar
+// odatda bir necha yuz KB, shuning uchun chegara qo'yamiz.
+const MAX_DOWNLOAD = 20 * 1024 * 1024;
+
+async function getFileBase64(token, fileId, { maxBytes = MAX_DOWNLOAD } = {}) {
+  const info = await call(token, 'getFile', { file_id: fileId });
+  if (!info || !info.file_path) throw new TelegramError('Fayl topilmadi', 0, true);
+  if (info.file_size && info.file_size > maxBytes) {
+    throw new TelegramError('Fayl juda katta', 0, true);
+  }
+
+  const url = `https://api.telegram.org/file/bot${token}/${info.file_path}`;
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 30000);
+  try {
+    const res = await fetch(url, { signal: ctl.signal });
+    if (!res.ok) throw new TelegramError('Fayl yuklanmadi: ' + res.status, res.status, false);
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (buf.length > maxBytes) throw new TelegramError('Fayl juda katta', 0, true);
+    return { base64: buf.toString('base64'), bytes: buf.length, path: info.file_path };
+  } catch (e) {
+    if (e instanceof TelegramError) throw e;
+    throw new TelegramError(e.name === 'AbortError' ? 'Fayl yuklash timeout' : e.message, 0, false);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // ── PLATFORMA BOTI ───────────────────────────────────────────
 // Bitta bot (TalentHub) barcha mijoz restoranlarga xizmat qiladi.
 // Token muhit o'zgaruvchisida — bazada saqlanmaydi, API javoblarida
@@ -118,7 +148,7 @@ async function platformUsername() {
 }
 
 module.exports = {
-  getMe, sendMessage, setWebhook, deleteWebhook, getWebhookInfo,
+  getMe, sendMessage, setWebhook, deleteWebhook, getWebhookInfo, getFileBase64,
   deepLink, TelegramError, MAX_LEN,
   platformToken, platformSecret, platformUsername, isPlatformReady
 };

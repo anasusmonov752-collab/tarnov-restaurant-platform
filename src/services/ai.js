@@ -66,10 +66,26 @@ function isConfigured() {
 }
 
 // ── Gemini ────────────────────────────────────────────────────
+// Xabar tanasi matn YOKI qismlar massivi bo'lishi mumkin.
+// Qism: 'matn' (satr) yoki { audio: { mimeType, data } } — data base64.
+// Shu bilan ovozli xabarni to'g'ridan Gemini'ga berish mumkin bo'ladi.
+function geminiParts(content) {
+  if (!Array.isArray(content)) return [{ text: String(content) }];
+  return content.map(p => {
+    if (typeof p === 'string') return { text: p };
+    if (p && p.audio) return { inlineData: { mimeType: p.audio.mimeType, data: p.audio.data } };
+    return { text: String(p) };
+  });
+}
+
+function hasBinary(messages) {
+  return messages.some(m => Array.isArray(m.content) && m.content.some(p => p && p.audio));
+}
+
 async function completeGemini({ system, messages, json, schema, maxTokens, tier }) {
   const contents = messages.map(m => ({
     role: m.role === 'assistant' ? 'model' : 'user',
-    parts: [{ text: String(m.content) }]
+    parts: geminiParts(m.content)
   }));
 
   const spec = MODELS.gemini[tier];
@@ -96,6 +112,11 @@ async function completeGemini({ system, messages, json, schema, maxTokens, tier 
 
 // ── Anthropic ─────────────────────────────────────────────────
 async function completeAnthropic({ system, messages, json, maxTokens, tier }) {
+  // Ovoz faqat Gemini orqali ketadi — bu yerga tushsa aniq xato beramiz,
+  // aks holda audio String() bo'lib "[object Object]" ga aylanardi.
+  if (hasBinary(messages)) {
+    throw Object.assign(new Error('Ovozli so\'rov uchun Gemini kerak'), { code: 'AI_AUDIO_UNSUPPORTED' });
+  }
   // Anthropic'da JSON rejimi yo'q — prefill orqali majburlaymiz.
   const msgs = messages.map(m => ({ role: m.role, content: String(m.content) }));
   if (json) msgs.push({ role: 'assistant', content: '{' });

@@ -16,6 +16,7 @@ const BotMessage = require('../models/BotMessage');
 const tg = require('../services/telegram');
 const relay = require('../services/botRelay');
 const outreach = require('../services/outreach');
+const candidateSearch = require('../services/candidateSearch');
 
 const router = express.Router();
 const guard = auth(['restaurant']);
@@ -65,7 +66,8 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
 
     const chatId = String(msg.chat.id);
     const text = (msg.text || '').trim();
-    if (!text) return;
+    const voice = msg.voice || msg.audio;   // ovozli xabar yoki audio fayl
+    if (!text && !voice) return;
     const token = tg.platformToken();
 
     // ── /start <payload> ──
@@ -143,12 +145,13 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
       return;
     }
 
-    // ── Admin reply qildi -> nomzodga yo'naltiramiz ──
+    // ── Admin chati ──
+    // reply bo'lsa -> nomzodga javob;  reply bo'lmasa -> nomzod qidiruvi
     const adminRest = await Restaurant.findOne({ 'telegram.adminChatId': chatId, active: true });
     if (adminRest) {
       const replyTo = msg.reply_to_message && msg.reply_to_message.message_id;
       if (!replyTo) {
-        await tg.sendMessage(token, chatId, 'Javob berish uchun nomzod xabariga reply qiling.');
+        await handleSearch(adminRest, chatId, { text, voice });
         return;
       }
       const orig = await BotMessage.findOne({ restaurantId: adminRest.id, adminMsgId: replyTo });
@@ -172,11 +175,14 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
     const rest = await Restaurant.findOne({ id: cand.restaurantId });
     if (!rest) return;
 
-    const adminMsgId = await relay.forwardToAdmin(rest, cand, text);
+    // Nomzod ovozli xabar yuborishi mumkin — uni matnga aylantirmaymiz
+    // (bu adminning qidiruvi emas), lekin adminga xabar beramiz.
+    const body = text || '[ovozli xabar — Telegramda tinglang]';
+    const adminMsgId = await relay.forwardToAdmin(rest, cand, body);
     await relay.logMsg({
       restaurantId: rest.id, candidateId: cand.id,
-      direction: 'in', kind: 'text', sentBy: 'telegram',
-      text, tgMessageId: msg.message_id, adminMsgId
+      direction: 'in', kind: text ? 'text' : 'system', sentBy: 'telegram',
+      text: body, tgMessageId: msg.message_id, adminMsgId
     });
     cand.tgUnread = (cand.tgUnread || 0) + 1;
     cand.tgLastMsgAt = new Date();
@@ -186,6 +192,43 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
     console.error('[TG] webhook xatosi:', e.message);
   }
 }));
+
+// ── Nomzod qidiruvi (matn yoki ovoz) ─────────────────────────
+// Admin reply qilmasdan yozsa — bu qidiruv so'rovi deb qabul qilinadi.
+async function handleSearch(restaurant, chatId, { text, voice }) {
+  const token = tg.platformToken();
+
+  if (text && text.startsWith('/')) {
+    await tg.sendMessage(token, chatId,
+      'Nomzod qidirish uchun shunchaki yozing yoki ovozli xabar yuboring.\n\n' +
+      'Masalan: "menejer kerak, 2 yildan ortiq tajribali, ingliz tili biladigan"\n\n' +
+      'Nomzodga javob berish uchun uning xabariga reply qiling.');
+    return;
+  }
+
+  await tg.sendMessage(token, chatId, voice ? 'Ovoz tinglanmoqda…' : 'Qidirilmoqda…');
+
+  try {
+    let input;
+    if (voice) {
+      const f = await tg.getFileBase64(token, voice.file_id, { maxBytes: 10 * 1024 * 1024 });
+      input = { audio: { mimeType: voice.mime_type || 'audio/ogg', data: f.base64 } };
+    } else {
+      input = { text };
+    }
+
+    const criteria = await candidateSearch.parseQuery(input, restaurant.id);
+    const rows = await candidateSearch.search(criteria, restaurant.id);
+    await tg.sendMessage(token, chatId, candidateSearch.format(criteria, rows));
+
+  } catch (e) {
+    console.error('[TG] qidiruv xatosi:', e.message);
+    const msg = e.code === 'AI_NOT_CONFIGURED'
+      ? 'AI sozlanmagan — qidiruv ishlamaydi.'
+      : `Qidirib bo'lmadi: ${e.message}`;
+    await tg.sendMessage(token, chatId, msg);
+  }
+}
 
 // ══ 2. ADMIN ENDPOINTLARI ═══════════════════════════════════
 

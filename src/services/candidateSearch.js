@@ -32,6 +32,10 @@ Maydonlar:
 
 HAR BIR maydonni qaytar. Ma'lumot bo'lmasa null (yoki massiv uchun []) qo'y.
 
+MUHIM: faqat so'rovda AYTILGANINI yoz. Hech narsani o'ylab topma.
+Shahar aytilmasa location null bo'lsin — "Toshkent" yoki boshqa shaharni
+o'zing qo'shma. Shu qoida barcha maydonlarga tegishli.
+
 Misollar:
   "menga xostes kerak, 2 yildan ortiq tajribali"
   -> role:"xostess", minExp:2, languages:[], location:null, limit:null
@@ -43,7 +47,11 @@ Misollar:
   -> role:"operator", minExp:null, languages:[], location:null, limit:null
 
   "kim bor umuman"
-  -> role:null, minExp:null, languages:[], location:null, limit:null`;
+  -> role:null, minExp:null, languages:[], location:null, limit:null
+
+  "нужен официант с опытом работы"
+  -> role:"ofitsiant", minExp:null, languages:[], location:null, limit:null
+     (shahar aytilmagan - location null)`;
 
 const SCHEMA = {
   type: 'object',
@@ -113,6 +121,31 @@ function normalizeRole(v) {
 
 function escapeRegex(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 
+// Bitta til bazada bir necha xil yozilgan: "Ingliz" / "Английский" / "English".
+// Apostrof va qo'shimchalardan qochish uchun o'zak bo'laklar ishlatiladi
+// (masalan "zbek" — "O'zbek" ham, "Узбекский" ham tushadi).
+const LANG_ALIAS = [
+  ['zbek', 'узбек', 'uzbek'],
+  ['rus', 'русск', 'russian'],
+  ['ngliz', 'нгли', 'english', 'inglis'],
+  ['qozoq', 'kazax', 'казах', 'kazakh'],
+  ['turk', 'турец', 'turkish'],
+  ['koreys', 'корей', 'korean'],
+  ['tojik', 'тадж', 'tajik'],
+  ['arab', 'араб', 'arabic'],
+  ['nemis', 'немец', 'german', 'deutsch'],
+  ['fransuz', 'француз', 'french'],
+  ['xitoy', 'китай', 'chinese'],
+  ['ozarbayjon', 'азербайдж', 'azerbaijani']
+];
+function langPattern(lang) {
+  const s = String(lang || '').toLowerCase().trim();
+  if (!s) return '.^';                       // hech narsaga mos kelmaydi
+  const group = LANG_ALIAS.find(g => g.some(a => s.includes(a) || a.includes(s)));
+  const parts = group || [s];
+  return parts.map(escapeRegex).join('|');
+}
+
 /** Kriteriyadan Mongo so'rovini quradi va nomzodlarni qaytaradi. */
 async function search(criteria, restaurantId, { limit = 8 } = {}) {
   const q = { restaurantId };
@@ -125,9 +158,11 @@ async function search(criteria, restaurantId, { limit = 8 } = {}) {
   if (criteria.location) {
     q.location = { $regex: escapeRegex(criteria.location), $options: 'i' };
   }
-  // Har bir til ALOHIDA shart — "ingliz va rus" ikkalasini ham talab qiladi
+  // Har bir til ALOHIDA shart — "ingliz va rus" ikkalasini ham talab qiladi.
+  // Rezyumelar aralash tilda kelgani uchun baza bir tilni ikki xil yozadi
+  // ("Ingliz" va "Английский"), shuning uchun barcha yozuvlarini izlaymiz.
   for (const lang of criteria.languages.slice(0, 4)) {
-    and.push({ languages: { $elemMatch: { $regex: escapeRegex(lang), $options: 'i' } } });
+    and.push({ languages: { $elemMatch: { $regex: langPattern(lang), $options: 'i' } } });
   }
   // Kalit so'zlar — istalgan joyda uchrasa bo'ladi
   for (const kw of criteria.keywords.slice(0, 4)) {

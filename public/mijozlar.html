@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TalentHub — Mijozlar va tanlovlar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF3FB; --ink:#16233A; --green:#0F2747; --green2:#0A1B33;
+  --gold:#2563EB; --gold-d:#1D4ED8; --card:#FFFFFF; --line:#E1E8F2;
+  --muted:#64748B; --danger:#C25B4C; --ok:#2E9E5B; --warn:#B4802E;
+  --shadow:0 1px 3px rgba(16,32,24,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:rgba(15,39,71,.22);border-radius:6px}
+::-webkit-scrollbar-track{background:transparent}
+button,input,select,textarea{font-family:inherit}
+
+.topbar{flex:none;background:linear-gradient(180deg,var(--green),var(--green2));color:#F5EFDF;padding:13px 20px;display:flex;align-items:center;gap:14px;z-index:40}
+.back{display:flex;align-items:center;gap:7px;background:rgba(37,99,235,.15);border:1px solid rgba(37,99,235,.3);color:#F5EFDF;padding:8px 13px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;text-decoration:none}
+.back:hover{background:rgba(37,99,235,.26)}
+.tb-mark{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--gold),var(--gold-d));display:flex;align-items:center;justify-content:center}
+.tb-mark span{font-style:italic;font-weight:700;font-size:21px;color:#F4F9FF}
+.tb-title{font-size:17px;font-weight:800;line-height:1}
+.tb-sub{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(37,99,235,.85);font-weight:700;margin-top:3px}
+.tb-spacer{flex:1}
+.view-sw{display:flex;align-items:center;gap:7px;background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.28);color:rgba(245,239,223,.9);padding:7px 12px;border-radius:9px;cursor:pointer;font-size:12.5px;font-weight:700;text-decoration:none}
+.view-sw:hover{background:rgba(37,99,235,.24)}
+.view-sw.on{background:var(--gold);border-color:var(--gold);color:#fff}
+
+.wrap{flex:1;overflow-y:auto;padding:18px 22px 40px}
+.inner{max-width:1180px;margin:0 auto}
+
+.head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.head h2{font-size:19px;font-weight:800}
+.head .sp{flex:1}
+
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 14px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:700}
+.btn:hover{background:#F3F7FD}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-p{background:var(--gold);border-color:var(--gold);color:#fff}
+.btn-p:hover{background:var(--gold-d)}
+.btn-ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn-ok:hover{filter:brightness(.94)}
+.btn-no{background:#fff;border-color:var(--danger);color:var(--danger)}
+.btn-no:hover{background:#FDF3F1}
+.btn-sm{padding:6px 10px;font-size:12px}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+.empty{padding:46px 20px;text-align:center;color:var(--muted);font-size:14px}
+
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:700;padding:11px 14px;border-bottom:1px solid var(--line)}
+td{padding:12px 14px;border-bottom:1px solid var(--line);font-size:13.5px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr.clk{cursor:pointer}
+tr.clk:hover{background:#F6F9FE}
+
+.pill{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11.5px;font-weight:700}
+.p-ok{background:rgba(46,158,91,.12);color:var(--ok)}
+.p-wait{background:rgba(180,128,46,.14);color:var(--warn)}
+.p-off{background:rgba(100,116,139,.14);color:var(--muted)}
+.p-no{background:rgba(194,91,76,.12);color:var(--danger)}
+.p-cr{background:rgba(37,99,235,.12);color:var(--gold);font-size:13px}
+
+.ov{position:fixed;inset:0;background:rgba(10,24,44,.5);display:none;align-items:center;justify-content:center;padding:24px;z-index:200}
+.ov.on{display:flex}
+.md{background:var(--card);border-radius:14px;width:100%;max-width:620px;max-height:88vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.3)}
+.md-top{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--card);border-radius:14px 14px 0 0}
+.md-top b{font-size:16px;flex:1}
+.md-x{border:none;background:transparent;font-size:19px;cursor:pointer;color:var(--muted);line-height:1}
+.md-b{padding:18px}
+
+label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:0 0 5px;text-transform:uppercase;letter-spacing:.5px}
+input[type=text],input[type=number],textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:14px;color:var(--ink);background:#FBFCFE}
+input:focus,textarea:focus{outline:none;border-color:var(--gold)}
+.fld{margin-bottom:14px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+.linkbox{background:#F3F7FD;border:1px solid var(--line);border-radius:9px;padding:11px;font-size:12.5px;word-break:break-all;font-family:ui-monospace,monospace;margin-bottom:10px}
+
+.ci{border:1px solid var(--line);border-radius:11px;padding:13px;margin-bottom:11px}
+.ci-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:7px}
+.ci-nm{font-weight:700;font-size:14.5px;flex:1}
+.ci-meta{font-size:12.5px;color:var(--muted);line-height:1.6}
+.ci-act{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
+.hidden{display:none}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="back" href="/restaurant-admin.html">&#8592; Panel</a>
+  <div class="tb-mark"><span>T</span></div>
+  <div>
+    <div class="tb-title">Mijozlar va tanlovlar</div>
+    <div class="tb-sub">TalentHub</div>
+  </div>
+  <div class="tb-spacer"></div>
+  <button class="view-sw on" id="tabC">Mijozlar</button>
+  <button class="view-sw" id="tabS">Tanlovlar</button>
+  <a class="view-sw" href="/recruitment.html">Nomzodlar bazasi</a>
+</div>
+
+<div class="wrap"><div class="inner">
+
+  <!-- ── MIJOZLAR ── -->
+  <div id="vC">
+    <div class="head">
+      <h2>Mijozlar</h2>
+      <div class="sp"></div>
+      <button class="btn btn-p" id="bNew">+ Yangi mijoz</button>
+    </div>
+    <div class="card" id="cList"><div class="empty">Yuklanmoqda...</div></div>
+  </div>
+
+  <!-- ── TANLOVLAR ── -->
+  <div id="vS" class="hidden">
+    <div class="head"><h2>Tanlovlar</h2></div>
+    <div class="card" id="sList"><div class="empty">Yuklanmoqda...</div></div>
+  </div>
+
+</div></div>
+
+<div class="ov" id="ov"><div class="md">
+  <div class="md-top"><b id="mdT">—</b><button class="md-x" id="mdX">&#10005;</button></div>
+  <div class="md-b" id="mdB"></div>
+</div></div>
+
+<div id="toast-container"></div>
+<script src="/js/utils.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+let CLIENTS = [], SHORTS = [];
+
+// ── Modal ──
+function openMd(title, html){ $('mdT').textContent = title; $('mdB').innerHTML = html; $('ov').classList.add('on'); }
+function closeMd(){ $('ov').classList.remove('on'); $('mdB').innerHTML = ''; }
+$('mdX').onclick = closeMd;
+$('ov').onclick = e => { if (e.target === $('ov')) closeMd(); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMd(); });
+
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+  ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+const dt = s => s ? new Date(s).toLocaleDateString('uz-UZ', { day:'2-digit', month:'short', year:'numeric' }) : '—';
+
+// ══ MIJOZLAR ══════════════════════════════════════════════
+const CST = {
+  active:  { cls:'p-ok',   lbl:'Faol' },
+  pending: { cls:'p-wait', lbl:'Kutilmoqda' },
+  blocked: { cls:'p-no',   lbl:'Bloklangan' }
+};
+
+async function loadClients(){
+  try { CLIENTS = await api('/api/clients'); } catch(e){ toast(e.message, 'error'); return; }
+  if (!CLIENTS.length) {
+    $('cList').innerHTML = '<div class="empty">Hali mijoz yo\'q. "+ Yangi mijoz" bilan boshlang.</div>';
+    return;
+  }
+  const rows = CLIENTS.map(c => {
+    const st = CST[c.status] || CST.pending;
+    return `<tr>
+      <td><b>${esc(c.name)}</b>${c.contactName ? '<div style="font-size:12px;color:var(--muted)">' + esc(c.contactName) + '</div>' : ''}</td>
+      <td>${esc(c.phone) || '—'}</td>
+      <td><span class="pill p-cr">${c.credits}</span></td>
+      <td><span class="pill ${st.cls}">${st.lbl}</span></td>
+      <td><span class="pill ${c.linked ? 'p-ok' : 'p-off'}">${c.linked ? 'Ulangan' : 'Ulanmagan'}</span></td>
+      <td>${c.openShortlists || 0}</td>
+      <td style="text-align:right;white-space:nowrap">
+        <button class="btn btn-sm" data-link="${c.id}">Havola</button>
+        <button class="btn btn-sm" data-cr="${c.id}">Kredit</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  $('cList').innerHTML = `<table>
+    <thead><tr><th>Mijoz</th><th>Telefon</th><th>Kredit</th><th>Holat</th><th>Telegram</th><th>Ochiq tanlov</th><th></th></tr></thead>
+    <tbody>${rows}</tbody></table>`;
+
+  $('cList').querySelectorAll('[data-link]').forEach(b => b.onclick = () => showLink(b.dataset.link));
+  $('cList').querySelectorAll('[data-cr]').forEach(b => b.onclick = () => showCredits(b.dataset.cr));
+}
+
+$('bNew').onclick = () => {
+  openMd('Yangi mijoz', `
+    <div class="fld"><label>Restoran nomi *</label><input type="text" id="fNm" placeholder="Chaykhana Navruz"></div>
+    <div class="row2">
+      <div class="fld"><label>Menejer ismi</label><input type="text" id="fCn" placeholder="Aziz"></div>
+      <div class="fld"><label>Telefon</label><input type="text" id="fPh" placeholder="+998 90 123 45 67"></div>
+    </div>
+    <div class="fld"><label>Boshlang'ich kredit</label><input type="number" id="fCr" value="5" min="0"></div>
+    <div class="fld"><label>Izoh</label><textarea id="fNo" rows="2"></textarea></div>
+    <button class="btn btn-p" id="fSave" style="width:100%">Yaratish</button>`);
+
+  $('fSave').onclick = async () => {
+    const name = $('fNm').value.trim();
+    if (!name) return toast('Nom kiriting', 'error');
+    $('fSave').disabled = true;
+    try {
+      await api('/api/clients', { method:'POST', body: JSON.stringify({
+        name, contactName: $('fCn').value.trim(), phone: $('fPh').value.trim(),
+        note: $('fNo').value.trim(), startCredits: parseInt($('fCr').value, 10) || 0
+      })});
+      toast('Mijoz yaratildi', 'success');
+      closeMd(); loadClients();
+    } catch(e){ toast(e.message, 'error'); $('fSave').disabled = false; }
+  };
+};
+
+async function showLink(id){
+  const c = CLIENTS.find(x => x.id === id);
+  openMd('Botga ulash havolasi', '<div class="empty">Olinmoqda...</div>');
+  let r;
+  try { r = await api('/api/clients/' + id + '/link'); }
+  catch(e){ $('mdB').innerHTML = '<div class="empty">' + esc(e.message) + '</div>'; return; }
+
+  $('mdB').innerHTML = `
+    <div style="font-size:13.5px;line-height:1.7;margin-bottom:12px">
+      Bu havolani <b>${esc(c.name)}</b> menejeriga yuboring. U bosgach bot uni taniydi
+      va nomzod qidira oladi.
+    </div>
+    <div class="linkbox" id="lk">${esc(r.link)}</div>
+    <button class="btn btn-p" id="bCp" style="width:100%">Nusxa olish</button>
+    <div style="font-size:12.5px;color:var(--muted);margin-top:11px;line-height:1.6">
+      Havola bir martalik — ishlatilgach kuchini yo'qotadi. Yangisi kerak bo'lsa
+      shu tugmani qayta bosing.
+    </div>`;
+
+  $('bCp').onclick = async () => {
+    try { await navigator.clipboard.writeText(r.link); toast('Nusxa olindi', 'success'); }
+    catch { toast('Nusxa olinmadi — qo\'lda belgilang', 'error'); }
+  };
+}
+
+async function showCredits(id){
+  const c = CLIENTS.find(x => x.id === id);
+  openMd('Kredit — ' + c.name, `
+    <div style="margin-bottom:14px">Joriy balans: <span class="pill p-cr">${c.credits}</span></div>
+    <div class="row2">
+      <div class="fld"><label>Miqdor (manfiy = ayirish)</label><input type="number" id="aAm" value="5"></div>
+      <div class="fld"><label>Izoh</label><input type="text" id="aNo" placeholder="To'lov"></div>
+    </div>
+    <button class="btn btn-p" id="aGo" style="width:100%;margin-bottom:16px">Qo'llash</button>
+    <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Tarix</div>
+    <div id="aHist"><div class="empty">Yuklanmoqda...</div></div>`);
+
+  $('aGo').onclick = async () => {
+    const amount = parseInt($('aAm').value, 10);
+    if (!amount) return toast('Miqdor kiriting', 'error');
+    $('aGo').disabled = true;
+    try {
+      const r = await api('/api/clients/' + id + '/credits', { method:'POST',
+        body: JSON.stringify({ amount, note: $('aNo').value.trim() }) });
+      toast('Yangi balans: ' + r.balance, 'success');
+      closeMd(); loadClients();
+    } catch(e){ toast(e.message, 'error'); $('aGo').disabled = false; }
+  };
+
+  const REASON = { purchase:'To\'lov', bonus:'Bonus', reveal:'Kontakt ochildi', refund:'Qaytarildi' };
+  try {
+    const h = await api('/api/clients/' + id + '/credits');
+    $('aHist').innerHTML = h.length
+      ? '<table><tbody>' + h.map(x => `<tr>
+          <td style="white-space:nowrap">${dt(x.createdAt)}</td>
+          <td><b style="color:${x.delta > 0 ? 'var(--ok)' : 'var(--danger)'}">${x.delta > 0 ? '+' : ''}${x.delta}</b></td>
+          <td>${REASON[x.reason] || esc(x.reason)}${x.note ? ' · ' + esc(x.note) : ''}</td>
+          <td style="text-align:right;color:var(--muted)">${x.balanceAfter}</td>
+        </tr>`).join('') + '</tbody></table>'
+      : '<div class="empty">Harakat yo\'q</div>';
+  } catch(e){ $('aHist').innerHTML = '<div class="empty">' + esc(e.message) + '</div>'; }
+}
+
+// ══ TANLOVLAR ═════════════════════════════════════════════
+const IST = {
+  selected:     { cls:'p-off',  lbl:'Tanlandi' },
+  contacting:   { cls:'p-wait', lbl:'Bog\'lanilmoqda' },
+  candidate_ok: { cls:'p-ok',   lbl:'Nomzod rozi' },
+  candidate_no: { cls:'p-no',   lbl:'Rozi emas' },
+  revealed:     { cls:'p-ok',   lbl:'Kontakt ochilgan' },
+  refunded:     { cls:'p-wait', lbl:'Qaytarilgan' }
+};
+
+async function loadShorts(){
+  try { SHORTS = await api('/api/shortlists'); } catch(e){ toast(e.message, 'error'); return; }
+  if (!SHORTS.length) {
+    $('sList').innerHTML = '<div class="empty">Hali tanlov yo\'q. Mijoz Mini App\'da nomzod tanlagach shu yerda paydo bo\'ladi.</div>';
+    return;
+  }
+  $('sList').innerHTML = `<table>
+    <thead><tr><th>Mijoz</th><th>Sana</th><th>Nomzod</th><th>Kutilmoqda</th><th>Ochilgan</th><th>Balans</th></tr></thead>
+    <tbody>${SHORTS.map(s => `<tr class="clk" data-sl="${s.id}">
+      <td><b>${esc(s.clientName)}</b></td>
+      <td>${dt(s.createdAt)}</td>
+      <td>${s.counts.total}</td>
+      <td>${s.counts.waiting ? '<span class="pill p-wait">' + s.counts.waiting + '</span>' : '—'}</td>
+      <td>${s.counts.revealed ? '<span class="pill p-ok">' + s.counts.revealed + '</span>' : '—'}</td>
+      <td><span class="pill p-cr">${s.clientCredits == null ? '?' : s.clientCredits}</span></td>
+    </tr>`).join('')}</tbody></table>`;
+
+  $('sList').querySelectorAll('[data-sl]').forEach(r => r.onclick = () => openShort(r.dataset.sl));
+}
+
+async function openShort(id){
+  openMd('Tanlov', '<div class="empty">Yuklanmoqda...</div>');
+  let d;
+  try { d = await api('/api/shortlists/' + id); }
+  catch(e){ $('mdB').innerHTML = '<div class="empty">' + esc(e.message) + '</div>'; return; }
+
+  $('mdT').textContent = (d.client && d.client.name) || 'Tanlov';
+
+  const head = `<div style="font-size:13px;color:var(--muted);margin-bottom:14px">
+    ${dt(d.createdAt)} · ${d.counts.total} ta nomzod · balans
+    <span class="pill p-cr">${d.client ? d.client.credits : '?'}</span></div>`;
+
+  const body = d.items.map(it => {
+    const c = it.candidate;
+    const st = IST[it.state] || IST.selected;
+    const done = it.state === 'revealed' || it.state === 'refunded';
+    if (!c) return `<div class="ci"><div class="ci-meta">Nomzod o'chirilgan (${esc(it.candidateId).slice(0,8)})</div></div>`;
+
+    return `<div class="ci" data-it="${esc(c.id)}">
+      <div class="ci-top">
+        <div class="ci-nm">${esc(c.fullName) || 'Nomsiz'}
+          <span style="font-weight:600;color:var(--muted);font-size:12.5px">${esc(c.publicCode) || ''}</span>
+        </div>
+        <span class="pill ${st.cls}">${st.lbl}</span>
+      </div>
+      <div class="ci-meta">
+        ${esc(c.desiredPosition) || '—'}<br>
+        ${[c.age ? c.age + ' yosh' : '', esc(c.location) || '', c.experienceYears ? c.experienceYears + ' yil' : '']
+          .filter(Boolean).join(' · ')}<br>
+        <b>${esc(c.phone) || 'telefon yo\'q'}</b>${c.email ? ' · ' + esc(c.email) : ''}
+      </div>
+      <div class="ci-act">
+        ${done ? '' : `
+          <button class="btn btn-sm" data-st="contacting"   data-c="${esc(c.id)}">Bog'lanyapman</button>
+          <button class="btn btn-sm btn-ok" data-st="candidate_ok" data-c="${esc(c.id)}">Nomzod rozi</button>
+          <button class="btn btn-sm btn-no" data-st="candidate_no" data-c="${esc(c.id)}">Rozi emas</button>
+          <button class="btn btn-sm btn-p"  data-rv="${esc(c.id)}">Kontaktni och (-1)</button>`}
+      </div>
+    </div>`;
+  }).join('');
+
+  $('mdB').innerHTML = head + body;
+
+  $('mdB').querySelectorAll('[data-st]').forEach(b => b.onclick = async () => {
+    b.disabled = true;
+    try {
+      await api(`/api/shortlists/${id}/items/${b.dataset.c}`, { method:'PATCH',
+        body: JSON.stringify({ state: b.dataset.st }) });
+      openShort(id); loadShorts();
+    } catch(e){ toast(e.message, 'error'); b.disabled = false; }
+  });
+
+  $('mdB').querySelectorAll('[data-rv]').forEach(b => b.onclick = async () => {
+    if (!confirm('Kontakt mijozga ochiladi va 1 kredit yechiladi. Davom etamizmi?')) return;
+    b.disabled = true;
+    try {
+      const r = await api(`/api/shortlists/${id}/reveal/${b.dataset.rv}`, { method:'POST' });
+      toast(r.already ? 'Allaqachon ochilgan' : 'Ochildi. Balans: ' + r.balance, 'success');
+      openShort(id); loadShorts();
+    } catch(e){ toast(e.message, 'error'); b.disabled = false; }
+  });
+}
+
+// ══ Tablar ════════════════════════════════════════════════
+$('tabC').onclick = () => {
+  $('tabC').classList.add('on'); $('tabS').classList.remove('on');
+  $('vC').classList.remove('hidden'); $('vS').classList.add('hidden');
+  loadClients();
+};
+$('tabS').onclick = () => {
+  $('tabS').classList.add('on'); $('tabC').classList.remove('on');
+  $('vS').classList.remove('hidden'); $('vC').classList.add('hidden');
+  loadShorts();
+};
+
+(async () => {
+  await requireRole('restaurant');
+  loadClients();
+  loadShorts();          // sanoqlar darhol to'g'ri ko'rinsin
+})();
+</script>
+</body>
+</html>

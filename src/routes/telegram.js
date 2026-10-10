@@ -155,6 +155,15 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
       const rest = await Restaurant.findOne({ id: cand.restaurantId });
       if (!rest) return;
 
+      // Shu chatga boshqa nomzod bog'langan bo'lsa — uzamiz. Aks holda
+      // bitta chatId ikki yozuvda qoladi va findOne({tgChatId}) qaysi
+      // birini topsa o'shani ko'rsatadi: odam boshqa odamning profilini
+      // ochib qo'yadi. Havola boshqa kishiga yuborilganda ham shu holat.
+      await Candidate.updateMany(
+        { tgChatId: chatId, id: { $ne: cand.id } },
+        { $set: { tgChatId: '', tgUsername: '', tgState: 'none' } }
+      );
+
       cand.tgChatId      = chatId;
       cand.tgUsername    = (msg.from && msg.from.username) || '';
       cand.tgState       = 'linked';

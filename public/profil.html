@@ -32,13 +32,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .card{background:var(--card);border-radius:14px;margin-bottom:14px;overflow:hidden}
 .pad{padding:14px}
 
-.prog{height:7px;background:var(--line);border-radius:5px;overflow:hidden;margin:9px 0 8px}
-.prog i{display:block;height:100%;background:var(--blue);border-radius:5px}
+.prog{height:7px;background:var(--line);border-radius:5px;overflow:hidden;margin:10px 0 12px}
+.prog i{display:block;height:100%;background:var(--blue);border-radius:5px;transition:width .3s}
 .need{font-size:13px;color:var(--muted);line-height:1.5}
+/* Yetishmagan maydon - bosiladigan. Ro'yxat o'qish emas, to'ldirish
+   oqimi bo'lsin: bosilganda o'sha bo'lim ochiladi. */
+.gaps{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px}
+.gap{font-size:13px;padding:7px 13px;border-radius:9px;background:#F2F7FF;color:var(--blue);
+  border:1px solid #D8E6FF;cursor:pointer;font-family:inherit;font-weight:600}
+.gap:active{background:#E4EFFF}
 
 .stats{display:flex;gap:10px;margin-bottom:14px}
 .stat{flex:1;background:var(--card);border-radius:13px;padding:13px 10px;text-align:center}
-.stat b{display:block;font-size:23px;font-weight:700;line-height:1}
+.stat b{display:block;font-size:23px;font-weight:700;line-height:1;color:var(--blue)}
 .stat span{font-size:11.5px;color:var(--muted);display:block;margin-top:5px;line-height:1.3}
 
 .seg{display:flex;gap:7px;margin-bottom:14px}
@@ -130,8 +136,16 @@ const MISS = {
   age:'yosh', shift:'smena', salaryExpectation:'maosh', experienceSummary:"o'zingiz haqingizda",
   languages:'tillar', sanitaryBook:'sanitar kitobcha'
 };
+// Yetishmagan maydon qaysi bo'limda tahrirlanadi
+const SECTION_OF = {
+  fullName:'main', phone:'main', age:'main', location:'main',
+  desiredPosition:'job', shift:'job', salaryExpectation:'job',
+  sanitaryBook:'sani', languages:'skill', experienceSummary:'about'
+};
 const dmy = d => d ? new Date(d).toLocaleDateString('uz-UZ',{day:'2-digit',month:'short',year:'numeric'}) : '';
-const row = (k,v) => `<div class="kv"><span class="k">${k}</span><span class="v ${v?'':'em'}">${v?esc(v):"ko'rsatilmagan"}</span></div>`;
+// Bo'sh qiymatda "ko'rsatilmagan" so'zini har qatorda takrorlamaymiz —
+// yetishmaganlar yuqorida alohida chiqadi, bu yerda tire yetarli.
+const row = (k,v) => `<div class="kv"><span class="k">${k}</span><span class="v ${v?'':'em'}">${v?esc(v):'—'}</span></div>`;
 
 function render(p){
   P = p;
@@ -161,16 +175,21 @@ function render(p){
     </div>
 
     ${cm.percent < 100 ? `<div class="card"><div class="pad">
-      <div style="display:flex;align-items:baseline"><b style="flex:1;font-size:15px">Profil ${cm.percent}% to'ldirilgan</b></div>
+      <b style="font-size:15.5px">Profil ${cm.percent}% to'ldirilgan</b>
       <div class="prog"><i style="width:${cm.percent}%"></i></div>
-      <div class="need">To'ldirilmagan: ${cm.missing.map(k=>MISS[k]||k).join(', ')}.
-        To'liq profil restoranlar ro'yxatida yuqoriroq turadi.</div>
+      <div class="gaps">${cm.missing.map(k =>
+        `<button class="gap" data-e="${SECTION_OF[k] || 'main'}">${MISS[k] || k}</button>`).join('')}</div>
+      <div class="need">Bosing — to'g'ri bo'lim ochiladi. To'liq profil restoranlar
+        ro'yxatida yuqoriroq turadi.</div>
     </div></div>` : ''}
 
-    <div class="stats">
+    ${st.picked || st.opened ? `<div class="stats">
       <div class="stat"><b>${st.picked}</b><span>restoran<br>tanlovida</span></div>
       <div class="stat"><b>${st.opened}</b><span>kontakt<br>ochilgan</span></div>
-    </div>
+    </div>` : `<div class="card"><div class="pad need">
+      Profilingiz restoranlarga ko'rsatila boshlagach, shu yerda nechta
+      restoran sizni tanlagani ko'rinadi.
+    </div></div>`}
 
     <div class="card">
       <div class="sec-h"><b>Asosiy</b><button class="ed" data-e="main">Tahrirlash</button></div>
@@ -224,7 +243,9 @@ function render(p){
     haptic();
     try { await save({ jobStatus: b.dataset.s }); } catch(e){ alert(e.message); }
   });
-  document.querySelectorAll('.ed').forEach(b => b.onclick = () => openSheet(b.dataset.e));
+  // '.ed' (bo'lim sarlavhasi) va '.gap' (yetishmagan maydon) — ikkalasi
+  // ham data-e bilan bir xil oynani ochadi
+  document.querySelectorAll('[data-e]').forEach(b => b.onclick = () => openSheet(b.dataset.e));
 }
 
 // ── Bo'limni tahrirlash ──

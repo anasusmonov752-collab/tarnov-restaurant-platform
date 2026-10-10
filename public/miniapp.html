@@ -94,12 +94,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .msg{text-align:center;padding:50px 20px;color:var(--muted);font-size:14px;line-height:1.6}
 
 /* ══ KABINET ══════════════════════════════════════════════ */
-.chead{background:linear-gradient(135deg,#0F2747,#0A1B33);color:#EAF2FF;
-  padding:16px 14px calc(16px + 4px);position:sticky;top:0;z-index:6}
-.chead .nm{font-size:17px;font-weight:700}
-.chead .cr{display:flex;align-items:baseline;gap:7px;margin-top:9px}
-.chead .cr b{font-size:28px;font-weight:800;color:#60A5FA;line-height:1}
-.chead .cr span{font-size:13px;color:rgba(234,242,255,.72)}
+/* Oq va havodor — nomzod profili bilan bir tilda. Oldin to'q ko'k
+   gradient edi; mobilda og'ir ko'rinar va asosiy raqamni (balans)
+   bo'rttirish o'rniga u bilan raqobatlashardi. */
+.chead{background:var(--card);border-bottom:1px solid var(--line);
+  padding:18px 16px 16px;position:sticky;top:0;z-index:6}
+.chead .nm{font-size:15px;color:var(--muted);font-weight:500}
+.chead .cr{display:flex;align-items:baseline;gap:9px;margin-top:6px}
+.chead .cr b{font-size:34px;font-weight:600;color:var(--blue);line-height:1}
+.chead .cr span{font-size:13px;color:var(--muted);line-height:1.4}
 
 .stats{display:flex;gap:8px;padding:12px 12px 0}
 .stat{flex:1;background:var(--card);border-radius:11px;padding:10px 8px;text-align:center}

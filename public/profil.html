@@ -17,14 +17,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   background:var(--bg);color:var(--ink);font-size:15px;-webkit-text-size-adjust:100%;
   padding-bottom:28px}
 
-.hero{background:linear-gradient(135deg,#0F2747,#0A1B33);color:#EAF2FF;padding:20px 16px 22px;
-  display:flex;gap:14px;align-items:center}
-.hero .av{width:64px;height:78px;border-radius:12px;flex:none;overflow:hidden;
-  background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;
-  font-size:20px;font-weight:600;color:rgba(234,242,255,.8)}
+/* Oq va havodor. Oldin to'q ko'k gradient edi - u e'tiborni fotodan
+   va ismdan tortib olardi va mobilda og'ir ko'rinardi. Ko'k endi faqat
+   tugma va havolalarda: urg'u kamaygani sari kuchayadi. */
+.hero{background:var(--card);border-radius:16px;padding:24px 18px 20px;text-align:center;
+  margin-bottom:14px}
+.hero .av{width:84px;height:84px;border-radius:50%;margin:0 auto;overflow:hidden;
+  background:#E8F0FD;display:flex;align-items:center;justify-content:center;
+  font-size:24px;font-weight:600;color:var(--blue)}
 .hero .av img{width:100%;height:100%;object-fit:cover}
-.hero .nm{font-size:19px;font-weight:700;line-height:1.25}
-.hero .sb{font-size:13.5px;color:rgba(234,242,255,.74);margin-top:4px;line-height:1.5}
+.hero .nm{font-size:23px;font-weight:600;line-height:1.25;margin-top:14px}
+.hero .sb{font-size:14.5px;color:var(--muted);margin-top:5px;line-height:1.5}
+.pill{display:inline-flex;align-items:center;gap:7px;margin-top:16px;border:none;
+  font-family:inherit;font-size:14px;font-weight:600;padding:9px 18px;border-radius:22px;cursor:pointer}
+.pill.look{background:rgba(46,158,91,.12);color:var(--ok)}
+.pill.think{background:rgba(180,128,46,.14);color:var(--warn)}
+.pill.off{background:rgba(100,116,139,.13);color:var(--muted)}
 
 .wrap{padding:14px}
 .h3{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;
@@ -47,10 +55,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .stat b{display:block;font-size:23px;font-weight:700;line-height:1;color:var(--blue)}
 .stat span{font-size:11.5px;color:var(--muted);display:block;margin-top:5px;line-height:1.3}
 
-.seg{display:flex;gap:7px;margin-bottom:14px}
-.sg{flex:1;padding:11px 5px;border:1.5px solid var(--line);background:var(--card);
-  border-radius:11px;font-family:inherit;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer}
-.sg.on{border-color:var(--blue);color:var(--blue);background:#F2F7FF}
+.opt{display:flex;align-items:center;width:100%;padding:16px 2px;border:none;
+  background:transparent;border-bottom:1px solid var(--line);font-family:inherit;
+  font-size:16px;color:var(--ink);cursor:pointer;text-align:left}
+.opt:last-of-type{border-bottom:none}
+.opt span{flex:1}
+.opt b{color:var(--blue);font-size:17px}
+.opt.on span{color:var(--blue);font-weight:600}
 
 .sec-h{display:flex;align-items:center;padding:13px 14px 0}
 .sec-h b{flex:1;font-size:15.5px;font-weight:600}
@@ -92,7 +103,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   font-size:16px;color:var(--ink);padding:0}
 .f input:focus,.f textarea:focus,.f select:focus{outline:none}
 .f textarea{resize:vertical;line-height:1.55;min-height:84px}
-.f .hint{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.45}
+.hint{font-size:12.5px;color:var(--muted);margin-top:5px;line-height:1.5}
 .btn{width:100%;padding:15px;border:none;border-radius:12px;background:var(--blue);
   color:#fff;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer;margin-top:14px}
 .btn:disabled{opacity:.5}
@@ -162,16 +173,16 @@ function render(p){
   const sb = p.sanitaryBook;
   const sbOk = sb === 'yes';
 
-  $('app').innerHTML = `
-  <div class="hero">
-    <div class="av">${p.hasPhoto ? `<img src="/api/cand/photo?i=${encodeURIComponent(INIT)}" alt="">` : esc(ini)}</div>
-    <div><div class="nm">${esc(p.fullName) || 'Ismingizni kiriting'}</div>
-      <div class="sb">${esc(sub) || 'Profilni to\'ldiring'}</div></div>
-  </div>
+  const PILL = { active:['look','Ish qidiryapman'], considering:['think',"Ko'rib chiqaman"], not_looking:['off','Qidirmayapman'] };
+  const [pcls, plbl] = PILL[cur] || PILL.active;
 
+  $('app').innerHTML = `
   <div class="wrap">
-    <div class="seg" id="seg">
-      ${STATUS.map(([k,l])=>`<button class="sg ${k===cur?'on':''}" data-s="${k}">${l}</button>`).join('')}
+    <div class="hero">
+      <div class="av">${p.hasPhoto ? `<img src="/api/cand/photo?i=${encodeURIComponent(INIT)}" alt="">` : esc(ini)}</div>
+      <div class="nm">${esc(p.fullName) || 'Ismingizni kiriting'}</div>
+      <div class="sb">${esc(sub) || 'Profilni to\'ldiring'}</div>
+      <button class="pill ${pcls}" data-e="status">${plbl}</button>
     </div>
 
     ${cm.percent < 100 ? `<div class="card"><div class="pad">
@@ -239,12 +250,8 @@ function render(p){
     </div>` : ''}
   </div>`;
 
-  document.querySelectorAll('.sg').forEach(b => b.onclick = async () => {
-    haptic();
-    try { await save({ jobStatus: b.dataset.s }); } catch(e){ alert(e.message); }
-  });
-  // '.ed' (bo'lim sarlavhasi) va '.gap' (yetishmagan maydon) — ikkalasi
-  // ham data-e bilan bir xil oynani ochadi
+  // '.ed' (bo'lim sarlavhasi), '.gap' (yetishmagan maydon) va holat
+  // chipi — hammasi data-e bilan bir xil oynani ochadi
   document.querySelectorAll('[data-e]').forEach(b => b.onclick = () => openSheet(b.dataset.e));
 }
 
@@ -292,6 +299,25 @@ const FORMS = {
 const TEXT_IDS = ['fullName','phone','desiredPosition','location','shift','salaryExpectation','education','experienceSummary','age','experienceYears','sanitaryBook','sanitaryBookUntil'];
 
 function openSheet(key){
+  // Holat — forma emas, uchta tanlov. Bosilgan zahoti saqlanadi va
+  // oyna yopiladi: "Saqlash" tugmasini qo'shish ortiqcha qadam bo'lardi.
+  if (key === 'status') {
+    $('shT').textContent = 'Holatingiz';
+    $('shB').innerHTML = STATUS.map(([k,l]) => `
+      <button class="opt ${k === P.jobStatus ? 'on' : ''}" data-s="${k}">
+        <span>${l}</span>${k === P.jobStatus ? '<b>&#10003;</b>' : ''}
+      </button>`).join('') +
+      `<div class="hint" style="padding:10px 0 2px">"Qidirmayapman" tanlasangiz restoranlarga
+       ko'rsatilmaysiz. Istalgan payt qaytarasiz.</div>`;
+    $('sheet').classList.add('on');
+    document.querySelectorAll('.opt').forEach(b => b.onclick = async () => {
+      haptic();
+      try { await save({ jobStatus: b.dataset.s }); closeSheet(); }
+      catch(e){ alert(e.message); }
+    });
+    return;
+  }
+
   const [title, body] = FORMS[key];
   $('shT').textContent = title;
   $('shB').innerHTML = body(P) + '<button class="btn" id="shSave">Saqlash</button>';

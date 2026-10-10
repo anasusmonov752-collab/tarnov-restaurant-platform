@@ -22,16 +22,19 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--i
 ::-webkit-scrollbar-track{background:transparent}
 button,input,select,textarea{font-family:inherit}
 
-.topbar{flex:none;background:linear-gradient(180deg,var(--green),var(--green2));color:#F5EFDF;padding:13px 20px;display:flex;align-items:center;gap:14px;z-index:40}
-.back{display:flex;align-items:center;gap:7px;background:rgba(37,99,235,.15);border:1px solid rgba(37,99,235,.3);color:#F5EFDF;padding:8px 13px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700;text-decoration:none}
-.back:hover{background:rgba(37,99,235,.26)}
-.tb-mark{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--gold),var(--gold-d));display:flex;align-items:center;justify-content:center}
-.tb-mark span{font-style:italic;font-weight:700;font-size:21px;color:#F4F9FF}
-.tb-title{font-size:17px;font-weight:800;line-height:1}
-.tb-sub{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(37,99,235,.85);font-weight:700;margin-top:3px}
+/* Oq sarlavha — Mini App bilan bir tilda. Oldin to'q ko'k gradient edi:
+   u sahifaning oq tanasidan uzilib turardi va e'tiborni kontentdan
+   tortib olardi. Ko'k endi faqat belgi va faol tabda. */
+.topbar{flex:none;background:var(--card);border-bottom:1px solid var(--line);color:var(--ink);padding:12px 20px;display:flex;align-items:center;gap:14px;z-index:40}
+.back{display:flex;align-items:center;gap:7px;background:transparent;border:1px solid var(--line);color:var(--muted);padding:8px 13px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;text-decoration:none}
+.back:hover{background:#F3F7FD;color:var(--ink)}
+.tb-mark{width:36px;height:36px;border-radius:10px;background:var(--gold);display:flex;align-items:center;justify-content:center}
+.tb-mark span{font-style:italic;font-weight:700;font-size:20px;color:#fff}
+.tb-title{font-size:16.5px;font-weight:700;line-height:1}
+.tb-sub{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:3px}
 .tb-spacer{flex:1}
-.view-sw{display:flex;align-items:center;gap:7px;background:rgba(37,99,235,.12);border:1px solid rgba(37,99,235,.28);color:rgba(245,239,223,.9);padding:7px 12px;border-radius:9px;cursor:pointer;font-size:12.5px;font-weight:700;text-decoration:none}
-.view-sw:hover{background:rgba(37,99,235,.24)}
+.view-sw{display:flex;align-items:center;gap:7px;background:transparent;border:1px solid var(--line);color:var(--muted);padding:7px 13px;border-radius:9px;cursor:pointer;font-size:12.5px;font-weight:600;text-decoration:none}
+.view-sw:hover{background:#F3F7FD;color:var(--ink)}
 .view-sw.on{background:var(--gold);border-color:var(--gold);color:#fff}
 
 .wrap{flex:1;overflow-y:auto;padding:18px 22px 40px}

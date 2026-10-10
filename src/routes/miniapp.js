@@ -19,6 +19,7 @@ const initData = require('../services/tgInitData');
 const anonymize = require('../services/anonymize');
 const tg = require('../services/telegram');
 const shortlistSvc = require('../services/shortlist');
+const credits = require('../services/credits');
 
 const router = express.Router();
 
@@ -139,6 +140,7 @@ router.post('/shortlist', clientGuard, asyncHandler(async (req, res) => {
     agencyId: ses.agencyId,
     clientId: req.client.id,
     vacancyId: '',
+    summary: ses.summary || '',
     items: picked.map(candidateId => ({ candidateId, state: 'selected' })),
     status: 'new'
   });
@@ -197,6 +199,148 @@ router.post('/shortlist', clientGuard, asyncHandler(async (req, res) => {
   }
 
   res.json({ ok: true, shortlistId: sl.id, count: picked.length });
+}));
+
+// ══ MIJOZ KABINETI ═══════════════════════════════════════════
+//
+// DIQQAT — anonim chegarasi: bu fayldan odatda kontakt CHIQMAYDI.
+// Yagona istisno quyida: `state === 'revealed'` bo'lgan nomzod. Mijoz
+// uning uchun kredit to'lagan, siz nomzod bilan gaplashib tasdiqlagansiz.
+// Boshqa hech qaysi holatda ism/telefon/email qaytarilmaydi.
+
+const CLIENT_STATE = {
+  selected:     { key: 'waiting',  label: 'Ko\'rib chiqilmoqda' },
+  contacting:   { key: 'waiting',  label: 'Bog\'lanilmoqda' },
+  candidate_ok: { key: 'waiting',  label: 'Nomzod rozi — kontakt tayyorlanmoqda' },
+  candidate_no: { key: 'no',       label: 'Nomzod rad etdi' },
+  revealed:     { key: 'open',     label: 'Kontakt ochilgan' },
+  refunded:     { key: 'refunded', label: 'Javob bermadi — kredit qaytarildi' }
+};
+
+// ── Mijoz haqida: balans va qisqa statistika ──
+router.get('/me', clientGuard, asyncHandler(async (req, res) => {
+  const rows = await Shortlist.find({ agencyId: req.client.agencyId, clientId: req.client.id }).lean();
+
+  let picked = 0, revealed = 0, hours = [];
+  for (const r of rows) {
+    for (const it of r.items) {
+      picked++;
+      if (it.state === 'revealed' && it.revealedAt) {
+        revealed++;
+        hours.push((new Date(it.revealedAt) - new Date(r.createdAt)) / 36e5);
+      }
+    }
+  }
+  const avg = hours.length ? hours.reduce((a, b) => a + b, 0) / hours.length : null;
+
+  res.json({
+    name: req.client.name,
+    credits: req.client.credits,
+    stats: {
+      searches: rows.length,
+      picked,
+      revealed,
+      avgHours: avg == null ? null : Math.round(avg * 10) / 10
+    }
+  });
+}));
+
+// ── Tanlovlarim ──
+router.get('/shortlists', clientGuard, asyncHandler(async (req, res) => {
+  const agencyId = req.client.agencyId;
+  const rows = await Shortlist.find({ agencyId, clientId: req.client.id })
+    .sort({ createdAt: -1 }).limit(50).lean();
+  if (!rows.length) return res.json([]);
+
+  const ids = [...new Set(rows.flatMap(r => r.items.map(i => i.candidateId)))];
+  const cands = await Candidate.find(
+    { restaurantId: agencyId, id: { $in: ids } },
+    'id publicCode role desiredPosition age location experienceYears hasPhoto ' +
+    'languages shift jobStatus fullName phone email'
+  ).lean();
+  const byId = Object.fromEntries(cands.map(c => [c.id, c]));
+
+  res.json(rows.map(r => ({
+    id: r.id,
+    summary: r.summary || 'Qidiruv',
+    createdAt: r.createdAt,
+    items: r.items.map(it => {
+      const c = byId[it.candidateId];
+      const st = CLIENT_STATE[it.state] || CLIENT_STATE.selected;
+      const open = it.state === 'revealed';
+
+      return {
+        candidateId: it.candidateId,
+        publicCode: c ? c.publicCode : '',
+        role: c ? c.role : '',
+        desiredPosition: c ? c.desiredPosition : '',
+        age: c ? c.age : null,
+        location: c ? c.location : '',
+        experienceYears: c ? c.experienceYears : 0,
+        languages: c ? c.languages : [],
+        shift: c ? c.shift : '',
+        hasPhoto: c ? !!c.hasPhoto : false,
+        state: st.key,
+        stateLabel: st.label,
+        reason: it.state === 'candidate_no' ? (it.note || '') : '',
+        revealedAt: it.revealedAt,
+        // Kontakt FAQAT ochilganda — yuqoridagi izohga qarang
+        contact: open && c ? { fullName: c.fullName, phone: c.phone, email: c.email } : null
+      };
+    })
+  })));
+}));
+
+// ── Kabinetdagi nomzod fotosi ──
+// Qidiruvdagi foto endpointi seans kalitiga bog'langan, seans esa 24 soatda
+// o'chadi. Kabinetda tanlov umrbod turadi, shuning uchun tekshiruv ham
+// tanlov bo'yicha: nomzod shu mijozning tanlovida bo'lishi shart.
+router.get('/photo-sl/:shortlistId/:id', asyncHandler(async (req, res) => {
+  const v = initData.verify(req.query.i || '');
+  if (!v.ok) return res.status(401).end();
+
+  const client = await Client.findOne({ tgChatId: String(v.user.id), status: 'active' });
+  if (!client) return res.status(403).end();
+
+  const sl = await Shortlist.findOne({
+    agencyId: client.agencyId, id: req.params.shortlistId, clientId: client.id,
+    'items.candidateId': req.params.id
+  }).lean();
+  if (!sl) return res.status(404).end();
+
+  const c = await Candidate.findOne({ restaurantId: client.agencyId, id: req.params.id }, 'photo').lean();
+  if (!c || !c.photo) return res.status(404).end();
+
+  const m = /^data:(image\/[a-z+]+);base64,(.+)$/i.exec(c.photo);
+  if (!m) return res.status(404).end();
+  res.set('Content-Type', m[1]);
+  res.set('Cache-Control', 'private, max-age=3600');
+  res.send(Buffer.from(m[2], 'base64'));
+}));
+
+// ── Kredit tarixi ──
+router.get('/credits', clientGuard, asyncHandler(async (req, res) => {
+  const rows = await credits.history(req.client.agencyId, req.client.id, 100);
+  res.json(rows.map(r => ({
+    delta: r.delta, reason: r.reason, balanceAfter: r.balanceAfter,
+    note: r.note, createdAt: r.createdAt
+  })));
+}));
+
+// ── Kredit so'rash ──
+// To'lov tizimi hali yo'q — so'rov sizga xabar bo'lib keladi, qo'lda qo'shasiz.
+router.post('/topup', clientGuard, asyncHandler(async (req, res) => {
+  const want = Math.max(1, Math.min(parseInt((req.body || {}).amount, 10) || 10, 500));
+
+  const agency = await Restaurant.findOne({ id: req.client.agencyId });
+  const adminChat = agency && agency.telegram && agency.telegram.adminChatId;
+  if (adminChat) {
+    await tg.sendMessage(tg.platformToken(), adminChat,
+      `💳 Kredit so'rovi\n\n${req.client.name}\n` +
+      `So'ralgan: ${want} kredit\nJoriy balans: ${req.client.credits}\n\n` +
+      `Panel -> Mijozlar -> Kredit`).catch(() => {});
+  }
+  res.json({ ok: true });
 }));
 
 module.exports = router;

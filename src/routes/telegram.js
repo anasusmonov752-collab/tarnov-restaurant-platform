@@ -105,11 +105,19 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
         if (cl.status === 'pending') cl.status = 'active';
         await cl.save();
 
+        // Yozuv maydoni yonida doimiy "Kabinet" tugmasi — mijoz tanlovlarini,
+        // ochilgan kontaktlarni va balansni istalgan payt ocha oladi.
+        // Qidiruv natijasidagi tugma vaqtinchalik, bu doimiy.
+        await tg.setChatMenuButton(token, chatId, 'Kabinet',
+          `${publicBase(req)}/miniapp.html`).catch(e =>
+            console.error('[TG] menyu tugmasi qo\'yilmadi:', e.message));
+
         await tg.sendMessage(token, chatId,
           `Xush kelibsiz, ${cl.name}!\n\n` +
           `Nomzod kerak bo'lsa shu yerga yozing yoki ovozli xabar yuboring.\n` +
           `Masalan: "xostes kerak, 2 yildan ortiq tajribali"\n\n` +
-          `Kredit: ${cl.credits} ta kontakt`);
+          `Kredit: ${cl.credits} ta kontakt\n\n` +
+          `Pastdagi "Kabinet" tugmasi — tanlovlaringiz va ochilgan kontaktlar.`);
 
         const ag = await Restaurant.findOne({ id: cl.agencyId });
         if (ag && ag.telegram && ag.telegram.adminChatId) {
@@ -222,6 +230,13 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
       }
       client.lastSeenAt = new Date();
       await client.save();
+
+      // Kabinet tugmasi. Ulanish paytida ham qo'yiladi, lekin bu yerda
+      // takrorlaymiz: ulanish kabinetdan oldin bo'lgan mijozlarda tugma
+      // yo'q edi, shu yo'l bilan o'zi paydo bo'ladi.
+      await tg.setChatMenuButton(token, chatId, 'Kabinet',
+        `${publicBase(req)}/miniapp.html`).catch(() => {});
+
       await handleClientSearch(client, chatId, { text, voice }, publicBase(req));
       return;
     }

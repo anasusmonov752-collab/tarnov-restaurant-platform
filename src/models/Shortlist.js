@@ -28,6 +28,11 @@ const ShortlistSchema = new mongoose.Schema({
   clientId:  { type: String, required: true },
   vacancyId: { type: String, default: '' },
 
+  // Qidiruv matni ("xostes, ingliz tili bilan"). SearchSession 24 soatda
+  // o'chadi, shuning uchun bu yerga KO'CHIRIB olamiz — aks holda mijoz
+  // kabinetida "bu qaysi qidiruv edi?" degan savol javobsiz qoladi.
+  summary: { type: String, default: '' },
+
   items:  { type: [ItemSchema], default: [] },
   status: { type: String, default: 'new' },     // new | in_progress | done
 

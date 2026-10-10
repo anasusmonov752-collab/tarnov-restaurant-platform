@@ -96,6 +96,15 @@ async function editMessageText(token, chatId, messageId, text, opts = {}) {
   });
 }
 
+// Yozuv maydoni yonidagi doimiy tugma. Faqat MIJOZ chatiga qo'yiladi:
+// nomzod va admin uchun kabinet yo'q, ularda tugma chalg'itadi.
+async function setChatMenuButton(token, chatId, text, url) {
+  return call(token, 'setChatMenuButton', {
+    chat_id: chatId,
+    menu_button: { type: 'web_app', text, web_app: { url } }
+  });
+}
+
 function setWebhook(token, url, secret) {
   return call(token, 'setWebhook', {
     url,
@@ -170,7 +179,7 @@ async function platformUsername() {
 }
 
 module.exports = {
-  getMe, sendMessage, answerCallback, editMessageText,
+  getMe, sendMessage, answerCallback, editMessageText, setChatMenuButton,
   setWebhook, deleteWebhook, getWebhookInfo, getFileBase64,
   deepLink, TelegramError, MAX_LEN,
   platformToken, platformSecret, platformUsername, isPlatformReady

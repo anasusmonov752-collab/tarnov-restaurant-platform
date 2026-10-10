@@ -18,6 +18,7 @@ const Shortlist = require('../models/Shortlist');
 const initData = require('../services/tgInitData');
 const anonymize = require('../services/anonymize');
 const tg = require('../services/telegram');
+const shortlistSvc = require('../services/shortlist');
 
 const router = express.Router();
 
@@ -148,27 +149,48 @@ router.post('/shortlist', clientGuard, asyncHandler(async (req, res) => {
     { $addToSet: { shownToClients: req.client.id } }
   );
 
-  // Sizga xabar — TO'LIQ kontakt bilan (bu agentlik chati, mijoznikisi emas)
+  // Sizga xabar — TO'LIQ kontakt bilan (bu agentlik chati, mijoznikisi emas).
+  //
+  // Har nomzod ALOHIDA xabar bo'lib ketadi, chunki har biriga o'z tugmasi
+  // kerak: tugma bosilgach o'sha xabarning o'zi natijaga almashtiriladi.
+  // Hammasi bitta xabarda bo'lsa, bittasini bajargach qolganlari ham
+  // yo'qolib ketardi.
   try {
     const agency = await Restaurant.findOne({ id: ses.agencyId });
     const adminChat = agency && agency.telegram && agency.telegram.adminChatId;
     if (adminChat) {
+      const token = tg.platformToken();
       const cands = await Candidate.find(
         { restaurantId: ses.agencyId, id: { $in: picked } },
-        'fullName phone email desiredPosition publicCode'
+        'id fullName phone email desiredPosition publicCode age location experienceYears'
       ).lean();
+      const byId = Object.fromEntries(cands.map(c => [c.id, c]));
 
-      const lines = cands.map((c, i) =>
-        `${i + 1}. ${c.fullName || 'Nomsiz'} (${c.publicCode || '—'})\n` +
-        `   ${c.desiredPosition || ''}\n` +
-        `   ${c.phone || 'telefon yo\'q'}${c.email ? ' · ' + c.email : ''}`
-      ).join('\n\n');
-
-      await tg.sendMessage(tg.platformToken(), adminChat,
-        `${req.client.name} ${picked.length} ta nomzod tanladi\n` +
+      await tg.sendMessage(token, adminChat,
+        `📋 ${req.client.name} — ${picked.length} ta nomzod tanladi\n` +
         `So'rov: ${ses.summary}\n` +
-        `${'—'.repeat(22)}\n\n${lines}\n\n` +
-        `Nomzodlar bilan bog'laning, keyin panelda kontaktni oching.`);
+        `Balans: ${req.client.credits} kredit\n\n` +
+        `Har nomzod bilan gaplashib, pastdagi tugmalar bilan belgilang.`);
+
+      // Tartib mijoz tanlagandek qolsin
+      for (const id of picked) {
+        const c = byId[id];
+        if (!c) continue;
+
+        const parts = [
+          `${c.fullName || 'Nomsiz'}  (${c.publicCode || '—'})`,
+          c.desiredPosition || '',
+          [c.age ? c.age + ' yosh' : '', c.location || '',
+           c.experienceYears ? c.experienceYears + ' yil tajriba' : '']
+            .filter(Boolean).join(' · '),
+          '',
+          `📞 ${c.phone || 'telefon yo\'q'}`,
+          c.email ? `✉️ ${c.email}` : ''
+        ].filter(Boolean);
+
+        await tg.sendMessage(token, adminChat, parts.join('\n'),
+          { reply_markup: shortlistSvc.cbKeyboard(sl.id, c.id) });
+      }
     }
   } catch (e) {
     console.error('[MA] adminga xabar ketmadi:', e.message);   // tanlov baribir saqlangan

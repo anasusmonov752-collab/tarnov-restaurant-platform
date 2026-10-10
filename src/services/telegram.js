@@ -74,6 +74,28 @@ async function sendMessage(token, chatId, text, opts = {}) {
   });
 }
 
+// Inline tugma bosilganda Telegram javob kutadi. Javob bermasak,
+// tugmada aylanuvchi soat ~30 soniya osilib qoladi.
+async function answerCallback(token, callbackQueryId, text = '', showAlert = false) {
+  return call(token, 'answerCallbackQuery', {
+    callback_query_id: callbackQueryId,
+    text: clamp(text),
+    show_alert: showAlert
+  });
+}
+
+// Amal bajarilgandan keyin eski xabarni yangilaymiz — tugmalar
+// o'chadi, natija o'rniga yoziladi. Shunda takror bosilmaydi.
+async function editMessageText(token, chatId, messageId, text, opts = {}) {
+  return call(token, 'editMessageText', {
+    chat_id: chatId,
+    message_id: messageId,
+    text: clamp(text),
+    disable_web_page_preview: true,
+    ...opts
+  });
+}
+
 function setWebhook(token, url, secret) {
   return call(token, 'setWebhook', {
     url,
@@ -148,7 +170,8 @@ async function platformUsername() {
 }
 
 module.exports = {
-  getMe, sendMessage, setWebhook, deleteWebhook, getWebhookInfo, getFileBase64,
+  getMe, sendMessage, answerCallback, editMessageText,
+  setWebhook, deleteWebhook, getWebhookInfo, getFileBase64,
   deepLink, TelegramError, MAX_LEN,
   platformToken, platformSecret, platformUsername, isPlatformReady
 };

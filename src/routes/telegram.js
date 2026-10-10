@@ -15,7 +15,9 @@ const Candidate = require('../models/Candidate');
 const BotMessage = require('../models/BotMessage');
 const Client = require('../models/Client');
 const SearchSession = require('../models/SearchSession');
+const Shortlist = require('../models/Shortlist');
 const tg = require('../services/telegram');
+const shortlistSvc = require('../services/shortlist');
 const relay = require('../services/botRelay');
 const outreach = require('../services/outreach');
 const candidateSearch = require('../services/candidateSearch');
@@ -62,6 +64,12 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
 
     const update = req.body || {};
     if (update.update_id != null && alreadySeen(update.update_id)) return;
+
+    // ── Inline tugma bosildi (kontakt ochish / rad etish) ──
+    if (update.callback_query) {
+      await handleCallback(update.callback_query);
+      return;
+    }
 
     const msg = update.message;
     if (!msg || !msg.chat) return;
@@ -349,6 +357,72 @@ async function handleClientSearch(client, chatId, { text, voice }, appBase) {
   } catch (e) {
     console.error('[TG] mijoz qidiruvi xatosi:', e.message);
     await tg.sendMessage(token, chatId, `Qidirib bo'lmadi: ${e.message}`);
+  }
+}
+
+// ── Inline tugmalar: kontakt ochish / rad etish ──────────────
+// Tugma formati services/shortlist.js da — yuboruvchi (miniapp) bilan
+// bitta manbadan foydalanishi uchun.
+async function handleCallback(cq) {
+  const token = tg.platformToken();
+  const chatId = cq.message && cq.message.chat && String(cq.message.chat.id);
+  const msgId = cq.message && cq.message.message_id;
+
+  const done = (text, alert = false) =>
+    tg.answerCallback(token, cq.id, text, alert).catch(() => {});
+
+  const parsed = shortlistSvc.parseCb(cq.data);
+  if (!parsed || !chatId) return done('Tugma eskirgan');
+
+  const { action, sl8, c8 } = parsed;
+
+  // Tugmani faqat agentlik admini bosa oladi
+  const agency = await Restaurant.findOne({ 'telegram.adminChatId': chatId, active: true });
+  if (!agency) return done('Ruxsat yo\'q', true);
+
+  const row = await Shortlist.findOne({ agencyId: agency.id, id: new RegExp('^' + sl8) });
+  if (!row) return done('Tanlov topilmadi', true);
+
+  const item = row.items.find(i => i.candidateId.startsWith(c8));
+  if (!item) return done('Nomzod topilmadi', true);
+
+  const candidateId = item.candidateId;
+  const cand = await Candidate.findOne({ restaurantId: agency.id, id: candidateId }, 'fullName publicCode phone').lean();
+  const who = (cand && (cand.fullName || cand.publicCode)) || 'Nomzod';
+
+  try {
+    if (action === 'n') {
+      await shortlistSvc.setItemState({
+        agencyId: agency.id, shortlistId: row.id, candidateId, state: 'candidate_no'
+      });
+      await done('Rad etildi — kredit yechilmadi');
+      if (msgId) {
+        await tg.editMessageText(token, chatId, msgId,
+          `❌ ${who} — rozi emas\nKredit yechilmadi.`).catch(() => {});
+      }
+      return;
+    }
+
+    const r = await shortlistSvc.reveal({ agencyId: agency.id, shortlistId: row.id, candidateId });
+    if (r.already) {
+      await done('Allaqachon ochilgan');
+      if (msgId) {
+        await tg.editMessageText(token, chatId, msgId, `✅ ${who} — kontakt allaqachon ochilgan`).catch(() => {});
+      }
+      return;
+    }
+
+    await done(`Ochildi. Balans: ${r.balance}`);
+    if (msgId) {
+      await tg.editMessageText(token, chatId, msgId,
+        `✅ ${who} — kontakt mijozga yuborildi\n` +
+        `${cand && cand.phone ? cand.phone + '\n' : ''}` +
+        `Mijoz balansi: ${r.balance} kredit`).catch(() => {});
+    }
+
+  } catch (e) {
+    console.error('[TG] callback xatosi:', e.message);
+    await done(e.message.slice(0, 190), true);
   }
 }
 

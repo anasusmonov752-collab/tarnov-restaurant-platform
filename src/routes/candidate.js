@@ -13,6 +13,7 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const { asyncHandler } = require('../middleware/errorHandler');
 const Candidate = require('../models/Candidate');
+const Shortlist = require('../models/Shortlist');
 const initData = require('../services/tgInitData');
 const { isValidRole } = require('../data/roles');
 
@@ -56,12 +57,66 @@ function profileOf(c) {
     })),
     hasPhoto: !!c.hasPhoto,
     jobStatus: c.jobStatus,
+    sanitaryBook: c.sanitaryBook,
+    sanitaryBookUntil: c.sanitaryBookUntil,
     confirmedAt: c.jobStatusAt
   };
 }
 
+// Profil to'ldirilganligi. Nomzodni oxirigacha olib borish uchun —
+// "70% to'ldirilgan" ko'rsatkichi bo'sh joyni ko'rsatadi va odam uni
+// yopgisi keladi. Og'irlik muhimlikka qarab: telefon va sanitar
+// kitobcha restoran uchun hal qiluvchi.
+const WEIGHTS = [
+  ['fullName',          12],
+  ['phone',             18],
+  ['desiredPosition',   12],
+  ['location',          10],
+  ['age',                6],
+  ['shift',              8],
+  ['salaryExpectation',  8],
+  ['experienceSummary', 10],
+  ['languages',          8],
+  ['sanitaryBook',       8]
+];
+
+function completeness(c) {
+  let got = 0, total = 0;
+  const missing = [];
+  for (const [k, w] of WEIGHTS) {
+    total += w;
+    let filled;
+    if (k === 'languages') filled = (c.languages || []).length > 0;
+    else if (k === 'sanitaryBook') filled = !!c.sanitaryBook;
+    else filled = !!c[k];
+    if (filled) got += w; else missing.push(k);
+  }
+  return { percent: Math.round((got / total) * 100), missing };
+}
+
 router.get('/me', guard, asyncHandler(async (req, res) => {
-  res.json(profileOf(req.cand));
+  const c = req.cand;
+
+  // Nomzodga ko'rsatiladigan statistika. Faqat HAQIQIY o'lchanadigan
+  // narsalar: necha restoran uni tanlovga kiritgan va nechtasiga
+  // kontakti ochilgan. "Ko'rishlar" ni hisoblamayapmiz — raqam
+  // to'qib chiqarilmasin.
+  const rows = await Shortlist.find(
+    { agencyId: c.restaurantId, 'items.candidateId': c.id },
+    'items'
+  ).lean();
+
+  let opened = 0;
+  for (const r of rows) {
+    for (const it of r.items) {
+      if (it.candidateId === c.id && it.state === 'revealed') opened++;
+    }
+  }
+
+  res.json(Object.assign(profileOf(c), {
+    stats: { picked: rows.length, opened },
+    completeness: completeness(c)
+  }));
 }));
 
 // ── Profilni tahrirlash ──
@@ -99,6 +154,13 @@ router.patch('/me', guard, asyncHandler(async (req, res) => {
   if (b.jobStatus !== undefined && JOB_STATUS.includes(b.jobStatus)) {
     c.jobStatus = b.jobStatus;
     c.jobStatusAt = new Date();
+  }
+  if (b.sanitaryBook !== undefined && ['', 'yes', 'no', 'expired'].includes(b.sanitaryBook)) {
+    c.sanitaryBook = b.sanitaryBook;
+  }
+  if (b.sanitaryBookUntil !== undefined) {
+    const d = b.sanitaryBookUntil ? new Date(b.sanitaryBookUntil) : null;
+    c.sanitaryBookUntil = d && !isNaN(d.getTime()) ? d : null;
   }
 
   // Nomzod o'zi tahrirlagan profil - endi "tasdiqlangan" hisoblanadi

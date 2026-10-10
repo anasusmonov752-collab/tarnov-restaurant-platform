@@ -83,6 +83,12 @@ const CandidateSchema = new mongoose.Schema({
   jobStatusAt: { type: Date,   default: null },
   shownToClients: { type: [String], default: [] },    // takror ko'rsatmaslik uchun
 
+  // Sanitar kitobcha — oziq-ovqat sohasida MAJBURIY hujjat. hh'da u
+  // profil tubida ko'milgan, bizda esa birinchi savollardan biri:
+  // kitobchasi yo'q nomzodni restoran ishga ololmaydi.
+  sanitaryBook:      { type: String, default: '' },   // yes | no | expired
+  sanitaryBookUntil: { type: Date,   default: null },
+
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

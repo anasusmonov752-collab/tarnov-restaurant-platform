@@ -10,50 +10,85 @@
 :root{
   --bg:#EEF3FB; --card:#FFFFFF; --ink:#16233A; --muted:#64748B;
   --line:#E1E8F2; --blue:#2563EB; --blue-d:#1D4ED8;
-  --ok:#2E9E5B; --warn:#B4802E;
+  --ok:#2E9E5B; --warn:#B4802E; --danger:#C25B4C;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-  background:var(--bg);color:var(--ink);font-size:15px;padding-bottom:88px;
-  -webkit-text-size-adjust:100%}
+  background:var(--bg);color:var(--ink);font-size:15px;-webkit-text-size-adjust:100%;
+  padding-bottom:28px}
 
-.hero{background:linear-gradient(135deg,#0F2747,#0A1B33);color:#EAF2FF;padding:18px 16px 20px;
+.hero{background:linear-gradient(135deg,#0F2747,#0A1B33);color:#EAF2FF;padding:20px 16px 22px;
   display:flex;gap:14px;align-items:center}
-.hero .av{width:62px;height:76px;border-radius:11px;flex:none;overflow:hidden;
+.hero .av{width:64px;height:78px;border-radius:12px;flex:none;overflow:hidden;
   background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;
-  font-size:19px;font-weight:600;color:rgba(234,242,255,.8)}
+  font-size:20px;font-weight:600;color:rgba(234,242,255,.8)}
 .hero .av img{width:100%;height:100%;object-fit:cover}
-.hero .nm{font-size:18px;font-weight:700;line-height:1.25}
-.hero .sb{font-size:13px;color:rgba(234,242,255,.72);margin-top:4px;line-height:1.5}
+.hero .nm{font-size:19px;font-weight:700;line-height:1.25}
+.hero .sb{font-size:13.5px;color:rgba(234,242,255,.74);margin-top:4px;line-height:1.5}
 
 .wrap{padding:14px}
 .h3{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;
   letter-spacing:.5px;margin:0 0 8px 3px}
-.card{background:var(--card);border-radius:14px;padding:4px 14px;margin-bottom:16px}
+.card{background:var(--card);border-radius:14px;margin-bottom:14px;overflow:hidden}
+.pad{padding:14px}
 
-.f{padding:11px 0;border-bottom:1px solid var(--line)}
-.f:last-child{border-bottom:none}
-.f label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
-.f input,.f textarea,.f select{width:100%;border:none;background:transparent;
-  font-family:inherit;font-size:15.5px;color:var(--ink);padding:0}
-.f input:focus,.f textarea:focus,.f select:focus{outline:none}
-.f textarea{resize:vertical;line-height:1.55;min-height:62px}
-.f .hint{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.45}
+.prog{height:7px;background:var(--line);border-radius:5px;overflow:hidden;margin:9px 0 8px}
+.prog i{display:block;height:100%;background:var(--blue);border-radius:5px}
+.need{font-size:13px;color:var(--muted);line-height:1.5}
 
-.ro{padding:11px 0;border-bottom:1px solid var(--line);font-size:14.5px}
-.ro:last-child{border-bottom:none}
-.ro b{display:block;font-weight:600}
-.ro span{font-size:13px;color:var(--muted);display:block;margin-top:2px}
+.stats{display:flex;gap:10px;margin-bottom:14px}
+.stat{flex:1;background:var(--card);border-radius:13px;padding:13px 10px;text-align:center}
+.stat b{display:block;font-size:23px;font-weight:700;line-height:1}
+.stat span{font-size:11.5px;color:var(--muted);display:block;margin-top:5px;line-height:1.3}
 
-.seg{display:flex;gap:7px;margin:0 0 16px}
-.sg{flex:1;padding:11px 6px;border:1.5px solid var(--line);background:var(--card);
-  border-radius:11px;font-family:inherit;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
+.seg{display:flex;gap:7px;margin-bottom:14px}
+.sg{flex:1;padding:11px 5px;border:1.5px solid var(--line);background:var(--card);
+  border-radius:11px;font-family:inherit;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer}
 .sg.on{border-color:var(--blue);color:var(--blue);background:#F2F7FF}
 
-.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);
-  padding:11px 14px calc(11px + env(safe-area-inset-bottom))}
+.sec-h{display:flex;align-items:center;padding:13px 14px 0}
+.sec-h b{flex:1;font-size:15.5px;font-weight:600}
+.ed{border:none;background:transparent;color:var(--blue);font-family:inherit;
+  font-size:13.5px;font-weight:600;cursor:pointer;padding:0}
+.kv{display:flex;gap:12px;padding:10px 14px;font-size:14.5px;border-bottom:1px solid var(--line)}
+.kv:last-child{border-bottom:none}
+.kv .k{color:var(--muted);flex:none;min-width:116px}
+.kv .v{flex:1;text-align:right;word-break:break-word}
+.kv .v.em{color:var(--muted)}
+
+.flag{display:flex;gap:11px;align-items:flex-start;padding:13px 14px}
+.flag .ic{width:34px;height:34px;border-radius:9px;flex:none;display:flex;align-items:center;
+  justify-content:center;font-size:17px}
+.flag.ok .ic{background:rgba(46,158,91,.13)}
+.flag.no .ic{background:rgba(194,91,76,.12)}
+.flag .tx{flex:1;font-size:14px;line-height:1.5}
+.flag .tx i{font-style:normal;color:var(--muted);font-size:13px;display:block;margin-top:2px}
+
+.w{padding:12px 14px;border-bottom:1px solid var(--line)}
+.w:last-child{border-bottom:none}
+.w b{font-size:14.5px;font-weight:600;display:block}
+.w span{font-size:13px;color:var(--muted);display:block;margin-top:2px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;padding:12px 14px}
+.chip{font-size:13px;padding:6px 12px;border-radius:9px;background:var(--bg)}
+
+.sheet{position:fixed;inset:0;background:rgba(8,20,38,.45);display:none;align-items:flex-end;z-index:60}
+.sheet.on{display:flex}
+.sh{background:var(--card);width:100%;max-height:92vh;overflow-y:auto;border-radius:18px 18px 0 0}
+.sh-h{position:sticky;top:0;background:var(--card);display:flex;align-items:center;
+  padding:16px;border-bottom:1px solid var(--line);border-radius:18px 18px 0 0}
+.sh-h b{flex:1;font-size:16.5px}
+.sh-x{border:none;background:transparent;font-size:19px;color:var(--muted);cursor:pointer}
+.sh-b{padding:4px 16px 16px}
+.f{padding:12px 0;border-bottom:1px solid var(--line)}
+.f:last-of-type{border-bottom:none}
+.f label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+.f input,.f textarea,.f select{width:100%;border:none;background:transparent;font-family:inherit;
+  font-size:16px;color:var(--ink);padding:0}
+.f input:focus,.f textarea:focus,.f select:focus{outline:none}
+.f textarea{resize:vertical;line-height:1.55;min-height:84px}
+.f .hint{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.45}
 .btn{width:100%;padding:15px;border:none;border-radius:12px;background:var(--blue);
-  color:#fff;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer}
+  color:#fff;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer;margin-top:14px}
 .btn:disabled{opacity:.5}
 .msg{text-align:center;padding:60px 24px;color:var(--muted);font-size:14.5px;line-height:1.6}
 </style>
@@ -62,12 +97,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 
 <div id="app"><div class="msg">Yuklanmoqda…</div></div>
 
+<div class="sheet" id="sheet">
+  <div class="sh">
+    <div class="sh-h"><b id="shT">—</b><button class="sh-x" id="shX">&#10005;</button></div>
+    <div class="sh-b" id="shB"></div>
+  </div>
+</div>
+
 <script>
 const TG = window.Telegram && window.Telegram.WebApp;
 if (TG) { TG.ready(); TG.expand(); }
 const INIT = (TG && TG.initData) || '';
 const $ = id => document.getElementById(id);
 const esc = s => String(s==null?'':s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const haptic = () => { try { TG && TG.HapticFeedback && TG.HapticFeedback.selectionChanged(); } catch(e){} };
 
 async function api(path, opt){
   const r = await fetch(path, Object.assign({
@@ -78,112 +121,183 @@ async function api(path, opt){
   return d;
 }
 
-const STATUS = [
-  ['active',      'Ish qidiryapman'],
-  ['considering', "Ko'rib chiqaman"],
-  ['not_looking', 'Qidirmayapman']
-];
-let P = null, status = 'active';
+let P = null;
+
+const STATUS = [['active','Ish qidiryapman'],['considering',"Ko'rib chiqaman"],['not_looking','Qidirmayapman']];
+const SANI = { yes:'Bor', no:"Yo'q", expired:'Muddati tugagan' };
+const MISS = {
+  fullName:'ism', phone:'telefon', desiredPosition:'lavozim', location:'hudud',
+  age:'yosh', shift:'smena', salaryExpectation:'maosh', experienceSummary:"o'zingiz haqingizda",
+  languages:'tillar', sanitaryBook:'sanitar kitobcha'
+};
+const dmy = d => d ? new Date(d).toLocaleDateString('uz-UZ',{day:'2-digit',month:'short',year:'numeric'}) : '';
+const row = (k,v) => `<div class="kv"><span class="k">${k}</span><span class="v ${v?'':'em'}">${v?esc(v):"ko'rsatilmagan"}</span></div>`;
 
 function render(p){
   P = p;
-  status = p.jobStatus && p.jobStatus !== 'unknown' ? p.jobStatus : 'active';
-
-  const initials = (p.fullName || '?').trim().split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();
-  const sub = [
-    p.desiredPosition || '',
-    p.experienceYears ? p.experienceYears + ' yil tajriba' : ''
-  ].filter(Boolean).join(' · ');
+  const ini = (p.fullName || '?').trim().split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();
+  const sub = [p.desiredPosition||'', p.experienceYears ? p.experienceYears+' yil tajriba' : ''].filter(Boolean).join(' · ');
+  const cm = p.completeness || { percent:0, missing:[] };
+  const st = p.stats || { picked:0, opened:0 };
+  const cur = p.jobStatus && p.jobStatus !== 'unknown' ? p.jobStatus : 'active';
 
   const work = (p.workHistory||[]).filter(w=>w.company||w.position).map(w=>`
-    <div class="ro"><b>${esc(w.position||'Lavozim')}</b>
+    <div class="w"><b>${esc(w.position||'Lavozim')}</b>
       <span>${[esc(w.company||''), esc(w.period||'')].filter(Boolean).join(' · ')}</span></div>`).join('');
+
+  const sb = p.sanitaryBook;
+  const sbOk = sb === 'yes';
 
   $('app').innerHTML = `
   <div class="hero">
-    <div class="av">${p.hasPhoto
-      ? `<img src="/api/cand/photo?i=${encodeURIComponent(INIT)}" alt="">` : esc(initials)}</div>
-    <div>
-      <div class="nm">${esc(p.fullName) || 'Ismingizni kiriting'}</div>
-      <div class="sb">${esc(sub) || 'Profilni to\'ldiring'}</div>
-    </div>
+    <div class="av">${p.hasPhoto ? `<img src="/api/cand/photo?i=${encodeURIComponent(INIT)}" alt="">` : esc(ini)}</div>
+    <div><div class="nm">${esc(p.fullName) || 'Ismingizni kiriting'}</div>
+      <div class="sb">${esc(sub) || 'Profilni to\'ldiring'}</div></div>
   </div>
 
   <div class="wrap">
-    <div class="h3">Holatingiz</div>
     <div class="seg" id="seg">
-      ${STATUS.map(([k,l])=>`<button class="sg ${k===status?'on':''}" data-s="${k}">${l}</button>`).join('')}
+      ${STATUS.map(([k,l])=>`<button class="sg ${k===cur?'on':''}" data-s="${k}">${l}</button>`).join('')}
     </div>
 
-    <div class="h3">Asosiy</div>
+    ${cm.percent < 100 ? `<div class="card"><div class="pad">
+      <div style="display:flex;align-items:baseline"><b style="flex:1;font-size:15px">Profil ${cm.percent}% to'ldirilgan</b></div>
+      <div class="prog"><i style="width:${cm.percent}%"></i></div>
+      <div class="need">To'ldirilmagan: ${cm.missing.map(k=>MISS[k]||k).join(', ')}.
+        To'liq profil restoranlar ro'yxatida yuqoriroq turadi.</div>
+    </div></div>` : ''}
+
+    <div class="stats">
+      <div class="stat"><b>${st.picked}</b><span>restoran<br>tanlovida</span></div>
+      <div class="stat"><b>${st.opened}</b><span>kontakt<br>ochilgan</span></div>
+    </div>
+
     <div class="card">
-      <div class="f"><label>Ism familiya</label><input id="fullName" value="${esc(p.fullName)}"></div>
-      <div class="f"><label>Telefon</label><input id="phone" value="${esc(p.phone)}" inputmode="tel"></div>
-      <div class="f"><label>Qaysi lavozim</label><input id="desiredPosition" value="${esc(p.desiredPosition)}"></div>
-      <div class="f"><label>Yosh</label><input id="age" value="${p.age||''}" inputmode="numeric"></div>
-      <div class="f"><label>Hudud</label><input id="location" value="${esc(p.location)}"></div>
+      <div class="sec-h"><b>Asosiy</b><button class="ed" data-e="main">Tahrirlash</button></div>
+      ${row('Ism familiya', p.fullName)}
+      ${row('Telefon', p.phone)}
+      ${row('Yosh', p.age ? p.age + ' yosh' : '')}
+      ${row('Hudud', p.location)}
     </div>
 
-    <div class="h3">Ish sharti</div>
     <div class="card">
-      <div class="f"><label>Tajriba (yil)</label><input id="experienceYears" value="${p.experienceYears||''}" inputmode="numeric"></div>
-      <div class="f"><label>Smena</label><input id="shift" value="${esc(p.shift)}" placeholder="kunduzgi / kechki / ikkalasi"></div>
-      <div class="f"><label>Kutilayotgan maosh</label><input id="salaryExpectation" value="${esc(p.salaryExpectation)}" placeholder="4-5 mln"></div>
+      <div class="sec-h"><b>Qidirayotgan ish</b><button class="ed" data-e="job">Tahrirlash</button></div>
+      ${row('Lavozim', p.desiredPosition)}
+      ${row('Tajriba', p.experienceYears ? p.experienceYears + ' yil' : '')}
+      ${row('Smena', p.shift)}
+      ${row('Kutilgan maosh', p.salaryExpectation)}
     </div>
 
-    <div class="h3">Ko'nikma va til</div>
     <div class="card">
-      <div class="f"><label>Tillar</label><input id="languages" value="${esc((p.languages||[]).join(', '))}" placeholder="o'zbek, rus">
-        <div class="hint">Vergul bilan ajrating</div></div>
-      <div class="f"><label>Ko'nikmalar</label><input id="skills" value="${esc((p.skills||[]).join(', '))}" placeholder="R-Keeper, upsell">
-        <div class="hint">Vergul bilan ajrating</div></div>
-      <div class="f"><label>Ta'lim</label><input id="education" value="${esc(p.education)}"></div>
+      <div class="sec-h"><b>Sanitar kitobcha</b><button class="ed" data-e="sani">Tahrirlash</button></div>
+      <div class="flag ${sbOk?'ok':'no'}">
+        <div class="ic">${sbOk?'&#10003;':'!'}</div>
+        <div class="tx">${sb ? esc(SANI[sb]) : "Ko'rsatilmagan"}
+          <i>${sbOk && p.sanitaryBookUntil ? 'Amal qiladi: ' + dmy(p.sanitaryBookUntil)
+             : 'Oziq-ovqat sohasida majburiy hujjat. Bo\'lmasa restoran ishga ola olmaydi.'}</i></div>
+      </div>
     </div>
 
-    <div class="h3">O'zingiz haqingizda</div>
     <div class="card">
-      <div class="f"><textarea id="experienceSummary" placeholder="Qisqacha: qayerda ishlagansiz, nimani yaxshi bilasiz">${esc(p.experienceSummary)}</textarea></div>
+      <div class="sec-h"><b>Til va ko'nikma</b><button class="ed" data-e="skill">Tahrirlash</button></div>
+      ${(p.languages||[]).length ? `<div class="chips">${p.languages.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}</div>` : row('Tillar','')}
+      ${(p.skills||[]).length ? `<div class="chips" style="padding-top:0">${p.skills.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}</div>` : ''}
+      ${row("Ta'lim", p.education)}
     </div>
 
-    ${work ? `<div class="h3">Ish tarixi</div><div class="card">${work}
-      <div class="f"><div class="hint">Bu ma'lumot rezyumengizdan olingan. O'zgartirish kerak bo'lsa HR'ga yozing.</div></div>
+    <div class="card">
+      <div class="sec-h"><b>O'zingiz haqingizda</b><button class="ed" data-e="about">Tahrirlash</button></div>
+      <div class="pad" style="padding-top:9px;font-size:14.5px;line-height:1.6;color:${p.experienceSummary?'var(--ink)':'var(--muted)'}">
+        ${p.experienceSummary ? esc(p.experienceSummary)
+          : "Qisqacha yozing: qayerda ishlagansiz, nimani yaxshi bilasiz. Restoran shuni birinchi o'qiydi."}
+      </div>
+    </div>
+
+    ${work ? `<div class="card">
+      <div class="sec-h"><b>Ish tarixi</b></div>
+      ${work}
+      <div class="pad" style="padding-top:9px"><div class="need">Rezyumengizdan olingan. O'zgartirish kerak bo'lsa HR'ga yozing.</div></div>
     </div>` : ''}
-  </div>
+  </div>`;
 
-  <div class="bar"><button class="btn" id="save">Saqlash</button></div>`;
-
-  document.querySelectorAll('.sg').forEach(b => b.onclick = () => {
-    status = b.dataset.s;
-    document.querySelectorAll('.sg').forEach(x => x.classList.toggle('on', x.dataset.s === status));
-    try { TG && TG.HapticFeedback && TG.HapticFeedback.selectionChanged(); } catch(e){}
+  document.querySelectorAll('.sg').forEach(b => b.onclick = async () => {
+    haptic();
+    try { await save({ jobStatus: b.dataset.s }); } catch(e){ alert(e.message); }
   });
-
-  $('save').onclick = save;
+  document.querySelectorAll('.ed').forEach(b => b.onclick = () => openSheet(b.dataset.e));
 }
 
-const val = id => ($(id) ? $(id).value.trim() : '');
-const list = id => val(id).split(',').map(s=>s.trim()).filter(Boolean);
+// ── Bo'limni tahrirlash ──
+// hh'dagidek: bitta ulkan forma emas, har bo'lim alohida. Telefonda
+// uzun formani oxirigacha to'ldiradigan odam kam.
+const FORMS = {
+  main: ['Asosiy', p => `
+    <div class="f"><label>Ism familiya</label><input id="fullName" value="${esc(p.fullName)}"></div>
+    <div class="f"><label>Telefon</label><input id="phone" value="${esc(p.phone)}" inputmode="tel"></div>
+    <div class="f"><label>Yosh</label><input id="age" value="${p.age||''}" inputmode="numeric"></div>
+    <div class="f"><label>Hudud</label><input id="location" value="${esc(p.location)}" placeholder="Chilonzor"></div>`],
 
-async function save(){
-  const b = $('save');
-  b.disabled = true; b.textContent = 'Saqlanmoqda…';
-  try{
-    await api('/api/cand/me', { method:'PATCH', body: JSON.stringify({
-      fullName: val('fullName'), phone: val('phone'),
-      desiredPosition: val('desiredPosition'), location: val('location'),
-      shift: val('shift'), salaryExpectation: val('salaryExpectation'),
-      education: val('education'), experienceSummary: val('experienceSummary'),
-      age: val('age'), experienceYears: val('experienceYears'),
-      languages: list('languages'), skills: list('skills'),
-      jobStatus: status
-    })});
-    b.textContent = 'Saqlandi';
-    try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
-    if (TG) setTimeout(()=>TG.close(), 900);
-  }catch(e){
-    b.disabled = false; b.textContent = 'Qayta urinish';
-    alert(e.message);
-  }
+  job: ['Qidirayotgan ish', p => `
+    <div class="f"><label>Qaysi lavozim</label><input id="desiredPosition" value="${esc(p.desiredPosition)}" placeholder="Ofitsiant"></div>
+    <div class="f"><label>Tajriba (yil)</label><input id="experienceYears" value="${p.experienceYears||''}" inputmode="numeric"></div>
+    <div class="f"><label>Smena</label><input id="shift" value="${esc(p.shift)}" placeholder="kunduzgi / kechki / ikkalasi"></div>
+    <div class="f"><label>Kutilayotgan maosh</label><input id="salaryExpectation" value="${esc(p.salaryExpectation)}" placeholder="4-5 mln">
+      <div class="hint">Aniq yozing — restoran shu bo'yicha tanlaydi.</div></div>`],
+
+  sani: ['Sanitar kitobcha', p => `
+    <div class="f"><label>Holati</label>
+      <select id="sanitaryBook">
+        <option value=""        ${!p.sanitaryBook?'selected':''}>Ko'rsatilmagan</option>
+        <option value="yes"     ${p.sanitaryBook==='yes'?'selected':''}>Bor</option>
+        <option value="no"      ${p.sanitaryBook==='no'?'selected':''}>Yo'q</option>
+        <option value="expired" ${p.sanitaryBook==='expired'?'selected':''}>Muddati tugagan</option>
+      </select></div>
+    <div class="f"><label>Amal qilish muddati</label>
+      <input id="sanitaryBookUntil" type="date" value="${p.sanitaryBookUntil ? new Date(p.sanitaryBookUntil).toISOString().slice(0,10) : ''}">
+      <div class="hint">Kitobchasi bor nomzod birinchi navbatda taklif qilinadi.</div></div>`],
+
+  skill: ["Til va ko'nikma", p => `
+    <div class="f"><label>Tillar</label><input id="languages" value="${esc((p.languages||[]).join(', '))}" placeholder="o'zbek, rus">
+      <div class="hint">Vergul bilan ajrating</div></div>
+    <div class="f"><label>Ko'nikmalar</label><input id="skills" value="${esc((p.skills||[]).join(', '))}" placeholder="R-Keeper, upsell">
+      <div class="hint">Vergul bilan ajrating</div></div>
+    <div class="f"><label>Ta'lim</label><input id="education" value="${esc(p.education)}"></div>`],
+
+  about: ["O'zingiz haqingizda", p => `
+    <div class="f"><textarea id="experienceSummary" placeholder="Masalan: 3 yil ofitsiant bo'lib ishlaganman, kechki smenada tezkor xizmat ko'rsataman, rus tilida erkin gaplashaman.">${esc(p.experienceSummary)}</textarea>
+      <div class="hint">2-3 jumla yetarli.</div></div>`]
+};
+
+const TEXT_IDS = ['fullName','phone','desiredPosition','location','shift','salaryExpectation','education','experienceSummary','age','experienceYears','sanitaryBook','sanitaryBookUntil'];
+
+function openSheet(key){
+  const [title, body] = FORMS[key];
+  $('shT').textContent = title;
+  $('shB').innerHTML = body(P) + '<button class="btn" id="shSave">Saqlash</button>';
+  $('sheet').classList.add('on');
+
+  $('shSave').onclick = async () => {
+    const b = $('shSave');
+    b.disabled = true; b.textContent = 'Saqlanmoqda…';
+    const payload = {};
+    for (const id of TEXT_IDS) if ($(id)) payload[id] = $(id).value.trim();
+    for (const id of ['languages','skills']) {
+      if ($(id)) payload[id] = $(id).value.split(',').map(s=>s.trim()).filter(Boolean);
+    }
+    try { await save(payload); closeSheet(); }
+    catch(e){ b.disabled = false; b.textContent = 'Qayta urinish'; alert(e.message); }
+  };
+}
+function closeSheet(){ $('sheet').classList.remove('on'); $('shB').innerHTML = ''; }
+$('shX').onclick = closeSheet;
+$('sheet').onclick = e => { if (e.target === $('sheet')) closeSheet(); };
+
+async function save(patch){
+  const r = await api('/api/cand/me', { method:'PATCH', body: JSON.stringify(patch) });
+  // Statistika va to'ldirilganlik PATCH javobida yo'q — qayta o'qiymiz
+  render(await api('/api/cand/me'));
+  try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
+  return r;
 }
 
 (async function(){

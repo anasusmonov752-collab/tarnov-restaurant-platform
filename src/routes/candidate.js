@@ -76,8 +76,10 @@ const WEIGHTS = [
   ['shift',              8],
   ['salaryExpectation',  8],
   ['experienceSummary', 10],
-  ['languages',          8],
-  ['sanitaryBook',       8]
+  ['languages',          8]
+  // Sanitar kitobcha hozircha hisobga olinmaydi — O'zbekistonda
+  // amalda har doim ham talab qilinmayapti. Maydon modelda qoldi,
+  // kerak bo'lsa shu ro'yxatga qaytariladi.
 ];
 
 function completeness(c) {

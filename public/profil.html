@@ -73,13 +73,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .kv .v{flex:1;text-align:right;word-break:break-word}
 .kv .v.em{color:var(--muted)}
 
-.flag{display:flex;gap:11px;align-items:flex-start;padding:13px 14px}
-.flag .ic{width:34px;height:34px;border-radius:9px;flex:none;display:flex;align-items:center;
-  justify-content:center;font-size:17px}
-.flag.ok .ic{background:rgba(46,158,91,.13)}
-.flag.no .ic{background:rgba(194,91,76,.12)}
-.flag .tx{flex:1;font-size:14px;line-height:1.5}
-.flag .tx i{font-style:normal;color:var(--muted);font-size:13px;display:block;margin-top:2px}
 
 .w{padding:12px 14px;border-bottom:1px solid var(--line)}
 .w:last-child{border-bottom:none}
@@ -87,6 +80,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .w span{font-size:13px;color:var(--muted);display:block;margin-top:2px}
 .chips{display:flex;gap:6px;flex-wrap:wrap;padding:12px 14px}
 .chip{font-size:13px;padding:6px 12px;border-radius:9px;background:var(--bg)}
+.chip.more{border:none;font-family:inherit;color:var(--blue);font-weight:600;
+  cursor:pointer;background:#F2F7FF}
 
 .sheet{position:fixed;inset:0;background:rgba(8,20,38,.45);display:none;align-items:flex-end;z-index:60}
 .sheet.on{display:flex}
@@ -141,19 +136,32 @@ async function api(path, opt){
 let P = null;
 
 const STATUS = [['active','Ish qidiryapman'],['considering',"Ko'rib chiqaman"],['not_looking','Qidirmayapman']];
-const SANI = { yes:'Bor', no:"Yo'q", expired:'Muddati tugagan' };
 const MISS = {
   fullName:'ism', phone:'telefon', desiredPosition:'lavozim', location:'hudud',
   age:'yosh', shift:'smena', salaryExpectation:'maosh', experienceSummary:"o'zingiz haqingizda",
-  languages:'tillar', sanitaryBook:'sanitar kitobcha'
+  languages:'tillar'
 };
 // Yetishmagan maydon qaysi bo'limda tahrirlanadi
 const SECTION_OF = {
   fullName:'main', phone:'main', age:'main', location:'main',
   desiredPosition:'job', shift:'job', salaryExpectation:'job',
-  sanitaryBook:'sani', languages:'skill', experienceSummary:'about'
+  languages:'skill', experienceSummary:'about'
 };
-const dmy = d => d ? new Date(d).toLocaleDateString('uz-UZ',{day:'2-digit',month:'short',year:'numeric'}) : '';
+// Ko'nikmalar rezyumedan kelganda 15-20 tagacha chiqadi va butun
+// ekranni egallaydi. Dastlab 6 tasi ko'rinadi, qolgani bir bosishda.
+const SKILL_SHOW = 6;
+let skillsOpen = false;
+
+function skillsHtml(sk){
+  if (!sk.length) return '';
+  const vis = skillsOpen ? sk : sk.slice(0, SKILL_SHOW);
+  const rest = sk.length - vis.length;
+  return `<div class="chips" style="padding-top:0">
+    ${vis.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}
+    ${rest > 0 ? `<button class="chip more" id="skMore">Yana ${rest} ta</button>` : ''}
+    ${skillsOpen && sk.length > SKILL_SHOW ? `<button class="chip more" id="skLess">Yig'ish</button>` : ''}
+  </div>`;
+}
 // Bo'sh qiymatda "ko'rsatilmagan" so'zini har qatorda takrorlamaymiz —
 // yetishmaganlar yuqorida alohida chiqadi, bu yerda tire yetarli.
 const row = (k,v) => `<div class="kv"><span class="k">${k}</span><span class="v ${v?'':'em'}">${v?esc(v):'—'}</span></div>`;
@@ -170,8 +178,6 @@ function render(p){
     <div class="w"><b>${esc(w.position||'Lavozim')}</b>
       <span>${[esc(w.company||''), esc(w.period||'')].filter(Boolean).join(' · ')}</span></div>`).join('');
 
-  const sb = p.sanitaryBook;
-  const sbOk = sb === 'yes';
 
   const PILL = { active:['look','Ish qidiryapman'], considering:['think',"Ko'rib chiqaman"], not_looking:['off','Qidirmayapman'] };
   const [pcls, plbl] = PILL[cur] || PILL.active;
@@ -219,19 +225,9 @@ function render(p){
     </div>
 
     <div class="card">
-      <div class="sec-h"><b>Sanitar kitobcha</b><button class="ed" data-e="sani">Tahrirlash</button></div>
-      <div class="flag ${sbOk?'ok':'no'}">
-        <div class="ic">${sbOk?'&#10003;':'!'}</div>
-        <div class="tx">${sb ? esc(SANI[sb]) : "Ko'rsatilmagan"}
-          <i>${sbOk && p.sanitaryBookUntil ? 'Amal qiladi: ' + dmy(p.sanitaryBookUntil)
-             : 'Oziq-ovqat sohasida majburiy hujjat. Bo\'lmasa restoran ishga ola olmaydi.'}</i></div>
-      </div>
-    </div>
-
-    <div class="card">
       <div class="sec-h"><b>Til va ko'nikma</b><button class="ed" data-e="skill">Tahrirlash</button></div>
       ${(p.languages||[]).length ? `<div class="chips">${p.languages.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}</div>` : row('Tillar','')}
-      ${(p.skills||[]).length ? `<div class="chips" style="padding-top:0">${p.skills.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}</div>` : ''}
+      ${skillsHtml(p.skills || [])}
       ${row("Ta'lim", p.education)}
     </div>
 
@@ -253,6 +249,10 @@ function render(p){
   // '.ed' (bo'lim sarlavhasi), '.gap' (yetishmagan maydon) va holat
   // chipi — hammasi data-e bilan bir xil oynani ochadi
   document.querySelectorAll('[data-e]').forEach(b => b.onclick = () => openSheet(b.dataset.e));
+
+  const more = $('skMore'), less = $('skLess');
+  if (more) more.onclick = () => { skillsOpen = true;  haptic(); render(P); };
+  if (less) less.onclick = () => { skillsOpen = false; haptic(); render(P); };
 }
 
 // ── Bo'limni tahrirlash ──
@@ -272,18 +272,6 @@ const FORMS = {
     <div class="f"><label>Kutilayotgan maosh</label><input id="salaryExpectation" value="${esc(p.salaryExpectation)}" placeholder="4-5 mln">
       <div class="hint">Aniq yozing — restoran shu bo'yicha tanlaydi.</div></div>`],
 
-  sani: ['Sanitar kitobcha', p => `
-    <div class="f"><label>Holati</label>
-      <select id="sanitaryBook">
-        <option value=""        ${!p.sanitaryBook?'selected':''}>Ko'rsatilmagan</option>
-        <option value="yes"     ${p.sanitaryBook==='yes'?'selected':''}>Bor</option>
-        <option value="no"      ${p.sanitaryBook==='no'?'selected':''}>Yo'q</option>
-        <option value="expired" ${p.sanitaryBook==='expired'?'selected':''}>Muddati tugagan</option>
-      </select></div>
-    <div class="f"><label>Amal qilish muddati</label>
-      <input id="sanitaryBookUntil" type="date" value="${p.sanitaryBookUntil ? new Date(p.sanitaryBookUntil).toISOString().slice(0,10) : ''}">
-      <div class="hint">Kitobchasi bor nomzod birinchi navbatda taklif qilinadi.</div></div>`],
-
   skill: ["Til va ko'nikma", p => `
     <div class="f"><label>Tillar</label><input id="languages" value="${esc((p.languages||[]).join(', '))}" placeholder="o'zbek, rus">
       <div class="hint">Vergul bilan ajrating</div></div>
@@ -296,7 +284,7 @@ const FORMS = {
       <div class="hint">2-3 jumla yetarli.</div></div>`]
 };
 
-const TEXT_IDS = ['fullName','phone','desiredPosition','location','shift','salaryExpectation','education','experienceSummary','age','experienceYears','sanitaryBook','sanitaryBookUntil'];
+const TEXT_IDS = ['fullName','phone','desiredPosition','location','shift','salaryExpectation','education','experienceSummary','age','experienceYears'];
 
 function openSheet(key){
   // Holat — forma emas, uchta tanlov. Bosilgan zahoti saqlanadi va

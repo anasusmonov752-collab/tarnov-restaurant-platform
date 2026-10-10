@@ -163,10 +163,19 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
       cand.updatedAt     = new Date();
       await cand.save();
 
+      // Bo'sh forma emas, TAYYOR profil ko'rsatiladi: rezyumesi bizda
+      // allaqachon tahlil qilingan. Bitta tugma bosib tasdiqlaydi —
+      // noldan to'ldirishga qaraganda ancha ko'p odam oxiriga yetadi.
       await tg.sendMessage(token, chatId,
         `Assalomu alaykum, ${relay.displayName(cand)}!\n\n` +
-        `${rest.name} HR bo'limiga xush kelibsiz. Suhbat vaqti va ` +
-        `savollaringiz bo'yicha shu yerda yozishamiz.`);
+        `${rest.name} HR bo'limiga xush kelibsiz.\n\n` +
+        profileCard(cand) +
+        `\n\nHammasi to'g'rimi?`,
+        { reply_markup: { inline_keyboard: [
+          [{ text: '✅ Ha, to\'g\'ri', callback_data: 'cp' }],
+          [{ text: '✏️ Tuzataman', web_app: { url: `${publicBase(req)}/profil.html` } }],
+          [{ text: '🚫 Hozir ish qidirmayapman', callback_data: 'cn' }]
+        ]}});
 
       await relay.logMsg({
         restaurantId: rest.id, candidateId: cand.id,
@@ -375,9 +384,36 @@ async function handleClientSearch(client, chatId, { text, voice }, appBase) {
   }
 }
 
-// ── Inline tugmalar: kontakt ochish / rad etish ──────────────
-// Tugma formati services/shortlist.js da — yuboruvchi (miniapp) bilan
-// bitta manbadan foydalanishi uchun.
+// ── Nomzod profili kartasi ───────────────────────────────────
+// Rezyumedan olingan asosiy faktlar. Hammasi emas — nomzod o'zini
+// tanishi uchun yetarli qismi. To'lig'i Mini App'da.
+function profileCard(c) {
+  const L = [];
+  if (c.fullName) L.push(c.fullName);
+
+  const line = [
+    c.desiredPosition || '',
+    c.experienceYears ? c.experienceYears + ' yil tajriba' : '',
+    c.age ? c.age + ' yosh' : '',
+    c.location || ''
+  ].filter(Boolean).join(' · ');
+  if (line) L.push(line);
+
+  const last = (c.workHistory || [])[0];
+  if (last && (last.company || last.position)) {
+    L.push(`Oxirgi ish: ${[last.position, last.company].filter(Boolean).join(', ')}`);
+  }
+  if ((c.languages || []).length) L.push(`Tillar: ${c.languages.join(', ')}`);
+  if (c.salaryExpectation) L.push(`Kutilayotgan maosh: ${c.salaryExpectation}`);
+  if (c.phone) L.push(`Telefon: ${c.phone}`);
+
+  return L.join('\n');
+}
+
+// ── Inline tugmalar ──────────────────────────────────────────
+// Ikki oila: nomzod o'z profili ustida ('cp'/'cn') va agentlik tanlov
+// ustida ('r:'/'n:'). Birinchisida id kerak emas — tugma nomzodning
+// O'Z chatida turadi, ya'ni chat uni aniqlaydi.
 async function handleCallback(cq) {
   const token = tg.platformToken();
   const chatId = cq.message && cq.message.chat && String(cq.message.chat.id);
@@ -386,8 +422,41 @@ async function handleCallback(cq) {
   const done = (text, alert = false) =>
     tg.answerCallback(token, cq.id, text, alert).catch(() => {});
 
-  const parsed = shortlistSvc.parseCb(cq.data);
-  if (!parsed || !chatId) return done('Tugma eskirgan');
+  if (!chatId) return;
+  const data = String(cq.data || '');
+
+  // ── Nomzod: profilni tasdiqlash / ish qidirmaslik ──
+  if (data === 'cp' || data === 'cn') {
+    const c = await Candidate.findOne({ tgChatId: chatId });
+    if (!c) return done('Profil topilmadi', true);
+
+    c.jobStatus   = data === 'cp' ? 'active' : 'not_looking';
+    c.jobStatusAt = new Date();
+    c.updatedAt   = new Date();
+    await c.save();
+
+    await done(data === 'cp' ? 'Rahmat, tasdiqlandi' : 'Qabul qilindi');
+    if (msgId) {
+      await tg.editMessageText(token, chatId, msgId, data === 'cp'
+        ? `✅ Profilingiz tasdiqlandi.\n\n${profileCard(c)}\n\n` +
+          `Mos ish chiqsa shu yerga xabar yuboramiz. Ma'lumotni o'zgartirmoqchi ` +
+          `bo'lsangiz istalgan payt yozing.`
+        : `Qabul qilindi — hozircha taklif yubormaymiz.\n\n` +
+          `Yana ish qidira boshlasangiz shu yerga yozing.`).catch(() => {});
+    }
+
+    const rest = await Restaurant.findOne({ id: c.restaurantId });
+    if (rest && rest.telegram && rest.telegram.adminChatId) {
+      await tg.sendMessage(token, rest.telegram.adminChatId,
+        `${relay.displayName(c)} — ${data === 'cp' ? 'profilni tasdiqladi (ish qidiryapti)' : 'ish qidirmayapti'}`)
+        .catch(() => {});
+    }
+    return;
+  }
+
+  // ── Agentlik: kontakt ochish / rad etish ──
+  const parsed = shortlistSvc.parseCb(data);
+  if (!parsed) return done('Tugma eskirgan');
 
   const { action, sl8, c8 } = parsed;
 

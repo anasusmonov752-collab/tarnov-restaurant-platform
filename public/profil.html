@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mening profilim</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+/* Palitra qattiq - Telegram mavzusiga ergashmaydi, brend bir xil qolsin */
+:root{
+  --bg:#EEF3FB; --card:#FFFFFF; --ink:#16233A; --muted:#64748B;
+  --line:#E1E8F2; --blue:#2563EB; --blue-d:#1D4ED8;
+  --ok:#2E9E5B; --warn:#B4802E;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--bg);color:var(--ink);font-size:15px;padding-bottom:88px;
+  -webkit-text-size-adjust:100%}
+
+.hero{background:linear-gradient(135deg,#0F2747,#0A1B33);color:#EAF2FF;padding:18px 16px 20px;
+  display:flex;gap:14px;align-items:center}
+.hero .av{width:62px;height:76px;border-radius:11px;flex:none;overflow:hidden;
+  background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;
+  font-size:19px;font-weight:600;color:rgba(234,242,255,.8)}
+.hero .av img{width:100%;height:100%;object-fit:cover}
+.hero .nm{font-size:18px;font-weight:700;line-height:1.25}
+.hero .sb{font-size:13px;color:rgba(234,242,255,.72);margin-top:4px;line-height:1.5}
+
+.wrap{padding:14px}
+.h3{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.5px;margin:0 0 8px 3px}
+.card{background:var(--card);border-radius:14px;padding:4px 14px;margin-bottom:16px}
+
+.f{padding:11px 0;border-bottom:1px solid var(--line)}
+.f:last-child{border-bottom:none}
+.f label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+.f input,.f textarea,.f select{width:100%;border:none;background:transparent;
+  font-family:inherit;font-size:15.5px;color:var(--ink);padding:0}
+.f input:focus,.f textarea:focus,.f select:focus{outline:none}
+.f textarea{resize:vertical;line-height:1.55;min-height:62px}
+.f .hint{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.45}
+
+.ro{padding:11px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+.ro:last-child{border-bottom:none}
+.ro b{display:block;font-weight:600}
+.ro span{font-size:13px;color:var(--muted);display:block;margin-top:2px}
+
+.seg{display:flex;gap:7px;margin:0 0 16px}
+.sg{flex:1;padding:11px 6px;border:1.5px solid var(--line);background:var(--card);
+  border-radius:11px;font-family:inherit;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
+.sg.on{border-color:var(--blue);color:var(--blue);background:#F2F7FF}
+
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);
+  padding:11px 14px calc(11px + env(safe-area-inset-bottom))}
+.btn{width:100%;padding:15px;border:none;border-radius:12px;background:var(--blue);
+  color:#fff;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer}
+.btn:disabled{opacity:.5}
+.msg{text-align:center;padding:60px 24px;color:var(--muted);font-size:14.5px;line-height:1.6}
+</style>
+</head>
+<body>
+
+<div id="app"><div class="msg">Yuklanmoqda…</div></div>
+
+<script>
+const TG = window.Telegram && window.Telegram.WebApp;
+if (TG) { TG.ready(); TG.expand(); }
+const INIT = (TG && TG.initData) || '';
+const $ = id => document.getElementById(id);
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+async function api(path, opt){
+  const r = await fetch(path, Object.assign({
+    headers:{ 'Content-Type':'application/json', 'X-Telegram-Init-Data': INIT }
+  }, opt));
+  const d = await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(d.error || 'Xato');
+  return d;
+}
+
+const STATUS = [
+  ['active',      'Ish qidiryapman'],
+  ['considering', "Ko'rib chiqaman"],
+  ['not_looking', 'Qidirmayapman']
+];
+let P = null, status = 'active';
+
+function render(p){
+  P = p;
+  status = p.jobStatus && p.jobStatus !== 'unknown' ? p.jobStatus : 'active';
+
+  const initials = (p.fullName || '?').trim().split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();
+  const sub = [
+    p.desiredPosition || '',
+    p.experienceYears ? p.experienceYears + ' yil tajriba' : ''
+  ].filter(Boolean).join(' · ');
+
+  const work = (p.workHistory||[]).filter(w=>w.company||w.position).map(w=>`
+    <div class="ro"><b>${esc(w.position||'Lavozim')}</b>
+      <span>${[esc(w.company||''), esc(w.period||'')].filter(Boolean).join(' · ')}</span></div>`).join('');
+
+  $('app').innerHTML = `
+  <div class="hero">
+    <div class="av">${p.hasPhoto
+      ? `<img src="/api/cand/photo?i=${encodeURIComponent(INIT)}" alt="">` : esc(initials)}</div>
+    <div>
+      <div class="nm">${esc(p.fullName) || 'Ismingizni kiriting'}</div>
+      <div class="sb">${esc(sub) || 'Profilni to\'ldiring'}</div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="h3">Holatingiz</div>
+    <div class="seg" id="seg">
+      ${STATUS.map(([k,l])=>`<button class="sg ${k===status?'on':''}" data-s="${k}">${l}</button>`).join('')}
+    </div>
+
+    <div class="h3">Asosiy</div>
+    <div class="card">
+      <div class="f"><label>Ism familiya</label><input id="fullName" value="${esc(p.fullName)}"></div>
+      <div class="f"><label>Telefon</label><input id="phone" value="${esc(p.phone)}" inputmode="tel"></div>
+      <div class="f"><label>Qaysi lavozim</label><input id="desiredPosition" value="${esc(p.desiredPosition)}"></div>
+      <div class="f"><label>Yosh</label><input id="age" value="${p.age||''}" inputmode="numeric"></div>
+      <div class="f"><label>Hudud</label><input id="location" value="${esc(p.location)}"></div>
+    </div>
+
+    <div class="h3">Ish sharti</div>
+    <div class="card">
+      <div class="f"><label>Tajriba (yil)</label><input id="experienceYears" value="${p.experienceYears||''}" inputmode="numeric"></div>
+      <div class="f"><label>Smena</label><input id="shift" value="${esc(p.shift)}" placeholder="kunduzgi / kechki / ikkalasi"></div>
+      <div class="f"><label>Kutilayotgan maosh</label><input id="salaryExpectation" value="${esc(p.salaryExpectation)}" placeholder="4-5 mln"></div>
+    </div>
+
+    <div class="h3">Ko'nikma va til</div>
+    <div class="card">
+      <div class="f"><label>Tillar</label><input id="languages" value="${esc((p.languages||[]).join(', '))}" placeholder="o'zbek, rus">
+        <div class="hint">Vergul bilan ajrating</div></div>
+      <div class="f"><label>Ko'nikmalar</label><input id="skills" value="${esc((p.skills||[]).join(', '))}" placeholder="R-Keeper, upsell">
+        <div class="hint">Vergul bilan ajrating</div></div>
+      <div class="f"><label>Ta'lim</label><input id="education" value="${esc(p.education)}"></div>
+    </div>
+
+    <div class="h3">O'zingiz haqingizda</div>
+    <div class="card">
+      <div class="f"><textarea id="experienceSummary" placeholder="Qisqacha: qayerda ishlagansiz, nimani yaxshi bilasiz">${esc(p.experienceSummary)}</textarea></div>
+    </div>
+
+    ${work ? `<div class="h3">Ish tarixi</div><div class="card">${work}
+      <div class="f"><div class="hint">Bu ma'lumot rezyumengizdan olingan. O'zgartirish kerak bo'lsa HR'ga yozing.</div></div>
+    </div>` : ''}
+  </div>
+
+  <div class="bar"><button class="btn" id="save">Saqlash</button></div>`;
+
+  document.querySelectorAll('.sg').forEach(b => b.onclick = () => {
+    status = b.dataset.s;
+    document.querySelectorAll('.sg').forEach(x => x.classList.toggle('on', x.dataset.s === status));
+    try { TG && TG.HapticFeedback && TG.HapticFeedback.selectionChanged(); } catch(e){}
+  });
+
+  $('save').onclick = save;
+}
+
+const val = id => ($(id) ? $(id).value.trim() : '');
+const list = id => val(id).split(',').map(s=>s.trim()).filter(Boolean);
+
+async function save(){
+  const b = $('save');
+  b.disabled = true; b.textContent = 'Saqlanmoqda…';
+  try{
+    await api('/api/cand/me', { method:'PATCH', body: JSON.stringify({
+      fullName: val('fullName'), phone: val('phone'),
+      desiredPosition: val('desiredPosition'), location: val('location'),
+      shift: val('shift'), salaryExpectation: val('salaryExpectation'),
+      education: val('education'), experienceSummary: val('experienceSummary'),
+      age: val('age'), experienceYears: val('experienceYears'),
+      languages: list('languages'), skills: list('skills'),
+      jobStatus: status
+    })});
+    b.textContent = 'Saqlandi';
+    try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
+    if (TG) setTimeout(()=>TG.close(), 900);
+  }catch(e){
+    b.disabled = false; b.textContent = 'Qayta urinish';
+    alert(e.message);
+  }
+}
+
+(async function(){
+  if (!INIT) { $('app').innerHTML = '<div class="msg">Bu sahifa Telegram ichida ochilishi kerak.</div>'; return; }
+  try { render(await api('/api/cand/me')); }
+  catch(e){ $('app').innerHTML = `<div class="msg">${esc(e.message)}</div>`; }
+})();
+</script>
+</body>
+</html>

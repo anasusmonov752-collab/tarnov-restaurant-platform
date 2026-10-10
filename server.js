@@ -124,6 +124,7 @@ app.use('/api/shortlists', require('./src/routes/shortlists'));
 app.use('/api/tg', require('./src/routes/telegram'));
 app.use('/api/clients', require('./src/routes/clients'));
 app.use('/api/ma', require('./src/routes/miniapp'));
+app.use('/api/cand', require('./src/routes/candidate'));
 app.use('/api/waiter', require('./src/routes/waiter'));
 
 // ── Global error handler ───────────────────────────────────────────

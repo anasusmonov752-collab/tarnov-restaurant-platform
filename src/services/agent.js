@@ -267,30 +267,32 @@ O'zgartirish mumkin bo'lgan maydonlar:
   experienceSummary, jobStatus ("active"|"considering"|"not_looking")
 
 reply - foydalanuvchiga aytiladigan matn.
-updates - o'zgargan maydonlar obyekti (bo'sh bo'lsa {}).`;
 
+Qolgan maydonlarni FAQAT o'zgartirilayotgan bo'lsa to'ldir, aks holda
+null (massivlar uchun []) qoldir.`;
+
+// Tekis sxema, hamma maydon required. Ichma-ich obyekt va majburiy
+// bo'lmagan maydonlarda Gemini qismlarni tashlab ketadi — bu
+// candidateSearch'da allaqachon sinalgan.
 const CAND_SCHEMA = {
   type: 'object',
   properties: {
-    reply:   { type: 'string' },
-    intent:  { type: 'string' },
-    updates: {
-      type: 'object',
-      properties: {
-        phone:             { type: 'string', nullable: true },
-        desiredPosition:   { type: 'string', nullable: true },
-        location:          { type: 'string', nullable: true },
-        shift:             { type: 'string', nullable: true },
-        salaryExpectation: { type: 'string', nullable: true },
-        experienceYears:   { type: 'integer', nullable: true },
-        experienceSummary: { type: 'string', nullable: true },
-        jobStatus:         { type: 'string', nullable: true },
-        languages:         { type: 'array', items: { type: 'string' } },
-        skills:            { type: 'array', items: { type: 'string' } }
-      }
-    }
+    reply:             { type: 'string' },
+    intent:            { type: 'string' },
+    phone:             { type: 'string', nullable: true },
+    desiredPosition:   { type: 'string', nullable: true },
+    location:          { type: 'string', nullable: true },
+    shift:             { type: 'string', nullable: true },
+    salaryExpectation: { type: 'string', nullable: true },
+    experienceSummary: { type: 'string', nullable: true },
+    jobStatus:         { type: 'string', nullable: true },
+    experienceYears:   { type: 'integer', nullable: true },
+    languages:         { type: 'array', items: { type: 'string' } },
+    skills:            { type: 'array', items: { type: 'string' } }
   },
-  required: ['reply','intent','updates']
+  required: ['reply','intent','phone','desiredPosition','location','shift',
+             'salaryExpectation','experienceSummary','jobStatus','experienceYears',
+             'languages','skills']
 };
 
 // Oq ro'yxat: AI boshqa maydonga tegib qo'ymasin (rol tasnifi, AI
@@ -332,7 +334,7 @@ async function handleCandidate({ cand, chatId, text }) {
   });
 
   const reply = String(r.reply || '').trim();
-  const u = r.updates || {};
+  const u = r;                 // sxema tekis — maydonlar javobning o'zida
   const changed = [];
 
   if (r.intent === 'update') {

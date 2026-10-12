@@ -318,15 +318,28 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
         try {
           await tg.sendChatAction(token, chatId).catch(() => {});
           const out = await agent.handleCandidate({ cand, chatId, text });
-          if (out.text) await tg.sendMessage(token, chatId, out.text);
+
+          // Javob HAR DOIM ketadi. Avval `if (out.text)` edi — model bo'sh
+          // matn qaytarsa nomzod jim qolardi va "bot o'lgan" deb o'ylardi.
+          await tg.sendMessage(token, chatId,
+            out.text || 'Qabul qildim, HR javob beradi.');
           handled = !out.forward;
+
           if (out.changed.length && rest.telegram && rest.telegram.adminChatId) {
             await tg.sendMessage(token, rest.telegram.adminChatId,
               `${relay.displayName(cand)} profilini yangiladi: ${out.changed.join(', ')}\n` +
               `"${body}"`).catch(() => {});
           }
         } catch (e) {
-          console.error('[TG] nomzod agenti xatosi:', e.message);  // relayga tushadi
+          // Xato yuz bersa ham nomzod javobsiz qolmaydi: xabar sizga
+          // uzatiladi (pastda), nomzodga esa shuni aytamiz.
+          console.error('[TG] nomzod agenti xatosi:', e.message);
+          await tg.sendMessage(token, chatId,
+            'Xabaringizni HR\'ga uzatdim, tez orada javob beradi.').catch(() => {});
+          if (rest.telegram && rest.telegram.adminChatId) {
+            await tg.sendMessage(token, rest.telegram.adminChatId,
+              `⚠️ AI javob bera olmadi (${relay.displayName(cand)}): ${e.message}`).catch(() => {});
+          }
         }
       }
     }

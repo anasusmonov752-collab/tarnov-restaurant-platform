@@ -302,6 +302,36 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
     // Nomzod ovozli xabar yuborishi mumkin — uni matnga aylantirmaymiz
     // (bu adminning qidiruvi emas), lekin adminga xabar beramiz.
     const body = text || '[ovozli xabar — Telegramda tinglang]';
+
+    // ── Agent: profil o'zgarishini o'zi qabul qiladi ──
+    // Lekin SIZ nomzod bilan yozishayotgan bo'lsangiz aralashmaydi:
+    // oxirgi sutkada javob yozgan bo'lsangiz, bu tirik suhbat va
+    // bot o'rtaga tushsa chalkashlik bo'ladi.
+    let handled = false;
+    if (text) {
+      const recentReply = await BotMessage.findOne({
+        restaurantId: rest.id, candidateId: cand.id, direction: 'out',
+        createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+      }).lean();
+
+      if (!recentReply) {
+        try {
+          await tg.sendChatAction(token, chatId).catch(() => {});
+          const out = await agent.handleCandidate({ cand, chatId, text });
+          if (out.text) await tg.sendMessage(token, chatId, out.text);
+          handled = !out.forward;
+          if (out.changed.length && rest.telegram && rest.telegram.adminChatId) {
+            await tg.sendMessage(token, rest.telegram.adminChatId,
+              `${relay.displayName(cand)} profilini yangiladi: ${out.changed.join(', ')}\n` +
+              `"${body}"`).catch(() => {});
+          }
+        } catch (e) {
+          console.error('[TG] nomzod agenti xatosi:', e.message);  // relayga tushadi
+        }
+      }
+    }
+    if (handled) return;
+
     const adminMsgId = await relay.forwardToAdmin(rest, cand, body);
     await relay.logMsg({
       restaurantId: rest.id, candidateId: cand.id,

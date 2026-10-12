@@ -229,6 +229,156 @@ async function remember(conv, userText, botText, criteria, count) {
   await conv.save();
 }
 
+// ══ NOMZOD TOMONI ════════════════════════════════════════════
+// Nomzod tugma bosmay yozishi mumkin: "maoshim 6 mln bo'ldi",
+// "endi kechki smenada ishlayman". Bot tushunib profilni yangilaydi.
+//
+// MUHIM: bot relayni YUTIB YUBORMASLIGI kerak. Nomzodning savoli
+// sizga yetib borishi shart — aks holda odam javobsiz qoladi va
+// botni tashlab ketadi. Shubhali holatda doim sizga uzatiladi.
+
+const CAND_SYSTEM = `Sen TalentHub'ning HR agentisan. Ish qidirayotgan odam
+bilan gaplashyapsan. Uning profili bazada bor — u o'zgarish aytishi,
+savol berishi yoki shunchaki yozishi mumkin.
+
+OHANG: qisqa, iliq, ortiqcha rasmiyatchiliksiz. Bir-ikki jumla.
+Foydalanuvchi qaysi tilda yozsa — o'sha tilda javob ber.
+
+Sening vazifang — xabarni uch turga ajratish:
+
+  "update"   - profilidagi ma'lumotni o'zgartirmoqchi
+               ("maoshim 6 mln", "Chilonzorga ko'chdim", "ish topdim")
+  "question" - savol beryapti yoki HR bilan gaplashmoqchi
+               ("qachon javob berasiz?", "qanday ish bor?")
+  "chat"     - salomlashish yoki qisqa gap
+
+QOIDALAR:
+1. Ish taklif qilma, maosh aytma, muddat va'da qilma. Bularni
+   faqat HR biladi. So'rashsa: "HR javob beradi".
+2. Ishonching komil bo'lmasa — "question" deb belgila. Savol HR'ga
+   boradi, bu xavfsizroq.
+3. Faqat AYTILGAN maydonni o'zgartir. Boshqasiga tegma.
+4. "Ish topdim" yoki "qidirmayapman" desa — jobStatus = "not_looking".
+   "Yana qidiryapman" desa — "active".
+
+O'zgartirish mumkin bo'lgan maydonlar:
+  phone, desiredPosition, location, shift, salaryExpectation,
+  experienceYears, languages (massiv), skills (massiv),
+  experienceSummary, jobStatus ("active"|"considering"|"not_looking")
+
+reply - foydalanuvchiga aytiladigan matn.
+updates - o'zgargan maydonlar obyekti (bo'sh bo'lsa {}).`;
+
+const CAND_SCHEMA = {
+  type: 'object',
+  properties: {
+    reply:   { type: 'string' },
+    intent:  { type: 'string' },
+    updates: {
+      type: 'object',
+      properties: {
+        phone:             { type: 'string', nullable: true },
+        desiredPosition:   { type: 'string', nullable: true },
+        location:          { type: 'string', nullable: true },
+        shift:             { type: 'string', nullable: true },
+        salaryExpectation: { type: 'string', nullable: true },
+        experienceYears:   { type: 'integer', nullable: true },
+        experienceSummary: { type: 'string', nullable: true },
+        jobStatus:         { type: 'string', nullable: true },
+        languages:         { type: 'array', items: { type: 'string' } },
+        skills:            { type: 'array', items: { type: 'string' } }
+      }
+    }
+  },
+  required: ['reply','intent','updates']
+};
+
+// Oq ro'yxat: AI boshqa maydonga tegib qo'ymasin (rol tasnifi, AI
+// bahosi, manba — bular agentlikning tahlili)
+const CAND_TEXT = ['phone','desiredPosition','location','shift','salaryExpectation','experienceSummary'];
+const CAND_LIST = ['languages','skills'];
+const CAND_STATUS = ['active','considering','not_looking'];
+
+/**
+ * Nomzodning xabarini qayta ishlaydi.
+ * @returns {Promise<{text:string, forward:boolean, changed:string[]}>}
+ */
+async function handleCandidate({ cand, chatId, text }) {
+  let conv = await Conversation.findOne({ chatId });
+  if (!conv) {
+    conv = await Conversation.create({
+      chatId, agencyId: cand.restaurantId, candidateId: cand.id, criteria: {}
+    });
+  }
+
+  const profile = {
+    desiredPosition: cand.desiredPosition, location: cand.location,
+    shift: cand.shift, salaryExpectation: cand.salaryExpectation,
+    experienceYears: cand.experienceYears, languages: cand.languages,
+    jobStatus: cand.jobStatus
+  };
+
+  const r = await ai.complete({
+    system: CAND_SYSTEM,
+    messages: [{ role: 'user', content:
+      `UNING PROFILI: ${JSON.stringify(profile)}\n\n` +
+      `OLDINGI SUHBAT:\n${historyText(conv.turns)}\n\n` +
+      `Foydalanuvchi: ${text}` }],
+    json: true,
+    schema: CAND_SCHEMA,
+    maxTokens: 600,
+    tier: 'fast',
+    restaurantId: cand.restaurantId
+  });
+
+  const reply = String(r.reply || '').trim();
+  const u = r.updates || {};
+  const changed = [];
+
+  if (r.intent === 'update') {
+    for (const k of CAND_TEXT) {
+      if (u[k] != null && String(u[k]).trim() && String(u[k]) !== String(cand[k] || '')) {
+        cand[k] = String(u[k]).trim().slice(0, 200);
+        changed.push(k);
+      }
+    }
+    for (const k of CAND_LIST) {
+      if (Array.isArray(u[k]) && u[k].length) {
+        cand[k] = u[k].map(x => String(x).trim().slice(0, 60)).filter(Boolean).slice(0, 30);
+        changed.push(k);
+      }
+    }
+    if (Number.isFinite(u.experienceYears) && u.experienceYears >= 0 && u.experienceYears <= 60) {
+      cand.experienceYears = u.experienceYears;
+      changed.push('experienceYears');
+    }
+    if (u.jobStatus && CAND_STATUS.includes(u.jobStatus)) {
+      cand.jobStatus = u.jobStatus;
+      cand.jobStatusAt = new Date();
+      changed.push('jobStatus');
+    }
+    if (changed.length) {
+      cand.updatedAt = new Date();
+      await cand.save();
+    }
+  }
+
+  conv.turns.push({ r: 'u', t: String(text).slice(0, 400) });
+  conv.turns.push({ r: 'b', t: reply.slice(0, 400) });
+  if (conv.turns.length > MAX_TURNS) conv.turns = conv.turns.slice(-MAX_TURNS);
+  conv.candidateId = cand.id;
+  conv.updatedAt = new Date();
+  await conv.save();
+
+  // Profil o'zgarmagan bo'lsa — xabar sizga boradi. Shubhada ham
+  // shunday: javobsiz qolgan nomzod yo'qoladi.
+  return {
+    text: reply,
+    forward: r.intent !== 'update' || !changed.length,
+    changed
+  };
+}
+
 /** Tanlov yuborilgandan keyin vakansiya shartlarini so'rash rejimiga o'tadi. */
 async function askOffer(chatId, shortlistId) {
   await Conversation.updateOne(
@@ -237,4 +387,4 @@ async function askOffer(chatId, shortlistId) {
   );
 }
 
-module.exports = { handleClient, askOffer };
+module.exports = { handleClient, handleCandidate, askOffer };

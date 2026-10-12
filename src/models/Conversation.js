@@ -16,7 +16,8 @@ const TurnSchema = new mongoose.Schema({
 const ConversationSchema = new mongoose.Schema({
   chatId:   { type: String, required: true },
   agencyId: { type: String, required: true },
-  clientId: { type: String, default: '' },
+  clientId:    { type: String, default: '' },   // mijoz tomoni
+  candidateId: { type: String, default: '' },   // nomzod tomoni
 
   // To'plangan qidiruv mezonlari — xabardan xabarga to'ldirib boriladi
   criteria: { type: mongoose.Schema.Types.Mixed, default: () => ({}) },

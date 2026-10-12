@@ -309,8 +309,13 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
     // bot o'rtaga tushsa chalkashlik bo'ladi.
     let handled = false;
     if (text) {
+      // FAQAT odam yozgan javob hisobga olinadi. Avval har qanday 'out'
+      // tekshirilardi — taklif yuborilishining o'zi ham 'out/system'
+      // yozuvi qoldiradi, shuning uchun endigina taklif qilingan har bir
+      // nomzodda agent 24 soat o'chib turardi.
       const recentReply = await BotMessage.findOne({
-        restaurantId: rest.id, candidateId: cand.id, direction: 'out',
+        restaurantId: rest.id, candidateId: cand.id,
+        direction: 'out', kind: 'text', sentBy: { $in: ['panel', 'telegram'] },
         createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
       }).lean();
 

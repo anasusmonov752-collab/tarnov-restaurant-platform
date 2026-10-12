@@ -121,6 +121,7 @@ input:focus,textarea:focus{outline:none;border-color:var(--gold)}
       <div class="sp"></div>
       <button class="btn btn-p" id="bNew">+ Yangi mijoz</button>
     </div>
+    <div id="qual"></div>
     <div class="card" id="cList"><div class="empty">Yuklanmoqda...</div></div>
   </div>
 
@@ -420,6 +421,37 @@ $('tabS').onclick = () => {
   loadShorts();
 };
 
+// Ma'lumot sifati. Qidiruv nega natija bermayotganini shu ko'rsatadi:
+// "2 yil tajribali ofitsiant" topilmasa, sabab odatda filtr emas —
+// experienceYears tahlil qilinmagan bo'lsa 0 bo'lib qoladi.
+function showQuality(a){
+  const q = a.quality, n = a.total || 0;
+  if (!q || !n) return;
+
+  const bad = [
+    { k:'noRole',  v:q.noRole,  t:'rolsiz ("boshqa")',   why:'lavozim bo\'yicha filtr ishlamaydi' },
+    { k:'noExp',   v:q.noExp,   t:'tajribasi ko\'rsatilmagan', why:'"N yil tajriba" so\'rovi ularni topmaydi' },
+    { k:'noLoc',   v:q.noLoc,   t:'hududsiz',            why:'tuman bo\'yicha qidiruvdan tushib qoladi' },
+    { k:'noPhone', v:q.noPhone, t:'telefonsiz',          why:'kontakt ochib bo\'lmaydi' }
+  ].filter(x => x.v > 0).sort((x, y) => y.v - x.v);
+
+  if (!bad.length) return;
+  const worst = bad[0];
+  if (worst.v / n < 0.1) return;        // 10% dan kam bo'lsa bezovta qilmaymiz
+
+  $('qual').innerHTML = `<div class="card" style="border-left:3px solid var(--warn);margin-bottom:14px">
+    <div class="pad">
+      <b style="font-size:15px">Ma'lumot sifati — qidiruvga ta'sir qilyapti</b>
+      <div style="font-size:13.5px;line-height:1.75;margin-top:9px;color:var(--muted)">
+        ${bad.map(x => `<div><b style="color:var(--ink)">${x.v}</b> ta ${x.t}
+          <span style="font-size:12.5px">— ${x.why}</span></div>`).join('')}
+      </div>
+      <div style="font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.6">
+        Jami ${n} ta nomzod. Bu maydonlar to'ldirilmaguncha filtr to'liq ishlamaydi.
+      </div>
+    </div></div>`;
+}
+
 // AI kunlik kvotasi. Pilot paytida ko'z oldida tursin: kvota tugasa
 // bot jim qoladi va sababini bilmay qolish oson.
 async function loadAi(){
@@ -438,6 +470,8 @@ async function loadAi(){
     el.style.color = pct < 0.15 ? 'var(--danger)' : (pct < 0.4 ? 'var(--warn)' : 'var(--muted)');
     el.title = q.map(s =>
       `${s.model}: ${s.limit ? s.remaining + '/' + s.limit + ' qoldi' : 'cheksiz'}`).join('\n');
+
+    showQuality(a);
   } catch { el.textContent = 'AI ?'; }
 }
 

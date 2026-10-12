@@ -230,6 +230,18 @@ router.get('/analytics', guard, asyncHandler(async (req, res) => {
   let aiInfo = { configured: ai.isConfigured(), provider: ai.activeProvider() };
   try { aiInfo.quota = await aiQuota.statusAll(); } catch (e) { aiInfo.quotaError = e.message; }
   const unparsed = await Candidate.countDocuments({ restaurantId: rid, aiParsed: false });
+
+  // Ma'lumot sifati — qidiruv nega natija bermayotganini ko'rsatadi.
+  // "2 yil tajribali ofitsiant" topilmasligining sababi odatda filtr
+  // emas, bo'sh maydon: experienceYears tahlil qilinmagan bo'lsa 0
+  // bo'lib qoladi va >= 2 shartiga hech kim tushmaydi.
+  const [noRole, noExp, noPhone, noLoc] = await Promise.all([
+    Candidate.countDocuments({ restaurantId: rid, role: 'boshqa' }),
+    Candidate.countDocuments({ restaurantId: rid, $or: [{ experienceYears: 0 }, { experienceYears: null }] }),
+    Candidate.countDocuments({ restaurantId: rid, $or: [{ phone: '' }, { phone: null }] }),
+    Candidate.countDocuments({ restaurantId: rid, $or: [{ location: '' }, { location: null }] })
+  ]);
+  const quality = { noRole, noExp, noPhone, noLoc, unparsed };
   res.json({
     total: st.total,
     byStatus: st.map,
@@ -239,7 +251,8 @@ router.get('/analytics', guard, asyncHandler(async (req, res) => {
     rejected: st.map.rejected || 0,
     avgDaysToHire: hireRows.length ? Math.round(hireRows[0].avg) : null,
     ai: aiInfo,
-    unparsed
+    unparsed,
+    quality
   });
 }));
 

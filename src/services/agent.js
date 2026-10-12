@@ -169,22 +169,36 @@ async function handleClient({ client, chatId, input }) {
   }
 
   // ── Qidiruv ──
+  // search() shartlarni bosqichma-bosqich yumshatadi. countFor esa
+  // QAT'IY sanaydi. Ikkalasi kerak: qat'iy son nol bo'lsa ham
+  // yumshatilgan natija foydali — "topilmadi" deb to'xtatish eng yomon
+  // javob, chunki bazada mos odam bor, faqat bitta shart halaqit beradi.
   const total = await candidateSearch.countFor(criteria, client.agencyId);
+  const result = await candidateSearch.search(criteria, client.agencyId, { limit: 12 });
 
-  if (!total) {
+  if (!result.rows.length) {
     const msg = (reply ? reply + '\n\n' : '') +
-      'Shu shartlarga mos nomzod topilmadi. Shartlardan birini yumshataymizmi — ' +
-      'masalan tajriba yoki hudud?';
+      'Bazada bunga mos nomzod topilmadi. Boshqa lavozim yoki shartni sinab ko\'ramizmi?';
     await remember(conv, userText, msg, criteria);
     return { text: msg };
   }
 
-  const result = await candidateSearch.search(criteria, client.agencyId, { limit: 12 });
   const key = await saveSession(client, criteria, result.rows);
 
   const lines = [];
   if (reply) lines.push(reply);
-  lines.push(`${total} ta mos nomzod bor.`);
+
+  if (total) {
+    lines.push(`${total} ta mos nomzod bor.`);
+  } else {
+    // Qat'iy shartga hech kim tushmadi, lekin yumshatib topildi.
+    // Nimani hisobga olmaganimizni ochiq aytamiz — mijoz o'zi qaror
+    // qilsin, biz shartni jimgina yo'qotmaymiz.
+    lines.push(
+      `Qat'iy shartga mos kelmadi — ${(result.relaxed.join(', ') || 'ba\'zi shartlar')} ` +
+      `hisobga olinmadi.`,
+      `Shundan ${result.rows.length} ta eng yaqin nomzod tanlandi.`);
+  }
 
   // Natija ko'p bo'lsa toraytirish taklif qilamiz. 30 tagacha bo'lsa
   // aralashmaymiz — odam o'zi ko'rib chiqa oladi, ortiqcha savol
@@ -199,7 +213,8 @@ async function handleClient({ client, chatId, input }) {
   }
 
   await remember(conv, userText, lines.join('\n'), criteria, total);
-  return { text: lines.join('\n'), searchKey: key, count: Math.min(total, result.rows.length) };
+  // Tugmadagi son — haqiqatan ochiladigan nomzodlar soni
+  return { text: lines.join('\n'), searchKey: key, count: result.rows.length };
 }
 
 async function saveSession(client, criteria, rows) {

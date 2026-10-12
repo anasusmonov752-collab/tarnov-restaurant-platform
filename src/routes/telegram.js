@@ -309,15 +309,25 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
     // bot o'rtaga tushsa chalkashlik bo'ladi.
     let handled = false;
     if (text) {
-      // FAQAT odam yozgan javob hisobga olinadi. Avval har qanday 'out'
-      // tekshirilardi — taklif yuborilishining o'zi ham 'out/system'
-      // yozuvi qoldiradi, shuning uchun endigina taklif qilingan har bir
-      // nomzodda agent 24 soat o'chib turardi.
+      // Bot siz bilan nomzod o'rtasidagi TIRIK suhbatga aralashmasligi
+      // kerak. Lekin "tirik" — soatlar masalasi, sutka emas: avval 24
+      // soat edi va bot deyarli har doim jim qolardi.
+      //
+      // FAQAT odam yozgan javob hisobga olinadi: taklif yuborilishining
+      // o'zi ham 'out' yozuvi qoldiradi ('system'), u suhbat emas.
       const recentReply = await BotMessage.findOne({
         restaurantId: rest.id, candidateId: cand.id,
         direction: 'out', kind: 'text', sentBy: { $in: ['panel', 'telegram'] },
-        createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+        createdAt: { $gte: new Date(Date.now() - 2 * 60 * 60 * 1000) }
       }).lean();
+
+      // Jim qolgan bo'lsa sababini ko'rsatamiz — aks holda "bot
+      // ishlamayapti" deb o'ylab, sababini topib bo'lmaydi.
+      if (recentReply && rest.telegram && rest.telegram.adminChatId) {
+        await tg.sendMessage(token, rest.telegram.adminChatId,
+          `ℹ️ Bot javob bermadi — siz ${relay.displayName(cand)} bilan ` +
+          `yozishyapsiz (oxirgi 2 soat ichida javob berilgan).`).catch(() => {});
+      }
 
       if (!recentReply) {
         try {

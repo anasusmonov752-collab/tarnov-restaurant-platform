@@ -155,6 +155,26 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
       const rest = await Restaurant.findOne({ id: cand.restaurantId });
       if (!rest) return;
 
+      // Bu chat mijoz sifatida ulangan bo'lsa, nomzod qilib bog'lamaymiz.
+      // Rol ustunligi mijoz > nomzod, ya'ni ulansa ham bot uni mijoz deb
+      // taniyverardi: profil ochilmas, menyu tugmasi mijoz kabinetiga
+      // olib borardi. Jim qoldirgandan ko'ra ochiq aytamiz.
+      // To'lovchi mijozni o'z-o'zidan uzib yubormaymiz — bu HR qarori.
+      const asClient = await Client.findOne({ tgChatId: chatId });
+      if (asClient) {
+        await tg.sendMessage(token, chatId,
+          `Bu Telegram hisobi "${asClient.name}" mijozi sifatida ulangan.\n\n` +
+          `Bitta hisob bir vaqtda ham mijoz, ham nomzod bo'la olmaydi. ` +
+          `Nomzod sifatida kirmoqchi bo'lsangiz boshqa Telegram hisobidan ` +
+          `urinib ko'ring yoki HR bilan bog'laning.`);
+        if (rest.telegram && rest.telegram.adminChatId) {
+          await tg.sendMessage(token, rest.telegram.adminChatId,
+            `${relay.displayName(cand)} nomzod havolasini bosdi, lekin bu chat ` +
+            `"${asClient.name}" mijoziga bog'langan. Ulanmadi.`).catch(() => {});
+        }
+        return;
+      }
+
       // Shu chatga boshqa nomzod bog'langan bo'lsa — uzamiz. Aks holda
       // bitta chatId ikki yozuvda qoladi va findOne({tgChatId}) qaysi
       // birini topsa o'shani ko'rsatadi: odam boshqa odamning profilini
@@ -171,6 +191,13 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
       cand.tgInviteToken = '';                   // bir martalik — kuydiriladi
       cand.updatedAt     = new Date();
       await cand.save();
+
+      // Nomzodga O'Z tugmasi. Bu chat ilgari mijoz bo'lgan bo'lsa,
+      // unda "Kabinet" tugmasi qolgan bo'ladi va mijoz kabinetini
+      // ochadi — rol o'zgarganda tugma ham o'zgarishi shart.
+      await tg.setChatMenuButton(token, chatId, 'Profilim',
+        `${publicBase(req)}/profil.html`).catch(e =>
+          console.error('[TG] nomzod menyu tugmasi qo\'yilmadi:', e.message));
 
       // Bo'sh forma emas, TAYYOR profil ko'rsatiladi: rezyumesi bizda
       // allaqachon tahlil qilingan. Bitta tugma bosib tasdiqlaydi —
@@ -264,6 +291,12 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
     if (!cand) return;
     const rest = await Restaurant.findOne({ id: cand.restaurantId });
     if (!rest) return;
+
+    // Tugmani har xabarda qayta qo'yamiz: kabinet qo'shilishidan oldin
+    // ulangan nomzodlarda u yo'q, chat ilgari mijoz bo'lgan bo'lsa esa
+    // noto'g'ri kabinetga olib borardi.
+    await tg.setChatMenuButton(token, chatId, 'Profilim',
+      `${publicBase(req)}/profil.html`).catch(() => {});
 
     // Nomzod ovozli xabar yuborishi mumkin — uni matnga aylantirmaymiz
     // (bu adminning qidiruvi emas), lekin adminga xabar beramiz.

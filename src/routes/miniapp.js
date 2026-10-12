@@ -20,6 +20,7 @@ const anonymize = require('../services/anonymize');
 const tg = require('../services/telegram');
 const shortlistSvc = require('../services/shortlist');
 const credits = require('../services/credits');
+const agent = require('../services/agent');
 
 const router = express.Router();
 
@@ -196,6 +197,22 @@ router.post('/shortlist', clientGuard, asyncHandler(async (req, res) => {
     }
   } catch (e) {
     console.error('[MA] adminga xabar ketmadi:', e.message);   // tanlov baribir saqlangan
+  }
+
+  // Mijozdan vakansiya shartlarini so'raymiz — tanlovdan KEYIN.
+  // Oldin so'rasak bu anketa bo'lardi; hozir esa tabiiy: odam tanladi,
+  // endi "nima taklif qilasiz?" mantiqiy savol. Javob nomzodga
+  // qo'ng'iroq qilganda kerak bo'ladi.
+  try {
+    if (req.client.tgChatId) {
+      await agent.askOffer(req.client.tgChatId, sl.id);
+      await tg.sendMessage(tg.platformToken(), req.client.tgChatId,
+        `${picked.length} ta nomzod qabul qilindi.\n\n` +
+        `Ular bilan gaplashishim uchun ayting — nima taklif qilasiz? ` +
+        `Maosh, smena, qachondan kerak.`);
+    }
+  } catch (e) {
+    console.error('[MA] taklif so\'rovi yuborilmadi:', e.message);
   }
 
   res.json({ ok: true, shortlistId: sl.id, count: picked.length });

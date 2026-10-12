@@ -25,6 +25,7 @@ Maydonlar:
   minExp      - eng kam tajriba (yil, butun son) yoki null
   languages   - talab qilingan tillar massivi (masalan ["ingliz"]) yoki []
   location    - hudud/shahar yoki null
+  shift       - "kunduzgi" | "kechki" yoki null (smena aytilmasa null)
   maxSalary   - maosh shifti (son, so'mda) yoki null
   keywords    - qolgan muhim so'zlar (ko'nikma, kompaniya nomi) massivi
   limit       - nechta nomzod so'ralgan (son) yoki null
@@ -61,6 +62,7 @@ const SCHEMA = {
     minExp:     { type: 'integer', nullable: true },
     languages:  { type: 'array', items: { type: 'string' } },
     location:   { type: 'string', nullable: true },
+    shift:      { type: 'string', nullable: true },
     maxSalary:  { type: 'integer', nullable: true },
     keywords:   { type: 'array', items: { type: 'string' } },
     limit:      { type: 'integer', nullable: true },
@@ -69,7 +71,7 @@ const SCHEMA = {
   // HAMMASI required — Gemini majburiy bo'lmagan maydonni tashlab ketardi,
   // shuning uchun rol/hudud/limit doim bo'sh kelardi. Noma'lum bo'lsa
   // model null qo'yadi.
-  required: ['transcript','role','minExp','languages','location','maxSalary','keywords','limit','summary']
+  required: ['transcript','role','minExp','languages','location','shift','maxSalary','keywords','limit','summary']
 };
 
 /**
@@ -92,9 +94,19 @@ async function parseQuery(input, restaurantId) {
   });
 
   r.role = normalizeRole(r.role);
+  r.shift = normalizeShift(r.shift);
   if (!Array.isArray(r.languages)) r.languages = [];
   if (!Array.isArray(r.keywords))  r.keywords = [];
   return r;
+}
+
+// Smena uch xil yoziladi. Faqat ikki qiymatga keltiramiz: nomzodning
+// "ikkalasi" qiymati har ikkala so'rovga ham mos keladi (quyida, buildQuery).
+function normalizeShift(v) {
+  const s = String(v || '').toLowerCase();
+  if (/kech|вечер|night|evening/.test(s)) return 'kechki';
+  if (/kun|день|дневн|morning|day/.test(s)) return 'kunduzgi';
+  return null;
 }
 
 // Model lavozimni har xil yozishi mumkin: "xostes", "Хостес", "hostess".
@@ -152,10 +164,11 @@ const FIELDS = 'id fullName phone email role desiredPosition experienceYears lan
 // ishonchsizligi bo'yicha: kalit so'zlar AI o'ylab topishi oson
 // ("zal menejeri" dan "zal" chiqib, hamma natijani o'ldirgan edi),
 // shahar ham xato aniqlanishi mumkin.
-const RELAX_ORDER = ['keywords', 'location', 'languages', 'minExp'];
+const RELAX_ORDER = ['keywords', 'location', 'shift', 'languages', 'minExp'];
 const RELAX_LABEL = {
   keywords:  'kalit so\'zlar',
   location:  'hudud',
+  shift:     'smena',
   languages: 'til',
   minExp:    'tajriba yili'
 };
@@ -171,6 +184,16 @@ function buildQuery(criteria, restaurantId, skip) {
   }
   if (!skip.has('location') && criteria.location) {
     q.location = { $regex: escapeRegex(criteria.location), $options: 'i' };
+  }
+  // Nomzodda "ikkalasi" bo'lsa har qanday smenaga mos keladi.
+  // Smenasi ko'rsatilmaganlarni ham tashlamaymiz — bazada ko'pchilikda
+  // bu maydon bo'sh, qattiq filtrlasak natija deyarli qolmaydi.
+  if (!skip.has('shift') && criteria.shift) {
+    and.push({ $or: [
+      { shift: { $regex: criteria.shift === 'kechki' ? 'kech|вечер' : 'kun|днев', $options: 'i' } },
+      { shift: { $regex: 'ikkala|оба|любая', $options: 'i' } },
+      { shift: '' }, { shift: null }
+    ]});
   }
   if (!skip.has('languages')) {
     // Har bir til ALOHIDA shart — "ingliz va rus" ikkalasi ham talab qilinadi.
@@ -218,6 +241,7 @@ async function search(criteria, restaurantId, { limit = 8 } = {}) {
     const used = field === 'keywords'  ? criteria.keywords.length
                : field === 'languages' ? criteria.languages.length
                : field === 'location'  ? !!criteria.location
+               : field === 'shift'     ? !!criteria.shift
                : Number.isFinite(criteria.minExp) && criteria.minExp > 0;
     skip.add(field);
     if (used) relaxed.push(RELAX_LABEL[field]);
@@ -258,4 +282,57 @@ function format(criteria, result) {
        + lines.join('\n');
 }
 
-module.exports = { parseQuery, search, format };
+// ── Suhbat uchun: sanoq va toraytirish variantlari ───────────
+// Bot "47 ta bor, Chilonzorda 12 tasi" deya olishi uchun. Raqamni
+// AI o'ylab topmasin — shuning uchun bazadan sanab olamiz.
+
+const EMPTY = { role:null, minExp:null, languages:[], location:null, shift:null, maxSalary:null, keywords:[], limit:null };
+
+function fill(c) { return Object.assign({}, EMPTY, c || {}); }
+
+async function countFor(criteria, restaurantId) {
+  return Candidate.countDocuments(buildQuery(fill(criteria), restaurantId, new Set()));
+}
+
+/**
+ * Qaysi qo'shimcha shart natijani qanchaga qisqartirishini hisoblaydi.
+ * Faqat HALI qo'yilmagan shartlar taklif qilinadi va faqat natijani
+ * haqiqatan kamaytirsa — "12 tadan 12 ta qoladi" degan taklif foydasiz.
+ * @returns {Promise<Array<{key:string,label:string,count:number,patch:object}>>}
+ */
+async function facets(criteria, restaurantId, total) {
+  const c = fill(criteria);
+  const out = [];
+
+  const probe = async (key, label, patch) => {
+    const n = await countFor(Object.assign({}, c, patch), restaurantId);
+    if (n > 0 && n < total) out.push({ key, label, count: n, patch });
+  };
+
+  if (!c.minExp) await probe('minExp', '2 yildan ortiq tajriba', { minExp: 2 });
+  if (!c.shift) {
+    await probe('shift_k', 'kechki smena',   { shift: 'kechki' });
+    await probe('shift_d', 'kunduzgi smena', { shift: 'kunduzgi' });
+  }
+
+  // Hudud — eng ko'p uchraydigan uchtasi. Ro'yxatni o'zimiz tuzmaymiz:
+  // bazada qaysi tuman ko'p bo'lsa, o'shani taklif qilamiz.
+  if (!c.location) {
+    const top = await Candidate.aggregate([
+      { $match: buildQuery(c, restaurantId, new Set()) },
+      { $match: { location: { $nin: ['', null] } } },
+      { $group: { _id: '$location', n: { $sum: 1 } } },
+      { $sort: { n: -1 } },
+      { $limit: 3 }
+    ]);
+    for (const t of top) {
+      if (t.n > 0 && t.n < total) {
+        out.push({ key: 'loc_' + t._id, label: t._id, count: t.n, patch: { location: t._id } });
+      }
+    }
+  }
+
+  return out.sort((a, b) => b.count - a.count).slice(0, 4);
+}
+
+module.exports = { parseQuery, search, format, countFor, facets, normalizeRole, normalizeShift, EMPTY };

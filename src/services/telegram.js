@@ -96,6 +96,12 @@ async function editMessageText(token, chatId, messageId, text, opts = {}) {
   });
 }
 
+// "yozmoqda…" ko'rsatkichi. AI javobi bir necha soniya olganda bot
+// o'lgandek tuyulmasligi uchun. ~5 soniyada o'chadi.
+function sendChatAction(token, chatId, action = 'typing') {
+  return call(token, 'sendChatAction', { chat_id: chatId, action });
+}
+
 // Yozuv maydoni yonidagi doimiy tugma. Faqat MIJOZ chatiga qo'yiladi:
 // nomzod va admin uchun kabinet yo'q, ularda tugma chalg'itadi.
 async function setChatMenuButton(token, chatId, text, url) {
@@ -179,7 +185,7 @@ async function platformUsername() {
 }
 
 module.exports = {
-  getMe, sendMessage, answerCallback, editMessageText, setChatMenuButton,
+  getMe, sendMessage, answerCallback, editMessageText, setChatMenuButton, sendChatAction,
   setWebhook, deleteWebhook, getWebhookInfo, getFileBase64,
   deepLink, TelegramError, MAX_LEN,
   platformToken, platformSecret, platformUsername, isPlatformReady

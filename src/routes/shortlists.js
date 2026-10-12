@@ -95,6 +95,7 @@ router.get('/:id', guard, asyncHandler(async (req, res) => {
 
   res.json({
     id: row.id, status: row.status, vacancyId: row.vacancyId,
+    summary: row.summary, offer: row.offer,
     createdAt: row.createdAt, updatedAt: row.updatedAt,
     client: client || null,
     counts: counts(row.items),

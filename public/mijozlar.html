@@ -343,9 +343,18 @@ async function openShort(id){
 
   $('mdT').textContent = (d.client && d.client.name) || 'Tanlov';
 
-  const head = `<div style="font-size:13px;color:var(--muted);margin-bottom:14px">
-    ${dt(d.createdAt)} · ${d.counts.total} ta nomzod · balans
-    <span class="pill p-cr">${d.client ? d.client.credits : '?'}</span></div>`;
+  // Qidiruv matni va mijoz taklifi — qo'ng'iroq qilishdan oldin
+  // ko'z oldingizda tursin: kimni qidirgan va nima taklif qilyapti
+  const head = `<div style="font-size:13px;color:var(--muted);margin-bottom:12px">
+      ${dt(d.createdAt)} · ${d.counts.total} ta nomzod · balans
+      <span class="pill p-cr">${d.client ? d.client.credits : '?'}</span>
+    </div>
+    ${d.summary ? `<div style="font-size:14px;margin-bottom:10px"><b>So'rov:</b> ${esc(d.summary)}</div>` : ''}
+    ${d.offer ? `<div style="background:#F2F7FF;border:1px solid #D8E6FF;border-radius:10px;
+      padding:11px 13px;font-size:14px;line-height:1.6;margin-bottom:14px">
+      <b style="color:var(--gold)">Mijoz taklifi:</b><br>${esc(d.offer)}</div>`
+    : `<div style="font-size:13px;color:var(--muted);margin-bottom:14px">
+      Taklif shartlari hali yuborilmagan.</div>`}`;
 
   const body = d.items.map(it => {
     const c = it.candidate;

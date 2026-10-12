@@ -21,6 +21,7 @@ const shortlistSvc = require('../services/shortlist');
 const relay = require('../services/botRelay');
 const outreach = require('../services/outreach');
 const candidateSearch = require('../services/candidateSearch');
+const agent = require('../services/agent');
 
 const router = express.Router();
 const guard = auth(['restaurant']);
@@ -386,7 +387,9 @@ async function handleClientSearch(client, chatId, { text, voice }, appBase) {
     return;
   }
 
-  await tg.sendMessage(token, chatId, voice ? 'Ovoz tinglanmoqda…' : 'Qidirilmoqda…');
+  // "Yozmoqda…" — AI javobi 2-4 soniya oladi, shu oraliqda bot
+  // o'lgandek tuyulmasin
+  await tg.sendChatAction(token, chatId).catch(() => {});
 
   try {
     let input;
@@ -397,32 +400,23 @@ async function handleClientSearch(client, chatId, { text, voice }, appBase) {
       input = { text };
     }
 
-    const criteria = await candidateSearch.parseQuery(input, client.agencyId);
-    const result = await candidateSearch.search(criteria, client.agencyId, { limit: 15 });
+    // Bir martalik qidiruv emas, suhbat: oldingi mezonlar eslab qolinadi
+    // va yangi gap ularga qo'shiladi.
+    const out = await agent.handleClient({ client, chatId, input });
 
-    if (!result.rows.length) {
-      await tg.sendMessage(token, chatId,
-        `So'rov: ${criteria.summary}\n\nAyni paytda mos nomzod yo'q. ` +
-        `Yangi nomzod kelganda xabar beramiz.`);
-      return;
-    }
+    const opts = out.searchKey ? { reply_markup: { inline_keyboard: [[
+      { text: `Ko'rish${out.count ? ' (' + out.count + ')' : ''}`,
+        web_app: { url: `${appBase}/miniapp.html?s=${out.searchKey}` } }
+    ]]}} : {};
 
-    const note = result.relaxed.length
-      ? `\nQat'iy mos kelmadi — ${result.relaxed.join(', ')} hisobga olinmadi.` : '';
-
-    // Mini App havolasi — qidiruv natijasini saqlab, kalit bilan ochamiz
-    const key = await saveSearch(client, criteria, result.rows);
-    await tg.sendMessage(token, chatId,
-      `So'rov: ${criteria.summary}\n` +
-      `Topildi: ${result.rows.length} ta nomzod${note}\n\n` +
-      `Ko'rib chiqish va tanlash uchun pastdagi tugmani bosing.`,
-      { reply_markup: { inline_keyboard: [[
-        { text: `Ko'rish (${result.rows.length} ta)`, web_app: { url: `${appBase}/miniapp.html?s=${key}` } }
-      ]]}});
+    await tg.sendMessage(token, chatId, out.text, opts);
 
   } catch (e) {
-    console.error('[TG] mijoz qidiruvi xatosi:', e.message);
-    await tg.sendMessage(token, chatId, `Qidirib bo'lmadi: ${e.message}`);
+    console.error('[TG] mijoz suhbati xatosi:', e.message);
+    await tg.sendMessage(token, chatId,
+      e.code === 'AI_NOT_CONFIGURED'
+        ? 'AI hozircha sozlanmagan. HR bilan bog\'laning.'
+        : `Javob berib bo'lmadi: ${e.message}`);
   }
 }
 

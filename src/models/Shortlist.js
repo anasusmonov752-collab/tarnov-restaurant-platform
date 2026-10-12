@@ -33,6 +33,11 @@ const ShortlistSchema = new mongoose.Schema({
   // kabinetida "bu qaysi qidiruv edi?" degan savol javobsiz qoladi.
   summary: { type: String, default: '' },
 
+  // Mijoz nima taklif qilyapti (maosh, smena, qachon kerak). Tanlovdan
+  // KEYIN so'raladi — filtr uchun emas, nomzodga qo'ng'iroq qilganda
+  // nima sotayotganingizni bilish uchun.
+  offer: { type: String, default: '' },
+
   items:  { type: [ItemSchema], default: [] },
   status: { type: String, default: 'new' },     // new | in_progress | done
 

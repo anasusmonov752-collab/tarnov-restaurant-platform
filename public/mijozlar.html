@@ -106,6 +106,7 @@ input:focus,textarea:focus{outline:none;border-color:var(--gold)}
     <div class="tb-sub">TalentHub</div>
   </div>
   <div class="tb-spacer"></div>
+  <span class="view-sw" id="aiChip" title="AI kunlik kvotasi" style="cursor:default">AI …</span>
   <button class="view-sw on" id="tabC">Mijozlar</button>
   <button class="view-sw" id="tabS">Tanlovlar</button>
   <a class="view-sw" href="/recruitment.html">Nomzodlar bazasi</a>
@@ -419,10 +420,32 @@ $('tabS').onclick = () => {
   loadShorts();
 };
 
+// AI kunlik kvotasi. Pilot paytida ko'z oldida tursin: kvota tugasa
+// bot jim qoladi va sababini bilmay qolish oson.
+async function loadAi(){
+  const el = $('aiChip');
+  try {
+    const a = await api('/api/recruitment/analytics');
+    // statusAll() massiv qaytaradi: [{model, used, limit, remaining, exhausted}]
+    const q = (a.ai && a.ai.quota) || [];
+    const rows = q.filter(x => x && x.limit);
+    if (!rows.length) { el.textContent = a.ai && a.ai.configured ? 'AI ✓' : 'AI ✕'; return; }
+
+    // Eng tang ahvoldagisini ko'rsatamiz — birinchi tugaydigani muhim
+    const worst = rows.reduce((x, y) => (x.remaining / x.limit) < (y.remaining / y.limit) ? x : y);
+    const pct = worst.remaining / worst.limit;
+    el.textContent = `AI ${worst.remaining}/${worst.limit}`;
+    el.style.color = pct < 0.15 ? 'var(--danger)' : (pct < 0.4 ? 'var(--warn)' : 'var(--muted)');
+    el.title = q.map(s =>
+      `${s.model}: ${s.limit ? s.remaining + '/' + s.limit + ' qoldi' : 'cheksiz'}`).join('\n');
+  } catch { el.textContent = 'AI ?'; }
+}
+
 (async () => {
   await requireRole('restaurant');
   loadClients();
   loadShorts();          // sanoqlar darhol to'g'ri ko'rinsin
+  loadAi();
 })();
 </script>
 </body>

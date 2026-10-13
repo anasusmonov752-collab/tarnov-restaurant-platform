@@ -650,10 +650,14 @@ router.get('/status', guard, asyncHandler(async (req, res) => {
     try { out.botUsername = await tg.platformUsername(); } catch (e) { out.error = e.message; }
     try {
       const info = await tg.getWebhookInfo(tg.platformToken());
+      const allowed = info.allowed_updates || [];
       out.webhook = {
         set: !!info.url,
         pending: info.pending_update_count || 0,
-        lastError: info.last_error_message || ''
+        lastError: info.last_error_message || '',
+        // Bo'sh ro'yxat = Telegram standart to'plami (callback ham kiradi)
+        buttonsWork: !allowed.length || allowed.includes('callback_query'),
+        allowedUpdates: allowed
       };
     } catch (e) { out.webhook = { error: e.message }; }
   }

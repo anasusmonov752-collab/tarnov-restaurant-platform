@@ -153,6 +153,20 @@ async function startServer() {
     console.log(`✦ Running on http://localhost:${PORT}`);
     console.log(`✦ ENV: ${process.env.NODE_ENV || 'development'}`);
   });
+
+  // Telegram webhook'ini tekshirib, kerak bo'lsa qayta ro'yxatdan
+  // o'tkazamiz. allowed_updates Telegram tomonida saqlanadi: koddagi
+  // ro'yxat o'zgarsa ham, setWebhook qayta chaqirilmaguncha eskisi
+  // amal qiladi. Bir marta shu sabab inline tugmalar jim turgan edi.
+  const tgSvc = require('./src/services/telegram');
+  if (process.env.APP_URL) {
+    const r = await tgSvc.ensureWebhook(process.env.APP_URL);
+    if (r.action === 'none')  console.log('✦ Telegram webhook: joyida');
+    else if (r.ok)            console.log(`✦ Telegram webhook: ${r.action}`);
+    else if (r.action !== 'skip') console.error('✦ Telegram webhook xatosi:', r.error);
+  } else {
+    console.log('✦ Telegram webhook: APP_URL yo\'q, tekshirilmadi');
+  }
 }
 
 startServer();

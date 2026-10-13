@@ -115,10 +115,44 @@ function setWebhook(token, url, secret) {
   return call(token, 'setWebhook', {
     url,
     secret_token: secret,
-    // Bizga faqat xabarlar kerak — qolgan update turlari shovqin
-    allowed_updates: ['message'],
+    // callback_query SHART: Telegram bu ro'yxatda bo'lmagan turdagi
+    // yangilanishni umuman yubormaydi. Avval faqat 'message' edi va
+    // botdagi HAMMA inline tugma jim turardi — bosilardi-yu, server
+    // bexabar qolardi. web_app tugmalari ishlagani chalg'itgan: ular
+    // Telegram tomonida ochiladi, serverga bormaydi.
+    allowed_updates: ['message', 'callback_query'],
     drop_pending_updates: true
   });
+}
+
+/**
+ * Webhook to'g'ri ro'yxatdan o'tganini kafolatlaydi — server har ishga
+ * tushganda chaqiriladi.
+ *
+ * Nega kerak: allowed_updates Telegram TOMONIDA saqlanadi. Koddagi
+ * ro'yxatni o'zgartirish yetarli emas, setWebhook qayta chaqirilishi
+ * shart. Aks holda kod to'g'ri, bot esa jim — sababini topish qiyin.
+ *
+ * @returns {Promise<{ok:boolean, action:string, error?:string}>}
+ */
+async function ensureWebhook(baseUrl) {
+  if (!isPlatformReady() || !baseUrl) return { ok: false, action: 'skip' };
+  const url = `${String(baseUrl).replace(/\/+$/, '')}/api/tg/webhook/${platformSecret()}`;
+
+  try {
+    const info = await getWebhookInfo(platformToken());
+    const allowed = info.allowed_updates || [];
+    // Telegram bo'sh ro'yxatni "hammasi (chat_member'dan tashqari)" deb
+    // tushunadi — shuning uchun bo'sh bo'lsa ham to'g'ri hisoblanadi.
+    const hasCb = !allowed.length || allowed.includes('callback_query');
+
+    if (info.url === url && hasCb) return { ok: true, action: 'none' };
+
+    await setWebhook(platformToken(), url, platformSecret());
+    return { ok: true, action: info.url === url ? 'updated' : 'registered' };
+  } catch (e) {
+    return { ok: false, action: 'error', error: e.message };
+  }
 }
 
 function deleteWebhook(token) {
@@ -186,7 +220,7 @@ async function platformUsername() {
 
 module.exports = {
   getMe, sendMessage, answerCallback, editMessageText, setChatMenuButton, sendChatAction,
-  setWebhook, deleteWebhook, getWebhookInfo, getFileBase64,
+  setWebhook, ensureWebhook, deleteWebhook, getWebhookInfo, getFileBase64,
   deepLink, TelegramError, MAX_LEN,
   platformToken, platformSecret, platformUsername, isPlatformReady
 };

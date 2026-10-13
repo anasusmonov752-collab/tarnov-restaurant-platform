@@ -179,6 +179,7 @@ async function loadClients(){
       <td><span class="pill ${c.linked ? 'p-ok' : 'p-off'}">${c.linked ? 'Ulangan' : 'Ulanmagan'}</span></td>
       <td>${c.openShortlists || 0}</td>
       <td style="text-align:right;white-space:nowrap">
+        <button class="btn btn-sm" data-ed="${c.id}">Tahrirlash</button>
         <button class="btn btn-sm" data-link="${c.id}">Havola</button>
         <button class="btn btn-sm" data-cr="${c.id}">Kredit</button>
       </td>
@@ -191,6 +192,45 @@ async function loadClients(){
 
   $('cList').querySelectorAll('[data-link]').forEach(b => b.onclick = () => showLink(b.dataset.link));
   $('cList').querySelectorAll('[data-cr]').forEach(b => b.onclick = () => showCredits(b.dataset.cr));
+  $('cList').querySelectorAll('[data-ed]').forEach(b => b.onclick = () => showEdit(b.dataset.ed));
+
+  // Lokatsiyasi yo'q mijozlar — qo'ng'iroqda birinchi so'raladigan
+  // narsa shu, shuning uchun ko'rinib tursin
+  const noLoc = CLIENTS.filter(c => !c.location).length;
+  $('qual').insertAdjacentHTML('beforeend', noLoc
+    ? `<div class="card" style="border-left:3px solid var(--warn);margin-bottom:14px"><div class="pad"
+        style="font-size:13.5px;line-height:1.6">
+        <b>${noLoc} ta mijozda manzil ko'rsatilmagan.</b>
+        <span style="color:var(--muted)">Nomzodga qo'ng'iroq qilganda birinchi
+        "qayerda?" deb so'raydi — "Tahrirlash" dan to'ldiring.</span></div></div>`
+    : '');
+}
+
+function showEdit(id){
+  const c = CLIENTS.find(x => x.id === id);
+  openMd('Tahrirlash — ' + c.name, `
+    <div class="fld"><label>Restoran nomi</label><input type="text" id="eNm" value="${esc(c.name)}"></div>
+    <div class="row2">
+      <div class="fld"><label>Menejer ismi</label><input type="text" id="eCn" value="${esc(c.contactName)}"></div>
+      <div class="fld"><label>Telefon</label><input type="text" id="ePh" value="${esc(c.phone)}"></div>
+    </div>
+    <div class="fld"><label>Tuman</label><input type="text" id="eLo" value="${esc(c.location)}" placeholder="Chilonzor"></div>
+    <div class="fld"><label>Manzil / mo'ljal</label><input type="text" id="eAd" value="${esc(c.address)}" placeholder="Bunyodkor 12, Mega Planet ro'parasi"></div>
+    <div class="fld"><label>Restoran haqida</label><input type="text" id="eAb" value="${esc(c.about)}" placeholder="150 o'rinli, yevropa oshxonasi"></div>
+    <button class="btn btn-p" id="eSave" style="width:100%">Saqlash</button>`);
+
+  $('eSave').onclick = async () => {
+    $('eSave').disabled = true;
+    try {
+      await api('/api/clients/' + id, { method:'PATCH', body: JSON.stringify({
+        name: $('eNm').value.trim(), contactName: $('eCn').value.trim(),
+        phone: $('ePh').value.trim(), location: $('eLo').value.trim(),
+        address: $('eAd').value.trim(), about: $('eAb').value.trim()
+      })});
+      toast('Saqlandi', 'success');
+      closeMd(); loadClients();
+    } catch(e){ toast(e.message, 'error'); $('eSave').disabled = false; }
+  };
 }
 
 $('bNew').onclick = () => {
@@ -200,7 +240,12 @@ $('bNew').onclick = () => {
       <div class="fld"><label>Menejer ismi</label><input type="text" id="fCn" placeholder="Aziz"></div>
       <div class="fld"><label>Telefon</label><input type="text" id="fPh" placeholder="+998 90 123 45 67"></div>
     </div>
-    <div class="fld"><label>Boshlang'ich kredit</label><input type="number" id="fCr" value="5" min="0"></div>
+    <div class="row2">
+      <div class="fld"><label>Tuman *</label><input type="text" id="fLo" placeholder="Chilonzor"></div>
+      <div class="fld"><label>Boshlang'ich kredit</label><input type="number" id="fCr" value="5" min="0"></div>
+    </div>
+    <div class="fld"><label>Manzil / mo'ljal</label><input type="text" id="fAd" placeholder="Bunyodkor ko'chasi 12, Mega Planet ro'parasi"></div>
+    <div class="fld"><label>Restoran haqida</label><input type="text" id="fAb" placeholder="150 o'rinli, yevropa oshxonasi"></div>
     <div class="fld"><label>Izoh</label><textarea id="fNo" rows="2"></textarea></div>
     <button class="btn btn-p" id="fSave" style="width:100%">Yaratish</button>`);
 
@@ -211,6 +256,8 @@ $('bNew').onclick = () => {
     try {
       await api('/api/clients', { method:'POST', body: JSON.stringify({
         name, contactName: $('fCn').value.trim(), phone: $('fPh').value.trim(),
+        location: $('fLo').value.trim(), address: $('fAd').value.trim(),
+        about: $('fAb').value.trim(),
         note: $('fNo').value.trim(), startCredits: parseInt($('fCr').value, 10) || 0
       })});
       toast('Mijoz yaratildi', 'success');
@@ -357,16 +404,28 @@ async function openShort(id){
 
   // Qidiruv matni va mijoz taklifi — qo'ng'iroq qilishdan oldin
   // ko'z oldingizda tursin: kimni qidirgan va nima taklif qilyapti
-  const head = `<div style="font-size:13px;color:var(--muted);margin-bottom:12px">
-      ${dt(d.createdAt)} · ${d.counts.total} ta nomzod · balans
-      <span class="pill p-cr">${d.client ? d.client.credits : '?'}</span>
-    </div>
-    ${d.summary ? `<div style="font-size:14px;margin-bottom:10px"><b>So'rov:</b> ${esc(d.summary)}</div>` : ''}
-    ${d.offer ? `<div style="background:#F2F7FF;border:1px solid #D8E6FF;border-radius:10px;
-      padding:11px 13px;font-size:14px;line-height:1.6;margin-bottom:14px">
-      <b style="color:var(--gold)">Mijoz taklifi:</b><br>${esc(d.offer)}</div>`
-    : `<div style="font-size:13px;color:var(--muted);margin-bottom:14px">
-      Taklif shartlari hali yuborilmagan.</div>`}`;
+  // Qo'ng'iroq kartasi — nomzodga qo'ng'iroq qilganda kerak bo'lgan
+  // hamma narsa bir joyda. Nomzod birinchi ikki narsani so'raydi:
+  // "qayerda?" va "qancha?". Ikkalasi ham shu yerda turishi kerak,
+  // aks holda har safar mijoz kartasini qidirib o'tirasiz.
+  const cl = d.client || {};
+  const place = [cl.location, cl.address].filter(Boolean).map(esc).join(' · ');
+  const head = `<div style="background:#F2F7FF;border:1px solid #D8E6FF;border-radius:12px;
+      padding:13px;margin-bottom:14px;line-height:1.55">
+      <div style="font-size:15.5px;font-weight:700">${esc(cl.name) || 'Mijoz'}</div>
+      ${place
+        ? `<div style="font-size:13.5px;color:var(--muted);margin-top:2px">${place}</div>`
+        : `<div style="font-size:13px;color:var(--danger);margin-top:2px">Manzil ko'rsatilmagan — nomzod birinchi shuni so'raydi</div>`}
+      ${cl.about ? `<div style="font-size:13px;color:var(--muted);margin-top:2px">${esc(cl.about)}</div>` : ''}
+      ${d.summary ? `<div style="font-size:14px;margin-top:9px"><b>So'rov:</b> ${esc(d.summary)}</div>` : ''}
+      ${d.offer
+        ? `<div style="font-size:14px;margin-top:6px"><b>Taklif:</b> ${esc(d.offer)}</div>`
+        : `<div style="font-size:13px;color:var(--warn);margin-top:6px">Taklif shartlari yo'q — mijozdan so'rang (maosh, smena)</div>`}
+      <div style="font-size:12.5px;color:var(--muted);margin-top:9px">
+        ${dt(d.createdAt)} · ${d.counts.total} ta nomzod · balans
+        <span class="pill p-cr">${cl.credits ?? '?'}</span>
+      </div>
+    </div>`;
 
   const body = d.items.map(it => {
     const c = it.candidate;

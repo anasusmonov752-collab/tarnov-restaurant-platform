@@ -23,6 +23,7 @@ const VALID_STATUS = ['pending', 'active', 'blocked'];
 function publicClient(c) {
   return {
     id: c.id, name: c.name, contactName: c.contactName, phone: c.phone,
+    location: c.location, address: c.address, about: c.about,
     note: c.note, status: c.status, credits: c.credits,
     linked: !!c.tgChatId, tgUsername: c.tgUsername,
     createdAt: c.createdAt, lastSeenAt: c.lastSeenAt
@@ -55,6 +56,9 @@ router.post('/', guard, asyncHandler(async (req, res) => {
     name,
     contactName: String(b.contactName || '').slice(0, 80),
     phone:       String(b.phone || '').slice(0, 40),
+    location:    String(b.location || '').slice(0, 80),
+    address:     String(b.address || '').slice(0, 200),
+    about:       String(b.about || '').slice(0, 300),
     note:        String(b.note || '').slice(0, 500),
     status: 'pending'
   });
@@ -76,6 +80,9 @@ router.patch('/:id', guard, asyncHandler(async (req, res) => {
   if (b.name !== undefined)        c.name = String(b.name).trim().slice(0, 120);
   if (b.contactName !== undefined) c.contactName = String(b.contactName).slice(0, 80);
   if (b.phone !== undefined)       c.phone = String(b.phone).slice(0, 40);
+  if (b.location !== undefined)    c.location = String(b.location).slice(0, 80);
+  if (b.address !== undefined)     c.address = String(b.address).slice(0, 200);
+  if (b.about !== undefined)       c.about = String(b.about).slice(0, 300);
   if (b.note !== undefined)        c.note = String(b.note).slice(0, 500);
   if (b.status !== undefined && VALID_STATUS.includes(b.status)) c.status = b.status;
   await c.save();

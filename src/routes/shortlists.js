@@ -80,7 +80,10 @@ router.get('/:id', guard, asyncHandler(async (req, res) => {
   const row = await Shortlist.findOne({ agencyId, id: req.params.id }).lean();
   if (!row) return res.status(404).json({ error: 'Tanlov topilmadi' });
 
-  const client = await Client.findOne({ agencyId, id: row.clientId }, 'id name credits tgChatId status').lean();
+  // Lokatsiya va taklif qo'ng'iroq uchun kerak: nomzod birinchi
+  // "qayerda?" va "qancha?" deb so'raydi.
+  const client = await Client.findOne({ agencyId, id: row.clientId },
+    'id name credits tgChatId status location address about phone contactName').lean();
 
   const ids = row.items.map(i => i.candidateId);
   const cands = await Candidate.find(

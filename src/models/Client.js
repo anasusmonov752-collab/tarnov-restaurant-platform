@@ -17,6 +17,14 @@ const ClientSchema = new mongoose.Schema({
   phone:       { type: String, default: '' },
   note:        { type: String, default: '' },
 
+  // Nomzodga qo'ng'iroq qilganda birinchi so'raladigan narsa — "qayerda?".
+  // Bu mijozning doimiy ma'lumoti, har so'rovda qayta so'ralmaydi.
+  // Taklif shartlari (maosh, smena) esa Shortlist.offer da — ular
+  // har vakansiyada o'zgaradi.
+  location: { type: String, default: '' },   // tuman: "Chilonzor"
+  address:  { type: String, default: '' },   // to'liq manzil / mo'ljal
+  about:    { type: String, default: '' },   // "150 o'rinli, yevropa oshxonasi"
+
   // ── Telegram ──
   tgChatId:    { type: String, default: '' },
   tgUsername:  { type: String, default: '' },

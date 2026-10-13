@@ -38,6 +38,21 @@ function alreadySeen(id) {
   return false;
 }
 
+// Webhook allowed_updates'ini bir marta (protsess umri davomida)
+// tekshiradi. Natija ko'rinib tursin — bu sozlama jimgina noto'g'ri
+// bo'lib, butun inline tugmalarni o'chirib qo'ygan edi.
+let webhookChecked = false;
+async function ensureWebhookOnce(req) {
+  if (webhookChecked) return;
+  webhookChecked = true;              // xato bo'lsa ham qayta urinmaymiz
+  try {
+    const r = await tg.ensureWebhook(publicBase(req));
+    console.log('[TG] webhook tekshiruvi:', r.action, r.error || '');
+  } catch (e) {
+    console.error('[TG] webhook tekshirib bo\'lmadi:', e.message);
+  }
+}
+
 function publicBase(req) {
   if (process.env.APP_URL) return process.env.APP_URL.replace(/\/+$/, '');
   const proto = req.headers['x-forwarded-proto'] || req.protocol || 'https';
@@ -62,6 +77,12 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
     const secret = tg.platformSecret();
     if (!secret || req.params.secret !== secret) return;
     if (req.get('X-Telegram-Bot-Api-Secret-Token') !== secret) return;
+
+    // Webhook sozlamasini bir marta tekshiramiz. Server ishga tushganda
+    // ham tekshiriladi, lekin u APP_URL ga bog'liq — o'rnatilmagan
+    // bo'lsa o'tkazib yuboriladi. Bu yerda esa manzil so'rovning
+    // o'zidan olinadi, ya'ni hech qanday sozlamaga bog'liq emas.
+    await ensureWebhookOnce(req);
 
     const update = req.body || {};
     if (update.update_id != null && alreadySeen(update.update_id)) return;

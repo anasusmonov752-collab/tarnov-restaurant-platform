@@ -721,13 +721,24 @@ document.getElementById('tgStatusBtn').onclick = async ()=>{
   try { s = await api('/api/tg/status'); } catch(e){ toast(e.message); return; }
 
   const row = (k,v,ok) => `<div class="rc-row"><div class="rc-k">${k}</div><div class="rc-v" style="color:${ok===undefined?'var(--ink)':(ok?'var(--ok)':'var(--danger)')}">${v}</div></div>`;
-  const whOk = s.webhook && s.webhook.set && !s.webhook.lastError;
+  const whOk  = s.webhook && s.webhook.set && !s.webhook.lastError;
+  // Inline tugmalar allowed_updates ga bog'liq — Telegram tomonidagi
+  // sozlama. Alohida ko'rsatamiz: webhook "ishlayapti" bo'lsa ham
+  // tugmalar jim bo'lishi mumkin, va buni boshqa yo'l bilan bilib
+  // bo'lmaydi.
+  const btnOk = s.webhook && s.webhook.buttonsWork;
 
   document.getElementById('md').innerHTML = `
     <div class="md-top"><b style="font-size:16px">Telegram bot</b><button class="md-x" id="mdX">✕</button></div>
     <div style="padding:18px">
       ${row('Bot', s.botUsername ? '@'+esc(s.botUsername) : 'sozlanmagan', s.platformReady)}
       ${row('Webhook', whOk ? 'ishlayapti' : (s.webhook && s.webhook.lastError ? esc(s.webhook.lastError) : 'o\'rnatilmagan'), whOk)}
+      ${row('Inline tugmalar', btnOk ? 'ishlaydi' : 'ISHLAMAYDI — qayta yozing', btnOk)}
+      ${btnOk ? '' : `<div style="font-size:12.5px;color:var(--muted);margin:6px 0 10px;line-height:1.6">
+        Telegram faqat ruxsat etilgan turdagi yangilanishlarni yuboradi.
+        callback_query ro'yxatda yo'q — shuning uchun tugma bosilgani
+        serverga yetib bormaydi.</div>`}
+      <button class="btn btn-sm" id="tgReWh" style="margin-bottom:12px">Webhookni qayta yozish</button>
       ${row('Sizning Telegramingiz', s.adminLinked ? 'ulangan' : 'ulanmagan', s.adminLinked)}
       ${row('Xabar yuborish kanali', (s.channels||[]).includes('sms') ? 'SMS + qo\'lda' : 'faqat qo\'lda (SMS ulanmagan)')}
       ${s.smsBalance != null ? row('SMS balans', esc(String(s.smsBalance))) : ''}
@@ -739,6 +750,19 @@ document.getElementById('tgStatusBtn').onclick = async ()=>{
     </div>`;
   document.getElementById('ov').classList.add('on');
   document.getElementById('mdX').onclick = closeMd;
+
+  const rw = document.getElementById('tgReWh');
+  if (rw) rw.onclick = async () => {
+    rw.disabled = true; rw.textContent = 'Yozilmoqda…';
+    try {
+      await api('/api/tg/setup-webhook', { method:'POST' });
+      const s2 = await api('/api/tg/status');
+      const ok = s2.webhook && s2.webhook.buttonsWork;
+      toast(ok ? 'Tayyor — tugmalar endi ishlaydi' : 'Yozildi, lekin tugmalar hali yopiq', ok ? 'success' : 'error');
+      rw.textContent = ok ? 'Tayyor' : 'Qayta urinish';
+      if (!ok) rw.disabled = false;
+    } catch(e){ toast(e.message, 'error'); rw.disabled = false; rw.textContent = 'Qayta urinish'; }
+  };
 
   const lb = document.getElementById('tgLinkMe');
   if(lb) lb.onclick = async ()=>{

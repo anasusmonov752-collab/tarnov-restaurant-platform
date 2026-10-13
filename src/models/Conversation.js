@@ -34,6 +34,12 @@ const ConversationSchema = new mongoose.Schema({
   turns: { type: [TurnSchema], default: [] },
 
   lastCount: { type: Number, default: 0 },
+
+  // Sahifalash: mijozga birinchi 20 ta ko'rsatiladi, "Yana" bosilsa
+  // keyingisi. relaxFields birinchi qidiruvdan saqlanadi — keyingi
+  // sahifa aynan shu yumshatish bilan olinishi kerak.
+  page:        { type: Number,   default: 0 },
+  relaxFields: { type: [String], default: [] },
   updatedAt: { type: Date, default: Date.now }
 });
 

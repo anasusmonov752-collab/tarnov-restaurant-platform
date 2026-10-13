@@ -221,20 +221,24 @@ function buildQuery(criteria, restaurantId, skip) {
  * hisobga olmaganini aytib natija bergan foydaliroq.
  * @returns {{rows:Array, relaxed:string[]}}
  */
+const SORT = { fitScore: -1, experienceYears: -1, createdAt: -1 };
+
 async function search(criteria, restaurantId, { limit = 8 } = {}) {
-  const n = Math.min(Math.max(criteria.limit || limit, 1), 15);
+  const n = Math.min(Math.max(criteria.limit || limit, 1), 30);
   const skip = new Set();
   const relaxed = [];
 
   for (let step = 0; step <= RELAX_ORDER.length; step++) {
     const rows = await Candidate
       .find(buildQuery(criteria, restaurantId, skip), FIELDS)
-      .sort({ fitScore: -1, experienceYears: -1, createdAt: -1 })
+      .sort(SORT)
       .limit(n)
       .lean();
 
-    if (rows.length) return { rows, relaxed };
-    if (step === RELAX_ORDER.length) return { rows: [], relaxed };
+    // relaxFields ham qaytariladi: keyingi sahifa AYNAN shu yumshatish
+    // bilan olinishi kerak, aks holda ro'yxat sakrab ketadi.
+    if (rows.length) return { rows, relaxed, relaxFields: [...skip] };
+    if (step === RELAX_ORDER.length) return { rows: [], relaxed, relaxFields: [...skip] };
 
     // Keyingi shartni tashlaymiz — faqat u haqiqatan qo'llangan bo'lsa
     const field = RELAX_ORDER[step];
@@ -246,7 +250,22 @@ async function search(criteria, restaurantId, { limit = 8 } = {}) {
     skip.add(field);
     if (used) relaxed.push(RELAX_LABEL[field]);
   }
-  return { rows: [], relaxed };
+  return { rows: [], relaxed, relaxFields: [] };
+}
+
+/**
+ * Keyingi sahifa. Yumshatish QAYTA hisoblanmaydi — birinchi qidiruvda
+ * qaysi shartlar tashlangan bo'lsa (relaxFields), o'shalar bilan davom
+ * etadi. Aks holda 2-sahifa boshqa to'plamdan kelib, nomzodlar
+ * takrorlanar yoki tushib qolardi.
+ */
+async function page(criteria, restaurantId, { skip = 0, limit = 20, relaxFields = [] } = {}) {
+  const q = buildQuery(criteria, restaurantId, new Set(relaxFields));
+  const [rows, total] = await Promise.all([
+    Candidate.find(q, FIELDS).sort(SORT).skip(skip).limit(Math.min(limit, 30)).lean(),
+    Candidate.countDocuments(q)
+  ]);
+  return { rows, total, hasMore: skip + rows.length < total };
 }
 
 /** Natijani Telegram uchun matnga aylantiradi. */
@@ -335,4 +354,4 @@ async function facets(criteria, restaurantId, total) {
   return out.sort((a, b) => b.count - a.count).slice(0, 4);
 }
 
-module.exports = { parseQuery, search, format, countFor, facets, normalizeRole, normalizeShift, EMPTY };
+module.exports = { parseQuery, search, page, format, countFor, facets, normalizeRole, normalizeShift, EMPTY };

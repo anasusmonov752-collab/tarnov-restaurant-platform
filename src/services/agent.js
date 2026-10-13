@@ -174,7 +174,9 @@ async function handleClient({ client, chatId, input }) {
   // yumshatilgan natija foydali — "topilmadi" deb to'xtatish eng yomon
   // javob, chunki bazada mos odam bor, faqat bitta shart halaqit beradi.
   const total = await candidateSearch.countFor(criteria, client.agencyId);
-  const result = await candidateSearch.search(criteria, client.agencyId, { limit: 12 });
+  // 20 ta — Mini App'da aylantirib ko'rish qulay bo'lgan chegara.
+  // Qolgani "Yana nomzodlar" tugmasi orqali.
+  const result = await candidateSearch.search(criteria, client.agencyId, { limit: 20 });
 
   if (!result.rows.length) {
     const msg = (reply ? reply + '\n\n' : '') +
@@ -184,6 +186,15 @@ async function handleClient({ client, chatId, input }) {
   }
 
   const key = await saveSession(client, criteria, result.rows);
+
+  // Sahifalash holati: "Yana" bosilganda shu yerdan davom etadi
+  conv.page = 0;
+  conv.relaxFields = result.relaxFields || [];
+
+  // Qat'iy son nol bo'lsa, yumshatilgan to'plamning haqiqiy hajmini
+  // olamiz — "yana bormi?" degan savolga shu javob beradi.
+  const pool = total || (await candidateSearch.page(criteria, client.agencyId,
+    { skip: 0, limit: 1, relaxFields: conv.relaxFields })).total;
 
   const lines = [];
   if (reply) lines.push(reply);
@@ -212,9 +223,49 @@ async function handleClient({ client, chatId, input }) {
     }
   }
 
+  const shown = result.rows.length;
+  const more = Math.max(0, pool - shown);
+  if (more) lines.push('', `Yoqmasa — yana ${more} ta nomzod bor.`);
+
   await remember(conv, userText, lines.join('\n'), criteria, total);
   // Tugmadagi son — haqiqatan ochiladigan nomzodlar soni
-  return { text: lines.join('\n'), searchKey: key, count: result.rows.length };
+  return { text: lines.join('\n'), searchKey: key, count: shown, more };
+}
+
+/**
+ * "Yana ko'rsat" — xuddi shu mezonlar bo'yicha keyingi sahifa.
+ * Mezonlar va yumshatish suhbatdan olinadi, qayta so'ralmaydi.
+ */
+async function morePage({ client, chatId }) {
+  const conv = await Conversation.findOne({ chatId, clientId: client.id });
+  if (!conv || !conv.criteria || !conv.criteria.role) {
+    return { text: 'Avval kim kerakligini yozing — ofitsiant, xostes, menejer?' };
+  }
+
+  const criteria = { ...candidateSearch.EMPTY, ...conv.criteria };
+  const nextPage = (conv.page || 0) + 1;
+  const SIZE = 20;
+
+  const r = await candidateSearch.page(criteria, client.agencyId, {
+    skip: nextPage * SIZE, limit: SIZE, relaxFields: conv.relaxFields || []
+  });
+
+  if (!r.rows.length) {
+    const msg = 'Boshqa nomzod qolmadi. Shartni o\'zgartirib ko\'ramizmi — ' +
+                'masalan boshqa hudud yoki tajribani kamroq?';
+    await remember(conv, '[yana]', msg, criteria, conv.lastCount);
+    return { text: msg };
+  }
+
+  const key = await saveSession(client, criteria, r.rows);
+  conv.page = nextPage;
+
+  const from = nextPage * SIZE + 1;
+  const lines = [`${from}–${from + r.rows.length - 1} (jami ${r.total} ta)`];
+  if (r.hasMore) lines.push(`Yana ${r.total - (nextPage * SIZE + r.rows.length)} ta qoladi.`);
+
+  await remember(conv, '[yana]', lines.join('\n'), criteria, conv.lastCount);
+  return { text: lines.join('\n'), searchKey: key, count: r.rows.length, more: r.hasMore ? 1 : 0 };
 }
 
 async function saveSession(client, criteria, rows) {
@@ -404,4 +455,4 @@ async function askOffer(chatId, shortlistId) {
   );
 }
 
-module.exports = { handleClient, handleCandidate, askOffer };
+module.exports = { handleClient, handleCandidate, morePage, askOffer };

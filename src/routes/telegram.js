@@ -68,7 +68,7 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
 
     // ── Inline tugma bosildi (kontakt ochish / rad etish) ──
     if (update.callback_query) {
-      await handleCallback(update.callback_query);
+      await handleCallback(update.callback_query, publicBase(req));
       return;
     }
 
@@ -462,12 +462,7 @@ async function handleClientSearch(client, chatId, { text, voice }, appBase) {
     // va yangi gap ularga qo'shiladi.
     const out = await agent.handleClient({ client, chatId, input });
 
-    const opts = out.searchKey ? { reply_markup: { inline_keyboard: [[
-      { text: `Ko'rish${out.count ? ' (' + out.count + ')' : ''}`,
-        web_app: { url: `${appBase}/miniapp.html?s=${out.searchKey}` } }
-    ]]}} : {};
-
-    await tg.sendMessage(token, chatId, out.text, opts);
+    await tg.sendMessage(token, chatId, out.text, searchKeyboard(out, appBase));
 
   } catch (e) {
     console.error('[TG] mijoz suhbati xatosi:', e.message);
@@ -476,6 +471,20 @@ async function handleClientSearch(client, chatId, { text, voice }, appBase) {
         ? 'AI hozircha sozlanmagan. HR bilan bog\'laning.'
         : `Javob berib bo'lmadi: ${e.message}`);
   }
+}
+
+// Qidiruv natijasi tugmalari: ko'rish + (bo'lsa) keyingi sahifa.
+// Mijozga birinchi 20 ta ko'rsatiladi, qolgani "Yana" orqali —
+// hammasini bitta ro'yxatga tiqib tashlash foydasiz, odam baribir
+// birinchi o'ntasidan nariga qaramaydi.
+function searchKeyboard(out, appBase) {
+  if (!out.searchKey) return {};
+  const rows = [[
+    { text: `Ko'rish${out.count ? ' (' + out.count + ')' : ''}`,
+      web_app: { url: `${appBase}/miniapp.html?s=${out.searchKey}` } }
+  ]];
+  if (out.more) rows.push([{ text: 'Yana nomzodlar', callback_data: 'more' }]);
+  return { reply_markup: { inline_keyboard: rows } };
 }
 
 // ── Nomzod profili kartasi ───────────────────────────────────
@@ -508,7 +517,7 @@ function profileCard(c) {
 // Ikki oila: nomzod o'z profili ustida ('cp'/'cn') va agentlik tanlov
 // ustida ('r:'/'n:'). Birinchisida id kerak emas — tugma nomzodning
 // O'Z chatida turadi, ya'ni chat uni aniqlaydi.
-async function handleCallback(cq) {
+async function handleCallback(cq, appBase) {
   const token = tg.platformToken();
   const chatId = cq.message && cq.message.chat && String(cq.message.chat.id);
   const msgId = cq.message && cq.message.message_id;
@@ -518,6 +527,22 @@ async function handleCallback(cq) {
 
   if (!chatId) return;
   const data = String(cq.data || '');
+
+  // ── Mijoz: "Yana nomzodlar" ──
+  if (data === 'more') {
+    const client = await Client.findOne({ tgChatId: chatId, status: 'active' });
+    if (!client) return done('Mijoz topilmadi', true);
+    await done('Qidirilmoqda…');
+    try {
+      await tg.sendChatAction(token, chatId).catch(() => {});
+      const out = await agent.morePage({ client, chatId });
+      await tg.sendMessage(token, chatId, out.text, searchKeyboard(out, appBase));
+    } catch (e) {
+      console.error('[TG] keyingi sahifa xatosi:', e.message);
+      await tg.sendMessage(token, chatId, `Keyingi nomzodlarni olib bo'lmadi: ${e.message}`);
+    }
+    return;
+  }
 
   // ── Nomzod: profilni tasdiqlash / ish qidirmaslik ──
   if (data === 'cp' || data === 'cn') {

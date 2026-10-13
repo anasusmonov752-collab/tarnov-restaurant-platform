@@ -312,10 +312,20 @@ const IST = {
   selected:     { cls:'p-off',  lbl:'Tanlandi' },
   contacting:   { cls:'p-wait', lbl:'Bog\'lanilmoqda' },
   candidate_ok: { cls:'p-ok',   lbl:'Nomzod rozi' },
-  candidate_no: { cls:'p-no',   lbl:'Rozi emas' },
+  candidate_no: { cls:'p-no',   lbl:'Nomzod rad etdi' },
   revealed:     { cls:'p-ok',   lbl:'Kontakt ochilgan' },
-  refunded:     { cls:'p-wait', lbl:'Qaytarilgan' }
+  interview:    { cls:'p-ok',   lbl:'Suhbat belgilandi' },
+  hired:        { cls:'p-ok',   lbl:'Ishga olindi' },
+  not_fit:      { cls:'p-no',   lbl:'Mos kelmadi' },
+  refunded:     { cls:'p-wait', lbl:'Kredit qaytarildi' }
 };
+
+// Rad sabablari serverdan olinadi — ro'yxat ikki joyda yozilmasin
+let META = null;
+async function meta(){
+  if (!META) { try { META = await api('/api/shortlists/meta'); } catch { META = { candReasons: [] }; } }
+  return META;
+}
 
 async function loadShorts(){
   try { SHORTS = await api('/api/shortlists'); } catch(e){ toast(e.message, 'error'); return; }
@@ -361,7 +371,9 @@ async function openShort(id){
   const body = d.items.map(it => {
     const c = it.candidate;
     const st = IST[it.state] || IST.selected;
-    const done = it.state === 'revealed' || it.state === 'refunded';
+    // Siz qo'yadigan amallar faqat kontakt ochilgunicha. Keyingisi
+    // mijozning qo'lida: suhbat, ishga olish, rad.
+    const agencyDone = ['revealed', 'refunded', 'interview', 'hired', 'not_fit'].includes(it.state);
     if (!c) return `<div class="ci"><div class="ci-meta">Nomzod o'chirilgan (${esc(it.candidateId).slice(0,8)})</div></div>`;
 
     return `<div class="ci" data-it="${esc(c.id)}">
@@ -377,17 +389,45 @@ async function openShort(id){
           .filter(Boolean).join(' · ')}<br>
         <b>${esc(c.phone) || 'telefon yo\'q'}</b>${c.email ? ' · ' + esc(c.email) : ''}
       </div>
-      <div class="ci-act">
-        ${done ? '' : `
+      ${it.reasonLabel ? `<div style="font-size:12.5px;color:var(--danger);margin-top:7px">Sabab: ${esc(it.reasonLabel)}</div>` : ''}
+      ${it.interviewAt ? `<div style="font-size:12.5px;color:var(--ok);margin-top:7px">Suhbat: ${new Date(it.interviewAt).toLocaleString('uz-UZ',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</div>` : ''}
+      <div class="ci-act" id="act-${esc(c.id)}">
+        ${agencyDone ? '' : `
           <button class="btn btn-sm" data-st="contacting"   data-c="${esc(c.id)}">Bog'lanyapman</button>
           <button class="btn btn-sm btn-ok" data-st="candidate_ok" data-c="${esc(c.id)}">Nomzod rozi</button>
-          <button class="btn btn-sm btn-no" data-st="candidate_no" data-c="${esc(c.id)}">Rozi emas</button>
+          <button class="btn btn-sm btn-no" data-no="${esc(c.id)}">Rad etdi</button>
           <button class="btn btn-sm btn-p"  data-rv="${esc(c.id)}">Kontaktni och (-1)</button>`}
       </div>
     </div>`;
   }).join('');
 
   $('mdB').innerHTML = head + body;
+
+  // "Rad etdi" — sababsiz qabul qilmaymiz. Sabab eng qimmatli
+  // ma'lumot: 50 ta qo'ng'iroqdan keyin mijozga "6 tasi maosh sababli
+  // rad etdi" deb aniq gapirish mumkin bo'ladi.
+  $('mdB').querySelectorAll('[data-no]').forEach(b => b.onclick = async () => {
+    const cid = b.dataset.no;
+    const m = await meta();
+    const box = $('act-' + cid);
+    box.innerHTML = `<div style="width:100%">
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:7px">Nega rad etdi?</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${(m.candReasons||[]).map(r =>
+          `<button class="btn btn-sm" data-rs="${r.key}" data-c="${cid}">${esc(r.label)}</button>`).join('')}
+        <button class="btn btn-sm" data-cancel="${cid}">Bekor</button>
+      </div></div>`;
+
+    box.querySelectorAll('[data-rs]').forEach(x => x.onclick = async () => {
+      x.disabled = true;
+      try {
+        await api(`/api/shortlists/${id}/items/${cid}`, { method:'PATCH',
+          body: JSON.stringify({ state:'candidate_no', reason: x.dataset.rs }) });
+        openShort(id); loadShorts();
+      } catch(e){ toast(e.message, 'error'); x.disabled = false; }
+    });
+    box.querySelector('[data-cancel]').onclick = () => openShort(id);
+  });
 
   $('mdB').querySelectorAll('[data-st]').forEach(b => b.onclick = async () => {
     b.disabled = true;

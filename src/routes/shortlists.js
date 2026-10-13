@@ -13,17 +13,34 @@ const Shortlist = require('../models/Shortlist');
 const Candidate = require('../models/Candidate');
 const Client = require('../models/Client');
 const sl = require('../services/shortlist');
+const pipeline = require('../data/pipeline');
 
 const router = express.Router();
 const guard = auth(['restaurant']);
 
-// Ro'yxatda nomzod tafsiloti kerak emas — faqat sanoq
+// Holat va sabab ro'yxatlari — frontend ularni nusxalab yurmasin
+router.get('/meta', guard, (req, res) => res.json({
+  states: pipeline.STATES,
+  agencyStates: pipeline.AGENCY_STATES,
+  clientStates: pipeline.CLIENT_STATES,
+  candReasons: pipeline.CAND_REASONS,
+  clientReasons: pipeline.CLIENT_REASONS
+}));
+
+// Ro'yxatda nomzod tafsiloti kerak emas — faqat sanoq.
+// hired alohida sanaladi: bu yakuniy natija va asosiy ko'rsatkich.
 function counts(items) {
-  const c = { total: items.length, waiting: 0, revealed: 0, rejected: 0 };
+  const c = { total: items.length, waiting: 0, revealed: 0, interview: 0, hired: 0, rejected: 0 };
   for (const i of items) {
-    if (i.state === 'revealed') c.revealed++;
-    else if (i.state === 'candidate_no') c.rejected++;
-    else if (i.state !== 'refunded') c.waiting++;
+    switch (i.state) {
+      case 'hired':        c.hired++; break;
+      case 'interview':    c.interview++; break;
+      case 'revealed':     c.revealed++; break;
+      case 'candidate_no':
+      case 'not_fit':      c.rejected++; break;
+      case 'refunded':     break;
+      default:             c.waiting++;
+    }
   }
   return c;
 }
@@ -78,6 +95,11 @@ router.get('/:id', guard, asyncHandler(async (req, res) => {
     return {
       candidateId: i.candidateId,
       state: i.state,
+      stateLabel: pipeline.stateLabel(i.state),
+      reason: i.reason || '',
+      reasonLabel: pipeline.reasonLabel(i.reason),
+      interviewAt: i.interviewAt,
+      decidedAt: i.decidedAt,
       note: i.note,
       revealedAt: i.revealedAt,
       refundedAt: i.refundedAt,
@@ -105,13 +127,14 @@ router.get('/:id', guard, asyncHandler(async (req, res) => {
 
 // ── A3. Nomzod holatini o'zgartirish ──
 router.patch('/:id/items/:candidateId', guard, asyncHandler(async (req, res) => {
-  const { state, note } = req.body || {};
+  const { state, reason, note } = req.body || {};
   try {
     const row = await sl.setItemState({
       agencyId: req.user.restaurantId,
       shortlistId: req.params.id,
       candidateId: req.params.candidateId,
       state: String(state || ''),
+      reason: String(reason || ''),
       note: String(note || '')
     });
     res.json({ ok: true, counts: counts(row.items) });

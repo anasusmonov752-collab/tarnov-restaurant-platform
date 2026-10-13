@@ -132,6 +132,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .ct a{display:block;font-size:16px;font-weight:700;color:var(--ok);text-decoration:none;margin-top:5px}
 .ct .em{font-size:13px;color:var(--muted);margin-top:3px;word-break:break-all}
 .rz{font-size:12.5px;color:var(--danger);margin-top:6px;line-height:1.45}
+.iv{font-size:12.5px;color:var(--ok);font-weight:600;margin-top:6px}
+.acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.ab{border:1px solid var(--line);background:var(--card);color:var(--ink);font-family:inherit;
+  font-size:12.5px;font-weight:600;padding:8px 12px;border-radius:9px;cursor:pointer}
+.ab.ok{border-color:rgba(46,158,91,.4);color:var(--ok)}
+.ab.no{border-color:rgba(194,91,76,.35);color:var(--danger)}
+.ab:disabled{opacity:.5}
+.ivbox{margin-top:9px}
+.ivbox input{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 11px;
+  font-family:inherit;font-size:15px;color:var(--ink);background:var(--card)}
 
 .le{display:flex;align-items:center;gap:11px;padding:11px 13px;border-bottom:1px solid var(--line)}
 .le:last-child{border-bottom:none}
@@ -432,6 +442,18 @@ function itemHtml(slId, it){
 
   const rz = it.reason ? `<div class="rz">Sabab: ${esc(it.reason)}</div>` : '';
 
+  const iv = it.interviewAt
+    ? `<div class="iv">Suhbat: ${new Date(it.interviewAt).toLocaleString('uz-UZ',
+        { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })}</div>` : '';
+
+  // Qaror tugmalari faqat kontakt ochilgandan keyin. Oldin ularning
+  // ma'nosi yo'q — raqam hali sizda emas.
+  const act = it.canAct ? `<div class="acts" id="a-${esc(it.candidateId)}">
+      ${it.interviewAt ? '' : `<button class="ab" data-iv="${esc(it.candidateId)}" data-sl="${esc(slId)}">Suhbatga chaqirdim</button>`}
+      <button class="ab ok" data-hire="${esc(it.candidateId)}" data-sl="${esc(slId)}">Ishga oldim</button>
+      <button class="ab no" data-nf="${esc(it.candidateId)}" data-sl="${esc(slId)}">Mos kelmadi</button>
+    </div>` : '';
+
   return `<div class="it">
     <div class="av">${it.hasPhoto
       ? `<img src="/api/ma/photo-sl/${encodeURIComponent(slId)}/${encodeURIComponent(it.candidateId)}?i=${encodeURIComponent(INIT)}" alt="">`
@@ -440,7 +462,7 @@ function itemHtml(slId, it){
       <div class="p">${esc(it.desiredPosition || 'Nomzod')}</div>
       <div class="m">${esc(it.publicCode)}${meta ? ' · ' + esc(meta) : ''}</div>
       <span class="st ${it.state}">${esc(it.stateLabel)}</span>
-      ${rz}${ct}
+      ${rz}${iv}${ct}${act}
     </div>
   </div>`;
 }
@@ -460,7 +482,66 @@ async function loadShortlists(){
       </div>
       ${s.items.map(it => itemHtml(s.id, it)).join('')}
     </div>`).join('');
+    wireActions();
   }catch(e){ $('slList').innerHTML = `<div class="msg">${esc(e.message)}</div>`; }
+}
+
+const NOT_FIT = [
+  ['experience','Tajriba yetarli emas'], ['language','Til darajasi'],
+  ['no_show','Suhbatga kelmadi'], ['salary_ask','Maosh talabi yuqori'], ['other','Boshqa']
+];
+
+async function decide(slId, candId, body){
+  await api(`/api/ma/shortlists/${encodeURIComponent(slId)}/items/${encodeURIComponent(candId)}`,
+    { method:'POST', body: JSON.stringify(body) });
+  try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
+  loadShortlists(); loadMe();
+}
+
+function wireActions(){
+  // Suhbat sanasi
+  document.querySelectorAll('[data-iv]').forEach(b => b.onclick = () => {
+    const id = b.dataset.iv, sl = b.dataset.sl;
+    const box = $('a-' + id);
+    box.innerHTML = `<div class="ivbox">
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:6px">Suhbat qachon?</div>
+      <input type="datetime-local" id="iv-${id}">
+      <div class="acts"><button class="ab ok" id="ivok-${id}">Saqlash</button>
+        <button class="ab" id="ivno-${id}">Bekor</button></div></div>`;
+    $('ivok-' + id).onclick = async () => {
+      const v = $('iv-' + id).value;
+      if (!v) return;
+      $('ivok-' + id).disabled = true;
+      try { await decide(sl, id, { state:'interview', interviewAt: new Date(v).toISOString() }); }
+      catch(e){ alert(e.message); $('ivok-' + id).disabled = false; }
+    };
+    $('ivno-' + id).onclick = loadShortlists;
+  });
+
+  // Ishga oldim — butun tizimning yakuniy ko'rsatkichi
+  document.querySelectorAll('[data-hire]').forEach(b => b.onclick = async () => {
+    if (!confirm('Bu nomzodni ishga oldingizmi?')) return;
+    b.disabled = true;
+    try { await decide(b.dataset.sl, b.dataset.hire, { state:'hired' }); }
+    catch(e){ alert(e.message); b.disabled = false; }
+  });
+
+  // Mos kelmadi — sabab bilan, aks holda keyingi qidiruv yaxshilanmaydi
+  document.querySelectorAll('[data-nf]').forEach(b => b.onclick = () => {
+    const id = b.dataset.nf, sl = b.dataset.sl;
+    const box = $('a-' + id);
+    box.innerHTML = `<div style="width:100%">
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:6px">Nega mos kelmadi?</div>
+      <div class="acts">${NOT_FIT.map(([k, l]) =>
+        `<button class="ab" data-r="${k}">${l}</button>`).join('')}
+        <button class="ab" data-r="">Bekor</button></div></div>`;
+    box.querySelectorAll('[data-r]').forEach(x => x.onclick = async () => {
+      if (!x.dataset.r) return loadShortlists();
+      x.disabled = true;
+      try { await decide(sl, id, { state:'not_fit', reason: x.dataset.r }); }
+      catch(e){ alert(e.message); x.disabled = false; }
+    });
+  });
 }
 
 const REASON = { purchase:'Kredit qo\'shildi', bonus:'Bonus', reveal:'Kontakt ochildi', refund:'Qaytarildi' };

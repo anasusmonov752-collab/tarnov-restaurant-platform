@@ -9,17 +9,19 @@ const mongoose = require('mongoose');
 const ItemSchema = new mongoose.Schema({
   candidateId: { type: String, required: true },
 
-  // selected      - mijoz tanladi, siz hali ko'rmadingiz
-  // contacting    - nomzod bilan bog'lanyapsiz
-  // candidate_ok  - nomzod rozi, kontakt ochishga tayyor
-  // candidate_no  - nomzod yo'q dedi / topilmadi (kredit yechilmaydi)
-  // revealed      - kontakt mijozga ochildi (-1 kredit)
-  // refunded      - ochilgan, lekin javob bermadi (+1 kredit qaytdi)
+  // Bosqichlar va sabablar ro'yxati — src/data/pipeline.js
   state: { type: String, default: 'selected' },
 
-  revealedAt: { type: Date, default: null },
-  refundedAt: { type: Date, default: null },
-  note:       { type: String, default: '' }
+  // Rad sababi (candidate_no yoki not_fit holatida). Erkin matn emas,
+  // ro'yxatdan: faqat shunda "6 tasi maosh sababli rad etdi" deb
+  // sanab bo'ladi va mijozga aniq maslahat beriladi.
+  reason: { type: String, default: '' },
+
+  interviewAt: { type: Date, default: null },   // restorandagi suhbat
+  decidedAt:   { type: Date, default: null },   // ishga olindi / mos kelmadi
+  revealedAt:  { type: Date, default: null },
+  refundedAt:  { type: Date, default: null },
+  note:        { type: String, default: '' }
 }, { _id: false });
 
 const ShortlistSchema = new mongoose.Schema({

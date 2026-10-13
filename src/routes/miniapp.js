@@ -20,6 +20,7 @@ const anonymize = require('../services/anonymize');
 const tg = require('../services/telegram');
 const shortlistSvc = require('../services/shortlist');
 const credits = require('../services/credits');
+const pipeline = require('../data/pipeline');
 const agent = require('../services/agent');
 
 const router = express.Router();
@@ -231,6 +232,9 @@ const CLIENT_STATE = {
   candidate_ok: { key: 'waiting',  label: 'Nomzod rozi — kontakt tayyorlanmoqda' },
   candidate_no: { key: 'no',       label: 'Nomzod rad etdi' },
   revealed:     { key: 'open',     label: 'Kontakt ochilgan' },
+  interview:    { key: 'open',     label: 'Suhbat belgilandi' },
+  hired:        { key: 'hired',    label: 'Ishga olindi' },
+  not_fit:      { key: 'no',       label: 'Mos kelmadi' },
   refunded:     { key: 'refunded', label: 'Javob bermadi — kredit qaytarildi' }
 };
 
@@ -299,7 +303,9 @@ router.get('/shortlists', clientGuard, asyncHandler(async (req, res) => {
         hasPhoto: c ? !!c.hasPhoto : false,
         state: st.key,
         stateLabel: st.label,
-        reason: it.state === 'candidate_no' ? (it.note || '') : '',
+        reason: it.reason ? pipeline.reasonLabel(it.reason) : '',
+        interviewAt: it.interviewAt,
+        canAct: ['revealed', 'interview'].includes(it.state),
         revealedAt: it.revealedAt,
         // Kontakt FAQAT ochilganda — yuqoridagi izohga qarang
         contact: open && c ? { fullName: c.fullName, phone: c.phone, email: c.email } : null
@@ -333,6 +339,46 @@ router.get('/photo-sl/:shortlistId/:id', asyncHandler(async (req, res) => {
   res.set('Content-Type', m[1]);
   res.set('Cache-Control', 'private, max-age=3600');
   res.send(Buffer.from(m[2], 'base64'));
+}));
+
+// ── Mijoz qarori: suhbat / ishga oldim / mos kelmadi ──
+// Faqat kontakt ochilgandan keyin. "Ishga oldim" — butun tizimning
+// yakuniy ko'rsatkichi: busiz necha foiz ishga joylashayotganini
+// bilib bo'lmaydi.
+router.post('/shortlists/:id/items/:candidateId', clientGuard, asyncHandler(async (req, res) => {
+  const b = req.body || {};
+  try {
+    const row = await shortlistSvc.setClientState({
+      agencyId: req.client.agencyId,
+      shortlistId: req.params.id,
+      clientId: req.client.id,
+      candidateId: req.params.candidateId,
+      state: String(b.state || ''),
+      reason: String(b.reason || ''),
+      interviewAt: b.interviewAt || null
+    });
+
+    // Sizga xabar — mijoz qaror qilganini bilishingiz kerak
+    try {
+      const agency = await Restaurant.findOne({ id: req.client.agencyId });
+      const adminChat = agency && agency.telegram && agency.telegram.adminChatId;
+      if (adminChat) {
+        const c = await Candidate.findOne(
+          { restaurantId: req.client.agencyId, id: req.params.candidateId },
+          'fullName publicCode').lean();
+        const who = (c && (c.fullName || c.publicCode)) || 'Nomzod';
+        const txt = b.state === 'hired' ? `✅ ${req.client.name}: ${who} ISHGA OLINDI`
+                  : b.state === 'interview' ? `📅 ${req.client.name}: ${who} suhbatga chaqirildi`
+                  : `❌ ${req.client.name}: ${who} mos kelmadi` +
+                    (b.reason ? ` — ${pipeline.reasonLabel(b.reason)}` : '');
+        await tg.sendMessage(tg.platformToken(), adminChat, txt);
+      }
+    } catch (e) { console.error('[MA] qaror xabari ketmadi:', e.message); }
+
+    res.json({ ok: true, shortlistId: row.id });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 }));
 
 // ── Kredit tarixi ──

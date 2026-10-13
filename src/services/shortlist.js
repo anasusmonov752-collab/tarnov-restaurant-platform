@@ -12,31 +12,79 @@ const Candidate = require('../models/Candidate');
 const Client = require('../models/Client');
 const credits = require('./credits');
 const tg = require('./telegram');
+const pipeline = require('../data/pipeline');
 
-// Nomzod bosqichlari. 'revealed' va 'refunded' — yakuniy, qo'lda qo'yilmaydi.
-const MANUAL_STATES = ['selected', 'contacting', 'candidate_ok', 'candidate_no'];
+const MANUAL_STATES = pipeline.AGENCY_STATES;
 
 function isManualState(s) { return MANUAL_STATES.includes(s); }
 
-// ── Nomzod holatini qo'lda o'zgartirish ──
-async function setItemState({ agencyId, shortlistId, candidateId, state, note = '' }) {
+// ── Nomzod holatini qo'lda o'zgartirish (agentlik tomoni) ──
+async function setItemState({ agencyId, shortlistId, candidateId, state, reason = '', note = '' }) {
   if (!isManualState(state)) throw new Error('Holat noto\'g\'ri');
+  if (reason && !pipeline.CAND_REASON_KEYS.includes(reason)) throw new Error('Sabab noto\'g\'ri');
 
-  // Ochilgan/qaytarilgan nomzodni orqaga qaytarib bo'lmaydi — pul
-  // harakatlangan, tarix buzilmasligi kerak.
+  const set = {
+    'items.$.state': state,
+    'items.$.note': note,
+    updatedAt: new Date()
+  };
+  // Sabab faqat rad etishda saqlanadi — boshqa holatga o'tganda
+  // eski sabab osilib qolmasligi kerak.
+  set['items.$.reason'] = state === 'candidate_no' ? reason : '';
+
+  // Ochilgan va yakuniy holatlarni orqaga qaytarib bo'lmaydi: pul
+  // harakatlangan yoki mijoz qaror qilgan, tarix buzilmasligi kerak.
+  const locked = ['revealed', 'refunded', 'interview', 'hired', 'not_fit'];
   const sl = await Shortlist.findOneAndUpdate(
     {
       agencyId, id: shortlistId,
-      items: { $elemMatch: { candidateId, state: { $nin: ['revealed', 'refunded'] } } }
+      items: { $elemMatch: { candidateId, state: { $nin: locked } } }
     },
-    { $set: { 'items.$.state': state, 'items.$.note': note, updatedAt: new Date() } },
+    { $set: set },
     { new: true }
   );
 
   if (!sl) {
     const exists = await Shortlist.findOne({ agencyId, id: shortlistId, 'items.candidateId': candidateId });
-    throw new Error(exists ? 'Kontakt allaqachon ochilgan — holatni o\'zgartirib bo\'lmaydi' : 'Tanlov yoki nomzod topilmadi');
+    throw new Error(exists
+      ? 'Bu bosqichdan keyin holatni o\'zgartirib bo\'lmaydi'
+      : 'Tanlov yoki nomzod topilmadi');
   }
+  return sl;
+}
+
+// ── Mijoz tomoni: suhbat / ishga olish / rad ──
+// Faqat kontakt ochilgandan keyin mantiqiy — ochilmagan nomzodni
+// suhbatga chaqirib bo'lmaydi, uning raqami mijozda yo'q.
+async function setClientState({ agencyId, shortlistId, clientId, candidateId, state, reason = '', interviewAt = null }) {
+  if (!pipeline.CLIENT_STATES.includes(state)) throw new Error('Holat noto\'g\'ri');
+  if (reason && !pipeline.CLIENT_REASON_KEYS.includes(reason)) throw new Error('Sabab noto\'g\'ri');
+
+  const now = new Date();
+  const set = { 'items.$.state': state, updatedAt: now };
+  set['items.$.reason'] = state === 'not_fit' ? reason : '';
+
+  if (state === 'interview') {
+    const d = interviewAt ? new Date(interviewAt) : null;
+    if (!d || isNaN(d.getTime())) throw new Error('Suhbat sanasi noto\'g\'ri');
+    set['items.$.interviewAt'] = d;
+  } else {
+    set['items.$.decidedAt'] = now;
+  }
+
+  // Oldingi holat: kontakt ochilgan yoki suhbat belgilangan bo'lishi
+  // kerak. 'hired'/'not_fit' esa yakuniy — qayta o'zgartirilmaydi.
+  const allowedFrom = state === 'interview' ? ['revealed'] : ['revealed', 'interview'];
+  const sl = await Shortlist.findOneAndUpdate(
+    {
+      agencyId, id: shortlistId, clientId,
+      items: { $elemMatch: { candidateId, state: { $in: allowedFrom } } }
+    },
+    { $set: set },
+    { new: true }
+  );
+
+  if (!sl) throw new Error('Bu nomzod uchun hali kontakt ochilmagan yoki qaror qabul qilingan');
   return sl;
 }
 
@@ -154,6 +202,7 @@ function cbKeyboard(shortlistId, candidateId) {
 }
 
 module.exports = {
-  setItemState, reveal, notifyClient, MANUAL_STATES, isManualState,
+  setItemState, setClientState, reveal, notifyClient,
+  MANUAL_STATES, isManualState,
   cbData, parseCb, cbKeyboard
 };

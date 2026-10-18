@@ -23,6 +23,12 @@ const guard = auth(['restaurant']);
 // ── Barcha suhbatlar ──
 router.get('/', guard, asyncHandler(async (req, res) => {
   const agencyId = req.user.restaurantId;
+
+  // Eski ochilgan kontaktlarga ham suhbat bo'lsin. Mijoz va nomzod
+  // inboxlarida bu avtomatik, lekin siz ularni ochmaysiz — shuning
+  // uchun bu yerda ham chaqiramiz, aks holda ro'yxat bo'sh ko'rinadi.
+  await chat.backfill({ agencyId });
+
   const q = { agencyId };
   if (req.query.kind === 'cc' || req.query.kind === 'ca') q.kind = req.query.kind;
   // Faqat javobsiz qolganlar — ish ro'yxati sifatida

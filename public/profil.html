@@ -130,6 +130,54 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   font-family:inherit;color:var(--muted);font-size:11.5px;font-weight:600;line-height:1.3}
 .tb .ic{display:block;font-size:19px;margin-bottom:2px}
 .tb.on{color:var(--blue)}
+
+/* ══ SUHBATLAR ══════════════════════════════════════════════
+   Inbox: tepada qadalgan agentlik (galochka bilan), ostida
+   kontakt ochilgan nomzodlar. */
+.ch-empty{padding:28px 16px;text-align:center;color:var(--muted);font-size:14px}
+.ch-row{display:flex;gap:12px;align-items:center;padding:12px 14px;background:var(--card);
+  border-bottom:1px solid var(--line);cursor:pointer}
+.ch-row:active{background:#F3F7FD}
+.ch-av{width:46px;height:46px;border-radius:50%;flex:none;display:flex;align-items:center;
+  justify-content:center;font-weight:700;font-size:14px;background:#E8EFFA;color:var(--blue)}
+.ch-av.ag{background:var(--blue);color:#fff;font-size:17px}
+.ch-mid{flex:1;min-width:0}
+.ch-top{display:flex;align-items:center;gap:5px}
+.ch-name{font-weight:650;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ch-vf{flex:none;display:block}
+.ch-pin{flex:none;color:var(--muted);font-size:12px}
+.ch-last{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;margin-top:2px}
+.ch-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:none}
+.ch-time{font-size:11.5px;color:var(--muted)}
+.ch-badge{min-width:19px;height:19px;border-radius:10px;background:var(--blue);color:#fff;
+  font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px}
+
+/* Ochilgan suhbat */
+.cv{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column}
+.cv.hide{display:none}
+.cv-h{flex:none;display:flex;align-items:center;gap:10px;padding:11px 12px;
+  background:var(--card);border-bottom:1px solid var(--line)}
+.cv-back{flex:none;background:transparent;border:0;font-size:19px;color:var(--blue);
+  padding:4px 8px;cursor:pointer}
+.cv-b{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px}
+.cv-f{flex:none;display:flex;gap:8px;padding:10px 12px;background:var(--card);
+  border-top:1px solid var(--line)}
+.cv-f input{flex:1;min-width:0;border:1px solid var(--line);border-radius:20px;
+  padding:10px 14px;font-size:14.5px;outline:none;background:var(--bg);color:var(--ink)}
+.cv-f input:focus{border-color:var(--blue)}
+.cv-send{flex:none;width:40px;height:40px;border-radius:50%;border:0;background:var(--blue);
+  color:#fff;font-size:16px;cursor:pointer}
+.cv-send:disabled{opacity:.45}
+.cmsg{max-width:78%;padding:9px 13px;border-radius:16px;font-size:14.5px;line-height:1.45;
+  word-wrap:break-word;white-space:pre-wrap}
+.cmsg.me{align-self:flex-end;background:var(--blue);color:#fff;border-bottom-right-radius:5px}
+.cmsg.them{align-self:flex-start;background:var(--card);border:1px solid var(--line);
+  border-bottom-left-radius:5px}
+/* Tizim xabari ataylab boshqacha: uni odamning gapi bilan adashtirmaslik kerak */
+.cmsg.sys{align-self:center;background:#E8EFFA;color:#3A5070;font-size:12.5px;
+  text-align:center;border-radius:12px;max-width:92%}
+.cmsg-t{font-size:10.5px;opacity:.65;margin-top:3px;text-align:right}
 </style>
 </head>
 <body>
@@ -146,11 +194,33 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   <div id="appList"><div class="msg">Yuklanmoqda…</div></div>
 </div></div>
 
+<div id="vM" class="hide">
+  <div id="chatList"><div class="ch-empty">Yuklanmoqda…</div></div>
+</div>
+
 <nav class="tabs">
   <button class="tb on" id="tP"><span class="ic">&#128100;</span>Profilim</button>
   <button class="tb"    id="tJ"><span class="ic">&#128188;</span>Ish o'rinlari</button>
   <button class="tb"    id="tA"><span class="ic">&#128203;</span>Arizalarim</button>
+  <button class="tb"    id="tM"><span class="ic">&#128172;</span>Xabarlar</button>
 </nav>
+
+<!-- Ochilgan suhbat: butun ekran, tablar ustidan -->
+<div class="cv hide" id="cv">
+  <div class="cv-h">
+    <button class="cv-back" id="cvBack">&#10094;</button>
+    <div class="ch-av" id="cvAv">—</div>
+    <div style="flex:1;min-width:0">
+      <div class="ch-top"><span class="ch-name" id="cvName">—</span><span id="cvVf"></span></div>
+      <div class="ch-last" id="cvSub"></div>
+    </div>
+  </div>
+  <div class="cv-b" id="cvBody"></div>
+  <div class="cv-f">
+    <input id="cvIn" placeholder="Xabar yozing…" autocomplete="off" maxlength="2000">
+    <button class="cv-send" id="cvSend">&#10148;</button>
+  </div>
+</div>
 
 <div class="sheet" id="sheet">
   <div class="sh">
@@ -457,8 +527,123 @@ async function loadApps(){
 
 const dmy = d => d ? new Date(d).toLocaleDateString('uz-UZ',{day:'2-digit',month:'short'}) : '';
 
+
+// ══════════════════════════════════════════════════════════
+//  SUHBATLAR
+// ══════════════════════════════════════════════════════════
+// Tepada qadalgan "TalentHub" (agentlik) — u BotMessage'dagi mavjud
+// Telegram yozishmasi, shuning uchun id'si maxsus: 'agency'.
+// Ostida kontaktingizni ochgan mijozlar — ular NOMI bilan ko'rinadi,
+// chunki kontakt ochilgan, ya'ni tanishish allaqachon bo'lgan.
+
+const VF = '<svg class="ch-vf" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">'
+  + '<circle cx="12" cy="12" r="11" fill="#2563EB"/>'
+  + '<path d="M10.8 16.2l-3.4-3.4 1.3-1.3 2.1 2.1 5-5 1.3 1.3z" fill="#fff"/></svg>';
+
+let CHATS = [], CUR = null;
+
+const initialsOf = s => String(s || '—').replace(/[^\p{L}\p{N} ]/gu, '').trim().slice(0, 2).toUpperCase();
+
+function tmOf(s){
+  if (!s) return '';
+  const d = new Date(s), n = new Date();
+  return d.toDateString() === n.toDateString()
+    ? d.toLocaleTimeString('uz-UZ', { hour:'2-digit', minute:'2-digit' })
+    : d.toLocaleDateString('uz-UZ', { day:'2-digit', month:'short' });
+}
+
+async function loadChats(){
+  try {
+    CHATS = await api('/api/cand/chats');
+    drawChats();
+  } catch(e){
+    $('chatList').innerHTML = '<div class="ch-empty">' + esc(e.message) + '</div>';
+  }
+}
+
+function drawChats(){
+  const box = $('chatList');
+  if (!CHATS.length){ box.innerHTML = '<div class="ch-empty">Hali suhbat yo\'q</div>'; return; }
+  box.innerHTML = CHATS.map((c, i) => {
+    const ag = !!c.pinned;
+    const nm = c.title || '—';
+    return '<div class="ch-row" data-i="' + i + '">'
+      + '<div class="ch-av' + (ag ? ' ag' : '') + '">' + (ag ? '&#9733;' : esc(initialsOf(nm))) + '</div>'
+      + '<div class="ch-mid"><div class="ch-top"><span class="ch-name">' + esc(nm) + '</span>'
+      + (ag ? VF + '<span class="ch-pin">&#128204;</span>' : '') + '</div>'
+      + '<div class="ch-last">' + esc(c.subtitle || c.lastMsgText || '') + '</div></div>'
+      + '<div class="ch-right"><span class="ch-time">' + tmOf(c.lastMsgAt) + '</span>'
+      + (c.unread ? '<span class="ch-badge">' + c.unread + '</span>' : '') + '</div></div>';
+  }).join('');
+  box.querySelectorAll('.ch-row').forEach(el => {
+    el.onclick = () => openChat(CHATS[+el.dataset.i]);
+  });
+}
+
+async function openChat(c){
+  CUR = c;
+  const ag = !!c.pinned;
+  $('cvName').textContent = c.title || '—';
+  $('cvVf').innerHTML = ag ? VF : '';
+  $('cvSub').textContent = ag ? 'Agentlik' : (c.subtitle || '');
+  $('cvAv').textContent = ag ? '★' : initialsOf(c.title);
+  $('cvAv').className = 'ch-av' + (ag ? ' ag' : '');
+  $('cvBody').innerHTML = '<div class="ch-empty">Yuklanmoqda…</div>';
+  $('cv').classList.remove('hide');
+  await reloadMsgs();
+  c.unread = 0;
+  drawChats();
+}
+
+async function reloadMsgs(){
+  if (!CUR) return;
+  try {
+    const d = await api('/api/cand/chats/' + encodeURIComponent(CUR.id) + '/messages');
+    drawMsgs(d.messages || []);
+  } catch(e){
+    $('cvBody').innerHTML = '<div class="ch-empty">' + esc(e.message) + '</div>';
+  }
+}
+
+function drawMsgs(ms){
+  const b = $('cvBody');
+  if (!ms.length){ b.innerHTML = '<div class="ch-empty">Hali xabar yo\'q</div>'; return; }
+  b.innerHTML = ms.map(m => {
+    if (m.kind === 'system') return '<div class="cmsg sys">' + esc(m.text) + '</div>';
+    const me = m.from === 'candidate';
+    return '<div class="cmsg ' + (me ? 'me' : 'them') + '">' + esc(m.text)
+      + '<div class="cmsg-t">' + tmOf(m.createdAt) + '</div></div>';
+  }).join('');
+  b.scrollTop = b.scrollHeight;
+}
+
+async function sendMsg(){
+  const inp = $('cvIn'), t = inp.value.trim();
+  if (!t || !CUR) return;
+  $('cvSend').disabled = true;
+  try {
+    await api('/api/cand/chats/' + encodeURIComponent(CUR.id) + '/messages',
+      { method:'POST', body: JSON.stringify({ text: t }) });
+    inp.value = '';
+    await reloadMsgs();
+    loadChats();
+  } catch(e){
+    $('cvBody').insertAdjacentHTML('beforeend',
+      '<div class="cmsg sys">Yuborilmadi: ' + esc(e.message) + '</div>');
+    $('cvBody').scrollTop = $('cvBody').scrollHeight;
+  }
+  $('cvSend').disabled = false;
+}
+
+$('cvBack').onclick = () => { $('cv').classList.add('hide'); CUR = null; };
+$('cvSend').onclick = sendMsg;
+$('cvIn').onkeydown = e => { if (e.key === 'Enter') sendMsg(); };
+
+// Telegram xabaridagi tugma profil.html#chat ga olib keladi —
+// shu holda darhol Xabarlar tabini ochamiz.
+if (location.hash === '#chat') setTimeout(() => pickTab('tM'), 0);
 // ── Tablar ──
-const TABS = [['tP','app'], ['tJ','vJ'], ['tA','vA']];
+const TABS = [['tP','app'], ['tJ','vJ'], ['tA','vA'], ['tM','vM']];
 function pickTab(id){
   TABS.forEach(([t, v]) => {
     $(t).classList.toggle('on', t === id);
@@ -468,6 +653,7 @@ function pickTab(id){
   window.scrollTo(0, 0);
   if (id === 'tJ') loadJobs();
   if (id === 'tA') loadApps();
+  if (id === 'tM') loadChats();
 }
 TABS.forEach(([t]) => { $(t).onclick = () => pickTab(t); });
 

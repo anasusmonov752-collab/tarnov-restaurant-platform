@@ -52,7 +52,8 @@ const PERKS = {
   oqitish:   'O\'qitish'
 };
 
-const TIME = /^([01]?\d|2[0-3]):[0-5]\d$/;
+// 24:00 ham to'g'ri — restoran smenasi ko'pincha yarim tunda tugaydi
+const TIME = /^(([01]?\d|2[0-3]):[0-5]\d|24:00)$/;
 const pad = t => t.length === 4 ? '0' + t : t;
 
 /** "6/1, 10:00–22:00" */

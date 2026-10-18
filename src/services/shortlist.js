@@ -141,7 +141,7 @@ async function reveal({ agencyId, shortlistId, candidateId }) {
   const claimed = await Shortlist.findOneAndUpdate(
     {
       agencyId, id: shortlistId,
-      items: { $elemMatch: { candidateId, state: { $ne: 'revealed' } } }
+      items: { $elemMatch: { candidateId, state: { $in: pipeline.REVEALABLE_STATES } } }
     },
     { $set: { 'items.$.state': 'revealed', 'items.$.revealedAt': now, updatedAt: now } },
     { new: true }
@@ -151,7 +151,18 @@ async function reveal({ agencyId, shortlistId, candidateId }) {
   if (!claimed) {
     const sl = await Shortlist.findOne({ agencyId, id: shortlistId, 'items.candidateId': candidateId });
     if (!sl) throw new Error('Tanlov yoki nomzod topilmadi');
-    return { already: true, shortlist: sl };      // takroriy bosish — pul yechilmaydi
+
+    const it = (sl.items || []).find(x => x.candidateId === candidateId);
+    const st = (it && it.state) || '';
+
+    // Nomzod bosh tortgan — ochadigan narsa yo'q. Avval bu holatdan ham
+    // ochilib, kredit bekorga yechilardi.
+    if (st === 'candidate_no') {
+      throw new Error('Nomzod bu ishdan bosh tortgan — kontakt ochilmaydi');
+    }
+    // Ochilgan yoki undan keyingi holat (interview/hired/not_fit/refunded):
+    // takroriy bosish. Pul yechilmaydi va mijozning qarori saqlanadi.
+    return { already: true, shortlist: sl, state: st };
   }
 
   let balance;

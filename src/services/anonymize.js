@@ -62,6 +62,33 @@ function forClient(c) {
   // Ism o'rniga kod. Kod hali yo'q bo'lsa — ro'yxatda bo'sh ko'rinmasin.
   out.publicCode = src.publicCode || '—';
 
+  // Erkin matnli maydonlarda ism qolib ketadi. Buning uch manbasi bor va
+  // faqat bittasini AI prompt'i hal qiladi:
+  //   1. AI yozgan summary/fitReason — prompt ismni taqiqlamaydi
+  //   2. experienceSummary — nomzodning O'ZI yozadi (routes/candidate.js)
+  //   3. bazadagi ~799 eski yozuv — prompt o'zgarsa ham tozalanmaydi
+  // Shuning uchun redaksiya CHIQISHDA, kod bilan qilinadi: uchalasini ham
+  // qamrab oladi. Bu blok out.publicCode dan KEYIN turishi shart.
+  const FREE_TEXT = ['summary', 'experienceSummary', 'fitReason', 'education'];
+  const nameParts = String(src.fullName || '')
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter(w => w.length >= 3);        // qisqa bo'laklar noto'g'ri mos keladi
+  if (nameParts.length) {
+    const rx = new RegExp(nameParts.join('|'), 'giu');
+    for (const f of FREE_TEXT) {
+      if (typeof out[f] === 'string') out[f] = out[f].replace(rx, out.publicCode);
+    }
+    if (Array.isArray(out.workHistory)) {
+      out.workHistory = out.workHistory.map(w => {
+        if (!w || typeof w !== 'object') return w;
+        const n = Object.assign({}, w);
+        if (typeof n.position === 'string')    n.position    = n.position.replace(rx, out.publicCode);
+        if (typeof n.description === 'string') n.description = n.description.replace(rx, out.publicCode);
+        return n;
+      });
+    }
+  }
+
   return out;
 }
 

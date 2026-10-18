@@ -35,6 +35,13 @@ const AGENCY_STATES = ['selected', 'contacting', 'candidate_ok', 'candidate_no']
 // ochilmagan nomzodni suhbatga chaqirib bo'lmaydi.
 const CLIENT_STATES = ['interview', 'hired', 'not_fit'];
 
+// Kontakt ochish MUMKIN bo'lgan holatlar — oq ro'yxat, qora emas.
+// Avval `state !== 'revealed'` deb yozilgan edi va bu ikki xatoga olib
+// keldi: nomzod rad etgandan (candidate_no) keyin ham kontakt ochilardi,
+// va mijoz qaror qilgandan (interview/hired/not_fit) keyin ikkinchi
+// kredit yechilib, qaror 'revealed' ga qaytib ketardi.
+const REVEALABLE_STATES = ['selected', 'contacting', 'candidate_ok'];
+
 // ── Rad sabablari ────────────────────────────────────────────
 // Eng qimmatli ma'lumot shu. 50 ta qo'ng'iroqdan keyin mijozga aniq
 // gapirish mumkin bo'ladi: "6 tasi maosh sababli rad etdi".
@@ -107,7 +114,7 @@ function isForward(fromStatus, toStatus) {
 
 module.exports = {
   STATES, STATE_KEYS, stateLabel, isFinal,
-  AGENCY_STATES, CLIENT_STATES,
+  AGENCY_STATES, CLIENT_STATES, REVEALABLE_STATES,
   CAND_REASONS, CLIENT_REASONS,
   CAND_REASON_KEYS, CLIENT_REASON_KEYS, reasonLabel,
   KANBAN_ORDER, STATE_TO_KANBAN, isForward

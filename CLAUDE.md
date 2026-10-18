@@ -2,6 +2,21 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Qanday ishlash kerak (Anas bilan)
+
+1. **Xato variantni to'g'irla.** Agar Anas texnik yoki biznes jihatdan
+   noto'g'ri yo'l taklif qilsa — "maqul" demang. Nega xato ekanini
+   1-2 gapda ayting va maqbul variantni bering. Anas qayta
+   tasdiqlasa — uning qarori, bajaring.
+2. **"Tayyor" demasdan oldin o'lchang.** Jonli deploy'da tekshirilmagan
+   narsa tayyor emas. Push ≠ ishlayapti.
+3. **Bir nechta narsa birdan buzilsa — bitta sabab izla.** Har birini
+   alohida yamoqlamang.
+4. **Ma'lumotni kodni ayblashdan oldin tekshir.** "Filtr xato" deyishdan
+   oldin bazaga qarang.
+5. **Chala ish yo'q.** Vazifaning bir qismi bloklangan bo'lsa —
+   qolganini oxirigacha bajaring va nima qolganini aniq ayting.
+
 ## Project Overview
 
 **RestoOne — Restaurant Staff Training Platform** — multi-tenant SaaS for restaurant staff training. Restaurants manage menus, waiters take tests based on menu knowledge, and results are tracked with certificates for 90%+ scores.

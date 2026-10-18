@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TalentHub — Vakansiyalar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF3FB; --ink:#16233A; --green:#0F2747; --green2:#0A1B33;
+  --gold:#2563EB; --gold-d:#1D4ED8; --card:#FFFFFF; --line:#E1E8F2;
+  --muted:#64748B; --danger:#C25B4C; --ok:#2E9E5B; --warn:#B4802E;
+  --shadow:0 1px 3px rgba(16,32,24,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:rgba(15,39,71,.22);border-radius:6px}
+button,input,select,textarea{font-family:inherit}
+
+.topbar{flex:none;background:var(--card);border-bottom:1px solid var(--line);color:var(--ink);padding:12px 20px;display:flex;align-items:center;gap:14px;z-index:40}
+.back{display:flex;align-items:center;gap:7px;background:transparent;border:1px solid var(--line);color:var(--muted);padding:8px 13px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;text-decoration:none}
+.back:hover{background:#F3F7FD;color:var(--ink)}
+.tb-mark{width:36px;height:36px;border-radius:10px;background:var(--gold);display:flex;align-items:center;justify-content:center}
+.tb-mark span{font-style:italic;font-weight:700;font-size:20px;color:#fff}
+.tb-title{font-size:16.5px;font-weight:700;line-height:1}
+.tb-sub{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:3px}
+.tb-spacer{flex:1}
+.view-sw{display:flex;align-items:center;gap:7px;background:transparent;border:1px solid var(--line);color:var(--muted);padding:7px 13px;border-radius:9px;cursor:pointer;font-size:12.5px;font-weight:600;text-decoration:none}
+.view-sw:hover{background:#F3F7FD;color:var(--ink)}
+.view-sw.on{background:var(--gold);border-color:var(--gold);color:#fff}
+
+.wrap{flex:1;overflow-y:auto;padding:18px 22px 40px}
+.inner{max-width:1180px;margin:0 auto}
+.head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.head h2{font-size:19px;font-weight:800}
+.head .sp{flex:1}
+
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 14px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:700}
+.btn:hover{background:#F3F7FD}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-p{background:var(--gold);border-color:var(--gold);color:#fff}
+.btn-p:hover{background:var(--gold-d)}
+.btn-no{background:#fff;border-color:var(--danger);color:var(--danger)}
+.btn-sm{padding:6px 10px;font-size:12px}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+.empty{padding:46px 20px;text-align:center;color:var(--muted);font-size:14px}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:700;padding:11px 14px;border-bottom:1px solid var(--line)}
+td{padding:12px 14px;border-bottom:1px solid var(--line);font-size:13.5px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+
+.pill{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11.5px;font-weight:700}
+.p-ok{background:rgba(46,158,91,.12);color:var(--ok)}
+.p-wait{background:rgba(180,128,46,.14);color:var(--warn)}
+.p-off{background:rgba(100,116,139,.14);color:var(--muted)}
+.p-no{background:rgba(194,91,76,.12);color:var(--danger)}
+.p-new{background:rgba(37,99,235,.12);color:var(--gold)}
+
+.ov{position:fixed;inset:0;background:rgba(10,24,44,.5);display:none;align-items:center;justify-content:center;padding:24px;z-index:200}
+.ov.on{display:flex}
+.md{background:var(--card);border-radius:14px;width:100%;max-width:640px;max-height:88vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.3)}
+.md-top{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--card);border-radius:14px 14px 0 0}
+.md-top b{font-size:16px;flex:1}
+.md-x{border:none;background:transparent;font-size:19px;cursor:pointer;color:var(--muted)}
+.md-b{padding:18px}
+label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:0 0 5px;text-transform:uppercase;letter-spacing:.5px}
+input[type=text],input[type=number],select,textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:14px;color:var(--ink);background:#FBFCFE}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold)}
+.fld{margin-bottom:14px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sec{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:18px 0 10px}
+.ci{border:1px solid var(--line);border-radius:11px;padding:13px;margin-bottom:11px}
+.ci b{font-size:14.5px}
+.ci .m{font-size:12.5px;color:var(--muted);line-height:1.6;margin-top:3px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="back" href="/restaurant-admin.html">&#8592; Panel</a>
+  <div class="tb-mark"><span>T</span></div>
+  <div>
+    <div class="tb-title">Vakansiyalar</div>
+    <div class="tb-sub">TalentHub</div>
+  </div>
+  <div class="tb-spacer"></div>
+  <a class="view-sw" href="/mijozlar.html">Mijozlar</a>
+  <a class="view-sw" href="/recruitment.html">Nomzodlar bazasi</a>
+</div>
+
+<div class="wrap"><div class="inner">
+  <div class="head">
+    <h2>Barcha vakansiyalar</h2>
+    <div class="sp"></div>
+    <select id="fSt" style="width:auto;margin-right:8px">
+      <option value="">Hammasi</option>
+      <option value="open" selected>Ochiq</option>
+      <option value="paused">To'xtatilgan</option>
+      <option value="closed">Yopilgan</option>
+    </select>
+    <button class="btn btn-p" id="bNew">+ Vakansiya</button>
+  </div>
+  <div id="warn"></div>
+  <div class="card" id="list"><div class="empty">Yuklanmoqda...</div></div>
+</div></div>
+
+<div class="ov" id="ov"><div class="md">
+  <div class="md-top"><b id="mdT">—</b><button class="md-x" id="mdX">&#10005;</button></div>
+  <div class="md-b" id="mdB"></div>
+</div></div>
+
+<div id="toast-container"></div>
+<script src="/js/utils.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+let ROWS = [], CLIENTS = [];
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dt = s => s ? new Date(s).toLocaleDateString('uz-UZ',{day:'2-digit',month:'short'}) : '—';
+
+function openMd(t, h){ $('mdT').textContent = t; $('mdB').innerHTML = h; $('ov').classList.add('on'); }
+function closeMd(){ $('ov').classList.remove('on'); $('mdB').innerHTML = ''; }
+$('mdX').onclick = closeMd;
+$('ov').onclick = e => { if (e.target === $('ov')) closeMd(); };
+
+const ST = { open:['p-ok','Ochiq'], paused:['p-wait','To\'xtatilgan'], closed:['p-off','Yopilgan'] };
+
+async function load(){
+  const q = $('fSt').value ? '?status=' + $('fSt').value : '';
+  try { ROWS = await api('/api/vacancies' + q); }
+  catch(e){ toast(e.message, 'error'); return; }
+
+  // Tasdiqlanmaganlar — nomzodlarga ko'rsatilmayapti, bu yo'qotish
+  const stale = ROWS.filter(v => v.stale && v.status === 'open');
+  $('warn').innerHTML = stale.length
+    ? `<div class="card" style="border-left:3px solid var(--warn);margin-bottom:14px"><div style="padding:14px">
+        <b style="font-size:15px">${stale.length} ta vakansiya tasdiqlanmagan</b>
+        <div style="font-size:13.5px;color:var(--muted);margin-top:5px;line-height:1.6">
+          14 kundan ortiq tasdiqlanmagan vakansiya nomzodlarga <b>ko'rsatilmaydi</b>.
+          Mijozdan so'rang: o'rin hali ochiqmi?</div></div></div>`
+    : '';
+
+  if (!ROWS.length) {
+    $('list').innerHTML = '<div class="empty">Vakansiya yo\'q. Mijoz o\'zi ochadi yoki siz kiritasiz.</div>';
+    return;
+  }
+
+  $('list').innerHTML = `<table>
+    <thead><tr><th>Vakansiya</th><th>Mijoz</th><th>Taklif</th><th>Arizalar</th><th>Tanlov</th><th>Holat</th><th></th></tr></thead>
+    <tbody>${ROWS.map(v => {
+      const [cls, lbl] = ST[v.status] || ST.open;
+      return `<tr>
+        <td><b>${esc(v.title)}</b>
+          ${v.headcount > 1 ? `<div style="font-size:12px;color:var(--muted)">${v.headcount} ta odam</div>` : ''}</td>
+        <td>${esc(v.clientName)}
+          ${v.clientLocation ? `<div style="font-size:12px;color:var(--muted)">${esc(v.clientLocation)}</div>` : ''}</td>
+        <td>${esc(v.salaryText) || '<span style="color:var(--warn)">ko\'rsatilmagan</span>'}
+          ${v.shift ? `<div style="font-size:12px;color:var(--muted)">${esc(v.shift)}</div>` : ''}</td>
+        <td>${v.apps ? `${v.apps}${v.appsNew ? ` <span class="pill p-new">${v.appsNew} yangi</span>` : ''}` : '—'}</td>
+        <td>${v.shortlists || '—'}</td>
+        <td><span class="pill ${cls}">${lbl}</span>
+          ${v.stale && v.status === 'open' ? '<div><span class="pill p-no" style="margin-top:4px">tasdiqlang</span></div>' : ''}</td>
+        <td style="text-align:right;white-space:nowrap">
+          <button class="btn btn-sm" data-app="${v.id}">Arizalar</button>
+          <button class="btn btn-sm" data-cf="${v.id}">Tasdiqlash</button>
+          <button class="btn btn-sm" data-ed="${v.id}">Tahrirlash</button>
+        </td></tr>`;
+    }).join('')}</tbody></table>`;
+
+  $('list').querySelectorAll('[data-app]').forEach(b => b.onclick = () => showApps(b.dataset.app));
+  $('list').querySelectorAll('[data-ed]').forEach(b => b.onclick = () => form(ROWS.find(x => x.id === b.dataset.ed)));
+  $('list').querySelectorAll('[data-cf]').forEach(b => b.onclick = async () => {
+    b.disabled = true;
+    try { await api(`/api/vacancies/${b.dataset.cf}/confirm`, { method:'POST' }); toast('Tasdiqlandi', 'success'); load(); }
+    catch(e){ toast(e.message, 'error'); b.disabled = false; }
+  });
+}
+$('fSt').onchange = load;
+
+// ── Forma ──
+function form(v){
+  const d = v || {};
+  const opts = CLIENTS.map(c => `<option value="${c.id}" ${d.clientId === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('');
+  openMd(v ? 'Vakansiyani tahrirlash' : 'Yangi vakansiya', `
+    ${v ? '' : `<div class="fld"><label>Mijoz *</label><select id="fCl">${opts}</select></div>`}
+    <div class="fld"><label>Kim kerak *</label><input type="text" id="fTi" value="${esc(d.title)}" placeholder="Ofitsiant, kechki smena"></div>
+
+    <div class="sec">Talab</div>
+    <div class="row2">
+      <div class="fld"><label>Tajriba (yil)</label><input type="number" id="fEx" value="${d.minExp ?? ''}"></div>
+      <div class="fld"><label>Nechta odam</label><input type="number" id="fHc" value="${d.headcount || 1}" min="1"></div>
+    </div>
+    <div class="row2">
+      <div class="fld"><label>Smena</label><select id="fSh">
+        <option value="">Farqi yo'q</option>
+        <option value="kunduzgi" ${d.shift==='kunduzgi'?'selected':''}>Kunduzgi</option>
+        <option value="kechki"   ${d.shift==='kechki'?'selected':''}>Kechki</option>
+        <option value="ikkalasi" ${d.shift==='ikkalasi'?'selected':''}>Ikkalasi</option>
+      </select></div>
+      <div class="fld"><label>Tuman</label><input type="text" id="fLo" value="${esc(d.location)}" placeholder="Chilonzor"></div>
+    </div>
+
+    <div class="sec">Taklif — nomzod shuni o'qiydi</div>
+    <div class="row2">
+      <div class="fld"><label>Maosh (dan)</label><input type="number" id="fSf" value="${d.salaryFrom ?? ''}" placeholder="4000000"></div>
+      <div class="fld"><label>Maosh (gacha)</label><input type="number" id="fSt2" value="${d.salaryTo ?? ''}" placeholder="5000000"></div>
+    </div>
+    <div class="fld"><label>Grafik</label><input type="text" id="fSc" value="${esc(d.schedule)}" placeholder="6/1, 16:00-24:00"></div>
+    <div class="fld"><label>Qo'shimcha shartlar</label><textarea id="fCo" rows="2" placeholder="Ovqat, forma, yo'l kira">${esc(d.conditions)}</textarea></div>
+    ${v ? `<div class="fld"><label>Holat</label><select id="fStt">
+      <option value="open"   ${d.status==='open'?'selected':''}>Ochiq</option>
+      <option value="paused" ${d.status==='paused'?'selected':''}>To'xtatilgan</option>
+      <option value="closed" ${d.status==='closed'?'selected':''}>Yopilgan</option>
+    </select></div>` : ''}
+    <button class="btn btn-p" id="fSave" style="width:100%">Saqlash</button>`);
+
+  $('fSave').onclick = async () => {
+    const title = $('fTi').value.trim();
+    if (!title) return toast('Vakansiya nomini yozing', 'error');
+    const body = {
+      title, minExp: $('fEx').value, headcount: $('fHc').value,
+      shift: $('fSh').value, location: $('fLo').value.trim(),
+      salaryFrom: $('fSf').value, salaryTo: $('fSt2').value,
+      schedule: $('fSc').value.trim(), conditions: $('fCo').value.trim()
+    };
+    if (!v) body.clientId = $('fCl').value;
+    if (v && $('fStt')) body.status = $('fStt').value;
+
+    $('fSave').disabled = true;
+    try {
+      if (v) await api('/api/vacancies/' + v.id, { method:'PATCH', body: JSON.stringify(body) });
+      else   await api('/api/vacancies', { method:'POST', body: JSON.stringify(body) });
+      toast('Saqlandi', 'success'); closeMd(); load();
+    } catch(e){ toast(e.message, 'error'); $('fSave').disabled = false; }
+  };
+}
+$('bNew').onclick = () => {
+  if (!CLIENTS.length) return toast('Avval mijoz yarating', 'error');
+  form(null);
+};
+
+// ── Arizalar (to'liq kontakt bilan) ──
+const AST = { new:['p-new','Yangi'], seen:['p-wait','Mijoz ko\'rdi'],
+              shortlisted:['p-ok','Tanlandi'], rejected:['p-no','Rad etildi'] };
+
+async function showApps(id){
+  openMd('Arizalar', '<div class="empty">Yuklanmoqda...</div>');
+  let d;
+  try { d = await api(`/api/vacancies/${id}/applications`); }
+  catch(e){ $('mdB').innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
+
+  $('mdT').textContent = d.vacancy.title;
+  if (!d.items.length) {
+    $('mdB').innerHTML = '<div class="empty">Hali ariza yo\'q.</div>';
+    return;
+  }
+  $('mdB').innerHTML = d.items.map(it => {
+    const c = it.candidate;
+    const [cls, lbl] = AST[it.state] || AST.new;
+    if (!c) return `<div class="ci"><div class="m">Nomzod o'chirilgan</div></div>`;
+    const meta = [c.desiredPosition, c.experienceYears ? c.experienceYears + ' yil' : '',
+                  c.age ? c.age + ' yosh' : '', c.location].filter(Boolean).join(' · ');
+    return `<div class="ci">
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <b style="flex:1">${esc(c.fullName) || 'Nomsiz'}
+          <span style="font-weight:600;color:var(--muted);font-size:12.5px">${esc(c.publicCode)}</span></b>
+        <span class="pill ${cls}">${lbl}</span>
+      </div>
+      <div class="m">${esc(meta)}</div>
+      <div class="m"><b style="color:var(--ink)">${esc(c.phone) || 'telefon yo\'q'}</b>${c.email ? ' · ' + esc(c.email) : ''}</div>
+      ${it.message ? `<div class="m" style="color:var(--ink);margin-top:6px">"${esc(it.message)}"</div>` : ''}
+      <div class="m" style="margin-top:6px">${dt(it.createdAt)}</div>
+    </div>`;
+  }).join('');
+}
+
+(async () => {
+  await requireRole('restaurant');
+  try { CLIENTS = await api('/api/clients'); } catch { CLIENTS = []; }
+  load();
+})();
+</script>
+</body>
+</html>

@@ -11,6 +11,8 @@ const { asyncHandler } = require('../middleware/errorHandler');
 const Vacancy = require('../models/Vacancy');
 const Client = require('../models/Client');
 const Shortlist = require('../models/Shortlist');
+const Application = require('../models/Application');
+const Candidate = require('../models/Candidate');
 const vac = require('../services/vacancy');
 
 const router = express.Router();
@@ -31,17 +33,35 @@ router.get('/', guard, asyncHandler(async (req, res) => {
   const clients = await Client.find({ agencyId, id: { $in: ids } }, 'id name location').lean();
   const byId = Object.fromEntries(clients.map(c => [c.id, c]));
 
-  // Har vakansiyaga nechta tanlov bog'langan
-  const counts = await Shortlist.aggregate([
-    { $match: { agencyId, vacancyId: { $in: rows.map(r => r.id) } } },
-    { $group: { _id: '$vacancyId', n: { $sum: 1 } } }
+  // Tanlov va ariza sanog'i — bitta so'rovdan ikkitasi
+  const vids = rows.map(r => r.id);
+  const [slRows, appRows] = await Promise.all([
+    Shortlist.aggregate([
+      { $match: { agencyId, vacancyId: { $in: vids } } },
+      { $group: { _id: '$vacancyId', n: { $sum: 1 } } }
+    ]),
+    Application.aggregate([
+      { $match: { agencyId, vacancyId: { $in: vids } } },
+      { $group: { _id: { v: '$vacancyId', s: '$state' }, n: { $sum: 1 } } }
+    ])
   ]);
-  const cMap = Object.fromEntries(counts.map(c => [c._id, c.n]));
+  const slMap = Object.fromEntries(slRows.map(c => [c._id, c.n]));
+
+  // Ko'rilmagan ariza alohida — siz shuni birinchi ko'rishingiz kerak
+  const appMap = {};
+  for (const r of appRows) {
+    const v = r._id.v;
+    appMap[v] = appMap[v] || { total: 0, fresh: 0 };
+    appMap[v].total += r.n;
+    if (r._id.s === 'new') appMap[v].fresh += r.n;
+  }
 
   res.json(rows.map(v => vac.full(v, {
     clientName: (byId[v.clientId] || {}).name || 'Noma\'lum',
     clientLocation: (byId[v.clientId] || {}).location || '',
-    shortlists: cMap[v.id] || 0
+    shortlists: slMap[v.id] || 0,
+    apps: (appMap[v.id] || {}).total || 0,
+    appsNew: (appMap[v.id] || {}).fresh || 0
   })));
 }));
 
@@ -54,6 +74,34 @@ router.get('/:id', guard, asyncHandler(async (req, res) => {
   const client = await Client.findOne({ agencyId, id: v.clientId },
     'id name contactName phone location address about credits').lean();
   res.json(vac.full(v, { client: client || null }));
+}));
+
+// ── Vakansiyaga kelgan arizalar ──
+// Mijoz anonim ko'radi, SIZ to'liq ko'rasiz: nomzod bilan gaplashish
+// sizning ishingiz.
+router.get('/:id/applications', guard, asyncHandler(async (req, res) => {
+  const agencyId = req.user.restaurantId;
+  const v = await Vacancy.findOne({ agencyId, id: req.params.id }).lean();
+  if (!v) return res.status(404).json({ error: 'Vakansiya topilmadi' });
+
+  const apps = await Application.find({ agencyId, vacancyId: v.id })
+    .sort({ createdAt: -1 }).limit(200).lean();
+  if (!apps.length) return res.json({ vacancy: vac.full(v), items: [] });
+
+  const cands = await Candidate.find(
+    { restaurantId: agencyId, id: { $in: apps.map(a => a.candidateId) } },
+    'id publicCode fullName phone email role desiredPosition experienceYears age location jobStatus tgState'
+  ).lean();
+  const byId = Object.fromEntries(cands.map(c => [c.id, c]));
+
+  res.json({
+    vacancy: vac.full(v),
+    items: apps.map(a => ({
+      id: a.id, state: a.state, message: a.message, reason: a.reason,
+      createdAt: a.createdAt, shortlistId: a.shortlistId,
+      candidate: byId[a.candidateId] || null
+    }))
+  });
 }));
 
 // ── Yaratish (mijoz nomidan) ──

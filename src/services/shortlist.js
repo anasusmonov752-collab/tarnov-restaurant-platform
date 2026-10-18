@@ -50,7 +50,35 @@ async function setItemState({ agencyId, shortlistId, candidateId, state, reason 
       ? 'Bu bosqichdan keyin holatni o\'zgartirib bo\'lmaydi'
       : 'Tanlov yoki nomzod topilmadi');
   }
+  await syncKanban(agencyId, candidateId, state);
   return sl;
+}
+
+// ── Kanbanni tanlov bo'yicha oldinga surish ──────────────────
+// Tanlovda nomzod suhbatga chiqsa, kanbanda ham suhbatda bo'lishi kerak.
+// Faqat OLDINGA: bir mijoz rad etsa, boshqasida erishilgan bosqich
+// yo'qolmaydi.
+//
+// Yiqilsa throw qilmaydi — asosiy amal (kredit, holat) allaqachon
+// bajarilgan, kanban esa ko'rsatma qatlam.
+async function syncKanban(agencyId, candidateId, state) {
+  const target = pipeline.STATE_TO_KANBAN[state];
+  if (!target) return;
+
+  try {
+    const c = await Candidate.findOne({ restaurantId: agencyId, id: candidateId }, 'status').lean();
+    if (!c || !pipeline.isForward(c.status, target)) return;
+
+    const set = { status: target, statusChangedAt: new Date(), updatedAt: new Date() };
+    // Ishga olindi — bu global fakt: boshqa mijozlarga ko'rsatmaymiz
+    if (target === 'hired') {
+      set.jobStatus = 'not_looking';
+      set.jobStatusAt = new Date();
+    }
+    await Candidate.updateOne({ restaurantId: agencyId, id: candidateId }, { $set: set });
+  } catch (e) {
+    console.error('[SL] kanban sinxronlanmadi:', e.message);
+  }
 }
 
 // ── Mijoz tomoni: suhbat / ishga olish / rad ──
@@ -85,6 +113,7 @@ async function setClientState({ agencyId, shortlistId, clientId, candidateId, st
   );
 
   if (!sl) throw new Error('Bu nomzod uchun hali kontakt ochilmagan yoki qaror qabul qilingan');
+  await syncKanban(agencyId, candidateId, state);
   return sl;
 }
 
@@ -141,6 +170,7 @@ async function reveal({ agencyId, shortlistId, candidateId }) {
 
   const cand = await Candidate.findOne({ restaurantId: agencyId, id: candidateId }).lean();
   await notifyClient({ agencyId, clientId: claimed.clientId, cand, balance });
+  await syncKanban(agencyId, candidateId, 'revealed');
 
   return { already: false, shortlist: claimed, balance, candidate: cand, prevState };
 }

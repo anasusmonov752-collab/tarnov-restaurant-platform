@@ -65,9 +65,50 @@ const CLIENT_REASON_KEYS = CLIENT_REASONS.map(r => r.key);
 const reasonLabel = k =>
   (CAND_REASONS.find(r => r.key === k) || CLIENT_REASONS.find(r => r.key === k) || {}).label || '';
 
+// ── Ikki voronkani bog'lash ──────────────────────────────────
+// Platformada IKKI xil bosqich bor va ular boshqa narsani o'lchaydi:
+//
+//   Candidate.status        — nomzod SIZNING umumiy voronkangizda qayerda
+//   Shortlist.items[].state — nomzod SHU MIJOZ uchun qayerda
+//
+// Bittasini ikkinchisiga almashtirib bo'lmaydi: bir nomzod bir nechta
+// mijozning tanlovida bo'lishi mumkin. Lekin ular bir-birini bilishi
+// shart — aks holda kanbanda "yangi" bo'lib turgan odam aslida allaqachon
+// suhbatdan o'tgan bo'ladi.
+//
+// Yechim: tanlovdagi harakat kanbanni OLDINGA suradi, orqaga hech qachon.
+
+// Kanban tartibi. reserve va rejected — yon holatlar, tartibda emas.
+const KANBAN_ORDER = ['new', 'phone', 'interview', 'interview2', 'trial', 'hired'];
+
+// Tanlov holati -> kanban bosqichi. null = kanbanga tegilmaydi.
+// candidate_no va not_fit ataylab null: nomzod SHU ishdan bosh tortdi,
+// bu uni umumiy bazadan chiqarmaydi.
+const STATE_TO_KANBAN = {
+  selected:     null,
+  contacting:   'phone',
+  candidate_ok: 'phone',
+  candidate_no: null,
+  revealed:     'phone',
+  interview:    'interview',
+  hired:        'hired',
+  not_fit:      null,
+  refunded:     null
+};
+
+/** Yangi bosqich eskisidan oldindami? Faqat shunda suriladi. */
+function isForward(fromStatus, toStatus) {
+  const a = KANBAN_ORDER.indexOf(fromStatus);
+  const b = KANBAN_ORDER.indexOf(toStatus);
+  if (b < 0) return false;            // noma'lum bosqichga surmaymiz
+  if (a < 0) return true;             // reserve/rejected dan ko'tarilsa — mayli
+  return b > a;
+}
+
 module.exports = {
   STATES, STATE_KEYS, stateLabel, isFinal,
   AGENCY_STATES, CLIENT_STATES,
   CAND_REASONS, CLIENT_REASONS,
-  CAND_REASON_KEYS, CLIENT_REASON_KEYS, reasonLabel
+  CAND_REASON_KEYS, CLIENT_REASON_KEYS, reasonLabel,
+  KANBAN_ORDER, STATE_TO_KANBAN, isForward
 };

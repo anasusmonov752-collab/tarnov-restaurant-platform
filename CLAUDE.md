@@ -16,6 +16,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    oldin bazaga qarang.
 5. **Chala ish yo'q.** Vazifaning bir qismi bloklangan bo'lsa —
    qolganini oxirigacha bajaring va nima qolganini aniq ayting.
+6. **`sed`/`awk` bilan tahrirlagandan keyin natijani O'QI.** "Qator
+   qo'shildimi?" deb `grep` qilish yetarli emas — qo'shilgani rost,
+   mazmuni buzuq bo'lishi mumkin. Tahrirlangan joyni `sed -n` bilan
+   chiqarib, ko'z bilan ko'ring. 2026-10-18 da shu sababdan `\n`
+   literal `n` ga aylanib, butun Mini App oq ekran bo'lib qoldi.
+   Katta HTML/JS uchun shell emas, `Write` ishlating.
 
 ## Qolgan ishlar (2026-10-18 holatiga)
 

@@ -184,6 +184,13 @@ async function backfill({ agencyId, clientId = '', candidateId = '' }) {
 // Nomzod tomonidagi qadalgan suhbatning id'si — AGENCY_THREAD.
 const AGENCY_THREAD = 'agency';
 
+// BotMessage'dagi 'system' yozuvlar — agentlikning ichki jurnali
+// ("Havola yaratildi (qo'lda uzatish): <link>", "Taklif yuborildi (sms)",
+// "Nomzod Telegramga ulandi", ovozli xabar belgisi). Ular adminga
+// yozilgan va uchinchi shaxsda; nomzod ularni o'z suhbatida ko'rmasin.
+const CANDIDATE_VISIBLE = (agencyId, candidateId) =>
+  ({ restaurantId: agencyId, candidateId, kind: { $ne: 'system' } });
+
 function row(t, side) {
   const unread = { client: t.unreadClient, candidate: t.unreadCandidate, agency: t.unreadAgency }[side] || 0;
   return {
@@ -212,7 +219,7 @@ async function inboxForClient(agencyId, clientId) {
 async function inboxForCandidate(agencyId, candidateId) {
   await backfill({ agencyId, candidateId });
   const [last, threads] = await Promise.all([
-    BotMessage.findOne({ restaurantId: agencyId, candidateId }).sort({ createdAt: -1 }).lean(),
+    BotMessage.findOne(CANDIDATE_VISIBLE(agencyId, candidateId)).sort({ createdAt: -1 }).lean(),
     ChatThread.find({ agencyId, candidateId, kind: 'cc' }).sort({ lastMsgAt: -1 }).limit(100).lean()
   ]);
   const head = {
@@ -231,12 +238,12 @@ async function inboxForCandidate(agencyId, candidateId) {
 // keltiramiz — UI ikkala manbani farqlamasin.
 async function messages({ agencyId, threadId, candidateId = '', limit = 200 }) {
   if (threadId === AGENCY_THREAD) {
-    const rows = await BotMessage.find({ restaurantId: agencyId, candidateId })
+    const rows = await BotMessage.find(CANDIDATE_VISIBLE(agencyId, candidateId))
       .sort({ createdAt: -1 }).limit(limit).lean();
     return rows.reverse().map(m => ({
       id: m.id,
-      from: m.kind === 'system' ? 'system' : (m.direction === 'in' ? 'candidate' : 'agency'),
-      kind: m.kind === 'system' ? 'system' : 'text',
+      from: m.direction === 'in' ? 'candidate' : 'agency',
+      kind: 'text',
       text: m.text, createdAt: m.createdAt
     }));
   }

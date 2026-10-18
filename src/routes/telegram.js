@@ -377,15 +377,9 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
     }
     if (handled) return;
 
-    const adminMsgId = await relay.forwardToAdmin(rest, cand, body);
-    await relay.logMsg({
-      restaurantId: rest.id, candidateId: cand.id,
-      direction: 'in', kind: text ? 'text' : 'system', sentBy: 'telegram',
-      text: body, tgMessageId: msg.message_id, adminMsgId
+    await relay.receiveFromCandidate(rest, cand, body, {
+      kind: text ? 'text' : 'system', tgMessageId: msg.message_id, sentBy: 'telegram'
     });
-    cand.tgUnread = (cand.tgUnread || 0) + 1;
-    cand.tgLastMsgAt = new Date();
-    await cand.save();
 
   } catch (e) {
     console.error('[TG] webhook xatosi:', e.message);

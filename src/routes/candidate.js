@@ -122,7 +122,10 @@ router.get('/me', guard, asyncHandler(async (req, res) => {
   let opened = 0;
   for (const r of rows) {
     for (const it of r.items) {
-      if (it.candidateId === c.id && it.state === 'revealed') opened++;
+      // revealedAt bo'yicha, holat bo'yicha EMAS: mijoz "suhbat belgilandi"
+      // yoki "ishga oldim" qo'ygach holat o'zgaradi, kontakt esa ochiqligicha
+      // qoladi (mijoz kabinetidagi 3c6caca tuzatishi bilan bir xil mantiq)
+      if (it.candidateId === c.id && it.revealedAt && it.state !== 'refunded') opened++;
     }
   }
 
@@ -378,12 +381,15 @@ router.post('/chats/:id/messages', guard, asyncHandler(async (req, res) => {
   const text = String((req.body || {}).text || '').trim();
   if (!text) return res.status(400).json({ error: 'Xabar bo\'sh' });
 
-  // Agentlikka — mavjud relay orqali, admin Telegramda ko'radi
+  // Agentlikka — Telegram webhook bilan BIR XIL yo'l: BotMessage yoziladi
+  // (nomzod o'z xabarini suhbatda ko'radi) va adminMsgId saqlanadi
+  // (admin reply qilsa javob shu nomzodga qaytadi)
   if (req.params.id === chat.AGENCY_THREAD) {
     const rest = await Restaurant.findOne({ id: agencyId });
     if (!rest) return res.status(404).json({ error: 'Agentlik topilmadi' });
-    await botRelay.forwardToAdmin(rest, req.cand, text);
-    return res.json({ ok: true });
+    const m = await botRelay.receiveFromCandidate(rest, req.cand, text.slice(0, 3800),
+      { sentBy: 'miniapp' });
+    return res.json({ ok: true, id: m.id, createdAt: m.createdAt });
   }
 
   const th = await ChatThread.findOne({ agencyId, id: req.params.id, candidateId: req.cand.id });

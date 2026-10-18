@@ -428,7 +428,7 @@ router.post('/vacancies', clientGuard, asyncHandler(async (req, res) => {
     // bu yerda soyalab qo'yardi va keyin kimdir chat.post() yozsa yiqilardi.
     const adminChat = agency && agency.telegram && agency.telegram.adminChatId;
     if (adminChat) {
-      await tg.sendMessage(tg.platformToken(), chat,
+      await tg.sendMessage(tg.platformToken(), adminChat,
         `📋 Yangi vakansiya — ${req.client.name}\n\n` +
         `${v.title}\n` +
         (vac.salaryText(v) ? vac.salaryText(v) + '\n' : '') +

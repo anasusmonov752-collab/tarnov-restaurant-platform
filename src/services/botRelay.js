@@ -5,6 +5,7 @@
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const BotMessage = require('../models/BotMessage');
+const Candidate = require('../models/Candidate');
 const tg = require('./telegram');
 const outreach = require('./outreach');
 const { roleLabel } = require('../data/roles');
@@ -102,6 +103,37 @@ async function forwardToAdmin(restaurant, candidate, text) {
   return sent && sent.message_id;
 }
 
+// ── Nomzoddan kelgan xabar ───────────────────────────────────
+// Ikki kirish yo'li bor: Telegram webhook va Mini App'dagi qadalgan
+// "TalentHub" suhbati. Ikkalasi ham SHU yerdan o'tadi. Ilgari Mini App
+// faqat forwardToAdmin'ni chaqirardi: BotMessage yozilmasdi, xabar
+// nomzodning o'z suhbatidan yo'qolardi, adminMsgId bo'lmagani uchun
+// admin reply qilganda javob nomzodga yetmasdi.
+//
+// Telegram yiqilsa ham xabar bazaga yoziladi — panelda ko'rinadi,
+// nomzod esa "yuborilmadi" deb qayta yozishga majbur bo'lmaydi.
+async function receiveFromCandidate(restaurant, candidate, text,
+    { kind = 'text', tgMessageId = null, sentBy = 'telegram' } = {}) {
+  let adminMsgId = null;
+  try {
+    adminMsgId = await forwardToAdmin(restaurant, candidate, text);
+  } catch (e) {
+    console.error('[RELAY] adminga yetmadi:', e.message);
+  }
+
+  const m = await logMsg({
+    restaurantId: restaurant.id, candidateId: candidate.id,
+    direction: 'in', kind, sentBy, text, tgMessageId, adminMsgId
+  });
+
+  // $inc — webhook va Mini App bir vaqtda yozsa hisob yo'qolmasin
+  await Candidate.updateOne(
+    { restaurantId: candidate.restaurantId, id: candidate.id },
+    { $inc: { tgUnread: 1 }, $set: { tgLastMsgAt: new Date() } }
+  );
+  return m;
+}
+
 // ── Nomzodga xabar yuborish ──────────────────────────────────
 async function sendToCandidate(restaurant, candidate, text, sentBy = 'panel') {
   const err = canSend(candidate);
@@ -134,5 +166,5 @@ async function sendToCandidate(restaurant, candidate, text, sentBy = 'panel') {
 
 module.exports = {
   makeToken, makeSecret, displayName, canSend, logMsg,
-  invite, forwardToAdmin, sendToCandidate
+  invite, forwardToAdmin, receiveFromCandidate, sendToCandidate
 };

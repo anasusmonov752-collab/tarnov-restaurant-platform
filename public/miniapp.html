@@ -975,7 +975,9 @@ function pickTab(id){
 TABS.forEach(([t]) => { $(t).onclick = () => pickTab(t); });
 
 // Telegram push tugmasi miniapp.html#chat ga olib keladi — Aloqa tabini ochamiz.
-if (location.hash === '#chat') setTimeout(() => pickTab('tMS'), 0);
+// Element tekshiriladi: INIT bo'lmasa sahifa body'ni almashtiradi va
+// tablar yo'qoladi — shunda pickTab null ustida yiqilardi.
+if (location.hash === '#chat') setTimeout(() => { if ($('tMS')) pickTab('tMS'); }, 0);
 
 // ══════════════════════════════════════════════════════════
 (async function(){

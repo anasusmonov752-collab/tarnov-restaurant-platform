@@ -641,7 +641,8 @@ $('cvIn').onkeydown = e => { if (e.key === 'Enter') sendMsg(); };
 
 // Telegram xabaridagi tugma profil.html#chat ga olib keladi —
 // shu holda darhol Xabarlar tabini ochamiz.
-if (location.hash === '#chat') setTimeout(() => pickTab('tM'), 0);
+// Element tekshiriladi: INIT bo'lmasa tablar yo'qoladi.
+if (location.hash === '#chat') setTimeout(() => { if ($('tM')) pickTab('tM'); }, 0);
 // ── Tablar ──
 const TABS = [['tP','app'], ['tJ','vJ'], ['tA','vA'], ['tM','vM']];
 function pickTab(id){

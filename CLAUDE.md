@@ -17,6 +17,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 5. **Chala ish yo'q.** Vazifaning bir qismi bloklangan bo'lsa —
    qolganini oxirigacha bajaring va nima qolganini aniq ayting.
 
+## Qolgan ishlar (2026-10-18 holatiga)
+
+**MINIAPP-2 — tugallanmagan.** Kod yozilgan va deploy qilingan, lekin
+uchdan-uchiga test o'tkazilmagan. Audit: `docs/miniapp2-audit-2026-10-18.md`
+(58 da'vo → 35 tasdiqlangan). 4 bloklovchi tuzatilishi shart, ulardan
+ikkitasi haqiqiy pul yo'qotadi:
+- `src/services/shortlist.js:144` — kredit ikkinchi marta yechiladi
+- `src/services/shortlist.js:144` — nomzod rad etgandan keyin ham kontakt ochiladi
+- `src/services/anonymize.js:22` — nomzod ismi kreditsiz sizib chiqadi
+- `public/vakansiyalar.html:118` — toast CSS yo'q, xatolar ko'rinmaydi
+
+**Eskiz SMS ochilmagan** — nomzod kabineti, tiriklik tekshiruvi va suhbat
+tasdiqlash shunga bog'liq. 799 nomzoddan ~1 tasi botga bog'langan.
+
+**Ma'lumot tozalash** — 162 ta `role:'boshqa'`, 33 ta tahlil qilinmagan
+nomzod, 3 ta `SINOV` test yozuvi.
+
+**Render Starter ($7/oy)** — haqiqiy mijozlar kelishidan oldin. Bepul
+tarifda 50 soniya sovuq start bor.
+
+**Inline tugmalar** — `allowed_updates` ga `callback_query` qo'shilgandan
+keyin jonli tekshirilmagan.
+
+**Ochilib ketgan kalitlarni bekor qilish** — GitHub token `ghp_VBxW...`,
+Telegram bot tokeni, `admin@tarnov.uz` paroli (eski skriptlarda qattiq
+yozilgan edi, endi so'raydigan qilib o'zgartirilgan).
+
 ## Project Overview
 
 **RestoOne — Restaurant Staff Training Platform** — multi-tenant SaaS for restaurant staff training. Restaurants manage menus, waiters take tests based on menu knowledge, and results are tracked with certificates for 90%+ scores.

@@ -157,6 +157,42 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .h3{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;
   letter-spacing:.5px;margin:0 0 9px 13px}
 
+/* ── Vakansiyalar ── */
+.vc{background:var(--card);border-radius:14px;padding:13px;margin-bottom:11px}
+.vc .ti{font-size:15.5px;font-weight:600;line-height:1.3}
+.vc .mt{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.5}
+.vc .row{display:flex;gap:7px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.tag{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:7px}
+.tag.open{background:rgba(46,158,91,.13);color:var(--ok)}
+.tag.paused{background:rgba(180,128,46,.14);color:var(--warn)}
+.tag.closed{background:rgba(100,116,139,.14);color:var(--muted)}
+.tag.stale{background:rgba(194,91,76,.12);color:var(--danger)}
+.tag.app{background:rgba(37,99,235,.12);color:var(--blue)}
+.sbtn{border:1px solid var(--line);background:var(--card);border-radius:9px;
+  padding:7px 12px;font-family:inherit;font-size:12.5px;font-weight:600;
+  color:var(--ink);cursor:pointer}
+.sbtn.p{background:var(--blue);border-color:var(--blue);color:#fff}
+.sbtn.d{border-color:var(--danger);color:var(--danger)}
+
+/* ── Pastki oyna ── */
+.sheet{position:fixed;inset:0;background:rgba(8,20,38,.45);display:none;align-items:flex-end;z-index:60}
+.sheet.on{display:flex}
+.sh{background:var(--card);width:100%;max-height:92vh;overflow-y:auto;border-radius:18px 18px 0 0}
+.sh-h{position:sticky;top:0;background:var(--card);display:flex;align-items:center;
+  padding:16px;border-bottom:1px solid var(--line);border-radius:18px 18px 0 0}
+.sh-h b{flex:1;font-size:16.5px}
+.sh-x{border:none;background:transparent;font-size:19px;color:var(--muted);cursor:pointer}
+.sh-b{padding:4px 16px 20px}
+.fl{padding:12px 0;border-bottom:1px solid var(--line)}
+.fl:last-of-type{border-bottom:none}
+.fl label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+.fl input,.fl select,.fl textarea{width:100%;border:none;background:transparent;
+  font-family:inherit;font-size:16px;color:var(--ink);padding:0}
+.fl input:focus,.fl select:focus,.fl textarea:focus{outline:none}
+.fl textarea{resize:vertical;min-height:60px;line-height:1.5}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.hint{font-size:12.5px;color:var(--muted);margin-top:5px;line-height:1.5}
+
 /* ── Tab paneli ── */
 .tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);
   border-top:1px solid var(--line);display:flex;
@@ -194,6 +230,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     <div class="wrap" id="slList"><div class="msg">Yuklanmoqda…</div></div>
   </div>
 
+  <div id="vVC" class="hide">
+    <div class="wrap">
+      <button class="btn" id="bNewV" style="width:100%;margin-bottom:14px">+ Yangi vakansiya</button>
+      <div id="vcList"><div class="msg">Yuklanmoqda…</div></div>
+    </div>
+  </div>
+
   <div id="vCR" class="hide">
     <div class="wrap">
       <div class="card"><div class="pad">
@@ -221,10 +264,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   </div>
 
   <nav class="tabs">
-    <button class="tb on" id="tSL"><span class="ic">&#128203;</span>Tanlovlarim</button>
+    <button class="tb on" id="tSL"><span class="ic">&#128203;</span>Tanlovlar</button>
+    <button class="tb"    id="tVC"><span class="ic">&#128188;</span>Vakansiya</button>
     <button class="tb"    id="tCR"><span class="ic">&#128179;</span>Balans</button>
     <button class="tb"    id="tMS"><span class="ic">&#128172;</span>Aloqa</button>
   </nav>
+</div>
+
+<div class="sheet" id="sheet">
+  <div class="sh">
+    <div class="sh-h"><b id="shT">—</b><button class="sh-x" id="shX">&#10005;</button></div>
+    <div class="sh-b" id="shB"></div>
+  </div>
 </div>
 
 <script>
@@ -570,8 +621,173 @@ $('bTop').onclick = async () => {
 
 $('bChat').onclick = () => { if (TG) TG.close(); };
 
+// ══════════════════════════════════════════════════════════
+//  VAKANSIYALAR
+// ══════════════════════════════════════════════════════════
+function openSheet(title, html){ $('shT').textContent = title; $('shB').innerHTML = html; $('sheet').classList.add('on'); }
+function closeSheet(){ $('sheet').classList.remove('on'); $('shB').innerHTML = ''; }
+$('shX').onclick = closeSheet;
+$('sheet').onclick = e => { if (e.target === $('sheet')) closeSheet(); };
+
+const VST = { open:['open','Ochiq'], paused:['paused','To\'xtatilgan'], closed:['closed','Yopilgan'] };
+
+async function loadVacancies(){
+  try{
+    const rows = await api('/api/ma/vacancies');
+    if (!rows.length) {
+      $('vcList').innerHTML = `<div class="msg">Vakansiya yo'q.<br><br>
+        "+ Yangi vakansiya" bilan kim kerakligini yozing — nomzodlar
+        o'zi ariza bera boshlaydi.</div>`;
+      return;
+    }
+    $('vcList').innerHTML = rows.map(v => {
+      const [cls, lbl] = VST[v.status] || VST.open;
+      const meta = [v.salaryText, v.shift, v.schedule].filter(Boolean).join(' · ');
+      return `<div class="vc">
+        <div class="ti">${esc(v.title)}</div>
+        ${meta ? `<div class="mt">${esc(meta)}</div>` : ''}
+        ${v.headcount > 1 ? `<div class="mt">${v.headcount} ta odam kerak</div>` : ''}
+        <div class="row">
+          <span class="tag ${cls}">${lbl}</span>
+          ${v.stale && v.status === 'open' ? '<span class="tag stale">Tasdiqlang</span>' : ''}
+          ${v.shortlists ? `<span class="tag app">${v.shortlists} tanlov</span>` : ''}
+        </div>
+        <div class="row">
+          <button class="sbtn p" data-apps="${v.id}">Arizalar</button>
+          ${v.status === 'open' ? `<button class="sbtn" data-conf="${v.id}">Tasdiqlash</button>` : ''}
+          <button class="sbtn" data-edit="${v.id}">Tahrirlash</button>
+          ${v.status === 'open' ? `<button class="sbtn d" data-close="${v.id}">Yopish</button>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+
+    document.querySelectorAll('[data-apps]').forEach(b => b.onclick = () => showApps(b.dataset.apps));
+    document.querySelectorAll('[data-conf]').forEach(b => b.onclick = async () => {
+      b.disabled = true;
+      try { await api(`/api/ma/vacancies/${b.dataset.conf}/confirm`, { method:'POST' }); haptic(); loadVacancies(); }
+      catch(e){ alert(e.message); b.disabled = false; }
+    });
+    document.querySelectorAll('[data-close]').forEach(b => b.onclick = async () => {
+      if (!confirm('Vakansiya yopiladi. Davom etamizmi?')) return;
+      b.disabled = true;
+      try { await api(`/api/ma/vacancies/${b.dataset.close}`, { method:'PATCH', body: JSON.stringify({ status:'closed' }) }); loadVacancies(); }
+      catch(e){ alert(e.message); b.disabled = false; }
+    });
+    document.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => {
+      vacForm(rows.find(x => x.id === b.dataset.edit));
+    });
+  }catch(e){ $('vcList').innerHTML = `<div class="msg">${esc(e.message)}</div>`; }
+}
+
+// Forma ataylab ikki qismga bo'lingan: TALAB (kimni qidiramiz) va
+// TAKLIF (nima beramiz). Mijoz ikkinchisini to'ldirmasa, HR qo'ng'iroq
+// qilganda nima aytishini bilmaydi.
+function vacForm(v){
+  const d = v || {};
+  openSheet(v ? 'Tahrirlash' : 'Yangi vakansiya', `
+    <div class="fl"><label>Kim kerak *</label>
+      <input id="fTi" value="${esc(d.title)}" placeholder="Ofitsiant, kechki smena"></div>
+
+    <div style="font-size:12px;color:var(--muted);text-transform:uppercase;
+      letter-spacing:.5px;font-weight:600;margin:16px 0 0">Talab</div>
+    <div class="two">
+      <div class="fl"><label>Tajriba (yil)</label><input id="fEx" inputmode="numeric" value="${d.minExp ?? ''}"></div>
+      <div class="fl"><label>Nechta odam</label><input id="fHc" inputmode="numeric" value="${d.headcount || 1}"></div>
+    </div>
+    <div class="fl"><label>Smena</label>
+      <select id="fSh">
+        <option value=""           ${!d.shift ? 'selected' : ''}>Farqi yo'q</option>
+        <option value="kunduzgi"   ${d.shift === 'kunduzgi' ? 'selected' : ''}>Kunduzgi</option>
+        <option value="kechki"     ${d.shift === 'kechki' ? 'selected' : ''}>Kechki</option>
+        <option value="ikkalasi"   ${d.shift === 'ikkalasi' ? 'selected' : ''}>Ikkalasi</option>
+      </select></div>
+
+    <div style="font-size:12px;color:var(--muted);text-transform:uppercase;
+      letter-spacing:.5px;font-weight:600;margin:16px 0 0">Taklif</div>
+    <div class="two">
+      <div class="fl"><label>Maosh (dan)</label><input id="fSf" inputmode="numeric" value="${d.salaryFrom ?? ''}" placeholder="4000000"></div>
+      <div class="fl"><label>Maosh (gacha)</label><input id="fSt" inputmode="numeric" value="${d.salaryTo ?? ''}" placeholder="5000000"></div>
+    </div>
+    <div class="fl"><label>Grafik</label><input id="fSc" value="${esc(d.schedule)}" placeholder="6/1, 16:00-24:00"></div>
+    <div class="fl"><label>Qo'shimcha shartlar</label>
+      <textarea id="fCo" placeholder="Ovqat, forma, yo'l kira">${esc(d.conditions)}</textarea>
+      <div class="hint">Nomzod birinchi shuni o'qiydi. Aniq yozsangiz
+        rozi bo'lish ehtimoli oshadi.</div></div>
+
+    <button class="btn" id="fSave" style="width:100%;margin-top:16px">Saqlash</button>`);
+
+  $('fSave').onclick = async () => {
+    const title = $('fTi').value.trim();
+    if (!title) return alert('Kim kerakligini yozing');
+    const body = {
+      title, minExp: $('fEx').value, headcount: $('fHc').value, shift: $('fSh').value,
+      salaryFrom: $('fSf').value, salaryTo: $('fSt').value,
+      schedule: $('fSc').value.trim(), conditions: $('fCo').value.trim()
+    };
+    $('fSave').disabled = true; $('fSave').textContent = 'Saqlanmoqda…';
+    try {
+      if (v) await api('/api/ma/vacancies/' + v.id, { method:'PATCH', body: JSON.stringify(body) });
+      else   await api('/api/ma/vacancies', { method:'POST', body: JSON.stringify(body) });
+      closeSheet(); loadVacancies();
+    } catch(e){ alert(e.message); $('fSave').disabled = false; $('fSave').textContent = 'Qayta urinish'; }
+  };
+}
+$('bNewV').onclick = () => vacForm(null);
+
+// ── Vakansiyaga kelgan arizalar ──
+async function showApps(id){
+  openSheet('Arizalar', '<div class="msg">Yuklanmoqda…</div>');
+  let d;
+  try { d = await api(`/api/ma/vacancies/${id}/applications`); }
+  catch(e){ $('shB').innerHTML = `<div class="msg">${esc(e.message)}</div>`; return; }
+
+  $('shT').textContent = d.vacancy.title;
+  if (!d.items.length) {
+    $('shB').innerHTML = `<div class="msg">Hali ariza yo'q.<br><br>
+      Vakansiya nomzodlarga ko'rsatilyapti. Tasdiqlab turing —
+      tasdiqlanmagani ro'yxatdan tushib qoladi.</div>`;
+    return;
+  }
+
+  $('shB').innerHTML = d.items.map(it => {
+    const c = it.candidate;
+    if (!c) return '';
+    const meta = [
+      c.experienceYears ? c.experienceYears + ' yil tajriba' : 'Tajribasiz',
+      c.age ? c.age + ' yosh' : '', c.location || ''
+    ].filter(Boolean).join(' · ');
+    const done = it.state === 'shortlisted' || it.state === 'rejected';
+    return `<div class="vc" style="margin-bottom:12px">
+      <div class="ti">${esc(c.desiredPosition || 'Nomzod')}
+        <span style="font-weight:600;color:var(--muted);font-size:12.5px">${esc(c.publicCode)}</span></div>
+      <div class="mt">${esc(meta)}</div>
+      ${it.message ? `<div class="mt" style="color:var(--ink);margin-top:7px">"${esc(it.message)}"</div>` : ''}
+      ${done
+        ? `<div class="row"><span class="tag ${it.state === 'shortlisted' ? 'open' : 'closed'}">${
+            it.state === 'shortlisted' ? 'Tanlandi' : 'Rad etildi'}</span></div>`
+        : `<div class="row">
+            <button class="sbtn p" data-pick="${it.id}">Tanlash</button>
+            <button class="sbtn d" data-rej="${it.id}">Rad etish</button>
+          </div>`}
+    </div>`;
+  }).join('');
+
+  $('shB').querySelectorAll('[data-pick]').forEach(b => b.onclick = async () => {
+    b.disabled = true;
+    try { await api(`/api/ma/applications/${b.dataset.pick}/pick`, { method:'POST' });
+      haptic(); showApps(id); loadVacancies(); loadShortlists(); }
+    catch(e){ alert(e.message); b.disabled = false; }
+  });
+  $('shB').querySelectorAll('[data-rej]').forEach(b => b.onclick = async () => {
+    b.disabled = true;
+    try { await api(`/api/ma/applications/${b.dataset.rej}/reject`, { method:'POST', body: JSON.stringify({}) });
+      showApps(id); }
+    catch(e){ alert(e.message); b.disabled = false; }
+  });
+}
+
 // ── Tablar ──
-const TABS = [['tSL','vSL'], ['tCR','vCR'], ['tMS','vMS']];
+const TABS = [['tSL','vSL'], ['tVC','vVC'], ['tCR','vCR'], ['tMS','vMS']];
 function pickTab(id){
   TABS.forEach(([t,v]) => {
     $(t).classList.toggle('on', t === id);
@@ -580,6 +796,7 @@ function pickTab(id){
   haptic('sel');
   if (id === 'tCR') loadCredits();
   if (id === 'tSL') loadShortlists();
+  if (id === 'tVC') loadVacancies();
 }
 TABS.forEach(([t]) => { $(t).onclick = () => pickTab(t); });
 

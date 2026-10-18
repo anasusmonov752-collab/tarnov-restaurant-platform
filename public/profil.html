@@ -15,7 +15,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   background:var(--bg);color:var(--ink);font-size:15px;-webkit-text-size-adjust:100%;
-  padding-bottom:28px}
+  padding-bottom:86px}
 
 /* Oq va havodor. Oldin to'q ko'k gradient edi - u e'tiborni fotodan
    va ismdan tortib olardi va mobilda og'ir ko'rinardi. Ko'k endi faqat
@@ -103,11 +103,54 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   color:#fff;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer;margin-top:14px}
 .btn:disabled{opacity:.5}
 .msg{text-align:center;padding:60px 24px;color:var(--muted);font-size:14.5px;line-height:1.6}
+.hide{display:none !important}
+
+/* ── Ish o'rinlari va arizalar ── */
+.jb{background:var(--card);border-radius:14px;padding:14px;margin-bottom:11px}
+.jb .ti{font-size:16px;font-weight:600;line-height:1.3}
+.jb .pl{font-size:13.5px;color:var(--muted);margin-top:3px}
+.jb .sl{font-size:15px;font-weight:600;color:var(--ok);margin-top:7px}
+.jb .ln{font-size:13px;color:var(--muted);margin-top:5px;line-height:1.55}
+.jb .row{display:flex;gap:7px;align-items:center;margin-top:11px;flex-wrap:wrap}
+.tg2{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:7px}
+.tg2.fit{background:rgba(46,158,91,.13);color:var(--ok)}
+.tg2.fresh{background:rgba(37,99,235,.1);color:var(--blue)}
+.tg2.wait{background:rgba(180,128,46,.14);color:var(--warn)}
+.tg2.no{background:rgba(194,91,76,.12);color:var(--danger)}
+.tg2.ok{background:rgba(46,158,91,.13);color:var(--ok)}
+.ab{flex:1;padding:11px;border:none;border-radius:10px;background:var(--blue);
+  color:#fff;font-size:14.5px;font-weight:600;font-family:inherit;cursor:pointer}
+.ab:disabled{background:var(--bg);color:var(--muted)}
+
+/* ── Tab paneli ── */
+.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);
+  border-top:1px solid var(--line);display:flex;
+  padding-bottom:env(safe-area-inset-bottom);z-index:50}
+.tb{flex:1;border:none;background:transparent;padding:10px 4px 11px;cursor:pointer;
+  font-family:inherit;color:var(--muted);font-size:11.5px;font-weight:600;line-height:1.3}
+.tb .ic{display:block;font-size:19px;margin-bottom:2px}
+.tb.on{color:var(--blue)}
 </style>
 </head>
 <body>
 
 <div id="app"><div class="msg">Yuklanmoqda…</div></div>
+
+<div id="vJ" class="hide"><div class="wrap">
+  <div class="h3">Ish o'rinlari</div>
+  <div id="jobList"><div class="msg">Yuklanmoqda…</div></div>
+</div></div>
+
+<div id="vA" class="hide"><div class="wrap">
+  <div class="h3">Arizalarim</div>
+  <div id="appList"><div class="msg">Yuklanmoqda…</div></div>
+</div></div>
+
+<nav class="tabs">
+  <button class="tb on" id="tP"><span class="ic">&#128100;</span>Profilim</button>
+  <button class="tb"    id="tJ"><span class="ic">&#128188;</span>Ish o'rinlari</button>
+  <button class="tb"    id="tA"><span class="ic">&#128203;</span>Arizalarim</button>
+</nav>
 
 <div class="sheet" id="sheet">
   <div class="sh">
@@ -334,6 +377,99 @@ async function save(patch){
   try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
   return r;
 }
+
+// ══════════════════════════════════════════════════════════
+//  ISH O'RINLARI
+// ══════════════════════════════════════════════════════════
+// Restoran nomi ko'rinmaydi — faqat hudud. Buni server hal qiladi
+// (services/vacancy.js forCandidate), bu yerda shunchaki ko'rsatamiz.
+
+async function loadJobs(){
+  try{
+    const rows = await api('/api/cand/vacancies');
+    if (!rows.length) {
+      $('jobList').innerHTML = `<div class="msg">Hozircha ochiq ish o'rni yo'q.<br><br>
+        Profilingiz to'liq bo'lsa, mos ish chiqishi bilan o'zimiz yozamiz.</div>`;
+      return;
+    }
+    $('jobList').innerHTML = rows.map(v => {
+      const need = [
+        v.minExp ? v.minExp + ' yildan tajriba' : '',
+        v.shift ? v.shift + ' smena' : '',
+        (v.languages || []).join(', ')
+      ].filter(Boolean).join(' · ');
+      return `<div class="jb">
+        <div class="ti">${esc(v.title)}</div>
+        <div class="pl">${esc(v.place)}</div>
+        ${v.salaryText ? `<div class="sl">${esc(v.salaryText)}</div>` : ''}
+        ${v.schedule ? `<div class="ln">${esc(v.schedule)}</div>` : ''}
+        ${v.conditions ? `<div class="ln">${esc(v.conditions)}</div>` : ''}
+        ${need ? `<div class="ln" style="margin-top:7px">Talab: ${esc(need)}</div>` : ''}
+        <div class="row">
+          ${v.match ? '<span class="tg2 fit">Sizga mos</span>' : ''}
+          <span class="tg2 fresh">${v.freshDays === 0 ? 'Bugun tasdiqlangan' : v.freshDays + ' kun oldin tasdiqlangan'}</span>
+        </div>
+        <div class="row">
+          <button class="ab" data-ap="${v.id}" ${v.applied ? 'disabled' : ''}>
+            ${v.applied ? 'Ariza berilgan' : 'Ariza berish'}</button>
+        </div>
+      </div>`;
+    }).join('');
+
+    document.querySelectorAll('[data-ap]').forEach(b => b.onclick = async () => {
+      b.disabled = true; b.textContent = 'Yuborilmoqda…';
+      try {
+        await api(`/api/cand/vacancies/${b.dataset.ap}/apply`, { method:'POST', body: JSON.stringify({}) });
+        b.textContent = 'Ariza berilgan';
+        try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
+      } catch(e){
+        alert(e.message);
+        b.disabled = false; b.textContent = 'Ariza berish';
+      }
+    });
+  }catch(e){ $('jobList').innerHTML = `<div class="msg">${esc(e.message)}</div>`; }
+}
+
+const AST = { new:'wait', seen:'wait', shortlisted:'ok', rejected:'no' };
+
+async function loadApps(){
+  try{
+    const rows = await api('/api/cand/applications');
+    if (!rows.length) {
+      $('appList').innerHTML = `<div class="msg">Hali ariza bermagansiz.<br><br>
+        "Ish o'rinlari" bo'limidan mos ishni tanlang.</div>`;
+      return;
+    }
+    $('appList').innerHTML = rows.map(a => {
+      const v = a.vacancy;
+      return `<div class="jb">
+        <div class="ti">${v ? esc(v.title) : 'Vakansiya o\'chirilgan'}</div>
+        ${v ? `<div class="pl">${esc(v.place)}</div>` : ''}
+        ${v && v.salaryText ? `<div class="sl">${esc(v.salaryText)}</div>` : ''}
+        <div class="row">
+          <span class="tg2 ${AST[a.state] || 'wait'}">${esc(a.stateLabel)}</span>
+          <span style="font-size:12.5px;color:var(--muted)">${dmy(a.createdAt)}</span>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){ $('appList').innerHTML = `<div class="msg">${esc(e.message)}</div>`; }
+}
+
+const dmy = d => d ? new Date(d).toLocaleDateString('uz-UZ',{day:'2-digit',month:'short'}) : '';
+
+// ── Tablar ──
+const TABS = [['tP','app'], ['tJ','vJ'], ['tA','vA']];
+function pickTab(id){
+  TABS.forEach(([t, v]) => {
+    $(t).classList.toggle('on', t === id);
+    $(v).classList.toggle('hide', t !== id);
+  });
+  haptic();
+  window.scrollTo(0, 0);
+  if (id === 'tJ') loadJobs();
+  if (id === 'tA') loadApps();
+}
+TABS.forEach(([t]) => { $(t).onclick = () => pickTab(t); });
 
 (async function(){
   if (!INIT) { $('app').innerHTML = '<div class="msg">Bu sahifa Telegram ichida ochilishi kerak.</div>'; return; }

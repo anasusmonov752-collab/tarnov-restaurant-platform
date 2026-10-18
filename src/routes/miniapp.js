@@ -293,7 +293,11 @@ router.get('/shortlists', clientGuard, asyncHandler(async (req, res) => {
     items: r.items.map(it => {
       const c = byId[it.candidateId];
       const st = CLIENT_STATE[it.state] || CLIENT_STATE.selected;
-      const open = it.state === 'revealed';
+      // Kontakt kredit to'langandan keyin KO'RINIB TURAVERADI. Ilgari shart
+      // `state === 'revealed'` edi: mijoz "suhbat belgilandi" qo'ygani zahoti
+      // holat o'zgarib, TO'LANGAN kontakt kabinetdan yo'qolardi.
+      // 'refunded' istisno — kredit qaytarilgan, kontakt ham qaytariladi.
+      const open = !!it.revealedAt && it.state !== 'refunded';
 
       return {
         candidateId: it.candidateId,
@@ -419,8 +423,10 @@ router.post('/vacancies', clientGuard, asyncHandler(async (req, res) => {
   // Sizga xabar — yangi vakansiya ochilganini bilishingiz kerak
   try {
     const agency = await Restaurant.findOne({ id: req.client.agencyId });
-    const chat = agency && agency.telegram && agency.telegram.adminChatId;
-    if (chat) {
+    // 'chat' deb atamaymiz — yuqorida chat SERVISI import qilingan,
+    // bu yerda soyalab qo'yardi va keyin kimdir chat.post() yozsa yiqilardi.
+    const adminChat = agency && agency.telegram && agency.telegram.adminChatId;
+    if (adminChat) {
       await tg.sendMessage(tg.platformToken(), chat,
         `📋 Yangi vakansiya — ${req.client.name}\n\n` +
         `${v.title}\n` +
@@ -562,12 +568,13 @@ router.post('/applications/:id/:action', clientGuard, asyncHandler(async (req, r
   // Sizga to'liq kontakt bilan xabar
   try {
     const agency = await Restaurant.findOne({ id: agencyId });
-    const chat = agency && agency.telegram && agency.telegram.adminChatId;
-    if (chat) {
+    // 'chat' deb atamaymiz — yuqorida chat SERVISI import qilingan.
+    const adminChat = agency && agency.telegram && agency.telegram.adminChatId;
+    if (adminChat) {
       const c = await Candidate.findOne({ restaurantId: agencyId, id: a.candidateId },
         'fullName phone desiredPosition publicCode').lean();
       if (c) {
-        await tg.sendMessage(tg.platformToken(), chat,
+        await tg.sendMessage(tg.platformToken(), adminChat,
           `${req.client.name} arizachini tanladi\n` +
           `Vakansiya: ${(v && v.title) || '—'}\n` +
           `${'—'.repeat(22)}\n\n` +

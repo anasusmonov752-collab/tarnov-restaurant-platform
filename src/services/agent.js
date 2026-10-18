@@ -134,10 +134,18 @@ async function handleClient({ client, chatId, input }) {
 
     // Mijoz nima yozib olinganini ko'rsin — AI adashgan bo'lsa shu
     // yerda payqaydi va kabinetda tuzatadi
-    return { text: card
-      ? `Yozib oldim:\n\n${card}\n\nXato bo'lsa — Kabinet → Vakansiya bo'limida tuzating. ` +
-        `Nomzodlar bilan gaplashib, javobini yozaman.`
-      : 'Yozib oldim. Nomzodlar bilan gaplashib, javobini yozaman.' };
+    // Yopiq vakansiya bo'lsa — ostida "E'lon qilish" tugmasi. Qaror shu
+    // yerda qulay: mijoz shartlarni endigina ko'rdi, nimani e'lon
+    // qilayotganini biladi. Kabinetdagi tugmani esa topmasligi mumkin.
+    const hidden = card && applied.vacancy.listed === false;
+    return {
+      text: card
+        ? `Yozib oldim:\n\n${card}\n\nXato bo'lsa — Kabinet → Vakansiya bo'limida tuzating. ` +
+          `Nomzodlar bilan gaplashib, javobini yozaman.` +
+          (hidden ? `\n\nBoshqa nomzodlar ham ariza bersinmi?` : '')
+        : 'Yozib oldim. Nomzodlar bilan gaplashib, javobini yozaman.',
+      publishVacancyId: hidden ? applied.vacancy.id : ''
+    };
   }
 
   const userText = input.text || '[ovozli xabar]';

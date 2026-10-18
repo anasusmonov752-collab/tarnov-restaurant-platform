@@ -25,6 +25,26 @@ function isStale(v) {
   return (Date.now() - new Date(v.confirmedAt).getTime()) > STALE_DAYS * 864e5;
 }
 
+// Sarlavhadan lavozimni aniqlash. Forma lavozim so'ramagan paytda
+// yozilgan vakansiyalar hammasi 'boshqa' bo'lib qolgan edi: qidiruv
+// ularni "shu lavozimga ochiq vakansiya" deb tanimay, dublikat ochardi,
+// nomzodga esa "Sizga mos" belgisi hech chiqmasdi.
+// O'zak bo'yicha: xatoli yozuv ("Xostes", "офицант") ham tanilsin.
+const ROLE_STEMS = [
+  ['ofitsiant', /ofits|офиц|waiter/i],
+  ['barmen',    /barm|бармен|bartend/i],
+  ['xostess',   /xost|host|хост/i],
+  ['oshpaz',    /oshpaz|ошпаз|povar|повар|cook|chef/i],
+  ['kassir',    /kass|касс|cashier/i],
+  ['menejer',   /menej|менедж|manager/i],
+  ['operator',  /operat|оператор|call/i]
+];
+function guessRole(title) {
+  const t = String(title || '');
+  const hit = ROLE_STEMS.find(([, re]) => re.test(t));
+  return hit && isValidRole(hit[0]) ? hit[0] : '';
+}
+
 /** Foydalanuvchi yuborgan ma'lumotni tozalaydi. */
 function clean(b, prev = {}) {
   const num = (x, lo, hi) => {
@@ -35,6 +55,13 @@ function clean(b, prev = {}) {
 
   if (b.title !== undefined)      out.title = String(b.title).trim().slice(0, 120);
   if (b.role !== undefined)       out.role = isValidRole(b.role) ? b.role : 'boshqa';
+  // Lavozim tanlanmagan (eski forma, panel) — sarlavhadan aniqlaymiz.
+  // Aniq tanlangan lavozimga tegmaymiz.
+  const hasRole = isValidRole(out.role !== undefined ? out.role : prev.role);
+  if (!hasRole) {
+    const g = guessRole(out.title !== undefined ? out.title : prev.title);
+    if (g) out.role = g;
+  }
   if (b.minExp !== undefined)     out.minExp = num(b.minExp, 0, 50);
   if (b.minAge !== undefined)     out.minAge = num(b.minAge, 14, 80);
   if (b.maxAge !== undefined)     out.maxAge = num(b.maxAge, 14, 80);
@@ -127,4 +154,4 @@ function forCandidate(v, client) {
   };
 }
 
-module.exports = { clean, full, forCandidate, salaryText, isStale, VALID_STATUS, SHIFTS, STALE_DAYS };
+module.exports = { clean, full, forCandidate, salaryText, isStale, guessRole, VALID_STATUS, SHIFTS, STALE_DAYS };

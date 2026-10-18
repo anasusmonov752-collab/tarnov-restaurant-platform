@@ -194,12 +194,27 @@ async function load(){
 $('fSt').onchange = load;
 
 // ── Forma ──
+// Lavozim — server bilan bir xil ro'yxat (src/data/roles.js), o'zgarsa
+// hamma joyda. Busiz vakansiya 'boshqa' bo'lib qolardi va bot qidiruvi
+// uni tanimay yoniga dublikat ochardi.
+const ROLES = [['ofitsiant','Ofitsiant'],['barmen','Barmen'],['xostess','Xostess'],
+  ['oshpaz','Oshpaz'],['kassir','Kassir'],['menejer','Menejer'],['operator','Call operator']];
+const SHIFT_T = { kunduzgi:'kunduzgi smena', kechki:'kechki smena', ikkalasi:'kunduzgi/kechki smena' };
+// Server shabloni bilan bir xil sarlavha (vacancyAuto.makeTitle)
+const autoTitle = (r, s) => {
+  const l = (ROLES.find(x => x[0] === r) || [])[1];
+  return l ? (SHIFT_T[s] ? l + ', ' + SHIFT_T[s] : l) : '';
+};
+
 function form(v){
   const d = v || {};
   const opts = CLIENTS.map(c => `<option value="${c.id}" ${d.clientId === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('');
+  const roleOpts = `<option value="">— tanlang —</option>` + ROLES.map(([k, l]) =>
+    `<option value="${k}" ${d.role === k ? 'selected' : ''}>${l}</option>`).join('');
   openMd(v ? 'Vakansiyani tahrirlash' : 'Yangi vakansiya', `
     ${v ? '' : `<div class="fld"><label>Mijoz *</label><select id="fCl">${opts}</select></div>`}
-    <div class="fld"><label>Kim kerak *</label><input type="text" id="fTi" value="${esc(d.title)}" placeholder="Ofitsiant, kechki smena"></div>
+    <div class="fld"><label>Lavozim *</label><select id="fRo">${roleOpts}</select></div>
+    <div class="fld"><label>Sarlavha *</label><input type="text" id="fTi" value="${esc(d.title)}" placeholder="Ofitsiant, kechki smena"></div>
 
     <div class="sec">Talab</div>
     <div class="row2">
@@ -230,11 +245,19 @@ function form(v){
     </select></div>` : ''}
     <button class="btn btn-p" id="fSave" style="width:100%">Saqlash</button>`);
 
+  // Sarlavha lavozim va smenadan o'zi yoziladi — qo'lda yozilguncha
+  let autoT = !d.title || d.title === autoTitle(d.role, d.shift);
+  const syncT = () => { if (autoT) $('fTi').value = autoTitle($('fRo').value, $('fSh').value); };
+  $('fTi').oninput = () => { autoT = false; };
+  $('fRo').onchange = syncT;
+  $('fSh').onchange = syncT;
+
   $('fSave').onclick = async () => {
-    const title = $('fTi').value.trim();
-    if (!title) return toast('Vakansiya nomini yozing', 'error');
+    const role = $('fRo').value;
+    if (!role) return toast('Lavozimni tanlang', 'error');
+    const title = $('fTi').value.trim() || autoTitle(role, $('fSh').value);
     const body = {
-      title, minExp: $('fEx').value, headcount: $('fHc').value,
+      role, title, minExp: $('fEx').value, headcount: $('fHc').value,
       shift: $('fSh').value, location: $('fLo').value.trim(),
       salaryFrom: $('fSf').value, salaryTo: $('fSt2').value,
       schedule: $('fSc').value.trim(), conditions: $('fCo').value.trim()

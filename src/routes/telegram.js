@@ -17,6 +17,7 @@ const Client = require('../models/Client');
 const SearchSession = require('../models/SearchSession');
 const { publicBase } = require('../utils/publicBase');
 const Shortlist = require('../models/Shortlist');
+const Vacancy = require('../models/Vacancy');
 const tg = require('../services/telegram');
 const shortlistSvc = require('../services/shortlist');
 const relay = require('../services/botRelay');
@@ -489,13 +490,18 @@ async function handleClientSearch(client, chatId, { text, voice }, appBase) {
 // hammasini bitta ro'yxatga tiqib tashlash foydasiz, odam baribir
 // birinchi o'ntasidan nariga qaramaydi.
 function searchKeyboard(out, appBase) {
-  if (!out.searchKey) return {};
-  const rows = [[
-    { text: `Ko'rish${out.count ? ' (' + out.count + ')' : ''}`,
-      web_app: { url: `${appBase}/miniapp.html?s=${out.searchKey}` } }
-  ]];
-  if (out.more) rows.push([{ text: 'Yana nomzodlar', callback_data: 'more' }]);
-  return { reply_markup: { inline_keyboard: rows } };
+  const rows = [];
+  if (out.searchKey) {
+    rows.push([{ text: `Ko'rish${out.count ? ' (' + out.count + ')' : ''}`,
+      web_app: { url: `${appBase}/miniapp.html?s=${out.searchKey}` } }]);
+    if (out.more) rows.push([{ text: 'Yana nomzodlar', callback_data: 'more' }]);
+  }
+  // Taklif yozib olingach — yopiq vakansiyani bitta bosishda e'lon qilish.
+  // "vp:" + uuid = 39 bayt, Telegram chegarasi 64.
+  if (out.publishVacancyId) {
+    rows.push([{ text: '📢 E\'lon qilish', callback_data: 'vp:' + out.publishVacancyId }]);
+  }
+  return rows.length ? { reply_markup: { inline_keyboard: rows } } : {};
 }
 
 // ── Nomzod profili kartasi ───────────────────────────────────
@@ -552,6 +558,38 @@ async function handleCallback(cq, appBase) {
       console.error('[TG] keyingi sahifa xatosi:', e.message);
       await tg.sendMessage(token, chatId, `Keyingi nomzodlarni olib bo'lmadi: ${e.message}`);
     }
+    return;
+  }
+
+  // ── Mijoz: yopiq vakansiyani e'lon qilish ──
+  // clientId sharti: tugma boshqa chatga forward qilinsa ham faqat
+  // vakansiya egasi e'lon qila oladi.
+  if (data.startsWith('vp:')) {
+    const client = await Client.findOne({ tgChatId: chatId, status: 'active' });
+    if (!client) return done('Mijoz topilmadi', true);
+    const v = await Vacancy.findOneAndUpdate(
+      { agencyId: client.agencyId, clientId: client.id, id: data.slice(3), status: { $ne: 'closed' } },
+      // confirmedAt ham: e'lon "hozir ochiq" degani, aks holda eski
+      // vakansiya darhol "eskirgan" bo'lib ro'yxatga tushmasdi
+      { $set: { listed: true, confirmedAt: new Date(), updatedAt: new Date() } },
+      { new: true }
+    );
+    if (!v) return done('Vakansiya topilmadi yoki yopilgan', true);
+    await done('E\'lon qilindi');
+
+    // Tugmani olib tashlaymiz (reply_markup'siz tahrir klaviaturani o'chiradi),
+    // matn o'sha-o'sha qoladi — ostiga natija qo'shiladi
+    const was = (cq.message && cq.message.text) || '';
+    await tg.editMessageText(token, chatId, msgId,
+      `${was}\n\n📢 E'lon qilindi — nomzodlar ariza bera boshlaydi.`).catch(() => {});
+
+    try {
+      const agency = await Restaurant.findOne({ id: client.agencyId });
+      const adminChat = agency && agency.telegram && agency.telegram.adminChatId;
+      if (adminChat) {
+        await tg.sendMessage(token, adminChat, `📢 ${client.name} vakansiyani e'lon qildi: ${v.title}`);
+      }
+    } catch (e) { console.error('[TG] e\'lon xabari ketmadi:', e.message); }
     return;
   }
 

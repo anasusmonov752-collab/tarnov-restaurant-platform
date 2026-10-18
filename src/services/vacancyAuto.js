@@ -180,12 +180,18 @@ async function ensureFromSearch({ agencyId, client, criteria = {} }) {
   const salaryTo = salary(criteria.maxSalary);
 
   if (role) {
-    const v = await Vacancy.findOne({
-      agencyId, clientId: client.id, role, status: { $ne: 'closed' }
-    }).sort({ createdAt: -1 });
+    // Lavozimi 'boshqa' bo'lgan eski qo'lda yozilganlarni ham sarlavhasi
+    // bo'yicha tanib olamiz ("Xostes" -> xostess). Aks holda mijoz qo'lda
+    // ochgan vakansiya yonida xuddi shunday ikkinchisi paydo bo'lardi.
+    const open = await Vacancy.find({
+      agencyId, clientId: client.id, status: { $ne: 'closed' }
+    }).sort({ createdAt: -1 }).limit(50);
+    const v = open.find(x => x.role === role) ||
+              open.find(x => !isValidRole(x.role) && vac.guessRole(x.title) === role);
     if (v) {
       // Faqat BO'SH maydonlarni to'ldiramiz — mijoz o'zi yozganini bosmaymiz
       let changed = false;
+      if (v.role !== role) { v.role = role; changed = true; }   // eski 'boshqa' tuzaladi
       const fill = (k, val) => {
         const empty = v[k] == null || v[k] === '' || (Array.isArray(v[k]) && !v[k].length);
         if (empty && val != null && val !== '' && !(Array.isArray(val) && !val.length)) {

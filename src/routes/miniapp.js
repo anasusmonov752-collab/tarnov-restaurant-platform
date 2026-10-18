@@ -25,6 +25,8 @@ const Vacancy = require('../models/Vacancy');
 const Application = require('../models/Application');
 const vac = require('../services/vacancy');
 const agent = require('../services/agent');
+const chat = require('../services/chat');
+const ChatThread = require('../models/ChatThread');
 
 const router = express.Router();
 
@@ -602,6 +604,57 @@ router.post('/topup', clientGuard, asyncHandler(async (req, res) => {
       `Panel -> Mijozlar -> Kredit`).catch(() => {});
   }
   res.json({ ok: true });
+}));
+
+// ══ SUHBATLAR ═══════════════════════════════════════════════
+// Tepada qadalgan "TalentHub ✓" (agentlik), ostida kontakt ochilgan
+// nomzodlar. Suhbat kontakt ochilganda avtomatik ochiladi — mijoz
+// o'zi boshlay olmaydi, chunki to'lanmagan nomzodga yozib bo'lmaydi.
+
+router.get('/chats', clientGuard, asyncHandler(async (req, res) => {
+  const agencyId = req.client.agencyId;
+  const rows = await chat.inboxForClient(agencyId, req.client.id);
+
+  // Nomzodni KODI bilan ko'rsatamiz — ism bu yerda ham chiqmaydi
+  const ids = rows.filter(r => r.candidateId).map(r => r.candidateId);
+  const cands = ids.length
+    ? await Candidate.find({ restaurantId: agencyId, id: { $in: ids } },
+        'id publicCode desiredPosition').lean()
+    : [];
+  const by = Object.fromEntries(cands.map(c => [c.id, c]));
+
+  res.json(rows.map(r => {
+    if (!r.candidateId) return r;
+    const c = by[r.candidateId] || {};
+    return Object.assign({}, r, {
+      title: c.publicCode || '—',
+      subtitle: r.lastMsgText || c.desiredPosition || ''
+    });
+  }));
+}));
+
+router.get('/chats/:id/messages', clientGuard, asyncHandler(async (req, res) => {
+  const agencyId = req.client.agencyId;
+  // clientId shart: boshqa mijozning suhbatini id bilan ocholmasin
+  const th = await ChatThread.findOne({ agencyId, id: req.params.id, clientId: req.client.id });
+  if (!th) return res.status(404).json({ error: 'Suhbat topilmadi' });
+
+  const msgs = await chat.messages({ agencyId, threadId: th.id });
+  await chat.markRead({ agencyId, threadId: th.id, side: 'client' });
+  res.json({ id: th.id, kind: th.kind, state: th.state, messages: msgs });
+}));
+
+router.post('/chats/:id/messages', clientGuard, asyncHandler(async (req, res) => {
+  const agencyId = req.client.agencyId;
+  const th = await ChatThread.findOne({ agencyId, id: req.params.id, clientId: req.client.id });
+  if (!th) return res.status(404).json({ error: 'Suhbat topilmadi' });
+
+  try {
+    const m = await chat.post({ agencyId, threadId: th.id, from: 'client', text: (req.body || {}).text });
+    res.json({ ok: true, id: m.id, createdAt: m.createdAt });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 }));
 
 module.exports = router;

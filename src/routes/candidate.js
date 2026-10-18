@@ -23,6 +23,9 @@ const vac = require('../services/vacancy');
 const tg = require('../services/telegram');
 const initData = require('../services/tgInitData');
 const { isValidRole } = require('../data/roles');
+const chat = require('../services/chat');
+const ChatThread = require('../models/ChatThread');
+const botRelay = require('../services/botRelay');
 
 const router = express.Router();
 
@@ -320,6 +323,77 @@ router.get('/photo', asyncHandler(async (req, res) => {
   res.set('Content-Type', m[1]);
   res.set('Cache-Control', 'private, max-age=3600');
   res.send(Buffer.from(m[2], 'base64'));
+}));
+
+// ══ SUHBATLAR ═══════════════════════════════════════════════
+// Tepada qadalgan "TalentHub ✓", ostida kontaktini ochgan mijozlar.
+//
+// Qadalgan suhbat ChatThread'da EMAS — u mavjud Telegram yozishmasi
+// (BotMessage). Shuning uchun id'si maxsus: chat.AGENCY_THREAD.
+// Unga yozilgan xabar botRelay orqali admin chatiga boradi, ya'ni siz
+// uni Telegramda ko'rasiz — yangi inbox kuzatish shart emas.
+
+router.get('/chats', guard, asyncHandler(async (req, res) => {
+  const agencyId = req.cand.restaurantId;
+  const rows = await chat.inboxForCandidate(agencyId, req.cand.id);
+
+  // Mijozni NOMI bilan ko'rsatamiz: kontakt ochilgan, ya'ni tanishish
+  // allaqachon bo'lgan. Anonimlik faqat kontaktgacha amal qiladi.
+  const ids = rows.filter(r => r.clientId).map(r => r.clientId);
+  const cl = ids.length
+    ? await Client.find({ agencyId, id: { $in: ids } }, 'id name location').lean()
+    : [];
+  const by = Object.fromEntries(cl.map(c => [c.id, c]));
+
+  res.json(rows.map(r => {
+    if (!r.clientId) return r;
+    const c = by[r.clientId] || {};
+    return Object.assign({}, r, {
+      title: c.name || 'Ish beruvchi',
+      subtitle: r.lastMsgText || c.location || ''
+    });
+  }));
+}));
+
+router.get('/chats/:id/messages', guard, asyncHandler(async (req, res) => {
+  const agencyId = req.cand.restaurantId;
+
+  if (req.params.id === chat.AGENCY_THREAD) {
+    const msgs = await chat.messages({ agencyId, threadId: chat.AGENCY_THREAD, candidateId: req.cand.id });
+    return res.json({ id: chat.AGENCY_THREAD, kind: 'ca', state: 'open', messages: msgs });
+  }
+
+  // candidateId shart: boshqa nomzodning suhbatini ocholmasin
+  const th = await ChatThread.findOne({ agencyId, id: req.params.id, candidateId: req.cand.id });
+  if (!th) return res.status(404).json({ error: 'Suhbat topilmadi' });
+
+  const msgs = await chat.messages({ agencyId, threadId: th.id });
+  await chat.markRead({ agencyId, threadId: th.id, side: 'candidate' });
+  res.json({ id: th.id, kind: th.kind, state: th.state, messages: msgs });
+}));
+
+router.post('/chats/:id/messages', guard, asyncHandler(async (req, res) => {
+  const agencyId = req.cand.restaurantId;
+  const text = String((req.body || {}).text || '').trim();
+  if (!text) return res.status(400).json({ error: 'Xabar bo\'sh' });
+
+  // Agentlikka — mavjud relay orqali, admin Telegramda ko'radi
+  if (req.params.id === chat.AGENCY_THREAD) {
+    const rest = await Restaurant.findOne({ id: agencyId });
+    if (!rest) return res.status(404).json({ error: 'Agentlik topilmadi' });
+    await botRelay.forwardToAdmin(rest, req.cand, text);
+    return res.json({ ok: true });
+  }
+
+  const th = await ChatThread.findOne({ agencyId, id: req.params.id, candidateId: req.cand.id });
+  if (!th) return res.status(404).json({ error: 'Suhbat topilmadi' });
+
+  try {
+    const m = await chat.post({ agencyId, threadId: th.id, from: 'candidate', text });
+    res.json({ ok: true, id: m.id, createdAt: m.createdAt });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
 }));
 
 module.exports = router;

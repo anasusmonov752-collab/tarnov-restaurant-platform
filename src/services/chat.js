@@ -8,6 +8,7 @@
 const { v4: uuidv4 } = require('uuid');
 const ChatThread = require('../models/ChatThread');
 const ChatMessage = require('../models/ChatMessage');
+const BotMessage = require('../models/BotMessage');
 
 const PREVIEW = 120;   // ro'yxatda ko'rinadigan qism
 
@@ -88,4 +89,81 @@ async function onReveal({ agencyId, clientId, candidateId, shortlistId, clientNa
   return th;
 }
 
-module.exports = { ensureThread, post, markRead, onReveal, PREVIEW };
+
+// ── INBOX ────────────────────────────────────────────────────
+// Ikkala kabinetda bir xil ko'rinish: tepada qadalgan "TalentHub ✓",
+// ostida haqiqiy suhbatlar.
+//
+// Qadalgan suhbat IKKI XIL MANBADAN keladi va buni shu yerda yashiramiz,
+// UI bilmasin:
+//   mijoz tomoni  -> ChatThread kind='ca'   (yangi)
+//   nomzod tomoni -> BotMessage             (mavjud relay, Telegram
+//                    reply plumbing'i bilan — ko'chirmaymiz)
+// Nomzod tomonidagi qadalgan suhbatning id'si — AGENCY_THREAD.
+const AGENCY_THREAD = 'agency';
+
+function row(t, side) {
+  const unread = { client: t.unreadClient, candidate: t.unreadCandidate, agency: t.unreadAgency }[side] || 0;
+  return {
+    id: t.id, kind: t.kind, state: t.state,
+    candidateId: t.candidateId, clientId: t.clientId,
+    lastMsgAt: t.lastMsgAt, lastMsgText: t.lastMsgText, lastMsgFrom: t.lastMsgFrom,
+    unread, pinned: false
+  };
+}
+
+// Mijoz inboxi: qadalgan agentlik + kontakt ochilgan nomzodlar
+async function inboxForClient(agencyId, clientId) {
+  const [pin, threads] = await Promise.all([
+    ensureThread({ agencyId, clientId, kind: 'ca' }),
+    ChatThread.find({ agencyId, clientId, kind: 'cc' }).sort({ lastMsgAt: -1 }).limit(100).lean()
+  ]);
+  const head = Object.assign(row(pin.toObject ? pin.toObject() : pin, 'client'), {
+    pinned: true, title: 'TalentHub', verified: true,
+    subtitle: pin.lastMsgText || 'Yordam kerakmi? Yozing'
+  });
+  return [head, ...threads.map(t => row(t, 'client'))];
+}
+
+// Nomzod inboxi: qadalgan agentlik (BotMessage'dan) + uni ochgan mijozlar
+async function inboxForCandidate(agencyId, candidateId) {
+  const [last, threads] = await Promise.all([
+    BotMessage.findOne({ restaurantId: agencyId, candidateId }).sort({ createdAt: -1 }).lean(),
+    ChatThread.find({ agencyId, candidateId, kind: 'cc' }).sort({ lastMsgAt: -1 }).limit(100).lean()
+  ]);
+  const head = {
+    id: AGENCY_THREAD, kind: 'ca', state: 'open', pinned: true,
+    title: 'TalentHub', verified: true,
+    subtitle: (last && last.text) ? String(last.text).slice(0, PREVIEW) : 'Yordam kerakmi? Yozing',
+    lastMsgAt: last ? last.createdAt : null,
+    lastMsgFrom: last ? (last.direction === 'in' ? 'candidate' : 'agency') : '',
+    unread: 0
+  };
+  return [head, ...threads.map(t => row(t, 'candidate'))];
+}
+
+// ── Xabarlar ─────────────────────────────────────────────────
+// Nomzodning qadalgan suhbati uchun BotMessage'ni bir xil shaklga
+// keltiramiz — UI ikkala manbani farqlamasin.
+async function messages({ agencyId, threadId, candidateId = '', limit = 200 }) {
+  if (threadId === AGENCY_THREAD) {
+    const rows = await BotMessage.find({ restaurantId: agencyId, candidateId })
+      .sort({ createdAt: -1 }).limit(limit).lean();
+    return rows.reverse().map(m => ({
+      id: m.id,
+      from: m.kind === 'system' ? 'system' : (m.direction === 'in' ? 'candidate' : 'agency'),
+      kind: m.kind === 'system' ? 'system' : 'text',
+      text: m.text, createdAt: m.createdAt
+    }));
+  }
+  const rows = await ChatMessage.find({ agencyId, threadId })
+    .sort({ createdAt: -1 }).limit(limit).lean();
+  return rows.reverse().map(m => ({
+    id: m.id, from: m.from, kind: m.kind, text: m.text, createdAt: m.createdAt
+  }));
+}
+module.exports = {
+  ensureThread, post, markRead, onReveal,
+  inboxForClient, inboxForCandidate, messages,
+  PREVIEW, AGENCY_THREAD
+};

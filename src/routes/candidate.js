@@ -12,8 +12,15 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const { asyncHandler } = require('../middleware/errorHandler');
+const { v4: uuidv4 } = require('uuid');
 const Candidate = require('../models/Candidate');
 const Shortlist = require('../models/Shortlist');
+const Vacancy = require('../models/Vacancy');
+const Application = require('../models/Application');
+const Client = require('../models/Client');
+const Restaurant = require('../models/Restaurant');
+const vac = require('../services/vacancy');
+const tg = require('../services/telegram');
 const initData = require('../services/tgInitData');
 const { isValidRole } = require('../data/roles');
 
@@ -171,6 +178,133 @@ router.patch('/me', guard, asyncHandler(async (req, res) => {
   await c.save();
 
   res.json({ ok: true, profile: profileOf(c) });
+}));
+
+// ══ ISH O'RINLARI ════════════════════════════════════════════
+// Nomzod ochiq vakansiyalarni ko'radi va ariza beradi.
+//
+// Restoran nomi KO'RINMAYDI — faqat "Chilonzorda restoran". Nomzod
+// nomni bilsa to'g'ridan-to'g'ri borib ishga kiradi va vositachilik
+// ma'nosini yo'qotadi. Bu mijozni ham himoya qiladi: u nomzod ismini
+// faqat kontakt ochilgach ko'radi. Ikki tomon ham teng anonim.
+
+router.get('/vacancies', guard, asyncHandler(async (req, res) => {
+  const c = req.cand;
+
+  // Eskirganlarini ko'rsatmaymiz: tasdiqlanmagan vakansiya katta
+  // ehtimol allaqachon to'lgan. Soxta e'lon muammosi shunday yopiladi.
+  const fresh = new Date(Date.now() - vac.STALE_DAYS * 864e5);
+  // Diqqat: Candidate'da maydon `restaurantId`, Vacancy'da esa `agencyId` —
+  // ikkalasi ham bitta agentlikni bildiradi.
+  const rows = await Vacancy.find({
+    agencyId: c.restaurantId,
+    status: 'open',
+    confirmedAt: { $gte: fresh }
+  }).sort({ confirmedAt: -1 }).limit(60).lean();
+
+  if (!rows.length) return res.json([]);
+
+  // Hudud uchun mijoz ma'lumoti kerak — NOMI emas
+  const cids = [...new Set(rows.map(r => r.clientId))];
+  const clients = await Client.find({ agencyId: c.restaurantId, id: { $in: cids } }, 'id location').lean();
+  const byId = Object.fromEntries(clients.map(x => [x.id, x]));
+
+  // Qaysilariga allaqachon ariza berganini belgilaymiz
+  const mine = await Application.find(
+    { agencyId: c.restaurantId, candidateId: c.id }, 'vacancyId state').lean();
+  const appMap = Object.fromEntries(mine.map(a => [a.vacancyId, a.state]));
+
+  const out = rows.map(v => Object.assign(vac.forCandidate(v, byId[v.clientId]), {
+    applied: !!appMap[v.id],
+    appState: appMap[v.id] || '',
+    // "Sizga mos" belgisi: lavozim bir xil va tajriba yetadi
+    match: v.role === c.role && (!v.minExp || (c.experienceYears || 0) >= v.minExp)
+  }));
+
+  // Mos kelganlari yuqorida
+  out.sort((a, b) => (b.match - a.match) || (a.freshDays - b.freshDays));
+  res.json(out);
+}));
+
+router.post('/vacancies/:id/apply', guard, asyncHandler(async (req, res) => {
+  const c = req.cand;
+  const v = await Vacancy.findOne({ agencyId: c.restaurantId, id: req.params.id, status: 'open' }).lean();
+  if (!v) return res.status(404).json({ error: 'Vakansiya topilmadi yoki yopilgan' });
+
+  // Telefon bo'lmasa ariza befoyda — mijoz tanlasa ham bog'lana olmaymiz
+  if (!c.phone) {
+    return res.status(400).json({ error: 'Avval profilingizga telefon raqamini kiriting' });
+  }
+
+  try {
+    const a = await Application.create({
+      id: uuidv4(),
+      agencyId: c.restaurantId,
+      vacancyId: v.id,
+      candidateId: c.id,
+      clientId: v.clientId,
+      message: String((req.body || {}).message || '').trim().slice(0, 500)
+    });
+
+    // Ariza bergan odam ish qidiryapti — holatini shunga keltiramiz
+    if (c.jobStatus !== 'active') {
+      c.jobStatus = 'active';
+      c.jobStatusAt = new Date();
+      await c.save();
+    }
+
+    // Sizga xabar
+    try {
+      const agency = await Restaurant.findOne({ id: c.restaurantId });
+      const chat = agency && agency.telegram && agency.telegram.adminChatId;
+      if (chat) {
+        await tg.sendMessage(tg.platformToken(), chat,
+          `📨 Yangi ariza\n\n${c.fullName || 'Nomsiz'} — ${v.title}\n` +
+          `${c.desiredPosition || ''}${c.experienceYears ? ' · ' + c.experienceYears + ' yil' : ''}\n` +
+          `${c.phone || ''}`);
+      }
+    } catch (e) { console.error('[CAND] ariza xabari ketmadi:', e.message); }
+
+    res.json({ ok: true, id: a.id });
+  } catch (e) {
+    // unique indeks: takroriy ariza
+    if (e.code === 11000) return res.status(409).json({ error: 'Bu vakansiyaga allaqachon ariza bergansiz' });
+    throw e;
+  }
+}));
+
+// ── Arizalarim ──
+const APP_LABEL = {
+  new:         'Ko\'rib chiqilmoqda',
+  seen:        'Ko\'rildi',
+  shortlisted: 'Tanlandi — HR bog\'lanadi',
+  rejected:    'Rad etildi'
+};
+
+router.get('/applications', guard, asyncHandler(async (req, res) => {
+  const c = req.cand;
+  const rows = await Application.find({ agencyId: c.restaurantId, candidateId: c.id })
+    .sort({ createdAt: -1 }).limit(50).lean();
+  if (!rows.length) return res.json([]);
+
+  const vids = rows.map(r => r.vacancyId);
+  const vs = await Vacancy.find({ agencyId: c.restaurantId, id: { $in: vids } }).lean();
+  const vById = Object.fromEntries(vs.map(v => [v.id, v]));
+
+  const cids = [...new Set(vs.map(v => v.clientId))];
+  const clients = await Client.find({ agencyId: c.restaurantId, id: { $in: cids } }, 'id location').lean();
+  const clById = Object.fromEntries(clients.map(x => [x.id, x]));
+
+  res.json(rows.map(a => {
+    const v = vById[a.vacancyId];
+    return {
+      id: a.id,
+      state: a.state,
+      stateLabel: APP_LABEL[a.state] || a.state,
+      createdAt: a.createdAt,
+      vacancy: v ? vac.forCandidate(v, clById[v.clientId]) : null
+    };
+  }));
 }));
 
 // ── O'z fotosi ──

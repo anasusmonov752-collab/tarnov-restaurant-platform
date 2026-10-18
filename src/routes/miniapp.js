@@ -22,6 +22,7 @@ const shortlistSvc = require('../services/shortlist');
 const credits = require('../services/credits');
 const pipeline = require('../data/pipeline');
 const Vacancy = require('../models/Vacancy');
+const Application = require('../models/Application');
 const vac = require('../services/vacancy');
 const agent = require('../services/agent');
 
@@ -453,6 +454,129 @@ router.post('/vacancies/:id/confirm', clientGuard, asyncHandler(async (req, res)
   );
   if (!v) return res.status(404).json({ error: 'Vakansiya topilmadi' });
   res.json(vac.full(v));
+}));
+
+// ══ VAKANSIYAGA KELGAN ARIZALAR ══════════════════════════════
+// Arizachi ham qidiruvdagidek ANONIM ko'rinadi. Tanlangach oddiy
+// tanlov oqimiga quyiladi: siz tekshirasiz, kontakt ochiladi, kredit
+// yechiladi. Arizaga alohida pul modeli yaratmadik.
+
+router.get('/vacancies/:id/applications', clientGuard, asyncHandler(async (req, res) => {
+  const agencyId = req.client.agencyId;
+  const v = await Vacancy.findOne({ agencyId, clientId: req.client.id, id: req.params.id }).lean();
+  if (!v) return res.status(404).json({ error: 'Vakansiya topilmadi' });
+
+  const apps = await Application.find({ agencyId, vacancyId: v.id })
+    .sort({ createdAt: -1 }).limit(100).lean();
+  if (!apps.length) return res.json({ vacancy: vac.full(v), items: [] });
+
+  const cands = await Candidate.find(
+    { restaurantId: agencyId, id: { $in: apps.map(a => a.candidateId) } },
+    '-fileData -rawText -photo -tgInviteToken'
+  ).lean();
+  await assignCodes(agencyId, cands);
+  const byId = Object.fromEntries(cands.map(c => [c.id, c]));
+
+  // Ko'rilgan deb belgilaymiz — nomzod "Ko'rildi" holatini ko'radi
+  const unseen = apps.filter(a => a.state === 'new').map(a => a.id);
+  if (unseen.length) {
+    await Application.updateMany(
+      { agencyId, id: { $in: unseen } },
+      { $set: { state: 'seen', seenAt: new Date() } }
+    );
+  }
+
+  const anon = Object.fromEntries(
+    anonymize.forClientList(cands.filter(Boolean)).map(c => [c.publicCode, c])
+  );
+
+  res.json({
+    vacancy: vac.full(v),
+    items: apps.map(a => {
+      const c = byId[a.candidateId];
+      return {
+        id: a.id,
+        state: a.state === 'new' ? 'seen' : a.state,
+        message: a.message,
+        createdAt: a.createdAt,
+        candidate: c ? anon[c.publicCode] || null : null
+      };
+    })
+  });
+}));
+
+// ── Arizachini tanlash yoki rad etish ──
+router.post('/applications/:id/:action', clientGuard, asyncHandler(async (req, res) => {
+  const agencyId = req.client.agencyId;
+  const act = req.params.action;
+  if (!['pick', 'reject'].includes(act)) return res.status(400).json({ error: 'Amal noto\'g\'ri' });
+
+  const a = await Application.findOne({ agencyId, clientId: req.client.id, id: req.params.id });
+  if (!a) return res.status(404).json({ error: 'Ariza topilmadi' });
+  if (a.state === 'shortlisted' || a.state === 'rejected') {
+    return res.status(400).json({ error: 'Bu ariza bo\'yicha qaror qabul qilingan' });
+  }
+
+  if (act === 'reject') {
+    a.state = 'rejected';
+    a.reason = String((req.body || {}).reason || '').slice(0, 60);
+    a.decidedAt = new Date();
+    await a.save();
+    return res.json({ ok: true, state: a.state });
+  }
+
+  // Shu vakansiya bo'yicha ochiq tanlov bormi — bo'lsa unga qo'shamiz,
+  // aks holda yangisini ochamiz. Har arizaga alohida tanlov yaratsak,
+  // sizda o'nlab mayda tanlov yig'ilib ketardi.
+  const v = await Vacancy.findOne({ agencyId, id: a.vacancyId }).lean();
+  let sl = await Shortlist.findOne({
+    agencyId, clientId: req.client.id, vacancyId: a.vacancyId, status: { $ne: 'done' }
+  });
+
+  if (!sl) {
+    sl = await Shortlist.create({
+      id: uuidv4(), agencyId, clientId: req.client.id,
+      vacancyId: a.vacancyId,
+      summary: (v && v.title) || 'Arizalar',
+      items: [], status: 'new'
+    });
+  }
+  if (!sl.items.some(i => i.candidateId === a.candidateId)) {
+    sl.items.push({ candidateId: a.candidateId, state: 'selected' });
+    sl.updatedAt = new Date();
+    await sl.save();
+  }
+
+  a.state = 'shortlisted';
+  a.shortlistId = sl.id;
+  a.decidedAt = new Date();
+  await a.save();
+
+  await Candidate.updateOne(
+    { restaurantId: agencyId, id: a.candidateId },
+    { $addToSet: { shownToClients: req.client.id } }
+  );
+
+  // Sizga to'liq kontakt bilan xabar
+  try {
+    const agency = await Restaurant.findOne({ id: agencyId });
+    const chat = agency && agency.telegram && agency.telegram.adminChatId;
+    if (chat) {
+      const c = await Candidate.findOne({ restaurantId: agencyId, id: a.candidateId },
+        'fullName phone desiredPosition publicCode').lean();
+      if (c) {
+        await tg.sendMessage(tg.platformToken(), chat,
+          `${req.client.name} arizachini tanladi\n` +
+          `Vakansiya: ${(v && v.title) || '—'}\n` +
+          `${'—'.repeat(22)}\n\n` +
+          `${c.fullName || 'Nomsiz'} (${c.publicCode || '—'})\n` +
+          `${c.desiredPosition || ''}\n📞 ${c.phone || 'telefon yo\'q'}`,
+          { reply_markup: shortlistSvc.cbKeyboard(sl.id, a.candidateId) });
+      }
+    }
+  } catch (e) { console.error('[MA] ariza xabari ketmadi:', e.message); }
+
+  res.json({ ok: true, state: a.state, shortlistId: sl.id });
 }));
 
 // ── Kredit tarixi ──

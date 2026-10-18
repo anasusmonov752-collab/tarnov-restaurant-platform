@@ -48,10 +48,33 @@ Har xabar bot orqali Telegramga push bo'ladi — Mini App'ning o'z
 push'i yo'q, usiz chat o'lik bo'lardi. Agentlik `/suhbatlar.html`
 dan hammasini ko'radi va istalganiga yozadi.
 
-Qolgani: nomzod tomonini haqiqiy nomzod bilan sinash (Eskiz yoki
-uchinchi Telegram akkaunt kerak). Ma'lum kichik kamchilik: `'ca'`
-turidagi suhbat uchun unikal indeks yo'q, ikkita bir vaqtdagi inbox
-yuklanishi dublikat yaratishi mumkin (oyna juda tor).
+Qolgani: nomzod tomonini haqiqiy nomzod bilan sinash. Eskiz SHART
+EMAS: kalitlar yo'q bo'lsa panel deep-link'ni "qo'lda" rejimda beradi,
+uni uchinchi Telegram akkauntga (admin ham, mijoz ham emas) tashlash
+kifoya. Ma'lum kichik kamchilik: `'ca'` turidagi suhbat uchun unikal
+indeks yo'q, ikkita bir vaqtdagi inbox yuklanishi dublikat yaratishi
+mumkin (oyna juda tor).
+
+**Nomzod tomoni tuzatishlari** (`387cf50`, kod auditi): Mini App'dan
+"TalentHub"ga yozilgan xabar BotMessage'ga yozilmasdi — nomzod
+suhbatidan yo'qolardi, admin reply'i nomzodga yetmasdi. Endi webhook
+va Mini App bitta yo'l: `botRelay.receiveFromCandidate()`.
+
+**Avtomatik vakansiya — JONLI TEKSHIRILDI** (2026-10-18, `4331240`..):
+mijoz botda qidirib nomzod tanlasa vakansiya o'zi yaratiladi
+(`services/vacancyAuto.js`), taklif AI orqali QAT'IY SHABLONGA
+ajratiladi (satrlarni server yig'adi). Yopiq (`listed:false`) tug'iladi,
+botdagi "📢 E'lon qilish" tugmasi yoki kabinet orqali ochiladi. Shu
+lavozimga ochiq vakansiya bo'lsa yangisi ochilmaydi — formalarda
+lavozim majburiy, eski 'boshqa' yozuvlar sarlavhadan taniladi.
+Jonli isbot: ikkinchi qidiruv yangi vakansiya ochmadi (2 tanlov),
+E'lon qilish ishladi. `/ping` endi deploy qilingan commit'ni qaytaradi.
+
+**Keyingi bosqich (Anas tasdiqlagan):** kontakt ochilgach ikki tomon
+bir-birini to'liq ko'radi — mijoz chatida kod o'rniga ism+foto, bosilsa
+rezyume; nomzod mijoz nomini bossa kompaniya va vakansiya kartasi;
+nomzod vakansiyani bossa hh kabi to'liq sahifa (kompaniya nomisiz).
+Keyin: vakansiyadan "Mos nomzodlar" (Mini App ichida qidiruv).
 
 **Eskiz SMS ochilmagan** — nomzod kabineti, tiriklik tekshiruvi va suhbat
 tasdiqlash shunga bog'liq. 799 nomzoddan ~1 tasi botga bog'langan.

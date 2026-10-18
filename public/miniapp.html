@@ -973,7 +973,8 @@ function pickTab(id){
   if (id === 'tMS') loadChats();
 }
 TABS.forEach(([t]) => { $(t).onclick = () => pickTab(t); });
-n// Telegram push tugmasi miniapp.html#chat ga olib keladi — Aloqa tabini ochamiz.
+
+// Telegram push tugmasi miniapp.html#chat ga olib keladi — Aloqa tabini ochamiz.
 if (location.hash === '#chat') setTimeout(() => pickTab('tMS'), 0);
 
 // ══════════════════════════════════════════════════════════

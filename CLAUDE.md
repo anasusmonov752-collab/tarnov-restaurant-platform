@@ -34,13 +34,18 @@ To'rtala bloklovchi `9f2a6b8` da tuzatilib, jonli deploy'da isbotlandi:
 **Hali tekshirilmagan:** nomzod tomoni (ariza berish, nomzod kabineti) —
 Eskizga bog'liq. Qolgan 14 major + 17 minor topilma ham ochiq.
 
-**Mini App ichida ikki tomonlama chat** (egasi 2026-10-18 da so'radi).
-Mijoz ↔ nomzod chati, kontakt o'rniga emas — QO'SHIMCHA kanal sifatida.
-Maqsadi chetlab o'tishdan himoya EMAS (pul kontaktda olinadi, va chatda
-raqam almashish baribir to'xtatib bo'lmaydi), balki YOZUV: nima taklif
-qilingan, kim javob bermagan, muzokara qayerda to'xtagan. Bu nizoni hal
-qiladi va javob darajasi signalini beradi. Eskizdan KEYIN — hozir 799
-nomzoddan 1 tasi Telegramda, ya'ni chatning bir tomoni mavjud emas.
+**Mini App ichidagi chat — QURILDI** (2026-10-18, `919ca4e`..`7a0ccb4`).
+Mijoz ↔ nomzod suhbati kontakt ochilganda avtomatik ochiladi; kontakt
+ham, chat ham beriladi (chat kontakt o'rnini bosmaydi). Ikkala
+kabinetda inbox: tepada qadalgan "TalentHub ✓", ostida suhbatlar.
+Har xabar bot orqali Telegramga push bo'ladi — Mini App'ning o'z
+push'i yo'q, usiz chat o'lik bo'lardi. Agentlik `/suhbatlar.html`
+dan hammasini ko'radi va istalganiga yozadi.
+
+Qolgani: nomzod tomonini haqiqiy nomzod bilan sinash (Eskiz yoki
+uchinchi Telegram akkaunt kerak). Ma'lum kichik kamchilik: `'ca'`
+turidagi suhbat uchun unikal indeks yo'q, ikkita bir vaqtdagi inbox
+yuklanishi dublikat yaratishi mumkin (oyna juda tor).
 
 **Eskiz SMS ochilmagan** — nomzod kabineti, tiriklik tekshiruvi va suhbat
 tasdiqlash shunga bog'liq. 799 nomzoddan ~1 tasi botga bog'langan.

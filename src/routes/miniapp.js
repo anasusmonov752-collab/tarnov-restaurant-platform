@@ -21,6 +21,8 @@ const tg = require('../services/telegram');
 const shortlistSvc = require('../services/shortlist');
 const credits = require('../services/credits');
 const pipeline = require('../data/pipeline');
+const Vacancy = require('../models/Vacancy');
+const vac = require('../services/vacancy');
 const agent = require('../services/agent');
 
 const router = express.Router();
@@ -379,6 +381,78 @@ router.post('/shortlists/:id/items/:candidateId', clientGuard, asyncHandler(asyn
   } catch (e) {
     res.status(400).json({ error: e.message });
   }
+}));
+
+// ══ MIJOZNING VAKANSIYALARI ══════════════════════════════════
+// Mijoz o'zi yaratadi va yangilaydi. Siz ham panel orqali kirita
+// olasiz (/api/vacancies) — telefonda aytsa qo'lda yozasiz.
+
+router.get('/vacancies', clientGuard, asyncHandler(async (req, res) => {
+  const rows = await Vacancy.find({ agencyId: req.client.agencyId, clientId: req.client.id })
+    .sort({ createdAt: -1 }).limit(50).lean();
+
+  // Har vakansiyaga nechta nomzod tanlangan
+  const counts = await Shortlist.aggregate([
+    { $match: { agencyId: req.client.agencyId, clientId: req.client.id,
+                vacancyId: { $in: rows.map(r => r.id) } } },
+    { $group: { _id: '$vacancyId', n: { $sum: 1 } } }
+  ]);
+  const cMap = Object.fromEntries(counts.map(c => [c._id, c.n]));
+
+  res.json(rows.map(v => vac.full(v, { shortlists: cMap[v.id] || 0 })));
+}));
+
+router.post('/vacancies', clientGuard, asyncHandler(async (req, res) => {
+  const data = vac.clean(req.body || {});
+  if (!data.title) return res.status(400).json({ error: 'Vakansiya nomini yozing' });
+
+  const v = await Vacancy.create(Object.assign({
+    id: uuidv4(),
+    agencyId: req.client.agencyId,
+    clientId: req.client.id,
+    location: data.location || req.client.location || ''
+  }, data));
+
+  // Sizga xabar — yangi vakansiya ochilganini bilishingiz kerak
+  try {
+    const agency = await Restaurant.findOne({ id: req.client.agencyId });
+    const chat = agency && agency.telegram && agency.telegram.adminChatId;
+    if (chat) {
+      await tg.sendMessage(tg.platformToken(), chat,
+        `📋 Yangi vakansiya — ${req.client.name}\n\n` +
+        `${v.title}\n` +
+        (vac.salaryText(v) ? vac.salaryText(v) + '\n' : '') +
+        (v.shift ? v.shift + ' smena\n' : '') +
+        (v.headcount > 1 ? `${v.headcount} ta odam\n` : '') +
+        `\nPanel -> Vakansiyalar`);
+    }
+  } catch (e) { console.error('[MA] vakansiya xabari ketmadi:', e.message); }
+
+  res.json(vac.full(v));
+}));
+
+router.patch('/vacancies/:id', clientGuard, asyncHandler(async (req, res) => {
+  const v = await Vacancy.findOne({
+    agencyId: req.client.agencyId, clientId: req.client.id, id: req.params.id
+  });
+  if (!v) return res.status(404).json({ error: 'Vakansiya topilmadi' });
+
+  Object.assign(v, vac.clean(req.body || {}, v.toObject()));
+  v.updatedAt = new Date();
+  await v.save();
+  res.json(vac.full(v));
+}));
+
+// Tasdiqlash — "bu o'rin hali ochiq". Nomzod kartada "2 kun oldin
+// tasdiqlangan" deb ko'radi, soxta e'lon muammosi shunday yopiladi.
+router.post('/vacancies/:id/confirm', clientGuard, asyncHandler(async (req, res) => {
+  const v = await Vacancy.findOneAndUpdate(
+    { agencyId: req.client.agencyId, clientId: req.client.id, id: req.params.id },
+    { $set: { confirmedAt: new Date(), updatedAt: new Date() } },
+    { new: true }
+  );
+  if (!v) return res.status(404).json({ error: 'Vakansiya topilmadi' });
+  res.json(vac.full(v));
 }));
 
 // ── Kredit tarixi ──

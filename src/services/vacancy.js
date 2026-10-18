@@ -106,6 +106,8 @@ const money = n => n ? Number(n).toLocaleString('uz-UZ').replace(/,/g, ' ') : ''
 
 /** Maosh satri: "4 000 000 – 5 000 000 so'm" */
 function salaryText(v) {
+  // Bitta summa aytilsa ikkalasi teng bo'ladi — "4 000 000 – 4 000 000" emas
+  if (v.salaryFrom && v.salaryTo && v.salaryFrom === v.salaryTo) return `${money(v.salaryFrom)} so'm`;
   if (v.salaryFrom && v.salaryTo) return `${money(v.salaryFrom)} – ${money(v.salaryTo)} so'm`;
   if (v.salaryFrom) return `${money(v.salaryFrom)} so'mdan`;
   if (v.salaryTo)   return `${money(v.salaryTo)} so'mgacha`;

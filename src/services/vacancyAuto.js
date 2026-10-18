@@ -60,7 +60,10 @@ const pad = t => t.length === 4 ? '0' + t : t;
 function makeSchedule(p) {
   const days = p.workDays >= 1 && p.workDays <= 7 && p.restDays >= 0 && p.restDays <= 6
     ? `${p.workDays}/${p.restDays}` : '';
-  const hours = TIME.test(p.hoursFrom || '') && TIME.test(p.hoursTo || '')
+  // Boshi va oxiri bir xil ("11:00–11:00") — AI soatni ajrata olmagan;
+  // noto'g'ri jadvaldan ko'ra bo'sh joy yaxshiroq
+  const hours = TIME.test(p.hoursFrom || '') && TIME.test(p.hoursTo || '') &&
+    pad(p.hoursFrom) !== pad(p.hoursTo)
     ? `${pad(p.hoursFrom)}–${pad(p.hoursTo)}` : '';
   return [days, hours].filter(Boolean).join(', ');
 }
@@ -112,6 +115,7 @@ QOIDALAR:
 - shift: "kunduzgi" | "kechki" | "ikkalasi" | null.
 - workDays/restDays: "6/1" -> 6 va 1; "2/2" -> 2 va 2; "haftada 5 kun" -> 5 va 2.
 - hoursFrom/hoursTo: "HH:MM" formatida, "10 dan 22 gacha" -> "10:00", "22:00".
+  Faqat bittasi aytilsa ikkinchisi null — uni TAKRORLAMA va taxmin qilma.
 - perks — FAQAT shu kalitlardan: ${Object.keys(PERKS).join(', ')}.
   ovqat=ovqat/obed; forma=forma/kiyim; yol=yo'l kira puli; transport=xizmat
   avtobusi; rasmiy=rasmiy/trudovoy; bonus=bonus/premiya/foiz; choy=choy puli;

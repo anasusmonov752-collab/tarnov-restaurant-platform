@@ -13,6 +13,7 @@ const Client = require('../models/Client');
 const credits = require('./credits');
 const tg = require('./telegram');
 const pipeline = require('../data/pipeline');
+const chat = require('./chat');
 
 const MANUAL_STATES = pipeline.AGENCY_STATES;
 
@@ -126,7 +127,7 @@ async function setClientState({ agencyId, shortlistId, clientId, candidateId, st
 //   3. yechilmasa — bandlikni bekor qilamiz
 //   4. mijozga xabar yuboramiz (bu bosqich yiqilsa ham ochilgan holda qoladi:
 //      kontakt kabinetda ko'rinadi, kredit bekorga ketmaydi)
-async function reveal({ agencyId, shortlistId, candidateId }) {
+async function reveal({ agencyId, shortlistId, candidateId, appBase = '' }) {
   const now = new Date();
 
   // Oldingi holatni band qilishdan OLDIN o'qiymiz — kredit yetmay qolsa
@@ -180,7 +181,19 @@ async function reveal({ agencyId, shortlistId, candidateId }) {
   }
 
   const cand = await Candidate.findOne({ restaurantId: agencyId, id: candidateId }).lean();
+  const client = await Client.findOne({ agencyId, id: claimed.clientId }).lean();
   await notifyClient({ agencyId, clientId: claimed.clientId, cand, balance });
+
+  // Suhbat ochish va nomzodga xabar — ikkalasi yiqilsa ham jim o'tadi:
+  // kredit yechilgan, kontakt mijozda. Bular ustiga qo'shimcha qatlam.
+  try {
+    await chat.onReveal({
+      agencyId, clientId: claimed.clientId, candidateId, shortlistId,
+      clientName: client && client.name, publicCode: cand && cand.publicCode
+    });
+  } catch (e) { console.error('[SL] suhbat ochilmadi:', e.message); }
+
+  await notifyCandidate({ cand, clientName: client && client.name, appBase });
   await syncKanban(agencyId, candidateId, 'revealed');
 
   return { already: false, shortlist: claimed, balance, candidate: cand, prevState };
@@ -209,6 +222,31 @@ async function notifyClient({ agencyId, clientId, cand, balance }) {
     await tg.sendMessage(tg.platformToken(), client.tgChatId, lines.join('\n'));
   } catch (e) {
     console.error('[SL] mijozga kontakt xabari ketmadi:', e.message);
+  }
+}
+
+// ── Kontakt ochilganini NOMZODGA bildirish ──
+// Ilgari nomzod hech narsa bilmasdi: mijozda uning telefoni bor edi,
+// o'zi esa kim qo'ng'iroq qilishini bilmasdi. Kontakt ochilish payti —
+// o'zaro tanishtirish payti, shuning uchun restoran nomini aytamiz.
+//
+// Yiqilsa throw qilmaydi — kredit allaqachon yechilgan.
+async function notifyCandidate({ cand, clientName, appBase }) {
+  try {
+    if (!cand || !cand.tgChatId) return;
+    const who = clientName || 'Ish beruvchi';
+    const lines = [
+      `🏢 «${who}» sizning kontaktingizni oldi.`,
+      '',
+      'Ular tez orada bog\'lanadi. Siz ham ilovadagi yozishma orqali',
+      'savol bera olasiz.'
+    ];
+    const opts = appBase ? { reply_markup: { inline_keyboard: [[
+      { text: '💬 Yozishmani ochish', web_app: { url: `${appBase}/profil.html#chat` } }
+    ]]}} : {};
+    await tg.sendMessage(tg.platformToken(), cand.tgChatId, lines.join('\n'), opts);
+  } catch (e) {
+    console.error('[SL] nomzodga xabar ketmadi:', e.message);
   }
 }
 
@@ -243,7 +281,7 @@ function cbKeyboard(shortlistId, candidateId) {
 }
 
 module.exports = {
-  setItemState, setClientState, reveal, notifyClient,
+  setItemState, setClientState, reveal, notifyClient, notifyCandidate,
   MANUAL_STATES, isManualState,
   cbData, parseCb, cbKeyboard
 };

@@ -14,6 +14,7 @@ const Candidate = require('../models/Candidate');
 const Client = require('../models/Client');
 const sl = require('../services/shortlist');
 const pipeline = require('../data/pipeline');
+const { publicBase } = require('../utils/publicBase');
 
 const router = express.Router();
 const guard = auth(['restaurant']);
@@ -152,7 +153,8 @@ router.post('/:id/reveal/:candidateId', guard, asyncHandler(async (req, res) => 
     const r = await sl.reveal({
       agencyId: req.user.restaurantId,
       shortlistId: req.params.id,
-      candidateId: req.params.candidateId
+      candidateId: req.params.candidateId,
+      appBase: publicBase(req)
     });
     if (r.already) return res.json({ ok: true, already: true, message: 'Kontakt allaqachon ochilgan' });
     res.json({ ok: true, already: false, balance: r.balance, counts: counts(r.shortlist.items) });

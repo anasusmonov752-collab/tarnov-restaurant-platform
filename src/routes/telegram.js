@@ -15,6 +15,7 @@ const Candidate = require('../models/Candidate');
 const BotMessage = require('../models/BotMessage');
 const Client = require('../models/Client');
 const SearchSession = require('../models/SearchSession');
+const { publicBase } = require('../utils/publicBase');
 const Shortlist = require('../models/Shortlist');
 const tg = require('../services/telegram');
 const shortlistSvc = require('../services/shortlist');
@@ -53,11 +54,6 @@ async function ensureWebhookOnce(req) {
   }
 }
 
-function publicBase(req) {
-  if (process.env.APP_URL) return process.env.APP_URL.replace(/\/+$/, '');
-  const proto = req.headers['x-forwarded-proto'] || req.protocol || 'https';
-  return `${proto}://${req.get('host')}`;
-}
 
 // ══ 1. WEBHOOK ══════════════════════════════════════════════
 
@@ -627,7 +623,7 @@ async function handleCallback(cq, appBase) {
       return;
     }
 
-    const r = await shortlistSvc.reveal({ agencyId: agency.id, shortlistId: row.id, candidateId });
+    const r = await shortlistSvc.reveal({ agencyId: agency.id, shortlistId: row.id, candidateId, appBase });
     if (r.already) {
       await done('Allaqachon ochilgan');
       if (msgId) {

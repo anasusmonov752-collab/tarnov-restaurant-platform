@@ -19,14 +19,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Qolgan ishlar (2026-10-18 holatiga)
 
-**MINIAPP-2 — tugallanmagan.** Kod yozilgan va deploy qilingan, lekin
-uchdan-uchiga test o'tkazilmagan. Audit: `docs/miniapp2-audit-2026-10-18.md`
-(58 da'vo → 35 tasdiqlangan). 4 bloklovchi tuzatilishi shart, ulardan
-ikkitasi haqiqiy pul yo'qotadi:
-- `src/services/shortlist.js:144` — kredit ikkinchi marta yechiladi
-- `src/services/shortlist.js:144` — nomzod rad etgandan keyin ham kontakt ochiladi
-- `src/services/anonymize.js:22` — nomzod ismi kreditsiz sizib chiqadi
-- `public/vakansiyalar.html:118` — toast CSS yo'q, xatolar ko'rinmaydi
+**MINIAPP-2 — bloklovchilar tuzatildi va JONLI TEKSHIRILDI (2026-10-18).**
+Audit: `docs/miniapp2-audit-2026-10-18.md` (58 da'vo → 35 tasdiqlangan).
+To'rtala bloklovchi `9f2a6b8` da tuzatilib, jonli deploy'da isbotlandi:
+- `reveal()` oq ro'yxati — `interview` holatidan ochib bo'lmadi, mijoz
+  qarori saqlandi, ikkinchi kredit yechilmadi
+- `candidate_no` dan ochish 400 qaytardi, kredit yechilmadi
+- Ism redaksiyasi ishladi: mijoz kartasida tavsif matni ichida ism
+  o'rnida `A-XC7L` kodi turdi (xom ma'lumotda u yerda ism bor edi).
+  Bazadagi 798 nomzoddan 60 tasida (7.5%) summary/fitReason ichida ism
+  bor — demak nuqson haqiqiy edi
+- Toast CSS: 191×42px, z-index 9999, modal (200) ustida
+
+**Hali tekshirilmagan:** nomzod tomoni (ariza berish, nomzod kabineti) —
+Eskizga bog'liq. Qolgan 14 major + 17 minor topilma ham ochiq.
+
+**Mini App ichida ikki tomonlama chat** (egasi 2026-10-18 da so'radi).
+Mijoz ↔ nomzod chati, kontakt o'rniga emas — QO'SHIMCHA kanal sifatida.
+Maqsadi chetlab o'tishdan himoya EMAS (pul kontaktda olinadi, va chatda
+raqam almashish baribir to'xtatib bo'lmaydi), balki YOZUV: nima taklif
+qilingan, kim javob bermagan, muzokara qayerda to'xtagan. Bu nizoni hal
+qiladi va javob darajasi signalini beradi. Eskizdan KEYIN — hozir 799
+nomzoddan 1 tasi Telegramda, ya'ni chatning bir tomoni mavjud emas.
 
 **Eskiz SMS ochilmagan** — nomzod kabineti, tiriklik tekshiruvi va suhbat
 tasdiqlash shunga bog'liq. 799 nomzoddan ~1 tasi botga bog'langan.

@@ -145,7 +145,8 @@ async function load(){
   catch(e){ toast(e.message, 'error'); return; }
 
   // Tasdiqlanmaganlar — nomzodlarga ko'rsatilmayapti, bu yo'qotish
-  const stale = ROWS.filter(v => v.stale && v.status === 'open');
+  // Yopiq (avtomatik) vakansiyalar baribir ro'yxatda yo'q — ogohlantirishga kirmaydi
+  const stale = ROWS.filter(v => v.listed && v.stale && v.status === 'open');
   $('warn').innerHTML = stale.length
     ? `<div class="card" style="border-left:3px solid var(--warn);margin-bottom:14px"><div style="padding:14px">
         <b style="font-size:15px">${stale.length} ta vakansiya tasdiqlanmagan</b>
@@ -173,7 +174,8 @@ async function load(){
         <td>${v.apps ? `${v.apps}${v.appsNew ? ` <span class="pill p-new">${v.appsNew} yangi</span>` : ''}` : '—'}</td>
         <td>${v.shortlists || '—'}</td>
         <td><span class="pill ${cls}">${lbl}</span>
-          ${v.stale && v.status === 'open' ? '<div><span class="pill p-no" style="margin-top:4px">tasdiqlang</span></div>' : ''}</td>
+          ${!v.listed ? '<div><span class="pill p-off" style="margin-top:4px" title="Qidiruvdan o\'zi yaratilgan, nomzodlar ko\'rmaydi">yopiq</span></div>' : ''}
+          ${v.listed && v.stale && v.status === 'open' ? '<div><span class="pill p-no" style="margin-top:4px">tasdiqlang</span></div>' : ''}</td>
         <td style="text-align:right;white-space:nowrap">
           <button class="btn btn-sm" data-app="${v.id}">Arizalar</button>
           <button class="btn btn-sm" data-cf="${v.id}">Tasdiqlash</button>

@@ -17,6 +17,7 @@ const candidateSearch = require('./candidateSearch');
 const relay = require('./botRelay');
 const tg = require('./telegram');
 const ai = require('./ai');
+const vacAuto = require('./vacancyAuto');
 const { ROLES } = require('../data/roles');
 
 const ROLE_HINT = ROLES.map(r => `${r.key} (${r.label})`).join(', ');
@@ -99,13 +100,20 @@ async function handleClient({ client, chatId, input }) {
 
   // ── Vakansiya shartlarini yig'ish bosqichi ──
   // Tanlov yuborilgandan keyin "nima taklif qilasiz?" so'raladi.
-  // Javob AI'siz saqlanadi: bu erkin matn, tahlil shart emas.
+  // Xom matn tanlovda qoladi (agentlik uchun), vakansiyaga esa AI
+  // ajratgan SHABLON maydonlari yoziladi (vacancyAuto.applyOffer).
   if (conv.stage === 'offer' && conv.shortlistId && input.text) {
     const offer = String(input.text).slice(0, 600);
     await Shortlist.updateOne(
       { agencyId: client.agencyId, id: conv.shortlistId },
       { $set: { offer, updatedAt: new Date() } }
     );
+
+    let applied = { vacancy: null, parsed: false };
+    try {
+      applied = await vacAuto.applyOffer({ agencyId: client.agencyId, shortlistId: conv.shortlistId, text: offer });
+    } catch (e) { console.error('[AGENT] taklif vakansiyaga yozilmadi:', e.message); }
+    const card = applied.vacancy && applied.parsed ? vacAuto.templateText(applied.vacancy) : '';
 
     // Sizga darhol yetib borsin: qo'ng'iroq qilayotganda nima
     // taklif qilinayotganini bilishingiz kerak
@@ -114,7 +122,8 @@ async function handleClient({ client, chatId, input }) {
       const adminChat = agency && agency.telegram && agency.telegram.adminChatId;
       if (adminChat) {
         await tg.sendMessage(tg.platformToken(), adminChat,
-          `💼 ${client.name} taklif shartlarini yubordi:\n\n${offer}`);
+          `💼 ${client.name} taklif shartlarini yubordi:\n\n${offer}` +
+          (card ? `\n\nVakansiyaga yozildi:\n${card}` : ''));
       }
     } catch (e) { console.error('[AGENT] taklif xabari ketmadi:', e.message); }
 
@@ -122,7 +131,13 @@ async function handleClient({ client, chatId, input }) {
     conv.shortlistId = '';
     conv.updatedAt = new Date();
     await conv.save();
-    return { text: 'Yozib oldim. Nomzodlar bilan gaplashib, javobini yozaman.' };
+
+    // Mijoz nima yozib olinganini ko'rsin — AI adashgan bo'lsa shu
+    // yerda payqaydi va kabinetda tuzatadi
+    return { text: card
+      ? `Yozib oldim:\n\n${card}\n\nXato bo'lsa — Kabinet → Vakansiya bo'limida tuzating. ` +
+        `Nomzodlar bilan gaplashib, javobini yozaman.`
+      : 'Yozib oldim. Nomzodlar bilan gaplashib, javobini yozaman.' };
   }
 
   const userText = input.text || '[ovozli xabar]';
@@ -277,7 +292,9 @@ async function saveSession(client, criteria, rows) {
     criteria: {
       role: criteria.role, minExp: criteria.minExp,
       languages: criteria.languages, location: criteria.location,
-      keywords: criteria.keywords
+      keywords: criteria.keywords,
+      // Tanlovdan avtomatik vakansiya yasalganda kerak (vacancyAuto)
+      shift: criteria.shift, maxSalary: criteria.maxSalary
     },
     summary: criteria.summary,
     candidateIds: rows.map(r => r.id)

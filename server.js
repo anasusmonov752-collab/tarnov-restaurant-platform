@@ -52,7 +52,12 @@ app.use(express.static(path.join(__dirname, 'public'), {
 }));
 
 // ── Health check (UptimeRobot / keep-alive) ────────────────────────
-app.get('/ping', (req, res) => res.json({ ok: true, ts: Date.now() }));
+// commit — qaysi versiya jonli ekanini tashqaridan tekshirish uchun
+// (Render RENDER_GIT_COMMIT ni o'zi qo'yadi). Push != deploy.
+app.get('/ping', (req, res) => res.json({
+  ok: true, ts: Date.now(),
+  commit: (process.env.RENDER_GIT_COMMIT || '').slice(0, 7)
+}));
 
 // ── Public route: restaurant list for waiter login ─────────────────
 const Restaurant = require('./src/models/Restaurant');

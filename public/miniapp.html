@@ -168,6 +168,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .tag.closed{background:rgba(100,116,139,.14);color:var(--muted)}
 .tag.stale{background:rgba(194,91,76,.12);color:var(--danger)}
 .tag.app{background:rgba(37,99,235,.12);color:var(--blue)}
+.tag.priv{background:rgba(100,116,139,.14);color:var(--ink)}
 .sbtn{border:1px solid var(--line);background:var(--card);border-radius:9px;
   padding:7px 12px;font-family:inherit;font-size:12.5px;font-weight:600;
   color:var(--ink);cursor:pointer}
@@ -709,12 +710,16 @@ async function loadVacancies(){
         ${v.headcount > 1 ? `<div class="mt">${v.headcount} ta odam kerak</div>` : ''}
         <div class="row">
           <span class="tag ${cls}">${lbl}</span>
-          ${v.stale && v.status === 'open' ? '<span class="tag stale">Tasdiqlang</span>' : ''}
+          ${!v.listed ? '<span class="tag priv">Faqat sizga</span>' : ''}
+          ${v.listed && v.stale && v.status === 'open' ? '<span class="tag stale">Tasdiqlang</span>' : ''}
           ${v.shortlists ? `<span class="tag app">${v.shortlists} tanlov</span>` : ''}
         </div>
+        ${!v.listed && v.status === 'open' ? `<div class="mt">Qidiruvdan o'zi yaratilgan. Nomzodlar
+          ko'rmaydi — e'lon qilsangiz, ular ariza bera boshlaydi.</div>` : ''}
         <div class="row">
           <button class="sbtn p" data-apps="${v.id}">Arizalar</button>
-          ${v.status === 'open' ? `<button class="sbtn" data-conf="${v.id}">Tasdiqlash</button>` : ''}
+          ${!v.listed && v.status === 'open' ? `<button class="sbtn p" data-pub="${v.id}">E'lon qilish</button>` : ''}
+          ${v.listed && v.status === 'open' ? `<button class="sbtn" data-conf="${v.id}">Tasdiqlash</button>` : ''}
           <button class="sbtn" data-edit="${v.id}">Tahrirlash</button>
           ${v.status === 'open' ? `<button class="sbtn d" data-close="${v.id}">Yopish</button>` : ''}
         </div>
@@ -725,6 +730,11 @@ async function loadVacancies(){
     document.querySelectorAll('[data-conf]').forEach(b => b.onclick = async () => {
       b.disabled = true;
       try { await api(`/api/ma/vacancies/${b.dataset.conf}/confirm`, { method:'POST' }); haptic(); loadVacancies(); }
+      catch(e){ alert(e.message); b.disabled = false; }
+    });
+    document.querySelectorAll('[data-pub]').forEach(b => b.onclick = async () => {
+      b.disabled = true;
+      try { await api(`/api/ma/vacancies/${b.dataset.pub}`, { method:'PATCH', body: JSON.stringify({ listed:true }) }); haptic(); loadVacancies(); }
       catch(e){ alert(e.message); b.disabled = false; }
     });
     document.querySelectorAll('[data-close]').forEach(b => b.onclick = async () => {
@@ -803,9 +813,13 @@ async function showApps(id){
 
   $('shT').textContent = d.vacancy.title;
   if (!d.items.length) {
-    $('shB').innerHTML = `<div class="msg">Hali ariza yo'q.<br><br>
+    $('shB').innerHTML = d.vacancy.listed
+      ? `<div class="msg">Hali ariza yo'q.<br><br>
       Vakansiya nomzodlarga ko'rsatilyapti. Tasdiqlab turing —
-      tasdiqlanmagani ro'yxatdan tushib qoladi.</div>`;
+      tasdiqlanmagani ro'yxatdan tushib qoladi.</div>`
+      : `<div class="msg">Hali ariza yo'q.<br><br>
+      Vakansiya e'lon qilinmagan — nomzodlar uni ko'rmaydi.
+      Ariza kelishi uchun "E'lon qilish" ni bosing.</div>`;
     return;
   }
 

@@ -206,6 +206,7 @@ router.get('/vacancies', guard, asyncHandler(async (req, res) => {
   const rows = await Vacancy.find({
     agencyId: c.restaurantId,
     status: 'open',
+    listed: { $ne: false },            // avtomatik (yopiq) vakansiyalar ko'rinmaydi
     confirmedAt: { $gte: fresh }
   }).sort({ confirmedAt: -1 }).limit(60).lean();
 
@@ -235,7 +236,9 @@ router.get('/vacancies', guard, asyncHandler(async (req, res) => {
 
 router.post('/vacancies/:id/apply', guard, asyncHandler(async (req, res) => {
   const c = req.cand;
-  const v = await Vacancy.findOne({ agencyId: c.restaurantId, id: req.params.id, status: 'open' }).lean();
+  const v = await Vacancy.findOne({
+    agencyId: c.restaurantId, id: req.params.id, status: 'open', listed: { $ne: false }
+  }).lean();
   if (!v) return res.status(404).json({ error: 'Vakansiya topilmadi yoki yopilgan' });
 
   // Telefon bo'lmasa ariza befoyda — mijoz tanlasa ham bog'lana olmaymiz

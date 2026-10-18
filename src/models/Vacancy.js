@@ -39,6 +39,16 @@ const VacancySchema = new mongoose.Schema({
 
   status: { type: String, default: 'open' },    // open | paused | closed
 
+  // Qayerdan paydo bo'lgan: manual = mijoz/agentlik qo'lda yozgan,
+  // search = bot qidiruvidan tanlov qilinganda o'zi yaratilgan
+  // (services/vacancyAuto.js). search'da sarlavha shablondan yasaladi.
+  source: { type: String, default: 'manual' },
+
+  // Nomzodlarning ochiq ro'yxatida ko'rinadimi. Avtomatik vakansiya
+  // yopiq tug'iladi — mijoz e'lon qilmoqchi bo'lmagan, faqat qidirgan.
+  // Eski hujjatlarda maydon yo'q: so'rovlarda { $ne: false } ishlatiladi.
+  listed: { type: Boolean, default: true },
+
   // Soxta e'lon muammosining yechimi: mijoz vakansiyani muntazam
   // tasdiqlab turadi. Tasdiqlanmasa nomzodlarga ko'rsatilmaydi —
   // "2 kun oldin tasdiqlangan" degan belgi ishonch beradi.

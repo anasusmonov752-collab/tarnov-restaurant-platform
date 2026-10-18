@@ -47,6 +47,13 @@ function clean(b, prev = {}) {
   if (b.notes !== undefined)      out.notes = String(b.notes).trim().slice(0, 600);
   if (b.headcount !== undefined)  out.headcount = num(b.headcount, 1, 200) || 1;
   if (b.autoNotify !== undefined) out.autoNotify = !!b.autoNotify;
+  // E'lon qilish — "hozir ochiq" degani, shuning uchun tasdiq ham yangilanadi.
+  // Aks holda eski avtomatik vakansiya e'lon qilinib, darhol "eskirgan"
+  // bo'lib nomzod ro'yxatiga tushmay qolardi.
+  if (b.listed !== undefined) {
+    out.listed = !!b.listed;
+    if (out.listed) out.confirmedAt = new Date();
+  }
 
   if (Array.isArray(b.languages)) {
     out.languages = b.languages.map(x => String(x).trim().slice(0, 40)).filter(Boolean).slice(0, 8);
@@ -89,6 +96,7 @@ function full(v, extra = {}) {
     schedule: v.schedule, conditions: v.conditions,
     startDate: v.startDate, headcount: v.headcount,
     notes: v.notes, status: v.status,
+    source: v.source || 'manual', listed: v.listed !== false,
     confirmedAt: v.confirmedAt, stale: isStale(v),
     autoNotify: v.autoNotify,
     createdAt: v.createdAt, closedAt: v.closedAt

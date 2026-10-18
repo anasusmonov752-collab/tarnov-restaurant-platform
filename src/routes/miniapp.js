@@ -24,6 +24,7 @@ const pipeline = require('../data/pipeline');
 const Vacancy = require('../models/Vacancy');
 const Application = require('../models/Application');
 const vac = require('../services/vacancy');
+const vacAuto = require('../services/vacancyAuto');
 const agent = require('../services/agent');
 const chat = require('../services/chat');
 const ChatThread = require('../models/ChatThread');
@@ -143,11 +144,23 @@ router.post('/shortlist', clientGuard, asyncHandler(async (req, res) => {
     .slice(0, 20);
   if (!picked.length) return res.status(400).json({ error: 'Nomzod tanlanmadi' });
 
+  // Har tanlovning vakansiyasi bo'lsin — nomzod kontakt ochilgach
+  // "qayerga, qanday shartda" ni ko'radi. Yiqilsa tanlov baribir saqlanadi.
+  let vacancyId = '';
+  try {
+    const v = await vacAuto.ensureFromSearch({
+      agencyId: ses.agencyId, client: req.client, criteria: ses.criteria || {}
+    });
+    vacancyId = v.id;
+  } catch (e) {
+    console.error('[MA] avtomatik vakansiya yaratilmadi:', e.message);
+  }
+
   const sl = await Shortlist.create({
     id: uuidv4(),
     agencyId: ses.agencyId,
     clientId: req.client.id,
-    vacancyId: '',
+    vacancyId,
     summary: ses.summary || '',
     items: picked.map(candidateId => ({ candidateId, state: 'selected' })),
     status: 'new'
@@ -447,7 +460,11 @@ router.patch('/vacancies/:id', clientGuard, asyncHandler(async (req, res) => {
   });
   if (!v) return res.status(404).json({ error: 'Vakansiya topilmadi' });
 
-  Object.assign(v, vac.clean(req.body || {}, v.toObject()));
+  const data = vac.clean(req.body || {}, v.toObject());
+  // Mijoz sarlavhani o'zi o'zgartirsa — endi u qo'lda yozilgan vakansiya,
+  // shablon keyingi taklifda sarlavhani qayta yasab, uni bosib ketmasin
+  if (v.source === 'search' && data.title && data.title !== v.title) v.source = 'manual';
+  Object.assign(v, data);
   v.updatedAt = new Date();
   await v.save();
   res.json(vac.full(v));

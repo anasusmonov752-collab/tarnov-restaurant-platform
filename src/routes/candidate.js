@@ -24,6 +24,7 @@ const tg = require('../services/telegram');
 const initData = require('../services/tgInitData');
 const { isValidRole } = require('../data/roles');
 const chat = require('../services/chat');
+const contactView = require('../services/contactView');
 const ChatThread = require('../models/ChatThread');
 const botRelay = require('../services/botRelay');
 const { publicBase } = require('../utils/publicBase');
@@ -352,14 +353,50 @@ router.get('/chats', guard, asyncHandler(async (req, res) => {
     : [];
   const by = Object.fromEntries(cl.map(c => [c.id, c]));
 
+  // Kompaniya kartasi faqat ochiq kontaktda (kredit qaytarilmagan)
+  const pairs = ids.length
+    ? await contactView.openPairs({ agencyId, candidateId: req.cand.id })
+    : [];
+  const open = new Set(pairs.map(p => p.clientId));
+
   res.json(rows.map(r => {
     if (!r.clientId) return r;
     const c = by[r.clientId] || {};
     return Object.assign({}, r, {
       title: c.name || 'Ish beruvchi',
-      subtitle: r.lastMsgText || c.location || ''
+      subtitle: r.lastMsgText || c.location || '',
+      open: open.has(r.clientId)
     });
   }));
+}));
+
+// ── Kompaniya kartasi va vakansiya — faqat kontakt ochilgan bo'lsa ──
+// Vakansiya tanlovdan olinadi: qidiruvdan kelgan tanlovda u avtomatik
+// yaratilgan (vacancyAuto), arizadan kelganda — nomzod ariza bergani.
+// Kontakt ochilgan, shuning uchun vakansiya yopiq (listed:false)
+// bo'lsa ham ko'rsatiladi: u aynan shu nomzod uchun.
+router.get('/companies/:clientId', guard, asyncHandler(async (req, res) => {
+  const agencyId = req.cand.restaurantId;
+  const pairs = (await contactView.openPairs({ agencyId, candidateId: req.cand.id }))
+    .filter(p => p.clientId === req.params.clientId);
+  if (!pairs.length) return res.status(403).json({ error: 'Kontakt ochilmagan' });
+
+  const cl = await Client.findOne({ agencyId, id: req.params.clientId }).lean();
+  if (!cl) return res.status(404).json({ error: 'Kompaniya topilmadi' });
+
+  const vids = [...new Set(pairs.map(p => p.vacancyId).filter(Boolean))];
+  const vs = vids.length
+    ? await Vacancy.find({ agencyId, id: { $in: vids } }).lean()
+    : [];
+
+  res.json({
+    company: contactView.companyOf(cl),
+    // forCandidate ishlatamiz, lekin "place" endi nom bilan: kontakt ochilgan
+    vacancies: vs.map(v => Object.assign(vac.forCandidate(v, cl), {
+      place: [cl.name, v.location || cl.location].filter(Boolean).join(' · '),
+      closed: v.status === 'closed'
+    }))
+  });
 }));
 
 router.get('/chats/:id/messages', guard, asyncHandler(async (req, res) => {

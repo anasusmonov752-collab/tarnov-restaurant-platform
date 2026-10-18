@@ -176,7 +176,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .sbtn.d{border-color:var(--danger);color:var(--danger)}
 
 /* ── Pastki oyna ── */
-.sheet{position:fixed;inset:0;background:rgba(8,20,38,.45);display:none;align-items:flex-end;z-index:60}
+/* z-index suhbat oynasidan (.cv 60) yuqori — rezyume suhbat ustida ochiladi */
+.sheet{position:fixed;inset:0;background:rgba(8,20,38,.45);display:none;align-items:flex-end;z-index:70}
 .sheet.on{display:flex}
 .sh{background:var(--card);width:100%;max-height:92vh;overflow-y:auto;border-radius:18px 18px 0 0}
 .sh-h{position:sticky;top:0;background:var(--card);display:flex;align-items:center;
@@ -224,6 +225,40 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .ch-time{font-size:11.5px;color:var(--muted)}
 .ch-badge{min-width:19px;height:19px;border-radius:10px;background:var(--blue);color:#fff;
   font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px}
+.ch-av{overflow:hidden}
+.ch-av img{width:100%;height:100%;object-fit:cover}
+/* Kontakt ochilgan suhbat sarlavhasi bosiladi — rezyume ochiladi */
+.cv-who{flex:1;min-width:0;display:flex;align-items:center;gap:10px}
+.cv-who.tap{cursor:pointer}
+.cv-who.tap .ch-last::after{content:' · rezyume ›';color:var(--blue)}
+
+/* ══ REZYUME (kontakt ochilgandan keyin) ═══════════════════ */
+.rs-hd{display:flex;gap:13px;align-items:center;padding:6px 0 14px}
+.rs-ph{width:64px;height:76px;border-radius:12px;flex:none;overflow:hidden;background:#E8EFFA;
+  color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px}
+.rs-ph img{width:100%;height:100%;object-fit:cover}
+.rs-nm{font-size:18px;font-weight:700;line-height:1.25}
+.rs-po{font-size:14px;margin-top:3px}
+.rs-mt{font-size:13px;color:var(--muted);margin-top:3px;line-height:1.45}
+.rs-ct{display:flex;flex-direction:column;gap:4px;background:var(--bg);border-radius:12px;
+  padding:11px 13px;font-size:14.5px}
+.rs-ct a{color:var(--blue);font-weight:600;text-decoration:none}
+.rs-sec{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;
+  font-weight:600;margin:18px 0 8px}
+.rs-tx{font-size:14px;line-height:1.55;white-space:pre-line}
+.rs-w{padding:10px 0;border-bottom:1px solid var(--line)}
+.rs-w:last-child{border-bottom:none}
+.rs-w b{font-size:14.5px;font-weight:600}
+.rs-w .m{font-size:13px;color:var(--muted);margin-top:2px}
+.rs-w .d{font-size:13.5px;margin-top:5px;line-height:1.5;white-space:pre-line}
+.rs-kv{display:flex;gap:12px;padding:8px 0;font-size:14px;border-bottom:1px solid var(--line)}
+.rs-kv:last-child{border-bottom:none}
+.rs-kv .k{color:var(--muted);flex:none;min-width:120px}
+.rs-kv .v{flex:1;text-align:right}
+.rs-chips{display:flex;flex-wrap:wrap;gap:6px}
+.rs-chips span{font-size:12.5px;padding:4px 10px;border-radius:8px;background:var(--bg)}
+.rzb{margin-top:8px;border:1px solid var(--line);background:var(--card);border-radius:9px;
+  padding:7px 12px;font-family:inherit;font-size:12.5px;font-weight:600;color:var(--blue);cursor:pointer}
 
 /* Ochilgan suhbat */
 .cv{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;flex-direction:column}
@@ -311,10 +346,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   <div class="cv hide" id="cv">
     <div class="cv-h">
       <button class="cv-back" id="cvBack">&#10094;</button>
-      <div class="ch-av" id="cvAv">—</div>
-      <div style="flex:1;min-width:0">
-        <div class="ch-top"><span class="ch-name" id="cvName">—</span><span id="cvVf"></span></div>
-        <div class="ch-last" id="cvSub"></div>
+      <div class="cv-who" id="cvWho">
+        <div class="ch-av" id="cvAv">—</div>
+        <div style="flex:1;min-width:0">
+          <div class="ch-top"><span class="ch-name" id="cvName">—</span><span id="cvVf"></span></div>
+          <div class="ch-last" id="cvSub"></div>
+        </div>
       </div>
     </div>
     <div class="cv-b" id="cvBody"></div>
@@ -550,6 +587,7 @@ function itemHtml(slId, it){
       <div class="nm">${esc(it.contact.fullName) || 'Nomzod'}</div>
       <a href="tel:${esc(it.contact.phone)}">${esc(it.contact.phone) || '—'}</a>
       ${it.contact.email ? `<div class="em">${esc(it.contact.email)}</div>` : ''}
+      <button class="rzb" data-rz="${esc(it.candidateId)}">Rezyumeni ochish</button>
     </div>` : '';
 
   const rz = it.reason ? `<div class="rz">Sabab: ${esc(it.reason)}</div>` : '';
@@ -611,6 +649,9 @@ async function decide(slId, candId, body){
 }
 
 function wireActions(){
+  // Rezyume — kontakt ochilgan nomzodlarda
+  document.querySelectorAll('[data-rz]').forEach(b => b.onclick = () => showResume(b.dataset.rz));
+
   // Suhbat sanasi
   document.querySelectorAll('[data-iv]').forEach(b => b.onclick = () => {
     const id = b.dataset.iv, sl = b.dataset.sl;
@@ -924,7 +965,7 @@ function drawChats(){
     const ag = !!c.pinned;
     const nm = c.title || '—';
     return '<div class="ch-row" data-i="' + i + '">'
-      + '<div class="ch-av' + (ag ? ' ag' : '') + '">' + (ag ? '&#9733;' : esc(initialsOf(nm))) + '</div>'
+      + '<div class="ch-av' + (ag ? ' ag' : '') + '">' + (ag ? '&#9733;' : avatarHtml(c)) + '</div>'
       + '<div class="ch-mid"><div class="ch-top"><span class="ch-name">' + esc(nm) + '</span>'
       + (ag ? VF + '<span class="ch-pin">&#128204;</span>' : '') + '</div>'
       + '<div class="ch-last">' + esc(c.subtitle || c.lastMsgText || '') + '</div></div>'
@@ -936,14 +977,28 @@ function drawChats(){
   });
 }
 
+// Kontakt ochilgan nomzod — fotosi (bo'lsa), aks holda bosh harflar
+const candPhoto = id => '/api/ma/candidates/' + encodeURIComponent(id) + '/photo?i=' + encodeURIComponent(INIT);
+function avatarHtml(c){
+  return c.open && c.hasPhoto
+    ? '<img src="' + candPhoto(c.candidateId) + '" alt="">'
+    : esc(initialsOf(c.title));
+}
+
 async function openChat(c){
   CUR = c;
   const ag = !!c.pinned;
   $('cvName').textContent = c.title || '—';
   $('cvVf').innerHTML = ag ? VF : '';
-  $('cvSub').textContent = ag ? 'Agentlik' : (c.subtitle || '');
-  $('cvAv').textContent = ag ? '★' : initialsOf(c.title);
+  // Nomzod suhbatida ostki qator — lavozimi (oxirgi xabar emas): sarlavha
+  // "kim bilan gaplashyapman" ga javob beradi
+  $('cvSub').textContent = ag ? 'Agentlik' : (c.position || c.subtitle || '');
+  $('cvAv').innerHTML = ag ? '&#9733;' : avatarHtml(c);
   $('cvAv').className = 'ch-av' + (ag ? ' ag' : '');
+  // Sarlavhani bosish — rezyume (faqat kontakt ochiq bo'lsa)
+  const tap = !ag && c.open && c.candidateId;
+  $('cvWho').classList.toggle('tap', !!tap);
+  $('cvWho').onclick = tap ? () => showResume(c.candidateId) : null;
   $('cvBody').innerHTML = '<div class="ch-empty">Yuklanmoqda…</div>';
   $('cv').classList.remove('hide');
   await reloadMsgs();
@@ -992,6 +1047,52 @@ async function sendMsg(){
     $('cvBody').scrollTop = $('cvBody').scrollHeight;
   }
   $('cvSend').disabled = false;
+}
+
+// ── Rezyume ──
+// Faqat kontakt ochilgan nomzod: server tekshiradi (contactView), bu
+// yerda shunchaki ko'rsatamiz. Asl PDF emas — nomzodning o'z profili:
+// u tahrirlasa mijoz yangisini ko'radi.
+const SHIFT_L = { kunduzgi:'Kunduzgi', kechki:'Kechki', ikkalasi:'Kunduzgi va kechki' };
+const SAN_L = { yes:'Bor', no:"Yo'q", expired:"Muddati o'tgan" };
+
+async function showResume(id){
+  openSheet('Rezyume', '<div class="msg">Yuklanmoqda…</div>');
+  let r;
+  try { r = await api('/api/ma/candidates/' + encodeURIComponent(id)); }
+  catch(e){ $('shB').innerHTML = '<div class="msg">' + esc(e.message) + '</div>'; return; }
+
+  $('shT').textContent = r.fullName || 'Rezyume';
+  const meta = [r.age ? r.age + ' yosh' : '', r.location || '',
+    r.experienceYears ? r.experienceYears + ' yil tajriba' : 'Tajribasiz'].filter(Boolean).join(' · ');
+  const kv = (k, v) => v ? '<div class="rs-kv"><span class="k">' + k + '</span><span class="v">' + esc(v) + '</span></div>' : '';
+  const info = [
+    kv('Smena', SHIFT_L[r.shift] || r.shift),
+    kv('Kutilgan maosh', r.salaryExpectation),
+    kv("Ta'lim", r.education),
+    kv('Tillar', (r.languages || []).join(', ')),
+    kv('Sanitar kitobcha', SAN_L[r.sanitaryBook])
+  ].join('');
+  const work = (r.workHistory || []).map(w =>
+    '<div class="rs-w"><b>' + esc(w.position || 'Lavozim') + '</b>'
+    + '<div class="m">' + esc([w.company, w.period].filter(Boolean).join(' · ')) + '</div>'
+    + (w.description ? '<div class="d">' + esc(w.description) + '</div>' : '') + '</div>').join('');
+  const about = r.experienceSummary || r.summary || '';
+
+  $('shB').innerHTML =
+    '<div class="rs-hd"><div class="rs-ph">'
+    + (r.hasPhoto ? '<img src="' + candPhoto(r.id) + '" alt="">' : esc(initialsOf(r.fullName)))
+    + '</div><div style="min-width:0"><div class="rs-nm">' + esc(r.fullName || 'Nomzod') + '</div>'
+    + (r.desiredPosition ? '<div class="rs-po">' + esc(r.desiredPosition) + '</div>' : '')
+    + '<div class="rs-mt">' + esc(meta) + '</div></div></div>'
+    + '<div class="rs-ct">'
+    + (r.phone ? '<a href="tel:' + esc(r.phone) + '">&#128222; ' + esc(r.phone) + '</a>' : '<span>Telefon yo\'q</span>')
+    + (r.email ? '<span>&#9993;&#65039; ' + esc(r.email) + '</span>' : '') + '</div>'
+    + (about ? '<div class="rs-sec">O\'zi haqida</div><div class="rs-tx">' + esc(about) + '</div>' : '')
+    + (work ? '<div class="rs-sec">Ish tajribasi</div>' + work : '')
+    + (info ? '<div class="rs-sec">Ma\'lumotlar</div>' + info : '')
+    + ((r.skills || []).length ? '<div class="rs-sec">Ko\'nikmalar</div><div class="rs-chips">'
+      + r.skills.map(s => '<span>' + esc(s) + '</span>').join('') + '</div>' : '');
 }
 
 $('cvBack').onclick = () => { $('cv').classList.add('hide'); CUR = null; };

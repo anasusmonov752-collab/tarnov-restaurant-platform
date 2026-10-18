@@ -149,6 +149,8 @@ function forCandidate(v, client) {
     schedule: v.schedule,
     conditions: v.conditions,
     minExp: v.minExp,
+    minAge: v.minAge, maxAge: v.maxAge,
+    headcount: v.headcount || 1,
     languages: v.languages || [],
     startDate: v.startDate,
     confirmedAt: v.confirmedAt,

@@ -25,6 +25,7 @@ const Vacancy = require('../models/Vacancy');
 const Application = require('../models/Application');
 const vac = require('../services/vacancy');
 const vacAuto = require('../services/vacancyAuto');
+const contactView = require('../services/contactView');
 const agent = require('../services/agent');
 const chat = require('../services/chat');
 const ChatThread = require('../models/ChatThread');
@@ -640,22 +641,62 @@ router.get('/chats', clientGuard, asyncHandler(async (req, res) => {
   const agencyId = req.client.agencyId;
   const rows = await chat.inboxForClient(agencyId, req.client.id);
 
-  // Nomzodni KODI bilan ko'rsatamiz — ism bu yerda ham chiqmaydi
+  // Kontakt ochilgan nomzod — ISM va foto bilan (contactView qoidasi).
+  // Kredit qaytarilgan bo'lsa kod qoladi: kontakt ham qaytarilgan.
   const ids = rows.filter(r => r.candidateId).map(r => r.candidateId);
-  const cands = ids.length
-    ? await Candidate.find({ restaurantId: agencyId, id: { $in: ids } },
-        'id publicCode desiredPosition').lean()
-    : [];
+  const [cands, pairs] = ids.length ? await Promise.all([
+    Candidate.find({ restaurantId: agencyId, id: { $in: ids } },
+      'id publicCode desiredPosition fullName hasPhoto').lean(),
+    contactView.openPairs({ agencyId, clientId: req.client.id, candidateIds: ids })
+  ]) : [[], []];
   const by = Object.fromEntries(cands.map(c => [c.id, c]));
+  const open = new Set(pairs.map(p => p.candidateId));
 
   res.json(rows.map(r => {
     if (!r.candidateId) return r;
     const c = by[r.candidateId] || {};
+    const isOpen = open.has(r.candidateId);
     return Object.assign({}, r, {
-      title: c.publicCode || '—',
-      subtitle: r.lastMsgText || c.desiredPosition || ''
+      title: (isOpen && c.fullName) || c.publicCode || '—',
+      subtitle: r.lastMsgText || c.desiredPosition || '',
+      position: c.desiredPosition || '',
+      open: isOpen,
+      hasPhoto: isOpen && !!c.hasPhoto
     });
   }));
+}));
+
+// ── Nomzod rezyumesi — faqat kontakt ochilgan bo'lsa ──
+router.get('/candidates/:id', clientGuard, asyncHandler(async (req, res) => {
+  const agencyId = req.client.agencyId;
+  if (!await contactView.isOpenPair({ agencyId, clientId: req.client.id, candidateId: req.params.id })) {
+    return res.status(403).json({ error: 'Kontakt ochilmagan' });
+  }
+  const c = await Candidate.findOne({ restaurantId: agencyId, id: req.params.id },
+    '-fileData -rawText -photo -tgInviteToken').lean();
+  if (!c) return res.status(404).json({ error: 'Nomzod topilmadi' });
+  res.json(contactView.resumeOf(c));
+}));
+
+// ── Nomzod fotosi (chat va rezyume uchun) ──
+// Kabinetdagi photo-sl tanlov id'siga bog'liq; chatda esa tanlov yo'q,
+// shuning uchun tekshiruv to'g'ridan-to'g'ri "kontakt ochiqmi" bo'yicha.
+router.get('/candidates/:id/photo', asyncHandler(async (req, res) => {
+  const v = initData.verify(req.query.i || '');
+  if (!v.ok) return res.status(401).end();
+  const client = await Client.findOne({ tgChatId: String(v.user.id), status: 'active' });
+  if (!client) return res.status(403).end();
+  if (!await contactView.isOpenPair({ agencyId: client.agencyId, clientId: client.id, candidateId: req.params.id })) {
+    return res.status(403).end();
+  }
+
+  const c = await Candidate.findOne({ restaurantId: client.agencyId, id: req.params.id }, 'photo').lean();
+  if (!c || !c.photo) return res.status(404).end();
+  const m = /^data:(image\/[a-z+]+);base64,(.+)$/i.exec(c.photo);
+  if (!m) return res.status(404).end();
+  res.set('Content-Type', m[1]);
+  res.set('Cache-Control', 'private, max-age=3600');
+  res.send(Buffer.from(m[2], 'base64'));
 }));
 
 router.get('/chats/:id/messages', clientGuard, asyncHandler(async (req, res) => {

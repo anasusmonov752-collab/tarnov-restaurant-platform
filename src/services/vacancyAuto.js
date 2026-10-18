@@ -247,8 +247,17 @@ async function applyOffer({ agencyId, shortlistId, text }) {
 // ── Botdagi ko'rinish ────────────────────────────────────────
 // Mijozga ham, agentlikka ham bir xil shablon: nima yozib olinganini
 // ko'rib, xato bo'lsa kabinetda tuzatadi.
+// Oy nomlari qo'lda: 'uz-UZ' lokali ICU'da to'liq bo'lmasa "M10 25"
+// chiqaradi. Toshkent vaqti (+5) ham qo'lda: server UTC'da ishlaydi va
+// "25-oktabr 00:00 Toshkent" aks holda "24-oktabr" bo'lib ko'rinardi.
+const OYLAR = ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul',
+               'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr'];
+function dmy(d) {
+  const x = new Date(new Date(d).getTime() + 5 * 3600e3);
+  return `${x.getUTCDate()}-${OYLAR[x.getUTCMonth()]}`;
+}
+
 function templateText(v) {
-  const dmy = d => new Date(d).toLocaleDateString('uz-UZ', { day: 'numeric', month: 'long' });
   return [
     `📋 ${v.title}`,
     vac.salaryText(v) ? `Maosh: ${vac.salaryText(v)}` : '',

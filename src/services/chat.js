@@ -9,6 +9,10 @@ const { v4: uuidv4 } = require('uuid');
 const ChatThread = require('../models/ChatThread');
 const ChatMessage = require('../models/ChatMessage');
 const BotMessage = require('../models/BotMessage');
+const Shortlist = require('../models/Shortlist');
+const Client = require('../models/Client');
+const Candidate = require('../models/Candidate');
+const tg = require('./telegram');
 
 const PREVIEW = 120;   // ro'yxatda ko'rinadigan qism
 
@@ -38,7 +42,7 @@ async function ensureThread({ agencyId, clientId, candidateId = '', shortlistId 
 // ── Xabar qo'yish ────────────────────────────────────────────
 // `from` kim yozganini bildiradi. O'qilmaganlar hisobi faqat BOSHQA
 // tomonlarga oshadi — o'z xabaringiz sizga o'qilmagan bo'lib ko'rinmaydi.
-async function post({ agencyId, threadId, from, text, kind = 'text' }) {
+async function post({ agencyId, threadId, from, text, kind = 'text', appBase = '' }) {
   const clean = String(text || '').trim().slice(0, 4000);
   if (!clean) throw new Error('Xabar bo\'sh');
 
@@ -53,7 +57,7 @@ async function post({ agencyId, threadId, from, text, kind = 'text' }) {
   // keltirib chiqargansiz (kontakt ochish va h.k.)
   if (from !== 'agency' && from !== 'system') inc.unreadAgency = 1;
 
-  await ChatThread.updateOne({ agencyId, id: threadId }, {
+  const th = await ChatThread.findOneAndUpdate({ agencyId, id: threadId }, {
     $set: {
       lastMsgAt: msg.createdAt,
       lastMsgText: clean.slice(0, PREVIEW),
@@ -61,9 +65,59 @@ async function post({ agencyId, threadId, from, text, kind = 'text' }) {
       updatedAt: new Date()
     },
     $inc: inc
-  });
+  }, { new: true });
+
+  // Push — qarshi tomon Mini App'ni ochiq tutmaydi
+  if (th && await pushNotify({ agencyId, th, from, text: clean, appBase })) {
+    await ChatMessage.updateOne({ agencyId, id: msg.id }, { $set: { tgPushedAt: new Date() } });
+  }
 
   return msg;
+}
+
+
+// ── TELEGRAM BILDIRISHNOMASI ─────────────────────────────────
+// Mini App doim ochiq turmaydi va o'z push'i YO'Q. Bildirishnoma
+// bo'lmasa odam yozadi, javob ko'rmaydi va chatni tashlab ketadi —
+// keyin telefonga qaytadi. Shuning uchun har xabar bot orqali
+// qarshi tomonga ham boradi.
+//
+// Yiqilsa jim o'tadi: xabar bazaga allaqachon yozilgan.
+async function pushNotify({ agencyId, th, from, text, appBase }) {
+  try {
+    const token = tg.platformToken();
+    if (!token || !appBase) return;
+
+    const cut = String(text || '').slice(0, 140);
+    const targets = [];
+
+    // Kimga boradi: yozgan tomondan BOSHQASIGA.
+    // 'system' uchun push yo'q — reveal o'z xabarlarini allaqachon
+    // yuborgan, ikkinchisi takror bo'lardi.
+    if (from === 'system') return;
+
+    if (from !== 'client') {
+      const cl = await Client.findOne({ agencyId, id: th.clientId }, 'tgChatId').lean();
+      if (cl && cl.tgChatId) targets.push({ chatId: cl.tgChatId, url: appBase + '/miniapp.html#chat' });
+    }
+    if (from !== 'candidate' && th.kind === 'cc' && th.candidateId) {
+      const cd = await Candidate.findOne({ restaurantId: agencyId, id: th.candidateId }, 'tgChatId').lean();
+      if (cd && cd.tgChatId) targets.push({ chatId: cd.tgChatId, url: appBase + '/profil.html#chat' });
+    }
+    if (!targets.length) return;
+
+    const label = from === 'agency' ? 'TalentHub' : 'Yangi xabar';
+    const body = `💬 ${label}\n\n${cut}`;
+
+    await Promise.all(targets.map(t =>
+      tg.sendMessage(token, t.chatId, body, {
+        reply_markup: { inline_keyboard: [[{ text: 'Ochish', web_app: { url: t.url } }]] }
+      }).catch(e => console.error('[CHAT] push:', e.message))
+    ));
+    return true;
+  } catch (e) {
+    console.error('[CHAT] push umuman ketmadi:', e.message);
+  }
 }
 
 // ── O'qildi deb belgilash ────────────────────────────────────
@@ -90,6 +144,34 @@ async function onReveal({ agencyId, clientId, candidateId, shortlistId, clientNa
 }
 
 
+
+// ── Eski ochilgan kontaktlarga suhbat ────────────────────────
+// Chat kontakt ochish oqimidan KEYIN qo'shildi: ungacha ochilgan
+// kontaktlarda thread yo'q va mijoz ularni inboxda ko'rmaydi.
+//
+// Migratsiya skripti o'rniga inbox ochilganda to'ldirib boramiz —
+// o'zini o'zi tuzatadi va kelajakda ham (reveal yiqilib thread
+// ochilmay qolsa) bo'shliq qolmaydi. ensureThread idempotent.
+async function backfill({ agencyId, clientId = '', candidateId = '' }) {
+  const q = { agencyId };
+  if (clientId) q.clientId = clientId;
+  if (candidateId) q['items.candidateId'] = candidateId;
+
+  const rows = await Shortlist.find(q, 'id clientId items').limit(200).lean();
+  for (const s of rows) {
+    for (const it of (s.items || [])) {
+      if (!it.revealedAt) continue;                 // to'lanmagan — suhbat yo'q
+      if (it.state === 'refunded') continue;        // kredit qaytarilgan
+      if (candidateId && it.candidateId !== candidateId) continue;
+      try {
+        await ensureThread({
+          agencyId, clientId: s.clientId, candidateId: it.candidateId,
+          shortlistId: s.id, kind: 'cc'
+        });
+      } catch (e) { console.error('[CHAT] backfill:', e.message); }
+    }
+  }
+}
 // ── INBOX ────────────────────────────────────────────────────
 // Ikkala kabinetda bir xil ko'rinish: tepada qadalgan "TalentHub ✓",
 // ostida haqiqiy suhbatlar.
@@ -114,6 +196,7 @@ function row(t, side) {
 
 // Mijoz inboxi: qadalgan agentlik + kontakt ochilgan nomzodlar
 async function inboxForClient(agencyId, clientId) {
+  await backfill({ agencyId, clientId });
   const [pin, threads] = await Promise.all([
     ensureThread({ agencyId, clientId, kind: 'ca' }),
     ChatThread.find({ agencyId, clientId, kind: 'cc' }).sort({ lastMsgAt: -1 }).limit(100).lean()
@@ -127,6 +210,7 @@ async function inboxForClient(agencyId, clientId) {
 
 // Nomzod inboxi: qadalgan agentlik (BotMessage'dan) + uni ochgan mijozlar
 async function inboxForCandidate(agencyId, candidateId) {
+  await backfill({ agencyId, candidateId });
   const [last, threads] = await Promise.all([
     BotMessage.findOne({ restaurantId: agencyId, candidateId }).sort({ createdAt: -1 }).lean(),
     ChatThread.find({ agencyId, candidateId, kind: 'cc' }).sort({ lastMsgAt: -1 }).limit(100).lean()
@@ -163,7 +247,7 @@ async function messages({ agencyId, threadId, candidateId = '', limit = 200 }) {
   }));
 }
 module.exports = {
-  ensureThread, post, markRead, onReveal,
+  ensureThread, post, markRead, onReveal, backfill,
   inboxForClient, inboxForCandidate, messages,
   PREVIEW, AGENCY_THREAD
 };

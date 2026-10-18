@@ -26,6 +26,7 @@ const { isValidRole } = require('../data/roles');
 const chat = require('../services/chat');
 const ChatThread = require('../models/ChatThread');
 const botRelay = require('../services/botRelay');
+const { publicBase } = require('../utils/publicBase');
 
 const router = express.Router();
 
@@ -389,7 +390,8 @@ router.post('/chats/:id/messages', guard, asyncHandler(async (req, res) => {
   if (!th) return res.status(404).json({ error: 'Suhbat topilmadi' });
 
   try {
-    const m = await chat.post({ agencyId, threadId: th.id, from: 'candidate', text });
+    const m = await chat.post({ agencyId, threadId: th.id, from: 'candidate', text,
+      appBase: publicBase(req) });
     res.json({ ok: true, id: m.id, createdAt: m.createdAt });
   } catch (e) {
     res.status(400).json({ error: e.message });

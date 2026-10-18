@@ -161,7 +161,7 @@ function draw(){
       + '<div class="av' + (cc ? '' : ' ag') + '">' + esc(ini(t.clientName)) + '</div>'
       + '<div class="mid"><div class="nm">' + esc(nm) + '</div>'
       + '<div class="sb">' + esc(t.lastMsgText || t.position || '—') + '</div></div>'
-      + '<div class="rt"><span class="tmx">' + tmOf(t.lastMsgAt) + '</span>'
+      + '<div class="rt"><span class="tmx">' + (t.lastMsgFrom ? tmOf(t.lastMsgAt) : '') + '</span>'
       + (t.unread
           ? '<span class="bdg">' + t.unread + '</span>'
           : '<span class="kd ' + t.kind + '">' + (cc ? 'N' : 'A') + '</span>')

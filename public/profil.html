@@ -572,7 +572,7 @@ function drawChats(){
       + '<div class="ch-mid"><div class="ch-top"><span class="ch-name">' + esc(nm) + '</span>'
       + (ag ? VF + '<span class="ch-pin">&#128204;</span>' : '') + '</div>'
       + '<div class="ch-last">' + esc(c.subtitle || c.lastMsgText || '') + '</div></div>'
-      + '<div class="ch-right"><span class="ch-time">' + tmOf(c.lastMsgAt) + '</span>'
+      + '<div class="ch-right"><span class="ch-time">' + (c.lastMsgFrom ? tmOf(c.lastMsgAt) : '') + '</span>'
       + (c.unread ? '<span class="ch-badge">' + c.unread + '</span>' : '') + '</div></div>';
   }).join('');
   box.querySelectorAll('.ch-row').forEach(el => {

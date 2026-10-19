@@ -386,6 +386,7 @@ async function shortlistView(agencyId, clientId, rows) {
         interviewAt: it.interviewAt,
         canAct: ['revealed', 'interview'].includes(it.state),
         revealedAt: it.revealedAt,
+        since: r.createdAt,                       // "HR bog'lanmoqda · 3 soat"
         threadId: open ? (tBy[it.candidateId] || '') : '',
         // Kontakt FAQAT ochilganda
         contact: open && c.id ? { fullName: c.fullName, phone: c.phone, email: c.email } : null
@@ -684,6 +685,7 @@ router.get('/vacancies/:id/applications', clientGuard, asyncHandler(async (req, 
       return {
         id: a.id,
         state: a.state === 'new' ? 'seen' : a.state,
+        isNew: a.state === 'new',            // shu ochilishda birinchi marta ko'rildi
         message: a.message,
         createdAt: a.createdAt,
         candidate: c ? anon[c.publicCode] || null : null
@@ -826,29 +828,48 @@ router.get('/chats', clientGuard, asyncHandler(async (req, res) => {
   }));
 }));
 
-// ── Nomzod rezyumesi — faqat kontakt ochilgan bo'lsa ──
+// Mijoz bu nomzodni ko'rishga haqlimi: tanlovida bor yoki uning
+// vakansiyasiga ariza bergan. Boshqa nomzodni id bilan ochib bo'lmasin.
+async function clientKnows(agencyId, clientId, candidateId) {
+  const [s, a] = await Promise.all([
+    Shortlist.exists({ agencyId, clientId, 'items.candidateId': candidateId }),
+    Application.exists({ agencyId, clientId, candidateId })
+  ]);
+  return !!(s || a);
+}
+
+// ── Nomzod rezyumesi ──
+// Kontakt ochilgan — to'liq (ism, telefon). Ungacha — ANONIM, qidiruv
+// kartasi bilan bir xil: anonymize'dan o'tadi (ism yo'q, matnlardagi ism
+// kod bilan almashtirilgan). Mijoz kimni tanlaganini ko'rib turadi.
 router.get('/candidates/:id', clientGuard, asyncHandler(async (req, res) => {
-  const agencyId = req.client.agencyId;
-  if (!await contactView.isOpenPair({ agencyId, clientId: req.client.id, candidateId: req.params.id })) {
-    return res.status(403).json({ error: 'Kontakt ochilmagan' });
+  const agencyId = req.client.agencyId, id = req.params.id;
+  const open = await contactView.isOpenPair({ agencyId, clientId: req.client.id, candidateId: id });
+  if (!open && !await clientKnows(agencyId, req.client.id, id)) {
+    return res.status(404).json({ error: 'Nomzod topilmadi' });
   }
-  const c = await Candidate.findOne({ restaurantId: agencyId, id: req.params.id },
+  const c = await Candidate.findOne({ restaurantId: agencyId, id },
     '-fileData -rawText -photo -tgInviteToken').lean();
   if (!c) return res.status(404).json({ error: 'Nomzod topilmadi' });
-  res.json(contactView.resumeOf(c));
+  if (open) return res.json(Object.assign(contactView.resumeOf(c), { open: true }));
+
+  await assignCodes(agencyId, [c]);
+  const a = anonymize.forClient(c);
+  // AI bahosi (fitScore/fitReason) agentlikning ichki fikri — rezyumega kirmaydi
+  delete a.fitScore; delete a.fitReason;
+  res.json(Object.assign(a, { open: false }));
 }));
 
-// ── Nomzod fotosi (chat va rezyume uchun) ──
-// Kabinetdagi photo-sl tanlov id'siga bog'liq; chatda esa tanlov yo'q,
-// shuning uchun tekshiruv to'g'ridan-to'g'ri "kontakt ochiqmi" bo'yicha.
+// ── Nomzod fotosi (chat, rezyume, arizalar uchun) ──
+// Kabinetdagi photo-sl tanlov id'siga bog'liq; chat va arizada tanlov
+// yo'q. Foto qidiruv kartasida ham ko'rinadi (anonim emas), shuning uchun
+// shart: nomzod shu mijozning tanlovida yoki unga ariza bergan.
 router.get('/candidates/:id/photo', asyncHandler(async (req, res) => {
   const v = initData.verify(req.query.i || '');
   if (!v.ok) return res.status(401).end();
   const client = await Client.findOne({ tgChatId: String(v.user.id), status: 'active' });
   if (!client) return res.status(403).end();
-  if (!await contactView.isOpenPair({ agencyId: client.agencyId, clientId: client.id, candidateId: req.params.id })) {
-    return res.status(403).end();
-  }
+  if (!await clientKnows(client.agencyId, client.id, req.params.id)) return res.status(403).end();
 
   const c = await Candidate.findOne({ restaurantId: client.agencyId, id: req.params.id }, 'photo').lean();
   if (!c || !c.photo) return res.status(404).end();
@@ -864,11 +885,16 @@ router.get('/candidates/:id/photo', asyncHandler(async (req, res) => {
 // Mini App'ning o'z push'i yo'q — kirganda darhol ko'rinadigan nuqta
 // odamni suhbatga qaytaradi.
 router.get('/unread', clientGuard, asyncHandler(async (req, res) => {
-  const r = await ChatThread.aggregate([
-    { $match: { agencyId: req.client.agencyId, clientId: req.client.id, unreadClient: { $gt: 0 } } },
-    { $group: { _id: null, n: { $sum: '$unreadClient' } } }
+  const [r, apps] = await Promise.all([
+    ChatThread.aggregate([
+      { $match: { agencyId: req.client.agencyId, clientId: req.client.id, unreadClient: { $gt: 0 } } },
+      { $group: { _id: null, n: { $sum: '$unreadClient' } } }
+    ]),
+    // Ko'rilmagan arizalar — "Vakansiya" tabidagi nuqta. Arizalar ro'yxati
+    // ochilganda ular 'seen' bo'ladi (GET .../applications).
+    Application.countDocuments({ agencyId: req.client.agencyId, clientId: req.client.id, state: 'new' })
   ]);
-  res.json({ chats: (r[0] && r[0].n) || 0 });
+  res.json({ chats: (r[0] && r[0].n) || 0, apps });
 }));
 
 router.get('/chats/:id/messages', clientGuard, asyncHandler(async (req, res) => {

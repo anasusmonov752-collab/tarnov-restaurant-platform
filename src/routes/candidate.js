@@ -22,7 +22,7 @@ const Restaurant = require('../models/Restaurant');
 const vac = require('../services/vacancy');
 const tg = require('../services/telegram');
 const initData = require('../services/tgInitData');
-const { isValidRole } = require('../data/roles');
+const { isValidRole, roleLabel } = require('../data/roles');
 const chat = require('../services/chat');
 const contactView = require('../services/contactView');
 const ChatThread = require('../models/ChatThread');
@@ -275,6 +275,24 @@ router.post('/vacancies/:id/apply', guard, asyncHandler(async (req, res) => {
           `${c.phone || ''}`);
       }
     } catch (e) { console.error('[CAND] ariza xabari ketmadi:', e.message); }
+
+    // Mijozga — ilgari umuman xabar bormasdi: vakansiya ichiga kirmaguncha
+    // ariza kelganini bilmasdi. Matn ANONIM (ism, telefon yo'q) — kontakt
+    // faqat ochilganda. "Ko'rish" to'g'ridan-to'g'ri shu vakansiya arizalarini
+    // ochadi (?apps= — hash emas: Telegram launch parametrlarini hash'ga qo'yadi).
+    try {
+      const cl = await Client.findOne({ agencyId: c.restaurantId, id: v.clientId }, 'tgChatId status').lean();
+      if (cl && cl.tgChatId && cl.status === 'active') {
+        const who = [isValidRole(c.role) ? roleLabel(c.role) : (c.desiredPosition || 'Nomzod'),
+                     c.experienceYears ? c.experienceYears + ' yil tajriba' : 'Tajribasiz',
+                     c.location || ''].filter(Boolean).join(' · ');
+        await tg.sendMessage(tg.platformToken(), cl.tgChatId,
+          `📨 «${v.title}» vakansiyasiga yangi ariza\n\n${who}`,
+          { reply_markup: { inline_keyboard: [[
+            { text: 'Ko\'rish', web_app: { url: `${publicBase(req)}/miniapp.html?apps=${encodeURIComponent(v.id)}` } }
+          ]] } });
+      }
+    } catch (e) { console.error('[CAND] mijozga ariza xabari ketmadi:', e.message); }
 
     res.json({ ok: true, id: a.id });
   } catch (e) {

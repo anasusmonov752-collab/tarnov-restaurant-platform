@@ -127,7 +127,10 @@ async function setClientState({ agencyId, shortlistId, clientId, candidateId, st
 //   3. yechilmasa — bandlikni bekor qilamiz
 //   4. mijozga xabar yuboramiz (bu bosqich yiqilsa ham ochilgan holda qoladi:
 //      kontakt kabinetda ko'rinadi, kredit bekorga ketmaydi)
-async function reveal({ agencyId, shortlistId, candidateId, appBase = '' }) {
+// viaApplication — mijoz arizadan o'zi ochdi (services/applyReveal.js).
+// Oqim bir xil, faqat xabarlar matni boshqa: agentlik nomzod bilan
+// gaplashmagan, nomzod o'zi ariza bergan.
+async function reveal({ agencyId, shortlistId, candidateId, appBase = '', viaApplication = false }) {
   const now = new Date();
 
   // Oldingi holatni band qilishdan OLDIN o'qiymiz — kredit yetmay qolsa
@@ -182,7 +185,7 @@ async function reveal({ agencyId, shortlistId, candidateId, appBase = '' }) {
 
   const cand = await Candidate.findOne({ restaurantId: agencyId, id: candidateId }).lean();
   const client = await Client.findOne({ agencyId, id: claimed.clientId }).lean();
-  await notifyClient({ agencyId, clientId: claimed.clientId, cand, balance });
+  await notifyClient({ agencyId, clientId: claimed.clientId, cand, balance, viaApplication });
 
   // Suhbat ochish va nomzodga xabar — ikkalasi yiqilsa ham jim o'tadi:
   // kredit yechilgan, kontakt mijozda. Bular ustiga qo'shimcha qatlam.
@@ -193,7 +196,7 @@ async function reveal({ agencyId, shortlistId, candidateId, appBase = '' }) {
     });
   } catch (e) { console.error('[SL] suhbat ochilmadi:', e.message); }
 
-  await notifyCandidate({ cand, clientName: client && client.name, appBase });
+  await notifyCandidate({ cand, clientName: client && client.name, appBase, viaApplication });
   await syncKanban(agencyId, candidateId, 'revealed');
 
   return { already: false, shortlist: claimed, balance, candidate: cand, prevState };
@@ -202,7 +205,7 @@ async function reveal({ agencyId, shortlistId, candidateId, appBase = '' }) {
 // ── Ochilgan kontaktni mijozga yuborish ──
 // Yiqilsa throw qilmaydi: kontakt ochilgan, kredit yechilgan — xabar
 // ketmagani butun amalni bekor qilishga asos emas.
-async function notifyClient({ agencyId, clientId, cand, balance }) {
+async function notifyClient({ agencyId, clientId, cand, balance, viaApplication = false }) {
   try {
     const client = await Client.findOne({ agencyId, id: clientId }).lean();
     if (!client || !client.tgChatId || !cand) return;
@@ -217,7 +220,11 @@ async function notifyClient({ agencyId, clientId, cand, balance }) {
     ];
     if (cand.email) lines.push(`✉️ ${cand.email}`);
     lines.push('', `Balans: ${balance} kredit`);
-    lines.push('Nomzod siz bilan bog\'lanishni kutmoqda — biz u bilan gaplashdik.');
+    // Arizadan ochilganda agentlik nomzod bilan gaplashmagan — yolg'on
+    // "biz gaplashdik" demaymiz
+    lines.push(viaApplication
+      ? 'Nomzod vakansiyangizga o\'zi ariza bergan — qo\'ng\'iroqni kutmoqda.'
+      : 'Nomzod siz bilan bog\'lanishni kutmoqda — biz u bilan gaplashdik.');
 
     await tg.sendMessage(tg.platformToken(), client.tgChatId, lines.join('\n'));
   } catch (e) {
@@ -231,12 +238,14 @@ async function notifyClient({ agencyId, clientId, cand, balance }) {
 // o'zaro tanishtirish payti, shuning uchun restoran nomini aytamiz.
 //
 // Yiqilsa throw qilmaydi — kredit allaqachon yechilgan.
-async function notifyCandidate({ cand, clientName, appBase }) {
+async function notifyCandidate({ cand, clientName, appBase, viaApplication = false }) {
   try {
     if (!cand || !cand.tgChatId) return;
     const who = clientName || 'Ish beruvchi';
     const lines = [
-      `🏢 «${who}» sizning kontaktingizni oldi.`,
+      viaApplication
+        ? `🏢 «${who}» arizangizni ko'rib, kontaktingizni oldi.`
+        : `🏢 «${who}» sizning kontaktingizni oldi.`,
       '',
       'Ular tez orada bog\'lanadi. Siz ham ilovadagi yozishma orqali',
       'savol bera olasiz.'

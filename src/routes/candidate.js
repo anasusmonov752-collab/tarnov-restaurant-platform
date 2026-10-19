@@ -25,6 +25,7 @@ const initData = require('../services/tgInitData');
 const { isValidRole, roleLabel } = require('../data/roles');
 const chat = require('../services/chat');
 const contactView = require('../services/contactView');
+const applyReveal = require('../services/applyReveal');
 const ChatThread = require('../models/ChatThread');
 const botRelay = require('../services/botRelay');
 const { publicBase } = require('../utils/publicBase');
@@ -242,9 +243,14 @@ router.post('/vacancies/:id/apply', guard, asyncHandler(async (req, res) => {
   }).lean();
   if (!v) return res.status(404).json({ error: 'Vakansiya topilmadi yoki yopilgan' });
 
-  // Telefon bo'lmasa ariza befoyda — mijoz tanlasa ham bog'lana olmaymiz
+  // Telefon bo'lmasa ariza befoyda — mijoz tanlasa ham bog'lana olmaymiz.
+  // Format ham tekshiriladi: arizadan mijoz kontaktni o'zi ochadi (kredit
+  // bilan) — bitta harf yozilgan "telefon" uchun pul ketmasin (audit #20).
   if (!c.phone) {
     return res.status(400).json({ error: 'Avval profilingizga telefon raqamini kiriting' });
+  }
+  if (!applyReveal.validPhone(c.phone)) {
+    return res.status(400).json({ error: 'Telefon raqamingizni to\'g\'ri kiriting: +998 90 123 45 67' });
   }
 
   try {

@@ -735,11 +735,14 @@ async function submit(){
 // ══════════════════════════════════════════════════════════
 //  KABINET
 // ══════════════════════════════════════════════════════════
+// Joriy balans — arizadan kontakt ochishda tasdiq matni va oldindan tekshiruv uchun
+let CREDITS = null;
 async function loadMe(){
   try{
     const m = await api('/api/ma/me');
     $('cName').textContent = m.name || 'Mijoz';
     $('cCred').textContent = m.credits;
+    CREDITS = m.credits;                 // "Kontaktni ochish" tasdig'ida balans
     const s = m.stats || {};
     $('cStats').innerHTML = `
       <div class="stat"><b>${s.searches||0}</b><span>qidiruv</span></div>
@@ -1238,6 +1241,40 @@ function vacForm(v){
 $('bNewV').onclick = () => vacForm(null);
 
 // ── Vakansiyaga kelgan arizalar ──
+// ── Arizadan kontaktni o'zi ochish ──
+// Tasdiq majburiy: pul yechiladi. Telegram'ning o'z oynasi (showConfirm)
+// — brauzer confirm()dan ishonchliroq ko'rinadi; eski versiyada zaxira.
+function askConfirm(text){
+  return new Promise(res => {
+    try {
+      if (TG && TG.showConfirm && TG.isVersionAtLeast && TG.isVersionAtLeast('6.2')) return TG.showConfirm(text, ok => res(!!ok));
+    } catch(e){}
+    res(confirm(text));
+  });
+}
+
+async function openFromApp(b, vacancyId){
+  if (CREDITS != null && CREDITS < 1) {
+    alert('Kredit yetarli emas. "Balans" bo\'limidan kredit so\'rang.');
+    closeSheet(); pickTab('tCR'); return;
+  }
+  const bal = CREDITS != null ? `\nBalans: ${CREDITS} → ${CREDITS - 1}` : '';
+  const ok = await askConfirm(`Kontakt ochiladi va 1 kredit yechiladi.${bal}\n\nNomzodning ismi, telefoni va chat ochiladi.`);
+  if (!ok) return;
+  b.disabled = true; const was = b.innerHTML; b.textContent = 'Ochilmoqda…';
+  try {
+    const r = await api(`/api/ma/applications/${b.dataset.open}/open`, { method:'POST', body:'{}' });
+    if (r.balance != null) CREDITS = r.balance;
+    try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
+    loadMe(); loadShortlists(); if (VACS.length) loadVacancies();
+    showResume(r.candidateId || b.dataset.cand);          // darhol ism va telefon
+  } catch(e){
+    alert(e.message);
+    b.disabled = false; b.innerHTML = was;
+    showApps(vacancyId);                                  // holat o'zgargan bo'lishi mumkin
+  }
+}
+
 async function showApps(id){
   openSheet('Arizalar', '<div class="msg">Yuklanmoqda…</div>');
   let d;
@@ -1279,13 +1316,19 @@ async function showApps(id){
       ${it.message ? `<div class="cd-wait" style="color:var(--ink)">"${esc(it.message)}"</div>` : ''}
       <div class="cd-acts">
         <button class="cd-btn" data-rz="${esc(c.id)}">${IC.doc}Rezyume</button>
-        ${done ? '' : `<button class="cd-btn p" data-pick="${it.id}">Tanlash</button>
-          <button class="cd-btn" data-rej="${it.id}" style="color:var(--danger)">Rad etish</button>`}
+        ${done ? '' : it.instant
+          // Yangi ariza — kontaktni o'zi ochadi (tasdiq bilan, -1 kredit)
+          ? `<button class="cd-btn p" data-open="${it.id}" data-cand="${esc(c.id)}">${IC.phone}Kontaktni ochish</button>`
+          // Eski ariza yoki telefon tekshirilmagan — HR orqali
+          : `<button class="cd-btn p" data-pick="${it.id}">Tanlash</button>`}
+        ${done ? '' : `<button class="cd-btn" data-rej="${it.id}" style="color:var(--danger)">Rad etish</button>`}
       </div>
-      <div class="cd-foot"><span>Ariza: ${dShort(it.createdAt)}</span></div>
+      <div class="cd-foot"><span>Ariza: ${dShort(it.createdAt)}${
+        done ? '' : it.instant ? ' · 1 kredit, darhol ochiladi' : it.why ? ' · ' + esc(it.why) : ''}</span></div>
     </div>`;
   }).join('');
   $('shB').querySelectorAll('[data-rz]').forEach(b => b.onclick = () => showResume(b.dataset.rz));
+  $('shB').querySelectorAll('[data-open]').forEach(b => b.onclick = () => openFromApp(b, id));
 
   // Server arizalarni ochilganda 'seen' qildi — nuqta va kartadagi qizil belgi o'chsin
   refreshUnread();

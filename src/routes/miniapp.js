@@ -26,6 +26,7 @@ const Application = require('../models/Application');
 const vac = require('../services/vacancy');
 const vacAuto = require('../services/vacancyAuto');
 const contactView = require('../services/contactView');
+const applyReveal = require('../services/applyReveal');
 const candidateSearch = require('../services/candidateSearch');
 const relay = require('../services/botRelay');
 const { isValidRole, roleLabel } = require('../data/roles');
@@ -682,12 +683,18 @@ router.get('/vacancies/:id/applications', clientGuard, asyncHandler(async (req, 
     vacancy: vac.full(v),
     items: apps.map(a => {
       const c = byId[a.candidateId];
+      // Kontaktni o'zi ocha oladimi (applyReveal). Faqat qaror qilinmagan
+      // arizada; "why" — nega oddiy yo'l (HR tekshiradi) ekanini aytadi.
+      const open = a.state !== 'shortlisted' && a.state !== 'rejected';
+      const el = open && c ? applyReveal.eligibility(a, c) : { ok: false, why: '' };
       return {
         id: a.id,
         state: a.state === 'new' ? 'seen' : a.state,
         isNew: a.state === 'new',            // shu ochilishda birinchi marta ko'rildi
         message: a.message,
         createdAt: a.createdAt,
+        instant: el.ok,
+        why: el.ok ? '' : (el.why || ''),
         candidate: c ? anon[c.publicCode] || null : null
       };
     })
@@ -698,7 +705,10 @@ router.get('/vacancies/:id/applications', clientGuard, asyncHandler(async (req, 
 router.post('/applications/:id/:action', clientGuard, asyncHandler(async (req, res) => {
   const agencyId = req.client.agencyId;
   const act = req.params.action;
-  if (!['pick', 'reject'].includes(act)) return res.status(400).json({ error: 'Amal noto\'g\'ri' });
+  // pick   — tanlash, agentlik tekshiradi (oddiy yo'l)
+  // open   — kontaktni mijoz O'ZI ochadi (yangi ariza, -1 kredit, applyReveal)
+  // reject — rad etish
+  if (!['pick', 'open', 'reject'].includes(act)) return res.status(400).json({ error: 'Amal noto\'g\'ri' });
 
   const a = await Application.findOne({ agencyId, clientId: req.client.id, id: req.params.id });
   if (!a) return res.status(404).json({ error: 'Ariza topilmadi' });
@@ -712,6 +722,20 @@ router.post('/applications/:id/:action', clientGuard, asyncHandler(async (req, r
     a.decidedAt = new Date();
     await a.save();
     return res.json({ ok: true, state: a.state });
+  }
+
+  // Arizadan o'zi ochish: shart SERVERDA qayta tekshiriladi — tugma
+  // ko'rinishiga ishonmaymiz. Kredit oldindan tekshiriladi: yetmasa ariza
+  // "tanlangan" bo'lib qolib, mijozga xato chiqmasin (reveal() baribir
+  // atomik yechadi — bu faqat tushunarli xabar uchun).
+  if (act === 'open') {
+    const cand = await Candidate.findOne({ restaurantId: agencyId, id: a.candidateId },
+      'id phone jobStatus jobStatusAt').lean();
+    const el = applyReveal.eligibility(a, cand);
+    if (!el.ok) return res.status(400).json({ error: el.why });
+    if ((req.client.credits || 0) < 1) {
+      return res.status(400).json({ error: 'Kredit yetarli emas', noCredits: true });
+    }
   }
 
   // Shu vakansiya bo'yicha ochiq tanlov bormi — bo'lsa unga qo'shamiz,
@@ -745,6 +769,34 @@ router.post('/applications/:id/:action', clientGuard, asyncHandler(async (req, r
     { restaurantId: agencyId, id: a.candidateId },
     { $addToSet: { shownToClients: req.client.id } }
   );
+
+  if (act === 'open') {
+    // Oddiy kontakt ochish oqimi: atomik band qilish, -1 kredit, chat,
+    // mijoz va nomzodga xabar — hammasi reveal() da, bu yerda takrorlamaymiz
+    let r;
+    try {
+      r = await shortlistSvc.reveal({ agencyId, shortlistId: sl.id, candidateId: a.candidateId,
+        appBase: publicBase(req), viaApplication: true });
+    } catch (e) {
+      return res.status(400).json({ error: e.message });
+    }
+    // Sizga — nazoratdan chiqmaysiz, lekin tugma kerak emas: kontakt ochilgan
+    try {
+      const agency = await Restaurant.findOne({ id: agencyId });
+      const adminChat = agency && agency.telegram && agency.telegram.adminChatId;
+      const c = r.candidate;
+      if (adminChat && c && !r.already) {
+        await tg.sendMessage(tg.platformToken(), adminChat,
+          `✅ ${req.client.name} arizadan kontaktni o'zi ochdi (-1 kredit)\n` +
+          `Vakansiya: ${(v && v.title) || '—'}\n\n` +
+          `${c.fullName || 'Nomsiz'} (${c.publicCode || '—'})\n📞 ${c.phone || 'telefon yo\'q'}\n` +
+          `Mijoz balansi: ${r.balance} kredit`);
+      }
+    } catch (e) { console.error('[MA] ochish xabari ketmadi:', e.message); }
+
+    return res.json({ ok: true, state: a.state, shortlistId: sl.id, candidateId: a.candidateId,
+      balance: r.balance, already: !!r.already });
+  }
 
   // Sizga to'liq kontakt bilan xabar
   try {

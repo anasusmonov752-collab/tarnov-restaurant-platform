@@ -14,6 +14,8 @@ const credits = require('./credits');
 const tg = require('./telegram');
 const pipeline = require('../data/pipeline');
 const chat = require('./chat');
+const { isValidRole } = require('../data/roles');
+const I18N = require('../../public/js/th-i18n');
 
 const MANUAL_STATES = pipeline.AGENCY_STATES;
 
@@ -209,22 +211,25 @@ async function notifyClient({ agencyId, clientId, cand, balance, viaApplication 
   try {
     const client = await Client.findOne({ agencyId, id: clientId }).lean();
     if (!client || !client.tgChatId || !cand) return;
+    // Mijoz tilida (tanlagan yoki Telegram tili)
+    const lang = I18N.resolve(client.lang, client.tgLang);
+    const T = (k, v) => I18N.t(lang, k, v);
+    // Lavozim — rol bo'yicha bir xil (Mini App kabi), xom rezyume matni emas
+    const position = isValidRole(cand.role) ? T('role.' + cand.role) : (cand.desiredPosition || '');
 
     const lines = [
-      `✅ Kontakt ochildi — ${cand.publicCode || ''}`,
+      T('nc.opened', { code: cand.publicCode || '' }),
       '',
-      cand.fullName || 'Nomsiz',
-      cand.desiredPosition || '',
+      cand.fullName || T('nc.noName'),
+      position,
       '',
-      `📞 ${cand.phone || 'telefon yo\'q'}`
+      `📞 ${cand.phone || T('nc.noPhone')}`
     ];
     if (cand.email) lines.push(`✉️ ${cand.email}`);
-    lines.push('', `Balans: ${balance} kredit`);
+    lines.push('', T('nc.balance', { n: balance }));
     // Arizadan ochilganda agentlik nomzod bilan gaplashmagan — yolg'on
     // "biz gaplashdik" demaymiz
-    lines.push(viaApplication
-      ? 'Nomzod vakansiyangizga o\'zi ariza bergan — qo\'ng\'iroqni kutmoqda.'
-      : 'Nomzod siz bilan bog\'lanishni kutmoqda — biz u bilan gaplashdik.');
+    lines.push(T(viaApplication ? 'nc.viaApp' : 'nc.viaAgency'));
 
     await tg.sendMessage(tg.platformToken(), client.tgChatId, lines.join('\n'));
   } catch (e) {

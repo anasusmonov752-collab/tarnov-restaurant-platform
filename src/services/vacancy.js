@@ -129,7 +129,9 @@ function full(v, extra = {}, lang) {
     languages: lang ? langsLabel(v.languages, lang) : (v.languages || []),
     shift: v.shift, location: v.location,
     salaryFrom: v.salaryFrom, salaryTo: v.salaryTo, salaryText: salaryText(v, lang || 'uz'),
-    schedule: v.schedule, conditions: v.conditions,
+    schedule: v.schedule,
+    // "Ovqat · Forma" — ma'lum so'zlar o'quvchi tilida (th-i18n.perksText)
+    conditions: lang ? I18N.perksText(v.conditions, lang) : v.conditions,
     startDate: v.startDate, headcount: v.headcount,
     notes: v.notes, status: v.status,
     source: v.source || 'manual', listed: v.listed !== false,

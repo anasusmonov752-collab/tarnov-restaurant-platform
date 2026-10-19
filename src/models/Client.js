@@ -41,6 +41,10 @@ const ClientSchema = new mongoose.Schema({
   // language_code bo'yicha taxmin qilinadi (public/js/th-i18n.js).
   // Brauzerda emas, shu yerda: bot xabarlari ham shu tilda bo'lishi kerak.
   lang: { type: String, default: '' },
+  // Telegram language_code (oxirgi ko'rilgani). lang bo'sh bo'lganda
+  // bildirishnomalar (kontakt ochildi, yangi ariza) shundan til oladi —
+  // u yerda Telegram so'rovi yo'q. Qoida: th-i18n.resolve(lang, tgLang).
+  tgLang: { type: String, default: '' },
 
   createdAt:  { type: Date, default: Date.now },
   lastSeenAt: { type: Date, default: null }

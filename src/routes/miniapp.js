@@ -71,10 +71,20 @@ const limiter = rateLimit({
 router.use(limiter);
 
 // initData'ni tekshirib, mijozni topadi. Har endpoint shundan boshlanadi.
+// Kirish xatosi mijoz tilida va NIMA QILISH kerakligi bilan. Ilgari
+// "Avtorizatsiya: imzo eskirgan" chiqardi — oddiy odamga tushunarsiz;
+// eng ko'p uchraydigani — Mini App 24 soatdan ortiq ochiq turgani.
+const AUTH_KEY = { 'imzo eskirgan': 'auth.expired', 'initData yo\'q': 'auth.none' };
+const authText = (lang, err) => I18N.t(lang, AUTH_KEY[err] || 'auth.bad');
+
 const clientGuard = asyncHandler(async (req, res, next) => {
   const raw = req.get('X-Telegram-Init-Data') || (req.body && req.body.initData) || '';
   const v = initData.verify(raw);
-  if (!v.ok) return res.status(401).json({ error: 'Avtorizatsiya: ' + v.error });
+  if (!v.ok) {
+    // Asl sabab (masalan 'Bot sozlanmagan' — server muammosi) logda qoladi
+    console.warn('[MA] kirish rad etildi:', v.error);
+    return res.status(401).json({ error: authText(req.lang, v.error), code: 'auth' });
+  }
 
   const client = await Client.findOne({ tgChatId: String(v.user.id) });
   if (!client) return res.status(403).json({ error: 'Mijoz topilmadi' });
@@ -86,6 +96,13 @@ const clientGuard = asyncHandler(async (req, res, next) => {
   req.client = client;
   // Tanlagan bo'lsa — o'sha; aks holda Telegram tili (yuqoridagi taxmin)
   if (I18N.LANGS.includes(client.lang)) req.lang = client.lang;
+  // Telegram tili — bot bildirishnomalari uchun (u yerda initData yo'q).
+  // Faqat o'zgarganda yoziladi: har so'rovda bazaga yozmaymiz.
+  const tgLang = (v.user && v.user.language_code) || '';
+  if (tgLang && tgLang !== client.tgLang) {
+    Client.updateOne({ agencyId: client.agencyId, id: client.id }, { $set: { tgLang } })
+      .catch(e => console.error('[MA] tgLang yozilmadi:', e.message));
+  }
   next();
 });
 
@@ -279,17 +296,16 @@ router.post('/shortlist', clientGuard, asyncHandler(async (req, res) => {
   // Vakansiyadan qidirilgan va unda maosh bor bo'lsa — so'ramaymiz:
   // shartlar allaqachon yozilgan, ikkinchi marta so'rash bezovta qiladi.
   try {
+    // Mijoz tilida (req.lang — Client.lang yoki Telegram tili)
     if (req.client.tgChatId) {
+      const accepted = tl(req, 'slb.accepted', { n: picked.length });
       if (fromVacancy && (fromVacancy.salaryFrom || fromVacancy.salaryTo)) {
         await tg.sendMessage(tg.platformToken(), req.client.tgChatId,
-          `${picked.length} ta nomzod qabul qilindi.\n\n` +
-          `«${fromVacancy.title}» shartlari bo'yicha gaplashib, javobini yozaman.`);
+          `${accepted}\n\n${tl(req, 'slb.willTalk', { v: vac.titleFor(fromVacancy, req.lang) })}`);
       } else {
         await agent.askOffer(req.client.tgChatId, sl.id);
         await tg.sendMessage(tg.platformToken(), req.client.tgChatId,
-          `${picked.length} ta nomzod qabul qilindi.\n\n` +
-          `Ular bilan gaplashishim uchun ayting — nima taklif qilasiz? ` +
-          `Maosh, smena, qachondan kerak.`);
+          `${accepted}\n\n${tl(req, 'slb.askOffer')}`);
       }
     }
   } catch (e) {
@@ -348,6 +364,11 @@ router.patch('/lang', clientGuard, asyncHandler(async (req, res) => {
   const lang = String((req.body || {}).lang || '');
   if (!I18N.LANGS.includes(lang)) return res.status(400).json({ error: 'Amal noto\'g\'ri' });
   await Client.updateOne({ agencyId: req.client.agencyId, id: req.client.id }, { $set: { lang } });
+  // Chatdagi "Kabinet" tugmasi ham yangi tilda
+  if (req.client.tgChatId) {
+    tg.setChatMenuButton(tg.platformToken(), req.client.tgChatId, I18N.t(lang, 'bot.menu'),
+      `${publicBase(req)}/miniapp.html`).catch(e => console.error('[MA] menyu tugmasi:', e.message));
+  }
   res.json({ ok: true, lang });
 }));
 
@@ -624,6 +645,8 @@ router.get('/vacancies/:id/detail', clientGuard, asyncHandler(async (req, res) =
 // o'zgartirilgan" deb source='manual' qilib qo'yardi va agentlik/bot
 // xabarlarida ruscha chiqardi. Ko'rsatishda vac.full() o'quvchi tiliga qaytaradi.
 function autoTitleUz(data, prev = {}) {
+  // Sharoitlar ham: forma rus tilida "Питание · Форма" qaytaradi
+  if (data.conditions) data.conditions = I18N.perksText(data.conditions, 'uz');
   if (!data.title) return;
   const role = data.role !== undefined ? data.role : prev.role;
   const shift = data.shift !== undefined ? data.shift : prev.shift;

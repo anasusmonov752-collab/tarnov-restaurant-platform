@@ -13,6 +13,7 @@ const Shortlist = require('../models/Shortlist');
 const Client = require('../models/Client');
 const Candidate = require('../models/Candidate');
 const tg = require('./telegram');
+const I18N = require('../../public/js/th-i18n');
 
 const PREVIEW = 120;   // ro'yxatda ko'rinadigan qism
 
@@ -96,24 +97,25 @@ async function pushNotify({ agencyId, th, from, text, appBase }) {
     // yuborgan, ikkinchisi takror bo'lardi.
     if (from === 'system') return;
 
+    // lang — qabul qiluvchining tili. Mijoz — Client.lang/tgLang; nomzod
+    // kabineti hali o'zbekcha, shuning uchun nomzodga 'uz'.
     if (from !== 'client') {
-      const cl = await Client.findOne({ agencyId, id: th.clientId }, 'tgChatId').lean();
-      if (cl && cl.tgChatId) targets.push({ chatId: cl.tgChatId, url: appBase + '/miniapp.html#chat' });
+      const cl = await Client.findOne({ agencyId, id: th.clientId }, 'tgChatId lang tgLang').lean();
+      if (cl && cl.tgChatId) targets.push({ chatId: cl.tgChatId, url: appBase + '/miniapp.html#chat',
+        lang: I18N.resolve(cl.lang, cl.tgLang) });
     }
     if (from !== 'candidate' && th.kind === 'cc' && th.candidateId) {
       const cd = await Candidate.findOne({ restaurantId: agencyId, id: th.candidateId }, 'tgChatId').lean();
-      if (cd && cd.tgChatId) targets.push({ chatId: cd.tgChatId, url: appBase + '/profil.html#chat' });
+      if (cd && cd.tgChatId) targets.push({ chatId: cd.tgChatId, url: appBase + '/profil.html#chat', lang: 'uz' });
     }
     if (!targets.length) return;
 
-    const label = from === 'agency' ? 'TalentHub' : 'Yangi xabar';
-    const body = `💬 ${label}\n\n${cut}`;
-
-    await Promise.all(targets.map(t =>
-      tg.sendMessage(token, t.chatId, body, {
-        reply_markup: { inline_keyboard: [[{ text: 'Ochish', web_app: { url: t.url } }]] }
-      }).catch(e => console.error('[CHAT] push:', e.message))
-    ));
+    await Promise.all(targets.map(t => {
+      const label = from === 'agency' ? 'TalentHub' : I18N.t(t.lang, 'push.new');
+      return tg.sendMessage(token, t.chatId, `💬 ${label}\n\n${cut}`, {
+        reply_markup: { inline_keyboard: [[{ text: I18N.t(t.lang, 'push.open'), web_app: { url: t.url } }]] }
+      }).catch(e => console.error('[CHAT] push:', e.message));
+    }));
     return true;
   } catch (e) {
     console.error('[CHAT] push umuman ketmadi:', e.message);

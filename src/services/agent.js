@@ -18,18 +18,35 @@ const relay = require('./botRelay');
 const tg = require('./telegram');
 const ai = require('./ai');
 const vacAuto = require('./vacancyAuto');
+const Client = require('../models/Client');
 const { ROLES } = require('../data/roles');
+const I18N = require('../../public/js/th-i18n');
+const { placeLabel } = require('../utils/labels');
 
 const ROLE_HINT = ROLES.map(r => `${r.key} (${r.label})`).join(', ');
 const MAX_TURNS = 6;
 
-const SYSTEM = `Sen TalentHub'ning HR agentisan. Restoran rahbarlari senga
+// ── Javob tili ──
+// Mijoz tilni o'zi tanlagan bo'lsa (Client.lang) — AI faqat shu tilda
+// javob beradi: tizim qo'shadigan qatorlar ("12 ta mos nomzod bor")
+// ham shu tilda, aralash chiqmasin. Tanlamagan bo'lsa — u yozgan tilda,
+// va AI shu tilni qaytaradi (lang maydoni). Telegram tiliga ishonmaymiz:
+// O'zbekistonda ko'p odamning Telegrami ruscha, o'zi esa o'zbekcha yozadi.
+const LANG_NAME = { uz: 'o\'zbek', ru: 'rus' };
+const langRule = fixed => fixed
+  ? `JAVOB TILI: faqat ${LANG_NAME[fixed]} tilida (reply va summary). Foydalanuvchi
+boshqa tilda yozsa ham shu tilda javob ber. lang maydoniga "${fixed}" yoz.`
+  : `Foydalanuvchi qaysi tilda yozsa — o'sha tilda javob ber (o'zbek yoki rus);
+reply va summary shu tilda. lang maydoniga shu tilni yoz: "uz" yoki "ru".`;
+
+const SYSTEM = fixed => `Sen TalentHub'ning HR agentisan. Restoran rahbarlari senga
 xodim kerakligini aytadi, sen bazadan mos nomzodlarni topasan.
 
 OHANG: qisqa va ishchan. Hamkasb kabi gapir, sotuvchi kabi emas.
-Bir-ikki jumla yetarli. Foydalanuvchi qaysi tilda yozsa — o'sha tilda javob ber
-(o'zbek yoki rus). Hissiyotli iboralar, undov belgilari va "men sizning shaxsiy
-yordamchingizman" kabi gaplar KERAK EMAS.
+Bir-ikki jumla yetarli. Hissiyotli iboralar, undov belgilari va "men sizning
+shaxsiy yordamchingizman" kabi gaplar KERAK EMAS.
+
+${langRule(fixed)}
 
 MUHIM QOIDALAR:
 1. Nomzodlar sonini, ismini yoki ma'lumotini O'YLAB TOPMA. Raqamlarni tizim
@@ -57,11 +74,13 @@ Maydonlar:
   shift      - "kunduzgi" | "kechki" yoki null
   maxSalary  - maosh shifti (so'm) yoki null
   keywords   - qolgan muhim so'zlar massivi
-  summary    - so'rovning bir jumlalik tavsifi (o'zbekcha)`;
+  summary    - so'rovning bir jumlalik tavsifi (javob tilida)
+  lang       - javob tili: "uz" yoki "ru"`;
 
 const SCHEMA = {
   type: 'object',
   properties: {
+    lang:      { type: 'string' },
     reply:     { type: 'string' },
     intent:    { type: 'string' },
     role:      { type: 'string', nullable: true },
@@ -73,7 +92,7 @@ const SCHEMA = {
     keywords:  { type: 'array', items: { type: 'string' } },
     summary:   { type: 'string' }
   },
-  required: ['reply','intent','role','minExp','languages','location','shift','maxSalary','keywords','summary']
+  required: ['lang','reply','intent','role','minExp','languages','location','shift','maxSalary','keywords','summary']
 };
 
 async function loadConv(client, chatId) {
@@ -95,8 +114,13 @@ function historyText(turns) {
  * Mijozning xabarini qayta ishlaydi.
  * @returns {Promise<{text:string, searchKey?:string, count?:number}>}
  */
-async function handleClient({ client, chatId, input }) {
+async function handleClient({ client, chatId, input, lang = 'uz' }) {
   const conv = await loadConv(client, chatId);
+  // Mijoz o'zi tanlagan til (bo'lmasa null — AI yozilgan tildan aniqlaydi).
+  // lang — chaqiruvchining taxmini (Telegram tili), AI'siz javoblar uchun.
+  const fixed = I18N.LANGS.includes(client.lang) ? client.lang : null;
+  let L = fixed || lang;
+  const T = (k, v) => I18N.t(L, k, v);
 
   // ── Vakansiya shartlarini yig'ish bosqichi ──
   // Tanlov yuborilgandan keyin "nima taklif qilasiz?" so'raladi.
@@ -113,7 +137,9 @@ async function handleClient({ client, chatId, input }) {
     try {
       applied = await vacAuto.applyOffer({ agencyId: client.agencyId, shortlistId: conv.shortlistId, text: offer });
     } catch (e) { console.error('[AGENT] taklif vakansiyaga yozilmadi:', e.message); }
-    const card = applied.vacancy && applied.parsed ? vacAuto.templateText(applied.vacancy) : '';
+    const card = applied.vacancy && applied.parsed ? vacAuto.templateText(applied.vacancy, L) : '';
+    // Agentlikka — o'zbekcha karta (admin xabari)
+    const cardUz = card && L !== 'uz' ? vacAuto.templateText(applied.vacancy, 'uz') : card;
 
     // Sizga darhol yetib borsin: qo'ng'iroq qilayotganda nima
     // taklif qilinayotganini bilishingiz kerak
@@ -123,7 +149,7 @@ async function handleClient({ client, chatId, input }) {
       if (adminChat) {
         await tg.sendMessage(tg.platformToken(), adminChat,
           `💼 ${client.name} taklif shartlarini yubordi:\n\n${offer}` +
-          (card ? `\n\nVakansiyaga yozildi:\n${card}` : ''));
+          (cardUz ? `\n\nVakansiyaga yozildi:\n${cardUz}` : ''));
       }
     } catch (e) { console.error('[AGENT] taklif xabari ketmadi:', e.message); }
 
@@ -140,11 +166,10 @@ async function handleClient({ client, chatId, input }) {
     const hidden = card && applied.vacancy.listed === false;
     return {
       text: card
-        ? `Yozib oldim:\n\n${card}\n\nXato bo'lsa — Kabinet → Vakansiya bo'limida tuzating. ` +
-          `Nomzodlar bilan gaplashib, javobini yozaman.` +
-          (hidden ? `\n\nBoshqa nomzodlar ham ariza bersinmi?` : '')
-        : 'Yozib oldim. Nomzodlar bilan gaplashib, javobini yozaman.',
-      publishVacancyId: hidden ? applied.vacancy.id : ''
+        ? T('ag.recorded', { card }) + (hidden ? T('ag.askPublish') : '')
+        : T('ag.recordedShort'),
+      publishVacancyId: hidden ? applied.vacancy.id : '',
+      lang: L
     };
   }
 
@@ -160,7 +185,7 @@ async function handleClient({ client, chatId, input }) {
       `Foydalanuvchi: ${userText}`;
 
   const r = await ai.complete({
-    system: SYSTEM,
+    system: SYSTEM(fixed),
     messages: [{ role: 'user', content }],
     json: true,
     schema: SCHEMA,
@@ -168,6 +193,20 @@ async function handleClient({ client, chatId, input }) {
     tier: input.audio ? 'smart' : 'fast',
     restaurantId: client.agencyId
   });
+
+  // Tanlanmagan til — mijoz yozgan tildan. Bir marta saqlaymiz: keyingi
+  // xabarlar, Mini App va bildirishnomalar ham shu tilda bo'ladi
+  // (o'zgartirish — /til yoki Mini App). Juda qisqa gap ("ok", "ha") —
+  // ishonchli belgi emas, saqlanmaydi; ovozli xabar esa — ishonchli.
+  if (!fixed && I18N.LANGS.includes(r.lang)) {
+    L = r.lang;
+    const words = String(input.text || '').trim().split(/\s+/).filter(Boolean).length;
+    if (input.audio || words >= 3) {
+      await Client.updateOne({ agencyId: client.agencyId, id: client.id, lang: { $in: ['', null] } },
+        { $set: { lang: r.lang } }).catch(e => console.error('[AGENT] til saqlanmadi:', e.message));
+      client.lang = r.lang;
+    }
+  }
 
   const criteria = {
     // Model lavozimni har xil yozadi ("Хостес", "hostess") — bitta
@@ -188,7 +227,7 @@ async function handleClient({ client, chatId, input }) {
   // Lavozim yo'q — qidirib bo'lmaydi, AI savolini yuboramiz
   if (r.intent !== 'search' || !criteria.role) {
     await remember(conv, userText, reply, criteria);
-    return { text: reply || 'Kim kerakligini ayting — ofitsiant, xostes, menejer?' };
+    return { text: reply || T('ag.whoNeeded'), lang: L };
   }
 
   // ── Qidiruv ──
@@ -202,10 +241,9 @@ async function handleClient({ client, chatId, input }) {
   const result = await candidateSearch.search(criteria, client.agencyId, { limit: 20 });
 
   if (!result.rows.length) {
-    const msg = (reply ? reply + '\n\n' : '') +
-      'Bazada bunga mos nomzod topilmadi. Boshqa lavozim yoki shartni sinab ko\'ramizmi?';
+    const msg = (reply ? reply + '\n\n' : '') + T('ag.notFound');
     await remember(conv, userText, msg, criteria);
-    return { text: msg };
+    return { text: msg, lang: L };
   }
 
   const key = await saveSession(client, criteria, result.rows);
@@ -223,15 +261,15 @@ async function handleClient({ client, chatId, input }) {
   if (reply) lines.push(reply);
 
   if (total) {
-    lines.push(`${total} ta mos nomzod bor.`);
+    lines.push(T('ag.total', { n: total }));
   } else {
     // Qat'iy shartga hech kim tushmadi, lekin yumshatib topildi.
     // Nimani hisobga olmaganimizni ochiq aytamiz — mijoz o'zi qaror
     // qilsin, biz shartni jimgina yo'qotmaymiz.
+    const relaxed = (result.relaxFields || []).map(f => T('relax.' + f)).join(', ');
     lines.push(
-      `Qat'iy shartga mos kelmadi — ${(result.relaxed.join(', ') || 'ba\'zi shartlar')} ` +
-      `hisobga olinmadi.`,
-      `Shundan ${result.rows.length} ta eng yaqin nomzod tanlandi.`);
+      T('ag.relaxed', { x: relaxed || T('ag.relaxedSome') }),
+      T('ag.closest', { n: result.rows.length }));
   }
 
   // Natija ko'p bo'lsa toraytirish taklif qilamiz. 30 tagacha bo'lsa
@@ -240,29 +278,40 @@ async function handleClient({ client, chatId, input }) {
   if (total > 30) {
     const f = await candidateSearch.facets(criteria, client.agencyId, total);
     if (f.length) {
-      lines.push('', 'Toraytiramizmi?');
-      for (const x of f) lines.push(`· ${x.label} — ${x.count} ta`);
-      lines.push('', 'Yozib yuboring, yoki hammasini ko\'ring.');
+      lines.push('', T('ag.narrow'));
+      for (const x of f) lines.push(T('ag.facet', { label: facetLabel(x, L), n: x.count }));
+      lines.push('', T('ag.narrowHint'));
     }
   }
 
   const shown = result.rows.length;
   const more = Math.max(0, pool - shown);
-  if (more) lines.push('', `Yoqmasa — yana ${more} ta nomzod bor.`);
+  if (more) lines.push('', T('ag.moreLeft', { n: more }));
 
   await remember(conv, userText, lines.join('\n'), criteria, total);
   // Tugmadagi son — haqiqatan ochiladigan nomzodlar soni
-  return { text: lines.join('\n'), searchKey: key, count: shown, more };
+  return { text: lines.join('\n'), searchKey: key, count: shown, more, lang: L };
+}
+
+// Toraytirish varianti yozuvi — candidateSearch.facets kaliti bo'yicha
+// (u o'zbekcha yorliq beradi; hudud — bazadagi nom)
+function facetLabel(x, lang) {
+  if (x.key === 'minExp') return I18N.t(lang, 'facet.minExp');
+  if (x.key === 'shift_k') return I18N.t(lang, 'shiftT.kechki');
+  if (x.key === 'shift_d') return I18N.t(lang, 'shiftT.kunduzgi');
+  if (String(x.key).startsWith('loc_')) return placeLabel(x.label, lang);
+  return x.label;
 }
 
 /**
  * "Yana ko'rsat" — xuddi shu mezonlar bo'yicha keyingi sahifa.
  * Mezonlar va yumshatish suhbatdan olinadi, qayta so'ralmaydi.
  */
-async function morePage({ client, chatId }) {
+async function morePage({ client, chatId, lang = 'uz' }) {
+  const T = (k, v) => I18N.t(lang, k, v);
   const conv = await Conversation.findOne({ chatId, clientId: client.id });
   if (!conv || !conv.criteria || !conv.criteria.role) {
-    return { text: 'Avval kim kerakligini yozing — ofitsiant, xostes, menejer?' };
+    return { text: T('ag.moreFirst') };
   }
 
   const criteria = { ...candidateSearch.EMPTY, ...conv.criteria };
@@ -274,8 +323,7 @@ async function morePage({ client, chatId }) {
   });
 
   if (!r.rows.length) {
-    const msg = 'Boshqa nomzod qolmadi. Shartni o\'zgartirib ko\'ramizmi — ' +
-                'masalan boshqa hudud yoki tajribani kamroq?';
+    const msg = T('ag.noneLeft');
     await remember(conv, '[yana]', msg, criteria, conv.lastCount);
     return { text: msg };
   }
@@ -284,8 +332,8 @@ async function morePage({ client, chatId }) {
   conv.page = nextPage;
 
   const from = nextPage * SIZE + 1;
-  const lines = [`${from}–${from + r.rows.length - 1} (jami ${r.total} ta)`];
-  if (r.hasMore) lines.push(`Yana ${r.total - (nextPage * SIZE + r.rows.length)} ta qoladi.`);
+  const lines = [T('ag.range', { a: from, b: from + r.rows.length - 1, n: r.total })];
+  if (r.hasMore) lines.push(T('ag.left', { n: r.total - (nextPage * SIZE + r.rows.length) }));
 
   await remember(conv, '[yana]', lines.join('\n'), criteria, conv.lastCount);
   return { text: lines.join('\n'), searchKey: key, count: r.rows.length, more: r.hasMore ? 1 : 0 };

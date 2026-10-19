@@ -23,7 +23,8 @@ const Shortlist = require('../models/Shortlist');
 const ai = require('./ai');
 const vac = require('./vacancy');
 const { isValidRole } = require('../data/roles');
-const { vacTitle } = require('../../public/js/th-i18n');
+const I18N = require('../../public/js/th-i18n');
+const { vacTitle } = I18N;
 
 // ── Shablon ──────────────────────────────────────────────────
 
@@ -39,17 +40,9 @@ function makeTitle(role, shift) {
 
 // Sharoitlar — yopiq lug'at. AI faqat kalitni qaytaradi, matnni biz
 // qo'yamiz: "obed beramiz", "ovqat bepul", "kormit" — hammasi "Ovqat".
-const PERKS = {
-  ovqat:     'Ovqat',
-  forma:     'Forma',
-  yol:       'Yo\'l kira',
-  transport: 'Xizmat transporti',
-  rasmiy:    'Rasmiy ishga joylashtirish',
-  bonus:     'Bonus',
-  choy:      'Choy puli',
-  turar:     'Turar joy',
-  oqitish:   'O\'qitish'
-};
+// Yozuvlar th-i18n'da ('perk.<kalit>'): bazaga o'zbekcha yoziladi,
+// ko'rsatishda perksText() o'quvchi tiliga o'giradi.
+const PERKS = Object.fromEntries(I18N.PERK_KEYS.map(k => [k, I18N.t('uz', 'perk.' + k)]));
 
 // 24:00 ham to'g'ri — restoran smenasi ko'pincha yarim tunda tugaydi
 const TIME = /^(([01]?\d|2[0-3]):[0-5]\d|24:00)$/;
@@ -262,20 +255,26 @@ async function applyOffer({ agencyId, shortlistId, text }) {
 // "25-oktabr 00:00 Toshkent" aks holda "24-oktabr" bo'lib ko'rinardi.
 const OYLAR = ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul',
                'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr'];
-function dmy(d) {
+const MESYATS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля',
+                 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+function dmy(d, lang = 'uz') {
   const x = new Date(new Date(d).getTime() + 5 * 3600e3);
-  return `${x.getUTCDate()}-${OYLAR[x.getUTCMonth()]}`;
+  return lang === 'ru'
+    ? `${x.getUTCDate()} ${MESYATS[x.getUTCMonth()]}`
+    : `${x.getUTCDate()}-${OYLAR[x.getUTCMonth()]}`;
 }
 
-function templateText(v) {
+// lang — o'quvchi tili (mijoz). Agentlik xabari uchun 'uz' (default).
+function templateText(v, lang = 'uz') {
+  const T = k => I18N.t(lang, k);
   return [
-    `📋 ${v.title}`,
-    vac.salaryText(v) ? `Maosh: ${vac.salaryText(v)}` : '',
-    v.schedule   ? `Jadval: ${v.schedule}` : '',
-    v.conditions ? `Sharoit: ${v.conditions}` : '',
-    v.location   ? `Hudud: ${v.location}` : '',
-    v.startDate  ? `Boshlash: ${dmy(v.startDate)}` : '',
-    v.headcount > 1 ? `Kerak: ${v.headcount} ta` : ''
+    `📋 ${vac.titleFor(v, lang)}`,
+    vac.salaryText(v, lang) ? `${T('vk.salary')}: ${vac.salaryText(v, lang)}` : '',
+    v.schedule   ? `${T('vk.schedule')}: ${v.schedule}` : '',
+    v.conditions ? `${T('vk.cond')}: ${I18N.perksText(v.conditions, lang)}` : '',
+    v.location   ? `${T('vk.region')}: ${v.location}` : '',
+    v.startDate  ? `${T('vk.start')}: ${dmy(v.startDate, lang)}` : '',
+    v.headcount > 1 ? `${T('vk.need')}: ${I18N.t(lang, 'unit.people', { n: v.headcount })}` : ''
   ].filter(Boolean).join('\n');
 }
 

@@ -22,12 +22,14 @@ const Restaurant = require('../models/Restaurant');
 const vac = require('../services/vacancy');
 const tg = require('../services/telegram');
 const initData = require('../services/tgInitData');
-const { isValidRole, roleLabel } = require('../data/roles');
+const { isValidRole } = require('../data/roles');
+const { placeLabel } = require('../utils/labels');
 const chat = require('../services/chat');
 const contactView = require('../services/contactView');
 const applyReveal = require('../services/applyReveal');
 const ChatThread = require('../models/ChatThread');
 const botRelay = require('../services/botRelay');
+const I18N = require('../../public/js/th-i18n');
 const { publicBase } = require('../utils/publicBase');
 
 const router = express.Router();
@@ -307,15 +309,18 @@ router.post('/vacancies/:id/apply', guard, asyncHandler(async (req, res) => {
     // faqat ochilganda. "Ko'rish" to'g'ridan-to'g'ri shu vakansiya arizalarini
     // ochadi (?apps= — hash emas: Telegram launch parametrlarini hash'ga qo'yadi).
     try {
-      const cl = await Client.findOne({ agencyId: c.restaurantId, id: v.clientId }, 'tgChatId status').lean();
+      const cl = await Client.findOne({ agencyId: c.restaurantId, id: v.clientId }, 'tgChatId status lang tgLang').lean();
       if (cl && cl.tgChatId && cl.status === 'active') {
-        const who = [isValidRole(c.role) ? roleLabel(c.role) : (c.desiredPosition || 'Nomzod'),
-                     c.experienceYears ? c.experienceYears + ' yil tajriba' : 'Tajribasiz',
-                     c.location || ''].filter(Boolean).join(' · ');
+        // Mijoz tilida (Mini App bilan bir xil yozuv)
+        const lang = I18N.resolve(cl.lang, cl.tgLang);
+        const T = (k, x) => I18N.t(lang, k, x);
+        const who = [isValidRole(c.role) ? T('role.' + c.role) : (c.desiredPosition || T('role.candidate')),
+                     c.experienceYears ? T('fact.exp', { n: c.experienceYears }) : T('fact.noExp'),
+                     placeLabel(c.location, lang)].filter(Boolean).join(' · ');
         await tg.sendMessage(tg.platformToken(), cl.tgChatId,
-          `📨 «${v.title}» vakansiyasiga yangi ariza\n\n${who}`,
+          `${T('na.title', { v: vac.titleFor(v, lang) })}\n\n${who}`,
           { reply_markup: { inline_keyboard: [[
-            { text: 'Ko\'rish', web_app: { url: `${publicBase(req)}/miniapp.html?apps=${encodeURIComponent(v.id)}` } }
+            { text: T('bot.view'), web_app: { url: `${publicBase(req)}/miniapp.html?apps=${encodeURIComponent(v.id)}` } }
           ]] } });
       }
     } catch (e) { console.error('[CAND] mijozga ariza xabari ketmadi:', e.message); }

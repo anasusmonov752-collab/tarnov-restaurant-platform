@@ -343,7 +343,75 @@
       'why.rejected': 'Ariza rad etilgan',
       'why.not_looking': 'Nomzod hozir ish qidirmayapti — HR avval tekshiradi',
       'why.phone': 'Telefon raqami tekshirilmagan — HR avval tekshiradi',
-      'why.old': 'Ariza {n} kundan eski — HR avval tekshiradi'
+      'why.old': 'Ariza {n} kundan eski — HR avval tekshiradi',
+
+      // ── SERVER: Mini App kirish xatolari (tgInitData) ──
+      'auth.expired': 'Sessiya eskirgan — ilovani yopib, qayta oching.',
+      'auth.none': 'Ilovani Telegram ichidan oching.',
+      'auth.bad': 'Kirish tekshiruvdan o\'tmadi — ilovani yopib, qayta oching.',
+
+      // ── SERVER: vakansiya sharoitlari (vacancyAuto.PERKS kalitlari) ──
+      'perk.ovqat': 'Ovqat', 'perk.forma': 'Forma', 'perk.yol': 'Yo\'l kira',
+      'perk.transport': 'Xizmat transporti', 'perk.rasmiy': 'Rasmiy ishga joylashtirish',
+      'perk.bonus': 'Bonus', 'perk.choy': 'Choy puli', 'perk.turar': 'Turar joy', 'perk.oqitish': 'O\'qitish',
+
+      // ── BOT: mijoz bilan yozishma (routes/telegram.js) ──
+      'bot.hello': 'Salom! Bu TalentHub HR boti.\n\nBog\'lanish uchun sizga yuborilgan havoladan kiring.',
+      'bot.linkExpired': 'Havola eskirgan. HR bilan bog\'laning.',
+      'bot.menu': 'Kabinet',
+      'bot.welcome': 'Xush kelibsiz, {name}!\n\nNomzod kerak bo\'lsa shu yerga yozing yoki ovozli xabar yuboring.\nMasalan: "xostes kerak, 2 yildan ortiq tajribali"\n\nKredit: {n} ta kontakt\n\nPastdagi "Kabinet" tugmasi — tanlovlaringiz va ochilgan kontaktlar.',
+      'bot.langAsk': 'Tilni tanlang / Выберите язык',
+      'bot.langSet': 'Til: o\'zbekcha. O\'zgartirish — /til',
+      'bot.langToast': 'Tayyor',
+      'bot.blocked': 'Hisobingiz to\'xtatilgan. HR bilan bog\'laning.',
+      'bot.pending': 'Hisobingiz hali tasdiqlanmagan. Tez orada faollashtiriladi.',
+      'bot.asCandidate': 'Bu Telegram hisobi "{name}" mijozi sifatida ulangan.\n\nBitta hisob bir vaqtda ham mijoz, ham nomzod bo\'la olmaydi. Nomzod sifatida kirmoqchi bo\'lsangiz boshqa Telegram hisobidan urinib ko\'ring yoki HR bilan bog\'laning.',
+      'bot.help': 'Nomzod qidirish uchun shunchaki yozing yoki ovozli xabar yuboring.\n\nMasalan: "xostes kerak, 2 yildan ortiq tajribali, ingliz tili bilan"\n\nKredit: {n} ta kontakt\nTil: /til',
+      'bot.aiOff': 'AI hozircha sozlanmagan. HR bilan bog\'laning.',
+      'bot.replyFail': 'Javob berib bo\'lmadi: {e}',
+      'bot.view': 'Ko\'rish',
+      'bot.viewN': 'Ko\'rish ({n})',
+      'bot.more': 'Yana nomzodlar',
+      'bot.publish': '📢 E\'lon qilish',
+      'bot.searching': 'Qidirilmoqda…',
+      'bot.moreFail': 'Keyingi nomzodlarni olib bo\'lmadi: {e}',
+      'bot.vacGone': 'Vakansiya topilmadi yoki yopilgan',
+      'bot.published': 'E\'lon qilindi',
+      'bot.publishedLine': '📢 E\'lon qilindi — nomzodlar ariza bera boshlaydi.',
+
+      // ── BOT: AI agent tizim qatorlari (services/agent.js) ──
+      'ag.recorded': 'Yozib oldim:\n\n{card}\n\nXato bo\'lsa — Kabinet → Vakansiya bo\'limida tuzating. Nomzodlar bilan gaplashib, javobini yozaman.',
+      'ag.recordedShort': 'Yozib oldim. Nomzodlar bilan gaplashib, javobini yozaman.',
+      'ag.askPublish': '\n\nBoshqa nomzodlar ham ariza bersinmi?',
+      'ag.whoNeeded': 'Kim kerakligini ayting — ofitsiant, xostes, menejer?',
+      'ag.notFound': 'Bazada bunga mos nomzod topilmadi. Boshqa lavozim yoki shartni sinab ko\'ramizmi?',
+      'ag.total': '{n} ta mos nomzod bor.',
+      'ag.relaxed': 'Qat\'iy shartga mos kelmadi — {x} hisobga olinmadi.',
+      'ag.relaxedSome': 'ba\'zi shartlar',
+      'ag.closest': 'Shundan {n} ta eng yaqin nomzod tanlandi.',
+      'ag.narrow': 'Toraytiramizmi?',
+      'ag.facet': '· {label} — {n} ta',
+      'ag.narrowHint': 'Yozib yuboring, yoki hammasini ko\'ring.',
+      'ag.moreLeft': 'Yoqmasa — yana {n} ta nomzod bor.',
+      'ag.moreFirst': 'Avval kim kerakligini yozing — ofitsiant, xostes, menejer?',
+      'ag.noneLeft': 'Boshqa nomzod qolmadi. Shartni o\'zgartirib ko\'ramizmi — masalan boshqa hudud yoki tajribani kamroq?',
+      'ag.range': '{a}–{b} (jami {n} ta)',
+      'ag.left': 'Yana {n} ta qoladi.',
+      'facet.minExp': '2 yildan ortiq tajriba',
+
+      // ── BOT: bildirishnomalar (shortlist, chat, ariza, tanlov) ──
+      'nc.opened': '✅ Kontakt ochildi — {code}',
+      'nc.noName': 'Nomsiz',
+      'nc.noPhone': 'telefon yo\'q',
+      'nc.balance': 'Balans: {n} kredit',
+      'nc.viaApp': 'Nomzod vakansiyangizga o\'zi ariza bergan — qo\'ng\'iroqni kutmoqda.',
+      'nc.viaAgency': 'Nomzod siz bilan bog\'lanishni kutmoqda — biz u bilan gaplashdik.',
+      'push.new': 'Yangi xabar',
+      'push.open': 'Ochish',
+      'na.title': '📨 «{v}» vakansiyasiga yangi ariza',
+      'slb.accepted': '{n} ta nomzod qabul qilindi.',
+      'slb.willTalk': '«{v}» shartlari bo\'yicha gaplashib, javobini yozaman.',
+      'slb.askOffer': 'Ular bilan gaplashishim uchun ayting — nima taklif qilasiz? Maosh, smena, qachondan kerak.'
     },
 
     ru: {
@@ -641,7 +709,70 @@
       'why.rejected': 'Отклик отклонён',
       'why.not_looking': 'Кандидат сейчас не ищет работу — HR сначала проверит',
       'why.phone': 'Телефон не проверен — HR сначала проверит',
-      'why.old': ['Отклику больше {n} дня — HR сначала проверит', 'Отклику больше {n} дней — HR сначала проверит', 'Отклику больше {n} дней — HR сначала проверит']
+      'why.old': ['Отклику больше {n} дня — HR сначала проверит', 'Отклику больше {n} дней — HR сначала проверит', 'Отклику больше {n} дней — HR сначала проверит'],
+
+      'auth.expired': 'Сессия устарела — закройте приложение и откройте снова.',
+      'auth.none': 'Откройте приложение из Telegram.',
+      'auth.bad': 'Не удалось проверить вход — закройте приложение и откройте снова.',
+
+      'perk.ovqat': 'Питание', 'perk.forma': 'Форма', 'perk.yol': 'Проезд',
+      'perk.transport': 'Служебный транспорт', 'perk.rasmiy': 'Официальное оформление',
+      'perk.bonus': 'Бонусы', 'perk.choy': 'Чаевые', 'perk.turar': 'Жильё', 'perk.oqitish': 'Обучение',
+
+      'bot.hello': 'Здравствуйте! Это HR-бот TalentHub.\n\nЧтобы подключиться, перейдите по ссылке, которую вам отправили.',
+      'bot.linkExpired': 'Ссылка устарела. Свяжитесь с HR.',
+      'bot.menu': 'Кабинет',
+      'bot.welcome': 'Добро пожаловать, {name}!\n\nЕсли нужен сотрудник — напишите сюда или отправьте голосовое сообщение.\nНапример: «нужна хостес, опыт от 2 лет»\n\nКредиты: {n}\n\nКнопка «Кабинет» внизу — ваши подборки и открытые контакты.',
+      'bot.langAsk': 'Tilni tanlang / Выберите язык',
+      'bot.langSet': 'Язык: русский. Изменить — /til',
+      'bot.langToast': 'Готово',
+      'bot.blocked': 'Ваш аккаунт приостановлен. Свяжитесь с HR.',
+      'bot.pending': 'Ваш аккаунт ещё не подтверждён. Скоро его активируют.',
+      'bot.asCandidate': 'Этот аккаунт Telegram подключён как клиент «{name}».\n\nОдин аккаунт не может быть одновременно клиентом и кандидатом. Чтобы войти как кандидат, используйте другой аккаунт Telegram или свяжитесь с HR.',
+      'bot.help': 'Чтобы найти кандидата, просто напишите или отправьте голосовое сообщение.\n\nНапример: «нужна хостес, опыт от 2 лет, с английским»\n\nКредиты: {n}\nЯзык: /til',
+      'bot.aiOff': 'AI пока не настроен. Свяжитесь с HR.',
+      'bot.replyFail': 'Не удалось ответить: {e}',
+      'bot.view': 'Смотреть',
+      'bot.viewN': 'Смотреть ({n})',
+      'bot.more': 'Ещё кандидаты',
+      'bot.publish': '📢 Опубликовать',
+      'bot.searching': 'Поиск…',
+      'bot.moreFail': 'Не удалось загрузить следующих кандидатов: {e}',
+      'bot.vacGone': 'Вакансия не найдена или закрыта',
+      'bot.published': 'Опубликовано',
+      'bot.publishedLine': '📢 Опубликовано — кандидаты начнут откликаться.',
+
+      'ag.recorded': 'Записал:\n\n{card}\n\nЕсли есть ошибка — исправьте в Кабинет → Вакансии. Поговорю с кандидатами и напишу ответ.',
+      'ag.recordedShort': 'Записал. Поговорю с кандидатами и напишу ответ.',
+      'ag.askPublish': '\n\nПусть откликаются и другие кандидаты?',
+      'ag.whoNeeded': 'Скажите, кто нужен — официант, хостес, менеджер?',
+      'ag.notFound': 'В базе нет подходящих кандидатов. Попробуем другую должность или условия?',
+      'ag.total': ['Есть {n} подходящий кандидат.', 'Есть {n} подходящих кандидата.', 'Есть {n} подходящих кандидатов.'],
+      'ag.relaxed': 'Строго по условиям никого нет — не учтено: {x}.',
+      'ag.relaxedSome': 'часть условий',
+      'ag.closest': ['Подобран {n} самый близкий кандидат.', 'Подобраны {n} самых близких кандидата.', 'Подобраны {n} самых близких кандидатов.'],
+      'ag.narrow': 'Сузим поиск?',
+      'ag.facet': '· {label} — {n}',
+      'ag.narrowHint': 'Напишите условие или посмотрите всех.',
+      'ag.moreLeft': ['Если не подойдут — есть ещё {n} кандидат.', 'Если не подойдут — есть ещё {n} кандидата.', 'Если не подойдут — есть ещё {n} кандидатов.'],
+      'ag.moreFirst': 'Сначала напишите, кто нужен — официант, хостес, менеджер?',
+      'ag.noneLeft': 'Больше кандидатов нет. Изменим условия — например, другой район или меньше опыта?',
+      'ag.range': '{a}–{b} (всего {n})',
+      'ag.left': 'Осталось ещё {n}.',
+      'facet.minExp': 'опыт больше 2 лет',
+
+      'nc.opened': '✅ Контакт открыт — {code}',
+      'nc.noName': 'Без имени',
+      'nc.noPhone': 'нет телефона',
+      'nc.balance': ['Баланс: {n} кредит', 'Баланс: {n} кредита', 'Баланс: {n} кредитов'],
+      'nc.viaApp': 'Кандидат сам откликнулся на вашу вакансию — ждёт звонка.',
+      'nc.viaAgency': 'Кандидат ждёт вашего звонка — мы с ним поговорили.',
+      'push.new': 'Новое сообщение',
+      'push.open': 'Открыть',
+      'na.title': '📨 Новый отклик на вакансию «{v}»',
+      'slb.accepted': 'Принято кандидатов: {n}.',
+      'slb.willTalk': 'Поговорю с ними на условиях «{v}» и напишу ответ.',
+      'slb.askOffer': 'Чтобы я поговорил с ними, скажите — что предлагаете? Зарплата, смена, с какого числа.'
     }
   };
 
@@ -709,6 +840,26 @@
     return norm(lang) === 'ru' && ERR_RU[msg] ? ERR_RU[msg] : msg;
   }
 
+  /**
+   * Odamning tili: o'zi tanlagan (Client.lang) bo'lsa — o'sha, aks holda
+   * Telegram tilidan taxmin. Bot, bildirishnoma va Mini App bir xil qoidada.
+   */
+  function resolve(lang, tgCode) {
+    return LANGS.includes(lang) ? lang : fromTelegram(tgCode);
+  }
+
+  // Vakansiya sharoitlari bazada "Ovqat · Forma · ..." matni (vacancyAuto
+  // PERKS yig'adi). Ma'lum so'zlar o'quvchi tiliga o'giriladi — ikkala
+  // tildan ham taniladi, mijozning erkin izohi o'z holicha qoladi.
+  const PERK_KEYS = ['ovqat', 'forma', 'yol', 'transport', 'rasmiy', 'bonus', 'choy', 'turar', 'oqitish'];
+  function perksText(text, lang) {
+    if (!text) return text || '';
+    return String(text).split(' · ').map(part => {
+      const k = PERK_KEYS.find(p => LANGS.some(l => D[l]['perk.' + p] === part));
+      return k ? tr(lang, 'perk.' + k) : part;
+    }).join(' · ');
+  }
+
   // Avtomatik vakansiya sarlavhasi: "Ofitsiant, kechki smena".
   // Server (vacancyAuto.makeTitle) ham, Mini App formasi ham shundan.
   function vacTitle(role, shift, lang) {
@@ -717,5 +868,5 @@
     return D.uz['shiftT.' + shift] !== undefined ? base + ', ' + tr(lang, 'shiftT.' + shift) : base;
   }
 
-  return { LANGS, D, t: tr, ruForm, fromTelegram, errText, vacTitle };
+  return { LANGS, D, t: tr, ruForm, fromTelegram, errText, vacTitle, resolve, perksText, PERK_KEYS };
 });

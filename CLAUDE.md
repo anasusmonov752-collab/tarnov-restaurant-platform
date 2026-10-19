@@ -132,9 +132,17 @@ restoran roli emas. 23 administrator Anas qarori bilan ish tarixiga
 qarab ajratildi (supervayzer/restoran menejeri -> menejer). Qayta
 ishlatish: `POST /api/recruitment/roles/reclassify` (apply:false — ko'rish).
 
-**Qolgan ma'lumot ishlari:** 32 ta tahlil qilinmagan rezyume (lavozim bo'sh,
-`boshqa`) — AI bilan qayta tahlil kerak (`/:id/reanalyze` bor);
-"Женщина, 21 год, родилась 15 января 2005" bazada ikki marta (dublikat).
+Shuningdek 32 ta tahlil qilinmagan rezyume (2026-10-05 dagi `xo1xx.pdf`
+partiyasi — o'sha kuni AI kvotasi tugagan) AI bilan qayta tahlil qilindi:
+deyarli hammasi xostess. **Endi `boshqa` = 0.** (2026-10-19)
+
+**DUBLIKATLAR (o'lchandi, hali tozalanmagan):** 50 ta odam bazada 2-4
+martadan — 55 ta ortiqcha yozuv (3-6 oktabr hh partiyalari). Sabab:
+yuklashdagi dublikat tekshiruvi telefonni MATN sifatida aynan solishtiradi
+("+998 90 135 93 94" ≠ "+998901359394"), AI yiqilsa telefon ajratilmaydi
+va tekshiruv umuman o'tib ketadi. 8 to'plamda rollar har xil. Faqat
+bittasi tanlovda ishlatilgan (Kasimova Sabrina) — birlashtirishda o'sha
+yozuv qolishi shart. Telegramga ulangan dublikat yo'q.
 
 **Eskiz SMS ochilmagan** — nomzod kabineti, tiriklik tekshiruvi va suhbat
 tasdiqlash shunga bog'liq. 799 nomzoddan ~1 tasi botga bog'langan.

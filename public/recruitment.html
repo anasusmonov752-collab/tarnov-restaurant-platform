@@ -247,6 +247,8 @@ const STAGES = [
 const SMAP = Object.fromEntries(STAGES.map(s=>[s.k,s]));
 const ROLES = { ofitsiant:'Ofitsiant', barmen:'Barmen', xostess:'Xostess', oshpaz:'Oshpaz', kassir:'Kassir', menejer:'Menejer', operator:'Call operator', boshqa:'Boshqa' };
 const SRC = { hh:'hh.uz', manual:"Qo'lda", referral:'Tavsiya', telegram:'Telegram', anketa:'Anketa', other:'Boshqa' };
+// Anketa havolasidagi e'lon manbasi (services/survey CHANNELS bilan bir xil)
+const CHANNEL_L = { tg:'Telegram', ig:'Instagram', fb:'Facebook', olx:'OLX', hh:'hh.uz', qr:'QR kod', ref:'Tanish orqali', site:'Sayt', other:'Boshqa' };
 
 let ALL = [], FS = 'new', FR = '', Q = '', SEL = new Set();
 
@@ -572,6 +574,13 @@ function openCard(id){
           <div class="rc-row"><div class="rc-k">Ko'nikmalar</div><div class="rc-v">${(c.skills||[]).map(esc).join(', ')||'—'}</div></div>
           <div class="rc-row"><div class="rc-k">Tajriba</div><div class="rc-v">${esc(c.experienceSummary||'—')}</div></div>
         </div>
+        ${c.source === 'anketa' || (c.extraAnswers||[]).length ? `<div class="md-box" style="margin-top:14px">
+          <h4>Anketa</h4>
+          <div class="rc-row"><div class="rc-k">Telefon</div><div class="rc-v">${c.phoneVerifiedAt ? '✓ Telegram tasdiqlagan' : 'qo\'lda kiritilgan'}</div></div>
+          ${c.channel ? `<div class="rc-row"><div class="rc-k">Manba</div><div class="rc-v">${esc(CHANNEL_L[c.channel] || c.channel)}</div></div>` : ''}
+          ${c.consentAt ? `<div class="rc-row"><div class="rc-k">Rozilik</div><div class="rc-v">${new Date(c.consentAt).toLocaleDateString('uz')}</div></div>` : ''}
+          ${(c.extraAnswers||[]).map(x => `<div class="rc-row"><div class="rc-k">${esc(x.q)}</div><div class="rc-v">${esc(x.a)}</div></div>`).join('')}
+        </div>` : ''}
       </div>
       <div>
         <div class="md-box">

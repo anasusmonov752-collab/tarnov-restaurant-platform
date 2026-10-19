@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TalentHub — Anketalar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Panel uslubi — vakansiyalar.html bilan bir xil */
+:root{
+  --bg:#EEF3FB; --ink:#16233A; --gold:#2563EB; --gold-d:#1D4ED8; --card:#FFFFFF; --line:#E1E8F2;
+  --muted:#64748B; --danger:#C25B4C; --ok:#2E9E5B; --warn:#B4802E; --soft:#F3F7FD;
+  --shadow:0 1px 3px rgba(16,32,24,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:rgba(15,39,71,.22);border-radius:6px}
+button,input,select,textarea{font-family:inherit}
+
+.topbar{flex:none;background:var(--card);border-bottom:1px solid var(--line);padding:12px 20px;display:flex;align-items:center;gap:14px;z-index:40}
+.back{display:flex;align-items:center;gap:7px;border:1px solid var(--line);color:var(--muted);padding:8px 13px;border-radius:10px;font-size:13px;font-weight:600;text-decoration:none}
+.back:hover{background:var(--soft);color:var(--ink)}
+.tb-mark{width:36px;height:36px;border-radius:10px;background:var(--gold);display:flex;align-items:center;justify-content:center}
+.tb-mark span{font-style:italic;font-weight:700;font-size:20px;color:#fff}
+.tb-title{font-size:16.5px;font-weight:700;line-height:1}
+.tb-sub{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:3px}
+.tb-spacer{flex:1}
+.view-sw{border:1px solid var(--line);color:var(--muted);padding:7px 13px;border-radius:9px;font-size:12.5px;font-weight:600;text-decoration:none}
+.view-sw:hover{background:var(--soft);color:var(--ink)}
+.view-sw.on{background:var(--gold);border-color:var(--gold);color:#fff}
+
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 14px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:700}
+.btn:hover{background:var(--soft)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-p{background:var(--gold);border-color:var(--gold);color:#fff}
+.btn-p:hover{background:var(--gold-d)}
+.btn-sm{padding:5px 9px;font-size:12px}
+.ic-btn{border:1px solid var(--line);background:var(--card);border-radius:8px;width:28px;height:28px;cursor:pointer;color:var(--muted);font-size:13px;line-height:1}
+.ic-btn:hover{background:var(--soft);color:var(--ink)}
+.ic-btn:disabled{opacity:.3;cursor:default}
+.ic-btn.del:hover{color:var(--danger);border-color:rgba(194,91,76,.4)}
+
+/* Uch ustun: ro'yxat · tahrir · telefon ko'rinishi */
+.main{flex:1;display:grid;grid-template-columns:270px minmax(0,1fr) 340px;gap:18px;padding:18px 22px;overflow:hidden}
+.col{overflow-y:auto;min-height:0;padding-bottom:30px}
+.h{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin:2px 2px 10px}
+
+.sv{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 13px;margin-bottom:9px;cursor:pointer;box-shadow:var(--shadow)}
+.sv:hover{border-color:#C9D6EA}
+.sv.on{border-color:var(--gold);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.sv b{font-size:14px;display:block}
+.sv .m{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5}
+.pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;margin-right:4px}
+.p-ok{background:rgba(46,158,91,.12);color:var(--ok)}
+.p-off{background:rgba(100,116,139,.14);color:var(--muted)}
+.p-new{background:rgba(37,99,235,.12);color:var(--gold)}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+.ed-head{padding:16px;margin-bottom:14px}
+.ed-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.ed-row .fld{flex:1;min-width:180px}
+label{display:block;font-size:11.5px;font-weight:700;color:var(--muted);margin:0 0 5px;text-transform:uppercase;letter-spacing:.5px}
+input[type=text],select,textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:13.5px;color:var(--ink);background:#FBFCFE}
+textarea{resize:vertical;line-height:1.5;min-height:60px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold)}
+.note{font-size:12.5px;color:var(--muted);line-height:1.55}
+.acts{display:flex;gap:8px;align-items:center;margin-left:auto}
+.dirty{font-size:12px;color:var(--warn);font-weight:700}
+.tgl{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+
+/* Savol kartasi */
+.qc{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:9px;box-shadow:var(--shadow)}
+.qc.open{border-color:var(--gold)}
+.qh{display:flex;align-items:center;gap:10px;padding:11px 12px;cursor:pointer}
+.qn{width:24px;height:24px;border-radius:50%;background:var(--soft);color:var(--gold);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none}
+.qt{flex:1;min-width:0}
+.qt b{font-size:14px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qt .m{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
+.chip{font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;background:var(--soft);color:var(--muted)}
+.chip.f{background:rgba(37,99,235,.08);color:var(--gold-d)}
+.chip.r{background:rgba(180,128,46,.12);color:var(--warn)}
+.chip.c{background:rgba(46,158,91,.1);color:var(--ok)}
+.qb{padding:4px 14px 14px;border-top:1px solid var(--line)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.opt-r{display:grid;grid-template-columns:1fr 1fr 28px;gap:8px;margin-top:7px;align-items:center}
+.add{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.lnk{border:0;background:none;color:var(--gold);font-weight:700;font-size:13px;cursor:pointer;padding:4px 0}
+
+.addbar{position:relative;margin-top:6px}
+.menu{position:absolute;left:0;top:44px;z-index:30;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 40px rgba(15,39,71,.18);padding:8px;min-width:280px;display:none}
+.menu.on{display:block}
+.menu .mh{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:8px 10px 4px}
+.menu button{display:block;width:100%;text-align:left;border:0;background:none;padding:8px 10px;border-radius:8px;font-size:13.5px;cursor:pointer;color:var(--ink)}
+.menu button:hover{background:var(--soft)}
+.menu button i{font-style:normal;color:var(--muted);font-size:12px;margin-left:6px}
+
+/* Telefon ko'rinishi — anketa.html bilan bir xil uslub */
+.pv-tg{display:flex;justify-content:center;gap:4px;margin-bottom:10px}
+.pv-tg button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:5px 12px;font-size:12.5px;font-weight:700;cursor:pointer;color:var(--muted)}
+.pv-tg button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.phone{width:300px;margin:0 auto;border-radius:34px;border:9px solid #16233A;background:#EEF3FB;height:600px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 18px 40px rgba(15,39,71,.2)}
+.ph-top{padding:14px 14px 8px;display:flex;align-items:center;gap:8px}
+.ph-pr{flex:1;height:5px;background:#E1E8F2;border-radius:4px;overflow:hidden}
+.ph-pr i{display:block;height:100%;background:var(--gold)}
+.ph-st{font-size:11px;color:var(--muted)}
+.ph-b{flex:1;overflow-y:auto;padding:4px 12px}
+.ph-card{background:#fff;border-radius:15px;padding:16px 14px}
+.ph-q{font-size:17px;font-weight:700;line-height:1.3}
+.ph-h{font-size:12.5px;color:var(--muted);line-height:1.45;margin-top:6px}
+.ph-o{border:1.5px solid #E1E8F2;border-radius:11px;padding:10px 11px;font-size:13.5px;margin-top:7px;display:flex;gap:8px;align-items:center}
+.ph-o i{width:16px;height:16px;border-radius:50%;border:2px solid #E1E8F2;flex:none}
+.ph-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ph-grid .ph-o{margin-top:0;font-size:12.5px;padding:9px}
+.ph-in{border:1.5px solid #E1E8F2;border-radius:11px;padding:11px;font-size:13.5px;color:#9AA8BA;margin-top:12px}
+.ph-btn{background:var(--gold);color:#fff;border-radius:12px;padding:12px;text-align:center;font-weight:700;font-size:14px;margin-top:14px}
+.ph-cons{background:#EEF3FB;border-radius:10px;padding:11px;font-size:12.5px;line-height:1.5;margin-top:10px}
+.ph-foot{padding:10px 12px 14px}
+.ph-next{background:var(--gold);color:#fff;border-radius:12px;padding:13px;text-align:center;font-weight:700;font-size:14.5px;opacity:.5}
+.ph-photo{width:110px;height:130px;border-radius:13px;background:#E8EFFA;margin-top:12px;display:flex;align-items:center;justify-content:center;font-size:32px}
+
+.ov{position:fixed;inset:0;background:rgba(10,24,44,.5);display:none;align-items:center;justify-content:center;padding:24px;z-index:200}
+.ov.on{display:flex}
+.md{background:var(--card);border-radius:14px;width:100%;max-width:560px;max-height:88vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.3)}
+.md-top{display:flex;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line)}
+.md-top b{flex:1;font-size:16px}
+.md-x{border:none;background:transparent;font-size:19px;cursor:pointer;color:var(--muted)}
+.md-b{padding:18px}
+.fld{margin-bottom:13px}
+.empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px}
+
+#toast-container{position:fixed;top:16px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{display:flex;align-items:center;gap:10px;max-width:380px;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--muted);border-radius:10px;padding:12px 16px;font-size:13.5px;font-weight:500;color:var(--ink);box-shadow:0 8px 24px rgba(16,32,24,.16);pointer-events:auto}
+.toast-icon{display:flex;flex:none;color:var(--muted)}
+.toast-success{border-left-color:var(--ok)}   .toast-success .toast-icon{color:var(--ok)}
+.toast-error{border-left-color:var(--danger)} .toast-error .toast-icon{color:var(--danger)}
+.toast-info{border-left-color:var(--gold)}    .toast-info .toast-icon{color:var(--gold)}
+
+@media (max-width:1180px){ .main{grid-template-columns:250px minmax(0,1fr)} .pvcol{display:none} }
+@media (max-width:760px){ body{overflow:auto} .main{display:block;overflow:visible} .col{overflow:visible} .g2,.opt-r{grid-template-columns:1fr} .opt-r{grid-template-columns:1fr 28px} }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="back" href="/vakansiyalar.html">&#8592; Vakansiyalar</a>
+  <div class="tb-mark"><span>T</span></div>
+  <div>
+    <div class="tb-title">Anketalar</div>
+    <div class="tb-sub">Savollar konstruktori</div>
+  </div>
+  <div class="tb-spacer"></div>
+  <a class="view-sw" href="/vakansiyalar.html">Vakansiyalar</a>
+  <a class="view-sw on" href="/anketalar.html">Anketalar</a>
+  <a class="view-sw" href="/recruitment.html">Nomzodlar bazasi</a>
+</div>
+
+<div class="main">
+  <div class="col">
+    <div class="h">Anketalar</div>
+    <div id="svList"><div class="empty">Yuklanmoqda...</div></div>
+    <button class="btn" id="bNewS" style="width:100%;margin-top:4px">+ Lavozim anketasi</button>
+    <div class="note" style="margin-top:12px;padding:0 2px">
+      Vakansiya havolasi shu lavozim anketasini o'zi ochadi. Lavozim anketasi bo'lmasa — umumiy anketa.</div>
+  </div>
+
+  <div class="col" id="edCol"><div class="empty">Yuklanmoqda...</div></div>
+
+  <div class="col pvcol">
+    <div class="h" style="text-align:center">Nomzod shunday ko'radi</div>
+    <div class="pv-tg"><button data-pl="uz" class="on">O'zbekcha</button><button data-pl="ru">Русский</button></div>
+    <div id="pv"></div>
+  </div>
+</div>
+
+<div class="ov" id="ov"><div class="md">
+  <div class="md-top"><b id="mdT">—</b><button class="md-x" id="mdX">&#10005;</button></div>
+  <div class="md-b" id="mdB"></div>
+</div></div>
+
+<div id="toast-container"></div>
+<script src="/js/utils.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+const clone = o => JSON.parse(JSON.stringify(o));
+
+let LIST = [], CATALOG = [], CUSTOM = [], ROLES = [];
+let CUR = null;          // tahrirlanayotgan anketa (nusxa — saqlanmaguncha serverga tegmaydi)
+let DIRTY = false;
+let OPEN = -1;           // ochiq savol
+let PL = 'uz';           // ko'rinish tili
+
+const TYPE_L = { text:'Qisqa matn', longtext:'Uzun matn', date:'Sana', choice:'Tanlov', contact:'Telefon', photo:'Rasm', consent:'Rozilik' };
+const CAT = id => CATALOG.find(c => c.id === id);
+const roleL = k => (ROLES.find(r => r.key === k) || {}).label || k;
+
+// ══ Ro'yxat ══
+async function loadList(selectId){
+  let d;
+  try { d = await api('/api/surveys'); }
+  catch(e){ $('svList').innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
+  LIST = d.surveys; CATALOG = d.catalog; CUSTOM = d.customTypes; ROLES = d.roles;
+  drawList();
+  const want = selectId || (CUR && CUR.id) || (LIST[0] && LIST[0].id);
+  if (want && (!CUR || CUR.id !== want || selectId)) select(want, true);
+}
+
+function drawList(){
+  $('svList').innerHTML = LIST.map(s => `<div class="sv ${CUR && CUR.id === s.id ? 'on' : ''}" data-s="${s.id}">
+    <b>${esc(s.title.uz)}</b>
+    <div class="m">
+      ${s.isDefault ? '<span class="pill p-new">Umumiy</span>' : `<span class="pill p-new">${esc(roleL(s.role))}</span>`}
+      ${s.active ? '' : '<span class="pill p-off">O\'chirilgan</span>'}
+      ${s.questionCount} savol · ${s.started} boshladi · ${s.done} yubordi
+    </div></div>`).join('');
+  $('svList').querySelectorAll('[data-s]').forEach(el => el.onclick = () => select(el.dataset.s));
+}
+
+function select(id, force){
+  if (!force && DIRTY && CUR && CUR.id !== id && !confirm('Saqlanmagan o\'zgarishlar yo\'qoladi. Davom etamizmi?')) return;
+  const s = LIST.find(x => x.id === id);
+  if (!s) return;
+  CUR = clone(s); DIRTY = false; OPEN = -1;
+  drawList(); drawEditor();
+}
+
+// ══ Tahrir ══
+// Sarlavhani qayta chizmaymiz — yozayotgan maydondan kursor chiqib ketardi
+function markDirty(){
+  if (DIRTY) return;
+  DIRTY = true;
+  if ($('dirtyL')) $('dirtyL').textContent = 'Saqlanmagan';
+  if ($('bSave')) $('bSave').disabled = false;
+}
+
+function drawEditor(){
+  $('edCol').innerHTML = `<div class="card ed-head" id="edHead"></div>
+    <div class="h">Savollar <span style="font-weight:600;text-transform:none;letter-spacing:0">— bosib oching, ↑↓ bilan tartiblang</span></div>
+    <div id="qList"></div>
+    <div class="addbar">
+      <button class="btn" id="bAddQ">+ Savol qo'shish</button>
+      <div class="menu" id="addMenu"></div>
+    </div>`;
+  drawHead(); drawQs();
+  $('bAddQ').onclick = e => { e.stopPropagation(); toggleAddMenu(); };
+}
+
+function drawHead(){
+  const s = CUR;
+  const roleOpts = ROLES.map(r => `<option value="${r.key}" ${s.role === r.key ? 'selected' : ''}>${esc(r.label)}</option>`).join('');
+  $('edHead').innerHTML = `
+    <div class="ed-row">
+      <div class="fld" style="margin:0"><label>Nomi (o'zbekcha)</label><input type="text" id="tUz" value="${esc(s.title.uz)}" maxlength="80"></div>
+      <div class="fld" style="margin:0"><label>Nomi (ruscha)</label><input type="text" id="tRu" value="${esc(s.title.ru)}" maxlength="80"></div>
+    </div>
+    <div class="ed-row" style="margin-top:12px;align-items:center">
+      ${s.isDefault
+        ? `<div class="note"><b>Umumiy anketa</b> — lavozimni nomzod o'zi tanlaydi. Lavozim anketasi yo'q vakansiyalar ham shuni ochadi.</div>`
+        : `<div class="fld" style="margin:0;max-width:220px"><label>Lavozim</label><select id="tRole">${roleOpts}</select></div>
+           <label class="tgl" style="text-transform:none;letter-spacing:0;margin:18px 0 0;color:var(--ink)"><input type="checkbox" id="tAct" ${s.active ? 'checked' : ''}> Faol</label>`}
+      <div class="acts">
+        <span class="dirty" id="dirtyL">${DIRTY ? 'Saqlanmagan' : ''}</span>
+        <button class="btn" id="bLink" ${s.active ? '' : 'disabled'}>Havola</button>
+        <button class="btn btn-p" id="bSave" ${DIRTY ? '' : 'disabled'}>Saqlash</button>
+      </div>
+    </div>`;
+  $('tUz').oninput = e => { CUR.title.uz = e.target.value; markDirty(); };
+  $('tRu').oninput = e => { CUR.title.ru = e.target.value; markDirty(); };
+  if ($('tRole')) $('tRole').onchange = e => { CUR.role = e.target.value; markDirty(); };
+  if ($('tAct')) $('tAct').onchange = e => { CUR.active = e.target.checked; markDirty(); };
+  $('bSave').onclick = save;
+  $('bLink').onclick = showLink;
+}
+
+function qHeadHtml(q, i){
+  const c = CAT(q.id);
+  const last = i === CUR.questions.length - 1, isCons = q.type === 'consent';
+  return `<div class="qh" data-open="${i}">
+      <div class="qn">${i + 1}</div>
+      <div class="qt"><b>${esc(q.text.uz || '(matn yo\'q)')}</b>
+        <div class="m">
+          <span class="chip">${TYPE_L[q.type] || q.type}</span>
+          ${c ? `<span class="chip f">→ ${esc(c.field)}</span>` : '<span class="chip c">O\'z savolingiz</span>'}
+          ${q.required ? '<span class="chip r">Majburiy</span>' : ''}
+          ${c && c.locked ? '<span class="chip">&#128274; o\'chirilmaydi</span>' : ''}
+        </div></div>
+      <button class="ic-btn" data-up="${i}" title="Yuqoriga" ${i === 0 || isCons ? 'disabled' : ''}>&#8593;</button>
+      <button class="ic-btn" data-dn="${i}" title="Pastga" ${last || isCons || i === CUR.questions.length - 2 ? 'disabled' : ''}>&#8595;</button>
+      <button class="ic-btn del" data-del="${i}" title="Olib tashlash" ${c && c.locked ? 'disabled' : ''}>&#10005;</button>
+    </div>`;
+}
+
+function qBodyHtml(q, i){
+  const c = CAT(q.id);
+  const locked = c && c.locked;
+  const isCons = q.type === 'consent';
+  let opts = '';
+  if (q.type === 'choice') {
+    const fixed = c && c.keys === 'fixed';
+    const removed = fixed ? c.options.filter(o => !q.options.some(x => x.key === o.key)) : [];
+    opts = `<div style="margin-top:14px"><label>Variantlar (o'zbekcha · ruscha)</label>
+      ${q.options.map((o, j) => `<div class="opt-r">
+        <input type="text" data-ou="${j}" value="${esc(o.uz)}" maxlength="80">
+        <input type="text" data-or="${j}" value="${esc(o.ru)}" maxlength="80" placeholder="${esc(o.uz)}">
+        <button class="ic-btn del" data-od="${j}" title="Olib tashlash" ${q.options.length <= 2 ? 'disabled' : ''}>&#10005;</button>
+      </div>`).join('')}
+      <div class="add">
+        ${fixed
+          ? (removed.length ? removed.map(o => `<button class="lnk" data-ob="${esc(o.key)}">+ ${esc(o.uz)}</button>`).join('') : '')
+          : `<button class="lnk" data-oa="1">+ Variant qo'shish</button>`}
+      </div>
+      ${fixed ? `<div class="note" style="margin-top:6px">Bu variantlar nomzod kartasidagi "${esc(c.field)}" maydoniga bog'langan:
+        nomini o'zgartirish va olib tashlash mumkin, yangisi qo'shilmaydi.</div>` : ''}
+    </div>`;
+  }
+  return `<div class="qb">
+    <div class="g2">
+      <div><label>Savol (o'zbekcha)</label><input type="text" data-k="text.uz" value="${esc(q.text.uz)}" maxlength="200"></div>
+      <div><label>Savol (ruscha)</label><input type="text" data-k="text.ru" value="${esc(q.text.ru)}" maxlength="200" placeholder="${esc(q.text.uz)}"></div>
+    </div>
+    <div class="g2">
+      <div><label>${isCons ? 'Rozilik matni' : 'Izoh'} (o'zbekcha)</label><textarea data-k="hint.uz" maxlength="600">${esc(q.hint.uz)}</textarea></div>
+      <div><label>${isCons ? 'Rozilik matni' : 'Izoh'} (ruscha)</label><textarea data-k="hint.ru" maxlength="600">${esc(q.hint.ru)}</textarea></div>
+    </div>
+    <label class="tgl" style="margin-top:12px;text-transform:none;letter-spacing:0;color:var(--ink)">
+      <input type="checkbox" data-req="1" ${q.required ? 'checked' : ''} ${locked || isCons ? 'disabled' : ''}>
+      Majburiy ${locked || isCons ? '<span class="note">(ularsiz nomzod yaratilmaydi)</span>' : ''}</label>
+    ${opts}
+  </div>`;
+}
+
+function drawQs(){
+  $('qList').innerHTML = CUR.questions.map((q, i) =>
+    `<div class="qc ${OPEN === i ? 'open' : ''}" data-i="${i}">${qHeadHtml(q, i)}${OPEN === i ? qBodyHtml(q, i) : ''}</div>`).join('');
+  const root = $('qList');
+  root.querySelectorAll('[data-open]').forEach(el => el.onclick = e => {
+    if (e.target.closest('button')) return;
+    const i = +el.dataset.open; OPEN = OPEN === i ? -1 : i; drawQs();
+  });
+  root.querySelectorAll('[data-up]').forEach(b => b.onclick = () => move(+b.dataset.up, -1));
+  root.querySelectorAll('[data-dn]').forEach(b => b.onclick = () => move(+b.dataset.dn, 1));
+  root.querySelectorAll('[data-del]').forEach(b => b.onclick = () => removeQ(+b.dataset.del));
+  if (OPEN >= 0) wireBody(OPEN);
+  drawPreview();
+}
+
+function wireBody(i){
+  const q = CUR.questions[i];
+  const box = $('qList').querySelector(`.qc[data-i="${i}"]`);
+  const setPath = (path, v) => { const [a, b] = path.split('.'); q[a][b] = v; };
+  box.querySelectorAll('[data-k]').forEach(el => el.oninput = () => {
+    setPath(el.dataset.k, el.value); markDirty();
+    if (el.dataset.k === 'text.uz') box.querySelector('.qt b').textContent = el.value || '(matn yo\'q)';
+    drawPreview();
+  });
+  const req = box.querySelector('[data-req]');
+  if (req) req.onchange = () => { q.required = req.checked; markDirty(); drawQs(); };
+  box.querySelectorAll('[data-ou]').forEach(el => el.oninput = () => { q.options[+el.dataset.ou].uz = el.value; markDirty(); drawPreview(); });
+  box.querySelectorAll('[data-or]').forEach(el => el.oninput = () => { q.options[+el.dataset.or].ru = el.value; markDirty(); drawPreview(); });
+  box.querySelectorAll('[data-od]').forEach(b => b.onclick = () => { q.options.splice(+b.dataset.od, 1); markDirty(); drawQs(); });
+  box.querySelectorAll('[data-oa]').forEach(b => b.onclick = () => {
+    q.options.push({ key: '', uz: '', ru: '' }); markDirty(); drawQs();
+    const ins = $('qList').querySelectorAll(`.qc[data-i="${i}"] [data-ou]`); ins[ins.length - 1].focus();
+  });
+  box.querySelectorAll('[data-ob]').forEach(b => b.onclick = () => {
+    const o = CAT(q.id).options.find(x => x.key === b.dataset.ob);
+    q.options.push(clone(o)); markDirty(); drawQs();
+  });
+}
+
+// Rozilik doim oxirida — anketa oxirgi savolda yuboriladi (server ham shunday qiladi)
+function move(i, d){
+  const j = i + d, qs = CUR.questions;
+  if (j < 0 || j >= qs.length || qs[j].type === 'consent' || qs[i].type === 'consent') return;
+  [qs[i], qs[j]] = [qs[j], qs[i]];
+  if (OPEN === i) OPEN = j; else if (OPEN === j) OPEN = i;
+  markDirty(); drawQs();
+}
+function removeQ(i){
+  const q = CUR.questions[i], c = CAT(q.id);
+  if (c && c.locked) return;
+  if (!confirm(`"${q.text.uz}" savoli olib tashlansinmi?` + (c ? `\n\nNomzod kartasidagi "${c.field}" maydoni anketadan to'ldirilmaydi.` : ''))) return;
+  CUR.questions.splice(i, 1);
+  OPEN = -1; markDirty(); drawQs();
+}
+
+// ── Savol qo'shish ──
+function toggleAddMenu(){
+  const m = $('addMenu');
+  if (m.classList.contains('on')) { m.classList.remove('on'); return; }
+  const missing = CATALOG.filter(c => !CUR.questions.some(q => q.id === c.id));
+  m.innerHTML = `<div class="mh">O'z savolingiz</div>
+    <button data-nt="text">Qisqa matn <i>masalan: "Qaysi metroga yaqin yashaysiz?"</i></button>
+    <button data-nt="longtext">Uzun matn <i>erkin javob</i></button>
+    <button data-nt="choice">Tanlov <i>variantlardan biri</i></button>
+    ${missing.length ? `<div class="mh">Olib tashlangan standart savollar</div>` +
+      missing.map(c => `<button data-std="${c.id}">${esc(c.text.uz)} <i>→ ${esc(c.field)}</i></button>`).join('') : ''}`;
+  m.classList.add('on');
+  m.querySelectorAll('[data-nt]').forEach(b => b.onclick = () => addCustom(b.dataset.nt));
+  m.querySelectorAll('[data-std]').forEach(b => b.onclick = () => addStd(b.dataset.std));
+}
+document.addEventListener('click', e => { const m = $('addMenu'); if (m && !e.target.closest('.addbar')) m.classList.remove('on'); });
+
+// Yangi savol rozilikdan OLDIN qo'yiladi
+function insertQ(q){
+  const ci = CUR.questions.findIndex(x => x.type === 'consent');
+  const at = ci < 0 ? CUR.questions.length : ci;
+  CUR.questions.splice(at, 0, q);
+  OPEN = at; markDirty(); drawQs();
+  $('addMenu').classList.remove('on');
+  const el = $('qList').querySelector(`.qc[data-i="${at}"] [data-k="text.uz"]`);
+  if (el) { el.focus(); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+}
+function addCustom(type){
+  // id server tomonda beriladi (c_xxxx); kalitsiz variantlarga ham
+  insertQ({ id: '', type, required: false, text: { uz: '', ru: '' }, hint: { uz: '', ru: '' },
+    options: type === 'choice' ? [{ key: '', uz: '', ru: '' }, { key: '', uz: '', ru: '' }] : [] });
+}
+function addStd(id){
+  const c = CAT(id);
+  insertQ({ id: c.id, type: c.type, required: !!c.required, text: clone(c.text), hint: clone(c.hint), options: clone(c.options || []) });
+}
+
+// ── Saqlash ──
+async function save(){
+  const b = $('bSave');
+  b.disabled = true; b.textContent = 'Saqlanmoqda...';
+  try {
+    const s = await api('/api/surveys/' + CUR.id, { method:'PUT', body: JSON.stringify({
+      title: CUR.title, role: CUR.role, active: CUR.active, questions: CUR.questions }) });
+    DIRTY = false;
+    toast('Saqlandi', 'success');
+    await loadList(s.id);
+  } catch(e){
+    toast(e.message, 'error');
+    b.disabled = false; b.textContent = 'Saqlash';
+  }
+}
+window.addEventListener('beforeunload', e => { if (DIRTY) { e.preventDefault(); e.returnValue = ''; } });
+
+// ══ Yangi lavozim anketasi ══
+$('bNewS').onclick = () => {
+  const taken = new Set(LIST.filter(s => !s.isDefault && s.active).map(s => s.role));
+  const free = ROLES.filter(r => !taken.has(r.key));
+  if (!free.length) return toast('Hamma lavozim uchun anketa bor', 'info');
+  openMd('Lavozim anketasi', `
+    <div class="note" style="margin-bottom:14px">Savollar umumiy anketadan nusxa olinadi — keyin shu lavozimga moslaysiz
+      (masalan, oshpazga "Qaysi oshxonada ishlagansiz?" qo'shasiz). Vakansiya havolasi shu lavozimda bu anketani ochadi.</div>
+    <div class="fld"><label>Lavozim</label><select id="nRole">${free.map(r => `<option value="${r.key}">${esc(r.label)}</option>`).join('')}</select></div>
+    <button class="btn btn-p" id="nGo" style="width:100%">Yaratish</button>`);
+  $('nGo').onclick = async () => {
+    if (DIRTY && !confirm('Saqlanmagan o\'zgarishlar yo\'qoladi. Davom etamizmi?')) return;
+    $('nGo').disabled = true;
+    try {
+      const s = await api('/api/surveys', { method:'POST', body: JSON.stringify({ role: $('nRole').value }) });
+      closeMd(); DIRTY = false; toast('Anketa yaratildi', 'success');
+      await loadList(s.id);
+    } catch(e){ toast(e.message, 'error'); $('nGo').disabled = false; }
+  };
+};
+
+// ══ Havola ══
+async function showLink(){
+  if (DIRTY) toast('Avval saqlang — havola saqlangan anketani ochadi', 'info');
+  let ch = 'ig';
+  const draw = async () => {
+    let d;
+    try { d = await api(`/api/surveys/link?surveyId=${encodeURIComponent(CUR.id)}&channel=${ch}`); }
+    catch(e){ $('mdB').innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
+    $('mdB').innerHTML = `
+      <div class="note" style="margin-bottom:14px">Umumiy havola — nomzod shu anketani to'ldiradi.
+        Vakansiyaga ariza ham tushishi uchun havolani <b>Vakansiyalar → Anketa</b> dan oling.</div>
+      <div class="fld"><label>E'lon qayerga qo'yiladi</label>
+        <select id="lCh">${Object.entries(d.channels).map(([k, l]) => `<option value="${k}" ${k === ch ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div>
+      <div class="fld"><label>Havola</label>
+        <div style="display:flex;gap:8px"><input type="text" id="lUrl" readonly value="${esc(d.link)}">
+        <button class="btn btn-p" id="lCp">Nusxa</button></div></div>`;
+    $('lCh').onchange = () => { ch = $('lCh').value; draw(); };
+    $('lCp').onclick = async () => {
+      try { await navigator.clipboard.writeText(d.link); } catch(e){ $('lUrl').select(); document.execCommand('copy'); }
+      toast('Havoladan nusxa olindi', 'success');
+    };
+  };
+  openMd('Havola — ' + CUR.title.uz, '<div class="empty">Yuklanmoqda...</div>');
+  draw();
+}
+
+function openMd(t, h){ $('mdT').textContent = t; $('mdB').innerHTML = h; $('ov').classList.add('on'); }
+function closeMd(){ $('ov').classList.remove('on'); $('mdB').innerHTML = ''; }
+$('mdX').onclick = closeMd;
+$('ov').onclick = e => { if (e.target === $('ov')) closeMd(); };
+
+// ══ Telefon ko'rinishi ══
+// Ochiq savol (yoki birinchisi) anketa.html'dagidek chiziladi. Lavozimli
+// anketada "Lavozim" savoli nomzodga ko'rinmaydi — ko'rinishda ham shunday.
+document.querySelectorAll('[data-pl]').forEach(b => b.onclick = () => {
+  PL = b.dataset.pl;
+  document.querySelectorAll('[data-pl]').forEach(x => x.classList.toggle('on', x === b));
+  drawPreview();
+});
+function drawPreview(){
+  if (!CUR) return;
+  const vis = CUR.questions.filter(q => !(q.id === 'role' && CUR.role));
+  const q = CUR.questions[OPEN] && vis.includes(CUR.questions[OPEN]) ? CUR.questions[OPEN] : vis[0];
+  if (!q) { $('pv').innerHTML = ''; return; }
+  const n = vis.indexOf(q);
+  const L = o => (o && (o[PL] || o.uz)) || '';
+  const RU = PL === 'ru';
+  let body = '';
+  if (q.type === 'choice') {
+    const grid = q.options.length > 6;
+    body = `<div class="${grid ? 'ph-grid' : ''}" style="margin-top:12px">${q.options.map(o => `<div class="ph-o"><i></i>${esc(L(o) || '…')}</div>`).join('')}</div>`;
+  } else if (q.type === 'contact') {
+    body = `<div class="ph-btn">${RU ? '📱 Поделиться номером' : '📱 Raqamni ulashish'}</div>
+      <div style="color:var(--gold);font-weight:700;font-size:12.5px;margin-top:10px">${RU ? 'Ввести вручную' : 'Qo\'lda kiritaman'}</div>`;
+  } else if (q.type === 'photo') {
+    body = `<div class="ph-photo">&#128100;</div><div class="ph-btn">${RU ? '📷 Выбрать фото' : '📷 Rasm tanlash'}</div>`;
+  } else if (q.type === 'consent') {
+    body = `<div class="ph-cons">${esc(L(q.hint))}</div>
+      <div style="margin-top:10px;font-weight:700;font-size:13.5px">☐ ${RU ? 'Согласен(на)' : 'Roziman'}</div>`;
+  } else if (q.type === 'date') {
+    body = `<div class="ph-in">${RU ? 'дд.мм.гггг' : 'kk.oo.yyyy'}</div>`;
+  } else {
+    body = `<div class="ph-in" style="${q.type === 'longtext' ? 'height:80px' : ''}"></div>`;
+  }
+  const last = n === vis.length - 1;
+  $('pv').innerHTML = `<div class="phone">
+    <div class="ph-top"><span style="color:var(--gold)">&#10094;</span><div class="ph-pr"><i style="width:${Math.round(n / vis.length * 100)}%"></i></div>
+      <span class="ph-st">${n + 1} / ${vis.length}</span></div>
+    <div class="ph-b"><div class="ph-card">
+      <div class="ph-q">${esc(L(q.text) || '…')}</div>
+      ${q.type !== 'consent' && L(q.hint) ? `<div class="ph-h">${esc(L(q.hint))}</div>` : ''}
+      ${body}
+    </div></div>
+    <div class="ph-foot"><div class="ph-next">${last ? (RU ? 'Отправить' : 'Yuborish') : (RU ? 'Далее' : 'Keyingisi')}</div>
+      ${!q.required && q.type !== 'consent' ? `<div style="text-align:center;color:var(--muted);font-size:12.5px;margin-top:8px">${RU ? 'Пропустить' : 'O\'tkazib yuborish'}</div>` : ''}</div>
+  </div>`;
+}
+
+loadList();
+</script>
+</body>
+</html>

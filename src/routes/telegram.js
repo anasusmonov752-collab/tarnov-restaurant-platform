@@ -444,9 +444,10 @@ async function startSurvey(msg, chatId, ank, appBase) {
   if (ank.vacancyId) {
     v = await Vacancy.findOne({ id: ank.vacancyId }).lean();
     if (!v) { await tg.sendMessage(token, chatId, T(lang, 'ank.botBadLink')); return; }
-    s = await surveySvc.ensureDefault(v.agencyId);
-    // Yopilgan vakansiya — nomzodni yo'qotmaymiz: umumiy anketa
-    if (v.status !== 'open') { closed = true; v = null; }
+    // Yopilgan vakansiya — nomzodni yo'qotmaymiz: umumiy anketa.
+    // Ochiq — shu lavozim anketasi (konstruktorda yaratilgan bo'lsa), aks holda umumiy.
+    if (v.status !== 'open') { closed = true; s = await surveySvc.ensureDefault(v.agencyId); v = null; }
+    else s = await surveySvc.surveyForVacancy(v);
   } else {
     s = await Survey.findOne({ code: ank.code, active: true }).lean();
     if (!s) { await tg.sendMessage(token, chatId, T(lang, 'ank.botBadLink')); return; }

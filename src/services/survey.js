@@ -99,6 +99,113 @@ function template() {
   ].map(q => Object.assign({ required: true, hint: { uz: '', ru: '' }, options: [] }, q));
 }
 
+// ── Konstruktor qoidalari ──
+// Standart savollar nomzod maydoniga bog'langan (toFields id va kalit
+// bo'yicha o'qiydi). Konstruktor ularning MATNINI, tartibini, majburiyligini
+// o'zgartira oladi va (qulflanganidan boshqasini) olib tashlay oladi;
+// TURINI o'zgartira olmaydi.
+//   locked      — o'chirib bo'lmaydi, doim majburiy (ularsiz nomzod yo'q)
+//   keys:'fixed'— variant kalitlari kodda ma'noli (smena, tajriba yili...):
+//                 nomini o'zgartirish va yashirish mumkin, yangisi qo'shilmaydi
+//   keys:'open' — bazaga variant YOZUVI tushadi (tuman, maosh): qo'shish mumkin
+//   field       — panelda ko'rinadigan "qaysi maydonga tushadi"
+const CATALOG = {
+  role:       { keys: 'fixed', field: 'Lavozim' },
+  fullName:   { locked: true,  field: 'Ism' },
+  birthDate:  {                field: 'Yosh' },
+  gender:     { keys: 'fixed', field: 'Jins' },
+  phone:      { locked: true,  field: 'Telefon' },
+  location:   { keys: 'open',  field: 'Hudud' },
+  experience: { keys: 'fixed', field: 'Tajriba (yil)' },
+  lastJob:    {                field: 'Tajriba haqida' },
+  shift:      { keys: 'fixed', field: 'Smena' },
+  salary:     { keys: 'open',  field: 'Kutilgan maosh' },
+  russian:    { keys: 'fixed', field: 'Tillar' },
+  sanitary:   { keys: 'fixed', field: 'Sanitar kitobcha' },
+  study:      { keys: 'open',  field: 'Ta\'lim' },
+  photo:      {                field: 'Foto' },
+  consent:    { locked: true,  field: 'Rozilik' }
+};
+// O'z savoli — faqat shu turlar (sana, telefon, rasm, rozilik standart savolda)
+const CUSTOM_TYPES = ['text', 'longtext', 'choice'];
+
+/** Panel uchun: standart savollar (shablon matni bilan) va ularning qoidalari. */
+function catalogInfo() {
+  return template().map(q => Object.assign({}, q, CATALOG[q.id] || {}));
+}
+
+const shortId = () => [...crypto.randomBytes(4)].map(x => CODE_ABC[x % CODE_ABC.length]).join('').toLowerCase();
+
+/**
+ * Konstruktordan kelgan savollarni tekshiradi va tozalaydi.
+ * Xato bo'lsa throw (matn — panel uchun, o'zbekcha).
+ */
+function cleanQuestions(input) {
+  const fail = m => { throw Object.assign(new Error(m), { status: 400 }); };
+  if (!Array.isArray(input) || !input.length) fail('Savollar ro\'yxati bo\'sh');
+  if (input.length > 40) fail('Ko\'pi bilan 40 ta savol');
+  const tpl = Object.fromEntries(template().map(q => [q.id, q]));
+  const str = (s, max) => String(s == null ? '' : s).trim().slice(0, max);
+  const seen = new Set();
+
+  const out = input.map((raw, i) => {
+    const r = raw || {};
+    let id = str(r.id, 40);
+    const std = CATALOG[id] ? tpl[id] : null;
+    if (!std && !/^c_[a-z0-9]{3,12}$/.test(id)) id = 'c_' + shortId();   // yangi o'z savoli
+    if (seen.has(id)) fail(`Savol takrorlangan: ${id}`);
+    seen.add(id);
+
+    const type = std ? std.type : (CUSTOM_TYPES.includes(r.type) ? r.type : fail(`${i + 1}-savol: turi noto'g'ri`));
+    const rule = std ? CATALOG[id] : {};
+    const text = { uz: str(r.text && r.text.uz, 200), ru: str(r.text && r.text.ru, 200) };
+    if (!text.uz) fail(`${i + 1}-savol: o'zbekcha matn bo'sh`);
+    const q = {
+      id, type,
+      required: rule.locked || type === 'consent' ? true : !!r.required,
+      text,
+      hint: { uz: str(r.hint && r.hint.uz, 600), ru: str(r.hint && r.hint.ru, 600) },
+      options: []
+    };
+    if (type === 'consent' && !q.hint.uz) fail('Rozilik matni bo\'sh bo\'lmasin');
+
+    if (type === 'choice') {
+      const allowed = std && rule.keys === 'fixed' ? new Set(std.options.map(o => o.key)) : null;
+      const keys = new Set();
+      for (const o of (Array.isArray(r.options) ? r.options : [])) {
+        let key = str(o && o.key, 30);
+        if (allowed) { if (!allowed.has(key)) continue; }        // kodda ma'noli kalit — yangisi yo'q
+        else if (!/^[a-z0-9_]{1,30}$/.test(key) || keys.has(key)) key = 'o_' + shortId();
+        if (keys.has(key)) continue;
+        const uz = str(o.uz, 80);
+        if (!uz) fail(`${i + 1}-savol: variant matni bo'sh`);
+        keys.add(key);
+        q.options.push({ key, uz, ru: str(o.ru, 80) });
+      }
+      if (q.options.length < 2) fail(`${i + 1}-savol: kamida 2 ta variant kerak`);
+      if (q.options.length > 30) fail(`${i + 1}-savol: ko'pi bilan 30 ta variant`);
+    }
+    return q;
+  });
+
+  for (const id of Object.keys(CATALOG).filter(k => CATALOG[k].locked)) {
+    if (!seen.has(id)) fail('Ism, telefon va rozilik savollarini olib tashlab bo\'lmaydi');
+  }
+  // Rozilik — oxirida: anketa oxirgi savolda yuboriladi
+  const ci = out.findIndex(q => q.id === 'consent');
+  out.push(out.splice(ci, 1)[0]);
+  return out;
+}
+
+// Vakansiya havolasi qaysi anketani ochadi: shu lavozim anketasi, bo'lmasa umumiy
+async function surveyForVacancy(v) {
+  if (isValidRole(v.role)) {
+    const s = await Survey.findOne({ agencyId: v.agencyId, role: v.role, active: true, isDefault: false }).lean();
+    if (s) return s;
+  }
+  return ensureDefault(v.agencyId);
+}
+
 // ── Havola kodi ──
 const CODE_ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';     // I, O, 0, 1 yo'q — o'qishda adashmasin
 function makeCode() {
@@ -243,6 +350,12 @@ function toFields(answers, survey, presetRole) {
   if (a.sanitary) f.sanitaryBook = a.sanitary;
   if (a.study) f.education = a.study === 'no' ? 'O\'qimaydi' : 'O\'qiydi (' + opt('study', a.study).replace(/^Ha, /, '') + ')';
 
+  // Konstruktorda qo'shilgan o'z savollari — maydoni yo'q: kartadagi
+  // "Anketa javoblari" bo'limiga (savol matni o'zbekcha, panel uchun)
+  f.extraAnswers = (survey.questions || [])
+    .filter(q => !CATALOG[q.id] && a[q.id] != null && a[q.id] !== '')
+    .map(q => ({ q: q.text.uz, a: q.type === 'choice' ? opt(q.id, a[q.id]) : String(a[q.id]) }));
+
   // Kalit so'z qidiruvi uchun to'liq matn (rezyumedagi rawText o'rnida)
   f.rawText = (survey.questions || [])
     .filter(q => a[q.id] != null && a[q.id] !== '' && !['photo', 'consent'].includes(q.type))
@@ -285,6 +398,7 @@ async function finalize(r, { appBase } = {}) {
   const f = toFields(a, survey, presetRole);
   for (const [k, v] of Object.entries(f)) {
     if (v === '' || v == null) continue;
+    if (k === 'extraAnswers' && !v.length && !created) continue;   // eski javoblar o'chmasin
     if (k === 'rawText' && cand.rawText && !created) continue;   // rezyume matni saqlansin
     cand[k] = v;
   }
@@ -325,6 +439,7 @@ async function finalize(r, { appBase } = {}) {
 }
 
 module.exports = {
-  CHANNELS, DISTRICTS, template, makeCode, ensureDefault,
+  CHANNELS, DISTRICTS, CATALOG, CUSTOM_TYPES, catalogInfo, cleanQuestions, surveyForVacancy,
+  template, makeCode, ensureDefault,
   payloadFor, parsePayload, visibleQuestions, checkAnswer, toFields, finalize, normPhone, ageOf
 };

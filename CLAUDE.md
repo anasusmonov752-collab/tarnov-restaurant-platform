@@ -70,11 +70,18 @@ lavozim majburiy, eski 'boshqa' yozuvlar sarlavhadan taniladi.
 Jonli isbot: ikkinchi qidiruv yangi vakansiya ochmadi (2 tanlov),
 E'lon qilish ishladi. `/ping` endi deploy qilingan commit'ni qaytaradi.
 
-**Keyingi bosqich (Anas tasdiqlagan):** kontakt ochilgach ikki tomon
-bir-birini to'liq ko'radi — mijoz chatida kod o'rniga ism+foto, bosilsa
-rezyume; nomzod mijoz nomini bossa kompaniya va vakansiya kartasi;
-nomzod vakansiyani bossa hh kabi to'liq sahifa (kompaniya nomisiz).
-Keyin: vakansiyadan "Mos nomzodlar" (Mini App ichida qidiruv).
+**Kontaktdan keyingi to'liq profil — QURILDI** (`e862479`, Anas
+2026-10-19 da Telegramda sinab "hammasi ishladi" dedi): kontaktgacha
+ikki tomon anonim, ochilgach to'liq. "Ochilgan" ning yagona ta'rifi —
+`services/contactView.js` (revealedAt bor, refunded emas). Mijoz:
+chatda ism+foto, sarlavha/"Rezyumeni ochish" → rezyume (ichki maydonlar
+chiqmaydi). Nomzod: mijoz nomini bossa kompaniya kartasi (Client
+`address`/`about` dan — panelda to'ldirilishi kerak) va taklif qilingan
+vakansiya; ish o'rnini bossa hh kabi sahifa (kontaktgacha nomsiz).
+
+**Keyingi bosqich:** vakansiyadan "Mos nomzodlar" — mijoz Mini App'da
+vakansiyasini ochib, mezonlari bo'yicha anonim kartalarni ko'radi
+(botdagi qidiruvning teskari kirishi; ikkalasi vakansiyada tugaydi).
 
 **Eskiz SMS ochilmagan** — nomzod kabineti, tiriklik tekshiruvi va suhbat
 tasdiqlash shunga bog'liq. 799 nomzoddan ~1 tasi botga bog'langan.

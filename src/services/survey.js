@@ -32,6 +32,7 @@ const CHANNELS = {
   qr:    'QR kod',
   ref:   'Tanish orqali',
   site:  'Sayt',
+  bot:   'Botni o\'zi topgan',      // havolasiz /start (routes/telegram plainStart)
   other: 'Boshqa'
 };
 

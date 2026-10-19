@@ -358,6 +358,7 @@
       // ── BOT: mijoz bilan yozishma (routes/telegram.js) ──
       'bot.hello': 'Salom! Bu TalentHub HR boti.\n\nBog\'lanish uchun sizga yuborilgan havoladan kiring.',
       'bot.linkExpired': 'Havola eskirgan. HR bilan bog\'laning.',
+      'bot.candHello': 'Assalomu alaykum! Siz ro\'yxatdan o\'tgansiz. Ma\'lumotingizni ko\'rish va o\'zgartirish — pastdagi «Profilim» tugmasi.',
       'bot.menu': 'Kabinet',
       'bot.welcome': 'Xush kelibsiz, {name}!\n\nNomzod kerak bo\'lsa shu yerga yozing yoki ovozli xabar yuboring.\nMasalan: "xostes kerak, 2 yildan ortiq tajribali"\n\nKredit: {n} ta kontakt\n\nPastdagi "Kabinet" tugmasi — tanlovlaringiz va ochilgan kontaktlar.',
       'bot.langAsk': 'Tilni tanlang / Выберите язык',
@@ -769,6 +770,7 @@
 
       'bot.hello': 'Здравствуйте! Это HR-бот TalentHub.\n\nЧтобы подключиться, перейдите по ссылке, которую вам отправили.',
       'bot.linkExpired': 'Ссылка устарела. Свяжитесь с HR.',
+      'bot.candHello': 'Здравствуйте! Вы уже зарегистрированы. Посмотреть и изменить данные — кнопка «Мой профиль» внизу.',
       'bot.menu': 'Кабинет',
       'bot.welcome': 'Добро пожаловать, {name}!\n\nЕсли нужен сотрудник — напишите сюда или отправьте голосовое сообщение.\nНапример: «нужна хостес, опыт от 2 лет»\n\nКредиты: {n}\n\nКнопка «Кабинет» внизу — ваши подборки и открытые контакты.',
       'bot.langAsk': 'Tilni tanlang / Выберите язык',

@@ -76,7 +76,8 @@ router.get('/link', guard, asyncHandler(async (req, res) => {
   res.json({
     link: tg.deepLink(await tg.platformUsername(), payload),
     survey: { id: s.id, title: s.title, role: s.role, isDefault: !!s.isDefault },
-    channels: survey.CHANNELS
+    // 'bot' — e'lon joyi emas (havolasiz /start), tanlovda ko'rsatilmaydi
+    channels: Object.fromEntries(Object.entries(survey.CHANNELS).filter(([k]) => k !== 'bot'))
   });
 }));
 

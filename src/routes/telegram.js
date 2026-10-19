@@ -134,7 +134,7 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
       // Kimligi hali noma'lum — Telegram tilida
       const tgLang = I18N.fromTelegram(msg.from && msg.from.language_code);
       if (!payload) {
-        await tg.sendMessage(token, chatId, T(tgLang, 'bot.hello'));
+        await plainStart(msg, chatId, tgLang, publicBase(req));
         return;
       }
 
@@ -424,6 +424,41 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
     console.error('[TG] webhook xatosi:', e.message);
   }
 }));
+
+// ── Kodsiz /start ────────────────────────────────────────────
+// Odam botni qidiruvdan topib "Start" bosgan (yoki havoladagi kod
+// yo'qolgan). Ilgari hammaga "havoladan kiring" chiqardi — nomzod boshi
+// berk ko'chaga kirardi, mijoz esa o'z botida begonadek qolardi
+// (2026-10-20 Anas sinovida topildi).
+async function plainStart(msg, chatId, tgLang, appBase) {
+  const token = tg.platformToken();
+
+  const cl = await Client.findOne({ tgChatId: chatId });
+  if (cl && cl.status === 'active') {
+    const lang = langOf(cl, msg.from);
+    await setMenu(token, chatId, lang, appBase).catch(() => {});
+    await tg.sendMessage(token, chatId, welcomeText(cl, lang), langKb('lw:'));
+    return;
+  }
+  const cand = await Candidate.findOne({ tgChatId: chatId });
+  if (cand && cand.tgState === 'linked') {
+    const lang = I18N.LANGS.includes(cand.lang) ? cand.lang : tgLang;
+    await tg.setChatMenuButton(token, chatId, T(lang, 'ank.menu'), `${appBase}/profil.html`).catch(() => {});
+    await tg.sendMessage(token, chatId, T(lang, 'bot.candHello'));
+    return;
+  }
+  // Begona odam — ish izlab botni o'zi topgan: umumiy anketa. Platformada
+  // bitta agentlik bo'lsa (bitta umumiy anketa) — qaysi bazaga yozish aniq.
+  // Bir nechta bo'lsa taxmin qilmaymiz: havola kerak.
+  if (!cl) {
+    const defs = await Survey.find({ isDefault: true, active: true }, 'code').limit(2).lean();
+    if (defs.length === 1) {
+      await startSurvey(msg, chatId, { code: defs[0].code, channel: 'bot' }, appBase);
+      return;
+    }
+  }
+  await tg.sendMessage(token, chatId, T(tgLang, 'bot.hello'));
+}
 
 // ── Anketa: e'lon havolasi bosildi ───────────────────────────
 // To'ldirilish (SurveyResponse) shu yerda ochiladi va bot Mini App

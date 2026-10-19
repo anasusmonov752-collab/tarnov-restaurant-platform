@@ -122,11 +122,19 @@ oldindan tekshiriladi, keyin MAVJUD `shortlistSvc.reveal({viaApplication})`
 avvalgidek faqat agentlik orqali ochiladi (u rozilik bermagan).
 Haqiqiy kredit bilan sinaldi (yuqoriga qarang).
 
-**Ma'lumot muammosi (2026-10-19 o'lchandi):** 799 nomzoddan 162 tasi
-`role:'boshqa'`, ulardan ~110-125 tasining `desiredPosition` ida lavozim
-aniq ("менеджер ресторана" 41, "хостес" 19, "официант" 7...). Bot va
-"Mos nomzodlar" rol bo'yicha qidiradi — bu nomzodlar hech qachon
-chiqmaydi. Rezyume tahlilidagi rol normallashtirishida nuqson bor.
+**Rollar tozalandi — BAZADA BAJARILDI** (2026-10-19, `dae82a7`, `de2e4f2`):
+162 ta `boshqa`dan 130 tasi rolga o'tdi (menejer 89→166, xostess 138→172,
+ofitsiant +11, kassir +5, operator +3). Ildiz sabab: resumeParser AI
+rolini kalitga AYNAN solishtirib 'boshqa' qo'yardi; qidiruvda esa alohida
+ROLE_ALIAS bor edi. Endi YAGONA jadval — `data/roles.js guessRole()`
+(tahlilchi, vakansiya, qidiruv). Zavod "operator"i va savdo menejeri
+restoran roli emas. 23 administrator Anas qarori bilan ish tarixiga
+qarab ajratildi (supervayzer/restoran menejeri -> menejer). Qayta
+ishlatish: `POST /api/recruitment/roles/reclassify` (apply:false — ko'rish).
+
+**Qolgan ma'lumot ishlari:** 32 ta tahlil qilinmagan rezyume (lavozim bo'sh,
+`boshqa`) — AI bilan qayta tahlil kerak (`/:id/reanalyze` bor);
+"Женщина, 21 год, родилась 15 января 2005" bazada ikki marta (dublikat).
 
 **Eskiz SMS ochilmagan** — nomzod kabineti, tiriklik tekshiruvi va suhbat
 tasdiqlash shunga bog'liq. 799 nomzoddan ~1 tasi botga bog'langan.

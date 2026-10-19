@@ -44,5 +44,8 @@ const SurveySchema = new mongoose.Schema({
 
 SurveySchema.index({ agencyId: 1, id: 1 }, { unique: true });
 SurveySchema.index({ code: 1 }, { unique: true });
+// Agentlikda BITTA umumiy anketa: panelda bir vaqtda ikki so'rov kelsa
+// (ikki "Anketa" tugmasi) ensureDefault ikkinchisini yarata olmasin
+SurveySchema.index({ agencyId: 1 }, { unique: true, partialFilterExpression: { isDefault: true } });
 
 module.exports = mongoose.model('Survey', SurveySchema);

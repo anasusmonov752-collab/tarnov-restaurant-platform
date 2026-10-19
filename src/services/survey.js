@@ -118,7 +118,13 @@ async function ensureDefault(agencyId) {
         title: { uz: 'Restoran xodimi anketasi', ru: 'Анкета сотрудника ресторана' },
         questions: template()
       });
-    } catch (e) { if (e.code !== 11000) throw e; }   // kod band — qayta
+    } catch (e) {
+      if (e.code !== 11000) throw e;
+      // Parallel so'rov allaqachon yaratgan bo'lsa — o'shani qaytaramiz
+      // (Survey: agentlikka bitta umumiy anketa — unikal indeks); aks holda kod band — qayta
+      const ex = await Survey.findOne({ agencyId, isDefault: true, active: true });
+      if (ex) return ex;
+    }
   }
   throw new Error('Anketa kodi yaratilmadi');
 }

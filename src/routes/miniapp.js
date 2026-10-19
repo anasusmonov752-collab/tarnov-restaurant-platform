@@ -27,6 +27,7 @@ const vac = require('../services/vacancy');
 const vacAuto = require('../services/vacancyAuto');
 const contactView = require('../services/contactView');
 const applyReveal = require('../services/applyReveal');
+const { placeLabel, langsLabel } = require('../utils/labels');
 const candidateSearch = require('../services/candidateSearch');
 const relay = require('../services/botRelay');
 const { isValidRole, roleLabel } = require('../data/roles');
@@ -324,12 +325,14 @@ router.get('/shortlists', clientGuard, asyncHandler(async (req, res) => {
 // Bitta joyda: "Tanlovlar" ekrani ham, vakansiya sahifasi ham shundan oladi —
 // biri boshqacha ko'rsatib qo'ymasin.
 
-// Joy nomi bir xil yozilsin: hh "Tashkent", rezyume "Ташкент"
-const placeLabel = s => String(s || '').trim().replace(/^(tashkent|ташкент|тошкент|toshkent)/i, 'Toshkent');
 
 // Lavozim — rezyumedagi xom matn ("Хостес") emas, rol bo'yicha bir xil
 function roleText(c) {
   if (isValidRole(c.role)) return roleLabel(c.role);
+  // Rol 'boshqa' (bazada 162 ta) — lavozimni rezyume matnidan taniymiz
+  // ("Хостес" -> Xostess), aks holda mijozga xom ruscha matn chiqadi
+  const g = vac.guessRole(c.desiredPosition);
+  if (g) return roleLabel(g);
   const d = String(c.desiredPosition || '').trim();
   return d ? d[0].toUpperCase() + d.slice(1) : 'Nomzod';
 }
@@ -657,8 +660,31 @@ router.get('/vacancies/:id/applications', clientGuard, asyncHandler(async (req, 
 
   const apps = await Application.find({ agencyId, vacancyId: v.id })
     .sort({ createdAt: -1 }).limit(100).lean();
-  if (!apps.length) return res.json({ vacancy: vac.full(v), items: [] });
+  res.json({ vacancy: vac.full(v), items: await appsView(agencyId, apps) });
+}));
 
+// ── Barcha arizalar — "Arizalar" bo'limi ──
+// Har kuni ishlatiladi, shuning uchun alohida tab (Balans o'rnida).
+// Vakansiya bo'yicha guruhlash frontend'da; bu yerda vakansiya nomi beriladi.
+router.get('/applications', clientGuard, asyncHandler(async (req, res) => {
+  const agencyId = req.client.agencyId;
+  const apps = await Application.find({ agencyId, clientId: req.client.id })
+    .sort({ createdAt: -1 }).limit(200).lean();
+  const vids = [...new Set(apps.map(a => a.vacancyId))];
+  const vs = vids.length ? await Vacancy.find({ agencyId, id: { $in: vids } }, 'id title status').lean() : [];
+  const vBy = Object.fromEntries(vs.map(v => [v.id, v]));
+  const items = await appsView(agencyId, apps);
+  res.json(items.map(it => Object.assign(it, {
+    vacancyTitle: (vBy[it.vacancyId] || {}).title || 'Vakansiya',
+    vacancyStatus: (vBy[it.vacancyId] || {}).status || ''
+  })));
+}));
+
+// Ariza elementlarining ko'rinishi — ikkala endpoint uchun bitta.
+// Arizachi ANONIM (anonymize). Ochilganda 'new' -> 'seen' bo'ladi:
+// nomzod "Ko'rildi" holatini ko'radi, mijozdagi qizil belgi o'chadi.
+async function appsView(agencyId, apps) {
+  if (!apps.length) return [];
   const cands = await Candidate.find(
     { restaurantId: agencyId, id: { $in: apps.map(a => a.candidateId) } },
     '-fileData -rawText -photo -tgInviteToken'
@@ -679,27 +705,28 @@ router.get('/vacancies/:id/applications', clientGuard, asyncHandler(async (req, 
     anonymize.forClientList(cands.filter(Boolean)).map(c => [c.publicCode, c])
   );
 
-  res.json({
-    vacancy: vac.full(v),
-    items: apps.map(a => {
-      const c = byId[a.candidateId];
-      // Kontaktni o'zi ocha oladimi (applyReveal). Faqat qaror qilinmagan
-      // arizada; "why" — nega oddiy yo'l (HR tekshiradi) ekanini aytadi.
-      const open = a.state !== 'shortlisted' && a.state !== 'rejected';
-      const el = open && c ? applyReveal.eligibility(a, c) : { ok: false, why: '' };
-      return {
-        id: a.id,
-        state: a.state === 'new' ? 'seen' : a.state,
-        isNew: a.state === 'new',            // shu ochilishda birinchi marta ko'rildi
-        message: a.message,
-        createdAt: a.createdAt,
-        instant: el.ok,
-        why: el.ok ? '' : (el.why || ''),
-        candidate: c ? anon[c.publicCode] || null : null
-      };
-    })
+  return apps.map(a => {
+    const c = byId[a.candidateId];
+    // Kontaktni o'zi ocha oladimi (applyReveal). Faqat qaror qilinmagan
+    // arizada; "why" — nega oddiy yo'l (HR tekshiradi) ekanini aytadi.
+    const open = a.state !== 'shortlisted' && a.state !== 'rejected';
+    const el = open && c ? applyReveal.eligibility(a, c) : { ok: false, why: '' };
+    const ac = c ? anon[c.publicCode] || null : null;
+    // Bir xil yozuv; roleLabel — anonymize 'boshqa' uchun xom kalitni beradi
+    if (ac) { ac.location = placeLabel(ac.location); ac.languages = langsLabel(ac.languages); ac.roleLabel = roleText(c); }
+    return {
+      id: a.id,
+      vacancyId: a.vacancyId,
+      state: a.state === 'new' ? 'seen' : a.state,
+      isNew: a.state === 'new',            // shu ochilishda birinchi marta ko'rildi
+      message: a.message,
+      createdAt: a.createdAt,
+      instant: el.ok,
+      why: el.ok ? '' : (el.why || ''),
+      candidate: ac
+    };
   });
-}));
+}
 
 // ── Arizachini tanlash yoki rad etish ──
 router.post('/applications/:id/:action', clientGuard, asyncHandler(async (req, res) => {
@@ -903,13 +930,16 @@ router.get('/candidates/:id', clientGuard, asyncHandler(async (req, res) => {
   const c = await Candidate.findOne({ restaurantId: agencyId, id },
     '-fileData -rawText -photo -tgInviteToken').lean();
   if (!c) return res.status(404).json({ error: 'Nomzod topilmadi' });
-  if (open) return res.json(Object.assign(contactView.resumeOf(c), { open: true }));
+  // Bir xil yozuv: lavozim rol bo'yicha, "Toshkent", tillar o'zbekcha —
+  // rezyume hh'dan ruscha kelsa ham mijozga aralash til chiqmasin
+  const same = { roleText: roleText(c), location: placeLabel(c.location), languages: langsLabel(c.languages) };
+  if (open) return res.json(Object.assign(contactView.resumeOf(c), same, { open: true }));
 
   await assignCodes(agencyId, [c]);
   const a = anonymize.forClient(c);
   // AI bahosi (fitScore/fitReason) agentlikning ichki fikri — rezyumega kirmaydi
   delete a.fitScore; delete a.fitReason;
-  res.json(Object.assign(a, { open: false }));
+  res.json(Object.assign(a, same, { open: false }));
 }));
 
 // ── Nomzod fotosi (chat, rezyume, arizalar uchun) ──

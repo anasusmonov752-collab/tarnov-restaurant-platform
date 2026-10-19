@@ -230,6 +230,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .cd-box .acts{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
 .cd-box input{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;font-family:inherit;font-size:15px}
 
+/* Pastki oyna — "Orqaga" va balans */
+.sh-bk{border:none;background:transparent;font-size:18px;color:var(--blue);padding:0 12px 0 0;cursor:pointer;line-height:1}
+.cr-big{display:flex;align-items:baseline;gap:9px;padding:6px 0 14px}
+.cr-big b{font-size:40px;font-weight:700;color:var(--blue);line-height:1}
+.cr-big span{font-size:13px;color:var(--muted)}
+#crTap{cursor:pointer}
+.crgo{font-style:normal;font-size:12.5px;font-weight:600;color:var(--blue);margin-left:auto;white-space:nowrap}
 .cd-link{border:0;background:none;color:var(--blue);font-family:inherit;font-size:13px;font-weight:600;
   cursor:pointer;padding:4px 0;white-space:nowrap}
 /* Tanlovlar filtri */
@@ -472,7 +479,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 <div id="cabMode" class="hide">
   <div class="chead">
     <div class="nm" id="cName">—</div>
-    <div class="cr"><b id="cCred">—</b><span>kredit · 1 kredit = 1 ochilgan kontakt</span></div>
+    <div class="cr" id="crTap"><b id="cCred">—</b><span>kredit · 1 kredit = 1 ochilgan kontakt</span><i class="crgo">Balans ›</i></div>
   </div>
 
   <div id="vSL">
@@ -487,17 +494,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     </div>
   </div>
 
-  <div id="vCR" class="hide">
-    <div class="wrap">
-      <div class="card"><div class="pad">
-        <button class="btn" id="bTop" style="width:100%">Kredit so'rash</button>
-        <div style="font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.5">
-          So'rov HR'ga boradi. Tasdiqlangach balansingiz yangilanadi.
-        </div>
-      </div></div>
-      <div class="h3">Harakatlar tarixi</div>
-      <div class="card" id="crList"><div class="msg">Yuklanmoqda…</div></div>
-    </div>
+  <!-- Arizalar — Balans o'rnida (balans tepadagi raqamni bosganda oynada) -->
+  <div id="vAP" class="hide">
+    <div class="wrap" id="apList"><div class="msg">Yuklanmoqda…</div></div>
   </div>
 
   <div id="vMS" class="hide">
@@ -527,19 +526,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     </div>
   </div>
 
-  <!-- Ikonkalar: Lucide (clipboard-list, briefcase, wallet, message-circle) -->
+  <!-- Ikonkalar: Lucide (clipboard-list, inbox, briefcase, message-circle) -->
   <nav class="tabs">
     <span class="lens" id="lens" aria-hidden="true"></span>
     <button class="tb on" id="tSL"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg></span>Tanlovlar</button>
-    <button class="tb"    id="tVC"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg><i class="dot" id="dVC"></i></span>Vakansiya</button>
-    <button class="tb"    id="tCR"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg></span>Balans</button>
+    <button class="tb"    id="tAP"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg><i class="dot" id="dAP"></i></span>Arizalar</button>
+    <button class="tb"    id="tVC"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg></span>Vakansiya</button>
     <button class="tb"    id="tMS"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><i class="dot" id="dMS"></i></span>Aloqa</button>
   </nav>
 </div>
 
 <div class="sheet" id="sheet">
   <div class="sh">
-    <div class="sh-h"><b id="shT">—</b><button class="sh-x" id="shX">&#10005;</button></div>
+    <div class="sh-h"><button class="sh-bk hide" id="shBack" aria-label="Orqaga">&#10094;</button><b id="shT">—</b><button class="sh-x" id="shX">&#10005;</button></div>
     <div class="sh-b" id="shB"></div>
   </div>
 </div>
@@ -984,25 +983,47 @@ async function loadCredits(){
   }catch(e){ $('crList').innerHTML = `<div class="msg">${esc(e.message)}</div>`; }
 }
 
-$('bTop').onclick = async () => {
-  const b = $('bTop');
-  b.disabled = true; b.textContent = 'Yuborilmoqda…';
-  try{
-    await api('/api/ma/topup', { method:'POST', body: JSON.stringify({ amount: 10 }) });
-    b.textContent = 'So\'rov yuborildi';
-    try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
-  }catch(e){ b.disabled = false; b.textContent = 'Qayta urinish'; }
-};
-
 $('bChat').onclick = () => { if (TG) TG.close(); };
 
 // ══════════════════════════════════════════════════════════
 //  VAKANSIYALAR
 // ══════════════════════════════════════════════════════════
-function openSheet(title, html){ $('shT').textContent = title; $('shB').innerHTML = html; $('sheet').classList.add('on'); }
-function closeSheet(){ $('sheet').classList.remove('on'); $('shB').innerHTML = ''; }
+// ── Pastki oyna: zanjir ──
+// Oynalar bir-birining ustiga ochiladi (Vakansiya → Arizalar → Rezyume).
+// "‹" bir qadam orqaga, X hammasini yopadi. Ilgari rezyume arizalar
+// O'RNIGA ochilardi va X hammasini yopib yuborardi.
+// Har oyna boshida sheetEnter(kalit, qayta_chizish) — orqaga qaytilganda
+// oldingisi qayta chiziladi (ma'lumot yangi bo'ladi). Kalit bir xil bo'lsa
+// (oyna o'zini yangilasa) zanjirga qo'shilmaydi.
+// Telegram'ning o'z "Orqaga" tugmasi ham shu zanjir bo'yicha ishlaydi.
+let SH_CUR = null, SH_STACK = [], SH_RESTORE = false;
+function sheetEnter(key, render){
+  if (!SH_RESTORE && SH_CUR && SH_CUR.key !== key && $('sheet').classList.contains('on')) SH_STACK.push(SH_CUR);
+  SH_CUR = { key, render };
+  SH_RESTORE = false;
+  syncBack();
+}
+function sheetBack(){
+  const prev = SH_STACK.pop();
+  if (!prev) { closeSheet(); return; }
+  SH_RESTORE = true; SH_CUR = null;
+  prev.render();
+}
+function syncBack(){
+  $('shBack').classList.toggle('hide', !SH_STACK.length);
+  try {
+    if (TG && TG.BackButton && TG.isVersionAtLeast && TG.isVersionAtLeast('6.1')) {
+      if ($('sheet').classList.contains('on')) TG.BackButton.show(); else TG.BackButton.hide();
+    }
+  } catch(e){}
+}
+function openSheet(title, html){ $('shT').textContent = title; $('shB').innerHTML = html; $('sheet').classList.add('on'); syncBack(); }
+function closeSheet(){ $('sheet').classList.remove('on'); $('shB').innerHTML = ''; SH_STACK = []; SH_CUR = null; syncBack(); }
 $('shX').onclick = closeSheet;
+$('shBack').onclick = sheetBack;
 $('sheet').onclick = e => { if (e.target === $('sheet')) closeSheet(); };
+try { TG && TG.BackButton && TG.BackButton.onClick(sheetBack); } catch(e){}
+$('crTap').onclick = showCredits;
 
 // Kartada bitta asosiy amal ("Mos nomzodlarni ko'rish") va voronka
 // raqamlari — mijozga "N tanlov" emas, natija kerak. Qolgani ⋯ menyusida.
@@ -1100,6 +1121,7 @@ async function startMatches(id, b){
 
 // ── Vakansiya sahifasi: voronka, shartlar, nomzodlar, arizalar ──
 async function showVacancy(id){
+  sheetEnter('vac:' + id, () => showVacancy(id));
   openSheet('Vakansiya', '<div class="msg">Yuklanmoqda…</div>');
   let d;
   try { d = await api(`/api/ma/vacancies/${encodeURIComponent(id)}/detail`); }
@@ -1138,6 +1160,7 @@ async function showVacancy(id){
 function vacMenu(id, vObj){
   const v = vObj || VACS.find(x => x.id === id);
   if (!v) return;
+  sheetEnter('menu:' + id, () => vacMenu(id, v));
   const active = v.status !== 'closed';
   openSheet(v.title, `
     <button class="menu-it" data-m="edit">${IC.edit}Tahrirlash</button>
@@ -1177,6 +1200,7 @@ const autoTitle = (r, s) => {
 };
 
 function vacForm(v){
+  sheetEnter('form:' + (v ? v.id : 'new'), () => vacForm(v));
   const d = v || {};
   const roleOpts = `<option value="">— tanlang —</option>` + ROLES.map(([k, l]) =>
     `<option value="${k}" ${d.role === k ? 'selected' : ''}>${l}</option>`).join('');
@@ -1253,10 +1277,12 @@ function askConfirm(text){
   });
 }
 
-async function openFromApp(b, vacancyId){
+// refresh — arizalar qaysi joyda ko'rsatilgan bo'lsa (tab yoki vakansiya
+// oynasi), o'shani qayta chizish
+async function openFromApp(b, refresh){
   if (CREDITS != null && CREDITS < 1) {
-    alert('Kredit yetarli emas. "Balans" bo\'limidan kredit so\'rang.');
-    closeSheet(); pickTab('tCR'); return;
+    alert('Kredit yetarli emas. Tepadagi balansni bosib, kredit so\'rang.');
+    showCredits(); return;
   }
   const bal = CREDITS != null ? `\nBalans: ${CREDITS} → ${CREDITS - 1}` : '';
   const ok = await askConfirm(`Kontakt ochiladi va 1 kredit yechiladi.${bal}\n\nNomzodning ismi, telefoni va chat ochiladi.`);
@@ -1267,15 +1293,73 @@ async function openFromApp(b, vacancyId){
     if (r.balance != null) CREDITS = r.balance;
     try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
     loadMe(); loadShortlists(); if (VACS.length) loadVacancies();
+    if (!$('vAP').classList.contains('hide')) loadApps();
     showResume(r.candidateId || b.dataset.cand);          // darhol ism va telefon
   } catch(e){
     alert(e.message);
     b.disabled = false; b.innerHTML = was;
-    showApps(vacancyId);                                  // holat o'zgargan bo'lishi mumkin
+    refresh();                                            // holat o'zgargan bo'lishi mumkin
   }
 }
 
+// ── Arizachi kartasi — Arizalar tabi va vakansiya oynasi uchun bitta ──
+// Tanlovlardagi bilan bir xil uslub. Rezyume ANONIM (kontaktgacha):
+// ko'r-ko'rona "Tanlash"/"Rad etish" qilinmasin.
+function appCardHtml(it){
+  const c = it.candidate;
+  if (!c) return '';
+  const meta = [
+    c.experienceYears ? c.experienceYears + ' yil tajriba' : 'Tajribasiz',
+    c.age ? c.age + ' yosh' : '', c.location || ''
+  ].filter(Boolean).join(' · ');
+  const done = it.state === 'shortlisted' || it.state === 'rejected';
+  const chip = it.state === 'shortlisted' ? ['open', 'Tanlandi'] : it.state === 'rejected' ? ['no', 'Rad etildi']
+             : it.isNew ? ['waiting', 'Yangi'] : ['no', 'Ko\'rildi'];
+  const photo = c.hasPhoto ? `<img src="${candPhoto(c.id)}" alt="">` : esc(initialsOf(c.publicCode));
+  return `<div class="cd">
+    <div class="cd-top">
+      <div class="cd-ph">${photo}</div>
+      <div class="cd-mid"><div class="cd-nm">${esc(c.roleLabel || c.desiredPosition || 'Nomzod')}</div>
+        <div class="cd-sub">${esc([c.publicCode, meta].filter(Boolean).join(' · '))}</div></div>
+      <span class="stc ${chip[0]}">${chip[1]}</span>
+    </div>
+    ${it.message ? `<div class="cd-wait" style="color:var(--ink)">"${esc(it.message)}"</div>` : ''}
+    <div class="cd-acts">
+      <button class="cd-btn" data-rz="${esc(c.id)}">${IC.doc}Rezyume</button>
+      ${done ? '' : it.instant
+        // Yangi ariza — kontaktni o'zi ochadi (tasdiq bilan, -1 kredit)
+        ? `<button class="cd-btn p" data-open="${it.id}" data-cand="${esc(c.id)}">${IC.phone}Kontaktni ochish</button>`
+        // Eski ariza yoki telefon tekshirilmagan — HR orqali
+        : `<button class="cd-btn p" data-pick="${it.id}">Tanlash</button>`}
+      ${done ? '' : `<button class="cd-btn" data-rej="${it.id}" style="color:var(--danger)">Rad etish</button>`}
+    </div>
+    <div class="cd-foot"><span>Ariza: ${dShort(it.createdAt)}${
+      done ? '' : it.instant ? ' · 1 kredit, darhol ochiladi' : it.why ? ' · ' + esc(it.why) : ''}</span></div>
+  </div>`;
+}
+
+function wireApps(root, refresh){
+  root.querySelectorAll('[data-rz]').forEach(b => b.onclick = () => showResume(b.dataset.rz));
+  root.querySelectorAll('[data-open]').forEach(b => b.onclick = () => openFromApp(b, refresh));
+  root.querySelectorAll('[data-pick]').forEach(b => b.onclick = async () => {
+    b.disabled = true;
+    try { await api(`/api/ma/applications/${b.dataset.pick}/pick`, { method:'POST' });
+      haptic(); refresh(); if (VACS.length) loadVacancies(); loadShortlists(); }
+    catch(e){ alert(e.message); b.disabled = false; }
+  });
+  root.querySelectorAll('[data-rej]').forEach(b => b.onclick = async () => {
+    b.disabled = true;
+    try { await api(`/api/ma/applications/${b.dataset.rej}/reject`, { method:'POST', body: JSON.stringify({}) });
+      refresh(); }
+    catch(e){ alert(e.message); b.disabled = false; }
+  });
+  // Server arizalarni ochilganda 'seen' qildi — nuqta va qizil belgilar o'chsin
+  refreshUnread();
+}
+
+// ── Bitta vakansiyaning arizalari (vakansiya kartasi/sahifasidan) ──
 async function showApps(id){
+  sheetEnter('apps:' + id, () => showApps(id));
   openSheet('Arizalar', '<div class="msg">Yuklanmoqda…</div>');
   let d;
   try { d = await api(`/api/ma/vacancies/${id}/applications`); }
@@ -1292,60 +1376,80 @@ async function showApps(id){
       Ariza kelishi uchun "E'lon qilish" ni bosing.</div>`;
     return;
   }
+  $('shB').innerHTML = d.items.map(appCardHtml).join('');
+  wireApps($('shB'), () => showApps(id));
+  if (!$('vVC').classList.contains('hide')) loadVacancies();
+}
 
-  // Arizachi kartasi — Tanlovlardagi bilan bir xil uslub. Rezyume ANONIM
-  // (kontaktgacha): ko'r-ko'rona "Tanlash"/"Rad etish" qilinmasin.
-  $('shB').innerHTML = d.items.map(it => {
-    const c = it.candidate;
-    if (!c) return '';
-    const meta = [
-      c.experienceYears ? c.experienceYears + ' yil tajriba' : 'Tajribasiz',
-      c.age ? c.age + ' yosh' : '', c.location || ''
-    ].filter(Boolean).join(' · ');
-    const done = it.state === 'shortlisted' || it.state === 'rejected';
-    const chip = it.state === 'shortlisted' ? ['open', 'Tanlandi'] : it.state === 'rejected' ? ['no', 'Rad etildi']
-               : it.isNew ? ['waiting', 'Yangi'] : ['no', 'Ko\'rildi'];
-    const photo = c.hasPhoto ? `<img src="${candPhoto(c.id)}" alt="">` : esc(initialsOf(c.publicCode));
-    return `<div class="cd">
-      <div class="cd-top">
-        <div class="cd-ph">${photo}</div>
-        <div class="cd-mid"><div class="cd-nm">${esc(c.roleLabel || c.desiredPosition || 'Nomzod')}</div>
-          <div class="cd-sub">${esc([c.publicCode, meta].filter(Boolean).join(' · '))}</div></div>
-        <span class="stc ${chip[0]}">${chip[1]}</span>
-      </div>
-      ${it.message ? `<div class="cd-wait" style="color:var(--ink)">"${esc(it.message)}"</div>` : ''}
-      <div class="cd-acts">
-        <button class="cd-btn" data-rz="${esc(c.id)}">${IC.doc}Rezyume</button>
-        ${done ? '' : it.instant
-          // Yangi ariza — kontaktni o'zi ochadi (tasdiq bilan, -1 kredit)
-          ? `<button class="cd-btn p" data-open="${it.id}" data-cand="${esc(c.id)}">${IC.phone}Kontaktni ochish</button>`
-          // Eski ariza yoki telefon tekshirilmagan — HR orqali
-          : `<button class="cd-btn p" data-pick="${it.id}">Tanlash</button>`}
-        ${done ? '' : `<button class="cd-btn" data-rej="${it.id}" style="color:var(--danger)">Rad etish</button>`}
-      </div>
-      <div class="cd-foot"><span>Ariza: ${dShort(it.createdAt)}${
-        done ? '' : it.instant ? ' · 1 kredit, darhol ochiladi' : it.why ? ' · ' + esc(it.why) : ''}</span></div>
-    </div>`;
-  }).join('');
-  $('shB').querySelectorAll('[data-rz]').forEach(b => b.onclick = () => showResume(b.dataset.rz));
-  $('shB').querySelectorAll('[data-open]').forEach(b => b.onclick = () => openFromApp(b, id));
+// ══════════════════════════════════════════════════════════
+//  ARIZALAR TABI — barcha vakansiyalarning arizalari
+// ══════════════════════════════════════════════════════════
+// Har kuni ishlatiladi — alohida bo'lim (Balans o'rnida; balans tepadagi
+// raqamni bosganda ochiladi). Vakansiya bo'yicha guruhlangan; filtr:
+// "Kutilmoqda" (qaror qilinmagan) va "Hammasi".
+let AP_ROWS = [], APF = 'wait';
+const appWaiting = it => it.state !== 'shortlisted' && it.state !== 'rejected';
 
-  // Server arizalarni ochilganda 'seen' qildi — nuqta va kartadagi qizil belgi o'chsin
-  refreshUnread();
-  if ($('vVC') && !$('vVC').classList.contains('hide')) loadVacancies();
+async function loadApps(){
+  try { AP_ROWS = await api('/api/ma/applications'); renderApps(); }
+  catch(e){ $('apList').innerHTML = `<div class="msg">${esc(e.message)}</div>`; }
+}
 
-  $('shB').querySelectorAll('[data-pick]').forEach(b => b.onclick = async () => {
-    b.disabled = true;
-    try { await api(`/api/ma/applications/${b.dataset.pick}/pick`, { method:'POST' });
-      haptic(); showApps(id); loadVacancies(); loadShortlists(); }
-    catch(e){ alert(e.message); b.disabled = false; }
-  });
-  $('shB').querySelectorAll('[data-rej]').forEach(b => b.onclick = async () => {
-    b.disabled = true;
-    try { await api(`/api/ma/applications/${b.dataset.rej}/reject`, { method:'POST', body: JSON.stringify({}) });
-      showApps(id); }
-    catch(e){ alert(e.message); b.disabled = false; }
-  });
+function renderApps(){
+  if (!AP_ROWS.length) {
+    $('apList').innerHTML = `<div class="msg">Hali ariza yo'q.<br><br>
+      Vakansiyangizni e'lon qiling — nomzodlar o'zi ariza bera boshlaydi.
+      Yangi ariza kelsa Telegram'ga xabar keladi.</div>`;
+    return;
+  }
+  const waitN = AP_ROWS.filter(appWaiting).length;
+  if (APF === 'wait' && !waitN) APF = 'all';                 // kutilayotgani yo'q — hammasini ko'rsat
+  const rows = AP_ROWS.filter(it => APF === 'all' || appWaiting(it));
+
+  const groups = [], gBy = {};
+  for (const it of rows) {
+    let g = gBy[it.vacancyId];
+    if (!g) { g = gBy[it.vacancyId] = { title: it.vacancyTitle, closed: it.vacancyStatus === 'closed', items: [] }; groups.push(g); }
+    g.items.push(it);
+  }
+  groups.sort((a, b) => a.closed - b.closed);                // yopilganlar pastda
+
+  $('apList').innerHTML =
+    `<div class="flt">
+      <button class="${APF === 'wait' ? 'on' : ''}" data-af="wait">Kutilmoqda<b>${waitN}</b></button>
+      <button class="${APF === 'all' ? 'on' : ''}" data-af="all">Hammasi<b>${AP_ROWS.length}</b></button>
+    </div>` +
+    (groups.length ? groups.map(g => `<div class="grp">
+      <div class="grp-h"><b>${esc(g.title)}</b>${g.closed ? '<span class="cl">Yopilgan</span>' : ''}
+        <span>${g.items.length} ariza</span></div>
+      ${g.items.map(appCardHtml).join('')}
+    </div>`).join('') : '<div class="msg">Qaror kutayotgan ariza yo\'q.</div>');
+
+  $('apList').querySelectorAll('[data-af]').forEach(b => b.onclick = () => { APF = b.dataset.af; haptic('sel'); renderApps(); });
+  wireApps($('apList'), loadApps);
+}
+
+// ── Balans — tepadagi kredit raqamini bosganda ──
+// Kamdan-kam ishlatiladi, shuning uchun tab emas, oyna.
+async function showCredits(){
+  sheetEnter('credits', showCredits);
+  openSheet('Balans', `
+    <div class="cr-big"><b>${CREDITS == null ? '—' : CREDITS}</b><span>kredit · 1 kredit = 1 ochilgan kontakt</span></div>
+    <button class="btn" id="bTop" style="width:100%">Kredit so'rash</button>
+    <div style="font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.5">
+      So'rov HR'ga boradi. Tasdiqlangach balansingiz yangilanadi.</div>
+    <div class="vd-sec">Harakatlar tarixi</div>
+    <div class="card" id="crList"><div class="msg">Yuklanmoqda…</div></div>`);
+  $('bTop').onclick = async () => {
+    const b = $('bTop');
+    b.disabled = true; b.textContent = 'Yuborilmoqda…';
+    try{
+      await api('/api/ma/topup', { method:'POST', body: JSON.stringify({ amount: 10 }) });
+      b.textContent = 'So\'rov yuborildi';
+      try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
+    }catch(e){ b.disabled = false; b.textContent = 'Qayta urinish'; }
+  };
+  loadCredits();
 }
 
 
@@ -1481,6 +1585,7 @@ const SHIFT_L = { kunduzgi:'Kunduzgi', kechki:'Kechki', ikkalasi:'Kunduzgi va ke
 const SAN_L = { yes:'Bor', no:"Yo'q", expired:"Muddati o'tgan" };
 
 async function showResume(id){
+  sheetEnter('rz:' + id, () => showResume(id));
   openSheet('Rezyume', '<div class="msg">Yuklanmoqda…</div>');
   let r;
   try { r = await api('/api/ma/candidates/' + encodeURIComponent(id)); }
@@ -1489,7 +1594,9 @@ async function showResume(id){
   // Kontaktgacha — anonim: ism o'rnida lavozim, kod; telefon yo'q (server
   // anonymize'dan o'tkazgan, bu yerda faqat sarlavhani moslaymiz)
   const open = r.open !== false;
-  const nm = open ? (r.fullName || 'Nomzod') : (r.roleLabel || r.desiredPosition || 'Nomzod');
+  // roleText — server rol bo'yicha bir xil yozadi ("Xostess", xom "Хостес" emas)
+  const role = r.roleText || r.roleLabel || r.desiredPosition || 'Nomzod';
+  const nm = open ? (r.fullName || 'Nomzod') : role;
   $('shT').textContent = open ? (r.fullName || 'Rezyume') : 'Rezyume · ' + (r.publicCode || '');
   const meta = [r.age ? r.age + ' yosh' : '', r.location || '',
     r.experienceYears ? r.experienceYears + ' yil tajriba' : 'Tajribasiz'].filter(Boolean).join(' · ');
@@ -1505,20 +1612,23 @@ async function showResume(id){
     '<div class="rs-w"><b>' + esc(w.position || 'Lavozim') + '</b>'
     + '<div class="m">' + esc([w.company, w.period].filter(Boolean).join(' · ')) + '</div>'
     + (w.description ? '<div class="d">' + esc(w.description) + '</div>' : '') + '</div>').join('');
+  // Nomzodning o'z matni — "O'zi haqida"; yo'q bo'lsa AI xulosasi —
+  // "Qisqacha" (mijoz uni nomzod yozgan deb o'ylamasin)
   const about = r.experienceSummary || r.summary || '';
+  const aboutH = r.experienceSummary ? 'O\'zi haqida' : 'Qisqacha';
 
   $('shB').innerHTML =
     '<div class="rs-hd"><div class="rs-ph">'
     + (r.hasPhoto ? '<img src="' + candPhoto(r.id) + '" alt="">' : esc(open ? nameIni(nm) : initialsOf(r.publicCode)))
     + '</div><div style="min-width:0"><div class="rs-nm">' + esc(nm) + '</div>'
-    + '<div class="rs-po">' + esc(open ? (r.desiredPosition || '') : (r.publicCode || '')) + '</div>'
+    + '<div class="rs-po">' + esc(open ? role : (r.publicCode || '')) + '</div>'
     + '<div class="rs-mt">' + esc(meta) + '</div></div></div>'
     + (open
       ? '<div class="rs-ct">'
         + (r.phone ? '<a href="tel:' + esc(r.phone) + '">&#128222; ' + esc(r.phone) + '</a>' : '<span>Telefon yo\'q</span>')
         + (r.email ? '<span>&#9993;&#65039; ' + esc(r.email) + '</span>' : '') + '</div>'
       : '<div class="rs-ct" style="color:var(--muted)"><span>&#128274; Ism va telefon kontakt ochilgach ko\'rinadi</span></div>')
-    + (about ? '<div class="rs-sec">O\'zi haqida</div><div class="rs-tx">' + esc(about) + '</div>' : '')
+    + (about ? '<div class="rs-sec">' + aboutH + '</div><div class="rs-tx">' + esc(about) + '</div>' : '')
     + (work ? '<div class="rs-sec">Ish tajribasi</div>' + work : '')
     + (info ? '<div class="rs-sec">Ma\'lumotlar</div>' + info : '')
     + ((r.skills || []).length ? '<div class="rs-sec">Ko\'nikmalar</div><div class="rs-chips">'
@@ -1529,8 +1639,8 @@ async function showResume(id){
 // Kirganda, suhbatdan chiqqanda va ilovaga qaytganda yangilanadi.
 // Suhbatlar ro'yxati ochiq bo'lsa — qo'shimcha so'rovsiz, ro'yxatdan.
 function setDot(n){ const d = $('dMS'); if (d) d.classList.toggle('on', n > 0); }
-// Vakansiya tabidagi nuqta — ko'rilmagan arizalar
-function setAppsDot(n){ const d = $('dVC'); if (d) d.classList.toggle('on', n > 0); }
+// Arizalar tabidagi nuqta — ko'rilmagan arizalar
+function setAppsDot(n){ const d = $('dAP'); if (d) d.classList.toggle('on', n > 0); }
 function refreshUnread(){
   if (!INIT || $('cabMode').classList.contains('hide')) return;
   api('/api/ma/unread').then(d => { setDot(d.chats); setAppsDot(d.apps); }).catch(() => {});
@@ -1541,14 +1651,14 @@ $('cvBack').onclick = () => { $('cv').classList.add('hide'); CUR = null; refresh
 $('cvSend').onclick = sendMsg;
 $('cvIn').onkeydown = e => { if (e.key === 'Enter') sendMsg(); };
 // ── Tablar ──
-const TABS = [['tSL','vSL'], ['tVC','vVC'], ['tCR','vCR'], ['tMS','vMS']];
+const TABS = [['tSL','vSL'], ['tAP','vAP'], ['tVC','vVC'], ['tMS','vMS']];
 function pickTab(id){
   TABS.forEach(([t,v]) => {
     $(t).classList.toggle('on', t === id);
     $(v).classList.toggle('hide', t !== id);
   });
   haptic('sel');
-  if (id === 'tCR') loadCredits();
+  if (id === 'tAP') loadApps();
   if (id === 'tSL') loadShortlists();
   if (id === 'tVC') loadVacancies();
   if (id === 'tMS') loadChats();
@@ -1705,7 +1815,7 @@ $('bBackCab').onclick = backToCab;
 
   // Telegram'dagi "yangi ariza" xabarining "Ko'rish" tugmasi: ?apps=<vakansiya>
   const APPS = new URLSearchParams(location.search).get('apps');
-  if (APPS) { pickTab('tVC'); showApps(APPS); }
+  if (APPS) pickTab('tAP');                     // Arizalar bo'limi
 })();
 </script>
 </body>

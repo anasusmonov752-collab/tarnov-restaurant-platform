@@ -43,12 +43,22 @@ const ROLE_STEMS = [
   ['oshpaz',    /oshpaz|ошпаз|povar|повар|cook|chef|shef/i],
   ['kassir',    /kass|касс|cashier/i],
   ['menejer',   /menej|менедж|manager|управляющ|direktor|директор|супервайз|supervayz|administr|админ/i],
-  ['operator',  /operat|оператор|call|колл/i]
+  // Faqat call-markaz: "Старший оператор установки по очистке газа" —
+  // zavod operatori, bizning "operator" emas. Yolg'iz "operator" so'zi
+  // (bot so'rovi: "operator kerak") ham tanilsin.
+  ['operator',  /call|колл|кол-?центр|контакт-?центр|^\s*(operator|оператор)\s*$/i]
 ];
+// Savdo/SMM/mijozlar menejeri restoran menejeri emas — restoran konteksti
+// bo'lmasa "menejer" hisoblanmaydi (mijoz menejer qidirsa ular chiqmasin)
+const NOT_REST_MANAGER = /продаж|sales|по работе с клиент|клиентск|smm|смм|маркет|marketing/i;
+const REST_CONTEXT = /ресторан|restoran|кафе|kafe|зал\b|zal\b|управляющ|директор|direktor|супервайз|supervayz|администр|administr|отел|hotel/i;
+
 function guessRole(text) {
   const t = String(text || '');
+  const salesOnly = NOT_REST_MANAGER.test(t) && !REST_CONTEXT.test(t);
   let best = null, at = Infinity;
   for (const [key, re] of ROLE_STEMS) {
+    if (key === 'menejer' && salesOnly) continue;
     const m = re.exec(t);
     if (m && m.index < at && isValidRole(key)) { best = key; at = m.index; }
   }

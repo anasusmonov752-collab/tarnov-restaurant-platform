@@ -95,6 +95,25 @@ tanlanadi. Surishda `disableVerticalSwipes()` + touchmove preventDefault
 nuqta (`/api/ma/unread`, `/api/cand/unread`); nomzodning "TalentHub"
 yozishmasi nuqtaga kirmaydi — BotMessage'da o'qilganlik yo'q.
 
+**Tanlov va vakansiya ekranlari** (2026-10-19, `530a673`, `a1d33f9`):
+nomzod kartasi bitta (`candHtml`) — Tanlovlar va vakansiya sahifasida;
+bosqichlar chizig'i Kontakt → Suhbat → Ishga olindi; vakansiyada voronka
+(mos · tanlangan · kontakt · ishga olindi, "mos" = `countRelaxed`).
+Rezyume kontaktgacha ham ochiladi — ANONIM (`anonymize.forClient`), faqat
+mijoz tanlovidagi yoki unga ariza bergan nomzod (`clientKnows`). Yangi
+ariza: mijozga Telegram xabari (`?apps=<vakansiya>`, hash emas — Telegram
+launch parametrlarini hash'ga qo'yadi), Vakansiya tabida nuqta.
+
+**ARIZADAN KONTAKTNI MIJOZ O'ZI OCHADI** (`af12e84`, Anas qarori
+2026-10-19): ariza — nomzodning o'z roziligi, agentlik tekshiruvi shart
+emas. Qoida YAGONA joyda — `services/applyReveal.js`: rozilik 14 kundan
+yangi (ariza sanasi yoki `jobStatusAt` — yangirog'i), nomzod "not_looking"
+emas, telefon haqiqiy UZ formatida. Server qayta tekshiradi, kredit
+oldindan tekshiriladi, keyin MAVJUD `shortlistSvc.reveal({viaApplication})`
+— alohida kredit yechish yozilmasin. Qidiruvdan tanlangan nomzod esa
+avvalgidek faqat agentlik orqali ochiladi (u rozilik bermagan).
+Haqiqiy kredit bilan hali sinalmagan.
+
 **Ma'lumot muammosi (2026-10-19 o'lchandi):** 799 nomzoddan 162 tasi
 `role:'boshqa'`, ulardan ~110-125 tasining `desiredPosition` ida lavozim
 aniq ("менеджер ресторана" 41, "хостес" 19, "официант" 7...). Bot va

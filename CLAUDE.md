@@ -104,6 +104,14 @@ mijoz tanlovidagi yoki unga ariza bergan nomzod (`clientKnows`). Yangi
 ariza: mijozga Telegram xabari (`?apps=<vakansiya>`, hash emas — Telegram
 launch parametrlarini hash'ga qo'yadi), Vakansiya tabida nuqta.
 
+**Mijoz kabineti tuzilmasi** (`e9a78b0`): tablar Tanlovlar · Arizalar ·
+Vakansiya · Aloqa (Balans tab emas — tepadagi kredit raqamini bosganda
+oyna). Pastki oyna ZANJIR: har oyna boshida `sheetEnter(kalit, chizish)`,
+"‹" va Telegram BackButton bir qadam orqaga — yangi oyna qo'shilsa shu
+qoidaga rioya qiling. Ko'rsatishda bir xil yozuv — `utils/labels.js`
+(Toshkent, tillar o'zbekcha); rol 'boshqa' bo'lsa `guessRole(desiredPosition)`.
+Arizadan kontakt ochish JONLI ISHLADI (Anas, 2026-10-19: balans 2→1).
+
 **ARIZADAN KONTAKTNI MIJOZ O'ZI OCHADI** (`af12e84`, Anas qarori
 2026-10-19): ariza — nomzodning o'z roziligi, agentlik tekshiruvi shart
 emas. Qoida YAGONA joyda — `services/applyReveal.js`: rozilik 14 kundan
@@ -112,7 +120,7 @@ emas, telefon haqiqiy UZ formatida. Server qayta tekshiradi, kredit
 oldindan tekshiriladi, keyin MAVJUD `shortlistSvc.reveal({viaApplication})`
 — alohida kredit yechish yozilmasin. Qidiruvdan tanlangan nomzod esa
 avvalgidek faqat agentlik orqali ochiladi (u rozilik bermagan).
-Haqiqiy kredit bilan hali sinalmagan.
+Haqiqiy kredit bilan sinaldi (yuqoriga qarang).
 
 **Ma'lumot muammosi (2026-10-19 o'lchandi):** 799 nomzoddan 162 tasi
 `role:'boshqa'`, ulardan ~110-125 tasining `desiredPosition` ida lavozim

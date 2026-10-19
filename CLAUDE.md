@@ -86,10 +86,20 @@ tanlanganlar qayta chiqmaydi (`candidateSearch` `excludeIds`). Eslatma:
 `Candidate.shownToClients` yoziladi, lekin hech qayerda filtr sifatida
 ishlatilmaydi.
 
-**Pastki navigatsiya** (2026-10-19): ikkala kabinetda suzuvchi shaffof
-kapsula, Lucide ikonkalari (emoji emas), yozuvlar qoladi, o'qilmagan
-xabarga qizil nuqta (`/api/ma/unread`, `/api/cand/unread`). Nomzodning
-"TalentHub" yozishmasi nuqtaga kirmaydi — BotMessage'da o'qilganlik yo'q.
+**Pastki navigatsiya — JONLI TEKSHIRILDI** (2026-10-19, `610c85b` gacha):
+ikkala kabinetda "suyuq shisha" kapsula (iOS Liquid Glass taqlidi —
+haqiqiy sinish veb'da mumkin emas), Lucide ikonkalari, yozuvlar qoladi,
+faol bo'limda kamalak chetli linza; linzani barmoq bilan surib bo'lim
+tanlanadi. Surishda `disableVerticalSwipes()` + touchmove preventDefault
+— aks holda iOS'da butun Mini App qimirlardi. O'qilmagan xabarga qizil
+nuqta (`/api/ma/unread`, `/api/cand/unread`); nomzodning "TalentHub"
+yozishmasi nuqtaga kirmaydi — BotMessage'da o'qilganlik yo'q.
+
+**Ma'lumot muammosi (2026-10-19 o'lchandi):** 799 nomzoddan 162 tasi
+`role:'boshqa'`, ulardan ~110-125 tasining `desiredPosition` ida lavozim
+aniq ("менеджер ресторана" 41, "хостес" 19, "официант" 7...). Bot va
+"Mos nomzodlar" rol bo'yicha qidiradi — bu nomzodlar hech qachon
+chiqmaydi. Rezyume tahlilidagi rol normallashtirishida nuqson bor.
 
 **Eskiz SMS ochilmagan** — nomzod kabineti, tiriklik tekshiruvi va suhbat
 tasdiqlash shunga bog'liq. 799 nomzoddan ~1 tasi botga bog'langan.

@@ -18,7 +18,8 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-  background:var(--bg);color:var(--ink);font-size:15px;padding-bottom:84px;
+  background:var(--bg);color:var(--ink);font-size:15px;
+  padding-bottom:calc(96px + env(safe-area-inset-bottom));   /* suzuvchi panel ostida qolmasin */
   -webkit-text-size-adjust:100%}
 .wrap{padding:12px}
 .hide{display:none !important}
@@ -197,14 +198,31 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .hint{font-size:12.5px;color:var(--muted);margin-top:5px;line-height:1.5}
 
-/* ── Tab paneli ── */
-.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);
-  border-top:1px solid var(--line);display:flex;
-  padding-bottom:env(safe-area-inset-bottom);z-index:10}
-.tb{flex:1;border:none;background:transparent;padding:10px 4px 11px;cursor:pointer;
-  font-family:inherit;color:var(--muted);font-size:11.5px;font-weight:600;line-height:1.3}
-.tb .ic{display:block;font-size:19px;margin-bottom:2px}
-.tb.on{color:var(--blue)}
+/* ── Tab paneli ──
+   Suzuvchi shaffof kapsula. Emoji EMAS — Lucide chiziqli ikonkalari:
+   emoji har telefonda har xil chiziladi. Yozuv qoladi: bizning bo'limlar
+   (Tanlovlar, Balans) universal belgi emas, yozuvsiz taxmin qilinmaydi.
+   Blur ishlamaydigan eski WebView'da oddiy oq fon (@supports). */
+.tabs{position:fixed;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom));
+  display:flex;gap:2px;padding:5px;border-radius:26px;z-index:10;
+  background:rgba(255,255,255,.97);border:1px solid rgba(225,232,242,.9);
+  box-shadow:0 8px 28px rgba(15,39,71,.14),0 1px 3px rgba(15,39,71,.06)}
+@supports ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){
+  .tabs{background:rgba(255,255,255,.74);
+    -webkit-backdrop-filter:blur(18px) saturate(180%);backdrop-filter:blur(18px) saturate(180%)}
+}
+.tb{flex:1;min-width:0;border:none;background:transparent;border-radius:21px;padding:7px 2px 6px;
+  cursor:pointer;font-family:inherit;color:var(--muted);font-size:10.5px;font-weight:600;
+  line-height:1.2;white-space:nowrap;display:flex;flex-direction:column;align-items:center;gap:3px;
+  transition:background .18s,color .18s;-webkit-tap-highlight-color:transparent}
+.tb .ic{position:relative;display:block;width:23px;height:23px}
+.tb .ic svg{width:23px;height:23px;display:block}
+.tb.on{color:var(--ink);background:rgba(15,39,71,.08)}
+.tb.on .ic svg{stroke-width:2.3}
+/* O'qilmagan xabar — qizil nuqta */
+.tb .dot{position:absolute;top:-1px;right:-3px;width:10px;height:10px;border-radius:50%;
+  background:#EF4444;border:2px solid #fff;display:none}
+.tb .dot.on{display:block}
 
 /* ══ SUHBATLAR ══════════════════════════════════════════════
    Inbox: tepada qadalgan agentlik (galochka bilan), ostida
@@ -364,11 +382,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     </div>
   </div>
 
+  <!-- Ikonkalar: Lucide (clipboard-list, briefcase, wallet, message-circle) -->
   <nav class="tabs">
-    <button class="tb on" id="tSL"><span class="ic">&#128203;</span>Tanlovlar</button>
-    <button class="tb"    id="tVC"><span class="ic">&#128188;</span>Vakansiya</button>
-    <button class="tb"    id="tCR"><span class="ic">&#128179;</span>Balans</button>
-    <button class="tb"    id="tMS"><span class="ic">&#128172;</span>Aloqa</button>
+    <button class="tb on" id="tSL"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg></span>Tanlovlar</button>
+    <button class="tb"    id="tVC"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg></span>Vakansiya</button>
+    <button class="tb"    id="tCR"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg></span>Balans</button>
+    <button class="tb"    id="tMS"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><i class="dot" id="dMS"></i></span>Aloqa</button>
   </nav>
 </div>
 
@@ -979,6 +998,7 @@ async function loadChats(){
 
 function drawChats(){
   const box = $('chatList');
+  setDot(CHATS.reduce((s, c) => s + (c.unread || 0), 0));
   if (!CHATS.length){ box.innerHTML = '<div class="ch-empty">Hali suhbat yo\'q</div>'; return; }
   box.innerHTML = CHATS.map((c, i) => {
     const ag = !!c.pinned;
@@ -1114,7 +1134,17 @@ async function showResume(id){
       + r.skills.map(s => '<span>' + esc(s) + '</span>').join('') + '</div>' : '');
 }
 
-$('cvBack').onclick = () => { $('cv').classList.add('hide'); CUR = null; };
+// ── Qizil nuqta: o'qilmagan xabarlar ──
+// Kirganda, suhbatdan chiqqanda va ilovaga qaytganda yangilanadi.
+// Suhbatlar ro'yxati ochiq bo'lsa — qo'shimcha so'rovsiz, ro'yxatdan.
+function setDot(n){ const d = $('dMS'); if (d) d.classList.toggle('on', n > 0); }
+function refreshUnread(){
+  if (!INIT || $('cabMode').classList.contains('hide')) return;
+  api('/api/ma/unread').then(d => setDot(d.chats)).catch(() => {});
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshUnread(); });
+
+$('cvBack').onclick = () => { $('cv').classList.add('hide'); CUR = null; refreshUnread(); };
 $('cvSend').onclick = sendMsg;
 $('cvIn').onkeydown = e => { if (e.key === 'Enter') sendMsg(); };
 // ── Tablar ──
@@ -1168,6 +1198,7 @@ function backToCab(){
   $('cabMode').classList.remove('hide');
   FROM_CAB = false;
   pickTab('tVC');
+  refreshUnread();
 }
 $('bBackCab').onclick = backToCab;
 
@@ -1184,6 +1215,7 @@ $('bBackCab').onclick = backToCab;
   $('cabMode').classList.remove('hide');
   loadMe();
   loadShortlists();
+  refreshUnread();
 })();
 </script>
 </body>

@@ -772,6 +772,18 @@ router.get('/candidates/:id/photo', asyncHandler(async (req, res) => {
   res.send(Buffer.from(m[2], 'base64'));
 }));
 
+// ── O'qilmaganlar soni — pastki paneldagi qizil nuqta uchun ──
+// Yengil: inbox'ni (backfill, nomzodlar) yuklamaydi, faqat sanaydi.
+// Mini App'ning o'z push'i yo'q — kirganda darhol ko'rinadigan nuqta
+// odamni suhbatga qaytaradi.
+router.get('/unread', clientGuard, asyncHandler(async (req, res) => {
+  const r = await ChatThread.aggregate([
+    { $match: { agencyId: req.client.agencyId, clientId: req.client.id, unreadClient: { $gt: 0 } } },
+    { $group: { _id: null, n: { $sum: '$unreadClient' } } }
+  ]);
+  res.json({ chats: (r[0] && r[0].n) || 0 });
+}));
+
 router.get('/chats/:id/messages', clientGuard, asyncHandler(async (req, res) => {
   const agencyId = req.client.agencyId;
   // clientId shart: boshqa mijozning suhbatini id bilan ocholmasin

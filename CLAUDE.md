@@ -79,9 +79,17 @@ chiqmaydi). Nomzod: mijoz nomini bossa kompaniya kartasi (Client
 `address`/`about` dan — panelda to'ldirilishi kerak) va taklif qilingan
 vakansiya; ish o'rnini bossa hh kabi sahifa (kontaktgacha nomsiz).
 
-**Keyingi bosqich:** vakansiyadan "Mos nomzodlar" — mijoz Mini App'da
-vakansiyasini ochib, mezonlari bo'yicha anonim kartalarni ko'radi
-(botdagi qidiruvning teskari kirishi; ikkalasi vakansiyada tugaydi).
+**Vakansiyadan "Mos nomzodlar" — QURILDI va sinaldi** (`5f61fb0`,
+Anas 2026-10-19): Mini App'da vakansiya → anonim kartalar → tanlov shu
+vakansiyaga bog'lanadi (`SearchSession.vacancyId`). Shu vakansiyaga
+tanlanganlar qayta chiqmaydi (`candidateSearch` `excludeIds`). Eslatma:
+`Candidate.shownToClients` yoziladi, lekin hech qayerda filtr sifatida
+ishlatilmaydi.
+
+**Pastki navigatsiya** (2026-10-19): ikkala kabinetda suzuvchi shaffof
+kapsula, Lucide ikonkalari (emoji emas), yozuvlar qoladi, o'qilmagan
+xabarga qizil nuqta (`/api/ma/unread`, `/api/cand/unread`). Nomzodning
+"TalentHub" yozishmasi nuqtaga kirmaydi — BotMessage'da o'qilganlik yo'q.
 
 **Eskiz SMS ochilmagan** — nomzod kabineti, tiriklik tekshiruvi va suhbat
 tasdiqlash shunga bog'liq. 799 nomzoddan ~1 tasi botga bog'langan.

@@ -399,6 +399,17 @@ router.get('/companies/:clientId', guard, asyncHandler(async (req, res) => {
   });
 }));
 
+// ── O'qilmaganlar soni — pastki paneldagi qizil nuqta uchun ──
+// Faqat mijoz suhbatlari: agentlik ("TalentHub") yozishmasi BotMessage'da
+// va o'qilganlik holati yo'q — u xabarlar nomzodga Telegramda keladi.
+router.get('/unread', guard, asyncHandler(async (req, res) => {
+  const r = await ChatThread.aggregate([
+    { $match: { agencyId: req.cand.restaurantId, candidateId: req.cand.id, kind: 'cc', unreadCandidate: { $gt: 0 } } },
+    { $group: { _id: null, n: { $sum: '$unreadCandidate' } } }
+  ]);
+  res.json({ chats: (r[0] && r[0].n) || 0 });
+}));
+
 router.get('/chats/:id/messages', guard, asyncHandler(async (req, res) => {
   const agencyId = req.cand.restaurantId;
 

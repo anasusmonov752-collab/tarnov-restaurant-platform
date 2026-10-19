@@ -24,7 +24,9 @@ function makeSecret() {
 // fullName "Женщина, 21 год..." bo'lishi mumkin — shunda lavozim foydaliroq.
 function displayName(c) {
   const n = (c.fullName || '').trim();
-  if (n && !/^\s*(женщина|мужчина)\b/i.test(n)) return n;
+  // (?![а-яё]) — \b emas: JS'da \b faqat lotin harflarini so'z deb biladi va
+  // "Женщина, 21 год" hech qachon tanilmasdi (admin xabarlarida shu chiqardi)
+  if (n && !/^\s*(женщина|мужчина)(?![а-яё])/i.test(n)) return n;
   return c.desiredPosition || roleLabel(c.role) || 'Nomzod';
 }
 

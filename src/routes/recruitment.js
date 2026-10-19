@@ -12,12 +12,15 @@ const { asyncHandler } = require('../middleware/errorHandler');
 const Candidate = require('../models/Candidate');
 const Restaurant = require('../models/Restaurant');
 const BotMessage = require('../models/BotMessage');
+const Shortlist = require('../models/Shortlist');
+const Application = require('../models/Application');
 const relay = require('../services/botRelay');
 const candidateSearch = require('../services/candidateSearch');
 const resumeParser = require('../services/resumeParser');
 const ai = require('../services/ai');
 const aiQuota = require('../services/aiQuota');
 const { isValidRole, guessRole } = require('../data/roles');
+const { phoneKey, emailKey, textHash } = require('../utils/candidateKeys');
 
 const router = express.Router();
 const guard = auth(['restaurant']);
@@ -53,11 +56,26 @@ function sanitizeWork(arr) {
 
 // Bitta xom matndan (yoki fayldan) Candidate hujjati yasaydi va saqlaydi.
 async function buildAndSave({ restaurantId, rawText, fileName, fileType, fileBuffer, source, branch }) {
+  // Dublikat tekshiruvi — bir nomzod ikki marta kirmasin (utils/candidateKeys).
+  // 1) Matn izi AI'DAN OLDIN: bitta PDF qayta yuklansa kvota sarflanmaydi,
+  //    hh anonim rezyumelari (ism/telefonsiz) ham shu bilan tutiladi.
+  const tHash = textHash(rawText);
+  if (tHash) {
+    const same = await Candidate.findOne({ restaurantId, textHash: tHash }, 'fullName').lean();
+    if (same) return { duplicate: true, name: same.fullName || fileName };
+  }
+
   const { fields, aiParsed } = await resumeParser.structure(rawText, restaurantId);
 
-  // Dublikat tekshiruvi (telefon bo'yicha) — bir nomzod ikki marta kirmasin.
-  if (fields.phone) {
-    const exists = await Candidate.findOne({ restaurantId, phone: fields.phone }, '_id').lean();
+  // 2) Telefon (oxirgi 9 raqam — formatdan qat'i nazar) yoki email.
+  // Ilgari telefon MATN sifatida aynan solishtirilardi va "+998 90 ..." bilan
+  // "+99890..." ikki xil odam bo'lib qolardi — bazada 50 ta dublikat shundan.
+  const pk = phoneKey(fields.phone), ek = emailKey(fields.email);
+  const or = [];
+  if (pk) or.push({ phoneKey: pk });
+  if (ek) or.push({ email: new RegExp('^' + escapeRegex(ek) + '$', 'i') });
+  if (or.length) {
+    const exists = await Candidate.findOne({ restaurantId, $or: or }, '_id').lean();
     if (exists) return { duplicate: true, name: fields.fullName || fileName };
   }
 
@@ -69,6 +87,7 @@ async function buildAndSave({ restaurantId, rawText, fileName, fileType, fileBuf
     restaurantId,
     ...fields,
     rawText: String(rawText || '').slice(0, MAX_RAW),
+    textHash: tHash,
     fileName: fileName || '',
     fileData: storeFile ? fileBuffer.toString('base64') : '',
     fileType: fileType || '',
@@ -362,6 +381,121 @@ router.delete('/:id', guard, asyncHandler(async (req, res) => {
 }));
 
 // ── Guruh amallari (bir nechta nomzodni birdaniga) ──
+// ── Dublikatlarni birlashtirish ──
+// Bir odam bazada bir necha marta (eski yuklash telefonni matn sifatida
+// solishtirgan). Har odamdan BITTA yozuv qoladi, qolganlari o'chadi.
+// Avval apply:false — ro'yxatni ko'rib chiqasiz, keyin apply:true.
+//
+// Qoladigan yozuv tartibi: tanlovda ishlatilgan > Telegramga ulangan >
+// arizasi bor > yozishmasi bor > AI tahlil qilingan > fotosi bor > eng
+// to'liq. Ikkitasi ham tanlov/ariza/Telegramda bo'lsa — to'plamga TEGILMAYDI
+// (conflicts): bog'lanishlarni qo'lda ko'rish kerak.
+// O'chadiganlardagi foydali narsa qoladiganga ko'chadi: bo'sh maydonlar
+// (telefon, email, foto, lavozim), izohlar, teglar, "kimga ko'rsatilgan".
+// Shuningdek hamma nomzodga phoneKey/textHash to'ldiriladi — yangi yuklash
+// tekshiruvi eski yozuvlarni ham tanisin.
+router.post('/duplicates', guard, asyncHandler(async (req, res) => {
+  const rid = req.user.restaurantId;
+  const apply = !!(req.body && req.body.apply === true);
+
+  const rows = await Candidate.find({ restaurantId: rid },
+    'id fullName phone email desiredPosition role status rating notes tags shownToClients publicCode ' +
+    'hasPhoto aiParsed tgState rawText textHash phoneKey experienceYears createdAt').lean();
+  const [sls, apps, msgs] = await Promise.all([
+    Shortlist.find({ agencyId: rid }, 'items.candidateId').lean(),
+    Application.distinct('candidateId', { agencyId: rid }),
+    BotMessage.distinct('candidateId', { restaurantId: rid })
+  ]);
+  const inSl = new Set(sls.flatMap(s => (s.items || []).map(i => i.candidateId)));
+  const inApp = new Set(apps), inMsg = new Set(msgs);
+  const linked = c => inSl.has(c.id) || inApp.has(c.id) || c.tgState === 'linked';
+
+  // Bitta odam = umumiy kalitga ega yozuvlar to'plami (union-find)
+  const parent = {};
+  const find = x => parent[x] === x ? x : (parent[x] = find(parent[x]));
+  rows.forEach(c => { parent[c.id] = c.id; });
+  const seen = {};
+  for (const c of rows) {
+    const keys = [];
+    const pk = phoneKey(c.phone); if (pk) keys.push('p' + pk);
+    const ek = emailKey(c.email); if (ek) keys.push('e' + ek);
+    const th = c.textHash || textHash(c.rawText); if (th) keys.push('h' + th);
+    // hh anonim rezyume: ism o'rnida "Женщина, 21 год, родилась ..." — lavozim bilan birga
+    // (?![а-яё]) — \b emas: JS'da \b faqat lotin harflarini so'z deb biladi
+    if (/^\s*(женщина|мужчина)(?![а-яё])/i.test(c.fullName || '')) keys.push('a' + c.fullName.trim().toLowerCase() + '|' + (c.desiredPosition || ''));
+    for (const k of keys) { if (seen[k]) parent[find(c.id)] = find(seen[k]); else seen[k] = c.id; }
+  }
+  const sets = {};
+  rows.forEach(c => (sets[find(c.id)] = sets[find(c.id)] || []).push(c));
+
+  const filled = c => ['phone','email','desiredPosition','experienceYears','notes'].filter(k => c[k]).length;
+  const score = c => (inSl.has(c.id) ? 1e7 : 0) + (c.tgState === 'linked' ? 1e6 : 0) + (inApp.has(c.id) ? 1e5 : 0)
+    + (inMsg.has(c.id) ? 1e4 : 0) + (c.aiParsed ? 1e3 : 0) + (c.hasPhoto ? 100 : 0) + filled(c) * 10;
+  const view = c => ({ id: c.id, name: c.fullName, role: c.role, status: c.status, phone: c.phone,
+    created: c.createdAt, aiParsed: !!c.aiParsed, hasPhoto: !!c.hasPhoto,
+    inShortlist: inSl.has(c.id), tg: c.tgState === 'linked' });
+
+  const groups = [], conflicts = [];
+  for (const s of Object.values(sets)) {
+    if (s.length < 2) continue;
+    if (s.filter(linked).length > 1) { conflicts.push(s.map(view)); continue; }
+    s.sort((a, b) => (score(b) - score(a)) || (new Date(b.createdAt) - new Date(a.createdAt)));
+    const keep = s[0], drop = s.slice(1);
+
+    // Bo'sh maydonlarni to'ldirish va to'plamlarni birlashtirish
+    const set = {};
+    for (const k of ['phone', 'email', 'desiredPosition', 'publicCode']) {
+      if (!keep[k]) { const d = drop.find(x => x[k]); if (d) set[k] = d[k]; }
+    }
+    if (!keep.experienceYears) { const d = drop.find(x => x.experienceYears); if (d) set.experienceYears = d.experienceYears; }
+    // Izoh faqat o'chadigan nusxada bo'lsa ham ko'chsin (ilgari >1 sharti uni yo'qotardi)
+    const notes = [...new Set([keep.notes, ...drop.map(x => x.notes)].filter(Boolean))].join('\n').slice(0, 2000);
+    if (notes !== (keep.notes || '')) set.notes = notes;
+    const tags = [...new Set([...(keep.tags || []), ...drop.flatMap(x => x.tags || [])])];
+    if (tags.length > (keep.tags || []).length) set.tags = tags;
+    const shown = [...new Set([...(keep.shownToClients || []), ...drop.flatMap(x => x.shownToClients || [])])];
+    if (shown.length > (keep.shownToClients || []).length) set.shownToClients = shown;
+    const rating = Math.max(keep.rating || 0, ...drop.map(x => x.rating || 0));
+    if (rating > (keep.rating || 0)) set.rating = rating;
+    const photoFrom = !keep.hasPhoto ? drop.find(x => x.hasPhoto) : null;
+
+    groups.push({ keep: view(keep), remove: drop.map(view), set: Object.keys(set).concat(photoFrom ? ['photo'] : []),
+      roleConflict: new Set(s.map(x => x.role)).size > 1, _set: set, _photoFrom: photoFrom && photoFrom.id });
+  }
+
+  let removed = 0, backfilled = 0;
+  if (apply) {
+    for (const g of groups) {
+      const set = Object.assign({}, g._set, { updatedAt: new Date() });
+      if (g._photoFrom) {
+        const p = await Candidate.findOne({ restaurantId: rid, id: g._photoFrom }, 'photo').lean();
+        if (p && p.photo) { set.photo = p.photo; set.hasPhoto = true; }
+      }
+      if (set.phone) set.phoneKey = phoneKey(set.phone);
+      await Candidate.updateOne({ restaurantId: rid, id: g.keep.id }, { $set: set });
+      const ids = g.remove.map(x => x.id);
+      // Yozishma bo'lsa (Telegramsiz ham — tizim yozuvlari) qoladiganga ko'chadi
+      await BotMessage.updateMany({ restaurantId: rid, candidateId: { $in: ids } }, { $set: { candidateId: g.keep.id } });
+      const r = await Candidate.deleteMany({ restaurantId: rid, id: { $in: ids } });
+      removed += r.deletedCount || 0;
+    }
+    // Kalitlarni to'ldirish — yangi yuklash tekshiruvi eski yozuvlarni ham tanisin
+    const left = await Candidate.find({ restaurantId: rid }, 'id phone rawText phoneKey textHash').lean();
+    const ops = [];
+    for (const c of left) {
+      const pk = phoneKey(c.phone), th = c.textHash || textHash(c.rawText);
+      if (pk !== (c.phoneKey || '') || th !== (c.textHash || '')) {
+        ops.push({ updateOne: { filter: { restaurantId: rid, id: c.id }, update: { $set: { phoneKey: pk, textHash: th } } } });
+      }
+    }
+    if (ops.length) { await Candidate.bulkWrite(ops); backfilled = ops.length; }
+  }
+
+  res.json({ applied: apply, people: groups.length, removeCount: groups.reduce((n, g) => n + g.remove.length, 0),
+    removed, backfilled, conflicts,
+    groups: groups.map(({ _set, _photoFrom, ...g }) => g) });
+}));
+
 // ── Rollarni qayta tasniflash: 'boshqa' -> lavozim ──
 // Rezyume tahlilchisi AI kalitni aynan qaytarmasa 'boshqa' qo'yardi (endi
 // tuzatilgan). Bazada qolganlar uchun: avval apply:false — nima o'zgarishini

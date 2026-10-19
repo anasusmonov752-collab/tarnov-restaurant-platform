@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { phoneKey } = require('../utils/candidateKeys');
 
 // ── NOMZODLAR BAZASI (rezyume) ───────────────────────────────
 // ALOHIDA kolleksiya — Restaurant hujjatiga solinmaydi.
@@ -101,5 +102,19 @@ CandidateSchema.index({ tgInviteToken: 1 }, { sparse: true });
 CandidateSchema.index({ restaurantId: 1, tgChatId: 1 }, { sparse: true });
 // Mijoz ko'rgan qisqa kod bo'yicha topish
 CandidateSchema.index({ restaurantId: 1, publicCode: 1 }, { sparse: true });
+
+// ── Dublikat kalitlari (utils/candidateKeys.js) ──
+// phoneKey har saqlashda telefondan qayta hisoblanadi — telefon qayerda
+// o'zgarmasin (panel, nomzod o'zi, AI qayta tahlili), kalit mos turadi.
+// textHash faqat yaratishda qo'yiladi: rezyume matni keyin o'zgarmaydi.
+CandidateSchema.add({
+  phoneKey: { type: String, default: '' },
+  textHash: { type: String, default: '' }
+});
+CandidateSchema.pre('save', function () {
+  this.phoneKey = phoneKey(this.phone);
+});
+CandidateSchema.index({ restaurantId: 1, phoneKey: 1 });
+CandidateSchema.index({ restaurantId: 1, textHash: 1 });
 
 module.exports = mongoose.model('Candidate', CandidateSchema);

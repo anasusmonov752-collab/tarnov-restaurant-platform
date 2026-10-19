@@ -192,9 +192,28 @@ asosida), `SurveyResponse` (har javobda saqlanadi, `step` — qayerda
 to'xtagan). Ariza oqimi yagona: `services/applications.submit` (kabinet
 ham). Panel: Vakansiyalar -> "Anketa" / "Umumiy anketa havolasi" (kanal
 tanlanadi, manba bo'yicha boshladi/yubordi). Jonli: sahifa, API himoyasi,
-havola yaratish tekshirildi (umumiy kod HMXT37); Telegram'da haqiqiy
-nomzod bilan HALI SINALMAGAN. Keyingi: konstruktor, eslatma (Render bepul
-tarifida cron ishonchsiz), ovozli javob, nomzod kabineti ruscha.
+havola yaratish tekshirildi (umumiy kod HMXT37).
+
+**DIQQAT (2026-10-20 o'lchandi):** Anas "anketa ishladi" dedi, lekin prod
+bazada `SurveyResponse` = 0, "anketa" manbali nomzod = 0. Bot `/start a_..`
+ni qabul qilsa BIRINCHI javob yozuvini yaratadi — demak havola hali hech
+kim tomonidan ishlatilmagan (ehtimol mijoz akkauntidan bosilgan: u holda
+bot "mijoz sifatida ulangan" deydi va hech narsa yozmaydi). Uchinchi
+Telegram akkauntdan qayta sinash kerak.
+
+**Konstruktor — DEPLOY QILINDI** (2026-10-20, `a661597`..`7d8b7e0`):
+`anketalar.html` (Vakansiyalar -> Anketalar): ro'yxat, savol tahriri UZ/RU,
+o'z savoli (matn/uzun matn/tanlov -> `Candidate.extraAnswers`), lavozim
+anketalari (vakansiya havolasi `surveyForVacancy` bilan shu lavozim
+anketasini ochadi), telefon ko'rinishi. Himoya SERVERDA
+(`survey.cleanQuestions`): standart savol turi o'zgarmaydi, `keys:'fixed'`
+variantga yangisi qo'shilmaydi, ism/telefon/rozilik o'chmaydi, rozilik
+oxirida, bitta lavozimga bitta faol anketa. Jonli topilgan va tuzatilgan:
+unikal indeksdan oldingi parallel so'rov 2-umumiy anketa (XYAFYP) yaratgan
+edi — `ensureDefault` endi takrorni o'chiradi (eng eskisi qoladi) va
+indeksni quradi. Jonli: bitta anketa qoldi, o'zgarishsiz saqlash ma'lumotni
+buzmadi, roziliksiz saqlash 400. Keyingi: eslatma (Render bepul tarifida
+cron ishonchsiz), ovozli javob, ball/saralash, nomzod kabineti ruscha.
 
 **Eskiz SMS ochilmagan** — nomzod kabineti, tiriklik tekshiruvi va suhbat
 tasdiqlash shunga bog'liq. 742 nomzoddan ~1 tasi botga bog'langan.

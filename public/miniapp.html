@@ -237,6 +237,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
   mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude}
 .lens.on{opacity:1}
+/* Surish: sahifa aylanmasin, matn belgilanmasin, uzoq bosishda menyu chiqmasin */
+.tabs{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+/* Surilayotgan linza — kattaroq va shaffofroq, "lupa" kabi */
+.lens.drag{background:radial-gradient(120% 100% at 50% 0%,rgba(255,255,255,.7),rgba(255,255,255,.22) 60%,rgba(255,255,255,.08));
+  box-shadow:inset 0 1px 1px #fff,inset 0 -4px 8px rgba(255,255,255,.5),
+    0 10px 24px rgba(15,39,71,.2),0 2px 4px rgba(15,39,71,.1)}
+.tb.hov{color:var(--ink)}
 
 .tb{position:relative;z-index:1;flex:1;min-width:0;border:none;background:transparent;border-radius:21px;
   padding:7px 2px 6px;cursor:pointer;font-family:inherit;color:var(--muted);font-size:10.5px;
@@ -1205,6 +1212,66 @@ function moveLens(){
   if (first) { void lens.offsetWidth; lens.style.transition = ''; lens.classList.add('on'); }
 }
 window.addEventListener('resize', moveLens);
+
+// ── Linzani barmoq bilan surish (iOS Telegram/Instagram kabi) ──
+// Barmoq panelda 6px dan ko'p yursa — surish rejimi: linza barmoq ortidan
+// yuradi va kattalashadi, ostidagi bo'lim belgilanadi, qo'yib yuborilganda
+// o'sha bo'lim ochiladi va linza prujina bilan joyiga o'tiradi.
+// Kichik harakat — oddiy bosish (click) bo'lib qoladi.
+(function(){
+  const nav = document.querySelector('.tabs'), lens = $('lens');
+  if (!nav || !lens) return;
+  const btns = [...nav.querySelectorAll('.tb')];
+  const tick = () => { try { TG && TG.HapticFeedback && TG.HapticFeedback.selectionChanged(); } catch(e){} };
+  let sx = null, pid = null, drag = false, hov = null, quiet = 0;
+
+  // Barmoq ostidagi bo'lim; panel chetidan chiqsa — eng chetdagisi
+  const under = x => {
+    const first = btns[0].getBoundingClientRect(), last = btns[btns.length - 1].getBoundingClientRect();
+    if (x < first.left) return btns[0];
+    if (x >= last.right) return btns[btns.length - 1];
+    return btns.find(b => { const r = b.getBoundingClientRect(); return x >= r.left && x < r.right; }) || null;
+  };
+
+  nav.addEventListener('pointerdown', e => { sx = e.clientX; pid = e.pointerId; drag = false; });
+
+  nav.addEventListener('pointermove', e => {
+    if (sx == null || e.pointerId !== pid) return;
+    if (!drag) {
+      if (Math.abs(e.clientX - sx) < 6) return;
+      drag = true;
+      try { nav.setPointerCapture(pid); } catch(err){}
+      lens.style.transition = 'width .2s, opacity .2s';      // barmoqqa darhol ergashsin
+      lens.classList.add('drag', 'on');
+    }
+    const nr = nav.getBoundingClientRect(), w = lens.offsetWidth;
+    const x = Math.max(5, Math.min(nr.width - 5 - w, e.clientX - nr.left - w / 2));
+    lens.style.transform = 'translateX(' + x + 'px) scale(1.1,1.3)';
+    const b = under(e.clientX);
+    if (b && b !== hov) {
+      if (hov) hov.classList.remove('hov');
+      hov = b; b.classList.add('hov'); tick();
+    }
+  });
+
+  const end = e => {
+    if (sx == null || (e && e.pointerId !== pid)) return;
+    const was = drag;
+    sx = null; drag = false;
+    if (!was) return;                                       // oddiy bosish — click o'zi ishlaydi
+    lens.classList.remove('drag');
+    lens.style.transition = '';                             // joyiga prujina bilan
+    quiet = Date.now() + 350;                               // surishdan keyingi click bo'limni qayta almashtirmasin
+    const target = hov;
+    if (hov) { hov.classList.remove('hov'); hov = null; }
+    if (target) pickTab(target.id); else moveLens();
+  };
+  nav.addEventListener('pointerup', end);
+  nav.addEventListener('pointercancel', end);
+  nav.addEventListener('click', e => {
+    if (Date.now() < quiet) { e.stopPropagation(); e.preventDefault(); }
+  }, true);
+})();
 
 // Telegram push tugmasi miniapp.html#chat ga olib keladi — Aloqa tabini ochamiz.
 // Element tekshiriladi: INIT bo'lmasa sahifa body'ni almashtiradi va

@@ -287,6 +287,7 @@ function qHeadHtml(q, i){
           ${c ? `<span class="chip f">→ ${esc(c.field)}</span>` : '<span class="chip c">O\'z savolingiz</span>'}
           ${q.required ? '<span class="chip r">Majburiy</span>' : ''}
           ${c && c.locked ? '<span class="chip">&#128274; o\'chirilmaydi</span>' : ''}
+          ${q.id === 'role' && CUR.role ? '<span class="chip">nomzodga ko\'rinmaydi — lavozim ma\'lum</span>' : ''}
         </div></div>
       <button class="ic-btn" data-up="${i}" title="Yuqoriga" ${i === 0 || isCons ? 'disabled' : ''}>&#8593;</button>
       <button class="ic-btn" data-dn="${i}" title="Pastga" ${last || isCons || i === CUR.questions.length - 2 ? 'disabled' : ''}>&#8595;</button>

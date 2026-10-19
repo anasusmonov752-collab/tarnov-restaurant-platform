@@ -29,7 +29,8 @@ router.get('/', guard, asyncHandler(async (req, res) => {
   const agencyId = req.user.restaurantId;
   await survey.ensureDefault(agencyId);
   const [rows, counts] = await Promise.all([
-    Survey.find({ agencyId }).sort({ isDefault: -1, createdAt: 1 }).lean(),
+    // Lavozimsiz va umumiy bo'lmagan — o'chirilgan takror nusxa (ensureDefault), ko'rsatilmaydi
+    Survey.find({ agencyId, $or: [{ isDefault: true }, { role: { $ne: '' } }] }).sort({ isDefault: -1, createdAt: 1 }).lean(),
     SurveyResponse.aggregate([
       { $match: { agencyId } },
       { $group: { _id: '$surveyId', started: { $sum: 1 },

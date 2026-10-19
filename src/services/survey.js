@@ -216,8 +216,18 @@ function makeCode() {
 // Agentlikning umumiy anketasi (lavozimni nomzod tanlaydi). Yo'q bo'lsa
 // shablondan yasaladi — konstruktor paydo bo'lguncha yagona anketa shu.
 async function ensureDefault(agencyId) {
-  const s = await Survey.findOne({ agencyId, isDefault: true, active: true });
-  if (s) return s;
+  const all = await Survey.find({ agencyId, isDefault: true }).sort({ createdAt: 1 });
+  // Ikkinchi nusxa — unikal indeks paydo bo'lishidan oldingi parallel
+  // so'rovlar izi (2026-10-19: HMXT37 va XYAFYP 0,2 s farq bilan).
+  // Eng eskisi qoladi (havolalar uning kodida), qolgani o'chiriladi;
+  // indeks takror bor paytda qurilmagan — endi quriladi.
+  if (all.length > 1) {
+    await Survey.updateMany({ agencyId, isDefault: true, id: { $ne: all[0].id } },
+      { $set: { isDefault: false, active: false, updatedAt: new Date() } });
+    Survey.createIndexes().catch(e => console.error('[SURVEY] indeks qurilmadi:', e.message));
+  }
+  const s = all[0];
+  if (s) { if (!s.active) { s.active = true; await s.save(); } return s; }
   for (let i = 0; i < 5; i++) {
     try {
       return await Survey.create({

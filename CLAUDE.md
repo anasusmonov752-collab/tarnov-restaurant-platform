@@ -136,19 +136,26 @@ Shuningdek 32 ta tahlil qilinmagan rezyume (2026-10-05 dagi `xo1xx.pdf`
 partiyasi — o'sha kuni AI kvotasi tugagan) AI bilan qayta tahlil qilindi:
 deyarli hammasi xostess. **Endi `boshqa` = 0.** (2026-10-19)
 
-**DUBLIKATLAR (o'lchandi, hali tozalanmagan):** 50 ta odam bazada 2-4
-martadan — 55 ta ortiqcha yozuv (3-6 oktabr hh partiyalari). Sabab:
-yuklashdagi dublikat tekshiruvi telefonni MATN sifatida aynan solishtiradi
-("+998 90 135 93 94" ≠ "+998901359394"), AI yiqilsa telefon ajratilmaydi
-va tekshiruv umuman o'tib ketadi. 8 to'plamda rollar har xil. Faqat
-bittasi tanlovda ishlatilgan (Kasimova Sabrina) — birlashtirishda o'sha
-yozuv qolishi shart. Telegramga ulangan dublikat yo'q.
+**DUBLIKATLAR — TOZALANDI va JONLI O'LCHANDI** (2026-10-19, `b21c824`):
+50 odam bazada 2-4 martadan edi (3-6 oktabr hh partiyalari). Sabab:
+yuklash telefonni MATN sifatida aynan solishtirardi ("+998 90 135 93 94"
+≠ "+998901359394"), AI yiqilsa telefon ajratilmay tekshiruv o'tib ketardi.
+Tuzatish: `utils/candidateKeys.js` — `textHash` (AI'dan OLDIN, kvota
+tejaladi), `phoneKey` (oxirgi 9 raqam), email. Anas tasdig'i bilan
+birlashtirildi: 57 yozuv o'chdi, 799 → 742, qayta tekshiruv 0 guruh,
+8 tanlovdagi 12 yozuvning hech biri yetim qolmadi (Kasimova Sabrina'ning
+tanlovdagi yozuvi qoldi), 742 tasiga kalit yozildi. Jonli isbot: bazadagi
+PDF qayta yuklandi → `duplicates:1, created:0`. Telefon formati yo'li
+(boshqa PDF, shu raqam) jonli sinalmagan. Qayta ishlatish:
+`POST /api/recruitment/duplicates` (apply:false — ko'rish; Telegramga
+ulangan yoki tanlovdagi ikki yozuvli guruh `conflicts`ga tushadi, tegilmaydi).
+8 guruhda nusxalar roli har xil edi — qoladigan yozuv roli qoldi.
 
 **Eskiz SMS ochilmagan** — nomzod kabineti, tiriklik tekshiruvi va suhbat
-tasdiqlash shunga bog'liq. 799 nomzoddan ~1 tasi botga bog'langan.
+tasdiqlash shunga bog'liq. 742 nomzoddan ~1 tasi botga bog'langan.
 
-**Ma'lumot tozalash** — 162 ta `role:'boshqa'`, 33 ta tahlil qilinmagan
-nomzod, 3 ta `SINOV` test yozuvi.
+**Ma'lumot tozalash** — `boshqa` rollar, tahlil qilinmaganlar va
+dublikatlar bajarildi (yuqoriga qarang). Qolgani: 3 ta `SINOV` test yozuvi.
 
 **Render Starter ($7/oy)** — haqiqiy mijozlar kelishidan oldin. Bepul
 tarifda 50 soniya sovuq start bor.

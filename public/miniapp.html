@@ -25,6 +25,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 
 /* ── Ro'yxat ── */
 .top{position:sticky;top:0;background:var(--bg);padding:10px 12px;z-index:5;border-bottom:1px solid var(--line)}
+.backcab{border:0;background:transparent;color:var(--blue);font-family:inherit;font-size:14px;
+  font-weight:600;padding:2px 0 8px;cursor:pointer}
 .sum{font-size:13.5px;color:var(--muted);line-height:1.45}
 .cnt{font-size:13px;color:var(--muted);margin-top:3px}
 
@@ -293,6 +295,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 <div id="searchMode" class="hide">
   <div id="listView">
     <div class="top">
+      <button class="backcab hide" id="bBackCab">&#10094; Vakansiyalar</button>
       <div class="sum" id="sum">Yuklanmoqda…</div>
       <div class="cnt" id="cnt"></div>
     </div>
@@ -380,7 +383,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 const TG = window.Telegram && window.Telegram.WebApp;
 if (TG) { TG.ready(); TG.expand(); }
 
-const KEY  = new URLSearchParams(location.search).get('s') || '';
+// Qidiruv seansi kaliti. Botdan ?s= bilan keladi; kabinetdagi "Mos
+// nomzodlar" esa uni joyida almashtiradi (openSearch) — sahifani qayta
+// yuklamaymiz, chunki Telegram initData qayta yuklashda yo'qolishi mumkin.
+let KEY = new URLSearchParams(location.search).get('s') || '';
+let FROM_CAB = false;      // qidiruv kabinetdan ochilgan — orqaga qaytish bor
 const INIT = (TG && TG.initData) || '';
 const $ = id => document.getElementById(id);
 
@@ -551,7 +558,9 @@ async function submit(){
       HR ular bilan bog'lanadi va kontaktlarni ochib beradi.<br>
       Holatni "Kabinet" tugmasidan kuzatib boring.`);
     try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
-    if (TG) setTimeout(()=>TG.close(), 3000);
+    // Kabinetdan ochilgan bo'lsa — kabinetga qaytamiz (Mini App'ni yopmaymiz)
+    if (FROM_CAB) setTimeout(backToCab, 2500);
+    else if (TG) setTimeout(()=>TG.close(), 3000);
   }catch(e){
     b.disabled = false; b.textContent = 'Qayta urinish';
     show('Yuborilmadi: ' + esc(e.message));
@@ -758,7 +767,8 @@ async function loadVacancies(){
         ${!v.listed && v.status === 'open' ? `<div class="mt">Qidiruvdan o'zi yaratilgan. Nomzodlar
           ko'rmaydi — e'lon qilsangiz, ular ariza bera boshlaydi.</div>` : ''}
         <div class="row">
-          <button class="sbtn p" data-apps="${v.id}">Arizalar</button>
+          ${v.status === 'open' ? `<button class="sbtn p" data-match="${v.id}">Mos nomzodlar</button>` : ''}
+          <button class="sbtn" data-apps="${v.id}">Arizalar</button>
           ${!v.listed && v.status === 'open' ? `<button class="sbtn p" data-pub="${v.id}">E'lon qilish</button>` : ''}
           ${v.listed && v.status === 'open' ? `<button class="sbtn" data-conf="${v.id}">Tasdiqlash</button>` : ''}
           <button class="sbtn" data-edit="${v.id}">Tahrirlash</button>
@@ -772,6 +782,15 @@ async function loadVacancies(){
       b.disabled = true;
       try { await api(`/api/ma/vacancies/${b.dataset.conf}/confirm`, { method:'POST' }); haptic(); loadVacancies(); }
       catch(e){ alert(e.message); b.disabled = false; }
+    });
+    // Mos nomzodlar — vakansiya mezonlari bo'yicha anonim kartalar
+    document.querySelectorAll('[data-match]').forEach(b => b.onclick = async () => {
+      b.disabled = true; const was = b.textContent; b.textContent = 'Qidirilmoqda…';
+      try {
+        const r = await api(`/api/ma/vacancies/${b.dataset.match}/matches`, { method:'POST', body:'{}' });
+        if (!r.key) { alert(r.message || 'Mos nomzod topilmadi'); b.disabled = false; b.textContent = was; return; }
+        haptic(); openSearch(r.key, true);
+      } catch(e){ alert(e.message); b.disabled = false; b.textContent = was; }
     });
     document.querySelectorAll('[data-pub]').forEach(b => b.onclick = async () => {
       b.disabled = true;
@@ -1118,6 +1137,40 @@ TABS.forEach(([t]) => { $(t).onclick = () => pickTab(t); });
 // tablar yo'qoladi — shunda pickTab null ustida yiqilardi.
 if (location.hash === '#chat') setTimeout(() => { if ($('tMS')) pickTab('tMS'); }, 0);
 
+// ── Qidiruv natijasini ochish ──
+// Ikki joydan: botdagi "Ko'rish" (?s=) va kabinetdagi "Mos nomzodlar".
+async function openSearch(key, fromCab){
+  KEY = key; FROM_CAB = !!fromCab;
+  SEL.clear(); SEEN.clear(); ROWS = []; cur = -1;
+  // openDetail/renderList style.display bilan almashtiradi — xuddi shunday qaytaramiz
+  $('detail').innerHTML = ''; $('detail').style.display = 'none';
+  $('listView').style.display = 'block';
+  $('bar').style.display = 'none';
+  $('cnt').textContent = '';
+  $('sum').textContent = 'Yuklanmoqda…';
+  $('list').innerHTML = '';
+  $('bBackCab').classList.toggle('hide', !FROM_CAB);
+  $('cabMode').classList.add('hide');
+  $('searchMode').classList.remove('hide');
+  window.scrollTo(0, 0);
+  try{
+    const d = await api('/api/ma/session/' + encodeURIComponent(KEY), { method:'POST', body:'{}' });
+    ROWS = d.candidates || [];
+    $('sum').textContent = d.summary || '';
+    if (!ROWS.length) { show('Nomzod topilmadi.'); return; }
+    renderList();
+  }catch(e){ show(esc(e.message)); }
+}
+
+function backToCab(){
+  $('searchMode').classList.add('hide');
+  $('bar').style.display = 'none';
+  $('cabMode').classList.remove('hide');
+  FROM_CAB = false;
+  pickTab('tVC');
+}
+$('bBackCab').onclick = backToCab;
+
 // ══════════════════════════════════════════════════════════
 (async function(){
   if (!INIT) {
@@ -1126,17 +1179,7 @@ if (location.hash === '#chat') setTimeout(() => { if ($('tMS')) pickTab('tMS'); 
   }
 
   // Kalit bor -> qidiruv natijasi; yo'q -> kabinet (menyu tugmasi)
-  if (KEY) {
-    $('searchMode').classList.remove('hide');
-    try{
-      const d = await api('/api/ma/session/' + encodeURIComponent(KEY), { method:'POST', body:'{}' });
-      ROWS = d.candidates || [];
-      $('sum').textContent = d.summary || '';
-      if (!ROWS.length) { show('Nomzod topilmadi.'); return; }
-      renderList();
-    }catch(e){ show(esc(e.message)); }
-    return;
-  }
+  if (KEY) { openSearch(KEY, false); return; }
 
   $('cabMode').classList.remove('hide');
   loadMe();

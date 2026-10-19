@@ -19,6 +19,10 @@ const SearchSessionSchema = new mongoose.Schema({
   summary:      { type: String, default: '' },
   candidateIds: { type: [String], default: [] },
 
+  // Mini App'da vakansiyadan "Mos nomzodlar" bosilganda — tanlov shu
+  // vakansiyaga bog'lanadi (bot qidiruvida bo'sh, vakansiya o'zi yasaladi)
+  vacancyId: { type: String, default: '' },
+
   createdAt: { type: Date, default: Date.now }
 });
 

@@ -26,6 +26,9 @@ const Application = require('../models/Application');
 const vac = require('../services/vacancy');
 const vacAuto = require('../services/vacancyAuto');
 const contactView = require('../services/contactView');
+const candidateSearch = require('../services/candidateSearch');
+const relay = require('../services/botRelay');
+const { isValidRole } = require('../data/roles');
 const agent = require('../services/agent');
 const chat = require('../services/chat');
 const ChatThread = require('../models/ChatThread');
@@ -147,14 +150,25 @@ router.post('/shortlist', clientGuard, asyncHandler(async (req, res) => {
 
   // Har tanlovning vakansiyasi bo'lsin — nomzod kontakt ochilgach
   // "qayerga, qanday shartda" ni ko'radi. Yiqilsa tanlov baribir saqlanadi.
-  let vacancyId = '';
+  //   vakansiyadan qidiruv ("Mos nomzodlar") -> o'sha vakansiya
+  //   bot qidiruvi                           -> topiladi yoki yasaladi
+  let vacancyId = '', fromVacancy = null;
   try {
-    const v = await vacAuto.ensureFromSearch({
-      agencyId: ses.agencyId, client: req.client, criteria: ses.criteria || {}
-    });
-    vacancyId = v.id;
+    if (ses.vacancyId) {
+      fromVacancy = await Vacancy.findOne({
+        agencyId: ses.agencyId, clientId: req.client.id, id: ses.vacancyId
+      }).lean();
+    }
+    if (fromVacancy) {
+      vacancyId = fromVacancy.id;
+    } else {
+      const v = await vacAuto.ensureFromSearch({
+        agencyId: ses.agencyId, client: req.client, criteria: ses.criteria || {}
+      });
+      vacancyId = v.id;
+    }
   } catch (e) {
-    console.error('[MA] avtomatik vakansiya yaratilmadi:', e.message);
+    console.error('[MA] tanlov vakansiyaga bog\'lanmadi:', e.message);
   }
 
   const sl = await Shortlist.create({
@@ -224,13 +238,22 @@ router.post('/shortlist', clientGuard, asyncHandler(async (req, res) => {
   // Oldin so'rasak bu anketa bo'lardi; hozir esa tabiiy: odam tanladi,
   // endi "nima taklif qilasiz?" mantiqiy savol. Javob nomzodga
   // qo'ng'iroq qilganda kerak bo'ladi.
+  //
+  // Vakansiyadan qidirilgan va unda maosh bor bo'lsa — so'ramaymiz:
+  // shartlar allaqachon yozilgan, ikkinchi marta so'rash bezovta qiladi.
   try {
     if (req.client.tgChatId) {
-      await agent.askOffer(req.client.tgChatId, sl.id);
-      await tg.sendMessage(tg.platformToken(), req.client.tgChatId,
-        `${picked.length} ta nomzod qabul qilindi.\n\n` +
-        `Ular bilan gaplashishim uchun ayting — nima taklif qilasiz? ` +
-        `Maosh, smena, qachondan kerak.`);
+      if (fromVacancy && (fromVacancy.salaryFrom || fromVacancy.salaryTo)) {
+        await tg.sendMessage(tg.platformToken(), req.client.tgChatId,
+          `${picked.length} ta nomzod qabul qilindi.\n\n` +
+          `«${fromVacancy.title}» shartlari bo'yicha gaplashib, javobini yozaman.`);
+      } else {
+        await agent.askOffer(req.client.tgChatId, sl.id);
+        await tg.sendMessage(tg.platformToken(), req.client.tgChatId,
+          `${picked.length} ta nomzod qabul qilindi.\n\n` +
+          `Ular bilan gaplashishim uchun ayting — nima taklif qilasiz? ` +
+          `Maosh, smena, qachondan kerak.`);
+      }
     }
   } catch (e) {
     console.error('[MA] taklif so\'rovi yuborilmadi:', e.message);
@@ -473,6 +496,56 @@ router.patch('/vacancies/:id', clientGuard, asyncHandler(async (req, res) => {
 
 // Tasdiqlash — "bu o'rin hali ochiq". Nomzod kartada "2 kun oldin
 // tasdiqlangan" deb ko'radi, soxta e'lon muammosi shunday yopiladi.
+// ── Mos nomzodlar — vakansiyadan qidiruv ──
+// Botdagi qidiruvning teskari kirishi: u yerda gapdan vakansiya
+// yasaladi, bu yerda vakansiyadan qidiruv. Ikkalasi bir xil seans va
+// anonim kartalarga olib keladi, tanlov esa shu vakansiyaga bog'lanadi.
+// Mezonlar AI'siz, to'g'ridan-to'g'ri vakansiya maydonlaridan olinadi.
+router.post('/vacancies/:id/matches', clientGuard, asyncHandler(async (req, res) => {
+  const agencyId = req.client.agencyId;
+  const v = await Vacancy.findOne({ agencyId, clientId: req.client.id, id: req.params.id }).lean();
+  if (!v) return res.status(404).json({ error: 'Vakansiya topilmadi' });
+  if (v.status === 'closed') return res.status(400).json({ error: 'Vakansiya yopilgan' });
+  if (!isValidRole(v.role)) {
+    return res.status(400).json({ error: 'Vakansiyada lavozim ko\'rsatilmagan — "Tahrirlash" orqali tanlang' });
+  }
+
+  // Shu vakansiyaga allaqachon tanlanganlar qayta chiqmasin
+  const prev = await Shortlist.find({ agencyId, clientId: req.client.id, vacancyId: v.id }, 'items.candidateId').lean();
+  const excludeIds = [...new Set(prev.flatMap(s => (s.items || []).map(i => i.candidateId)))];
+
+  // EMPTY asosida: search() keywords/languages massiv bo'lishini kutadi
+  const criteria = Object.assign({}, candidateSearch.EMPTY, {
+    role: v.role,
+    minExp: v.minExp || null,
+    languages: v.languages || [],
+    location: v.location || null,
+    shift: v.shift === 'kunduzgi' || v.shift === 'kechki' ? v.shift : null,
+    maxSalary: v.salaryTo || null,
+    excludeIds
+  });
+  const result = await candidateSearch.search(criteria, agencyId, { limit: 20 });
+  if (!result.rows.length) {
+    return res.json({ key: '', count: 0,
+      message: excludeIds.length
+        ? 'Yangi mos nomzod yo\'q — mavjudlarining hammasini tanlagansiz.'
+        : 'Hozircha bazada mos nomzod yo\'q. Yangi nomzod chiqsa xabar beramiz.' });
+  }
+
+  // Yumshatilgan bo'lsa ochiq aytamiz — shartni jimgina yo'qotmaymiz
+  const note = result.relaxed.length ? ` (${result.relaxed.join(', ')} hisobga olinmadi)` : '';
+  const key = relay.makeToken();
+  await SearchSession.create({
+    key, agencyId, clientId: req.client.id,
+    criteria: { role: criteria.role, minExp: criteria.minExp, languages: criteria.languages,
+                location: criteria.location, shift: criteria.shift, maxSalary: criteria.maxSalary, keywords: [] },
+    summary: v.title + note,
+    candidateIds: result.rows.map(r => r.id),
+    vacancyId: v.id
+  });
+  res.json({ key, count: result.rows.length, relaxed: result.relaxed });
+}));
+
 router.post('/vacancies/:id/confirm', clientGuard, asyncHandler(async (req, res) => {
   const v = await Vacancy.findOneAndUpdate(
     { agencyId: req.client.agencyId, clientId: req.client.id, id: req.params.id },

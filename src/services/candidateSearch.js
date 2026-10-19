@@ -178,6 +178,11 @@ function buildQuery(criteria, restaurantId, skip) {
   const and = [];
 
   if (criteria.role) q.role = criteria.role;
+  // Allaqachon tanlanganlar (vakansiyadan qidiruvda) qayta chiqmasin.
+  // Yumshatish bu shartga tegmaydi — u filtr emas, takrorning oldini olish.
+  if (Array.isArray(criteria.excludeIds) && criteria.excludeIds.length) {
+    q.id = { $nin: criteria.excludeIds.slice(0, 500) };
+  }
 
   if (!skip.has('minExp') && Number.isFinite(criteria.minExp) && criteria.minExp > 0) {
     q.experienceYears = { $gte: criteria.minExp };

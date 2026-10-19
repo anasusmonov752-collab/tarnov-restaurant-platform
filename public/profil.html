@@ -905,6 +905,23 @@ window.addEventListener('resize', moveLens);
   };
   nav.addEventListener('pointerup', end);
   nav.addEventListener('pointercancel', end);
+
+  // iOS: linzani surayotganda butun Mini App qimirlab ketardi. Ikki sabab:
+  //  1) Telegram'ning "pastga surib yig'ish" imo-ishorasi — barmoq ozgina
+  //     pastga og'sa ham ishga tushadi. Barmoq panelda turganda o'chiramiz,
+  //     qo'yilganda qaytaramiz: boshqa joyda odatdagidek yopiladi.
+  //  2) WebView touch-action'ni to'liq hurmat qilmaydi — sahifa "rezinadek"
+  //     cho'ziladi. Panelda boshlangan harakatda aylantirishni to'xtatamiz
+  //     (pointer hodisalari va oddiy bosish bunga tegmaydi).
+  const swipes = on => { try {
+    if (!TG || !TG.isVersionAtLeast || !TG.isVersionAtLeast('7.7')) return;
+    on ? TG.enableVerticalSwipes() : TG.disableVerticalSwipes();
+  } catch(e){} };
+  const restore = () => setTimeout(() => swipes(true), 60);
+  nav.addEventListener('touchstart', () => swipes(false), { passive: true });
+  nav.addEventListener('touchmove', e => { if (e.cancelable) e.preventDefault(); }, { passive: false });
+  nav.addEventListener('touchend', restore);
+  nav.addEventListener('touchcancel', restore);
   nav.addEventListener('click', e => {
     if (Date.now() < quiet) { e.stopPropagation(); e.preventDefault(); }
   }, true);

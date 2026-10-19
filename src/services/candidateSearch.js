@@ -9,7 +9,7 @@
 
 const Candidate = require('../models/Candidate');
 const ai = require('./ai');
-const { ROLES, ROLE_KEYS, roleLabel } = require('../data/roles');
+const { ROLES, ROLE_KEYS, roleLabel, guessRole } = require('../data/roles');
 
 const ROLE_HINT = ROLES.map(r => `${r.key} (${r.label})`).join(', ');
 
@@ -111,23 +111,14 @@ function normalizeShift(v) {
 
 // Model lavozimni har xil yozishi mumkin: "xostes", "Хостес", "hostess".
 // Hammasini bitta kalitga keltiramiz — aks holda filtr ishlamaydi.
-const ROLE_ALIAS = {
-  ofitsiant: ['ofitsiant','ofitsiyant','официант','оффициант','waiter','waitress'],
-  barmen:    ['barmen','бармен','bartender','barista','бариста'],
-  xostess:   ['xostess','xostes','hostess','хостес','хостесс','host'],
-  oshpaz:    ['oshpaz','повар','cook','chef','shef'],
-  kassir:    ['kassir','кассир','cashier'],
-  menejer:   ['menejer','manager','менеджер','administrator','administrator zali','админ','администратор','zal menejeri','supervayzer','супервайзер'],
-  operator:  ['operator','оператор','call operator','call-operator','call markaz','колл-центр','call center','call-центра','callcenter']
-};
+// Jadval data/roles.js da (guessRole) — rezyume tahlilchisi ham shundan
+// foydalanadi. Ilgari bu yerda alohida ROLE_ALIAS bor edi, tahlilchida esa
+// yo'q edi: qidiruv "Хостес"ni tanirdi, rezyume esa 'boshqa' bo'lib qolardi.
 function normalizeRole(v) {
   if (!v) return null;
   const s = String(v).toLowerCase().trim();
   if (ROLE_KEYS.includes(s)) return s;
-  for (const key of Object.keys(ROLE_ALIAS)) {
-    if (ROLE_ALIAS[key].some(a => s === a || s.includes(a))) return key;
-  }
-  return null;
+  return guessRole(s) || null;
 }
 
 function escapeRegex(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }

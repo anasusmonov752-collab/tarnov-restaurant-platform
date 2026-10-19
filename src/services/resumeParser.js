@@ -9,7 +9,7 @@
 
 const zlib = require('zlib');
 const ai = require('./ai');
-const { ROLES, isValidRole } = require('../data/roles');
+const { ROLES, isValidRole, guessRole } = require('../data/roles');
 
 const MAX_TEXT = 15000; // AI'ga yuboriladigan matn chegarasi — ish tajribasi bo'limi ham sig'sin
 
@@ -90,7 +90,15 @@ function normalize(raw) {
   f.phone             = toStr(raw.phone).slice(0, 40);
   f.email             = toStr(raw.email).slice(0, 120);
   f.desiredPosition   = toStr(raw.desiredPosition).slice(0, 160);
-  f.role              = isValidRole(toStr(raw.role)) ? toStr(raw.role) : 'boshqa';
+  // AI kalitni aynan qaytarmasa ("xostes", "Хостес", "hostess") — ilgari
+  // shu zahoti 'boshqa' qo'yilardi va nomzod qidiruvda yo'qolardi (bazada
+  // 162 ta). Endi: AI javobi -> istagan lavozim -> ish tarixi, birinchi
+  // tanilgani (data/roles.js guessRole).
+  const aiRole = toStr(raw.role).toLowerCase();
+  f.role = isValidRole(aiRole) ? aiRole
+    : guessRole(aiRole) || guessRole(f.desiredPosition)
+      || guessRole((Array.isArray(raw.workHistory) ? raw.workHistory : []).map(w => w && w.position).join(', '))
+      || 'boshqa';
   f.experienceYears   = Math.min(60, toNum(raw.experienceYears));
   f.experienceSummary = toStr(raw.experienceSummary).slice(0, 300);
   f.skills            = toArr(raw.skills);

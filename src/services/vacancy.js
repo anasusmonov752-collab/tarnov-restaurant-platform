@@ -10,7 +10,7 @@
 // borib ishga kiradi va biz hech narsa olmaymiz. Mijozni ham shunday
 // himoya qilamiz — u nomzod ismini faqat kontakt ochilgach ko'radi.
 
-const { isValidRole } = require('../data/roles');
+const { isValidRole, guessRole } = require('../data/roles');
 
 const VALID_STATUS = ['open', 'paused', 'closed'];
 const SHIFTS = ['kunduzgi', 'kechki', 'ikkalasi'];
@@ -27,23 +27,9 @@ function isStale(v) {
 
 // Sarlavhadan lavozimni aniqlash. Forma lavozim so'ramagan paytda
 // yozilgan vakansiyalar hammasi 'boshqa' bo'lib qolgan edi: qidiruv
-// ularni "shu lavozimga ochiq vakansiya" deb tanimay, dublikat ochardi,
-// nomzodga esa "Sizga mos" belgisi hech chiqmasdi.
-// O'zak bo'yicha: xatoli yozuv ("Xostes", "офицант") ham tanilsin.
-const ROLE_STEMS = [
-  ['ofitsiant', /ofits|офиц|waiter/i],
-  ['barmen',    /barm|бармен|bartend/i],
-  ['xostess',   /xost|host|хост/i],
-  ['oshpaz',    /oshpaz|ошпаз|povar|повар|cook|chef/i],
-  ['kassir',    /kass|касс|cashier/i],
-  ['menejer',   /menej|менедж|manager/i],
-  ['operator',  /operat|оператор|call/i]
-];
-function guessRole(title) {
-  const t = String(title || '');
-  const hit = ROLE_STEMS.find(([, re]) => re.test(t));
-  return hit && isValidRole(hit[0]) ? hit[0] : '';
-}
+// ularni "shu lavozimga ochiq vakansiya" deb tanimay, dublikat ochardi.
+// Funksiyaning o'zi data/roles.js da — rezyume, vakansiya va qidiruv
+// uchun YAGONA jadval (bu yerda eksport qolgan: vac.guessRole chaqiruvlari).
 
 /** Foydalanuvchi yuborgan ma'lumotni tozalaydi. */
 function clean(b, prev = {}) {

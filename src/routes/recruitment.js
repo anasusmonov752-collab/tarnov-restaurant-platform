@@ -17,7 +17,7 @@ const candidateSearch = require('../services/candidateSearch');
 const resumeParser = require('../services/resumeParser');
 const ai = require('../services/ai');
 const aiQuota = require('../services/aiQuota');
-const { isValidRole } = require('../data/roles');
+const { isValidRole, guessRole } = require('../data/roles');
 
 const router = express.Router();
 const guard = auth(['restaurant']);
@@ -362,6 +362,44 @@ router.delete('/:id', guard, asyncHandler(async (req, res) => {
 }));
 
 // ── Guruh amallari (bir nechta nomzodni birdaniga) ──
+// ── Rollarni qayta tasniflash: 'boshqa' -> lavozim ──
+// Rezyume tahlilchisi AI kalitni aynan qaytarmasa 'boshqa' qo'yardi (endi
+// tuzatilgan). Bazada qolganlar uchun: avval apply:false — nima o'zgarishini
+// ko'rib chiqasiz, keyin apply:true. FAQAT role:'boshqa' ga tegadi — qo'lda
+// qo'yilgan rol o'zgarmaydi. Lavozim qayerdan tanilgani (from) ham qaytadi.
+router.post('/roles/reclassify', guard, asyncHandler(async (req, res) => {
+  const rid = req.user.restaurantId;
+  const apply = !!(req.body && req.body.apply === true);
+  const rows = await Candidate.find({ restaurantId: rid, role: 'boshqa' },
+    'id fullName desiredPosition workHistory experienceSummary summary aiParsed').lean();
+
+  const changes = [], unresolved = [];
+  for (const c of rows) {
+    const tries = [
+      ['lavozim',     c.desiredPosition],
+      ['ish tarixi',  (c.workHistory || []).map(w => w && w.position).filter(Boolean).join(', ')],
+      ['o\'zi haqida', c.experienceSummary],
+      ['AI xulosasi', c.summary]
+    ];
+    let to = '', from = '';
+    for (const [src, text] of tries) { to = guessRole(text); if (to) { from = src; break; } }
+    const row = { id: c.id, name: c.fullName, desiredPosition: c.desiredPosition };
+    if (to) changes.push(Object.assign(row, { to, from }));
+    else unresolved.push(Object.assign(row, { aiParsed: !!c.aiParsed }));
+  }
+
+  if (apply && changes.length) {
+    await Candidate.bulkWrite(changes.map(ch => ({ updateOne: {
+      // role:'boshqa' sharti — oraliqda qo'lda o'zgartirilgan bo'lsa tegmaymiz
+      filter: { restaurantId: rid, id: ch.id, role: 'boshqa' },
+      update: { $set: { role: ch.to, updatedAt: new Date() } }
+    } })));
+  }
+  const count = (arr, k) => arr.reduce((m, x) => (m[x[k]] = (m[x[k]] || 0) + 1, m), {});
+  res.json({ total: rows.length, applied: apply, byRole: count(changes, 'to'), bySource: count(changes, 'from'),
+             changes, unresolved });
+}));
+
 router.post('/bulk', guard, asyncHandler(async (req, res) => {
   const b = req.body || {};
   const ids = Array.isArray(b.ids) ? b.ids.slice(0, 500) : [];

@@ -21,6 +21,39 @@ const ROLE_KEYS = ROLES.map(r => r.key);
 const DEFAULT_ROLE = 'ofitsiant';
 
 function isValidRole(k) { return ROLE_KEYS.includes(k); }
+
+// ── Erkin matndan lavozimni tanish — YAGONA joy ──
+// Rezyume ("Хостес", "менеджер ресторана"), vakansiya sarlavhasi ("Xostes"),
+// mijoz so'rovi ("administrator kerak") — hammasi shu funksiyadan o'tadi.
+// Ilgari ikkita jadval bor edi (candidateSearch.ROLE_ALIAS va
+// vacancy.ROLE_STEMS) va rezyume tahlilchisi umuman tanimasdi: AI "xostes"
+// qaytarsa kalitga aynan mos kelmagani uchun 'boshqa' qo'yardi — bazada
+// 162 ta nomzod shunday qolib, qidiruvda ko'rinmasdi.
+//
+// O'zak bo'yicha (xatoli yozuv ham tanilsin). Matnda bir nechta lavozim
+// bo'lsa ("менеджер ресторана, старший официант") — BIRINCHI aytilgani:
+// odam odatda asosiy lavozimini oldin yozadi.
+//
+// "Administrator" restoranda — zal menejeri; bot qidiruvi ham uni menejer
+// deb tushunadi (Anas qarori kutilmoqda — o'zgarsa shu yerda).
+const ROLE_STEMS = [
+  ['ofitsiant', /ofits|офиц|оффиц|waiter|waitress/i],
+  ['barmen',    /barm|бармен|bartend|barista|бариста/i],
+  ['xostess',   /xost|host|хост/i],
+  ['oshpaz',    /oshpaz|ошпаз|povar|повар|cook|chef|shef/i],
+  ['kassir',    /kass|касс|cashier/i],
+  ['menejer',   /menej|менедж|manager|управляющ|direktor|директор|супервайз|supervayz|administr|админ/i],
+  ['operator',  /operat|оператор|call|колл/i]
+];
+function guessRole(text) {
+  const t = String(text || '');
+  let best = null, at = Infinity;
+  for (const [key, re] of ROLE_STEMS) {
+    const m = re.exec(t);
+    if (m && m.index < at && isValidRole(key)) { best = key; at = m.index; }
+  }
+  return best || '';
+}
 function roleLabel(k)   { return (ROLES.find(r => r.key === k) || {}).label || k || 'Ofitsiant'; }
 
 // Faqat mavjud rol kalitlaridan iborat toza massiv qaytaradi (kirish validatsiyasi uchun)
@@ -29,4 +62,4 @@ function sanitizeRoles(arr) {
   return [...new Set(arr.filter(isValidRole))];
 }
 
-module.exports = { ROLES, ROLE_KEYS, DEFAULT_ROLE, isValidRole, roleLabel, sanitizeRoles };
+module.exports = { ROLES, ROLE_KEYS, DEFAULT_ROLE, isValidRole, roleLabel, sanitizeRoles, guessRole };

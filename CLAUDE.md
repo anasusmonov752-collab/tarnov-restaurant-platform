@@ -161,10 +161,21 @@ qidirish EMAS). Rus ko'plik shakllari massiv bilan. Til odamga yoziladi:
 tarjima. Avtomatik vakansiya sarlavhasi bazaga O'ZBEKCHA yoziladi,
 `vac.full(v, extra, lang)` / `titleFor` o'quvchi tilida ko'rsatadi; panel
 (lang'siz) o'zgarmaydi. Mini App: `data-t`, `t()`, Aloqa'da UZ | RU.
-Jonli: fayllar, API va panel regressiyasi tekshirildi; Telegram ichida
-haqiqiy mijoz bilan HALI SINALMAGAN. Qolgani: bot xabarlari mijoz
-tilida, imzo xatosi ("Avtorizatsiya: ...") hali o'zbekcha, AI xulosalari
-ikki tilda, nomzod kabineti. Reja: `docs/taklif-til-anketa-ilova-2026-10-19.md`.
+Anas Telegramda sinadi (2026-10-20).
+
+**Bot ham mijoz tilida** (2026-10-20, `065364f`, jonli deploy): qoida
+`th-i18n.resolve(Client.lang, Client.tgLang)` — `tgLang` Telegram tili,
+webhook va Mini App guard'da yangilanadi (bildirishnomalar shundan til
+oladi). Xush kelibsiz ostida UZ/RU tugmalari (`lw:`), `/til` (`lg:`).
+AI agent: til tanlangan bo'lsa faqat o'sha tilda; tanlanmagan bo'lsa
+mijoz YOZGAN tildan aniqlab BIR MARTA saqlaydi (3+ so'z yoki ovoz) —
+Anas roziligi bilan: ko'p menejerning Telegrami ruscha, o'zi o'zbekcha
+yozadi. Tizim qatorlari, vakansiya kartasi, sharoitlar (`perksText`),
+kontakt/ariza/chat bildirishnomalari lug'atdan. Mini App kirish xatosi:
+"Sessiya eskirgan — ilovani yopib, qayta oching". Jonli: lug'at, xatolar,
+webhook holati tekshirildi; haqiqiy mijoz chatida HALI SINALMAGAN.
+O'zbekcha qolgani: agentlik admini xabarlari, nomzod boti va kabineti,
+AI xulosalari (bazada). Reja: `docs/taklif-til-anketa-ilova-2026-10-19.md`.
 
 **Eskiz SMS ochilmagan** — nomzod kabineti, tiriklik tekshiruvi va suhbat
 tasdiqlash shunga bog'liq. 742 nomzoddan ~1 tasi botga bog'langan.

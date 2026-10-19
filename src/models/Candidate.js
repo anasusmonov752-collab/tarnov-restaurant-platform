@@ -94,6 +94,17 @@ const CandidateSchema = new mongoose.Schema({
   // tanlamagan — Telegram language_code'dan taxmin). Client.lang bilan bir xil.
   lang: { type: String, default: '' },
 
+  // ── Anketa (services/survey.js) ──
+  gender:          { type: String, default: '' },   // male | female
+  birthDate:       { type: Date,   default: null },  // age shundan hisoblanadi
+  // Telefon Telegram "kontaktni ulashish" orqali kelgan — raqam haqiqiy
+  // va shu odamniki. Qo'lda yozilgan telefonda null.
+  phoneVerifiedAt: { type: Date,   default: null },
+  // Ma'lumotni qayta ishlash va ish beruvchilarga ko'rsatishga rozilik.
+  // Agentlik modeli uchun shart; 14 kunlik ariza qoidasi ham shunga tayanadi.
+  consentAt:       { type: Date,   default: null },
+  channel:         { type: String, default: '' },   // e'lon manbasi (ig, tg, olx, qr ...)
+
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

@@ -29,7 +29,7 @@ const MAX_RAW = 20000;                 // saqlanadigan xom matn chegarasi
 const MAX_FILE_STORE = 5 * 1024 * 1024; // 5 MB dan katta faylni base64 saqlmaymiz
 // Kanban bosqichlari (recruiting voronka) — frontend ustunlari shu tartibda.
 const VALID_STATUS = ['new', 'phone', 'interview', 'interview2', 'trial', 'hired', 'reserve', 'rejected'];
-const VALID_SOURCE = ['hh', 'manual', 'referral', 'telegram', 'other'];
+const VALID_SOURCE = ['hh', 'manual', 'referral', 'telegram', 'anketa', 'other'];   // anketa — services/survey
 
 // Fayllar xotirada (buffer) — PDF matnini ajratamiz va (kerak bo'lsa) base64 saqlaymiz.
 const upload = multer({

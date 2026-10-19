@@ -12,7 +12,6 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const { asyncHandler } = require('../middleware/errorHandler');
-const { v4: uuidv4 } = require('uuid');
 const Candidate = require('../models/Candidate');
 const Shortlist = require('../models/Shortlist');
 const Vacancy = require('../models/Vacancy');
@@ -20,16 +19,14 @@ const Application = require('../models/Application');
 const Client = require('../models/Client');
 const Restaurant = require('../models/Restaurant');
 const vac = require('../services/vacancy');
-const tg = require('../services/telegram');
 const initData = require('../services/tgInitData');
 const { isValidRole } = require('../data/roles');
-const { placeLabel } = require('../utils/labels');
 const chat = require('../services/chat');
 const contactView = require('../services/contactView');
 const applyReveal = require('../services/applyReveal');
 const ChatThread = require('../models/ChatThread');
 const botRelay = require('../services/botRelay');
-const I18N = require('../../public/js/th-i18n');
+const applications = require('../services/applications');
 const { publicBase } = require('../utils/publicBase');
 
 const router = express.Router();
@@ -276,55 +273,9 @@ router.post('/vacancies/:id/apply', guard, asyncHandler(async (req, res) => {
   }
 
   try {
-    const a = await Application.create({
-      id: uuidv4(),
-      agencyId: c.restaurantId,
-      vacancyId: v.id,
-      candidateId: c.id,
-      clientId: v.clientId,
-      message: String((req.body || {}).message || '').trim().slice(0, 500)
-    });
-
-    // Ariza bergan odam ish qidiryapti — holatini shunga keltiramiz
-    if (c.jobStatus !== 'active') {
-      c.jobStatus = 'active';
-      c.jobStatusAt = new Date();
-      await c.save();
-    }
-
-    // Sizga xabar
-    try {
-      const agency = await Restaurant.findOne({ id: c.restaurantId });
-      const chat = agency && agency.telegram && agency.telegram.adminChatId;
-      if (chat) {
-        await tg.sendMessage(tg.platformToken(), chat,
-          `📨 Yangi ariza\n\n${c.fullName || 'Nomsiz'} — ${v.title}\n` +
-          `${c.desiredPosition || ''}${c.experienceYears ? ' · ' + c.experienceYears + ' yil' : ''}\n` +
-          `${c.phone || ''}`);
-      }
-    } catch (e) { console.error('[CAND] ariza xabari ketmadi:', e.message); }
-
-    // Mijozga — ilgari umuman xabar bormasdi: vakansiya ichiga kirmaguncha
-    // ariza kelganini bilmasdi. Matn ANONIM (ism, telefon yo'q) — kontakt
-    // faqat ochilganda. "Ko'rish" to'g'ridan-to'g'ri shu vakansiya arizalarini
-    // ochadi (?apps= — hash emas: Telegram launch parametrlarini hash'ga qo'yadi).
-    try {
-      const cl = await Client.findOne({ agencyId: c.restaurantId, id: v.clientId }, 'tgChatId status lang tgLang').lean();
-      if (cl && cl.tgChatId && cl.status === 'active') {
-        // Mijoz tilida (Mini App bilan bir xil yozuv)
-        const lang = I18N.resolve(cl.lang, cl.tgLang);
-        const T = (k, x) => I18N.t(lang, k, x);
-        const who = [isValidRole(c.role) ? T('role.' + c.role) : (c.desiredPosition || T('role.candidate')),
-                     c.experienceYears ? T('fact.exp', { n: c.experienceYears }) : T('fact.noExp'),
-                     placeLabel(c.location, lang)].filter(Boolean).join(' · ');
-        await tg.sendMessage(tg.platformToken(), cl.tgChatId,
-          `${T('na.title', { v: vac.titleFor(v, lang) })}\n\n${who}`,
-          { reply_markup: { inline_keyboard: [[
-            { text: T('bot.view'), web_app: { url: `${publicBase(req)}/miniapp.html?apps=${encodeURIComponent(v.id)}` } }
-          ]] } });
-      }
-    } catch (e) { console.error('[CAND] mijozga ariza xabari ketmadi:', e.message); }
-
+    // Ariza, holat va ikki xabar — yagona yo'l (anketa ham shundan o'tadi)
+    const a = await applications.submit({ cand: c, vacancy: v,
+      message: (req.body || {}).message, appBase: publicBase(req), via: 'kabinet' });
     res.json({ ok: true, id: a.id });
   } catch (e) {
     // unique indeks: takroriy ariza

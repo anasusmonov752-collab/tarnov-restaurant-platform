@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TalentHub — Anketa</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="/js/th-i18n.js?v=3"></script>
+<style>
+/* Palitra miniapp.html va profil.html bilan bir xil (brend qattiq) */
+:root{
+  --bg:#EEF3FB; --card:#FFFFFF; --ink:#16233A; --muted:#64748B;
+  --line:#E1E8F2; --blue:#2563EB; --blue-d:#1D4ED8;
+  --ok:#2E9E5B; --danger:#C25B4C;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);
+  color:var(--ink);font-size:15px;-webkit-text-size-adjust:100%;min-height:100vh}
+.hide{display:none !important}
+
+/* Tepada: progress va qadam */
+.top{position:sticky;top:0;z-index:5;background:var(--bg);padding:12px 16px 8px}
+.top-row{display:flex;align-items:center;gap:10px}
+.bk{border:0;background:none;color:var(--blue);font-size:20px;line-height:1;padding:2px 6px 2px 0;cursor:pointer}
+.bk:disabled{opacity:0}
+.prog{flex:1;height:6px;background:var(--line);border-radius:4px;overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:var(--blue);border-radius:4px;transition:width .3s}
+.stp{font-size:12.5px;color:var(--muted);min-width:40px;text-align:right}
+
+.wrap{padding:8px 16px calc(110px + env(safe-area-inset-bottom))}
+.card{background:var(--card);border-radius:18px;padding:22px 18px;box-shadow:0 1px 2px rgba(15,39,71,.05)}
+.vac{font-size:13px;color:var(--blue);font-weight:600;margin-bottom:10px}
+.q{font-size:21px;font-weight:700;line-height:1.3}
+.hint{font-size:14px;color:var(--muted);line-height:1.5;margin-top:8px}
+.err{font-size:13.5px;color:var(--danger);margin-top:12px;min-height:18px}
+
+/* Variantlar — katta, barmoq bilan oson */
+.opts{display:flex;flex-direction:column;gap:9px;margin-top:18px}
+.opt{width:100%;text-align:left;border:1.5px solid var(--line);background:var(--card);border-radius:13px;
+  padding:14px 15px;font-family:inherit;font-size:16px;color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:10px}
+.opt i{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex:none}
+.opt.on{border-color:var(--blue);background:#F2F7FF}
+.opt.on i{border-color:var(--blue);background:var(--blue);box-shadow:inset 0 0 0 3px #fff}
+.opts.grid{display:grid;grid-template-columns:1fr 1fr}
+.opts.grid .opt{font-size:15px;padding:13px 12px}
+
+input.in,textarea.in{width:100%;margin-top:18px;border:1.5px solid var(--line);border-radius:13px;padding:14px;
+  font-family:inherit;font-size:17px;color:var(--ink);background:var(--card);outline:none}
+input.in:focus,textarea.in:focus{border-color:var(--blue)}
+textarea.in{min-height:110px;resize:vertical;line-height:1.5}
+
+/* Telefon */
+.share{width:100%;margin-top:20px;border:0;border-radius:14px;background:var(--blue);color:#fff;
+  font-family:inherit;font-size:17px;font-weight:700;padding:16px;cursor:pointer}
+.ok{margin-top:18px;padding:13px 14px;border-radius:12px;background:rgba(46,158,91,.1);color:#1E7A44;font-weight:600}
+.lnk{border:0;background:none;color:var(--blue);font-family:inherit;font-size:14.5px;font-weight:600;margin-top:14px;cursor:pointer;padding:4px 0}
+
+/* Rasm */
+.ph{margin-top:18px;width:150px;height:180px;border-radius:16px;background:#E8EFFA;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;color:var(--blue);font-size:40px}
+.ph img{width:100%;height:100%;object-fit:cover}
+
+/* Rozilik */
+.cons{margin-top:16px;padding:14px;border-radius:12px;background:var(--bg);font-size:14px;line-height:1.55}
+.chk{display:flex;align-items:center;gap:11px;margin-top:16px;font-size:16px;font-weight:600;cursor:pointer}
+.chk input{width:22px;height:22px;accent-color:var(--blue)}
+
+/* Pastki tugma */
+.bar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,rgba(238,243,251,0),var(--bg) 30%)}
+.btn{width:100%;border:0;border-radius:14px;background:var(--blue);color:#fff;font-family:inherit;
+  font-size:17px;font-weight:700;padding:16px;cursor:pointer}
+.btn:disabled{opacity:.45}
+.btn.ghost{background:transparent;color:var(--muted);font-weight:600;font-size:15px;padding:10px}
+
+/* Til va boshlash */
+.center{text-align:center;padding-top:40px}
+.logo{width:64px;height:64px;border-radius:18px;background:var(--blue);color:#fff;font-size:30px;
+  display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
+.langs{display:flex;flex-direction:column;gap:11px;margin-top:26px}
+.msg{text-align:center;color:var(--muted);padding:60px 20px;line-height:1.6}
+.done-ic{width:72px;height:72px;border-radius:50%;background:rgba(46,158,91,.14);color:var(--ok);font-size:36px;
+  display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
+</style>
+</head>
+<body>
+
+<div class="top hide" id="top">
+  <div class="top-row">
+    <button class="bk" id="bBack" aria-label="Orqaga">&#10094;</button>
+    <div class="prog"><i id="pg"></i></div>
+    <div class="stp" id="stp"></div>
+  </div>
+</div>
+<div class="wrap" id="main"><div class="msg">…</div></div>
+<div class="bar hide" id="bar">
+  <button class="btn" id="bNext"></button>
+  <button class="btn ghost hide" id="bSkip"></button>
+</div>
+
+<script>
+const TG = window.Telegram && window.Telegram.WebApp;
+if (TG) { TG.ready(); TG.expand(); }
+const INIT = (TG && TG.initData) || '';
+const RID = new URLSearchParams(location.search).get('r') || '';
+const I18N = window.THI18N;
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[m]));
+const haptic = k => { try { TG && TG.HapticFeedback && (k === 'ok' ? TG.HapticFeedback.notificationOccurred('success') : TG.HapticFeedback.selectionChanged()); } catch(e){} };
+
+// Til: avval Telegram tili (birinchi ekran ikki tilli), keyin nomzod tanlagani
+let LANG = (() => { const u = TG && TG.initDataUnsafe && TG.initDataUnsafe.user; return I18N.fromTelegram(u && u.language_code); })();
+const t = (k, v) => I18N.t(LANG, k, v);
+const L = o => (o && (o[LANG] || o.uz)) || '';       // savol matni { uz, ru }
+
+async function api(path, opt){
+  let r;
+  try {
+    r = await fetch('/api/anketa/' + encodeURIComponent(RID) + path, Object.assign({
+      headers: { 'Content-Type': 'application/json', 'X-Telegram-Init-Data': INIT }
+    }, opt));
+  } catch(e){ const er = new Error('net'); er.code = 'net'; throw er; }
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) { const er = new Error(d.code || 'net'); er.code = d.code || 'net'; er.q = d.q; throw er; }
+  return d;
+}
+const errText = code => {
+  const k = 'ank.err.' + code;
+  return I18N.D.uz[k] ? t(k) : (code === 'auth' ? t('auth.expired') : t('ank.err.net'));
+};
+
+let S = null;          // serverdagi holat
+let Q = [];            // ko'rinadigan savollar
+let idx = -1;          // joriy savol (-1 — kirish ekrani)
+let draft = {};        // shu savoldagi tanlov (saqlanmagan)
+
+// ══ Boshlash ══
+(async function(){
+  if (!INIT || !RID) { $('main').innerHTML = `<div class="msg">${esc(t('boot.needTg'))}</div>`; return; }
+  try { S = await api(''); }
+  catch(e){ $('main').innerHTML = `<div class="msg">${esc(errText(e.code))}</div>`; return; }
+  Q = S.questions || [];
+  if (S.status === 'done') { renderDone(null, true); return; }
+  if (S.lang) { LANG = S.lang; renderIntro(); }
+  else renderLang();
+})();
+
+// Til tanlash — har tugma o'z tilida
+function renderLang(){
+  hideNav();
+  $('main').innerHTML = `<div class="center">
+    <div class="logo">T</div>
+    <div class="q" style="font-size:19px">Tilni tanlang<br>Выберите язык</div>
+    <div class="langs">
+      <button class="opt" data-l="uz"><i></i>O'zbekcha</button>
+      <button class="opt" data-l="ru"><i></i>Русский</button>
+    </div></div>`;
+  $('main').querySelectorAll('[data-l]').forEach(b => b.onclick = async () => {
+    LANG = b.dataset.l; haptic();
+    b.classList.add('on');
+    api('/lang', { method:'POST', body: JSON.stringify({ lang: LANG }) }).catch(() => {});
+    renderIntro();
+  });
+}
+
+function renderIntro(){
+  document.documentElement.lang = LANG;
+  hideNav();
+  const v = S.vacancy;
+  $('main').innerHTML = `<div class="center">
+    <div class="logo">T</div>
+    ${v ? `<div class="vac">${esc(t('ank.forVacancy', { v: L(v.title) }))}${L(v.salary) ? ' · ' + esc(L(v.salary)) : ''}</div>` : ''}
+    <div class="q">${esc(t('ank.introH'))}</div>
+    <div class="hint" style="margin-top:12px">${esc(t('ank.introP'))}</div></div>`;
+  showBar(t('ank.start'), true, () => { idx = resumeIndex(); renderQ(); });
+}
+
+// Qaytib kelganda — oxirgi javobdan keyingi savol
+function resumeIndex(){
+  if (!S.step) return 0;
+  const i = Q.findIndex(q => q.id === S.step);
+  return i < 0 ? 0 : Math.min(i + 1, Q.length - 1);
+}
+
+// ══ Savol ekrani ══
+function renderQ(){
+  const q = Q[idx];
+  draft = { value: valueOf(q) };
+  $('top').classList.remove('hide');
+  $('pg').style.width = Math.round((idx / Q.length) * 100) + '%';
+  $('stp').textContent = t('ank.step', { a: idx + 1, b: Q.length });
+  $('bBack').disabled = idx === 0;
+  try { if (TG && TG.BackButton) TG.BackButton.show(); } catch(e){}
+  window.scrollTo(0, 0);
+
+  const head = `${S.vacancy && idx === 0 ? `<div class="vac">${esc(L(S.vacancy.title))}</div>` : ''}
+    <div class="q">${esc(L(q.text))}</div>
+    ${q.type !== 'consent' && L(q.hint) ? `<div class="hint">${esc(L(q.hint))}</div>` : ''}`;
+  let body = '';
+  if (q.type === 'choice') {
+    const grid = q.options.length > 6;            // tumanlar — ikki ustun
+    body = `<div class="opts ${grid ? 'grid' : ''}">${q.options.map(o =>
+      `<button class="opt ${draft.value === o.key ? 'on' : ''}" data-k="${esc(o.key)}"><i></i>${esc(L(o))}</button>`).join('')}</div>`;
+  } else if (q.type === 'text') {
+    body = `<input class="in" id="fIn" value="${esc(draft.value || '')}" autocomplete="name" maxlength="80">`;
+  } else if (q.type === 'longtext') {
+    body = `<textarea class="in" id="fIn" maxlength="600">${esc(draft.value || '')}</textarea>`;
+  } else if (q.type === 'date') {
+    const max = isoYearsAgo(14), min = isoYearsAgo(70);
+    body = `<input class="in" id="fIn" type="date" min="${min}" max="${max}" value="${esc(draft.value || '')}">`;
+  } else if (q.type === 'contact') {
+    body = contactHtml();
+  } else if (q.type === 'photo') {
+    body = `<div class="ph" id="fPh">${S.hasPhoto && S._photoUrl ? `<img src="${S._photoUrl}" alt="">` : '&#128100;'}</div>
+      <input type="file" id="fFile" accept="image/*" class="hide">
+      <button class="share" id="bPick" style="margin-top:16px">${esc(S.hasPhoto ? t('ank.photoChange') : t('ank.photoBtn'))}</button>`;
+  } else if (q.type === 'consent') {
+    body = `<div class="cons">${esc(L(q.hint))}</div>
+      <label class="chk"><input type="checkbox" id="fChk" ${draft.value === true ? 'checked' : ''}>${esc(t('ank.consentChk'))}</label>`;
+  }
+  $('main').innerHTML = `<div class="card">${head}${body}<div class="err" id="err"></div></div>`;
+  wireQ(q);
+}
+
+function valueOf(q){
+  if (q.type === 'contact') return S.phoneVerified ? '' : (S.answers.phone || '');
+  if (q.type === 'photo') return S.hasPhoto ? 'have' : '';
+  return S.answers[q.id] != null ? S.answers[q.id] : '';
+}
+function isoYearsAgo(n){ const d = new Date(); d.setFullYear(d.getFullYear() - n); return d.toISOString().slice(0, 10); }
+
+function wireQ(q){
+  const last = idx === Q.length - 1;
+  const nextTxt = last ? t('ank.submit') : t('ank.next');
+  if (q.type === 'choice') {
+    $('main').querySelectorAll('.opt').forEach(b => b.onclick = () => {
+      $('main').querySelectorAll('.opt').forEach(x => x.classList.toggle('on', x === b));
+      draft.value = b.dataset.k; haptic();
+      // Tanlov — darhol keyingisiga (ortiqcha bosish yo'q)
+      setTimeout(() => save(q), 160);
+    });
+    showBar(nextTxt, !!draft.value, () => save(q));
+  } else if (q.type === 'text' || q.type === 'longtext' || q.type === 'date') {
+    const inp = $('fIn');
+    const sync = () => { draft.value = inp.value; $('bNext').disabled = q.required && !inp.value.trim(); };
+    inp.oninput = sync; inp.onchange = sync;
+    if (q.type === 'text') inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); if (!$('bNext').disabled) save(q); } };
+    showBar(nextTxt, !q.required || !!String(draft.value).trim(), () => save(q));
+    if (q.type !== 'date') setTimeout(() => inp.focus(), 250);
+  } else if (q.type === 'contact') {
+    wireContact(q, nextTxt);
+  } else if (q.type === 'photo') {
+    $('bPick').onclick = () => $('fFile').click();
+    $('fFile').onchange = () => pickPhoto(q);
+    showBar(nextTxt, S.hasPhoto, () => save(q));
+  } else if (q.type === 'consent') {
+    $('fChk').onchange = () => { draft.value = $('fChk').checked; $('bNext').disabled = !draft.value; };
+    showBar(nextTxt, draft.value === true, () => save(q));
+  }
+  // Ixtiyoriy savol — o'tkazib yuborish
+  if (!q.required && q.type !== 'consent') {
+    $('bSkip').textContent = t('ank.skip');
+    $('bSkip').classList.remove('hide');
+    $('bSkip').onclick = () => go(1);
+  } else $('bSkip').classList.add('hide');
+}
+
+// ── Telefon ──
+// "Raqamni ulashish" — Telegram kontaktni BOTGA yuboradi, server uni
+// tasdiqlangan deb yozadi. Biz bu yerda serverdan holatni so'raymiz.
+// Eski Telegram (requestContact yo'q) yoki rad etilsa — qo'lda kiritish.
+let manualPhone = false;
+function contactHtml(){
+  if (S.phoneVerified) return `<div class="ok">${esc(t('ank.phoneOk', { p: S.phone }))}</div>`;
+  const canShare = TG && TG.requestContact && TG.isVersionAtLeast && TG.isVersionAtLeast('6.9');
+  if (canShare && !manualPhone) {
+    return `<button class="share" id="bShare">${esc(t('ank.shareBtn'))}</button>
+      <div class="hint hide" id="wait" style="margin-top:12px">${esc(t('ank.waitPhone'))}</div>
+      <button class="lnk" id="bManual">${esc(t('ank.manual'))}</button>`;
+  }
+  return `<input class="in" id="fIn" type="tel" inputmode="tel" placeholder="+998 90 123 45 67" value="${esc(draft.value || '')}">
+    <div class="hint">${esc(t('ank.phoneManualNote'))}</div>`;
+}
+function wireContact(q, nextTxt){
+  if (S.phoneVerified) { showBar(nextTxt, true, () => save(q)); return; }
+  if ($('bShare')) {
+    showBar(nextTxt, false, () => save(q));
+    $('bShare').onclick = () => {
+      $('wait').classList.remove('hide');
+      try {
+        TG.requestContact(ok => {
+          if (!ok) { $('wait').classList.add('hide'); return; }
+          pollPhone(q, nextTxt, 0);
+        });
+      } catch(e){ manualPhone = true; renderQ(); }
+    };
+    $('bManual').onclick = () => { manualPhone = true; renderQ(); };
+    return;
+  }
+  const inp = $('fIn');
+  inp.oninput = () => { draft.value = inp.value; $('bNext').disabled = inp.value.replace(/\D/g, '').length < 9; };
+  showBar(nextTxt, String(draft.value).replace(/\D/g, '').length >= 9, () => save(q));
+  setTimeout(() => inp.focus(), 250);
+}
+// Kontakt bot orqali keladi — server webhook'i yozguncha bir necha soniya
+async function pollPhone(q, nextTxt, n){
+  try {
+    const d = await api('');
+    if (d.phoneVerified) {
+      S.phoneVerified = true; S.phone = d.phone; haptic('ok');
+      renderQ(); return;
+    }
+  } catch(e){}
+  if (n < 12) setTimeout(() => pollPhone(q, nextTxt, n + 1), 1200);
+  else { manualPhone = true; renderQ(); }
+}
+
+// ── Rasm: 800px gacha, JPEG 80% (loyiha qoidasi) ──
+function pickPhoto(q){
+  const f = $('fFile').files[0];
+  if (!f) return;
+  const img = new Image();
+  img.onload = async () => {
+    const k = Math.min(1, 800 / Math.max(img.width, img.height));
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    const data = c.toDataURL('image/jpeg', 0.8);
+    URL.revokeObjectURL(img.src);
+    $('fPh').innerHTML = `<img src="${data}" alt="">`;
+    $('bPick').disabled = true;
+    try {
+      await api('/answer', { method:'POST', body: JSON.stringify({ q: q.id, value: data }) });
+      S.hasPhoto = true; S._photoUrl = data; draft.value = 'have';
+      $('bPick').textContent = t('ank.photoChange'); $('bNext').disabled = false; haptic('ok');
+    } catch(e){ $('err').textContent = errText(e.code); }
+    $('bPick').disabled = false;
+  };
+  img.onerror = () => { $('err').textContent = t('ank.err.photo'); };
+  img.src = URL.createObjectURL(f);
+}
+
+// ── Saqlash va keyingisi ──
+async function save(q){
+  const b = $('bNext');
+  if (b.disabled && q.type !== 'choice') return;
+  $('err').textContent = '';
+  let value = draft.value;
+  if (q.type === 'photo') value = undefined;                    // rasm tanlanganda saqlangan
+  if (q.type === 'contact' && S.phoneVerified) value = '';
+  b.disabled = true;
+  try {
+    if (value !== undefined) {
+      await api('/answer', { method:'POST', body: JSON.stringify({ q: q.id, value }) });
+      if (q.type === 'contact') S.answers.phone = value;
+      else if (q.type !== 'photo') S.answers[q.id] = value;
+    }
+    S.step = q.id;
+    if (idx === Q.length - 1) return submit();
+    go(1);
+  } catch(e){
+    $('err').textContent = errText(e.code);
+    b.disabled = false;
+  }
+}
+
+function go(d){
+  idx = Math.max(0, Math.min(Q.length - 1, idx + d));
+  renderQ();
+}
+$('bBack').onclick = () => { if (idx > 0) go(-1); };
+try { TG && TG.BackButton && TG.BackButton.onClick(() => { if (idx > 0) go(-1); else if (idx === 0) renderIntro(); }); } catch(e){}
+
+async function submit(){
+  const b = $('bNext');
+  b.disabled = true; b.textContent = t('ank.sending');
+  try {
+    const r = await api('/submit', { method:'POST', body: '{}' });
+    haptic('ok');
+    renderDone(r);
+  } catch(e){
+    // Majburiy savol qolib ketgan bo'lsa — o'shanga qaytamiz
+    if (e.code === 'required' && e.q) {
+      const i = Q.findIndex(q => q.id === e.q);
+      if (i >= 0) { idx = i; renderQ(); $('err').textContent = errText('required'); return; }
+    }
+    $('err').textContent = errText(e.code);
+    b.disabled = false; b.textContent = t('ank.submit');
+  }
+}
+
+function renderDone(r, already){
+  hideNav();
+  $('main').innerHTML = `<div class="center">
+    <div class="done-ic">&#10003;</div>
+    <div class="q">${esc(already ? t('ank.already') : t('ank.doneH'))}</div>
+    ${already ? '' : `<div class="hint" style="margin-top:12px">${esc(t('ank.doneP'))}</div>`}
+    ${r && r.applied && r.vacancyTitle ? `<div class="ok" style="margin-top:18px">${esc(t('ank.doneApplied', { v: r.vacancyTitle }))}</div>` : ''}
+  </div>`;
+  showBar(t('ank.close'), true, () => { if (TG) TG.close(); });
+}
+
+function showBar(txt, enabled, fn){
+  $('bar').classList.remove('hide');
+  const b = $('bNext');
+  b.textContent = txt; b.disabled = !enabled; b.onclick = fn;
+  $('bSkip').classList.add('hide');
+}
+function hideNav(){
+  $('top').classList.add('hide');
+  try { if (TG && TG.BackButton) TG.BackButton.hide(); } catch(e){}
+}
+</script>
+</body>
+</html>

@@ -25,6 +25,11 @@ const outreach = require('../services/outreach');
 const candidateSearch = require('../services/candidateSearch');
 const agent = require('../services/agent');
 const I18N = require('../../public/js/th-i18n');
+const { v4: uuidv4 } = require('uuid');
+const Survey = require('../models/Survey');
+const SurveyResponse = require('../models/SurveyResponse');
+const surveySvc = require('../services/survey');
+const vac = require('../services/vacancy');
 
 const router = express.Router();
 const guard = auth(['restaurant']);
@@ -113,6 +118,12 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
     const chatId = String(msg.chat.id);
     const text = (msg.text || '').trim();
     const voice = msg.voice || msg.audio;   // ovozli xabar yoki audio fayl
+
+    // ── Kontakt: anketadagi "Raqamni ulashish" (Mini App requestContact) ──
+    if (msg.contact) {
+      await handleContact(msg, chatId);
+      return;
+    }
     if (!text && !voice) return;
     const token = tg.platformToken();
 
@@ -179,6 +190,13 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
         await tg.sendMessage(token, chatId,
           `Ulandi — ${r.name}.\n\nEndi nomzodlarning javoblari shu yerga keladi. ` +
           `Javob berish uchun nomzod xabariga reply qiling.`);
+        return;
+      }
+
+      // E'lon havolasi — anketa (a_<kod>_<kanal> yoki v_<vakansiya>_<kanal>)
+      const ank = surveySvc.parsePayload(payload);
+      if (ank) {
+        await startSurvey(msg, chatId, ank, publicBase(req));
         return;
       }
 
@@ -406,6 +424,89 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
     console.error('[TG] webhook xatosi:', e.message);
   }
 }));
+
+// ── Anketa: e'lon havolasi bosildi ───────────────────────────
+// To'ldirilish (SurveyResponse) shu yerda ochiladi va bot Mini App
+// tugmasini beradi. Bot orqali kirish ataylab: chat ochiladi — keyin
+// nomzodga xabar yoza olamiz (Telegram bot birinchi bo'lib yoza olmaydi).
+async function startSurvey(msg, chatId, ank, appBase) {
+  const token = tg.platformToken();
+  const lang = I18N.fromTelegram(msg.from && msg.from.language_code);
+
+  // Ish beruvchi akkaunti nomzod bo'la olmaydi (nomzod havolasi bilan bir xil qoida)
+  const asClient = await Client.findOne({ tgChatId: chatId });
+  if (asClient) {
+    await tg.sendMessage(token, chatId, T(langOf(asClient, msg.from), 'bot.asCandidate', { name: asClient.name }));
+    return;
+  }
+
+  let s = null, v = null, closed = false;
+  if (ank.vacancyId) {
+    v = await Vacancy.findOne({ id: ank.vacancyId }).lean();
+    if (!v) { await tg.sendMessage(token, chatId, T(lang, 'ank.botBadLink')); return; }
+    s = await surveySvc.ensureDefault(v.agencyId);
+    // Yopilgan vakansiya — nomzodni yo'qotmaymiz: umumiy anketa
+    if (v.status !== 'open') { closed = true; v = null; }
+  } else {
+    s = await Survey.findOne({ code: ank.code, active: true }).lean();
+    if (!s) { await tg.sendMessage(token, chatId, T(lang, 'ank.botBadLink')); return; }
+  }
+
+  const tgUserId = String((msg.from && msg.from.id) || chatId);
+  const vacancyId = v ? v.id : '';
+  // Chala qolgan shu anketa bo'lsa — davom ettiriladi (javoblar saqlangan)
+  let r = await SurveyResponse.findOne({ agencyId: s.agencyId, tgUserId, surveyId: s.id, vacancyId, status: 'started' })
+    .sort({ updatedAt: -1 });
+  if (!r) {
+    r = await SurveyResponse.create({ id: uuidv4(), agencyId: s.agencyId, surveyId: s.id, vacancyId,
+      channel: ank.channel, tgUserId, chatId });
+  } else if (ank.channel && !r.channel) {
+    r.channel = ank.channel;
+    await r.save();
+  }
+
+  const text = closed ? T(lang, 'ank.botClosed')
+    : T(lang, 'ank.botInvite') + (v ? T(lang, 'ank.botInviteVac', { v: vac.titleFor(v, lang) }) : '');
+  await tg.sendMessage(token, chatId, text, { reply_markup: { inline_keyboard: [[
+    { text: T(lang, 'ank.botOpen'), web_app: { url: `${appBase}/anketa.html?r=${r.id}` } }
+  ]] } });
+}
+
+// ── Kontakt xabari ───────────────────────────────────────────
+// Telegram faqat odamning O'Z raqamini user_id bilan yuboradi — bu
+// raqam haqiqiy va shu odamniki. Mini App'ning javobiga emas, shunga
+// ishonamiz. Ochiq anketaga va (bo'lsa) bog'langan nomzodga yoziladi.
+async function handleContact(msg, chatId) {
+  const token = tg.platformToken();
+  const c = msg.contact;
+  const fromId = String((msg.from && msg.from.id) || '');
+  const lang0 = I18N.fromTelegram(msg.from && msg.from.language_code);
+
+  // Mijoz (ish beruvchi) chati — bu oqim uniki emas
+  if (await Client.exists({ tgChatId: chatId })) return;
+
+  if (!c || !c.phone_number || String(c.user_id || '') !== fromId) {
+    await tg.sendMessage(token, chatId, T(lang0, 'ank.contactOwn')).catch(() => {});
+    return;
+  }
+  const phone = surveySvc.normPhone(c.phone_number);
+  const now = new Date();
+
+  const r = await SurveyResponse.findOne({ tgUserId: fromId, status: 'started' }).sort({ updatedAt: -1 });
+  if (r) {
+    r.phone = phone; r.phoneVerifiedAt = now; r.updatedAt = now;
+    await r.save();
+  }
+  const cand = await Candidate.findOne({ tgChatId: chatId });
+  if (cand) {
+    cand.phone = phone; cand.phoneVerifiedAt = now; cand.updatedAt = now;
+    await cand.save();
+  }
+  if (r || cand) {
+    const lang = (r && I18N.LANGS.includes(r.lang) && r.lang) || (cand && I18N.LANGS.includes(cand.lang) && cand.lang) || lang0;
+    await tg.sendMessage(token, chatId, T(lang, 'ank.contactOk', { p: phone })).catch(() => {});
+  }
+}
 
 // ── Nomzod qidiruvi (matn yoki ovoz) ─────────────────────────
 // Admin reply qilmasdan yozsa — bu qidiruv so'rovi deb qabul qilinadi.

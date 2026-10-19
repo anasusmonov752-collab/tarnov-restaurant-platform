@@ -113,6 +113,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold)}
       <option value="paused">To'xtatilgan</option>
       <option value="closed">Yopilgan</option>
     </select>
+    <button class="btn" id="bAnk" style="margin-right:8px">Umumiy anketa havolasi</button>
     <button class="btn btn-p" id="bNew">+ Vakansiya</button>
   </div>
   <div id="warn"></div>
@@ -178,12 +179,17 @@ async function load(){
           ${v.listed && v.stale && v.status === 'open' ? '<div><span class="pill p-no" style="margin-top:4px">tasdiqlang</span></div>' : ''}</td>
         <td style="text-align:right;white-space:nowrap">
           <button class="btn btn-sm" data-app="${v.id}">Arizalar</button>
+          <button class="btn btn-sm" data-ank="${v.id}">Anketa</button>
           <button class="btn btn-sm" data-cf="${v.id}">Tasdiqlash</button>
           <button class="btn btn-sm" data-ed="${v.id}">Tahrirlash</button>
         </td></tr>`;
     }).join('')}</tbody></table>`;
 
   $('list').querySelectorAll('[data-app]').forEach(b => b.onclick = () => showApps(b.dataset.app));
+  $('list').querySelectorAll('[data-ank]').forEach(b => b.onclick = () => {
+    const v = ROWS.find(x => x.id === b.dataset.ank);
+    showAnketaLink(v.id, v.title);
+  });
   $('list').querySelectorAll('[data-ed]').forEach(b => b.onclick = () => form(ROWS.find(x => x.id === b.dataset.ed)));
   $('list').querySelectorAll('[data-cf]').forEach(b => b.onclick = async () => {
     b.disabled = true;
@@ -192,6 +198,62 @@ async function load(){
   });
 }
 $('fSt').onchange = load;
+
+// ── Anketa havolasi ──
+// E'lon uchun: nomzod bosadi -> botda "Anketani to'ldirish" -> Mini App.
+// Har e'lon joyiga alohida havola (kanal) — qaysi biri nomzod olib
+// kelayotgani pastdagi natijada ko'rinadi (services/survey, /api/surveys).
+const STEP_L = { role:'Lavozim', fullName:'Ism', birthDate:'Tug\'ilgan sana', gender:'Jins', phone:'Telefon',
+  location:'Tuman', experience:'Tajriba', lastJob:'Oxirgi ish', shift:'Smena', salary:'Maosh',
+  russian:'Rus tili', sanitary:'Sanitar kitobcha', study:'O\'qish', photo:'Rasm', consent:'Rozilik',
+  '(boshlamagan)':'ochdi, lekin boshlamadi' };
+
+function statsHtml(st){
+  if (!st.channels.length) return '<div class="empty" style="padding:16px 0">Hali hech kim boshlamagan.</div>';
+  const rows = st.channels.map(c => `<tr><td>${esc(c.label)}</td><td>${c.started}</td><td><b>${c.done}</b></td>
+    <td>${c.started ? Math.round(c.done / c.started * 100) + '%' : '—'}</td></tr>`).join('');
+  const drop = st.dropAt.slice(0, 3).map(x => `${esc(STEP_L[x.step] || x.step)} — ${x.n}`).join(' · ');
+  return `<table style="margin-top:8px"><thead><tr><th>Manba</th><th>Boshladi</th><th>Yubordi</th><th>Konversiya</th></tr></thead>
+    <tbody>${rows}</tbody></table>
+    ${drop ? `<div style="font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.6">
+      Tugatmaganlar oxirgi javob bergan savol: ${drop}</div>` : ''}`;
+}
+
+async function showAnketaLink(vid, title){
+  openMd(vid ? 'Anketa havolasi — ' + title : 'Umumiy anketa havolasi', '<div class="empty">Yuklanmoqda...</div>');
+  let ch = 'ig';
+  const qv = vid ? '&vacancyId=' + encodeURIComponent(vid) : '';
+  const draw = async () => {
+    let d, st;
+    try {
+      [d, st] = await Promise.all([
+        api('/api/surveys/link?channel=' + ch + qv),
+        api('/api/surveys/stats?' + qv.slice(1))
+      ]);
+    } catch(e){ $('mdB').innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
+    const opts = Object.entries(d.channels).map(([k, l]) =>
+      `<option value="${k}" ${k === ch ? 'selected' : ''}>${esc(l)}</option>`).join('');
+    $('mdB').innerHTML = `
+      <div style="font-size:13.5px;color:var(--muted);line-height:1.6;margin-bottom:14px">
+        ${vid ? 'Nomzod anketani to\'ldirgach shu vakansiyaga <b>ariza ham tushadi</b> — mijoz kabinetida ko\'rinadi.'
+              : 'Nomzod lavozimni o\'zi tanlaydi va bazaga tushadi.'}
+        Telefon Telegram orqali tasdiqlanadi, rozilik alohida so'raladi.</div>
+      <div class="fld"><label>E'lon qayerga qo'yiladi</label><select id="lCh">${opts}</select></div>
+      <div class="fld"><label>Havola</label>
+        <div style="display:flex;gap:8px"><input type="text" id="lUrl" readonly value="${esc(d.link)}">
+        <button class="btn btn-p" id="lCp">Nusxa</button></div></div>
+      <div class="sec">Natija${vid ? ' (shu vakansiya)' : ''}</div>
+      ${statsHtml(st)}`;
+    $('lCh').onchange = () => { ch = $('lCh').value; draw(); };
+    $('lCp').onclick = async () => {
+      try { await navigator.clipboard.writeText(d.link); }
+      catch(e){ $('lUrl').select(); document.execCommand('copy'); }
+      toast('Havoladan nusxa olindi', 'success');
+    };
+  };
+  draw();
+}
+$('bAnk').onclick = () => showAnketaLink('', '');
 
 // ── Forma ──
 // Lavozim — server bilan bir xil ro'yxat (src/data/roles.js), o'zgarsa

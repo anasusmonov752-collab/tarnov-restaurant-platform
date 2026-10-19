@@ -90,6 +90,10 @@ const CandidateSchema = new mongoose.Schema({
   sanitaryBook:      { type: String, default: '' },   // yes | no | expired
   sanitaryBookUntil: { type: Date,   default: null },
 
+  // Interfeys tili (nomzod kabineti va bot): 'uz' | 'ru' | '' (hali
+  // tanlamagan — Telegram language_code'dan taxmin). Client.lang bilan bir xil.
+  lang: { type: String, default: '' },
+
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

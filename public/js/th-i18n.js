@@ -1,0 +1,721 @@
+// ── TALENTHUB TIL LUG'ATI (o'zbek / rus) ─────────────────────
+// BITTA fayl: brauzer (<script src="/js/th-i18n.js?v=N">, window.THI18N)
+// va server (require('../../public/js/th-i18n')) ikkalasi shuni o'qiydi.
+// Mini App'dagi yozuv bilan server qaytargan yorliq bir-biridan farq
+// qilib qolmasin.
+//
+// Nega RestoOne'dagi i18n.js emas: u sahifadagi o'zbekcha MATNNI qidirib
+// almashtiradi — matn biroz o'zgarsa tarjima jim uziladi va serverda
+// umuman ishlamaydi. Bu yerda matn KALIT bo'yicha olinadi.
+//
+// Til odamga yoziladi (Client.lang / Candidate.lang), brauzerga emas.
+//
+// Qiymat turlari:
+//   'matn {n}'              — ikkala til uchun o'rniga qo'yish bilan
+//   ['bir', 'oz', 'ko'p']   — rus ko'plik shakllari (1 / 2-4 / 5+), {n} bo'yicha
+// Fayl o'zgarsa miniapp.html dagi ?v= ni oshiring (service worker keshi).
+
+(function (root, factory) {
+  const L = factory();
+  if (typeof module === 'object' && module.exports) module.exports = L;
+  else root.THI18N = L;
+})(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+
+  const LANGS = ['uz', 'ru'];
+
+  const D = {
+    uz: {
+      // ── Umumiy ──
+      'common.loading': 'Yuklanmoqda…',
+      'common.error': 'Xato',
+      'common.back': 'Orqaga',
+      'common.save': 'Saqlash',
+      'common.saving': 'Saqlanmoqda…',
+      'common.cancel': 'Bekor',
+      'common.retry': 'Qayta urinish',
+      'common.sending': 'Yuborilmoqda…',
+      'common.searching': 'Qidirilmoqda…',
+      'common.yes': 'Ha',
+      'boot.needTg': 'Bu sahifa Telegram ichida ochilishi kerak.',
+      'lang.title': 'Til / Язык',
+
+      // ── Tablar ──
+      'tab.sl': 'Tanlovlar',
+      'tab.ap': 'Arizalar',
+      'tab.vc': 'Vakansiya',
+      'tab.ms': 'Aloqa',
+
+      // ── Kabinet sarlavhasi ──
+      'cab.client': 'Mijoz',
+      'cab.credits': 'kredit · 1 kredit = 1 ochilgan kontakt',
+      'cab.balanceGo': 'Balans ›',
+      'st.searches': 'qidiruv',
+      'st.picked': 'tanlangan',
+      'st.revealed': 'kontakt',
+      'st.hours': 'soatda<br>ochiladi',
+
+      // ── Nomzod faktlari ──
+      'fact.exp': '{n} yil tajriba',
+      'fact.noExp': 'Tajribasiz',
+      'fact.age': '{n} yosh',
+      'unit.years': '{n} yil',
+      'unit.people': '{n} kishi',
+      'role.candidate': 'Nomzod',
+
+      // ── Qidiruv rejimi ──
+      'search.backVacs': 'Vakansiyalar',
+      'search.notFound': 'Nomzod topilmadi.',
+      'card.seen': 'Ko\'rib chiqilgan',
+      'card.ai': 'AI {n}/5',
+      'd.aiFit': 'AI moslik {n}/5',
+      'd.summary': 'Qisqacha',
+      'd.why': 'Nega mos:',
+      'd.info': 'Ma\'lumot',
+      'd.salary': 'Kutilayotgan maosh',
+      'd.totalExp': 'Umumiy tajriba',
+      'd.edu': 'Ta\'lim',
+      'd.region': 'Hudud',
+      'd.shift': 'Smena',
+      'd.langs': 'Tillar',
+      'd.skills': 'Ko\'nikmalar',
+      'd.aboutExp': 'Tajriba haqida',
+      'd.work': 'Ish tarixi',
+      'w.noPos': 'Lavozim ko\'rsatilmagan',
+      'bar.count': '{n} ta nomzod',
+      'bar.selected': ' · {n} ta tanlandi',
+      'bar.send': '{n} ta nomzodni yuborish',
+      'bar.pickSome': 'Nomzod tanlang',
+      'bar.picked': 'Tanlangan',
+      'bar.pick': 'Tanlash',
+      'sub.done': '<b>{n} ta nomzod yuborildi.</b><br><br>HR ular bilan bog\'lanadi va kontaktlarni ochib beradi.<br>Holatni "Kabinet" tugmasidan kuzatib boring.',
+      'sub.fail': 'Yuborilmadi: {e}',
+
+      // ── Ish qidirish holati ──
+      'job.active': 'Faol ish qidirmoqda',
+      'job.considering': 'Takliflarni ko\'rib chiqmoqda',
+      'job.not_looking': 'Ish qidirmayapti',
+
+      // ── Nomzod kartasi (Tanlovlar) ──
+      'chip.waiting': 'Jarayonda',
+      'chip.open': 'Kontakt ochiq',
+      'chip.hired': 'Ishga olindi',
+      'chip.refunded': 'Qaytarildi',
+      'step.contact': 'Kontakt',
+      'step.interview': 'Suhbat',
+      'step.hired': 'Ishga olindi',
+      'foot.interviewAt': 'Suhbat: {d}',
+      'foot.hired': 'Ishga olingan',
+      'foot.next': 'Keyingi bosqichni bosing',
+      'nf.btn': 'Mos kelmadi',
+      'nf.why': 'Nega mos kelmadi?',
+      'nf.other': 'Boshqa',
+      'act.call': 'Qo\'ng\'iroq',
+      'act.write': 'Yozish',
+      'act.resume': 'Rezyume',
+      'link.resume': 'Rezyume ›',
+      'line.hr': 'HR bog\'lanmoqda · {t}',
+      'ago.lt1': '1 soatdan kam',
+      'ago.h': '{n} soat',
+      'ago.d': '{n} kun',
+      'iv.when': 'Suhbat qachon?',
+      'hire.confirm': 'Bu nomzodni ishga oldingizmi?',
+
+      // ── Tanlovlar ro'yxati ──
+      'f.all': 'Hammasi',
+      'f.contact': 'Kontakt',
+      'f.wait': 'Jarayonda',
+      'f.hired': 'Ishga olindi',
+      'sl.empty': 'Hali tanlov yo\'q.<br><br>Botga "xostes kerak" deb yozing yoki Vakansiya bo\'limidan "Mos nomzodlar"ni oching.',
+      'sl.none': 'Bu bo\'limda nomzod yo\'q.',
+      'sl.closedVacs': 'Yopilgan vakansiyalar ({n})',
+      'grp.closed': 'Yopilgan',
+      'grp.count': '{n} nomzod',
+      'grp.contacts': ' · {n} kontakt',
+
+      // ── Kredit ──
+      'cr.sheet': 'Balans',
+      'cr.ask': 'Kredit so\'rash',
+      'cr.askHint': 'So\'rov HR\'ga boradi. Tasdiqlangach balansingiz yangilanadi.',
+      'cr.hist': 'Harakatlar tarixi',
+      'cr.sent': 'So\'rov yuborildi',
+      'cr.none': 'Harakat yo\'q',
+      'crr.purchase': 'Kredit qo\'shildi',
+      'crr.bonus': 'Bonus',
+      'crr.reveal': 'Kontakt ochildi',
+      'crr.refund': 'Qaytarildi',
+
+      // ── Vakansiyalar ──
+      'vac.new': '+ Yangi vakansiya',
+      'vac.sheet': 'Vakansiya',
+      'vac.empty': 'Vakansiya yo\'q.<br><br>"+ Yangi vakansiya" bilan kim kerakligini yozing — nomzodlar o\'zi ariza bera boshlaydi.',
+      'vac.closedList': 'Yopilganlar ({n})',
+      'vac.noSalary': 'Maosh ko\'rsatilmagan',
+      'vac.closed': 'Yopilgan',
+      'vac.today': 'Bugun yangilangan',
+      'vac.daysAgo': '{n} kun oldin yangilangan',
+      'vac.paused': 'To\'xtatilgan',
+      'vac.private': 'Faqat sizga',
+      'vac.listed': 'E\'lon qilingan',
+      'vac.stillOpen': 'Hali ochiqmi?',
+      'vac.more': 'Amallar',
+      'vac.matches': 'Mos nomzodlarni ko\'rish',
+      'vac.noMatch': 'Mos nomzod topilmadi',
+      'fn.mos': 'mos',
+      'fn.picked': 'tanlangan',
+      'fn.contact': 'kontakt',
+      'fn.hired': 'ishga olindi',
+      'apps.new': '{n} ta yangi ariza',
+      'apps.all': '{n} ta ariza',
+      'apps.view': 'Ko\'rish ›',
+      'vk.salary': 'Maosh',
+      'vk.schedule': 'Jadval',
+      'vk.shift': 'Smena',
+      'vk.cond': 'Sharoit',
+      'vk.region': 'Hudud',
+      'vk.start': 'Boshlash',
+      'vk.need': 'Kerak',
+      'vk.exp': 'Tajriba',
+      'vk.expFrom': '{n} yildan',
+      'vk.age': 'Yosh',
+      'vk.ageRange': '{a}–{b} yosh',
+      'vk.ageFrom': '{n} yoshdan',
+      'vk.ageTo': '{n} yoshgacha',
+      'vk.langs': 'Tillar',
+      'vk.status': 'Holat',
+      'vd.cands': 'Nomzodlar ({n})',
+      'vd.none': 'Hali nomzod tanlanmagan.',
+      'vd.terms': 'Shartlar',
+      'vd.menu': 'Tahrirlash va boshqa amallar',
+      'm.edit': 'Tahrirlash',
+      'm.unlist': 'E\'londan olish — faqat sizga',
+      'm.list': 'E\'lon qilish — nomzodlar ariza bersin',
+      'm.close': 'Yopish',
+      'm.reopen': 'Qayta ochish',
+      'm.closeConfirm': 'Vakansiya yopiladi. Davom etamizmi?',
+
+      // ── Vakansiya formasi ──
+      'form.new': 'Yangi vakansiya',
+      'form.edit': 'Tahrirlash',
+      'form.choose': '— tanlang —',
+      'form.role': 'Lavozim *',
+      'form.title': 'Sarlavha *',
+      'form.titlePh': 'Ofitsiant, kechki smena',
+      'form.req': 'Talab',
+      'form.exp': 'Tajriba (yil)',
+      'form.hc': 'Nechta odam',
+      'form.shift': 'Smena',
+      'form.any': 'Farqi yo\'q',
+      'form.both': 'Ikkalasi',
+      'form.offer': 'Taklif',
+      'form.sf': 'Maosh (dan)',
+      'form.st': 'Maosh (gacha)',
+      'form.sc': 'Grafik',
+      'form.co': 'Qo\'shimcha shartlar',
+      'form.coPh': 'Ovqat, forma, yo\'l kira',
+      'form.coHint': 'Nomzod birinchi shuni o\'qiydi. Aniq yozsangiz rozi bo\'lish ehtimoli oshadi.',
+      'form.roleReq': 'Lavozimni tanlang',
+
+      // ── Smena ──
+      'shift.kunduzgi': 'Kunduzgi',
+      'shift.kechki': 'Kechki',
+      'shift.ikkalasi': 'Kunduzgi va kechki',
+      'word.shift': 'smena',
+      'shiftT.kunduzgi': 'kunduzgi smena',
+      'shiftT.kechki': 'kechki smena',
+      'shiftT.ikkalasi': 'kunduzgi/kechki smena',
+
+      // ── Arizalar ──
+      'apps.sheet': 'Arizalar',
+      'apps.emptyListed': 'Hali ariza yo\'q.<br><br>Vakansiya nomzodlarga ko\'rsatilyapti. Tasdiqlab turing — tasdiqlanmagani ro\'yxatdan tushib qoladi.',
+      'apps.emptyPrivate': 'Hali ariza yo\'q.<br><br>Vakansiya e\'lon qilinmagan — nomzodlar uni ko\'rmaydi. Ariza kelishi uchun "E\'lon qilish" ni bosing.',
+      'ap.empty': 'Hali ariza yo\'q.<br><br>Vakansiyangizni e\'lon qiling — nomzodlar o\'zi ariza bera boshlaydi. Yangi ariza kelsa Telegram\'ga xabar keladi.',
+      'ap.fWait': 'Kutilmoqda',
+      'ap.fAll': 'Hammasi',
+      'ap.count': '{n} ariza',
+      'ap.noneWait': 'Qaror kutayotgan ariza yo\'q.',
+      'ap.open': 'Kontakt ochiq',
+      'ap.picked': 'Tanlandi',
+      'ap.rejected': 'Rad etildi',
+      'ap.new': 'Yangi',
+      'ap.seen': 'Ko\'rildi',
+      'ap.date': 'Ariza: {d}',
+      'ap.stagesInSl': ' · bosqichlar "Tanlovlar"da',
+      'ap.openContact': 'Kontaktni ochish',
+      'ap.pick': 'Tanlash',
+      'ap.reject': 'Rad etish',
+      'ap.instant': ' · 1 kredit, darhol ochiladi',
+      'open.noCredit': 'Kredit yetarli emas. Tepadagi balansni bosib, kredit so\'rang.',
+      'open.bal': '\nBalans: {a} → {b}',
+      'open.confirm': 'Kontakt ochiladi va 1 kredit yechiladi.{bal}\n\nNomzodning ismi, telefoni va chat ochiladi.',
+      'open.opening': 'Ochilmoqda…',
+
+      // ── Suhbatlar ──
+      'chat.backToBot': 'Botga qaytish',
+      'chat.placeholder': 'Xabar yozing…',
+      'chat.none': 'Hali suhbat yo\'q',
+      'chat.noMsgs': 'Hali xabar yo\'q',
+      'chat.agency': 'Agentlik',
+      'chat.fail': 'Yuborilmadi: {e}',
+      'chat.resumeLink': ' · rezyume ›',
+      'chat.helpPrompt': 'Yordam kerakmi? Yozing',
+
+      // ── Rezyume ──
+      'rz.sheet': 'Rezyume',
+      'rz.code': 'Rezyume · {c}',
+      'rz.salary': 'Kutilgan maosh',
+      'rz.san': 'Sanitar kitobcha',
+      'rz.pos': 'Lavozim',
+      'rz.noPhone': 'Telefon yo\'q',
+      'rz.locked': 'Ism va telefon kontakt ochilgach ko\'rinadi',
+      'rz.about': 'O\'zi haqida',
+      'rz.summary': 'Qisqacha',
+      'rz.work': 'Ish tajribasi',
+      'rz.info': 'Ma\'lumotlar',
+      'rz.skills': 'Ko\'nikmalar',
+      'san.yes': 'Bor',
+      'san.no': 'Yo\'q',
+      'san.expired': 'Muddati o\'tgan',
+
+      // ── Sana ──
+      'date.short': '{d}-{m}',
+
+      // ── SERVER: rollar (data/roles.js bilan bir xil kalitlar) ──
+      'role.ofitsiant': 'Ofitsiant',
+      'role.barmen': 'Barmen',
+      'role.xostess': 'Xostess',
+      'role.oshpaz': 'Oshpaz',
+      'role.kassir': 'Kassir',
+      'role.menejer': 'Menejer',
+      'role.operator': 'Call operator',
+      'role.other': 'Xodim',
+
+      // ── SERVER: mijozga ko'rinadigan tanlov holati ──
+      'cs.selected': 'Ko\'rib chiqilmoqda',
+      'cs.contacting': 'Bog\'lanilmoqda',
+      'cs.candidate_ok': 'Nomzod rozi — kontakt tayyorlanmoqda',
+      'cs.candidate_no': 'Nomzod rad etdi',
+      'cs.revealed': 'Kontakt ochilgan',
+      'cs.interview': 'Suhbat belgilandi',
+      'cs.hired': 'Ishga olindi',
+      'cs.not_fit': 'Mos kelmadi',
+      'cs.refunded': 'Javob bermadi — kredit qaytarildi',
+
+      // ── SERVER: rad sabablari (data/pipeline.js kalitlari) ──
+      'reason.salary': 'Maosh past',
+      'reason.far': 'Joy uzoq',
+      'reason.found_job': 'Boshqa ish topdi',
+      'reason.schedule': 'Smena mos emas',
+      'reason.no_answer': 'Javob bermadi',
+      'reason.not_interested': 'Qiziqmadi',
+      'reason.experience': 'Tajriba yetarli emas',
+      'reason.language': 'Til darajasi',
+      'reason.no_show': 'Suhbatga kelmadi',
+      'reason.salary_ask': 'Maosh talabi yuqori',
+      'reason.other': 'Boshqa sabab',
+
+      // ── SERVER: maosh (vacancy.salaryText) ──
+      'sal.eq': '{a} so\'m',
+      'sal.range': '{a} – {b} so\'m',
+      'sal.from': '{a} so\'mdan',
+      'sal.to': '{a} so\'mgacha',
+
+      // ── SERVER: joy va tillar (utils/labels.js) ──
+      'place.tashkent': 'Toshkent',
+      'lang.uz': 'O\'zbek', 'lang.ru': 'Rus', 'lang.en': 'Ingliz', 'lang.kk': 'Qozoq',
+      'lang.tr': 'Turk', 'lang.ko': 'Koreys', 'lang.tg': 'Tojik', 'lang.ar': 'Arab',
+      'lang.de': 'Nemis', 'lang.fr': 'Fransuz', 'lang.zh': 'Xitoy', 'lang.az': 'Ozarbayjon',
+
+      // ── SERVER: boshqa ──
+      'summary.default': 'Qidiruv',
+      'vacancy.default': 'Vakansiya',
+      'apps.slDefault': 'Arizalar',
+      'match.noneNew': 'Yangi mos nomzod yo\'q — mavjudlarining hammasini tanlagansiz.',
+      'match.noneYet': 'Hozircha bazada mos nomzod yo\'q. Yangi nomzod chiqsa xabar beramiz.',
+      'match.relaxed': ' ({x} hisobga olinmadi)',
+      'relax.keywords': 'kalit so\'zlar',
+      'relax.location': 'hudud',
+      'relax.shift': 'smena',
+      'relax.languages': 'til',
+      'relax.minExp': 'tajriba yili',
+      // applyReveal.eligibility kodlari
+      'why.not_found': 'Nomzod topilmadi',
+      'why.rejected': 'Ariza rad etilgan',
+      'why.not_looking': 'Nomzod hozir ish qidirmayapti — HR avval tekshiradi',
+      'why.phone': 'Telefon raqami tekshirilmagan — HR avval tekshiradi',
+      'why.old': 'Ariza {n} kundan eski — HR avval tekshiradi'
+    },
+
+    ru: {
+      'common.loading': 'Загрузка…',
+      'common.error': 'Ошибка',
+      'common.back': 'Назад',
+      'common.save': 'Сохранить',
+      'common.saving': 'Сохранение…',
+      'common.cancel': 'Отмена',
+      'common.retry': 'Повторить',
+      'common.sending': 'Отправка…',
+      'common.searching': 'Поиск…',
+      'common.yes': 'Да',
+      'boot.needTg': 'Эту страницу нужно открыть в Telegram.',
+      'lang.title': 'Til / Язык',
+
+      'tab.sl': 'Подборки',
+      'tab.ap': 'Отклики',
+      'tab.vc': 'Вакансии',
+      'tab.ms': 'Связь',
+
+      'cab.client': 'Клиент',
+      'cab.credits': ['кредит · 1 кредит = 1 открытый контакт', 'кредита · 1 кредит = 1 открытый контакт', 'кредитов · 1 кредит = 1 открытый контакт'],
+      'cab.balanceGo': 'Баланс ›',
+      'st.searches': 'поиски',
+      'st.picked': 'выбрано',
+      'st.revealed': 'контакты',
+      'st.hours': 'ч. до<br>открытия',
+
+      'fact.exp': ['опыт {n} год', 'опыт {n} года', 'опыт {n} лет'],
+      'fact.noExp': 'Без опыта',
+      'fact.age': ['{n} год', '{n} года', '{n} лет'],
+      'unit.years': ['{n} год', '{n} года', '{n} лет'],
+      'unit.people': ['{n} человек', '{n} человека', '{n} человек'],
+      'role.candidate': 'Кандидат',
+
+      'search.backVacs': 'Вакансии',
+      'search.notFound': 'Кандидаты не найдены.',
+      'card.seen': 'Просмотрено',
+      'card.ai': 'AI {n}/5',
+      'd.aiFit': 'Соответствие (AI) {n}/5',
+      'd.summary': 'Кратко',
+      'd.why': 'Почему подходит:',
+      'd.info': 'Информация',
+      'd.salary': 'Ожидаемая зарплата',
+      'd.totalExp': 'Общий опыт',
+      'd.edu': 'Образование',
+      'd.region': 'Район',
+      'd.shift': 'Смена',
+      'd.langs': 'Языки',
+      'd.skills': 'Навыки',
+      'd.aboutExp': 'Об опыте',
+      'd.work': 'Опыт работы',
+      'w.noPos': 'Должность не указана',
+      'bar.count': ['{n} кандидат', '{n} кандидата', '{n} кандидатов'],
+      'bar.selected': ' · выбрано: {n}',
+      'bar.send': 'Отправить ({n})',
+      'bar.pickSome': 'Выберите кандидатов',
+      'bar.picked': 'Выбран',
+      'bar.pick': 'Выбрать',
+      'sub.done': '<b>Отправлено кандидатов: {n}.</b><br><br>HR свяжется с ними и откроет контакты.<br>Следите за статусом через кнопку «Кабинет».',
+      'sub.fail': 'Не отправлено: {e}',
+
+      'job.active': 'Активно ищет работу',
+      'job.considering': 'Рассматривает предложения',
+      'job.not_looking': 'Не ищет работу',
+
+      'chip.waiting': 'В процессе',
+      'chip.open': 'Контакт открыт',
+      'chip.hired': 'Принят',
+      'chip.refunded': 'Возвращено',
+      'step.contact': 'Контакт',
+      'step.interview': 'Собеседование',
+      'step.hired': 'Принят',
+      'foot.interviewAt': 'Собеседование: {d}',
+      'foot.hired': 'Принят на работу',
+      'foot.next': 'Нажмите следующий этап',
+      'nf.btn': 'Не подошёл',
+      'nf.why': 'Почему не подошёл?',
+      'nf.other': 'Другое',
+      'act.call': 'Позвонить',
+      'act.write': 'Написать',
+      'act.resume': 'Резюме',
+      'link.resume': 'Резюме ›',
+      'line.hr': 'HR связывается · {t}',
+      'ago.lt1': 'меньше часа',
+      'ago.h': ['{n} час', '{n} часа', '{n} часов'],
+      'ago.d': ['{n} день', '{n} дня', '{n} дней'],
+      'iv.when': 'Когда собеседование?',
+      'hire.confirm': 'Вы приняли этого кандидата на работу?',
+
+      'f.all': 'Все',
+      'f.contact': 'Контакт',
+      'f.wait': 'В процессе',
+      'f.hired': 'Приняты',
+      'sl.empty': 'Подборок пока нет.<br><br>Напишите боту «нужна хостес» или откройте «Подходящие кандидаты» в разделе «Вакансии».',
+      'sl.none': 'В этом разделе нет кандидатов.',
+      'sl.closedVacs': 'Закрытые вакансии ({n})',
+      'grp.closed': 'Закрыта',
+      'grp.count': ['{n} кандидат', '{n} кандидата', '{n} кандидатов'],
+      'grp.contacts': ' · контактов: {n}',
+
+      'cr.sheet': 'Баланс',
+      'cr.ask': 'Запросить кредиты',
+      'cr.askHint': 'Запрос уйдёт в HR. После подтверждения баланс обновится.',
+      'cr.hist': 'История операций',
+      'cr.sent': 'Запрос отправлен',
+      'cr.none': 'Операций нет',
+      'crr.purchase': 'Начислены кредиты',
+      'crr.bonus': 'Бонус',
+      'crr.reveal': 'Открыт контакт',
+      'crr.refund': 'Возврат',
+
+      'vac.new': '+ Новая вакансия',
+      'vac.sheet': 'Вакансия',
+      'vac.empty': 'Вакансий нет.<br><br>Нажмите «+ Новая вакансия» и опишите, кто нужен, — кандидаты начнут откликаться сами.',
+      'vac.closedList': 'Закрытые ({n})',
+      'vac.noSalary': 'Зарплата не указана',
+      'vac.closed': 'Закрыта',
+      'vac.today': 'Обновлена сегодня',
+      'vac.daysAgo': ['Обновлена {n} день назад', 'Обновлена {n} дня назад', 'Обновлена {n} дней назад'],
+      'vac.paused': 'Приостановлена',
+      'vac.private': 'Только для вас',
+      'vac.listed': 'Опубликована',
+      'vac.stillOpen': 'Ещё открыта?',
+      'vac.more': 'Действия',
+      'vac.matches': 'Смотреть подходящих кандидатов',
+      'vac.noMatch': 'Подходящих кандидатов не найдено',
+      'fn.mos': 'подходят',
+      'fn.picked': 'выбрано',
+      'fn.contact': 'контакты',
+      'fn.hired': 'приняты',
+      'apps.new': ['{n} новый отклик', '{n} новых отклика', '{n} новых откликов'],
+      'apps.all': ['{n} отклик', '{n} отклика', '{n} откликов'],
+      'apps.view': 'Смотреть ›',
+      'vk.salary': 'Зарплата',
+      'vk.schedule': 'График',
+      'vk.shift': 'Смена',
+      'vk.cond': 'Условия',
+      'vk.region': 'Район',
+      'vk.start': 'Начало',
+      'vk.need': 'Нужно',
+      'vk.exp': 'Опыт',
+      'vk.expFrom': ['от {n} года', 'от {n} лет', 'от {n} лет'],
+      'vk.age': 'Возраст',
+      'vk.ageRange': '{a}–{b} лет',
+      'vk.ageFrom': ['от {n} года', 'от {n} лет', 'от {n} лет'],
+      'vk.ageTo': ['до {n} года', 'до {n} лет', 'до {n} лет'],
+      'vk.langs': 'Языки',
+      'vk.status': 'Статус',
+      'vd.cands': 'Кандидаты ({n})',
+      'vd.none': 'Кандидаты ещё не выбраны.',
+      'vd.terms': 'Условия',
+      'vd.menu': 'Редактирование и другие действия',
+      'm.edit': 'Редактировать',
+      'm.unlist': 'Снять с публикации — только для вас',
+      'm.list': 'Опубликовать — пусть кандидаты откликаются',
+      'm.close': 'Закрыть',
+      'm.reopen': 'Открыть снова',
+      'm.closeConfirm': 'Вакансия будет закрыта. Продолжить?',
+
+      'form.new': 'Новая вакансия',
+      'form.edit': 'Редактирование',
+      'form.choose': '— выберите —',
+      'form.role': 'Должность *',
+      'form.title': 'Название *',
+      'form.titlePh': 'Официант, вечерняя смена',
+      'form.req': 'Требования',
+      'form.exp': 'Опыт (лет)',
+      'form.hc': 'Сколько человек',
+      'form.shift': 'Смена',
+      'form.any': 'Не важно',
+      'form.both': 'Обе',
+      'form.offer': 'Предложение',
+      'form.sf': 'Зарплата (от)',
+      'form.st': 'Зарплата (до)',
+      'form.sc': 'График',
+      'form.co': 'Дополнительные условия',
+      'form.coPh': 'Питание, форма, проезд',
+      'form.coHint': 'Кандидат читает это первым. Чем конкретнее, тем выше шанс согласия.',
+      'form.roleReq': 'Выберите должность',
+
+      'shift.kunduzgi': 'Дневная',
+      'shift.kechki': 'Вечерняя',
+      'shift.ikkalasi': 'Дневная и вечерняя',
+      'word.shift': 'смена',
+      'shiftT.kunduzgi': 'дневная смена',
+      'shiftT.kechki': 'вечерняя смена',
+      'shiftT.ikkalasi': 'дневная/вечерняя смена',
+
+      'apps.sheet': 'Отклики',
+      'apps.emptyListed': 'Откликов пока нет.<br><br>Вакансия показывается кандидатам. Подтверждайте её — неподтверждённые выпадают из списка.',
+      'apps.emptyPrivate': 'Откликов пока нет.<br><br>Вакансия не опубликована — кандидаты её не видят. Чтобы пошли отклики, нажмите «Опубликовать».',
+      'ap.empty': 'Откликов пока нет.<br><br>Опубликуйте вакансию — кандидаты начнут откликаться сами. О новом отклике придёт сообщение в Telegram.',
+      'ap.fWait': 'Ожидают',
+      'ap.fAll': 'Все',
+      'ap.count': ['{n} отклик', '{n} отклика', '{n} откликов'],
+      'ap.noneWait': 'Нет откликов, ожидающих решения.',
+      'ap.open': 'Контакт открыт',
+      'ap.picked': 'Выбран',
+      'ap.rejected': 'Отклонён',
+      'ap.new': 'Новый',
+      'ap.seen': 'Просмотрен',
+      'ap.date': 'Отклик: {d}',
+      'ap.stagesInSl': ' · этапы — в «Подборках»',
+      'ap.openContact': 'Открыть контакт',
+      'ap.pick': 'Выбрать',
+      'ap.reject': 'Отклонить',
+      'ap.instant': ' · 1 кредит, откроется сразу',
+      'open.noCredit': 'Недостаточно кредитов. Нажмите на баланс вверху и запросите кредиты.',
+      'open.bal': '\nБаланс: {a} → {b}',
+      'open.confirm': 'Контакт будет открыт, спишется 1 кредит.{bal}\n\nОткроются имя, телефон кандидата и чат.',
+      'open.opening': 'Открываем…',
+
+      'chat.backToBot': 'Вернуться в бот',
+      'chat.placeholder': 'Напишите сообщение…',
+      'chat.none': 'Чатов пока нет',
+      'chat.noMsgs': 'Сообщений пока нет',
+      'chat.agency': 'Агентство',
+      'chat.fail': 'Не отправлено: {e}',
+      'chat.resumeLink': ' · резюме ›',
+      'chat.helpPrompt': 'Нужна помощь? Напишите',
+
+      'rz.sheet': 'Резюме',
+      'rz.code': 'Резюме · {c}',
+      'rz.salary': 'Ожидаемая зарплата',
+      'rz.san': 'Санитарная книжка',
+      'rz.pos': 'Должность',
+      'rz.noPhone': 'Нет телефона',
+      'rz.locked': 'Имя и телефон станут видны после открытия контакта',
+      'rz.about': 'О себе',
+      'rz.summary': 'Кратко',
+      'rz.work': 'Опыт работы',
+      'rz.info': 'Данные',
+      'rz.skills': 'Навыки',
+      'san.yes': 'Есть',
+      'san.no': 'Нет',
+      'san.expired': 'Просрочена',
+
+      'date.short': '{d} {m}',
+
+      'role.ofitsiant': 'Официант',
+      'role.barmen': 'Бармен',
+      'role.xostess': 'Хостес',
+      'role.oshpaz': 'Повар',
+      'role.kassir': 'Кассир',
+      'role.menejer': 'Менеджер',
+      'role.operator': 'Колл-оператор',
+      'role.other': 'Сотрудник',
+
+      'cs.selected': 'На рассмотрении',
+      'cs.contacting': 'Связываемся',
+      'cs.candidate_ok': 'Кандидат согласен — готовим контакт',
+      'cs.candidate_no': 'Кандидат отказался',
+      'cs.revealed': 'Контакт открыт',
+      'cs.interview': 'Назначено собеседование',
+      'cs.hired': 'Принят на работу',
+      'cs.not_fit': 'Не подошёл',
+      'cs.refunded': 'Не ответил — кредит возвращён',
+
+      'reason.salary': 'Низкая зарплата',
+      'reason.far': 'Далеко',
+      'reason.found_job': 'Нашёл другую работу',
+      'reason.schedule': 'Не подходит смена',
+      'reason.no_answer': 'Не отвечает',
+      'reason.not_interested': 'Не заинтересован',
+      'reason.experience': 'Недостаточно опыта',
+      'reason.language': 'Уровень языка',
+      'reason.no_show': 'Не пришёл на собеседование',
+      'reason.salary_ask': 'Высокие зарплатные ожидания',
+      'reason.other': 'Другая причина',
+
+      'sal.eq': '{a} сум',
+      'sal.range': '{a} – {b} сум',
+      'sal.from': 'от {a} сум',
+      'sal.to': 'до {a} сум',
+
+      'place.tashkent': 'Ташкент',
+      'lang.uz': 'Узбекский', 'lang.ru': 'Русский', 'lang.en': 'Английский', 'lang.kk': 'Казахский',
+      'lang.tr': 'Турецкий', 'lang.ko': 'Корейский', 'lang.tg': 'Таджикский', 'lang.ar': 'Арабский',
+      'lang.de': 'Немецкий', 'lang.fr': 'Французский', 'lang.zh': 'Китайский', 'lang.az': 'Азербайджанский',
+
+      'summary.default': 'Поиск',
+      'vacancy.default': 'Вакансия',
+      'apps.slDefault': 'Отклики',
+      'match.noneNew': 'Новых подходящих кандидатов нет — всех имеющихся вы уже выбрали.',
+      'match.noneYet': 'Пока в базе нет подходящих кандидатов. Сообщим, когда появятся новые.',
+      'match.relaxed': ' (без учёта: {x})',
+      'relax.keywords': 'ключевые слова',
+      'relax.location': 'район',
+      'relax.shift': 'смена',
+      'relax.languages': 'язык',
+      'relax.minExp': 'стаж',
+      'why.not_found': 'Кандидат не найден',
+      'why.rejected': 'Отклик отклонён',
+      'why.not_looking': 'Кандидат сейчас не ищет работу — HR сначала проверит',
+      'why.phone': 'Телефон не проверен — HR сначала проверит',
+      'why.old': ['Отклику больше {n} дня — HR сначала проверит', 'Отклику больше {n} дней — HR сначала проверит', 'Отклику больше {n} дней — HR сначала проверит']
+    }
+  };
+
+  // Server xatolari — ular servislarda o'zbekcha matn bilan otiladi
+  // (throw new Error('...')) va bir nechta joydan keladi. Kalitga o'tkazish
+  // har servisni o'zgartirishni talab qiladi, shuning uchun bu yerda MATN
+  // bo'yicha tarjima: topilmasa o'zbekcha qoladi (xato yo'qolmaydi).
+  // Yangi xato matni qo'shsangiz — shu yerga ham.
+  const ERR_RU = {
+    'Juda ko\'p so\'rov': 'Слишком много запросов',
+    'Xato': 'Ошибка',
+    'Mijoz topilmadi': 'Клиент не найден',
+    'Hisob to\'xtatilgan': 'Аккаунт приостановлен',
+    'Hisob hali tasdiqlanmagan': 'Аккаунт ещё не подтверждён',
+    'Qidiruv topilmadi yoki muddati tugagan': 'Поиск не найден или истёк',
+    'Nomzod tanlanmadi': 'Кандидаты не выбраны',
+    'Vakansiya topilmadi': 'Вакансия не найдена',
+    'Vakansiya nomini yozing': 'Укажите название вакансии',
+    'Vakansiya yopilgan': 'Вакансия закрыта',
+    'Vakansiyada lavozim ko\'rsatilmagan — "Tahrirlash" orqali tanlang': 'В вакансии не указана должность — выберите её через «Редактировать»',
+    'Amal noto\'g\'ri': 'Неверное действие',
+    'Ariza topilmadi': 'Отклик не найден',
+    'Bu ariza bo\'yicha qaror qabul qilingan': 'По этому отклику уже принято решение',
+    'Kredit yetarli emas': 'Недостаточно кредитов',
+    'Nomzod topilmadi': 'Кандидат не найден',
+    'Suhbat topilmadi': 'Чат не найден',
+    'Holat noto\'g\'ri': 'Неверный статус',
+    'Sabab noto\'g\'ri': 'Неверная причина',
+    'Suhbat sanasi noto\'g\'ri': 'Неверная дата собеседования',
+    'Bu nomzod uchun hali kontakt ochilmagan yoki qaror qabul qilingan': 'Контакт этого кандидата ещё не открыт или решение уже принято',
+    'Tanlov yoki nomzod topilmadi': 'Подборка или кандидат не найдены',
+    'Nomzod bu ishdan bosh tortgan — kontakt ochilmaydi': 'Кандидат отказался от этой работы — контакт не откроется',
+    'Bu bosqichdan keyin holatni o\'zgartirib bo\'lmaydi': 'После этого этапа статус изменить нельзя',
+    'Xabar bo\'sh': 'Пустое сообщение'
+  };
+
+  // Rus ko'plik shakli: 1, 21 -> 0 · 2-4, 22-24 -> 1 · 0, 5-20, 25 -> 2
+  function ruForm(n) {
+    const a = Math.abs(n) % 100, b = a % 10;
+    if (a > 10 && a < 20) return 2;
+    if (b === 1) return 0;
+    if (b >= 2 && b <= 4) return 1;
+    return 2;
+  }
+
+  function norm(lang) { return LANGS.includes(lang) ? lang : 'uz'; }
+
+  /** t('bar.count', { n: 5 }, 'ru') -> "5 кандидатов". Kalit topilmasa — o'zbekchasi, u ham bo'lmasa kalitning o'zi. */
+  function tr(lang, key, vars) {
+    const l = norm(lang);
+    let v = D[l][key];
+    if (v === undefined) v = D.uz[key];
+    if (v === undefined) return key;
+    if (Array.isArray(v)) v = v[ruForm(Number(vars && vars.n) || 0)];
+    if (vars) v = v.replace(/\{(\w+)\}/g, (m, k) => (vars[k] == null ? m : String(vars[k])));
+    return v;
+  }
+
+  /** Telegram language_code -> 'uz' | 'ru'. Rus tilli interfeyslar ruschaga, qolgani o'zbekchaga. */
+  function fromTelegram(code) {
+    return /^(ru|uk|be|kk|ky)\b/i.test(String(code || '')) ? 'ru' : 'uz';
+  }
+
+  function errText(lang, msg) {
+    return norm(lang) === 'ru' && ERR_RU[msg] ? ERR_RU[msg] : msg;
+  }
+
+  // Avtomatik vakansiya sarlavhasi: "Ofitsiant, kechki smena".
+  // Server (vacancyAuto.makeTitle) ham, Mini App formasi ham shundan.
+  function vacTitle(role, shift, lang) {
+    const r = D.uz['role.' + role] !== undefined && role !== 'other' ? role : 'other';
+    const base = tr(lang, 'role.' + r);
+    return D.uz['shiftT.' + shift] !== undefined ? base + ', ' + tr(lang, 'shiftT.' + shift) : base;
+  }
+
+  return { LANGS, D, t: tr, ruForm, fromTelegram, errText, vacTitle };
+});

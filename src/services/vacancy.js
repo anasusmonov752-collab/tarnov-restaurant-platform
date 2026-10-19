@@ -11,6 +11,9 @@
 // himoya qilamiz — u nomzod ismini faqat kontakt ochilgach ko'radi.
 
 const { isValidRole, guessRole } = require('../data/roles');
+const I18N = require('../../public/js/th-i18n');
+const { t } = I18N;
+const { langsLabel } = require('../utils/labels');
 
 const VALID_STATUS = ['open', 'paused', 'closed'];
 const SHIFTS = ['kunduzgi', 'kechki', 'ikkalasi'];
@@ -88,26 +91,44 @@ function clean(b, prev = {}) {
   return out;
 }
 
-const money = n => n ? Number(n).toLocaleString('uz-UZ').replace(/,/g, ' ') : '';
+// Bo'shliqni o'zimiz qo'yamiz: toLocaleString node versiyasiga qarab
+// vergul yoki ingichka bo'shliq beradi — natija hamma joyda bir xil bo'lsin
+const money = n => n ? String(Math.round(Number(n))).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') : '';
 
-/** Maosh satri: "4 000 000 – 5 000 000 so'm" */
-function salaryText(v) {
+/** Maosh satri: "4 000 000 – 5 000 000 so'm" / "... сум". lang — o'quvchining tili. */
+function salaryText(v, lang = 'uz') {
   // Bitta summa aytilsa ikkalasi teng bo'ladi — "4 000 000 – 4 000 000" emas
-  if (v.salaryFrom && v.salaryTo && v.salaryFrom === v.salaryTo) return `${money(v.salaryFrom)} so'm`;
-  if (v.salaryFrom && v.salaryTo) return `${money(v.salaryFrom)} – ${money(v.salaryTo)} so'm`;
-  if (v.salaryFrom) return `${money(v.salaryFrom)} so'mdan`;
-  if (v.salaryTo)   return `${money(v.salaryTo)} so'mgacha`;
+  if (v.salaryFrom && v.salaryTo && v.salaryFrom === v.salaryTo) return t(lang, 'sal.eq', { a: money(v.salaryFrom) });
+  if (v.salaryFrom && v.salaryTo) return t(lang, 'sal.range', { a: money(v.salaryFrom), b: money(v.salaryTo) });
+  if (v.salaryFrom) return t(lang, 'sal.from', { a: money(v.salaryFrom) });
+  if (v.salaryTo)   return t(lang, 'sal.to', { a: money(v.salaryTo) });
   return '';
 }
 
-/** Mijoz va agentlik uchun — hamma narsa ochiq. */
-function full(v, extra = {}) {
+// Avtomatik yasalgan sarlavha ("Ofitsiant, kechki smena") — o'quvchi tilida.
+// Qo'lda yozilgan sarlavhaga TEGMAYMIZ: u mijozning o'z so'zi.
+// Ikkala tildagi shakl tekshiriladi: rus tilli mijoz formada yaratgan
+// vakansiya o'zbek tilli o'quvchiga ham o'zbekcha chiqsin.
+function titleFor(v, lang) {
+  if (!lang) return v.title;
+  const auto = I18N.LANGS.some(l => v.title === I18N.vacTitle(v.role, v.shift, l));
+  return auto ? I18N.vacTitle(v.role, v.shift, lang) : v.title;
+}
+
+/**
+ * Mijoz va agentlik uchun — hamma narsa ochiq.
+ * lang berilsa (Mini App) maosh va avtomatik sarlavha shu tilda;
+ * berilmasa (agentlik paneli) — avvalgidek.
+ */
+function full(v, extra = {}, lang) {
   return Object.assign({
     id: v.id, clientId: v.clientId,
-    title: v.title, role: v.role,
+    title: titleFor(v, lang), role: v.role,
     minExp: v.minExp, minAge: v.minAge, maxAge: v.maxAge,
-    languages: v.languages || [], shift: v.shift, location: v.location,
-    salaryFrom: v.salaryFrom, salaryTo: v.salaryTo, salaryText: salaryText(v),
+    // Mini App'da tillar o'quvchi tilida ("Rus" -> "Русский"); panelda — kiritilgandek
+    languages: lang ? langsLabel(v.languages, lang) : (v.languages || []),
+    shift: v.shift, location: v.location,
+    salaryFrom: v.salaryFrom, salaryTo: v.salaryTo, salaryText: salaryText(v, lang || 'uz'),
     schedule: v.schedule, conditions: v.conditions,
     startDate: v.startDate, headcount: v.headcount,
     notes: v.notes, status: v.status,
@@ -144,4 +165,4 @@ function forCandidate(v, client) {
   };
 }
 
-module.exports = { clean, full, forCandidate, salaryText, isStale, guessRole, VALID_STATUS, SHIFTS, STALE_DAYS };
+module.exports = { clean, full, forCandidate, salaryText, titleFor, isStale, guessRole, VALID_STATUS, SHIFTS, STALE_DAYS };

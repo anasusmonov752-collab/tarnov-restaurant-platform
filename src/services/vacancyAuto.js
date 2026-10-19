@@ -22,20 +22,19 @@ const Vacancy = require('../models/Vacancy');
 const Shortlist = require('../models/Shortlist');
 const ai = require('./ai');
 const vac = require('./vacancy');
-const { isValidRole, roleLabel } = require('../data/roles');
+const { isValidRole } = require('../data/roles');
+const { vacTitle } = require('../../public/js/th-i18n');
 
 // ── Shablon ──────────────────────────────────────────────────
 
-const SHIFT_TITLE = {
-  kunduzgi: 'kunduzgi smena',
-  kechki:   'kechki smena',
-  ikkalasi: 'kunduzgi/kechki smena'
-};
-
-/** "Ofitsiant, kechki smena" — sarlavha faqat shu qoida bilan yasaladi. */
+/**
+ * "Ofitsiant, kechki smena" — sarlavha faqat shu qoida bilan yasaladi.
+ * Qoidaning o'zi lug'atda (th-i18n.vacTitle): Mini App formasi va
+ * vacancy.full() ham shundan — o'quvchi tilida ko'rsatish uchun ular
+ * bazadagi sarlavhani shu shakl bilan solishtiradi. Bazaga o'zbekcha yoziladi.
+ */
 function makeTitle(role, shift) {
-  const base = isValidRole(role) ? roleLabel(role) : 'Xodim';
-  return SHIFT_TITLE[shift] ? `${base}, ${SHIFT_TITLE[shift]}` : base;
+  return vacTitle(role, shift, 'uz');
 }
 
 // Sharoitlar — yopiq lug'at. AI faqat kalitni qaytaradi, matnni biz

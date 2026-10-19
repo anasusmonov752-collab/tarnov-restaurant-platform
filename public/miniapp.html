@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>TalentHub</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="/js/th-i18n.js?v=1"></script>
 <style>
 /* Rang Telegram mavzusidan OLINMAYDI.
    Avval --tg-theme-* o'zgaruvchilariga tayanardik, natijada mijozda tungi
@@ -403,7 +404,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 /* Kontakt ochilgan suhbat sarlavhasi bosiladi — rezyume ochiladi */
 .cv-who{flex:1;min-width:0;display:flex;align-items:center;gap:10px}
 .cv-who.tap{cursor:pointer}
-.cv-who.tap .ch-last::after{content:' · rezyume ›';color:var(--blue)}
+.cv-who.tap .ch-last::after{content:attr(data-after);color:var(--blue)}   /* matni — t('chat.resumeLink') */
+
+/* ── Til tanlash (Aloqa bo'limi) ── */
+.lng{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:14px;padding:10px 12px;margin-bottom:12px}
+.lng span{flex:1;font-size:14px;font-weight:600}
+.seg{display:flex;background:var(--bg);border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;border-radius:8px;padding:7px 12px;font-family:inherit;
+  font-size:13.5px;font-weight:600;color:var(--muted);cursor:pointer}
+.seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(15,39,71,.12)}
 
 /* ══ REZYUME (kontakt ochilgandan keyin) ═══════════════════ */
 .rs-hd{display:flex;gap:13px;align-items:center;padding:6px 0 14px}
@@ -466,8 +475,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 <div id="searchMode" class="hide">
   <div id="listView">
     <div class="top">
-      <button class="backcab hide" id="bBackCab">&#10094; Vakansiyalar</button>
-      <div class="sum" id="sum">Yuklanmoqda…</div>
+      <button class="backcab hide" id="bBackCab">&#10094; <span data-t="search.backVacs">Vakansiyalar</span></button>
+      <div class="sum" id="sum" data-t="common.loading">Yuklanmoqda…</div>
       <div class="cnt" id="cnt"></div>
     </div>
     <div class="wrap" id="list"></div>
@@ -480,30 +489,33 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 <div id="cabMode" class="hide">
   <div class="chead">
     <div class="nm" id="cName">—</div>
-    <div class="cr" id="crTap"><b id="cCred">—</b><span>kredit · 1 kredit = 1 ochilgan kontakt</span><i class="crgo">Balans ›</i></div>
+    <div class="cr" id="crTap"><b id="cCred">—</b><span id="cCredNote"></span><i class="crgo" data-t="cab.balanceGo">Balans ›</i></div>
   </div>
 
   <div id="vSL">
     <div class="stats" id="cStats"></div>
-    <div class="wrap" id="slList"><div class="msg">Yuklanmoqda…</div></div>
+    <div class="wrap" id="slList"><div class="msg" data-t="common.loading">Yuklanmoqda…</div></div>
   </div>
 
   <div id="vVC" class="hide">
     <div class="wrap">
-      <button class="btn" id="bNewV" style="width:100%;margin-bottom:14px">+ Yangi vakansiya</button>
-      <div id="vcList"><div class="msg">Yuklanmoqda…</div></div>
+      <button class="btn" id="bNewV" style="width:100%;margin-bottom:14px" data-t="vac.new">+ Yangi vakansiya</button>
+      <div id="vcList"><div class="msg" data-t="common.loading">Yuklanmoqda…</div></div>
     </div>
   </div>
 
   <!-- Arizalar — Balans o'rnida (balans tepadagi raqamni bosganda oynada) -->
   <div id="vAP" class="hide">
-    <div class="wrap" id="apList"><div class="msg">Yuklanmoqda…</div></div>
+    <div class="wrap" id="apList"><div class="msg" data-t="common.loading">Yuklanmoqda…</div></div>
   </div>
 
   <div id="vMS" class="hide">
-    <div id="chatList"><div class="ch-empty">Yuklanmoqda…</div></div>
+    <div id="chatList"><div class="ch-empty" data-t="common.loading">Yuklanmoqda…</div></div>
     <div class="wrap" style="padding-top:14px">
-      <button class="btn" id="bChat" style="width:100%">Botga qaytish</button>
+      <!-- Til — har tilda o'z nomi bilan: tilni tushunmagan odam ham topsin -->
+      <div class="lng"><span data-t="lang.title">Til / Язык</span>
+        <div class="seg"><button data-lang="uz">O'zbekcha</button><button data-lang="ru">Русский</button></div></div>
+      <button class="btn" id="bChat" style="width:100%" data-t="chat.backToBot">Botga qaytish</button>
     </div>
   </div>
 
@@ -522,7 +534,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     </div>
     <div class="cv-b" id="cvBody"></div>
     <div class="cv-f">
-      <input id="cvIn" placeholder="Xabar yozing…" autocomplete="off" maxlength="2000">
+      <input id="cvIn" placeholder="Xabar yozing…" data-tp="chat.placeholder" autocomplete="off" maxlength="2000">
       <button class="cv-send" id="cvSend">&#10148;</button>
     </div>
   </div>
@@ -530,16 +542,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   <!-- Ikonkalar: Lucide (clipboard-list, inbox, briefcase, message-circle) -->
   <nav class="tabs">
     <span class="lens" id="lens" aria-hidden="true"></span>
-    <button class="tb on" id="tSL"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg></span>Tanlovlar</button>
-    <button class="tb"    id="tAP"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg><i class="dot" id="dAP"></i></span>Arizalar</button>
-    <button class="tb"    id="tVC"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg></span>Vakansiya</button>
-    <button class="tb"    id="tMS"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><i class="dot" id="dMS"></i></span>Aloqa</button>
+    <button class="tb on" id="tSL"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg></span><span data-t="tab.sl">Tanlovlar</span></button>
+    <button class="tb"    id="tAP"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg><i class="dot" id="dAP"></i></span><span data-t="tab.ap">Arizalar</span></button>
+    <button class="tb"    id="tVC"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg></span><span data-t="tab.vc">Vakansiya</span></button>
+    <button class="tb"    id="tMS"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><i class="dot" id="dMS"></i></span><span data-t="tab.ms">Aloqa</span></button>
   </nav>
 </div>
 
 <div class="sheet" id="sheet">
   <div class="sh">
-    <div class="sh-h"><button class="sh-bk hide" id="shBack" aria-label="Orqaga">&#10094;</button><b id="shT">—</b><button class="sh-x" id="shX">&#10005;</button></div>
+    <div class="sh-h"><button class="sh-bk hide" id="shBack" aria-label="Orqaga" data-ta="common.back">&#10094;</button><b id="shT">—</b><button class="sh-x" id="shX">&#10005;</button></div>
     <div class="sh-b" id="shB"></div>
   </div>
 </div>
@@ -547,6 +559,38 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 <script>
 const TG = window.Telegram && window.Telegram.WebApp;
 if (TG) { TG.ready(); TG.expand(); }
+
+// ── Til ──
+// Hamma matn t('kalit') orqali — lug'at public/js/th-i18n.js da, server
+// ham shundan foydalanadi. Haqiqiy tanlov serverda (Client.lang); bu yerda
+// birinchi chizish uchun taxmin: oxirgi tanlov yoki Telegram tili.
+// Server boshqa til qaytarsa (/me, seans) — useLang() uni qo'llaydi.
+const I18N = window.THI18N;
+let LANG = (() => {
+  try { const s = localStorage.getItem('th_lang'); if (I18N.LANGS.includes(s)) return s; } catch(e){}
+  const u = TG && TG.initDataUnsafe && TG.initDataUnsafe.user;
+  return I18N.fromTelegram(u && u.language_code);
+})();
+const t = (k, v) => I18N.t(LANG, k, v);
+const LOC = () => LANG === 'ru' ? 'ru-RU' : 'uz-UZ';
+
+// Statik matnlar: data-t (matn), data-tp (placeholder), data-ta (aria-label)
+function applyStatic(){
+  document.documentElement.lang = LANG;
+  document.querySelectorAll('[data-t]').forEach(el => { el.textContent = t(el.dataset.t); });
+  document.querySelectorAll('[data-tp]').forEach(el => { el.placeholder = t(el.dataset.tp); });
+  document.querySelectorAll('[data-ta]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.ta)); });
+  document.querySelectorAll('[data-lang]').forEach(b => b.classList.toggle('on', b.dataset.lang === LANG));
+}
+// Serverdan kelgan til (manba — Client.lang). true — til o'zgardi.
+function useLang(l){
+  if (!I18N.LANGS.includes(l) || l === LANG) return false;
+  LANG = l;
+  try { localStorage.setItem('th_lang', l); } catch(e){}
+  applyStatic();
+  return true;
+}
+applyStatic();
 
 // Qidiruv seansi kaliti. Botdan ?s= bilan keladi; kabinetdagi "Mos
 // nomzodlar" esa uni joyida almashtiradi (openSearch) — sahifani qayta
@@ -564,11 +608,11 @@ async function api(path, opt){
     headers: { 'Content-Type':'application/json', 'X-Telegram-Init-Data': INIT }
   }, opt));
   const d = await r.json().catch(()=>({}));
-  if(!r.ok) throw new Error(d.error || 'Xato');
+  if(!r.ok) throw new Error(d.error || t('common.error'));    // server xatoni mijoz tilida beradi
   return d;
 }
 
-const dt = s => s ? new Date(s).toLocaleDateString('uz-UZ',{day:'2-digit',month:'short'}) : '';
+const dt = s => s ? new Date(s).toLocaleDateString(LOC(),{day:'2-digit',month:'short'}) : '';
 const initialsOf = code => String(code||'—').replace('A-','').slice(0,2);
 
 // ══════════════════════════════════════════════════════════
@@ -583,12 +627,13 @@ const photoUrl = c => `/api/ma/photo/${encodeURIComponent(KEY)}/${encodeURICompo
 function statusChip(c){
   if (!c.jobStatus || c.jobStatus === 'unknown') return '';
   const cls = c.jobStatus === 'active' ? 'act' : (c.jobStatus === 'not_looking' ? 'no' : '');
-  return `<span class="t ${cls}">${esc(c.jobStatusLabel)}</span>`;
+  return `<span class="t ${cls}">${esc(t('job.' + c.jobStatus))}</span>`;
 }
+// "3 yil tajriba · 24 yosh · Toshkent" — kartalar, arizalar, rezyumeda bir xil
+const expTxt = n => n ? t('fact.exp', { n }) : t('fact.noExp');
 function factLine(c){
-  const b = [];
-  b.push(c.experienceYears ? c.experienceYears + ' yil tajriba' : 'Tajribasiz');
-  if (c.age) b.push(c.age + ' yosh');
+  const b = [expTxt(c.experienceYears)];
+  if (c.age) b.push(t('fact.age', { n: c.age }));
   if (c.location) b.push(c.location);
   return b.join(' · ');
 }
@@ -603,11 +648,11 @@ function cardHtml(c){
       <div class="pos">${esc(w.title)}</div>
       <div class="meta">${esc(factLine(c))}</div>
       <div class="tags">
-        ${c.fitScore ? `<span class="t ai">AI ${c.fitScore}/5</span>` : ''}
+        ${c.fitScore ? `<span class="t ai">${esc(t('card.ai', { n: c.fitScore }))}</span>` : ''}
         ${statusChip(c)}
         ${c.salaryExpectation ? `<span class="t">${esc(c.salaryExpectation)}</span>` : ''}
       </div>
-      <div class="seenmark">Ko'rib chiqilgan</div>
+      <div class="seenmark">${esc(t('card.seen'))}</div>
     </div>
     <div class="tick"></div>
   </div>`;
@@ -654,7 +699,7 @@ function openDetail(i){
 
   const work = (c.workHistory||[]).map(w => `
     <div class="w">
-      <div class="w-p">${esc(w.position||'Lavozim ko\'rsatilmagan')}</div>
+      <div class="w-p">${esc(w.position || t('w.noPos'))}</div>
       ${w.company ? `<div class="w-c">${esc(w.company)}</div>` : ''}
       ${w.period ? `<div class="w-c">${esc(w.period)}</div>` : ''}
       ${w.description ? `<div class="w-d">${esc(w.description)}</div>` : ''}
@@ -669,23 +714,23 @@ function openDetail(i){
       <div class="d-pos">${esc(who.title)}</div>
       <div class="d-meta">${esc(factLine(c))}</div>
       <div class="tags" style="margin-top:9px">
-        ${c.fitScore ? `<span class="t ai">AI moslik ${c.fitScore}/5</span>` : ''}
+        ${c.fitScore ? `<span class="t ai">${esc(t('d.aiFit', { n: c.fitScore }))}</span>` : ''}
         ${statusChip(c)}
       </div>
     </div>
-    ${c.summary ? `<div class="sec"><h3>Qisqacha</h3><div class="ai">${esc(c.summary)}</div></div>` : ''}
-    ${c.fitReason ? `<div class="sec"><div class="ai"><b>Nega mos:</b> ${esc(c.fitReason)}</div></div>` : ''}
-    <div class="sec"><h3>Ma'lumot</h3>
-      ${c.salaryExpectation ? `<div class="kv"><span class="k">Kutilayotgan maosh</span><span class="v">${esc(c.salaryExpectation)}</span></div>` : ''}
-      ${c.experienceYears ? `<div class="kv"><span class="k">Umumiy tajriba</span><span class="v">${c.experienceYears} yil</span></div>` : ''}
-      ${c.education ? `<div class="kv"><span class="k">Ta'lim</span><span class="v">${esc(c.education)}</span></div>` : ''}
-      ${c.location ? `<div class="kv"><span class="k">Hudud</span><span class="v">${esc(c.location)}</span></div>` : ''}
-      ${c.shift ? `<div class="kv"><span class="k">Smena</span><span class="v">${esc(c.shift)}</span></div>` : ''}
+    ${c.summary ? `<div class="sec"><h3>${esc(t('d.summary'))}</h3><div class="ai">${esc(c.summary)}</div></div>` : ''}
+    ${c.fitReason ? `<div class="sec"><div class="ai"><b>${esc(t('d.why'))}</b> ${esc(c.fitReason)}</div></div>` : ''}
+    <div class="sec"><h3>${esc(t('d.info'))}</h3>
+      ${c.salaryExpectation ? `<div class="kv"><span class="k">${esc(t('d.salary'))}</span><span class="v">${esc(c.salaryExpectation)}</span></div>` : ''}
+      ${c.experienceYears ? `<div class="kv"><span class="k">${esc(t('d.totalExp'))}</span><span class="v">${esc(t('unit.years', { n: c.experienceYears }))}</span></div>` : ''}
+      ${c.education ? `<div class="kv"><span class="k">${esc(t('d.edu'))}</span><span class="v">${esc(c.education)}</span></div>` : ''}
+      ${c.location ? `<div class="kv"><span class="k">${esc(t('d.region'))}</span><span class="v">${esc(c.location)}</span></div>` : ''}
+      ${c.shift ? `<div class="kv"><span class="k">${esc(t('d.shift'))}</span><span class="v">${esc(shiftL(c.shift))}</span></div>` : ''}
     </div>
-    ${(c.languages||[]).length ? `<div class="sec"><h3>Tillar</h3><div class="chips">${c.languages.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}</div></div>` : ''}
-    ${(c.skills||[]).length ? `<div class="sec"><h3>Ko'nikmalar</h3><div class="chips">${c.skills.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}</div></div>` : ''}
-    ${c.experienceSummary ? `<div class="sec"><h3>Tajriba haqida</h3><p>${esc(c.experienceSummary)}</p></div>` : ''}
-    ${work ? `<div class="sec"><h3>Ish tarixi</h3>${work}</div>` : ''}
+    ${(c.languages||[]).length ? `<div class="sec"><h3>${esc(t('d.langs'))}</h3><div class="chips">${c.languages.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}</div></div>` : ''}
+    ${(c.skills||[]).length ? `<div class="sec"><h3>${esc(t('d.skills'))}</h3><div class="chips">${c.skills.map(x=>`<span class="chip">${esc(x)}</span>`).join('')}</div></div>` : ''}
+    ${c.experienceSummary ? `<div class="sec"><h3>${esc(t('d.aboutExp'))}</h3><p>${esc(c.experienceSummary)}</p></div>` : ''}
+    ${work ? `<div class="sec"><h3>${esc(t('d.work'))}</h3>${work}</div>` : ''}
     <div style="height:14px"></div>`;
 
   updateBar();
@@ -696,9 +741,9 @@ function updateBar(){
   bar.style.display = ROWS.length ? 'flex' : 'none';
 
   if (cur < 0) {
-    $('cnt').textContent = `${ROWS.length} ta nomzod` + (SEL.size ? ` · ${SEL.size} ta tanlandi` : '');
+    $('cnt').textContent = t('bar.count', { n: ROWS.length }) + (SEL.size ? t('bar.selected', { n: SEL.size }) : '');
     bar.innerHTML = `<button class="btn" id="send" ${SEL.size?'':'disabled'}>
-      ${SEL.size ? SEL.size + ' ta nomzodni yuborish' : 'Nomzod tanlang'}</button>`;
+      ${esc(SEL.size ? t('bar.send', { n: SEL.size }) : t('bar.pickSome'))}</button>`;
     if (SEL.size) $('send').onclick = submit;
     return;
   }
@@ -707,7 +752,7 @@ function updateBar(){
   bar.innerHTML = `
     <button class="nav" id="prev" ${cur===0?'disabled':''}>&#9664;</button>
     <span class="pg">${cur+1} / ${ROWS.length}</span>
-    <button class="btn ${on?'ghost':''}" id="pick">${on?'Tanlangan':'Tanlash'}</button>
+    <button class="btn ${on?'ghost':''}" id="pick">${esc(on ? t('bar.picked') : t('bar.pick'))}</button>
     <button class="nav" id="next" ${cur===ROWS.length-1?'disabled':''}>&#9654;</button>`;
   $('prev').onclick = ()=>openDetail(cur-1);
   $('next').onclick = ()=>openDetail(cur+1);
@@ -716,23 +761,21 @@ function updateBar(){
 
 async function submit(){
   const b = $('send');
-  b.disabled = true; b.textContent = 'Yuborilmoqda…';
+  b.disabled = true; b.textContent = t('common.sending');
   try{
     const r = await api('/api/ma/shortlist', {
       method:'POST', body: JSON.stringify({ key: KEY, ids: [...SEL] })
     });
     $('bar').style.display = 'none';
     $('sum').textContent = ''; $('cnt').textContent = '';
-    show(`<b>${r.count} ta nomzod yuborildi.</b><br><br>
-      HR ular bilan bog'lanadi va kontaktlarni ochib beradi.<br>
-      Holatni "Kabinet" tugmasidan kuzatib boring.`);
+    show(t('sub.done', { n: Number(r.count) || 0 }));        // lug'at matni ishonchli, n — son
     try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
     // Kabinetdan ochilgan bo'lsa — kabinetga qaytamiz (Mini App'ni yopmaymiz)
     if (FROM_CAB) setTimeout(backToCab, 2500);
     else if (TG) setTimeout(()=>TG.close(), 3000);
   }catch(e){
-    b.disabled = false; b.textContent = 'Qayta urinish';
-    show('Yuborilmadi: ' + esc(e.message));
+    b.disabled = false; b.textContent = t('common.retry');
+    show(esc(t('sub.fail', { e: e.message })));
   }
 }
 
@@ -744,15 +787,17 @@ let CREDITS = null;
 async function loadMe(){
   try{
     const m = await api('/api/ma/me');
-    $('cName').textContent = m.name || 'Mijoz';
+    useLang(m.lang);                     // haqiqiy tanlov — serverda (Client.lang)
+    $('cName').textContent = m.name || t('cab.client');
     $('cCred').textContent = m.credits;
+    $('cCredNote').textContent = t('cab.credits', { n: m.credits });
     CREDITS = m.credits;                 // "Kontaktni ochish" tasdig'ida balans
     const s = m.stats || {};
     $('cStats').innerHTML = `
-      <div class="stat"><b>${s.searches||0}</b><span>qidiruv</span></div>
-      <div class="stat"><b>${s.picked||0}</b><span>tanlangan</span></div>
-      <div class="stat"><b>${s.revealed||0}</b><span>kontakt</span></div>
-      <div class="stat"><b>${s.avgHours==null?'—':s.avgHours<1?'&lt;1':Math.round(s.avgHours)}</b><span>soatda<br>ochiladi</span></div>`;
+      <div class="stat"><b>${s.searches||0}</b><span>${t('st.searches')}</span></div>
+      <div class="stat"><b>${s.picked||0}</b><span>${t('st.picked')}</span></div>
+      <div class="stat"><b>${s.revealed||0}</b><span>${t('st.revealed')}</span></div>
+      <div class="stat"><b>${s.avgHours==null?'—':s.avgHours<1?'&lt;1':Math.round(s.avgHours)}</b><span>${t('st.hours')}</span></div>`;
   }catch(e){ $('cName').textContent = e.message; }
 }
 
@@ -763,8 +808,12 @@ async function loadMe(){
 // bo'yicha bir xil ("Xostess", xom "Хостес" emas). Qaror — bosqichlar
 // chizig'i: Kontakt → Suhbat → Ishga olindi; "Mos kelmadi" kichik havola.
 
-const OY = ['yan','fev','mar','apr','may','iyn','iyl','avg','sen','okt','noy','dek'];
-const dShort = s => { if (!s) return ''; const d = new Date(s); return d.getDate() + '-' + OY[d.getMonth()]; };
+const OY = {
+  uz: ['yan','fev','mar','apr','may','iyn','iyl','avg','sen','okt','noy','dek'],
+  ru: ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек']
+};
+// "18-okt" / "18 окт"
+const dShort = s => { if (!s) return ''; const d = new Date(s); return t('date.short', { d: d.getDate(), m: OY[LANG][d.getMonth()] }); };
 const dTime = s => { const d = new Date(s); return dShort(s) + ', ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); };
 const nameIni = s => String(s || '').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || '—';
 
@@ -774,7 +823,7 @@ const nameIni = s => String(s || '').trim().split(/\s+/).slice(0, 2).map(w => w[
 // Tanlovlar, Arizalar, qidiruv kartalari va rezyume shundan foydalanadi —
 // yangi joy qo'shilsa ham shu funksiyani chaqiring.
 function whoOf(c){
-  const role = c.roleText || c.roleLabel || c.desiredPosition || 'Nomzod';
+  const role = c.roleText || c.roleLabel || c.desiredPosition || t('role.candidate');
   const name = c.contact && c.contact.fullName;
   return name
     ? { open: true, title: name, sub: role, ini: nameIni(name) }
@@ -790,12 +839,13 @@ const IC = {
   close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>',
   reopen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>'
 };
-const CHIP = { waiting:'Jarayonda', open:'Kontakt ochiq', hired:'Ishga olindi', refunded:'Qaytarildi' };
+// Holat chipi: 'waiting' | 'open' | 'hired' | 'refunded' -> lug'at 'chip.*'
+const chipOf = st => ['waiting', 'open', 'hired', 'refunded'].includes(st) ? t('chip.' + st) : '';
 // "3 soat", "2 kun" — HR qancha vaqtdan beri bog'lanayotgani
 function agoTxt(s){
   if (!s) return '';
   const h = (Date.now() - new Date(s).getTime()) / 36e5;
-  return h < 1 ? '1 soatdan kam' : h < 24 ? Math.floor(h) + ' soat' : Math.floor(h / 24) + ' kun';
+  return h < 1 ? t('ago.lt1') : h < 24 ? t('ago.h', { n: Math.floor(h) }) : t('ago.d', { n: Math.floor(h / 24) });
 }
 
 function stepsHtml(it){
@@ -805,44 +855,44 @@ function stepsHtml(it){
   const ivAttr = !ivDone ? `data-iv="${id}" data-sl="${sl}"` : '';
   const hrAttr = !hired ? `data-hire="${id}" data-sl="${sl}"` : '';
   return `<div class="cd-steps">
-      <div class="sp done${hired ? ' hiredone' : ''}"><i>&#10003;</i>Kontakt</div>
+      <div class="sp done${hired ? ' hiredone' : ''}"><i>&#10003;</i>${esc(t('step.contact'))}</div>
       <div class="sp-ln ${hired ? 'win' : ivDone ? 'done' : ''}"></div>
-      <button class="sp ${ivDone ? 'done' + (hired ? ' hiredone' : '') : 'next'}" ${ivAttr}><i>${ivDone ? '&#10003;' : ''}</i>Suhbat</button>
+      <button class="sp ${ivDone ? 'done' + (hired ? ' hiredone' : '') : 'next'}" ${ivAttr}><i>${ivDone ? '&#10003;' : ''}</i>${esc(t('step.interview'))}</button>
       <div class="sp-ln ${hired ? 'win' : ''}"></div>
-      <button class="sp ${hired ? 'done hiredone' : 'next'}" ${hrAttr}><i>${hired ? '&#10003;' : ''}</i>Ishga olindi</button>
+      <button class="sp ${hired ? 'done hiredone' : 'next'}" ${hrAttr}><i>${hired ? '&#10003;' : ''}</i>${esc(t('step.hired'))}</button>
     </div>
     <div class="cd-foot">
-      <span>${it.interviewAt ? 'Suhbat: ' + dTime(it.interviewAt) : (hired ? 'Ishga olingan' : 'Keyingi bosqichni bosing')}</span>
-      ${!hired ? `<button class="cd-nf" data-nf="${id}" data-sl="${sl}">Mos kelmadi</button>` : ''}
+      <span>${esc(it.interviewAt ? t('foot.interviewAt', { d: dTime(it.interviewAt) }) : (hired ? t('foot.hired') : t('foot.next')))}</span>
+      ${!hired ? `<button class="cd-nf" data-nf="${id}" data-sl="${sl}">${esc(t('nf.btn'))}</button>` : ''}
     </div>`;
 }
 
 function candHtml(it){
   const w = whoOf(it), open = w.open, name = w.title;
-  const meta = [it.experienceYears ? it.experienceYears + ' yil tajriba' : 'Tajribasiz',
-                it.age ? it.age + ' yosh' : '', it.location || ''].filter(Boolean).join(' · ');
-  const sub = [w.sub, meta].filter(Boolean).join(' · ');
+  const meta = [factLine({ experienceYears: it.experienceYears, age: it.age, location: it.location })];
+  const sub = [w.sub, ...meta].filter(Boolean).join(' · ');
   const photo = it.hasPhoto
     ? `<img src="/api/ma/photo-sl/${encodeURIComponent(it.shortlistId)}/${encodeURIComponent(it.candidateId)}?i=${encodeURIComponent(INIT)}" alt="">`
     : esc(w.ini);
-  const chipTxt = it.state === 'no' ? it.stateLabel : (CHIP[it.state] || it.stateLabel);
+  // stateLabel serverdan mijoz tilida keladi
+  const chipTxt = it.state === 'no' ? it.stateLabel : (chipOf(it.state) || it.stateLabel);
 
   let body = '';
   if (open && it.stage !== 'not_fit') {
     const tel = String(it.contact.phone || '').replace(/[^\d+]/g, '');
     body = `<div class="cd-acts">
-        ${tel ? `<a class="cd-btn p" href="tel:${esc(tel)}">${IC.phone}Qo'ng'iroq</a>` : ''}
-        ${it.threadId ? `<button class="cd-btn" data-chat="${esc(it.candidateId)}">${IC.chat}Yozish</button>` : ''}
-        <button class="cd-btn" data-rz="${esc(it.candidateId)}">${IC.doc}Rezyume</button>
+        ${tel ? `<a class="cd-btn p" href="tel:${esc(tel)}">${IC.phone}${esc(t('act.call'))}</a>` : ''}
+        ${it.threadId ? `<button class="cd-btn" data-chat="${esc(it.candidateId)}">${IC.chat}${esc(t('act.write'))}</button>` : ''}
+        <button class="cd-btn" data-rz="${esc(it.candidateId)}">${IC.doc}${esc(t('act.resume'))}</button>
       </div>` + stepsHtml(it);
   } else {
     // Ixcham: bitta qator holat + rezyume (kontaktgacha — anonim).
     // Uzun izoh har kartada takrorlanib ro'yxatni tartibsiz qilardi.
-    const line = open ? 'Mos kelmadi' + (it.reason ? ' — ' + it.reason : '')
-               : it.state === 'waiting' ? 'HR bog\'lanmoqda · ' + agoTxt(it.since)
+    const line = open ? t('nf.btn') + (it.reason ? ' — ' + it.reason : '')
+               : it.state === 'waiting' ? t('line.hr', { t: agoTxt(it.since) })
                : (it.reason || it.stateLabel);
     body = `<div class="cd-foot"><span>${esc(line)}</span>
-      <button class="cd-link" data-rz="${esc(it.candidateId)}">Rezyume ›</button></div>`;
+      <button class="cd-link" data-rz="${esc(it.candidateId)}">${esc(t('link.resume'))}</button></div>`;
   }
 
   return `<div class="cd" data-card="${esc(it.shortlistId)}:${esc(it.candidateId)}">
@@ -862,7 +912,7 @@ function candHtml(it){
 // Filtr va tartib: harakat talab qiladiganlar (kontakt ochilgan — qo'ng'iroq
 // qilish kerak) tepada; yopilgan vakansiyalar pastda yig'ilgan.
 let SL_ROWS = [], SLF = 'all', showClosedSl = false;
-const FILTERS = [['all','Hammasi'], ['contact','Kontakt'], ['wait','Jarayonda'], ['hired','Ishga olindi']];
+const FILTERS = ['all', 'contact', 'wait', 'hired'];          // yozuvi — t('f.<kalit>')
 const inFilter = (it, f) => f === 'all'
   || (f === 'wait' && it.state === 'waiting')
   || (f === 'contact' && !!it.contact && (it.stage === 'contact' || it.stage === 'interview'))
@@ -876,8 +926,7 @@ async function loadShortlists(){
 
 function renderShortlists(){
   if (!SL_ROWS.length) {
-    $('slList').innerHTML = `<div class="msg">Hali tanlov yo'q.<br><br>
-      Botga "xostes kerak" deb yozing yoki Vakansiya bo'limidan "Mos nomzodlar"ni oching.</div>`;
+    $('slList').innerHTML = `<div class="msg">${t('sl.empty')}</div>`;
     return;
   }
   const groups = [], gBy = {};
@@ -888,15 +937,15 @@ function renderShortlists(){
     for (const it of s.items) if (!g.seen.has(it.candidateId)) { g.seen.add(it.candidateId); g.items.push(it); }
   }
   const all = groups.flatMap(g => g.items);
-  const cnt = Object.fromEntries(FILTERS.map(([k]) => [k, all.filter(it => inFilter(it, k)).length]));
+  const cnt = Object.fromEntries(FILTERS.map(k => [k, all.filter(it => inFilter(it, k)).length]));
 
   const groupHtml = g => {
     const items = g.items.filter(it => inFilter(it, SLF)).sort((a, b) => prio(a) - prio(b));
     if (!items.length) return '';
     const opened = g.items.filter(i => i.contact).length;
     return `<div class="grp">
-      <div class="grp-h"><b>${esc(g.title)}</b>${g.closed ? '<span class="cl">Yopilgan</span>' : ''}
-        <span>${g.items.length} nomzod${opened ? ' · ' + opened + ' kontakt' : ''}</span></div>
+      <div class="grp-h"><b>${esc(g.title)}</b>${g.closed ? `<span class="cl">${esc(t('grp.closed'))}</span>` : ''}
+        <span>${esc(t('grp.count', { n: g.items.length }) + (opened ? t('grp.contacts', { n: opened }) : ''))}</span></div>
       ${items.map(candHtml).join('')}
     </div>`;
   };
@@ -905,10 +954,10 @@ function renderShortlists(){
   const closedHtml = closedG.map(groupHtml).join('');
 
   $('slList').innerHTML =
-    `<div class="flt">${FILTERS.filter(([k]) => k === 'all' || cnt[k]).map(([k, l]) =>
-      `<button class="${SLF === k ? 'on' : ''}" data-f="${k}">${l}<b>${cnt[k]}</b></button>`).join('')}</div>` +
-    (act || (!closedHtml ? '<div class="msg">Bu bo\'limda nomzod yo\'q.</div>' : '')) +
-    (closedHtml ? `<button class="vk-closed-h" id="bClosedSl">${showClosedSl ? '&#9662;' : '&#9656;'} Yopilgan vakansiyalar (${closedG.length})</button>` +
+    `<div class="flt">${FILTERS.filter(k => k === 'all' || cnt[k]).map(k =>
+      `<button class="${SLF === k ? 'on' : ''}" data-f="${k}">${esc(t('f.' + k))}<b>${cnt[k]}</b></button>`).join('')}</div>` +
+    (act || (!closedHtml ? `<div class="msg">${esc(t('sl.none'))}</div>` : '')) +
+    (closedHtml ? `<button class="vk-closed-h" id="bClosedSl">${showClosedSl ? '&#9662;' : '&#9656;'} ${esc(t('sl.closedVacs', { n: closedG.length }))}</button>` +
       (showClosedSl ? closedHtml : '') : '');
 
   $('slList').querySelectorAll('[data-f]').forEach(b => b.onclick = () => { SLF = b.dataset.f; haptic('sel'); renderShortlists(); });
@@ -916,10 +965,9 @@ function renderShortlists(){
   wireCards($('slList'), loadShortlists);
 }
 
-const NOT_FIT = [
-  ['experience','Tajriba yetarli emas'], ['language','Til darajasi'],
-  ['no_show','Suhbatga kelmadi'], ['salary_ask','Maosh talabi yuqori'], ['other','Boshqa']
-];
+// Kalitlar — server pipeline.CLIENT_REASONS bilan bir xil; yozuvi lug'atda
+const NOT_FIT = ['experience', 'language', 'no_show', 'salary_ask', 'other'];
+const nfLabel = k => k === 'other' ? t('nf.other') : t('reason.' + k);
 
 async function decide(slId, candId, body){
   await api(`/api/ma/shortlists/${encodeURIComponent(slId)}/items/${encodeURIComponent(candId)}`,
@@ -949,9 +997,9 @@ function wireCards(root, refresh){
   // Suhbat sanasi
   root.querySelectorAll('[data-iv]').forEach(b => b.onclick = () => {
     const box = boxOf(b), id = b.dataset.iv, sl = b.dataset.sl;
-    box.innerHTML = `<div style="font-size:13px;color:var(--muted)">Suhbat qachon?</div>
+    box.innerHTML = `<div style="font-size:13px;color:var(--muted)">${esc(t('iv.when'))}</div>
       <input type="datetime-local" style="margin-top:8px">
-      <div class="acts"><button class="sbtn p">Saqlash</button><button class="sbtn">Bekor</button></div>`;
+      <div class="acts"><button class="sbtn p">${esc(t('common.save'))}</button><button class="sbtn">${esc(t('common.cancel'))}</button></div>`;
     const [ok, no] = box.querySelectorAll('button');
     ok.onclick = async () => {
       const v = box.querySelector('input').value;
@@ -965,7 +1013,7 @@ function wireCards(root, refresh){
 
   // Ishga olindi — butun tizimning yakuniy ko'rsatkichi
   root.querySelectorAll('[data-hire]').forEach(b => b.onclick = async () => {
-    if (!confirm('Bu nomzodni ishga oldingizmi?')) return;
+    if (!confirm(t('hire.confirm'))) return;
     b.disabled = true;
     try { await decide(b.dataset.sl, b.dataset.hire, { state:'hired' }); refresh(); }
     catch(e){ alert(e.message); b.disabled = false; }
@@ -974,9 +1022,9 @@ function wireCards(root, refresh){
   // Mos kelmadi — sabab bilan, aks holda keyingi qidiruv yaxshilanmaydi
   root.querySelectorAll('[data-nf]').forEach(b => b.onclick = () => {
     const box = boxOf(b), id = b.dataset.nf, sl = b.dataset.sl;
-    box.innerHTML = `<div style="font-size:13px;color:var(--muted)">Nega mos kelmadi?</div>
-      <div class="acts">${NOT_FIT.map(([k, l]) => `<button class="sbtn" data-r="${k}">${l}</button>`).join('')}
-        <button class="sbtn" data-r="">Bekor</button></div>`;
+    box.innerHTML = `<div style="font-size:13px;color:var(--muted)">${esc(t('nf.why'))}</div>
+      <div class="acts">${NOT_FIT.map(k => `<button class="sbtn" data-r="${k}">${esc(nfLabel(k))}</button>`).join('')}
+        <button class="sbtn" data-r="">${esc(t('common.cancel'))}</button></div>`;
     box.querySelectorAll('[data-r]').forEach(x => x.onclick = async () => {
       if (!x.dataset.r) { box.innerHTML = ''; return; }
       x.disabled = true;
@@ -986,15 +1034,16 @@ function wireCards(root, refresh){
   });
 }
 
-const REASON = { purchase:'Kredit qo\'shildi', bonus:'Bonus', reveal:'Kontakt ochildi', refund:'Qaytarildi' };
+// Kredit harakati sababi -> t('crr.<sabab>'); notanish sabab o'zicha
+const crReason = r => ['purchase', 'bonus', 'reveal', 'refund'].includes(r) ? t('crr.' + r) : r;
 
 async function loadCredits(){
   try{
     const rows = await api('/api/ma/credits');
-    if (!rows.length) { $('crList').innerHTML = '<div class="msg">Harakat yo\'q</div>'; return; }
+    if (!rows.length) { $('crList').innerHTML = `<div class="msg">${esc(t('cr.none'))}</div>`; return; }
     $('crList').innerHTML = rows.map(r => `<div class="le">
       <div class="dl ${r.delta>0?'p':'m'}">${r.delta>0?'+':''}${r.delta}</div>
-      <div class="rr">${esc(REASON[r.reason] || r.reason)}<i>${dt(r.createdAt)}${r.note ? ' · ' + esc(r.note) : ''}</i></div>
+      <div class="rr">${esc(crReason(r.reason))}<i>${dt(r.createdAt)}${r.note ? ' · ' + esc(r.note) : ''}</i></div>
       <div class="ba">${r.balanceAfter}</div>
     </div>`).join('');
   }catch(e){ $('crList').innerHTML = `<div class="msg">${esc(e.message)}</div>`; }
@@ -1062,56 +1111,56 @@ const daysAgo = s => Math.max(0, Math.floor((Date.now() - new Date(s).getTime())
 function funnelHtml(f){
   f = f || {};
   return `<div class="vk-fn">
-    <div class="hot"><b>${f.mos == null ? '—' : f.mos}</b><span>mos</span></div>
-    <div><b>${f.picked || 0}</b><span>tanlangan</span></div>
-    <div><b>${f.contact || 0}</b><span>kontakt</span></div>
-    <div class="win"><b>${f.hired || 0}</b><span>ishga olindi</span></div>
+    <div class="hot"><b>${f.mos == null ? '—' : f.mos}</b><span>${esc(t('fn.mos'))}</span></div>
+    <div><b>${f.picked || 0}</b><span>${esc(t('fn.picked'))}</span></div>
+    <div><b>${f.contact || 0}</b><span>${esc(t('fn.contact'))}</span></div>
+    <div class="win"><b>${f.hired || 0}</b><span>${esc(t('fn.hired'))}</span></div>
   </div>`;
 }
 
 // Arizalar — vakansiya ichiga kirmasdan ko'rinadigan joyda. Yangi bo'lsa
-// qizil belgi; hammasi ko'rilgan bo'lsa — oddiy havola.
+// yashil belgi; hammasi ko'rilgan bo'lsa — oddiy havola.
 function appsBtn(id, f){
   if (!f || !f.apps) return '';
   return f.appsNew
-    ? `<button class="vk-apps" data-apps="${esc(id)}"><i></i><span>${f.appsNew} ta yangi ariza</span>Ko'rish ›</button>`
-    : `<button class="vk-apps calm" data-apps="${esc(id)}"><span>${f.apps} ta ariza</span>Ko'rish ›</button>`;
+    ? `<button class="vk-apps" data-apps="${esc(id)}"><i></i><span>${esc(t('apps.new', { n: f.appsNew }))}</span>${esc(t('apps.view'))}</button>`
+    : `<button class="vk-apps calm" data-apps="${esc(id)}"><span>${esc(t('apps.all', { n: f.apps }))}</span>${esc(t('apps.view'))}</button>`;
 }
 
 function vacCardHtml(v){
   const active = v.status !== 'closed';
   const f = v.funnel || {};
-  const meta = [v.salaryText || 'Maosh ko\'rsatilmagan',
-                v.schedule || (SHIFT_L[v.shift] ? SHIFT_L[v.shift] + ' smena' : '')].filter(Boolean).join(' · ');
+  const meta = [v.salaryText || t('vac.noSalary'),
+                v.schedule || (v.shift && shiftL(v.shift) !== v.shift ? shiftL(v.shift) + ' ' + t('word.shift') : '')]
+    .filter(Boolean).join(' · ');
   const n = daysAgo(v.confirmedAt || v.createdAt);
   // "Tasdiqlash" o'rniga ma'nosi bilan: e'lon qilingan va bir necha kun
   // yangilanmagan bo'lsa — "Hali ochiqmi?"
   const ask = v.status === 'open' && v.listed && n >= 3;
   const foot = [
-    !active ? 'Yopilgan' : (n === 0 ? 'Bugun yangilangan' : n + ' kun oldin yangilangan'),
-    v.status === 'paused' ? 'To\'xtatilgan' : '',
-    active && !v.listed ? 'Faqat sizga' : ''
+    !active ? t('vac.closed') : (n === 0 ? t('vac.today') : t('vac.daysAgo', { n })),
+    v.status === 'paused' ? t('vac.paused') : '',
+    active && !v.listed ? t('vac.private') : ''
   ].filter(Boolean).map(esc).join(' · ');
   return `<div class="vk ${active ? '' : 'closed'}" data-vk="${esc(v.id)}">
     <div class="vk-h"><div class="vk-ti">${esc(v.title)}</div>
-      <button class="vk-more" data-more="${esc(v.id)}" aria-label="Amallar">&#8943;</button></div>
+      <button class="vk-more" data-more="${esc(v.id)}" aria-label="${esc(t('vac.more'))}">&#8943;</button></div>
     <div class="vk-mt">${esc(meta)}</div>
     ${funnelHtml(f)}
     ${appsBtn(v.id, f)}
-    ${v.status === 'open' ? `<button class="btn vk-cta" data-match="${esc(v.id)}">Mos nomzodlarni ko'rish</button>` : ''}
-    <div class="vk-ft">${foot}${ask ? ' · Hali ochiqmi? <button class="vk-yes" data-conf="' + esc(v.id) + '">Ha</button>' : ''}</div>
+    ${v.status === 'open' ? `<button class="btn vk-cta" data-match="${esc(v.id)}">${esc(t('vac.matches'))}</button>` : ''}
+    <div class="vk-ft">${foot}${ask ? ` · ${esc(t('vac.stillOpen'))} <button class="vk-yes" data-conf="${esc(v.id)}">${esc(t('common.yes'))}</button>` : ''}</div>
   </div>`;
 }
 
 function renderVacs(){
   if (!VACS.length) {
-    $('vcList').innerHTML = `<div class="msg">Vakansiya yo'q.<br><br>
-      "+ Yangi vakansiya" bilan kim kerakligini yozing — nomzodlar o'zi ariza bera boshlaydi.</div>`;
+    $('vcList').innerHTML = `<div class="msg">${t('vac.empty')}</div>`;
     return;
   }
   const act = VACS.filter(v => v.status !== 'closed'), cl = VACS.filter(v => v.status === 'closed');
   $('vcList').innerHTML = act.map(vacCardHtml).join('') + (cl.length
-    ? `<button class="vk-closed-h" id="bClosed">${showClosed ? '&#9662;' : '&#9656;'} Yopilganlar (${cl.length})</button>` +
+    ? `<button class="vk-closed-h" id="bClosed">${showClosed ? '&#9662;' : '&#9656;'} ${esc(t('vac.closedList', { n: cl.length }))}</button>` +
       (showClosed ? cl.map(vacCardHtml).join('') : '')
     : '');
   if ($('bClosed')) $('bClosed').onclick = () => { showClosed = !showClosed; renderVacs(); };
@@ -1138,10 +1187,10 @@ async function loadVacancies(){
 
 // Mos nomzodlar — vakansiya mezonlari bo'yicha anonim kartalar
 async function startMatches(id, b){
-  b.disabled = true; const was = b.textContent; b.textContent = 'Qidirilmoqda…';
+  b.disabled = true; const was = b.textContent; b.textContent = t('common.searching');
   try {
     const r = await api(`/api/ma/vacancies/${id}/matches`, { method:'POST', body:'{}' });
-    if (!r.key) { alert(r.message || 'Mos nomzod topilmadi'); b.disabled = false; b.textContent = was; return; }
+    if (!r.key) { alert(r.message || t('vac.noMatch')); b.disabled = false; b.textContent = was; return; }
     haptic(); closeSheet(); openSearch(r.key, true);
   } catch(e){ alert(e.message); b.disabled = false; b.textContent = was; }
 }
@@ -1149,33 +1198,34 @@ async function startMatches(id, b){
 // ── Vakansiya sahifasi: voronka, shartlar, nomzodlar, arizalar ──
 async function showVacancy(id){
   sheetEnter('vac:' + id, () => showVacancy(id));
-  openSheet('Vakansiya', '<div class="msg">Yuklanmoqda…</div>');
+  openSheet(t('vac.sheet'), `<div class="msg">${esc(t('common.loading'))}</div>`);
   let d;
   try { d = await api(`/api/ma/vacancies/${encodeURIComponent(id)}/detail`); }
   catch(e){ $('shB').innerHTML = `<div class="msg">${esc(e.message)}</div>`; return; }
   const v = d.vacancy, f = v.funnel || {};
   $('shT').textContent = v.title;
 
-  const kv = (k, val) => val ? `<div class="vd-kv"><span class="k">${k}</span><span class="v">${esc(val)}</span></div>` : '';
-  const age = v.minAge && v.maxAge ? `${v.minAge}–${v.maxAge} yosh` : v.minAge ? `${v.minAge} yoshdan` : v.maxAge ? `${v.maxAge} yoshgacha` : '';
+  const kv = (k, val) => val ? `<div class="vd-kv"><span class="k">${esc(t(k))}</span><span class="v">${esc(val)}</span></div>` : '';
+  const age = v.minAge && v.maxAge ? t('vk.ageRange', { a: v.minAge, b: v.maxAge })
+            : v.minAge ? t('vk.ageFrom', { n: v.minAge }) : v.maxAge ? t('vk.ageTo', { n: v.maxAge }) : '';
   const info = [
-    kv('Maosh', v.salaryText), kv('Jadval', v.schedule), kv('Smena', SHIFT_L[v.shift]),
-    kv('Sharoit', v.conditions), kv('Hudud', v.location),
-    kv('Boshlash', v.startDate ? dShort(v.startDate) : ''), kv('Kerak', v.headcount > 1 ? v.headcount + ' kishi' : ''),
-    kv('Tajriba', v.minExp ? v.minExp + ' yildan' : ''), kv('Yosh', age), kv('Tillar', (v.languages || []).join(', ')),
-    kv('Holat', v.status === 'closed' ? 'Yopilgan' : (v.listed ? 'E\'lon qilingan' : 'Faqat sizga'))
+    kv('vk.salary', v.salaryText), kv('vk.schedule', v.schedule), kv('vk.shift', v.shift ? shiftL(v.shift) : ''),
+    kv('vk.cond', v.conditions), kv('vk.region', v.location),
+    kv('vk.start', v.startDate ? dShort(v.startDate) : ''), kv('vk.need', v.headcount > 1 ? t('unit.people', { n: v.headcount }) : ''),
+    kv('vk.exp', v.minExp ? t('vk.expFrom', { n: v.minExp }) : ''), kv('vk.age', age), kv('vk.langs', (v.languages || []).join(', ')),
+    kv('vk.status', v.status === 'closed' ? t('vac.closed') : (v.listed ? t('vac.listed') : t('vac.private')))
   ].join('');
 
   $('shB').innerHTML = `
     ${funnelHtml(f)}
     ${appsBtn(v.id, f)}
-    ${v.status === 'open' ? `<button class="btn vk-cta" id="vdMatch">Mos nomzodlarni ko'rish</button>` : ''}
-    <div class="vd-sec">Nomzodlar (${d.items.length})</div>
+    ${v.status === 'open' ? `<button class="btn vk-cta" id="vdMatch">${esc(t('vac.matches'))}</button>` : ''}
+    <div class="vd-sec">${esc(t('vd.cands', { n: d.items.length }))}</div>
     <div id="vdItems">${d.items.length ? d.items.map(candHtml).join('')
-      : '<div class="cd-wait">Hali nomzod tanlanmagan.</div>'}</div>
-    <div class="vd-sec">Shartlar</div>
+      : `<div class="cd-wait">${esc(t('vd.none'))}</div>`}</div>
+    <div class="vd-sec">${esc(t('vd.terms'))}</div>
     ${info}
-    <button class="cd-btn" id="vdMenu" style="width:100%;margin-top:18px">Tahrirlash va boshqa amallar</button>`;
+    <button class="cd-btn" id="vdMenu" style="width:100%;margin-top:18px">${esc(t('vd.menu'))}</button>`;
 
   wireCards($('vdItems'), () => showVacancy(id));
   if ($('vdMatch')) $('vdMatch').onclick = e => startMatches(id, e.currentTarget);
@@ -1190,17 +1240,17 @@ function vacMenu(id, vObj){
   sheetEnter('menu:' + id, () => vacMenu(id, v));
   const active = v.status !== 'closed';
   openSheet(v.title, `
-    <button class="menu-it" data-m="edit">${IC.edit}Tahrirlash</button>
+    <button class="menu-it" data-m="edit">${IC.edit}${esc(t('m.edit'))}</button>
     ${active ? (v.listed
-      ? `<button class="menu-it" data-m="unlist">${IC.eyeoff}E'londan olish — faqat sizga</button>`
-      : `<button class="menu-it" data-m="list">${IC.megaphone}E'lon qilish — nomzodlar ariza bersin</button>`) : ''}
+      ? `<button class="menu-it" data-m="unlist">${IC.eyeoff}${esc(t('m.unlist'))}</button>`
+      : `<button class="menu-it" data-m="list">${IC.megaphone}${esc(t('m.list'))}</button>`) : ''}
     ${active
-      ? `<button class="menu-it d" data-m="close">${IC.close}Yopish</button>`
-      : `<button class="menu-it" data-m="reopen">${IC.reopen}Qayta ochish</button>`}`);
+      ? `<button class="menu-it d" data-m="close">${IC.close}${esc(t('m.close'))}</button>`
+      : `<button class="menu-it" data-m="reopen">${IC.reopen}${esc(t('m.reopen'))}</button>`}`);
   $('shB').querySelectorAll('[data-m]').forEach(b => b.onclick = async () => {
     const m = b.dataset.m;
     if (m === 'edit') { vacForm(v); return; }
-    if (m === 'close' && !confirm('Vakansiya yopiladi. Davom etamizmi?')) return;
+    if (m === 'close' && !confirm(t('m.closeConfirm'))) return;
     const body = m === 'list' ? { listed: true } : m === 'unlist' ? { listed: false }
                : m === 'close' ? { status: 'closed' } : { status: 'open' };
     b.disabled = true;
@@ -1217,53 +1267,49 @@ function vacMenu(id, vObj){
 // Lavozim — server bilan bir xil ro'yxat (src/data/roles.js), o'zgarsa
 // ikkala joyda. Ilgari forma lavozim so'ramasdi: vakansiya 'boshqa'
 // bo'lib qolardi va bot qidiruvi uni tanimay yoniga dublikat ochardi.
-const ROLES = [['ofitsiant','Ofitsiant'],['barmen','Barmen'],['xostess','Xostess'],
-  ['oshpaz','Oshpaz'],['kassir','Kassir'],['menejer','Menejer'],['operator','Call operator']];
-const SHIFT_T = { kunduzgi:'kunduzgi smena', kechki:'kechki smena', ikkalasi:'kunduzgi/kechki smena' };
-// Server shabloni bilan bir xil sarlavha (vacancyAuto.makeTitle)
-const autoTitle = (r, s) => {
-  const l = (ROLES.find(x => x[0] === r) || [])[1];
-  return l ? (SHIFT_T[s] ? l + ', ' + SHIFT_T[s] : l) : '';
-};
+const ROLES = ['ofitsiant', 'barmen', 'xostess', 'oshpaz', 'kassir', 'menejer', 'operator'];   // yozuvi — t('role.<kalit>')
+// Server shabloni bilan bir xil sarlavha — qoida lug'atda (THI18N.vacTitle),
+// vacancyAuto.makeTitle ham shundan. Server avtomatik sarlavhani bazaga
+// o'zbekcha yozadi va o'quvchi tilida qaytaradi.
+const autoTitle = (r, s) => ROLES.includes(r) ? I18N.vacTitle(r, s, LANG) : '';
 
 function vacForm(v){
   sheetEnter('form:' + (v ? v.id : 'new'), () => vacForm(v));
   const d = v || {};
-  const roleOpts = `<option value="">— tanlang —</option>` + ROLES.map(([k, l]) =>
-    `<option value="${k}" ${d.role === k ? 'selected' : ''}>${l}</option>`).join('');
-  openSheet(v ? 'Tahrirlash' : 'Yangi vakansiya', `
-    <div class="fl"><label>Lavozim *</label>
+  const sec = k => `<div style="font-size:12px;color:var(--muted);text-transform:uppercase;
+      letter-spacing:.5px;font-weight:600;margin:16px 0 0">${esc(t(k))}</div>`;
+  const roleOpts = `<option value="">${esc(t('form.choose'))}</option>` + ROLES.map(k =>
+    `<option value="${k}" ${d.role === k ? 'selected' : ''}>${esc(t('role.' + k))}</option>`).join('');
+  openSheet(t(v ? 'form.edit' : 'form.new'), `
+    <div class="fl"><label>${esc(t('form.role'))}</label>
       <select id="fRo">${roleOpts}</select></div>
-    <div class="fl"><label>Sarlavha *</label>
-      <input id="fTi" value="${esc(d.title)}" placeholder="Ofitsiant, kechki smena"></div>
+    <div class="fl"><label>${esc(t('form.title'))}</label>
+      <input id="fTi" value="${esc(d.title)}" placeholder="${esc(t('form.titlePh'))}"></div>
 
-    <div style="font-size:12px;color:var(--muted);text-transform:uppercase;
-      letter-spacing:.5px;font-weight:600;margin:16px 0 0">Talab</div>
+    ${sec('form.req')}
     <div class="two">
-      <div class="fl"><label>Tajriba (yil)</label><input id="fEx" inputmode="numeric" value="${d.minExp ?? ''}"></div>
-      <div class="fl"><label>Nechta odam</label><input id="fHc" inputmode="numeric" value="${d.headcount || 1}"></div>
+      <div class="fl"><label>${esc(t('form.exp'))}</label><input id="fEx" inputmode="numeric" value="${d.minExp ?? ''}"></div>
+      <div class="fl"><label>${esc(t('form.hc'))}</label><input id="fHc" inputmode="numeric" value="${d.headcount || 1}"></div>
     </div>
-    <div class="fl"><label>Smena</label>
+    <div class="fl"><label>${esc(t('form.shift'))}</label>
       <select id="fSh">
-        <option value=""           ${!d.shift ? 'selected' : ''}>Farqi yo'q</option>
-        <option value="kunduzgi"   ${d.shift === 'kunduzgi' ? 'selected' : ''}>Kunduzgi</option>
-        <option value="kechki"     ${d.shift === 'kechki' ? 'selected' : ''}>Kechki</option>
-        <option value="ikkalasi"   ${d.shift === 'ikkalasi' ? 'selected' : ''}>Ikkalasi</option>
+        <option value=""           ${!d.shift ? 'selected' : ''}>${esc(t('form.any'))}</option>
+        <option value="kunduzgi"   ${d.shift === 'kunduzgi' ? 'selected' : ''}>${esc(t('shift.kunduzgi'))}</option>
+        <option value="kechki"     ${d.shift === 'kechki' ? 'selected' : ''}>${esc(t('shift.kechki'))}</option>
+        <option value="ikkalasi"   ${d.shift === 'ikkalasi' ? 'selected' : ''}>${esc(t('form.both'))}</option>
       </select></div>
 
-    <div style="font-size:12px;color:var(--muted);text-transform:uppercase;
-      letter-spacing:.5px;font-weight:600;margin:16px 0 0">Taklif</div>
+    ${sec('form.offer')}
     <div class="two">
-      <div class="fl"><label>Maosh (dan)</label><input id="fSf" inputmode="numeric" value="${d.salaryFrom ?? ''}" placeholder="4000000"></div>
-      <div class="fl"><label>Maosh (gacha)</label><input id="fSt" inputmode="numeric" value="${d.salaryTo ?? ''}" placeholder="5000000"></div>
+      <div class="fl"><label>${esc(t('form.sf'))}</label><input id="fSf" inputmode="numeric" value="${d.salaryFrom ?? ''}" placeholder="4000000"></div>
+      <div class="fl"><label>${esc(t('form.st'))}</label><input id="fSt" inputmode="numeric" value="${d.salaryTo ?? ''}" placeholder="5000000"></div>
     </div>
-    <div class="fl"><label>Grafik</label><input id="fSc" value="${esc(d.schedule)}" placeholder="6/1, 16:00-24:00"></div>
-    <div class="fl"><label>Qo'shimcha shartlar</label>
-      <textarea id="fCo" placeholder="Ovqat, forma, yo'l kira">${esc(d.conditions)}</textarea>
-      <div class="hint">Nomzod birinchi shuni o'qiydi. Aniq yozsangiz
-        rozi bo'lish ehtimoli oshadi.</div></div>
+    <div class="fl"><label>${esc(t('form.sc'))}</label><input id="fSc" value="${esc(d.schedule)}" placeholder="6/1, 16:00-24:00"></div>
+    <div class="fl"><label>${esc(t('form.co'))}</label>
+      <textarea id="fCo" placeholder="${esc(t('form.coPh'))}">${esc(d.conditions)}</textarea>
+      <div class="hint">${esc(t('form.coHint'))}</div></div>
 
-    <button class="btn" id="fSave" style="width:100%;margin-top:16px">Saqlash</button>`);
+    <button class="btn" id="fSave" style="width:100%;margin-top:16px">${esc(t('common.save'))}</button>`);
 
   // Sarlavha lavozim va smenadan o'zi yoziladi — mijoz o'zi yozguncha
   let autoT = !d.title || d.title === autoTitle(d.role, d.shift);
@@ -1274,19 +1320,19 @@ function vacForm(v){
 
   $('fSave').onclick = async () => {
     const role = $('fRo').value;
-    if (!role) return alert('Lavozimni tanlang');
+    if (!role) return alert(t('form.roleReq'));
     const title = $('fTi').value.trim() || autoTitle(role, $('fSh').value);
     const body = {
       role, title, minExp: $('fEx').value, headcount: $('fHc').value, shift: $('fSh').value,
       salaryFrom: $('fSf').value, salaryTo: $('fSt').value,
       schedule: $('fSc').value.trim(), conditions: $('fCo').value.trim()
     };
-    $('fSave').disabled = true; $('fSave').textContent = 'Saqlanmoqda…';
+    $('fSave').disabled = true; $('fSave').textContent = t('common.saving');
     try {
       if (v) await api('/api/ma/vacancies/' + v.id, { method:'PATCH', body: JSON.stringify(body) });
       else   await api('/api/ma/vacancies', { method:'POST', body: JSON.stringify(body) });
       closeSheet(); loadVacancies();
-    } catch(e){ alert(e.message); $('fSave').disabled = false; $('fSave').textContent = 'Qayta urinish'; }
+    } catch(e){ alert(e.message); $('fSave').disabled = false; $('fSave').textContent = t('common.retry'); }
   };
 }
 $('bNewV').onclick = () => vacForm(null);
@@ -1308,13 +1354,13 @@ function askConfirm(text){
 // oynasi), o'shani qayta chizish
 async function openFromApp(b, refresh){
   if (CREDITS != null && CREDITS < 1) {
-    alert('Kredit yetarli emas. Tepadagi balansni bosib, kredit so\'rang.');
+    alert(t('open.noCredit'));
     showCredits(); return;
   }
-  const bal = CREDITS != null ? `\nBalans: ${CREDITS} → ${CREDITS - 1}` : '';
-  const ok = await askConfirm(`Kontakt ochiladi va 1 kredit yechiladi.${bal}\n\nNomzodning ismi, telefoni va chat ochiladi.`);
+  const bal = CREDITS != null ? t('open.bal', { a: CREDITS, b: CREDITS - 1 }) : '';
+  const ok = await askConfirm(t('open.confirm', { bal }));
   if (!ok) return;
-  b.disabled = true; const was = b.innerHTML; b.textContent = 'Ochilmoqda…';
+  b.disabled = true; const was = b.innerHTML; b.textContent = t('open.opening');
   try {
     const r = await api(`/api/ma/applications/${b.dataset.open}/open`, { method:'POST', body:'{}' });
     if (r.balance != null) CREDITS = r.balance;
@@ -1335,21 +1381,18 @@ async function openFromApp(b, refresh){
 function appCardHtml(it){
   const c = it.candidate;
   if (!c) return '';
-  const meta = [
-    c.experienceYears ? c.experienceYears + ' yil tajriba' : 'Tajribasiz',
-    c.age ? c.age + ' yosh' : '', c.location || ''
-  ].filter(Boolean).join(' · ');
+  const meta = factLine(c);
   const done = it.state === 'shortlisted' || it.state === 'rejected';
   const w = whoOf(c);
-  const chip = w.open ? ['open', 'Kontakt ochiq']
-             : it.state === 'shortlisted' ? ['waiting', 'Tanlandi'] : it.state === 'rejected' ? ['no', 'Rad etildi']
-             : it.isNew ? ['waiting', 'Yangi'] : ['no', 'Ko\'rildi'];
+  const chip = w.open ? ['open', t('ap.open')]
+             : it.state === 'shortlisted' ? ['waiting', t('ap.picked')] : it.state === 'rejected' ? ['no', t('ap.rejected')]
+             : it.isNew ? ['waiting', t('ap.new')] : ['no', t('ap.seen')];
   const photo = c.hasPhoto ? `<img src="${candPhoto(c.id)}" alt="">` : esc(w.ini);
   const head = `<div class="cd-top">
       <div class="cd-ph">${photo}</div>
       <div class="cd-mid"><div class="cd-nm">${esc(w.title)}</div>
         <div class="cd-sub">${esc([w.sub, meta].filter(Boolean).join(' · '))}</div></div>
-      <span class="stc ${chip[0]}">${chip[1]}</span>
+      <span class="stc ${chip[0]}">${esc(chip[1])}</span>
     </div>
     ${it.message ? `<div class="cd-wait" style="color:var(--ink)">"${esc(it.message)}"</div>` : ''}`;
 
@@ -1358,25 +1401,25 @@ function appCardHtml(it){
     const tel = String(c.contact.phone || '').replace(/[^\d+]/g, '');
     return `<div class="cd">${head}
       <div class="cd-acts">
-        ${tel ? `<a class="cd-btn p" href="tel:${esc(tel)}">${IC.phone}Qo'ng'iroq</a>` : ''}
-        ${c.threadId ? `<button class="cd-btn" data-chat="${esc(c.id)}">${IC.chat}Yozish</button>` : ''}
-        <button class="cd-btn" data-rz="${esc(c.id)}">${IC.doc}Rezyume</button>
+        ${tel ? `<a class="cd-btn p" href="tel:${esc(tel)}">${IC.phone}${esc(t('act.call'))}</a>` : ''}
+        ${c.threadId ? `<button class="cd-btn" data-chat="${esc(c.id)}">${IC.chat}${esc(t('act.write'))}</button>` : ''}
+        <button class="cd-btn" data-rz="${esc(c.id)}">${IC.doc}${esc(t('act.resume'))}</button>
       </div>
-      <div class="cd-foot"><span>Ariza: ${dShort(it.createdAt)} · bosqichlar "Tanlovlar"da</span></div>
+      <div class="cd-foot"><span>${esc(t('ap.date', { d: dShort(it.createdAt) }) + t('ap.stagesInSl'))}</span></div>
     </div>`;
   }
   return `<div class="cd">${head}
     <div class="cd-acts">
-      <button class="cd-btn" data-rz="${esc(c.id)}">${IC.doc}Rezyume</button>
+      <button class="cd-btn" data-rz="${esc(c.id)}">${IC.doc}${esc(t('act.resume'))}</button>
       ${done ? '' : it.instant
         // Yangi ariza — kontaktni o'zi ochadi (tasdiq bilan, -1 kredit)
-        ? `<button class="cd-btn p" data-open="${it.id}" data-cand="${esc(c.id)}">${IC.phone}Kontaktni ochish</button>`
+        ? `<button class="cd-btn p" data-open="${it.id}" data-cand="${esc(c.id)}">${IC.phone}${esc(t('ap.openContact'))}</button>`
         // Eski ariza yoki telefon tekshirilmagan — HR orqali
-        : `<button class="cd-btn p" data-pick="${it.id}">Tanlash</button>`}
-      ${done ? '' : `<button class="cd-btn" data-rej="${it.id}" style="color:var(--danger)">Rad etish</button>`}
+        : `<button class="cd-btn p" data-pick="${it.id}">${esc(t('ap.pick'))}</button>`}
+      ${done ? '' : `<button class="cd-btn" data-rej="${it.id}" style="color:var(--danger)">${esc(t('ap.reject'))}</button>`}
     </div>
-    <div class="cd-foot"><span>Ariza: ${dShort(it.createdAt)}${
-      done ? '' : it.instant ? ' · 1 kredit, darhol ochiladi' : it.why ? ' · ' + esc(it.why) : ''}</span></div>
+    <div class="cd-foot"><span>${esc(t('ap.date', { d: dShort(it.createdAt) }) + (
+      done ? '' : it.instant ? t('ap.instant') : it.why ? ' · ' + it.why : ''))}</span></div>
   </div>`;
 }
 
@@ -1403,20 +1446,14 @@ function wireApps(root, refresh){
 // ── Bitta vakansiyaning arizalari (vakansiya kartasi/sahifasidan) ──
 async function showApps(id){
   sheetEnter('apps:' + id, () => showApps(id));
-  openSheet('Arizalar', '<div class="msg">Yuklanmoqda…</div>');
+  openSheet(t('apps.sheet'), `<div class="msg">${esc(t('common.loading'))}</div>`);
   let d;
   try { d = await api(`/api/ma/vacancies/${id}/applications`); }
   catch(e){ $('shB').innerHTML = `<div class="msg">${esc(e.message)}</div>`; return; }
 
   $('shT').textContent = d.vacancy.title;
   if (!d.items.length) {
-    $('shB').innerHTML = d.vacancy.listed
-      ? `<div class="msg">Hali ariza yo'q.<br><br>
-      Vakansiya nomzodlarga ko'rsatilyapti. Tasdiqlab turing —
-      tasdiqlanmagani ro'yxatdan tushib qoladi.</div>`
-      : `<div class="msg">Hali ariza yo'q.<br><br>
-      Vakansiya e'lon qilinmagan — nomzodlar uni ko'rmaydi.
-      Ariza kelishi uchun "E'lon qilish" ni bosing.</div>`;
+    $('shB').innerHTML = `<div class="msg">${t(d.vacancy.listed ? 'apps.emptyListed' : 'apps.emptyPrivate')}</div>`;
     return;
   }
   $('shB').innerHTML = d.items.map(appCardHtml).join('');
@@ -1440,9 +1477,7 @@ async function loadApps(){
 
 function renderApps(){
   if (!AP_ROWS.length) {
-    $('apList').innerHTML = `<div class="msg">Hali ariza yo'q.<br><br>
-      Vakansiyangizni e'lon qiling — nomzodlar o'zi ariza bera boshlaydi.
-      Yangi ariza kelsa Telegram'ga xabar keladi.</div>`;
+    $('apList').innerHTML = `<div class="msg">${t('ap.empty')}</div>`;
     return;
   }
   const waitN = AP_ROWS.filter(appWaiting).length;
@@ -1459,14 +1494,14 @@ function renderApps(){
 
   $('apList').innerHTML =
     `<div class="flt">
-      <button class="${APF === 'wait' ? 'on' : ''}" data-af="wait">Kutilmoqda<b>${waitN}</b></button>
-      <button class="${APF === 'all' ? 'on' : ''}" data-af="all">Hammasi<b>${AP_ROWS.length}</b></button>
+      <button class="${APF === 'wait' ? 'on' : ''}" data-af="wait">${esc(t('ap.fWait'))}<b>${waitN}</b></button>
+      <button class="${APF === 'all' ? 'on' : ''}" data-af="all">${esc(t('ap.fAll'))}<b>${AP_ROWS.length}</b></button>
     </div>` +
     (groups.length ? groups.map(g => `<div class="grp">
-      <div class="grp-h"><b>${esc(g.title)}</b>${g.closed ? '<span class="cl">Yopilgan</span>' : ''}
-        <span>${g.items.length} ariza</span></div>
+      <div class="grp-h"><b>${esc(g.title)}</b>${g.closed ? `<span class="cl">${esc(t('grp.closed'))}</span>` : ''}
+        <span>${esc(t('ap.count', { n: g.items.length }))}</span></div>
       ${g.items.map(appCardHtml).join('')}
-    </div>`).join('') : '<div class="msg">Qaror kutayotgan ariza yo\'q.</div>');
+    </div>`).join('') : `<div class="msg">${esc(t('ap.noneWait'))}</div>`);
 
   $('apList').querySelectorAll('[data-af]').forEach(b => b.onclick = () => { APF = b.dataset.af; haptic('sel'); renderApps(); });
   wireApps($('apList'), loadApps);
@@ -1476,21 +1511,20 @@ function renderApps(){
 // Kamdan-kam ishlatiladi, shuning uchun tab emas, oyna.
 async function showCredits(){
   sheetEnter('credits', showCredits);
-  openSheet('Balans', `
-    <div class="cr-big"><b>${CREDITS == null ? '—' : CREDITS}</b><span>kredit · 1 kredit = 1 ochilgan kontakt</span></div>
-    <button class="btn" id="bTop" style="width:100%">Kredit so'rash</button>
-    <div style="font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.5">
-      So'rov HR'ga boradi. Tasdiqlangach balansingiz yangilanadi.</div>
-    <div class="vd-sec">Harakatlar tarixi</div>
-    <div class="card" id="crList"><div class="msg">Yuklanmoqda…</div></div>`);
+  openSheet(t('cr.sheet'), `
+    <div class="cr-big"><b>${CREDITS == null ? '—' : CREDITS}</b><span>${esc(t('cab.credits', { n: CREDITS || 0 }))}</span></div>
+    <button class="btn" id="bTop" style="width:100%">${esc(t('cr.ask'))}</button>
+    <div style="font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.5">${esc(t('cr.askHint'))}</div>
+    <div class="vd-sec">${esc(t('cr.hist'))}</div>
+    <div class="card" id="crList"><div class="msg">${esc(t('common.loading'))}</div></div>`);
   $('bTop').onclick = async () => {
     const b = $('bTop');
-    b.disabled = true; b.textContent = 'Yuborilmoqda…';
+    b.disabled = true; b.textContent = t('common.sending');
     try{
       await api('/api/ma/topup', { method:'POST', body: JSON.stringify({ amount: 10 }) });
-      b.textContent = 'So\'rov yuborildi';
+      b.textContent = t('cr.sent');
       try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
-    }catch(e){ b.disabled = false; b.textContent = 'Qayta urinish'; }
+    }catch(e){ b.disabled = false; b.textContent = t('common.retry'); }
   };
   loadCredits();
 }
@@ -1514,8 +1548,8 @@ function tmOf(s){
   const d = new Date(s), n = new Date();
   const sameDay = d.toDateString() === n.toDateString();
   return sameDay
-    ? d.toLocaleTimeString('uz-UZ', { hour:'2-digit', minute:'2-digit' })
-    : d.toLocaleDateString('uz-UZ', { day:'2-digit', month:'short' });
+    ? d.toLocaleTimeString(LOC(), { hour:'2-digit', minute:'2-digit' })
+    : d.toLocaleDateString(LOC(), { day:'2-digit', month:'short' });
 }
 
 async function loadChats(){
@@ -1531,7 +1565,7 @@ async function loadChats(){
 function drawChats(){
   const box = $('chatList');
   setDot(CHATS.reduce((s, c) => s + (c.unread || 0), 0));
-  if (!CHATS.length){ box.innerHTML = '<div class="ch-empty">Hali suhbat yo\'q</div>'; return; }
+  if (!CHATS.length){ box.innerHTML = '<div class="ch-empty">' + esc(t('chat.none')) + '</div>'; return; }
   box.innerHTML = CHATS.map((c, i) => {
     const ag = !!c.pinned;
     const nm = c.title || '—';
@@ -1563,14 +1597,15 @@ async function openChat(c){
   $('cvVf').innerHTML = ag ? VF : '';
   // Nomzod suhbatida ostki qator — lavozimi (oxirgi xabar emas): sarlavha
   // "kim bilan gaplashyapman" ga javob beradi
-  $('cvSub').textContent = ag ? 'Agentlik' : (c.position || c.subtitle || '');
+  $('cvSub').textContent = ag ? t('chat.agency') : (c.position || c.subtitle || '');
+  $('cvSub').dataset.after = t('chat.resumeLink');     // CSS ::after — " · rezyume ›"
   $('cvAv').innerHTML = ag ? '&#9733;' : avatarHtml(c);
   $('cvAv').className = 'ch-av' + (ag ? ' ag' : '');
   // Sarlavhani bosish — rezyume (faqat kontakt ochiq bo'lsa)
   const tap = !ag && c.open && c.candidateId;
   $('cvWho').classList.toggle('tap', !!tap);
   $('cvWho').onclick = tap ? () => showResume(c.candidateId) : null;
-  $('cvBody').innerHTML = '<div class="ch-empty">Yuklanmoqda…</div>';
+  $('cvBody').innerHTML = '<div class="ch-empty">' + esc(t('common.loading')) + '</div>';
   $('cv').classList.remove('hide');
   await reloadMsgs();
   c.unread = 0;
@@ -1589,7 +1624,7 @@ async function reloadMsgs(){
 
 function drawMsgs(ms){
   const b = $('cvBody');
-  if (!ms.length){ b.innerHTML = '<div class="ch-empty">Hali xabar yo\'q</div>'; return; }
+  if (!ms.length){ b.innerHTML = '<div class="ch-empty">' + esc(t('chat.noMsgs')) + '</div>'; return; }
   b.innerHTML = ms.map(m => {
     // Tizim xabari ALOHIDA ko'rinadi — uni odamning gapi bilan
     // adashtirish yozishmani dalil sifatida ishlatishni buzadi.
@@ -1614,7 +1649,7 @@ async function sendMsg(){
   } catch(e){
     // Xatoni ko'rinadigan qilamiz: jim yutilsa odam qayta-qayta bosadi
     $('cvBody').insertAdjacentHTML('beforeend',
-      '<div class="cmsg sys">Yuborilmadi: ' + esc(e.message) + '</div>');
+      '<div class="cmsg sys">' + esc(t('chat.fail', { e: e.message })) + '</div>');
     $('cvBody').scrollTop = $('cvBody').scrollHeight;
   }
   $('cvSend').disabled = false;
@@ -1624,12 +1659,13 @@ async function sendMsg(){
 // Faqat kontakt ochilgan nomzod: server tekshiradi (contactView), bu
 // yerda shunchaki ko'rsatamiz. Asl PDF emas — nomzodning o'z profili:
 // u tahrirlasa mijoz yangisini ko'radi.
-const SHIFT_L = { kunduzgi:'Kunduzgi', kechki:'Kechki', ikkalasi:'Kunduzgi va kechki' };
-const SAN_L = { yes:'Bor', no:"Yo'q", expired:"Muddati o'tgan" };
+// Smena kaliti -> "Kunduzgi" / "Дневная"; notanish qiymat o'zicha
+const shiftL = s => s && I18N.D.uz['shift.' + s] !== undefined ? t('shift.' + s) : (s || '');
+const sanL = s => ['yes', 'no', 'expired'].includes(s) ? t('san.' + s) : '';
 
 async function showResume(id){
   sheetEnter('rz:' + id, () => showResume(id));
-  openSheet('Rezyume', '<div class="msg">Yuklanmoqda…</div>');
+  openSheet(t('rz.sheet'), '<div class="msg">' + esc(t('common.loading')) + '</div>');
   let r;
   try { r = await api('/api/ma/candidates/' + encodeURIComponent(id)); }
   catch(e){ $('shB').innerHTML = '<div class="msg">' + esc(e.message) + '</div>'; return; }
@@ -1638,27 +1674,27 @@ async function showResume(id){
   // anonymize'dan o'tkazgan, bu yerda faqat sarlavhani moslaymiz)
   const open = r.open !== false;
   // roleText — server rol bo'yicha bir xil yozadi ("Xostess", xom "Хостес" emas)
-  const role = r.roleText || r.roleLabel || r.desiredPosition || 'Nomzod';
-  const nm = open ? (r.fullName || 'Nomzod') : role;
-  $('shT').textContent = open ? (r.fullName || 'Rezyume') : 'Rezyume · ' + (r.publicCode || '');
-  const meta = [r.age ? r.age + ' yosh' : '', r.location || '',
-    r.experienceYears ? r.experienceYears + ' yil tajriba' : 'Tajribasiz'].filter(Boolean).join(' · ');
-  const kv = (k, v) => v ? '<div class="rs-kv"><span class="k">' + k + '</span><span class="v">' + esc(v) + '</span></div>' : '';
+  const role = r.roleText || r.roleLabel || r.desiredPosition || t('role.candidate');
+  const nm = open ? (r.fullName || t('role.candidate')) : role;
+  $('shT').textContent = open ? (r.fullName || t('rz.sheet')) : t('rz.code', { c: r.publicCode || '' });
+  const meta = [r.age ? t('fact.age', { n: r.age }) : '', r.location || '', expTxt(r.experienceYears)]
+    .filter(Boolean).join(' · ');
+  const kv = (k, v) => v ? '<div class="rs-kv"><span class="k">' + esc(t(k)) + '</span><span class="v">' + esc(v) + '</span></div>' : '';
   const info = [
-    kv('Smena', SHIFT_L[r.shift] || r.shift),
-    kv('Kutilgan maosh', r.salaryExpectation),
-    kv("Ta'lim", r.education),
-    kv('Tillar', (r.languages || []).join(', ')),
-    kv('Sanitar kitobcha', SAN_L[r.sanitaryBook])
+    kv('d.shift', shiftL(r.shift)),
+    kv('rz.salary', r.salaryExpectation),
+    kv('d.edu', r.education),
+    kv('d.langs', (r.languages || []).join(', ')),
+    kv('rz.san', sanL(r.sanitaryBook))
   ].join('');
   const work = (r.workHistory || []).map(w =>
-    '<div class="rs-w"><b>' + esc(w.position || 'Lavozim') + '</b>'
+    '<div class="rs-w"><b>' + esc(w.position || t('rz.pos')) + '</b>'
     + '<div class="m">' + esc([w.company, w.period].filter(Boolean).join(' · ')) + '</div>'
     + (w.description ? '<div class="d">' + esc(w.description) + '</div>' : '') + '</div>').join('');
   // Nomzodning o'z matni — "O'zi haqida"; yo'q bo'lsa AI xulosasi —
   // "Qisqacha" (mijoz uni nomzod yozgan deb o'ylamasin)
   const about = r.experienceSummary || r.summary || '';
-  const aboutH = r.experienceSummary ? 'O\'zi haqida' : 'Qisqacha';
+  const aboutH = esc(t(r.experienceSummary ? 'rz.about' : 'rz.summary'));
 
   $('shB').innerHTML =
     '<div class="rs-hd"><div class="rs-ph">'
@@ -1668,13 +1704,13 @@ async function showResume(id){
     + '<div class="rs-mt">' + esc(meta) + '</div></div></div>'
     + (open
       ? '<div class="rs-ct">'
-        + (r.phone ? '<a href="tel:' + esc(r.phone) + '">&#128222; ' + esc(r.phone) + '</a>' : '<span>Telefon yo\'q</span>')
+        + (r.phone ? '<a href="tel:' + esc(r.phone) + '">&#128222; ' + esc(r.phone) + '</a>' : '<span>' + esc(t('rz.noPhone')) + '</span>')
         + (r.email ? '<span>&#9993;&#65039; ' + esc(r.email) + '</span>' : '') + '</div>'
-      : '<div class="rs-ct" style="color:var(--muted)"><span>&#128274; Ism va telefon kontakt ochilgach ko\'rinadi</span></div>')
+      : '<div class="rs-ct" style="color:var(--muted)"><span>&#128274; ' + esc(t('rz.locked')) + '</span></div>')
     + (about ? '<div class="rs-sec">' + aboutH + '</div><div class="rs-tx">' + esc(about) + '</div>' : '')
-    + (work ? '<div class="rs-sec">Ish tajribasi</div>' + work : '')
-    + (info ? '<div class="rs-sec">Ma\'lumotlar</div>' + info : '')
-    + ((r.skills || []).length ? '<div class="rs-sec">Ko\'nikmalar</div><div class="rs-chips">'
+    + (work ? '<div class="rs-sec">' + esc(t('rz.work')) + '</div>' + work : '')
+    + (info ? '<div class="rs-sec">' + esc(t('rz.info')) + '</div>' + info : '')
+    + ((r.skills || []).length ? '<div class="rs-sec">' + esc(t('rz.skills')) + '</div><div class="rs-chips">'
       + r.skills.map(s => '<span>' + esc(s) + '</span>').join('') + '</div>' : '');
 }
 
@@ -1707,7 +1743,20 @@ function pickTab(id){
   if (id === 'tMS') loadChats();
   moveLens();
 }
-TABS.forEach(([t]) => { $(t).onclick = () => pickTab(t); });
+TABS.forEach(([tb]) => { $(tb).onclick = () => pickTab(tb); });
+
+// ── Til almashtirish (Aloqa bo'limi) ──
+// Serverga yoziladi (Client.lang), keyin joriy bo'lim qayta yuklanadi:
+// holat, rol, maosh yorliqlari serverdan yangi tilda kelsin.
+async function setLang(l){
+  if (!useLang(l)) return;
+  haptic('sel');
+  try { await api('/api/ma/lang', { method:'PATCH', body: JSON.stringify({ lang: l }) }); } catch(e){}
+  loadMe();
+  const on = TABS.find(([tb]) => $(tb).classList.contains('on'));
+  pickTab(on ? on[0] : 'tSL');                 // linza ham yangi yozuv kengligiga moslashadi
+}
+document.querySelectorAll('[data-lang]').forEach(b => { b.onclick = () => setLang(b.dataset.lang); });
 
 // ── Linza: faol tab ostiga prujina bilan suriladi ──
 // Birinchi joylashuv animatsiyasiz — aks holda ochilganda chapdan uchib keladi.
@@ -1815,7 +1864,7 @@ async function openSearch(key, fromCab){
   $('listView').style.display = 'block';
   $('bar').style.display = 'none';
   $('cnt').textContent = '';
-  $('sum').textContent = 'Yuklanmoqda…';
+  $('sum').textContent = t('common.loading');
   $('list').innerHTML = '';
   $('bBackCab').classList.toggle('hide', !FROM_CAB);
   $('cabMode').classList.add('hide');
@@ -1823,9 +1872,10 @@ async function openSearch(key, fromCab){
   window.scrollTo(0, 0);
   try{
     const d = await api('/api/ma/session/' + encodeURIComponent(KEY), { method:'POST', body:'{}' });
+    useLang(d.lang);                           // botdan to'g'ridan-to'g'ri ochilganda /me chaqirilmaydi
     ROWS = d.candidates || [];
     $('sum').textContent = d.summary || '';
-    if (!ROWS.length) { show('Nomzod topilmadi.'); return; }
+    if (!ROWS.length) { show(esc(t('search.notFound'))); return; }
     renderList();
   }catch(e){ show(esc(e.message)); }
 }
@@ -1843,7 +1893,7 @@ $('bBackCab').onclick = backToCab;
 // ══════════════════════════════════════════════════════════
 (async function(){
   if (!INIT) {
-    document.body.innerHTML = '<div class="msg">Bu sahifa Telegram ichida ochilishi kerak.</div>';
+    document.body.innerHTML = '<div class="msg">' + esc(t('boot.needTg')) + '</div>';
     return;
   }
 
@@ -1852,7 +1902,9 @@ $('bBackCab').onclick = backToCab;
 
   $('cabMode').classList.remove('hide');
   moveLens();
-  loadMe();
+  // Avval /me — u haqiqiy tilni (Client.lang) beradi; ro'yxatlar shu tilda chizilsin
+  await loadMe();
+  moveLens();                                    // til almashgan bo'lsa tab yozuvlari kengligi o'zgargan
   loadShortlists();
   refreshUnread();
 

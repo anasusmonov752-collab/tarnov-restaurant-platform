@@ -38,21 +38,22 @@ function validPhone(p) {
  * @param {object} cand  Candidate (phone, jobStatus, jobStatusAt)
  * @returns {{ok:boolean, why?:string}}  why — mijozga ko'rsatiladigan sabab
  */
+// code — lug'at kaliti (th-i18n 'why.<code>'): Mini App sababni mijoz tilida ko'rsatadi
 function eligibility(app, cand) {
-  if (!app || !cand) return { ok: false, why: 'Nomzod topilmadi' };
-  if (app.state === 'rejected') return { ok: false, why: 'Ariza rad etilgan' };
+  if (!app || !cand) return { ok: false, code: 'not_found', why: 'Nomzod topilmadi' };
+  if (app.state === 'rejected') return { ok: false, code: 'rejected', why: 'Ariza rad etilgan' };
   if (cand.jobStatus === 'not_looking') {
-    return { ok: false, why: 'Nomzod hozir ish qidirmayapti — HR avval tekshiradi' };
+    return { ok: false, code: 'not_looking', why: 'Nomzod hozir ish qidirmayapti — HR avval tekshiradi' };
   }
   if (!validPhone(cand.phone)) {
-    return { ok: false, why: 'Telefon raqami tekshirilmagan — HR avval tekshiradi' };
+    return { ok: false, code: 'phone', why: 'Telefon raqami tekshirilmagan — HR avval tekshiradi' };
   }
   const consent = Math.max(
     new Date(app.createdAt).getTime() || 0,
     cand.jobStatusAt ? new Date(cand.jobStatusAt).getTime() : 0
   );
   if (Date.now() - consent > FRESH_DAYS * 864e5) {
-    return { ok: false, why: `Ariza ${FRESH_DAYS} kundan eski — HR avval tekshiradi` };
+    return { ok: false, code: 'old', why: `Ariza ${FRESH_DAYS} kundan eski — HR avval tekshiradi` };
   }
   return { ok: true };
 }

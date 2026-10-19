@@ -30,13 +30,36 @@ const applyReveal = require('../services/applyReveal');
 const { placeLabel, langsLabel } = require('../utils/labels');
 const candidateSearch = require('../services/candidateSearch');
 const relay = require('../services/botRelay');
-const { isValidRole, roleLabel } = require('../data/roles');
+const { isValidRole } = require('../data/roles');
 const agent = require('../services/agent');
 const chat = require('../services/chat');
 const ChatThread = require('../models/ChatThread');
 const { publicBase } = require('../utils/publicBase');
+const I18N = require('../../public/js/th-i18n');
 
 const router = express.Router();
+
+// ── Til ──
+// req.lang — javobdagi matnlar (holat, rol, maosh, xato) shu tilda.
+// Avval imzosiz initData'dan — FAQAT til uchun, limiter yoki guard rad
+// etsa ham xato o'qiladigan tilda chiqsin. clientGuard keyin mijozning
+// saqlangan tanlovi (Client.lang) bilan almashtiradi.
+// Xatolar res.json ichida tarjima qilinadi: servislar o'zbekcha otadi
+// (shortlist, credits, chat) va ularni har joyda ushlab o'tirmaymiz.
+router.use((req, res, next) => {
+  let code = '';
+  try {
+    const u = JSON.parse(new URLSearchParams(req.get('X-Telegram-Init-Data') || '').get('user') || 'null');
+    code = (u && u.language_code) || '';
+  } catch (e) { /* til taxmin qilinmaydi — o'zbekcha */ }
+  req.lang = I18N.fromTelegram(code);
+  const json = res.json.bind(res);
+  res.json = body => json(body && typeof body.error === 'string'
+    ? Object.assign({}, body, { error: I18N.errText(req.lang, body.error) })
+    : body);
+  next();
+});
+const tl = (req, key, vars) => I18N.t(req.lang, key, vars);
 
 const limiter = rateLimit({
   windowMs: 60 * 1000,
@@ -61,6 +84,8 @@ const clientGuard = asyncHandler(async (req, res, next) => {
     });
   }
   req.client = client;
+  // Tanlagan bo'lsa — o'sha; aks holda Telegram tili (yuqoridagi taxmin)
+  if (I18N.LANGS.includes(client.lang)) req.lang = client.lang;
   next();
 });
 
@@ -110,17 +135,18 @@ router.post('/session/:key', clientGuard, asyncHandler(async (req, res) => {
 
   // Anonim karta + kimlik qoidasi: oldin kontaktini ochgan nomzod qidiruvda
   // yana chiqsa — ism bilan; bir xil yozuv (lavozim, Toshkent, tillar)
-  const ids = await identities(ses.agencyId, req.client.id, ordered);
+  const ids = await identities(ses.agencyId, req.client.id, ordered, req.lang);
   const cards = anonymize.forClientList(ordered).map(card => Object.assign(card, ids[card.id], {
     roleLabel: ids[card.id].roleText,
-    location: placeLabel(card.location),
-    languages: langsLabel(card.languages)
+    location: placeLabel(card.location, req.lang),
+    languages: langsLabel(card.languages, req.lang)
   }));
 
   res.json({
     summary: ses.summary,
     credits: req.client.credits,
     clientName: req.client.name,
+    lang: req.lang,
     candidates: cards
   });
 }));
@@ -280,16 +306,11 @@ router.post('/shortlist', clientGuard, asyncHandler(async (req, res) => {
 // uning uchun kredit to'lagan, siz nomzod bilan gaplashib tasdiqlagansiz.
 // Boshqa hech qaysi holatda ism/telefon/email qaytarilmaydi.
 
+// Ichki holat -> mijozga ko'rinadigan guruh. Yozuvi lug'atda: 'cs.<holat>'.
 const CLIENT_STATE = {
-  selected:     { key: 'waiting',  label: 'Ko\'rib chiqilmoqda' },
-  contacting:   { key: 'waiting',  label: 'Bog\'lanilmoqda' },
-  candidate_ok: { key: 'waiting',  label: 'Nomzod rozi — kontakt tayyorlanmoqda' },
-  candidate_no: { key: 'no',       label: 'Nomzod rad etdi' },
-  revealed:     { key: 'open',     label: 'Kontakt ochilgan' },
-  interview:    { key: 'open',     label: 'Suhbat belgilandi' },
-  hired:        { key: 'hired',    label: 'Ishga olindi' },
-  not_fit:      { key: 'no',       label: 'Mos kelmadi' },
-  refunded:     { key: 'refunded', label: 'Javob bermadi — kredit qaytarildi' }
+  selected: 'waiting', contacting: 'waiting', candidate_ok: 'waiting',
+  candidate_no: 'no', revealed: 'open', interview: 'open',
+  hired: 'hired', not_fit: 'no', refunded: 'refunded'
 };
 
 // ── Mijoz haqida: balans va qisqa statistika ──
@@ -311,6 +332,7 @@ router.get('/me', clientGuard, asyncHandler(async (req, res) => {
   res.json({
     name: req.client.name,
     credits: req.client.credits,
+    lang: req.lang,
     stats: {
       searches: rows.length,
       picked,
@@ -320,6 +342,15 @@ router.get('/me', clientGuard, asyncHandler(async (req, res) => {
   });
 }));
 
+// ── Interfeys tili ──
+// Mijozga yoziladi (brauzerga emas) — keyin bot xabarlari ham shu tilda.
+router.patch('/lang', clientGuard, asyncHandler(async (req, res) => {
+  const lang = String((req.body || {}).lang || '');
+  if (!I18N.LANGS.includes(lang)) return res.status(400).json({ error: 'Amal noto\'g\'ri' });
+  await Client.updateOne({ agencyId: req.client.agencyId, id: req.client.id }, { $set: { lang } });
+  res.json({ ok: true, lang });
+}));
+
 // ── Tanlovlarim ──
 router.get('/shortlists', clientGuard, asyncHandler(async (req, res) => {
   const agencyId = req.client.agencyId;
@@ -327,7 +358,7 @@ router.get('/shortlists', clientGuard, asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 }).limit(50).lean();
   if (!rows.length) return res.json([]);
 
-  res.json(await shortlistView(agencyId, req.client.id, rows));
+  res.json(await shortlistView(agencyId, req.client.id, rows, req.lang));
 }));
 
 // ── Tanlov elementlarining ko'rinishi ──
@@ -336,14 +367,15 @@ router.get('/shortlists', clientGuard, asyncHandler(async (req, res) => {
 
 
 // Lavozim — rezyumedagi xom matn ("Хостес") emas, rol bo'yicha bir xil
-function roleText(c) {
-  if (isValidRole(c.role)) return roleLabel(c.role);
-  // Rol 'boshqa' (bazada 162 ta) — lavozimni rezyume matnidan taniymiz
+// lang — mijoz tili; rol yozuvi lug'atdan ('role.<kalit>')
+function roleText(c, lang = 'uz') {
+  if (isValidRole(c.role)) return I18N.t(lang, 'role.' + c.role);
+  // Rol 'boshqa' — lavozimni rezyume matnidan taniymiz
   // ("Хостес" -> Xostess), aks holda mijozga xom ruscha matn chiqadi
   const g = vac.guessRole(c.desiredPosition);
-  if (g) return roleLabel(g);
+  if (g) return I18N.t(lang, 'role.' + g);
   const d = String(c.desiredPosition || '').trim();
-  return d ? d[0].toUpperCase() + d.slice(1) : 'Nomzod';
+  return d ? d[0].toUpperCase() + d.slice(1) : I18N.t(lang, 'role.candidate');
 }
 
 // ── Nomzod "kimligi" — HAMMA JOYDA bitta qoida ──
@@ -352,7 +384,7 @@ function roleText(c) {
 // sarlavha quradi: ochiq -> ism / lavozim, yopiq -> lavozim / kod.
 // Ilgari Arizalar va qidiruv kartalari kontakt ochilgandan keyin ham
 // kodni ko'rsatardi — har joy o'zicha anonim bo'lib qolgan edi.
-async function identities(agencyId, clientId, cands) {
+async function identities(agencyId, clientId, cands, lang) {
   const ids = cands.map(c => c.id);
   if (!ids.length) return {};
   const [pairs, threads] = await Promise.all([
@@ -365,7 +397,7 @@ async function identities(agencyId, clientId, cands) {
   for (const c of cands) {
     const o = open.has(c.id);
     out[c.id] = {
-      roleText: roleText(c),
+      roleText: roleText(c, lang),
       contact: o ? { fullName: c.fullName, phone: c.phone, email: c.email } : null,
       threadId: o ? (tBy[c.id] || '') : ''
     };
@@ -376,7 +408,7 @@ async function identities(agencyId, clientId, cands) {
 // Voronka bosqichi (bosqichlar chizig'i uchun). Kontaktgacha — null.
 const STAGE = { revealed: 'contact', interview: 'interview', hired: 'hired', not_fit: 'not_fit' };
 
-async function shortlistView(agencyId, clientId, rows) {
+async function shortlistView(agencyId, clientId, rows, lang = 'uz') {
   if (!rows.length) return [];
   const ids = [...new Set(rows.flatMap(r => r.items.map(i => i.candidateId)))];
   const vids = [...new Set(rows.map(r => r.vacancyId).filter(Boolean))];
@@ -384,7 +416,8 @@ async function shortlistView(agencyId, clientId, rows) {
     Candidate.find({ restaurantId: agencyId, id: { $in: ids } },
       'id publicCode role desiredPosition age location experienceYears hasPhoto ' +
       'languages shift jobStatus fullName phone email').lean(),
-    vids.length ? Vacancy.find({ agencyId, id: { $in: vids } }, 'id title status').lean() : [],
+    // role/shift — avtomatik sarlavhani mijoz tilida ko'rsatish uchun (titleFor)
+    vids.length ? Vacancy.find({ agencyId, id: { $in: vids } }, 'id title status role shift').lean() : [],
     // "Yozish" tugmasi to'g'ridan-to'g'ri suhbatni ochishi uchun
     ChatThread.find({ agencyId, clientId, kind: 'cc', candidateId: { $in: ids } }, 'id candidateId').lean()
   ]);
@@ -394,14 +427,14 @@ async function shortlistView(agencyId, clientId, rows) {
 
   return rows.map(r => ({
     id: r.id,
-    summary: r.summary || 'Qidiruv',
+    summary: r.summary || I18N.t(lang, 'summary.default'),
     createdAt: r.createdAt,
     vacancyId: r.vacancyId || '',
-    vacancyTitle: (vById[r.vacancyId] || {}).title || '',
+    vacancyTitle: vById[r.vacancyId] ? vac.titleFor(vById[r.vacancyId], lang) : '',
     vacancyStatus: (vById[r.vacancyId] || {}).status || '',
     items: r.items.map(it => {
       const c = byId[it.candidateId] || {};
-      const st = CLIENT_STATE[it.state] || CLIENT_STATE.selected;
+      const stKey = CLIENT_STATE[it.state] ? it.state : 'selected';
       // Kontakt kredit to'langandan keyin KO'RINIB TURAVERADI (3c6caca).
       // 'refunded' istisno — kredit qaytarilgan, kontakt ham qaytariladi.
       const open = contactView.isOpen(it);
@@ -411,18 +444,20 @@ async function shortlistView(agencyId, clientId, rows) {
         candidateId: it.candidateId,
         publicCode: c.publicCode || '',
         role: c.role || '',
-        roleText: roleText(c),
+        roleText: roleText(c, lang),
         desiredPosition: c.desiredPosition || '',
         age: c.age || null,
-        location: placeLabel(c.location),
+        location: placeLabel(c.location, lang),
         experienceYears: c.experienceYears || 0,
         languages: c.languages || [],
         shift: c.shift || '',
         hasPhoto: !!c.hasPhoto,
-        state: st.key,
-        stateLabel: st.label,
+        state: CLIENT_STATE[stKey],
+        stateLabel: I18N.t(lang, 'cs.' + stKey),
         stage: open ? (STAGE[it.state] || 'contact') : null,
-        reason: it.reason ? pipeline.reasonLabel(it.reason) : '',
+        // Lug'atda yo'q eski sabab bo'lsa — pipeline'dagi yozuv
+        reason: !it.reason ? ''
+          : (I18N.D.uz['reason.' + it.reason] ? I18N.t(lang, 'reason.' + it.reason) : pipeline.reasonLabel(it.reason)),
         interviewAt: it.interviewAt,
         canAct: ['revealed', 'interview'].includes(it.state),
         revealedAt: it.revealedAt,
@@ -563,7 +598,7 @@ router.get('/vacancies', clientGuard, asyncHandler(async (req, res) => {
 
   // Voronka raqamlari — mijozga "N tanlov" emas, natija kerak
   const fun = await funnelFor(req.client.agencyId, req.client.id, rows);
-  res.json(rows.map(v => vac.full(v, { funnel: fun[v.id] })));
+  res.json(rows.map(v => vac.full(v, { funnel: fun[v.id] }, req.lang)));
 }));
 
 // ── Vakansiya sahifasi: shablon + voronka + shu vakansiyaning nomzodlari ──
@@ -576,17 +611,31 @@ router.get('/vacancies/:id/detail', clientGuard, asyncHandler(async (req, res) =
     funnelFor(agencyId, req.client.id, [v]),
     Shortlist.find({ agencyId, clientId: req.client.id, vacancyId: v.id }).sort({ createdAt: -1 }).lean()
   ]);
-  const view = await shortlistView(agencyId, req.client.id, sls);
+  const view = await shortlistView(agencyId, req.client.id, sls, req.lang);
   // Bir nomzod bir necha tanlovda bo'lsa — eng yangisi
   const seen = new Set();
   const items = view.flatMap(s => s.items).filter(it => !seen.has(it.candidateId) && seen.add(it.candidateId));
 
-  res.json({ vacancy: vac.full(v, { funnel: fun[v.id] }), items });
+  res.json({ vacancy: vac.full(v, { funnel: fun[v.id] }, req.lang), items });
 }));
+
+// Formadagi avtomatik sarlavha mijoz tilida keladi ("Официант, вечерняя
+// смена"). Bazaga o'zbekcha shakl yoziladi: aks holda PATCH uni "qo'lda
+// o'zgartirilgan" deb source='manual' qilib qo'yardi va agentlik/bot
+// xabarlarida ruscha chiqardi. Ko'rsatishda vac.full() o'quvchi tiliga qaytaradi.
+function autoTitleUz(data, prev = {}) {
+  if (!data.title) return;
+  const role = data.role !== undefined ? data.role : prev.role;
+  const shift = data.shift !== undefined ? data.shift : prev.shift;
+  if (I18N.LANGS.some(l => data.title === I18N.vacTitle(role, shift, l))) {
+    data.title = I18N.vacTitle(role, shift, 'uz');
+  }
+}
 
 router.post('/vacancies', clientGuard, asyncHandler(async (req, res) => {
   const data = vac.clean(req.body || {});
   if (!data.title) return res.status(400).json({ error: 'Vakansiya nomini yozing' });
+  autoTitleUz(data);
 
   const v = await Vacancy.create(Object.assign({
     id: uuidv4(),
@@ -612,7 +661,7 @@ router.post('/vacancies', clientGuard, asyncHandler(async (req, res) => {
     }
   } catch (e) { console.error('[MA] vakansiya xabari ketmadi:', e.message); }
 
-  res.json(vac.full(v));
+  res.json(vac.full(v, {}, req.lang));
 }));
 
 router.patch('/vacancies/:id', clientGuard, asyncHandler(async (req, res) => {
@@ -622,13 +671,14 @@ router.patch('/vacancies/:id', clientGuard, asyncHandler(async (req, res) => {
   if (!v) return res.status(404).json({ error: 'Vakansiya topilmadi' });
 
   const data = vac.clean(req.body || {}, v.toObject());
+  autoTitleUz(data, v);
   // Mijoz sarlavhani o'zi o'zgartirsa — endi u qo'lda yozilgan vakansiya,
   // shablon keyingi taklifda sarlavhani qayta yasab, uni bosib ketmasin
   if (v.source === 'search' && data.title && data.title !== v.title) v.source = 'manual';
   Object.assign(v, data);
   v.updatedAt = new Date();
   await v.save();
-  res.json(vac.full(v));
+  res.json(vac.full(v, {}, req.lang));
 }));
 
 // Tasdiqlash — "bu o'rin hali ochiq". Nomzod kartada "2 kun oldin
@@ -655,19 +705,19 @@ router.post('/vacancies/:id/matches', clientGuard, asyncHandler(async (req, res)
   const result = await candidateSearch.search(criteria, agencyId, { limit: 20 });
   if (!result.rows.length) {
     return res.json({ key: '', count: 0,
-      message: excludeIds.length
-        ? 'Yangi mos nomzod yo\'q — mavjudlarining hammasini tanlagansiz.'
-        : 'Hozircha bazada mos nomzod yo\'q. Yangi nomzod chiqsa xabar beramiz.' });
+      message: tl(req, excludeIds.length ? 'match.noneNew' : 'match.noneYet') });
   }
 
-  // Yumshatilgan bo'lsa ochiq aytamiz — shartni jimgina yo'qotmaymiz
-  const note = result.relaxed.length ? ` (${result.relaxed.join(', ')} hisobga olinmadi)` : '';
+  // Yumshatilgan bo'lsa ochiq aytamiz — shartni jimgina yo'qotmaymiz.
+  // Seans xulosasi mijoz tilida saqlanadi (seans 24 soat yashaydi).
+  const relaxed = (result.relaxFields || []).map(f => tl(req, 'relax.' + f));
+  const note = relaxed.length ? tl(req, 'match.relaxed', { x: relaxed.join(', ') }) : '';
   const key = relay.makeToken();
   await SearchSession.create({
     key, agencyId, clientId: req.client.id,
     criteria: { role: criteria.role, minExp: criteria.minExp, languages: criteria.languages,
                 location: criteria.location, shift: criteria.shift, maxSalary: criteria.maxSalary, keywords: [] },
-    summary: v.title + note,
+    summary: vac.titleFor(v, req.lang) + note,
     candidateIds: result.rows.map(r => r.id),
     vacancyId: v.id
   });
@@ -681,7 +731,7 @@ router.post('/vacancies/:id/confirm', clientGuard, asyncHandler(async (req, res)
     { new: true }
   );
   if (!v) return res.status(404).json({ error: 'Vakansiya topilmadi' });
-  res.json(vac.full(v));
+  res.json(vac.full(v, {}, req.lang));
 }));
 
 // ══ VAKANSIYAGA KELGAN ARIZALAR ══════════════════════════════
@@ -696,7 +746,7 @@ router.get('/vacancies/:id/applications', clientGuard, asyncHandler(async (req, 
 
   const apps = await Application.find({ agencyId, vacancyId: v.id })
     .sort({ createdAt: -1 }).limit(100).lean();
-  res.json({ vacancy: vac.full(v), items: await appsView(agencyId, req.client.id, apps) });
+  res.json({ vacancy: vac.full(v, {}, req.lang), items: await appsView(agencyId, req.client.id, apps, req.lang) });
 }));
 
 // ── Barcha arizalar — "Arizalar" bo'limi ──
@@ -707,19 +757,24 @@ router.get('/applications', clientGuard, asyncHandler(async (req, res) => {
   const apps = await Application.find({ agencyId, clientId: req.client.id })
     .sort({ createdAt: -1 }).limit(200).lean();
   const vids = [...new Set(apps.map(a => a.vacancyId))];
-  const vs = vids.length ? await Vacancy.find({ agencyId, id: { $in: vids } }, 'id title status').lean() : [];
+  const vs = vids.length ? await Vacancy.find({ agencyId, id: { $in: vids } }, 'id title status role shift').lean() : [];
   const vBy = Object.fromEntries(vs.map(v => [v.id, v]));
-  const items = await appsView(agencyId, req.client.id, apps);
+  const items = await appsView(agencyId, req.client.id, apps, req.lang);
   res.json(items.map(it => Object.assign(it, {
-    vacancyTitle: (vBy[it.vacancyId] || {}).title || 'Vakansiya',
+    vacancyTitle: vBy[it.vacancyId] ? vac.titleFor(vBy[it.vacancyId], req.lang) : tl(req, 'vacancy.default'),
     vacancyStatus: (vBy[it.vacancyId] || {}).status || ''
   })));
 }));
 
+// applyReveal sababi mijoz tilida (kod -> lug'at 'why.<kod>')
+const whyText = (lang, el) => el.code
+  ? I18N.t(lang, 'why.' + el.code, { n: applyReveal.FRESH_DAYS })
+  : (el.why || '');
+
 // Ariza elementlarining ko'rinishi — ikkala endpoint uchun bitta.
 // Arizachi ANONIM (anonymize). Ochilganda 'new' -> 'seen' bo'ladi:
 // nomzod "Ko'rildi" holatini ko'radi, mijozdagi qizil belgi o'chadi.
-async function appsView(agencyId, clientId, apps) {
+async function appsView(agencyId, clientId, apps, lang = 'uz') {
   if (!apps.length) return [];
   const cands = await Candidate.find(
     { restaurantId: agencyId, id: { $in: apps.map(a => a.candidateId) } },
@@ -740,7 +795,7 @@ async function appsView(agencyId, clientId, apps) {
   const anon = Object.fromEntries(
     anonymize.forClientList(cands.filter(Boolean)).map(c => [c.publicCode, c])
   );
-  const ids = await identities(agencyId, clientId, cands);
+  const ids = await identities(agencyId, clientId, cands, lang);
 
   return apps.map(a => {
     const c = byId[a.candidateId];
@@ -752,7 +807,7 @@ async function appsView(agencyId, clientId, apps) {
     // Bir xil yozuv + kimlik qoidasi (kontakt ochilgan bo'lsa — ism, chat)
     if (ac) {
       Object.assign(ac, ids[c.id]);
-      ac.location = placeLabel(ac.location); ac.languages = langsLabel(ac.languages); ac.roleLabel = ac.roleText;
+      ac.location = placeLabel(ac.location, lang); ac.languages = langsLabel(ac.languages, lang); ac.roleLabel = ac.roleText;
     }
     return {
       id: a.id,
@@ -762,7 +817,7 @@ async function appsView(agencyId, clientId, apps) {
       message: a.message,
       createdAt: a.createdAt,
       instant: el.ok,
-      why: el.ok ? '' : (el.why || ''),
+      why: el.ok ? '' : whyText(lang, el),
       candidate: ac
     };
   });
@@ -799,7 +854,7 @@ router.post('/applications/:id/:action', clientGuard, asyncHandler(async (req, r
     const cand = await Candidate.findOne({ restaurantId: agencyId, id: a.candidateId },
       'id phone jobStatus jobStatusAt').lean();
     const el = applyReveal.eligibility(a, cand);
-    if (!el.ok) return res.status(400).json({ error: el.why });
+    if (!el.ok) return res.status(400).json({ error: whyText(req.lang, el) });
     if ((req.client.credits || 0) < 1) {
       return res.status(400).json({ error: 'Kredit yetarli emas', noCredits: true });
     }
@@ -934,7 +989,10 @@ router.get('/chats', clientGuard, asyncHandler(async (req, res) => {
   const open = new Set(pairs.map(p => p.candidateId));
 
   res.json(rows.map(r => {
-    if (!r.candidateId) return r;
+    // Qadalgan agentlik: xabar bo'lmasa taklif matni — mijoz tilida
+    if (!r.candidateId) {
+      return r.pinned && !r.lastMsgText ? Object.assign({}, r, { subtitle: tl(req, 'chat.helpPrompt') }) : r;
+    }
     const c = by[r.candidateId] || {};
     const isOpen = open.has(r.candidateId);
     return Object.assign({}, r, {
@@ -972,7 +1030,8 @@ router.get('/candidates/:id', clientGuard, asyncHandler(async (req, res) => {
   if (!c) return res.status(404).json({ error: 'Nomzod topilmadi' });
   // Bir xil yozuv: lavozim rol bo'yicha, "Toshkent", tillar o'zbekcha —
   // rezyume hh'dan ruscha kelsa ham mijozga aralash til chiqmasin
-  const same = { roleText: roleText(c), location: placeLabel(c.location), languages: langsLabel(c.languages) };
+  const same = { roleText: roleText(c, req.lang), location: placeLabel(c.location, req.lang),
+                 languages: langsLabel(c.languages, req.lang) };
   if (open) return res.json(Object.assign(contactView.resumeOf(c), same, { open: true }));
 
   await assignCodes(agencyId, [c]);

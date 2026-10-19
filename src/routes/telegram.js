@@ -459,7 +459,7 @@ async function startSurvey(msg, chatId, ank, appBase) {
     .sort({ updatedAt: -1 });
   if (!r) {
     r = await SurveyResponse.create({ id: uuidv4(), agencyId: s.agencyId, surveyId: s.id, vacancyId,
-      channel: ank.channel, tgUserId, chatId });
+      channel: ank.channel, tgUserId, chatId, status: 'started' });
   } else if (ank.channel && !r.channel) {
     r.channel = ank.channel;
     await r.save();

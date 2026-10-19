@@ -114,7 +114,7 @@ async function ensureDefault(agencyId) {
   for (let i = 0; i < 5; i++) {
     try {
       return await Survey.create({
-        id: uuidv4(), agencyId, code: makeCode(), isDefault: true, role: '',
+        id: uuidv4(), agencyId, code: makeCode(), isDefault: true, active: true, role: '',
         title: { uz: 'Restoran xodimi anketasi', ru: 'Анкета сотрудника ресторана' },
         questions: template()
       });

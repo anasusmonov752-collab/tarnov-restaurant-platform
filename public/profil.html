@@ -148,25 +148,54 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .cv-who.tap{cursor:pointer}
 .cv-who.tap .ch-last::after{content:' · kompaniya ›';color:var(--blue)}
 
-/* ── Tab paneli ──
-   Suzuvchi shaffof kapsula — mijoz kabineti (miniapp.html) bilan bir xil.
-   Emoji EMAS — Lucide chiziqli ikonkalari; yozuv qoladi.
+/* ── Tab paneli: "suyuq shisha" ──
+   Namuna — iOS Liquid Glass. Haqiqiy sinish (ortidagini egib ko'rsatish)
+   veb'da mumkin emas: Safari backdrop-filter'da SVG filtrni qo'llamaydi.
+   Shuning uchun taqlid: yupqa shisha + kuchli blur, yuqori chetda
+   yaltirash, faol bo'limda kamalak chetli "linza" prujina bilan suriladi.
+   Shisha faqat ortidan nimadir o'tganda ko'rinadi — bo'sh och fonda oq.
+   Emoji EMAS — Lucide ikonkalari. Yozuv qoladi: bo'limlar universal emas.
    Blur ishlamaydigan eski WebView'da oddiy oq fon (@supports). */
 .tabs{position:fixed;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom));
-  display:flex;gap:2px;padding:5px;border-radius:26px;z-index:50;
-  background:rgba(255,255,255,.97);border:1px solid rgba(225,232,242,.9);
-  box-shadow:0 8px 28px rgba(15,39,71,.14),0 1px 3px rgba(15,39,71,.06)}
+  display:flex;gap:2px;padding:5px;border-radius:28px;z-index:50;isolation:isolate;
+  background:rgba(255,255,255,.96);border:1px solid rgba(225,232,242,.9);
+  box-shadow:0 10px 30px rgba(15,39,71,.16),0 2px 6px rgba(15,39,71,.08)}
 @supports ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){
-  .tabs{background:rgba(255,255,255,.74);
-    -webkit-backdrop-filter:blur(18px) saturate(180%);backdrop-filter:blur(18px) saturate(180%)}
+  .tabs{background:linear-gradient(180deg,rgba(255,255,255,.34),rgba(255,255,255,.14));
+    -webkit-backdrop-filter:blur(14px) saturate(210%);backdrop-filter:blur(14px) saturate(210%);
+    border:1px solid rgba(255,255,255,.6);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(255,255,255,.35),
+      inset 0 0 0 .5px rgba(15,39,71,.07),0 10px 30px rgba(15,39,71,.16),0 2px 6px rgba(15,39,71,.08)}
 }
-.tb{flex:1;min-width:0;border:none;background:transparent;border-radius:21px;padding:7px 2px 6px;
-  cursor:pointer;font-family:inherit;color:var(--muted);font-size:10.5px;font-weight:600;
-  line-height:1.2;white-space:nowrap;display:flex;flex-direction:column;align-items:center;gap:3px;
-  transition:background .18s,color .18s;-webkit-tap-highlight-color:transparent}
-.tb .ic{position:relative;display:block;width:23px;height:23px}
+/* Yuqori yarmidagi yaltirash — shishaning "qalinligi" */
+.tabs::before{content:'';position:absolute;left:2px;right:2px;top:1px;height:46%;
+  border-radius:26px 26px 12px 12px;pointer-events:none;z-index:0;
+  background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,0))}
+
+/* Faol bo'lim — linza. Bitta element, moveLens() uni faol tab ostiga
+   suradi; tablardan biroz kattaroq (scale), namunadagidek panel chetidan
+   chiqib turadi. ::after — kamalak chet (sinish chizig'i taqlidi). */
+.lens{position:absolute;top:5px;bottom:5px;left:0;width:0;border-radius:23px;z-index:0;
+  pointer-events:none;opacity:0;
+  transition:transform .5s cubic-bezier(.34,1.45,.5,1),width .5s cubic-bezier(.34,1.45,.5,1),opacity .2s;
+  background:radial-gradient(120% 100% at 50% 0%,rgba(255,255,255,.9),rgba(255,255,255,.4) 55%,rgba(255,255,255,.2));
+  box-shadow:inset 0 1px 1px #fff,inset 0 -3px 6px rgba(255,255,255,.45),
+    0 4px 14px rgba(15,39,71,.15),0 1px 2px rgba(15,39,71,.08)}
+.lens::after{content:'';position:absolute;inset:0;border-radius:inherit;padding:1.5px;
+  background:linear-gradient(100deg,rgba(255,80,160,.65),rgba(255,196,80,.5) 22%,rgba(255,255,255,.8) 46%,
+    rgba(80,196,255,.65) 72%,rgba(140,96,255,.65));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude}
+.lens.on{opacity:1}
+
+.tb{position:relative;z-index:1;flex:1;min-width:0;border:none;background:transparent;border-radius:21px;
+  padding:7px 2px 6px;cursor:pointer;font-family:inherit;color:var(--muted);font-size:10.5px;
+  font-weight:600;line-height:1.2;white-space:nowrap;display:flex;flex-direction:column;
+  align-items:center;gap:3px;transition:color .2s;-webkit-tap-highlight-color:transparent}
+.tb .ic{position:relative;display:block;width:23px;height:23px;transition:transform .3s cubic-bezier(.34,1.45,.5,1)}
 .tb .ic svg{width:23px;height:23px;display:block}
-.tb.on{color:var(--ink);background:rgba(15,39,71,.08)}
+.tb.on{color:var(--ink)}
+.tb.on .ic{transform:scale(1.1)}
 .tb.on .ic svg{stroke-width:2.3}
 /* O'qilmagan xabar — qizil nuqta */
 .tb .dot{position:absolute;top:-1px;right:-3px;width:10px;height:10px;border-radius:50%;
@@ -242,6 +271,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 
 <!-- Ikonkalar: Lucide (circle-user, briefcase, file-text, message-circle) -->
 <nav class="tabs">
+  <span class="lens" id="lens" aria-hidden="true"></span>
   <button class="tb on" id="tP"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"/></svg></span>Profilim</button>
   <button class="tb"    id="tJ"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg></span>Ish o'rinlari</button>
   <button class="tb"    id="tA"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg></span>Arizalarim</button>
@@ -796,8 +826,23 @@ function pickTab(id){
   if (id === 'tJ') loadJobs();
   if (id === 'tA') loadApps();
   if (id === 'tM') loadChats();
+  moveLens();
 }
 TABS.forEach(([t]) => { $(t).onclick = () => pickTab(t); });
+
+// ── Linza: faol tab ostiga prujina bilan suriladi ──
+// Birinchi joylashuv animatsiyasiz — aks holda ochilganda chapdan uchib keladi.
+function moveLens(){
+  const lens = $('lens'), on = document.querySelector('.tabs .tb.on');
+  if (!lens || !on || !on.offsetWidth) return;
+  const first = !lens.classList.contains('on');
+  if (first) lens.style.transition = 'none';
+  lens.style.width = on.offsetWidth + 'px';
+  lens.style.transform = 'translateX(' + on.offsetLeft + 'px) scale(1.04,1.16)';
+  if (first) { void lens.offsetWidth; lens.style.transition = ''; lens.classList.add('on'); }
+}
+window.addEventListener('resize', moveLens);
+moveLens();
 
 (async function(){
   if (!INIT) { $('app').innerHTML = '<div class="msg">Bu sahifa Telegram ichida ochilishi kerak.</div>'; return; }

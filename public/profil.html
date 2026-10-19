@@ -681,11 +681,14 @@ async function loadApps(){
         ${v ? `<div class="pl">${esc(v.place)}</div>` : ''}
         ${v && v.salaryText ? `<div class="sl">${esc(v.salaryText)}</div>` : ''}
         <div class="row">
-          <span class="tg2 ${AST[a.state] || 'wait'}">${esc(a.stateLabel)}</span>
+          <span class="tg2 ${v && v.companyOpen ? 'ok' : (AST[a.state] || 'wait')}">${esc(a.stateLabel)}</span>
           <span style="font-size:12.5px;color:var(--muted)">${dmy(a.createdAt)}</span>
         </div>
+        ${v && v.companyOpen ? `<div class="more" data-co="${esc(v.clientId)}" style="cursor:pointer">Kompaniya haqida ›</div>` : ''}
       </div>`;
     }).join('');
+    // Kontakt ochilgan — kompaniya kartasi (chatdagi bilan bir xil)
+    document.querySelectorAll('[data-co]').forEach(el => el.onclick = () => showCompany(el.dataset.co));
   }catch(e){ $('appList').innerHTML = `<div class="msg">${esc(e.message)}</div>`; }
 }
 

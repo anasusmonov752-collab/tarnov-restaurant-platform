@@ -108,11 +108,20 @@ router.post('/session/:key', clientGuard, asyncHandler(async (req, res) => {
   for (const r of rows) byId[r.id] = r;
   const ordered = ses.candidateIds.map(id => byId[id]).filter(Boolean);
 
+  // Anonim karta + kimlik qoidasi: oldin kontaktini ochgan nomzod qidiruvda
+  // yana chiqsa — ism bilan; bir xil yozuv (lavozim, Toshkent, tillar)
+  const ids = await identities(ses.agencyId, req.client.id, ordered);
+  const cards = anonymize.forClientList(ordered).map(card => Object.assign(card, ids[card.id], {
+    roleLabel: ids[card.id].roleText,
+    location: placeLabel(card.location),
+    languages: langsLabel(card.languages)
+  }));
+
   res.json({
     summary: ses.summary,
     credits: req.client.credits,
     clientName: req.client.name,
-    candidates: anonymize.forClientList(ordered)
+    candidates: cards
   });
 }));
 
@@ -335,6 +344,33 @@ function roleText(c) {
   if (g) return roleLabel(g);
   const d = String(c.desiredPosition || '').trim();
   return d ? d[0].toUpperCase() + d.slice(1) : 'Nomzod';
+}
+
+// ── Nomzod "kimligi" — HAMMA JOYDA bitta qoida ──
+// Kontakt ochilgan (contactView) — ism va telefon; aks holda null (anonim,
+// kod). Lavozim — rol bo'yicha bir xil (roleText). Frontend whoOf() shundan
+// sarlavha quradi: ochiq -> ism / lavozim, yopiq -> lavozim / kod.
+// Ilgari Arizalar va qidiruv kartalari kontakt ochilgandan keyin ham
+// kodni ko'rsatardi — har joy o'zicha anonim bo'lib qolgan edi.
+async function identities(agencyId, clientId, cands) {
+  const ids = cands.map(c => c.id);
+  if (!ids.length) return {};
+  const [pairs, threads] = await Promise.all([
+    contactView.openPairs({ agencyId, clientId, candidateIds: ids }),
+    ChatThread.find({ agencyId, clientId, kind: 'cc', candidateId: { $in: ids } }, 'id candidateId').lean()
+  ]);
+  const open = new Set(pairs.map(p => p.candidateId));
+  const tBy = Object.fromEntries(threads.map(t => [t.candidateId, t.id]));
+  const out = {};
+  for (const c of cands) {
+    const o = open.has(c.id);
+    out[c.id] = {
+      roleText: roleText(c),
+      contact: o ? { fullName: c.fullName, phone: c.phone, email: c.email } : null,
+      threadId: o ? (tBy[c.id] || '') : ''
+    };
+  }
+  return out;
 }
 
 // Voronka bosqichi (bosqichlar chizig'i uchun). Kontaktgacha — null.
@@ -660,7 +696,7 @@ router.get('/vacancies/:id/applications', clientGuard, asyncHandler(async (req, 
 
   const apps = await Application.find({ agencyId, vacancyId: v.id })
     .sort({ createdAt: -1 }).limit(100).lean();
-  res.json({ vacancy: vac.full(v), items: await appsView(agencyId, apps) });
+  res.json({ vacancy: vac.full(v), items: await appsView(agencyId, req.client.id, apps) });
 }));
 
 // ── Barcha arizalar — "Arizalar" bo'limi ──
@@ -673,7 +709,7 @@ router.get('/applications', clientGuard, asyncHandler(async (req, res) => {
   const vids = [...new Set(apps.map(a => a.vacancyId))];
   const vs = vids.length ? await Vacancy.find({ agencyId, id: { $in: vids } }, 'id title status').lean() : [];
   const vBy = Object.fromEntries(vs.map(v => [v.id, v]));
-  const items = await appsView(agencyId, apps);
+  const items = await appsView(agencyId, req.client.id, apps);
   res.json(items.map(it => Object.assign(it, {
     vacancyTitle: (vBy[it.vacancyId] || {}).title || 'Vakansiya',
     vacancyStatus: (vBy[it.vacancyId] || {}).status || ''
@@ -683,7 +719,7 @@ router.get('/applications', clientGuard, asyncHandler(async (req, res) => {
 // Ariza elementlarining ko'rinishi — ikkala endpoint uchun bitta.
 // Arizachi ANONIM (anonymize). Ochilganda 'new' -> 'seen' bo'ladi:
 // nomzod "Ko'rildi" holatini ko'radi, mijozdagi qizil belgi o'chadi.
-async function appsView(agencyId, apps) {
+async function appsView(agencyId, clientId, apps) {
   if (!apps.length) return [];
   const cands = await Candidate.find(
     { restaurantId: agencyId, id: { $in: apps.map(a => a.candidateId) } },
@@ -704,6 +740,7 @@ async function appsView(agencyId, apps) {
   const anon = Object.fromEntries(
     anonymize.forClientList(cands.filter(Boolean)).map(c => [c.publicCode, c])
   );
+  const ids = await identities(agencyId, clientId, cands);
 
   return apps.map(a => {
     const c = byId[a.candidateId];
@@ -712,8 +749,11 @@ async function appsView(agencyId, apps) {
     const open = a.state !== 'shortlisted' && a.state !== 'rejected';
     const el = open && c ? applyReveal.eligibility(a, c) : { ok: false, why: '' };
     const ac = c ? anon[c.publicCode] || null : null;
-    // Bir xil yozuv; roleLabel — anonymize 'boshqa' uchun xom kalitni beradi
-    if (ac) { ac.location = placeLabel(ac.location); ac.languages = langsLabel(ac.languages); ac.roleLabel = roleText(c); }
+    // Bir xil yozuv + kimlik qoidasi (kontakt ochilgan bo'lsa — ism, chat)
+    if (ac) {
+      Object.assign(ac, ids[c.id]);
+      ac.location = placeLabel(ac.location); ac.languages = langsLabel(ac.languages); ac.roleLabel = ac.roleText;
+    }
     return {
       id: a.id,
       vacancyId: a.vacancyId,

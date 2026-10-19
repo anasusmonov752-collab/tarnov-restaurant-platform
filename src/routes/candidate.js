@@ -197,6 +197,23 @@ router.patch('/me', guard, asyncHandler(async (req, res) => {
 // ma'nosini yo'qotadi. Bu mijozni ham himoya qiladi: u nomzod ismini
 // faqat kontakt ochilgach ko'radi. Ikki tomon ham teng anonim.
 
+// ── Kimlik qoidasi nomzod tomonida ──
+// Mijoz tomonidagi whoOf() ning juftligi: kontakt ochilgan mijozning
+// vakansiyasi — kompaniya NOMI bilan; ochilmagan — faqat hudud
+// ("Chilonzorda restoran"). Ro'yxatlar shundan o'tadi.
+async function openClientIds(c) {
+  const pairs = await contactView.openPairs({ agencyId: c.restaurantId, candidateId: c.id });
+  return new Set(pairs.map(p => p.clientId));
+}
+function vacFor(v, cl, openSet) {
+  const out = vac.forCandidate(v, cl);
+  const open = !!(cl && openSet.has(cl.id));
+  if (open && cl.name) out.place = [cl.name, v.location || cl.location].filter(Boolean).join(' · ');
+  out.companyOpen = open;
+  out.clientId = open ? cl.id : '';           // kompaniya kartasini ochish uchun
+  return out;
+}
+
 router.get('/vacancies', guard, asyncHandler(async (req, res) => {
   const c = req.cand;
 
@@ -214,9 +231,12 @@ router.get('/vacancies', guard, asyncHandler(async (req, res) => {
 
   if (!rows.length) return res.json([]);
 
-  // Hudud uchun mijoz ma'lumoti kerak — NOMI emas
+  // Hudud uchun mijoz ma'lumoti; NOM faqat kontakt ochilgan mijozda (vacFor)
   const cids = [...new Set(rows.map(r => r.clientId))];
-  const clients = await Client.find({ agencyId: c.restaurantId, id: { $in: cids } }, 'id location').lean();
+  const [clients, openSet] = await Promise.all([
+    Client.find({ agencyId: c.restaurantId, id: { $in: cids } }, 'id name location').lean(),
+    openClientIds(c)
+  ]);
   const byId = Object.fromEntries(clients.map(x => [x.id, x]));
 
   // Qaysilariga allaqachon ariza berganini belgilaymiz
@@ -224,7 +244,7 @@ router.get('/vacancies', guard, asyncHandler(async (req, res) => {
     { agencyId: c.restaurantId, candidateId: c.id }, 'vacancyId state').lean();
   const appMap = Object.fromEntries(mine.map(a => [a.vacancyId, a.state]));
 
-  const out = rows.map(v => Object.assign(vac.forCandidate(v, byId[v.clientId]), {
+  const out = rows.map(v => Object.assign(vacFor(v, byId[v.clientId], openSet), {
     applied: !!appMap[v.id],
     appState: appMap[v.id] || '',
     // "Sizga mos" belgisi: lavozim bir xil va tajriba yetadi
@@ -327,17 +347,22 @@ router.get('/applications', guard, asyncHandler(async (req, res) => {
   const vById = Object.fromEntries(vs.map(v => [v.id, v]));
 
   const cids = [...new Set(vs.map(v => v.clientId))];
-  const clients = await Client.find({ agencyId: c.restaurantId, id: { $in: cids } }, 'id location').lean();
+  const [clients, openSet] = await Promise.all([
+    Client.find({ agencyId: c.restaurantId, id: { $in: cids } }, 'id name location').lean(),
+    openClientIds(c)
+  ]);
   const clById = Object.fromEntries(clients.map(x => [x.id, x]));
 
   res.json(rows.map(a => {
     const v = vById[a.vacancyId];
+    const vv = v ? vacFor(v, clById[v.clientId], openSet) : null;
     return {
       id: a.id,
       state: a.state,
-      stateLabel: APP_LABEL[a.state] || a.state,
+      // Kontakt ochilgan bo'lsa — "Tanlandi — HR bog'lanadi" emas, aniq holat
+      stateLabel: vv && vv.companyOpen ? 'Kontakt ochildi — ish beruvchi bog\'lanadi' : (APP_LABEL[a.state] || a.state),
       createdAt: a.createdAt,
-      vacancy: v ? vac.forCandidate(v, clById[v.clientId]) : null
+      vacancy: vv
     };
   }));
 }));

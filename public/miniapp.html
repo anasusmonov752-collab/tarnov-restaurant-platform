@@ -193,7 +193,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px}
 .cd-ph img{width:100%;height:100%;object-fit:cover}
 .cd-mid{flex:1;min-width:0}
-.cd-nm{font-size:16px;font-weight:700;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cd-nm{font-size:16px;font-weight:700;line-height:1.25;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
 .cd-sub{font-size:13px;color:var(--muted);margin-top:2px;line-height:1.4;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .stc{flex:none;font-size:11.5px;font-weight:600;padding:4px 9px;border-radius:20px;white-space:nowrap}
@@ -593,11 +594,13 @@ function factLine(c){
 }
 
 function cardHtml(c){
+  // Kimlik qoidasi (whoOf): oldin kontaktini ochgan nomzod — ism bilan
+  const w = whoOf(c);
   return `<div class="c ${SEL.has(c.id)?'on':''} ${SEEN.has(c.id)?'seen':''}" data-id="${c.id}">
-    <div class="ph">${c.hasPhoto ? `<img src="${photoUrl(c)}" alt="">` : esc(initialsOf(c.publicCode))}</div>
+    <div class="ph">${c.hasPhoto ? `<img src="${photoUrl(c)}" alt="">` : esc(w.ini)}</div>
     <div class="b">
-      <div class="code">${esc(c.publicCode)}</div>
-      <div class="pos">${esc(c.desiredPosition || c.roleLabel || 'Nomzod')}</div>
+      <div class="code">${esc(w.open ? w.sub : c.publicCode)}</div>
+      <div class="pos">${esc(w.title)}</div>
       <div class="meta">${esc(factLine(c))}</div>
       <div class="tags">
         ${c.fitScore ? `<span class="t ai">AI ${c.fitScore}/5</span>` : ''}
@@ -646,7 +649,8 @@ function openDetail(i){
   // CSS'dagi #detail{display:none} qaytib kuchga kiradi.
   d.style.display = 'block';
   window.scrollTo(0, 0);
-  if (TG && TG.BackButton) { TG.BackButton.show(); TG.BackButton.onClick(renderList); }
+  // Bosilishi umumiy onTgBack orqali (bitta ishlovchi — har ochilishda yangisi qo'shilmasin)
+  if (TG && TG.BackButton) TG.BackButton.show();
 
   const work = (c.workHistory||[]).map(w => `
     <div class="w">
@@ -656,12 +660,13 @@ function openDetail(i){
       ${w.description ? `<div class="w-d">${esc(w.description)}</div>` : ''}
     </div>`).join('');
 
+  const who = whoOf(c);
   d.innerHTML = `
     ${c.hasPhoto ? `<img class="d-ph" src="${photoUrl(c)}" alt="">`
-                 : `<div class="d-ph-none">${esc(initialsOf(c.publicCode))}</div>`}
+                 : `<div class="d-ph-none">${esc(who.ini)}</div>`}
     <div class="d-head">
-      <div class="d-code">${esc(c.publicCode)}</div>
-      <div class="d-pos">${esc(c.desiredPosition || c.roleLabel || 'Nomzod')}</div>
+      <div class="d-code">${esc(who.open ? who.sub : c.publicCode)}</div>
+      <div class="d-pos">${esc(who.title)}</div>
       <div class="d-meta">${esc(factLine(c))}</div>
       <div class="tags" style="margin-top:9px">
         ${c.fitScore ? `<span class="t ai">AI moslik ${c.fitScore}/5</span>` : ''}
@@ -762,6 +767,19 @@ const OY = ['yan','fev','mar','apr','may','iyn','iyl','avg','sen','okt','noy','d
 const dShort = s => { if (!s) return ''; const d = new Date(s); return d.getDate() + '-' + OY[d.getMonth()]; };
 const dTime = s => { const d = new Date(s); return dShort(s) + ', ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); };
 const nameIni = s => String(s || '').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || '—';
+
+// ── Nomzod sarlavhasi — HAMMA JOYDA bitta qoida ──
+// Kontakt ochilgan (server contact beradi): sarlavha — ISM-FAMILIYA,
+// ostida lavozim. Ochilmagan: sarlavha — lavozim, ostida kod.
+// Tanlovlar, Arizalar, qidiruv kartalari va rezyume shundan foydalanadi —
+// yangi joy qo'shilsa ham shu funksiyani chaqiring.
+function whoOf(c){
+  const role = c.roleText || c.roleLabel || c.desiredPosition || 'Nomzod';
+  const name = c.contact && c.contact.fullName;
+  return name
+    ? { open: true, title: name, sub: role, ini: nameIni(name) }
+    : { open: false, title: role, sub: c.publicCode || '', ini: initialsOf(c.publicCode) };
+}
 const IC = {
   phone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
   chat:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>',
@@ -800,14 +818,13 @@ function stepsHtml(it){
 }
 
 function candHtml(it){
-  const open = !!it.contact;
-  const name = open ? (it.contact.fullName || it.roleText) : it.roleText;
+  const w = whoOf(it), open = w.open, name = w.title;
   const meta = [it.experienceYears ? it.experienceYears + ' yil tajriba' : 'Tajribasiz',
                 it.age ? it.age + ' yosh' : '', it.location || ''].filter(Boolean).join(' · ');
-  const sub = open ? [it.roleText, meta].join(' · ') : [it.publicCode, meta].join(' · ');
+  const sub = [w.sub, meta].filter(Boolean).join(' · ');
   const photo = it.hasPhoto
     ? `<img src="/api/ma/photo-sl/${encodeURIComponent(it.shortlistId)}/${encodeURIComponent(it.candidateId)}?i=${encodeURIComponent(INIT)}" alt="">`
-    : esc(open ? nameIni(name) : initialsOf(it.publicCode));
+    : esc(w.ini);
   const chipTxt = it.state === 'no' ? it.stateLabel : (CHIP[it.state] || it.stateLabel);
 
   let body = '';
@@ -1013,7 +1030,9 @@ function syncBack(){
   $('shBack').classList.toggle('hide', !SH_STACK.length);
   try {
     if (TG && TG.BackButton && TG.isVersionAtLeast && TG.isVersionAtLeast('6.1')) {
-      if ($('sheet').classList.contains('on')) TG.BackButton.show(); else TG.BackButton.hide();
+      // Oyna yopilganda tugmani yashiramiz — lekin qidiruvda nomzod ochiq bo'lsa, u uniki
+      const inDetail = !$('searchMode').classList.contains('hide') && cur >= 0;
+      if ($('sheet').classList.contains('on') || inDetail) TG.BackButton.show(); else TG.BackButton.hide();
     }
   } catch(e){}
 }
@@ -1022,7 +1041,15 @@ function closeSheet(){ $('sheet').classList.remove('on'); $('shB').innerHTML = '
 $('shX').onclick = closeSheet;
 $('shBack').onclick = sheetBack;
 $('sheet').onclick = e => { if (e.target === $('sheet')) closeSheet(); };
-try { TG && TG.BackButton && TG.BackButton.onClick(sheetBack); } catch(e){}
+// Telegram "Orqaga" — BITTA ishlovchi: ochiq oyna bo'lsa zanjir bo'yicha,
+// qidiruvda nomzod ochiq bo'lsa ro'yxatga. Ilgari qidiruv tafsiloti har
+// ochilishda o'z ishlovchisini qo'shardi va kabinetdagi oynalar bilan
+// to'qnashib, tugmani yashirib qo'yardi.
+function onTgBack(){
+  if ($('sheet').classList.contains('on')) { sheetBack(); return; }
+  if (!$('searchMode').classList.contains('hide') && cur >= 0) renderList();
+}
+try { TG && TG.BackButton && TG.BackButton.onClick(onTgBack); } catch(e){}
 $('crTap').onclick = showCredits;
 
 // Kartada bitta asosiy amal ("Mos nomzodlarni ko'rish") va voronka
@@ -1313,17 +1340,32 @@ function appCardHtml(it){
     c.age ? c.age + ' yosh' : '', c.location || ''
   ].filter(Boolean).join(' · ');
   const done = it.state === 'shortlisted' || it.state === 'rejected';
-  const chip = it.state === 'shortlisted' ? ['open', 'Tanlandi'] : it.state === 'rejected' ? ['no', 'Rad etildi']
+  const w = whoOf(c);
+  const chip = w.open ? ['open', 'Kontakt ochiq']
+             : it.state === 'shortlisted' ? ['waiting', 'Tanlandi'] : it.state === 'rejected' ? ['no', 'Rad etildi']
              : it.isNew ? ['waiting', 'Yangi'] : ['no', 'Ko\'rildi'];
-  const photo = c.hasPhoto ? `<img src="${candPhoto(c.id)}" alt="">` : esc(initialsOf(c.publicCode));
-  return `<div class="cd">
-    <div class="cd-top">
+  const photo = c.hasPhoto ? `<img src="${candPhoto(c.id)}" alt="">` : esc(w.ini);
+  const head = `<div class="cd-top">
       <div class="cd-ph">${photo}</div>
-      <div class="cd-mid"><div class="cd-nm">${esc(c.roleLabel || c.desiredPosition || 'Nomzod')}</div>
-        <div class="cd-sub">${esc([c.publicCode, meta].filter(Boolean).join(' · '))}</div></div>
+      <div class="cd-mid"><div class="cd-nm">${esc(w.title)}</div>
+        <div class="cd-sub">${esc([w.sub, meta].filter(Boolean).join(' · '))}</div></div>
       <span class="stc ${chip[0]}">${chip[1]}</span>
     </div>
-    ${it.message ? `<div class="cd-wait" style="color:var(--ink)">"${esc(it.message)}"</div>` : ''}
+    ${it.message ? `<div class="cd-wait" style="color:var(--ink)">"${esc(it.message)}"</div>` : ''}`;
+
+  // Kontakt ochilgan — Tanlovlardagi kabi: qo'ng'iroq, chat, rezyume
+  if (w.open) {
+    const tel = String(c.contact.phone || '').replace(/[^\d+]/g, '');
+    return `<div class="cd">${head}
+      <div class="cd-acts">
+        ${tel ? `<a class="cd-btn p" href="tel:${esc(tel)}">${IC.phone}Qo'ng'iroq</a>` : ''}
+        ${c.threadId ? `<button class="cd-btn" data-chat="${esc(c.id)}">${IC.chat}Yozish</button>` : ''}
+        <button class="cd-btn" data-rz="${esc(c.id)}">${IC.doc}Rezyume</button>
+      </div>
+      <div class="cd-foot"><span>Ariza: ${dShort(it.createdAt)} · bosqichlar "Tanlovlar"da</span></div>
+    </div>`;
+  }
+  return `<div class="cd">${head}
     <div class="cd-acts">
       <button class="cd-btn" data-rz="${esc(c.id)}">${IC.doc}Rezyume</button>
       ${done ? '' : it.instant
@@ -1340,6 +1382,7 @@ function appCardHtml(it){
 
 function wireApps(root, refresh){
   root.querySelectorAll('[data-rz]').forEach(b => b.onclick = () => showResume(b.dataset.rz));
+  root.querySelectorAll('[data-chat]').forEach(b => b.onclick = () => openChatWith(b.dataset.chat));
   root.querySelectorAll('[data-open]').forEach(b => b.onclick = () => openFromApp(b, refresh));
   root.querySelectorAll('[data-pick]').forEach(b => b.onclick = async () => {
     b.disabled = true;

@@ -28,7 +28,7 @@ const vacAuto = require('../services/vacancyAuto');
 const contactView = require('../services/contactView');
 const candidateSearch = require('../services/candidateSearch');
 const relay = require('../services/botRelay');
-const { isValidRole } = require('../data/roles');
+const { isValidRole, roleLabel } = require('../data/roles');
 const agent = require('../services/agent');
 const chat = require('../services/chat');
 const ChatThread = require('../models/ChatThread');
@@ -316,50 +316,134 @@ router.get('/shortlists', clientGuard, asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 }).limit(50).lean();
   if (!rows.length) return res.json([]);
 
-  const ids = [...new Set(rows.flatMap(r => r.items.map(i => i.candidateId)))];
-  const cands = await Candidate.find(
-    { restaurantId: agencyId, id: { $in: ids } },
-    'id publicCode role desiredPosition age location experienceYears hasPhoto ' +
-    'languages shift jobStatus fullName phone email'
-  ).lean();
-  const byId = Object.fromEntries(cands.map(c => [c.id, c]));
+  res.json(await shortlistView(agencyId, req.client.id, rows));
+}));
 
-  res.json(rows.map(r => ({
+// ── Tanlov elementlarining ko'rinishi ──
+// Bitta joyda: "Tanlovlar" ekrani ham, vakansiya sahifasi ham shundan oladi —
+// biri boshqacha ko'rsatib qo'ymasin.
+
+// Joy nomi bir xil yozilsin: hh "Tashkent", rezyume "Ташкент"
+const placeLabel = s => String(s || '').trim().replace(/^(tashkent|ташкент|тошкент|toshkent)/i, 'Toshkent');
+
+// Lavozim — rezyumedagi xom matn ("Хостес") emas, rol bo'yicha bir xil
+function roleText(c) {
+  if (isValidRole(c.role)) return roleLabel(c.role);
+  const d = String(c.desiredPosition || '').trim();
+  return d ? d[0].toUpperCase() + d.slice(1) : 'Nomzod';
+}
+
+// Voronka bosqichi (bosqichlar chizig'i uchun). Kontaktgacha — null.
+const STAGE = { revealed: 'contact', interview: 'interview', hired: 'hired', not_fit: 'not_fit' };
+
+async function shortlistView(agencyId, clientId, rows) {
+  if (!rows.length) return [];
+  const ids = [...new Set(rows.flatMap(r => r.items.map(i => i.candidateId)))];
+  const vids = [...new Set(rows.map(r => r.vacancyId).filter(Boolean))];
+  const [cands, vs, threads] = await Promise.all([
+    Candidate.find({ restaurantId: agencyId, id: { $in: ids } },
+      'id publicCode role desiredPosition age location experienceYears hasPhoto ' +
+      'languages shift jobStatus fullName phone email').lean(),
+    vids.length ? Vacancy.find({ agencyId, id: { $in: vids } }, 'id title status').lean() : [],
+    // "Yozish" tugmasi to'g'ridan-to'g'ri suhbatni ochishi uchun
+    ChatThread.find({ agencyId, clientId, kind: 'cc', candidateId: { $in: ids } }, 'id candidateId').lean()
+  ]);
+  const byId = Object.fromEntries(cands.map(c => [c.id, c]));
+  const vById = Object.fromEntries(vs.map(v => [v.id, v]));
+  const tBy = Object.fromEntries(threads.map(t => [t.candidateId, t.id]));
+
+  return rows.map(r => ({
     id: r.id,
     summary: r.summary || 'Qidiruv',
     createdAt: r.createdAt,
+    vacancyId: r.vacancyId || '',
+    vacancyTitle: (vById[r.vacancyId] || {}).title || '',
+    vacancyStatus: (vById[r.vacancyId] || {}).status || '',
     items: r.items.map(it => {
-      const c = byId[it.candidateId];
+      const c = byId[it.candidateId] || {};
       const st = CLIENT_STATE[it.state] || CLIENT_STATE.selected;
-      // Kontakt kredit to'langandan keyin KO'RINIB TURAVERADI. Ilgari shart
-      // `state === 'revealed'` edi: mijoz "suhbat belgilandi" qo'ygani zahoti
-      // holat o'zgarib, TO'LANGAN kontakt kabinetdan yo'qolardi.
+      // Kontakt kredit to'langandan keyin KO'RINIB TURAVERADI (3c6caca).
       // 'refunded' istisno — kredit qaytarilgan, kontakt ham qaytariladi.
-      const open = !!it.revealedAt && it.state !== 'refunded';
+      const open = contactView.isOpen(it);
 
       return {
+        shortlistId: r.id,
         candidateId: it.candidateId,
-        publicCode: c ? c.publicCode : '',
-        role: c ? c.role : '',
-        desiredPosition: c ? c.desiredPosition : '',
-        age: c ? c.age : null,
-        location: c ? c.location : '',
-        experienceYears: c ? c.experienceYears : 0,
-        languages: c ? c.languages : [],
-        shift: c ? c.shift : '',
-        hasPhoto: c ? !!c.hasPhoto : false,
+        publicCode: c.publicCode || '',
+        role: c.role || '',
+        roleText: roleText(c),
+        desiredPosition: c.desiredPosition || '',
+        age: c.age || null,
+        location: placeLabel(c.location),
+        experienceYears: c.experienceYears || 0,
+        languages: c.languages || [],
+        shift: c.shift || '',
+        hasPhoto: !!c.hasPhoto,
         state: st.key,
         stateLabel: st.label,
+        stage: open ? (STAGE[it.state] || 'contact') : null,
         reason: it.reason ? pipeline.reasonLabel(it.reason) : '',
         interviewAt: it.interviewAt,
         canAct: ['revealed', 'interview'].includes(it.state),
         revealedAt: it.revealedAt,
-        // Kontakt FAQAT ochilganda — yuqoridagi izohga qarang
-        contact: open && c ? { fullName: c.fullName, phone: c.phone, email: c.email } : null
+        threadId: open ? (tBy[it.candidateId] || '') : '',
+        // Kontakt FAQAT ochilganda
+        contact: open && c.id ? { fullName: c.fullName, phone: c.phone, email: c.email } : null
       };
     })
-  })));
-}));
+  }));
+}
+
+// ── Vakansiyadan qidiruv mezonlari ──
+// AI'siz, to'g'ridan-to'g'ri maydonlardan. "Mos nomzodlar" ham, kartadagi
+// "N mos" soni ham shundan — ikkalasi bir xil natija bersin.
+function vacancyCriteria(v, excludeIds = []) {
+  // EMPTY asosida: search() keywords/languages massiv bo'lishini kutadi
+  return Object.assign({}, candidateSearch.EMPTY, {
+    role: v.role,
+    minExp: v.minExp || null,
+    languages: v.languages || [],
+    location: v.location || null,
+    shift: v.shift === 'kunduzgi' || v.shift === 'kechki' ? v.shift : null,
+    maxSalary: v.salaryTo || null,
+    excludeIds
+  });
+}
+
+// ── Vakansiya voronkasi: mos · tanlangan · kontakt · ishga olindi ──
+// "mos" — hali tanlanmagan, mezonga tushadigan nomzodlar (search bilan
+// bir xil yumshatish). Faqat ochiq va lavozimi bor vakansiyada sanaladi.
+async function funnelFor(agencyId, clientId, vacancies) {
+  const ids = vacancies.map(v => v.id);
+  if (!ids.length) return {};
+  const [sls, apps] = await Promise.all([
+    Shortlist.find({ agencyId, clientId, vacancyId: { $in: ids } }, 'vacancyId items').lean(),
+    Application.aggregate([
+      { $match: { agencyId, clientId, vacancyId: { $in: ids } } },
+      { $group: { _id: '$vacancyId', n: { $sum: 1 }, fresh: { $sum: { $cond: [{ $eq: ['$state', 'new'] }, 1, 0] } } } }
+    ])
+  ]);
+  const aBy = Object.fromEntries(apps.map(a => [a._id, a]));
+  const out = {};
+  for (const v of vacancies) {
+    const items = sls.filter(s => s.vacancyId === v.id).flatMap(s => s.items || []);
+    const picked = [...new Set(items.map(i => i.candidateId))];
+    let mos = null;
+    if (v.status === 'open' && isValidRole(v.role)) {
+      try { mos = await candidateSearch.countRelaxed(vacancyCriteria(v, picked), agencyId); }
+      catch (e) { console.error('[MA] mos sanog\'i:', e.message); }
+    }
+    out[v.id] = {
+      mos,
+      picked: picked.length,
+      contact: items.filter(contactView.isOpen).length,
+      hired: items.filter(i => i.state === 'hired').length,
+      apps: (aBy[v.id] || {}).n || 0,
+      appsNew: (aBy[v.id] || {}).fresh || 0
+    };
+  }
+  return out;
+}
 
 // ── Kabinetdagi nomzod fotosi ──
 // Qidiruvdagi foto endpointi seans kalitiga bog'langan, seans esa 24 soatda
@@ -436,15 +520,27 @@ router.get('/vacancies', clientGuard, asyncHandler(async (req, res) => {
   const rows = await Vacancy.find({ agencyId: req.client.agencyId, clientId: req.client.id })
     .sort({ createdAt: -1 }).limit(50).lean();
 
-  // Har vakansiyaga nechta nomzod tanlangan
-  const counts = await Shortlist.aggregate([
-    { $match: { agencyId: req.client.agencyId, clientId: req.client.id,
-                vacancyId: { $in: rows.map(r => r.id) } } },
-    { $group: { _id: '$vacancyId', n: { $sum: 1 } } }
-  ]);
-  const cMap = Object.fromEntries(counts.map(c => [c._id, c.n]));
+  // Voronka raqamlari — mijozga "N tanlov" emas, natija kerak
+  const fun = await funnelFor(req.client.agencyId, req.client.id, rows);
+  res.json(rows.map(v => vac.full(v, { funnel: fun[v.id] })));
+}));
 
-  res.json(rows.map(v => vac.full(v, { shortlists: cMap[v.id] || 0 })));
+// ── Vakansiya sahifasi: shablon + voronka + shu vakansiyaning nomzodlari ──
+router.get('/vacancies/:id/detail', clientGuard, asyncHandler(async (req, res) => {
+  const agencyId = req.client.agencyId;
+  const v = await Vacancy.findOne({ agencyId, clientId: req.client.id, id: req.params.id }).lean();
+  if (!v) return res.status(404).json({ error: 'Vakansiya topilmadi' });
+
+  const [fun, sls] = await Promise.all([
+    funnelFor(agencyId, req.client.id, [v]),
+    Shortlist.find({ agencyId, clientId: req.client.id, vacancyId: v.id }).sort({ createdAt: -1 }).lean()
+  ]);
+  const view = await shortlistView(agencyId, req.client.id, sls);
+  // Bir nomzod bir necha tanlovda bo'lsa — eng yangisi
+  const seen = new Set();
+  const items = view.flatMap(s => s.items).filter(it => !seen.has(it.candidateId) && seen.add(it.candidateId));
+
+  res.json({ vacancy: vac.full(v, { funnel: fun[v.id] }), items });
 }));
 
 router.post('/vacancies', clientGuard, asyncHandler(async (req, res) => {
@@ -514,16 +610,7 @@ router.post('/vacancies/:id/matches', clientGuard, asyncHandler(async (req, res)
   const prev = await Shortlist.find({ agencyId, clientId: req.client.id, vacancyId: v.id }, 'items.candidateId').lean();
   const excludeIds = [...new Set(prev.flatMap(s => (s.items || []).map(i => i.candidateId)))];
 
-  // EMPTY asosida: search() keywords/languages massiv bo'lishini kutadi
-  const criteria = Object.assign({}, candidateSearch.EMPTY, {
-    role: v.role,
-    minExp: v.minExp || null,
-    languages: v.languages || [],
-    location: v.location || null,
-    shift: v.shift === 'kunduzgi' || v.shift === 'kechki' ? v.shift : null,
-    maxSalary: v.salaryTo || null,
-    excludeIds
-  });
+  const criteria = vacancyCriteria(v, excludeIds);
   const result = await candidateSearch.search(criteria, agencyId, { limit: 20 });
   if (!result.rows.length) {
     return res.json({ key: '', count: 0,

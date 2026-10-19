@@ -259,6 +259,21 @@ async function search(criteria, restaurantId, { limit = 8 } = {}) {
 }
 
 /**
+ * search() bilan BIR XIL yumshatish bilan sanaydi. Vakansiya kartasidagi
+ * "N mos" soni "Mos nomzodlar" tugmasi beradigan natijaga mos kelsin:
+ * qat'iy sanoq 0 deb, tugma esa 20 ta ko'rsatsa — ishonch yo'qoladi.
+ */
+async function countRelaxed(criteria, restaurantId) {
+  const skip = new Set();
+  for (let step = 0; step <= RELAX_ORDER.length; step++) {
+    const n = await Candidate.countDocuments(buildQuery(criteria, restaurantId, skip));
+    if (n || step === RELAX_ORDER.length) return n;
+    skip.add(RELAX_ORDER[step]);
+  }
+  return 0;
+}
+
+/**
  * Keyingi sahifa. Yumshatish QAYTA hisoblanmaydi — birinchi qidiruvda
  * qaysi shartlar tashlangan bo'lsa (relaxFields), o'shalar bilan davom
  * etadi. Aks holda 2-sahifa boshqa to'plamdan kelib, nomzodlar
@@ -359,4 +374,4 @@ async function facets(criteria, restaurantId, total) {
   return out.sort((a, b) => b.count - a.count).slice(0, 4);
 }
 
-module.exports = { parseQuery, search, page, format, countFor, facets, normalizeRole, normalizeShift, EMPTY };
+module.exports = { parseQuery, search, page, format, countFor, countRelaxed, facets, normalizeRole, normalizeShift, EMPTY };

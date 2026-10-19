@@ -178,6 +178,95 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .sbtn.p{background:var(--blue);border-color:var(--blue);color:#fff}
 .sbtn.d{border-color:var(--danger);color:var(--danger)}
 
+/* ══ NOMZOD KARTASI (Tanlovlar va vakansiya sahifasi) ══════════
+   Kontakt ochilgach sarlavhada ISM va foto; lavozim rol bo'yicha bir
+   xil yoziladi. Qaror — uchta tugma emas, bosqichlar chizig'i. */
+.grp{margin-bottom:18px}
+.grp-h{display:flex;align-items:baseline;gap:8px;padding:2px 4px 9px}
+.grp-h b{font-size:16px;font-weight:700;flex:1;min-width:0}
+.grp-h span{font-size:12.5px;color:var(--muted);white-space:nowrap}
+.grp-h .cl{font-size:11px;font-weight:600;padding:2px 7px;border-radius:6px;background:rgba(100,116,139,.14);color:var(--muted)}
+.cd{background:var(--card);border-radius:16px;padding:14px;margin-bottom:10px;
+  box-shadow:0 1px 2px rgba(15,39,71,.05)}
+.cd-top{display:flex;gap:12px;align-items:center}
+.cd-ph{width:52px;height:52px;border-radius:50%;flex:none;overflow:hidden;background:#E8EFFA;
+  color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px}
+.cd-ph img{width:100%;height:100%;object-fit:cover}
+.cd-mid{flex:1;min-width:0}
+.cd-nm{font-size:16px;font-weight:700;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cd-sub{font-size:13px;color:var(--muted);margin-top:2px;line-height:1.4;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.stc{flex:none;font-size:11.5px;font-weight:600;padding:4px 9px;border-radius:20px;white-space:nowrap}
+.stc.waiting{background:rgba(180,128,46,.13);color:var(--warn)}
+.stc.open{background:rgba(37,99,235,.1);color:var(--blue)}
+.stc.hired{background:rgba(46,158,91,.14);color:var(--ok)}
+.stc.no,.stc.refunded{background:rgba(100,116,139,.13);color:var(--muted)}
+.cd-wait{font-size:13px;color:var(--muted);margin-top:10px;line-height:1.45}
+.cd-acts{display:flex;gap:8px;margin-top:12px}
+.cd-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 6px;
+  border-radius:11px;border:1px solid var(--line);background:var(--card);color:var(--ink);
+  font-family:inherit;font-size:13.5px;font-weight:600;text-decoration:none;cursor:pointer}
+.cd-btn svg{width:17px;height:17px;flex:none}
+.cd-btn.p{background:var(--blue);border-color:var(--blue);color:#fff}
+.cd-steps{display:flex;align-items:flex-start;margin-top:14px;padding:0 2px}
+.sp{display:flex;flex-direction:column;align-items:center;gap:5px;flex:none;width:76px;
+  font-size:11.5px;font-weight:600;color:var(--muted);text-align:center;border:0;background:none;
+  font-family:inherit;padding:0;cursor:default}
+.sp i{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);background:var(--card);
+  display:flex;align-items:center;justify-content:center;font-style:normal;font-size:12px;color:#fff}
+.sp.done{color:var(--ink)}
+.sp.done i{background:var(--blue);border-color:var(--blue)}
+.sp.next{color:var(--blue);cursor:pointer}
+.sp.next i{border-color:var(--blue);box-shadow:0 0 0 4px rgba(37,99,235,.12)}
+.sp.hiredone i{background:var(--ok);border-color:var(--ok)}
+.sp-ln{flex:1;height:2px;background:var(--line);margin-top:10px;border-radius:2px}
+.sp-ln.done{background:var(--blue)}
+.sp-ln.win{background:var(--ok)}
+.cd-foot{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12.5px;color:var(--muted)}
+.cd-foot span{flex:1}
+.cd-nf{border:0;background:none;color:var(--danger);font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;padding:4px 0}
+.cd-box:empty{display:none}
+.cd-box{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.cd-box .acts{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+.cd-box input{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px;font-family:inherit;font-size:15px}
+
+/* ══ VAKANSIYA KARTASI ═══════════════════════════════════════
+   Bitta asosiy amal; voronka raqamlari; qolgani ⋯ menyuda. */
+.vk{background:var(--card);border-radius:16px;padding:15px;margin-bottom:12px;cursor:pointer;
+  box-shadow:0 1px 2px rgba(15,39,71,.05)}
+.vk.closed{opacity:.62}
+.vk-h{display:flex;align-items:flex-start;gap:8px}
+.vk-ti{flex:1;min-width:0;font-size:16.5px;font-weight:700;line-height:1.3}
+.vk-more{flex:none;width:32px;height:32px;margin:-6px -6px 0 0;border:0;border-radius:50%;background:none;
+  color:var(--muted);font-size:20px;line-height:1;cursor:pointer}
+.vk-more:active{background:var(--bg)}
+.vk-mt{font-size:13.5px;color:var(--muted);margin-top:4px;line-height:1.45}
+.vk-mt .priv{color:var(--ink);font-weight:600}
+.vk-fn{display:grid;grid-template-columns:repeat(4,1fr);margin:13px 0 12px;padding:11px 0;
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.vk-fn div{text-align:center}
+.vk-fn div+div{border-left:1px solid var(--line)}
+.vk-fn b{display:block;font-size:19px;font-weight:700;line-height:1.2}
+.vk-fn span{font-size:11px;color:var(--muted)}
+.vk-fn .hot b{color:var(--blue)}
+.vk-fn .win b{color:var(--ok)}
+.vk-cta{width:100%;margin:0}
+.vk-ft{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin-top:10px;font-size:12.5px;color:var(--muted)}
+.vk-yes{border:0;background:rgba(37,99,235,.1);color:var(--blue);font-family:inherit;font-size:12px;
+  font-weight:700;padding:3px 10px;border-radius:20px;cursor:pointer}
+.vk-closed-h{width:100%;display:flex;align-items:center;gap:6px;border:0;background:none;padding:10px 4px;
+  font-family:inherit;font-size:13.5px;font-weight:600;color:var(--muted);cursor:pointer}
+.vd-kv{display:flex;gap:12px;padding:9px 0;font-size:14.5px;border-bottom:1px solid var(--line)}
+.vd-kv:last-child{border-bottom:none}
+.vd-kv .k{color:var(--muted);flex:none;min-width:104px}
+.vd-kv .v{flex:1;text-align:right}
+.vd-sec{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin:20px 0 8px}
+.menu-it{width:100%;display:flex;align-items:center;gap:12px;padding:14px 4px;border:0;border-bottom:1px solid var(--line);
+  background:none;font-family:inherit;font-size:15.5px;color:var(--ink);cursor:pointer;text-align:left}
+.menu-it:last-child{border-bottom:0}
+.menu-it.d{color:var(--danger)}
+.menu-it svg{width:20px;height:20px;flex:none}
+
 /* ── Pastki oyna ── */
 /* z-index suhbat oynasidan (.cv 60) yuqori — rezyume suhbat ustida ochiladi */
 .sheet{position:fixed;inset:0;background:rgba(8,20,38,.45);display:none;align-items:flex-end;z-index:70}
@@ -639,64 +728,114 @@ async function loadMe(){
   }catch(e){ $('cName').textContent = e.message; }
 }
 
-function itemHtml(slId, it){
-  const meta = [
-    it.experienceYears ? it.experienceYears + ' yil' : 'Tajribasiz',
-    it.age ? it.age + ' yosh' : '',
-    it.location || ''
-  ].filter(Boolean).join(' · ');
+// ══════════════════════════════════════════════════════════
+//  NOMZOD KARTASI — "Tanlovlar" va vakansiya sahifasi uchun bitta
+// ══════════════════════════════════════════════════════════
+// Kontakt ochilgach sarlavhada ISM va foto (kod emas), lavozim rol
+// bo'yicha bir xil ("Xostess", xom "Хостес" emas). Qaror — bosqichlar
+// chizig'i: Kontakt → Suhbat → Ishga olindi; "Mos kelmadi" kichik havola.
 
-  const ct = it.contact ? `
-    <div class="ct">
-      <div class="nm">${esc(it.contact.fullName) || 'Nomzod'}</div>
-      <a href="tel:${esc(it.contact.phone)}">${esc(it.contact.phone) || '—'}</a>
-      ${it.contact.email ? `<div class="em">${esc(it.contact.email)}</div>` : ''}
-      <button class="rzb" data-rz="${esc(it.candidateId)}">Rezyumeni ochish</button>
-    </div>` : '';
+const OY = ['yan','fev','mar','apr','may','iyn','iyl','avg','sen','okt','noy','dek'];
+const dShort = s => { if (!s) return ''; const d = new Date(s); return d.getDate() + '-' + OY[d.getMonth()]; };
+const dTime = s => { const d = new Date(s); return dShort(s) + ', ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); };
+const nameIni = s => String(s || '').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || '—';
+const IC = {
+  phone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
+  chat:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>',
+  doc:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>',
+  edit:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
+  megaphone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>',
+  eyeoff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.53 13.53 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>',
+  close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>',
+  reopen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>'
+};
+const CHIP = { waiting:'Jarayonda', open:'Kontakt ochiq', hired:'Ishga olindi', refunded:'Qaytarildi' };
 
-  const rz = it.reason ? `<div class="rz">Sabab: ${esc(it.reason)}</div>` : '';
-
-  const iv = it.interviewAt
-    ? `<div class="iv">Suhbat: ${new Date(it.interviewAt).toLocaleString('uz-UZ',
-        { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })}</div>` : '';
-
-  // Qaror tugmalari faqat kontakt ochilgandan keyin. Oldin ularning
-  // ma'nosi yo'q — raqam hali sizda emas.
-  const act = it.canAct ? `<div class="acts" id="a-${esc(it.candidateId)}">
-      ${it.interviewAt ? '' : `<button class="ab" data-iv="${esc(it.candidateId)}" data-sl="${esc(slId)}">Suhbatga chaqirdim</button>`}
-      <button class="ab ok" data-hire="${esc(it.candidateId)}" data-sl="${esc(slId)}">Ishga oldim</button>
-      <button class="ab no" data-nf="${esc(it.candidateId)}" data-sl="${esc(slId)}">Mos kelmadi</button>
-    </div>` : '';
-
-  return `<div class="it">
-    <div class="av">${it.hasPhoto
-      ? `<img src="/api/ma/photo-sl/${encodeURIComponent(slId)}/${encodeURIComponent(it.candidateId)}?i=${encodeURIComponent(INIT)}" alt="">`
-      : esc(initialsOf(it.publicCode))}</div>
-    <div class="bd">
-      <div class="p">${esc(it.desiredPosition || 'Nomzod')}</div>
-      <div class="m">${esc(it.publicCode)}${meta ? ' · ' + esc(meta) : ''}</div>
-      <span class="st ${it.state}">${esc(it.stateLabel)}</span>
-      ${rz}${iv}${ct}${act}
+function stepsHtml(it){
+  const st = it.stage, sl = esc(it.shortlistId), id = esc(it.candidateId);
+  const ivDone = st === 'interview' || st === 'hired', hired = st === 'hired';
+  // Keyingi qadam bosiladi: kontaktdan keyin suhbat yoki darhol ishga olish
+  const ivAttr = !ivDone ? `data-iv="${id}" data-sl="${sl}"` : '';
+  const hrAttr = !hired ? `data-hire="${id}" data-sl="${sl}"` : '';
+  return `<div class="cd-steps">
+      <div class="sp done${hired ? ' hiredone' : ''}"><i>&#10003;</i>Kontakt</div>
+      <div class="sp-ln ${hired ? 'win' : ivDone ? 'done' : ''}"></div>
+      <button class="sp ${ivDone ? 'done' + (hired ? ' hiredone' : '') : 'next'}" ${ivAttr}><i>${ivDone ? '&#10003;' : ''}</i>Suhbat</button>
+      <div class="sp-ln ${hired ? 'win' : ''}"></div>
+      <button class="sp ${hired ? 'done hiredone' : 'next'}" ${hrAttr}><i>${hired ? '&#10003;' : ''}</i>Ishga olindi</button>
     </div>
+    <div class="cd-foot">
+      <span>${it.interviewAt ? 'Suhbat: ' + dTime(it.interviewAt) : (hired ? 'Ishga olingan' : 'Keyingi bosqichni bosing')}</span>
+      ${!hired ? `<button class="cd-nf" data-nf="${id}" data-sl="${sl}">Mos kelmadi</button>` : ''}
+    </div>`;
+}
+
+function candHtml(it){
+  const open = !!it.contact;
+  const name = open ? (it.contact.fullName || it.roleText) : it.roleText;
+  const meta = [it.experienceYears ? it.experienceYears + ' yil tajriba' : 'Tajribasiz',
+                it.age ? it.age + ' yosh' : '', it.location || ''].filter(Boolean).join(' · ');
+  const sub = open ? [it.roleText, meta].join(' · ') : [it.publicCode, meta].join(' · ');
+  const photo = it.hasPhoto
+    ? `<img src="/api/ma/photo-sl/${encodeURIComponent(it.shortlistId)}/${encodeURIComponent(it.candidateId)}?i=${encodeURIComponent(INIT)}" alt="">`
+    : esc(open ? nameIni(name) : initialsOf(it.publicCode));
+  const chipTxt = it.state === 'no' ? it.stateLabel : (CHIP[it.state] || it.stateLabel);
+
+  let body = '';
+  if (open && it.stage !== 'not_fit') {
+    const tel = String(it.contact.phone || '').replace(/[^\d+]/g, '');
+    body = `<div class="cd-acts">
+        ${tel ? `<a class="cd-btn p" href="tel:${esc(tel)}">${IC.phone}Qo'ng'iroq</a>` : ''}
+        ${it.threadId ? `<button class="cd-btn" data-chat="${esc(it.candidateId)}">${IC.chat}Yozish</button>` : ''}
+        <button class="cd-btn" data-rz="${esc(it.candidateId)}">${IC.doc}Rezyume</button>
+      </div>` + stepsHtml(it);
+  } else if (open) {
+    body = `<div class="cd-wait">Mos kelmadi${it.reason ? ' — ' + esc(it.reason) : ''}</div>
+      <div class="cd-acts"><button class="cd-btn" data-rz="${esc(it.candidateId)}">${IC.doc}Rezyume</button></div>`;
+  } else if (it.state === 'waiting') {
+    body = `<div class="cd-wait">${esc(it.stateLabel)}. Kontakt ochilgach ism, telefon va chat shu yerda paydo bo'ladi.</div>`;
+  } else if (it.reason) {
+    body = `<div class="cd-wait">${esc(it.reason)}</div>`;
+  }
+
+  return `<div class="cd" data-card="${esc(it.shortlistId)}:${esc(it.candidateId)}">
+    <div class="cd-top">
+      <div class="cd-ph">${photo}</div>
+      <div class="cd-mid"><div class="cd-nm">${esc(name)}</div><div class="cd-sub">${esc(sub)}</div></div>
+      <span class="stc ${esc(it.state)}">${esc(chipTxt)}</span>
+    </div>
+    ${body}
+    <div class="cd-box"></div>
   </div>`;
 }
 
+// ── Tanlovlar: vakansiya bo'yicha guruhlangan ──
+// Endi har tanlovning vakansiyasi bor — "Xostes · 18-okt" kabi qidiruv
+// nomi o'rniga mijozga tanish vakansiya nomi chiqadi.
 async function loadShortlists(){
   try{
     const rows = await api('/api/ma/shortlists');
     if (!rows.length) {
       $('slList').innerHTML = `<div class="msg">Hali tanlov yo'q.<br><br>
-        Botga "xostes kerak" deb yozing — mos nomzodlarni ko'rsataman.</div>`;
+        Botga "xostes kerak" deb yozing yoki Vakansiya bo'limidan "Mos nomzodlar"ni oching.</div>`;
       return;
     }
-    $('slList').innerHTML = rows.map(s => `<div class="sl">
-      <div class="sl-h">
-        <div class="q">${esc(s.summary)}</div>
-        <div class="d">${dt(s.createdAt)} · ${s.items.length} ta nomzod</div>
-      </div>
-      ${s.items.map(it => itemHtml(s.id, it)).join('')}
-    </div>`).join('');
-    wireActions();
+    const groups = [], gBy = {};
+    for (const s of rows) {
+      const key = s.vacancyId || 's:' + s.id;
+      let g = gBy[key];
+      if (!g) { g = gBy[key] = { title: s.vacancyTitle || s.summary, closed: s.vacancyStatus === 'closed', items: [], seen: new Set() }; groups.push(g); }
+      for (const it of s.items) if (!g.seen.has(it.candidateId)) { g.seen.add(it.candidateId); g.items.push(it); }
+    }
+    $('slList').innerHTML = groups.map(g => {
+      const opened = g.items.filter(i => i.contact).length;
+      return `<div class="grp">
+        <div class="grp-h"><b>${esc(g.title)}</b>${g.closed ? '<span class="cl">Yopilgan</span>' : ''}
+          <span>${g.items.length} nomzod${opened ? ' · ' + opened + ' kontakt' : ''}</span></div>
+        ${g.items.map(candHtml).join('')}
+      </div>`;
+    }).join('');
+    wireCards($('slList'), loadShortlists);
   }catch(e){ $('slList').innerHTML = `<div class="msg">${esc(e.message)}</div>`; }
 }
 
@@ -709,53 +848,62 @@ async function decide(slId, candId, body){
   await api(`/api/ma/shortlists/${encodeURIComponent(slId)}/items/${encodeURIComponent(candId)}`,
     { method:'POST', body: JSON.stringify(body) });
   try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
-  loadShortlists(); loadMe();
+  loadMe();
 }
 
-function wireActions(){
-  // Rezyume — kontakt ochilgan nomzodlarda
-  document.querySelectorAll('[data-rz]').forEach(b => b.onclick = () => showResume(b.dataset.rz));
+// Suhbat oynasini nomzod bilan to'g'ridan-to'g'ri ochish
+async function openChatWith(candId){
+  closeSheet();
+  pickTab('tMS');
+  try { CHATS = await api('/api/ma/chats'); drawChats(); } catch(e){ return; }
+  const c = CHATS.find(x => x.candidateId === candId);
+  if (c) openChat(c);
+}
+
+// Kartalardagi amallar. root — qaysi ro'yxat (Tanlovlar yoki vakansiya
+// sahifasi), refresh — qarordan keyin o'shani qayta chizish. Forma
+// kartaning o'z qutisiga chiziladi: bir nomzod ikki ro'yxatda bo'lsa ham
+// id to'qnashmaydi.
+function wireCards(root, refresh){
+  const boxOf = el => el.closest('.cd').querySelector('.cd-box');
+  root.querySelectorAll('[data-rz]').forEach(b => b.onclick = () => showResume(b.dataset.rz));
+  root.querySelectorAll('[data-chat]').forEach(b => b.onclick = () => openChatWith(b.dataset.chat));
 
   // Suhbat sanasi
-  document.querySelectorAll('[data-iv]').forEach(b => b.onclick = () => {
-    const id = b.dataset.iv, sl = b.dataset.sl;
-    const box = $('a-' + id);
-    box.innerHTML = `<div class="ivbox">
-      <div style="font-size:12.5px;color:var(--muted);margin-bottom:6px">Suhbat qachon?</div>
-      <input type="datetime-local" id="iv-${id}">
-      <div class="acts"><button class="ab ok" id="ivok-${id}">Saqlash</button>
-        <button class="ab" id="ivno-${id}">Bekor</button></div></div>`;
-    $('ivok-' + id).onclick = async () => {
-      const v = $('iv-' + id).value;
+  root.querySelectorAll('[data-iv]').forEach(b => b.onclick = () => {
+    const box = boxOf(b), id = b.dataset.iv, sl = b.dataset.sl;
+    box.innerHTML = `<div style="font-size:13px;color:var(--muted)">Suhbat qachon?</div>
+      <input type="datetime-local" style="margin-top:8px">
+      <div class="acts"><button class="sbtn p">Saqlash</button><button class="sbtn">Bekor</button></div>`;
+    const [ok, no] = box.querySelectorAll('button');
+    ok.onclick = async () => {
+      const v = box.querySelector('input').value;
       if (!v) return;
-      $('ivok-' + id).disabled = true;
-      try { await decide(sl, id, { state:'interview', interviewAt: new Date(v).toISOString() }); }
-      catch(e){ alert(e.message); $('ivok-' + id).disabled = false; }
+      ok.disabled = true;
+      try { await decide(sl, id, { state:'interview', interviewAt: new Date(v).toISOString() }); refresh(); }
+      catch(e){ alert(e.message); ok.disabled = false; }
     };
-    $('ivno-' + id).onclick = loadShortlists;
+    no.onclick = () => { box.innerHTML = ''; };
   });
 
-  // Ishga oldim — butun tizimning yakuniy ko'rsatkichi
-  document.querySelectorAll('[data-hire]').forEach(b => b.onclick = async () => {
+  // Ishga olindi — butun tizimning yakuniy ko'rsatkichi
+  root.querySelectorAll('[data-hire]').forEach(b => b.onclick = async () => {
     if (!confirm('Bu nomzodni ishga oldingizmi?')) return;
     b.disabled = true;
-    try { await decide(b.dataset.sl, b.dataset.hire, { state:'hired' }); }
+    try { await decide(b.dataset.sl, b.dataset.hire, { state:'hired' }); refresh(); }
     catch(e){ alert(e.message); b.disabled = false; }
   });
 
   // Mos kelmadi — sabab bilan, aks holda keyingi qidiruv yaxshilanmaydi
-  document.querySelectorAll('[data-nf]').forEach(b => b.onclick = () => {
-    const id = b.dataset.nf, sl = b.dataset.sl;
-    const box = $('a-' + id);
-    box.innerHTML = `<div style="width:100%">
-      <div style="font-size:12.5px;color:var(--muted);margin-bottom:6px">Nega mos kelmadi?</div>
-      <div class="acts">${NOT_FIT.map(([k, l]) =>
-        `<button class="ab" data-r="${k}">${l}</button>`).join('')}
-        <button class="ab" data-r="">Bekor</button></div></div>`;
+  root.querySelectorAll('[data-nf]').forEach(b => b.onclick = () => {
+    const box = boxOf(b), id = b.dataset.nf, sl = b.dataset.sl;
+    box.innerHTML = `<div style="font-size:13px;color:var(--muted)">Nega mos kelmadi?</div>
+      <div class="acts">${NOT_FIT.map(([k, l]) => `<button class="sbtn" data-r="${k}">${l}</button>`).join('')}
+        <button class="sbtn" data-r="">Bekor</button></div>`;
     box.querySelectorAll('[data-r]').forEach(x => x.onclick = async () => {
-      if (!x.dataset.r) return loadShortlists();
+      if (!x.dataset.r) { box.innerHTML = ''; return; }
       x.disabled = true;
-      try { await decide(sl, id, { state:'not_fit', reason: x.dataset.r }); }
+      try { await decide(sl, id, { state:'not_fit', reason: x.dataset.r }); refresh(); }
       catch(e){ alert(e.message); x.disabled = false; }
     });
   });
@@ -795,73 +943,152 @@ function closeSheet(){ $('sheet').classList.remove('on'); $('shB').innerHTML = '
 $('shX').onclick = closeSheet;
 $('sheet').onclick = e => { if (e.target === $('sheet')) closeSheet(); };
 
-const VST = { open:['open','Ochiq'], paused:['paused','To\'xtatilgan'], closed:['closed','Yopilgan'] };
+// Kartada bitta asosiy amal ("Mos nomzodlarni ko'rish") va voronka
+// raqamlari — mijozga "N tanlov" emas, natija kerak. Qolgani ⋯ menyusida.
+// Kartani bosish — vakansiya sahifasi. Yopilganlar pastda yig'ilgan.
+let VACS = [], showClosed = false;
+
+const daysAgo = s => Math.max(0, Math.floor((Date.now() - new Date(s).getTime()) / 864e5));
+
+function funnelHtml(f){
+  f = f || {};
+  return `<div class="vk-fn">
+    <div class="hot"><b>${f.mos == null ? '—' : f.mos}</b><span>mos</span></div>
+    <div><b>${f.picked || 0}</b><span>tanlangan</span></div>
+    <div><b>${f.contact || 0}</b><span>kontakt</span></div>
+    <div class="win"><b>${f.hired || 0}</b><span>ishga olindi</span></div>
+  </div>`;
+}
+
+function vacCardHtml(v){
+  const active = v.status !== 'closed';
+  const f = v.funnel || {};
+  const meta = [v.salaryText || 'Maosh ko\'rsatilmagan',
+                v.schedule || (SHIFT_L[v.shift] ? SHIFT_L[v.shift] + ' smena' : '')].filter(Boolean).join(' · ');
+  const n = daysAgo(v.confirmedAt || v.createdAt);
+  // "Tasdiqlash" o'rniga ma'nosi bilan: e'lon qilingan va bir necha kun
+  // yangilanmagan bo'lsa — "Hali ochiqmi?"
+  const ask = v.status === 'open' && v.listed && n >= 3;
+  const foot = [
+    !active ? 'Yopilgan' : (n === 0 ? 'Bugun yangilangan' : n + ' kun oldin yangilangan'),
+    v.status === 'paused' ? 'To\'xtatilgan' : '',
+    active && !v.listed ? 'Faqat sizga' : '',
+    f.apps ? f.apps + ' ariza' + (f.appsNew ? ' (' + f.appsNew + ' yangi)' : '') : ''
+  ].filter(Boolean).map(esc).join(' · ');
+  return `<div class="vk ${active ? '' : 'closed'}" data-vk="${esc(v.id)}">
+    <div class="vk-h"><div class="vk-ti">${esc(v.title)}</div>
+      <button class="vk-more" data-more="${esc(v.id)}" aria-label="Amallar">&#8943;</button></div>
+    <div class="vk-mt">${esc(meta)}</div>
+    ${funnelHtml(f)}
+    ${v.status === 'open' ? `<button class="btn vk-cta" data-match="${esc(v.id)}">Mos nomzodlarni ko'rish</button>` : ''}
+    <div class="vk-ft">${foot}${ask ? ' · Hali ochiqmi? <button class="vk-yes" data-conf="' + esc(v.id) + '">Ha</button>' : ''}</div>
+  </div>`;
+}
+
+function renderVacs(){
+  if (!VACS.length) {
+    $('vcList').innerHTML = `<div class="msg">Vakansiya yo'q.<br><br>
+      "+ Yangi vakansiya" bilan kim kerakligini yozing — nomzodlar o'zi ariza bera boshlaydi.</div>`;
+    return;
+  }
+  const act = VACS.filter(v => v.status !== 'closed'), cl = VACS.filter(v => v.status === 'closed');
+  $('vcList').innerHTML = act.map(vacCardHtml).join('') + (cl.length
+    ? `<button class="vk-closed-h" id="bClosed">${showClosed ? '&#9662;' : '&#9656;'} Yopilganlar (${cl.length})</button>` +
+      (showClosed ? cl.map(vacCardHtml).join('') : '')
+    : '');
+  if ($('bClosed')) $('bClosed').onclick = () => { showClosed = !showClosed; renderVacs(); };
+
+  const root = $('vcList');
+  root.querySelectorAll('[data-vk]').forEach(el => el.onclick = e => {
+    if (e.target.closest('button')) return;              // ichidagi tugmalar o'zi ishlaydi
+    showVacancy(el.dataset.vk);
+  });
+  root.querySelectorAll('[data-more]').forEach(b => b.onclick = () => vacMenu(b.dataset.more));
+  root.querySelectorAll('[data-match]').forEach(b => b.onclick = () => startMatches(b.dataset.match, b));
+  root.querySelectorAll('[data-conf]').forEach(b => b.onclick = async () => {
+    b.disabled = true;
+    try { await api(`/api/ma/vacancies/${b.dataset.conf}/confirm`, { method:'POST' }); haptic(); loadVacancies(); }
+    catch(e){ alert(e.message); b.disabled = false; }
+  });
+}
 
 async function loadVacancies(){
-  try{
-    const rows = await api('/api/ma/vacancies');
-    if (!rows.length) {
-      $('vcList').innerHTML = `<div class="msg">Vakansiya yo'q.<br><br>
-        "+ Yangi vakansiya" bilan kim kerakligini yozing — nomzodlar
-        o'zi ariza bera boshlaydi.</div>`;
-      return;
-    }
-    $('vcList').innerHTML = rows.map(v => {
-      const [cls, lbl] = VST[v.status] || VST.open;
-      const meta = [v.salaryText, v.shift, v.schedule].filter(Boolean).join(' · ');
-      return `<div class="vc">
-        <div class="ti">${esc(v.title)}</div>
-        ${meta ? `<div class="mt">${esc(meta)}</div>` : ''}
-        ${v.headcount > 1 ? `<div class="mt">${v.headcount} ta odam kerak</div>` : ''}
-        <div class="row">
-          <span class="tag ${cls}">${lbl}</span>
-          ${!v.listed ? '<span class="tag priv">Faqat sizga</span>' : ''}
-          ${v.listed && v.stale && v.status === 'open' ? '<span class="tag stale">Tasdiqlang</span>' : ''}
-          ${v.shortlists ? `<span class="tag app">${v.shortlists} tanlov</span>` : ''}
-        </div>
-        ${!v.listed && v.status === 'open' ? `<div class="mt">Qidiruvdan o'zi yaratilgan. Nomzodlar
-          ko'rmaydi — e'lon qilsangiz, ular ariza bera boshlaydi.</div>` : ''}
-        <div class="row">
-          ${v.status === 'open' ? `<button class="sbtn p" data-match="${v.id}">Mos nomzodlar</button>` : ''}
-          <button class="sbtn" data-apps="${v.id}">Arizalar</button>
-          ${!v.listed && v.status === 'open' ? `<button class="sbtn p" data-pub="${v.id}">E'lon qilish</button>` : ''}
-          ${v.listed && v.status === 'open' ? `<button class="sbtn" data-conf="${v.id}">Tasdiqlash</button>` : ''}
-          <button class="sbtn" data-edit="${v.id}">Tahrirlash</button>
-          ${v.status === 'open' ? `<button class="sbtn d" data-close="${v.id}">Yopish</button>` : ''}
-        </div>
-      </div>`;
-    }).join('');
+  try { VACS = await api('/api/ma/vacancies'); renderVacs(); }
+  catch(e){ $('vcList').innerHTML = `<div class="msg">${esc(e.message)}</div>`; }
+}
 
-    document.querySelectorAll('[data-apps]').forEach(b => b.onclick = () => showApps(b.dataset.apps));
-    document.querySelectorAll('[data-conf]').forEach(b => b.onclick = async () => {
-      b.disabled = true;
-      try { await api(`/api/ma/vacancies/${b.dataset.conf}/confirm`, { method:'POST' }); haptic(); loadVacancies(); }
-      catch(e){ alert(e.message); b.disabled = false; }
-    });
-    // Mos nomzodlar — vakansiya mezonlari bo'yicha anonim kartalar
-    document.querySelectorAll('[data-match]').forEach(b => b.onclick = async () => {
-      b.disabled = true; const was = b.textContent; b.textContent = 'Qidirilmoqda…';
-      try {
-        const r = await api(`/api/ma/vacancies/${b.dataset.match}/matches`, { method:'POST', body:'{}' });
-        if (!r.key) { alert(r.message || 'Mos nomzod topilmadi'); b.disabled = false; b.textContent = was; return; }
-        haptic(); openSearch(r.key, true);
-      } catch(e){ alert(e.message); b.disabled = false; b.textContent = was; }
-    });
-    document.querySelectorAll('[data-pub]').forEach(b => b.onclick = async () => {
-      b.disabled = true;
-      try { await api(`/api/ma/vacancies/${b.dataset.pub}`, { method:'PATCH', body: JSON.stringify({ listed:true }) }); haptic(); loadVacancies(); }
-      catch(e){ alert(e.message); b.disabled = false; }
-    });
-    document.querySelectorAll('[data-close]').forEach(b => b.onclick = async () => {
-      if (!confirm('Vakansiya yopiladi. Davom etamizmi?')) return;
-      b.disabled = true;
-      try { await api(`/api/ma/vacancies/${b.dataset.close}`, { method:'PATCH', body: JSON.stringify({ status:'closed' }) }); loadVacancies(); }
-      catch(e){ alert(e.message); b.disabled = false; }
-    });
-    document.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => {
-      vacForm(rows.find(x => x.id === b.dataset.edit));
-    });
-  }catch(e){ $('vcList').innerHTML = `<div class="msg">${esc(e.message)}</div>`; }
+// Mos nomzodlar — vakansiya mezonlari bo'yicha anonim kartalar
+async function startMatches(id, b){
+  b.disabled = true; const was = b.textContent; b.textContent = 'Qidirilmoqda…';
+  try {
+    const r = await api(`/api/ma/vacancies/${id}/matches`, { method:'POST', body:'{}' });
+    if (!r.key) { alert(r.message || 'Mos nomzod topilmadi'); b.disabled = false; b.textContent = was; return; }
+    haptic(); closeSheet(); openSearch(r.key, true);
+  } catch(e){ alert(e.message); b.disabled = false; b.textContent = was; }
+}
+
+// ── Vakansiya sahifasi: voronka, shartlar, nomzodlar, arizalar ──
+async function showVacancy(id){
+  openSheet('Vakansiya', '<div class="msg">Yuklanmoqda…</div>');
+  let d;
+  try { d = await api(`/api/ma/vacancies/${encodeURIComponent(id)}/detail`); }
+  catch(e){ $('shB').innerHTML = `<div class="msg">${esc(e.message)}</div>`; return; }
+  const v = d.vacancy, f = v.funnel || {};
+  $('shT').textContent = v.title;
+
+  const kv = (k, val) => val ? `<div class="vd-kv"><span class="k">${k}</span><span class="v">${esc(val)}</span></div>` : '';
+  const age = v.minAge && v.maxAge ? `${v.minAge}–${v.maxAge} yosh` : v.minAge ? `${v.minAge} yoshdan` : v.maxAge ? `${v.maxAge} yoshgacha` : '';
+  const info = [
+    kv('Maosh', v.salaryText), kv('Jadval', v.schedule), kv('Smena', SHIFT_L[v.shift]),
+    kv('Sharoit', v.conditions), kv('Hudud', v.location),
+    kv('Boshlash', v.startDate ? dShort(v.startDate) : ''), kv('Kerak', v.headcount > 1 ? v.headcount + ' kishi' : ''),
+    kv('Tajriba', v.minExp ? v.minExp + ' yildan' : ''), kv('Yosh', age), kv('Tillar', (v.languages || []).join(', ')),
+    kv('Holat', v.status === 'closed' ? 'Yopilgan' : (v.listed ? 'E\'lon qilingan' : 'Faqat sizga'))
+  ].join('');
+
+  $('shB').innerHTML = `
+    ${funnelHtml(f)}
+    ${v.status === 'open' ? `<button class="btn vk-cta" id="vdMatch">Mos nomzodlarni ko'rish</button>` : ''}
+    <div class="vd-sec">Nomzodlar (${d.items.length})</div>
+    <div id="vdItems">${d.items.length ? d.items.map(candHtml).join('')
+      : '<div class="cd-wait">Hali nomzod tanlanmagan.</div>'}</div>
+    ${f.apps ? `<div class="vd-sec">Arizalar (${f.apps})</div>
+      <button class="cd-btn" id="vdApps" style="width:100%">${IC.doc}Arizalarni ko'rish${f.appsNew ? ' · ' + f.appsNew + ' yangi' : ''}</button>` : ''}
+    <div class="vd-sec">Shartlar</div>
+    ${info}
+    <button class="cd-btn" id="vdMenu" style="width:100%;margin-top:18px">Tahrirlash va boshqa amallar</button>`;
+
+  wireCards($('vdItems'), () => showVacancy(id));
+  if ($('vdMatch')) $('vdMatch').onclick = e => startMatches(id, e.currentTarget);
+  if ($('vdApps')) $('vdApps').onclick = () => showApps(id);
+  $('vdMenu').onclick = () => vacMenu(id, v);
+}
+
+// ── ⋯ menyusi: Tahrirlash, E'lon qilish / olish, Yopish / Qayta ochish ──
+function vacMenu(id, vObj){
+  const v = vObj || VACS.find(x => x.id === id);
+  if (!v) return;
+  const active = v.status !== 'closed';
+  openSheet(v.title, `
+    <button class="menu-it" data-m="edit">${IC.edit}Tahrirlash</button>
+    ${active ? (v.listed
+      ? `<button class="menu-it" data-m="unlist">${IC.eyeoff}E'londan olish — faqat sizga</button>`
+      : `<button class="menu-it" data-m="list">${IC.megaphone}E'lon qilish — nomzodlar ariza bersin</button>`) : ''}
+    ${active
+      ? `<button class="menu-it d" data-m="close">${IC.close}Yopish</button>`
+      : `<button class="menu-it" data-m="reopen">${IC.reopen}Qayta ochish</button>`}`);
+  $('shB').querySelectorAll('[data-m]').forEach(b => b.onclick = async () => {
+    const m = b.dataset.m;
+    if (m === 'edit') { vacForm(v); return; }
+    if (m === 'close' && !confirm('Vakansiya yopiladi. Davom etamizmi?')) return;
+    const body = m === 'list' ? { listed: true } : m === 'unlist' ? { listed: false }
+               : m === 'close' ? { status: 'closed' } : { status: 'open' };
+    b.disabled = true;
+    try {
+      await api('/api/ma/vacancies/' + encodeURIComponent(id), { method:'PATCH', body: JSON.stringify(body) });
+      closeSheet(); haptic(); loadVacancies();
+    } catch(e){ alert(e.message); b.disabled = false; }
+  });
 }
 
 // Forma ataylab ikki qismga bo'lingan: TALAB (kimni qidiramiz) va

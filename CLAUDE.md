@@ -177,6 +177,25 @@ webhook holati tekshirildi; haqiqiy mijoz chatida HALI SINALMAGAN.
 O'zbekcha qolgani: agentlik admini xabarlari, nomzod boti va kabineti,
 AI xulosalari (bazada). Reja: `docs/taklif-til-anketa-ilova-2026-10-19.md`.
 
+**ANKETA MODULI (1-bosqich) — DEPLOY QILINDI** (2026-10-20, `60e30be`..):
+o'z nomzod oqimi. E'lon havolasi `t.me/TalentHubUzBot?start=a_<kod>_<kanal>`
+(umumiy) yoki `v_<vakansiya uuid>_<kanal>` (to'ldirgach ARIZA ham tushadi)
+-> bot "Anketani to'ldirish" (web_app) -> `anketa.html` (har ekranda bitta
+savol, UZ/RU) -> bazada tayyor nomzod (`source:'anketa'`, `channel`,
+`consentAt`). Javob -> maydon SHABLON bo'yicha (`services/survey.toFields`),
+AI yo'q. Telefon — Mini App `requestContact`, bot webhook'i `message.contact`
+(contact.user_id === from.id) bilan TASDIQLAYDI (`phoneVerifiedAt`);
+qo'lda — zaxira. Nomzod topish: shu Telegram akkaunti, keyin telefon
+(qo'lda yozilgan raqam bilan birovning bog'langan profili egallanmaydi).
+Modellar: `Survey` (savollar bazada, shablon — Tarnov Verifix anketasi
+asosida), `SurveyResponse` (har javobda saqlanadi, `step` — qayerda
+to'xtagan). Ariza oqimi yagona: `services/applications.submit` (kabinet
+ham). Panel: Vakansiyalar -> "Anketa" / "Umumiy anketa havolasi" (kanal
+tanlanadi, manba bo'yicha boshladi/yubordi). Jonli: sahifa, API himoyasi,
+havola yaratish tekshirildi (umumiy kod HMXT37); Telegram'da haqiqiy
+nomzod bilan HALI SINALMAGAN. Keyingi: konstruktor, eslatma (Render bepul
+tarifida cron ishonchsiz), ovozli javob, nomzod kabineti ruscha.
+
 **Eskiz SMS ochilmagan** — nomzod kabineti, tiriklik tekshiruvi va suhbat
 tasdiqlash shunga bog'liq. 742 nomzoddan ~1 tasi botga bog'langan.
 

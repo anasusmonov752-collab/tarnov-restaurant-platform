@@ -151,6 +151,21 @@ PDF qayta yuklandi → `duplicates:1, created:0`. Telefon formati yo'li
 ulangan yoki tanlovdagi ikki yozuvli guruh `conflicts`ga tushadi, tegilmaydi).
 8 guruhda nusxalar roli har xil edi — qoladigan yozuv roli qoldi.
 
+**TIL TIZIMI (o'zbek/rus) — mijoz Mini App'i DEPLOY QILINDI** (2026-10-19,
+`c951e5c`): lug'at BITTA fayl — `public/js/th-i18n.js` (brauzer va server
+`require` qiladi), matn KALIT bo'yicha (RestoOne'dagi `i18n.js` kabi matn
+qidirish EMAS). Rus ko'plik shakllari massiv bilan. Til odamga yoziladi:
+`Client.lang` / `Candidate.lang` (bo'sh — Telegram `language_code`dan).
+`/api/ma` javoblari (holat, rol, maosh, Toshkent, tillar, sabab, xatolar)
+`req.lang` da; servis xatolari `ERR_RU` jadvali bilan res.json ichida
+tarjima. Avtomatik vakansiya sarlavhasi bazaga O'ZBEKCHA yoziladi,
+`vac.full(v, extra, lang)` / `titleFor` o'quvchi tilida ko'rsatadi; panel
+(lang'siz) o'zgarmaydi. Mini App: `data-t`, `t()`, Aloqa'da UZ | RU.
+Jonli: fayllar, API va panel regressiyasi tekshirildi; Telegram ichida
+haqiqiy mijoz bilan HALI SINALMAGAN. Qolgani: bot xabarlari mijoz
+tilida, imzo xatosi ("Avtorizatsiya: ...") hali o'zbekcha, AI xulosalari
+ikki tilda, nomzod kabineti. Reja: `docs/taklif-til-anketa-ilova-2026-10-19.md`.
+
 **Eskiz SMS ochilmagan** — nomzod kabineti, tiriklik tekshiruvi va suhbat
 tasdiqlash shunga bog'liq. 742 nomzoddan ~1 tasi botga bog'langan.
 

@@ -24,4 +24,16 @@ jobs:
       # npm ci emas: package-lock.json da pdf-parse yo'q (Render npm install ishlatadi)
       - run: npm install --no-audit --no-fund
       - run: npm i --no-save mongodb-memory-server@10
-      - run: npm test
+      # Natija (testlar soni) annotatsiya bo'lib chiqadi — loglarni ochmasdan ko'rinadi
+      - name: npm test
+        shell: bash
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee test.log
+      - name: Natija
+        if: always()
+        shell: bash
+        run: |
+          s=$(grep -E '^(# |ℹ )(tests|pass|fail) [0-9]+' test.log | sed 's/^ℹ /# /' | tr '\n' ' ')
+          echo "::notice title=Testlar::${s:-natija topilmadi}"
+          grep -E '^not ok|✖' test.log | head -20 | while read -r l; do echo "::error title=Yiqilgan test::$l"; done || true

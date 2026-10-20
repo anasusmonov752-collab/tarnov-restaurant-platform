@@ -64,7 +64,8 @@ router.get('/:rid', guard, asyncHandler(async (req, res) => {
     phone: r.phone || '',
     phoneVerified: !!r.phoneVerifiedAt,
     step: r.step,
-    questions: survey.visibleQuestions(s, presetRole),
+    // bo'lim (sec) va o'tkazish sharti (skipIf) bilan — anketa.html shularni ko'rsatadi
+    questions: survey.withMeta(survey.visibleQuestions(s, presetRole)),
     // Sarlavhada — nomzod qaysi ishga to'ldirayotganini ko'rsin (restoran nomisiz)
     vacancy: v ? {
       title: { uz: vac.titleFor(v, 'uz'), ru: vac.titleFor(v, 'ru') },
@@ -125,7 +126,7 @@ router.post('/:rid/submit', guard, asyncHandler(async (req, res) => {
   const { s, presetRole } = await contextOf(r);
   const a = r.answers || {};
   for (const q of survey.visibleQuestions(s, presetRole)) {
-    if (!q.required) continue;
+    if (!q.required || survey.skipped(q, a)) continue;   // "Tajribam yo'q" — oxirgi ish so'ralmaydi
     const ok = q.type === 'contact' ? (r.phoneVerifiedAt || a.phone)
              : q.type === 'consent' ? a.consent === true
              : q.type === 'photo' ? !!r.photo

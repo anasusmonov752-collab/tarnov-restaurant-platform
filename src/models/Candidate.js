@@ -104,6 +104,10 @@ const CandidateSchema = new mongoose.Schema({
   // Agentlik modeli uchun shart; 14 kunlik ariza qoidasi ham shunga tayanadi.
   consentAt:       { type: Date,   default: null },
   channel:         { type: String, default: '' },   // e'lon manbasi (ig, tg, olx, qr ...)
+  // "Qachondan ish boshlay olasiz" — now | w1 | w2 | m1 va taxminiy sana
+  // (anketa yuborilgan kundan hisoblanadi; ish beruvchi kartada ko'radi)
+  startWhen:       { type: String, default: '' },
+  availableFrom:   { type: Date,   default: null },
   // Konstruktorda qo'shilgan o'z savollari javoblari (maydoni yo'q):
   // { q: savol matni, a: javob } — panel kartasida "Anketa javoblari"
   extraAnswers:    { type: [{ q: String, a: String, _id: false }], default: [] },

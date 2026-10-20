@@ -20,7 +20,8 @@ const PUBLIC_FIELDS = [
   'publicCode', 'role', 'desiredPosition', 'experienceYears', 'experienceSummary',
   'workHistory', 'skills', 'languages', 'location', 'age', 'education',
   'salaryExpectation', 'summary', 'fitScore', 'fitReason', 'shift',
-  'jobStatus', 'hasPhoto', 'source'
+  'jobStatus', 'hasPhoto', 'source',
+  'startWhen', 'availableFrom'     // anketadan: "qachondan chiqa oladi" — shaxsni ochmaydi
 ];
 
 const JOB_STATUS_LABEL = {

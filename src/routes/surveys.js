@@ -109,6 +109,51 @@ router.get('/stats', guard, asyncHandler(async (req, res) => {
   });
 }));
 
+// ── Anketalarni yangi versiyaga o'tkazish (2-versiya, 2026-10-20) ──
+// apply:false — nima o'zgarishini ko'rsatadi, bazaga yozmaydi.
+// apply:true  — umumiy anketa yangi shablonga o'tadi (siz qo'shgan o'z
+//               savollaringiz saqlanadi); xostess/oshpaz/ofitsiant anketalari
+//               yaratiladi (bor bo'lsa — yangilanadi).
+router.post('/upgrade', guard, asyncHandler(async (req, res) => {
+  const agencyId = req.user.restaurantId;
+  const apply = !!(req.body || {}).apply;
+  const ids = qs => (qs || []).map(q => q.id);
+  const plan = [];
+
+  const def = await survey.ensureDefault(agencyId);
+  const defQs = survey.upgradeQuestions(def.questions, survey.template());
+  plan.push({ survey: def.title.uz, action: 'yangilanadi', from: ids(def.questions), to: ids(defQs) });
+
+  const roleRows = [];
+  for (const role of survey.PRESET_ROLES) {
+    const p = survey.rolePreset(role);
+    const ex = await Survey.findOne({ agencyId, role, active: true, isDefault: false });
+    const qs = ex ? survey.upgradeQuestions(ex.questions, p.questions) : p.questions;
+    roleRows.push({ role, p, ex, qs });
+    plan.push({ survey: ex ? ex.title.uz : p.title.uz, action: ex ? 'yangilanadi' : 'yaratiladi',
+                from: ex ? ids(ex.questions) : [], to: ids(qs) });
+  }
+  if (!apply) return res.json({ applied: false, plan });
+
+  def.questions = defQs; def.updatedAt = new Date(); def.markModified('questions');
+  await def.save();
+  for (const r of roleRows) {
+    if (r.ex) {
+      r.ex.questions = r.qs; r.ex.updatedAt = new Date(); r.ex.markModified('questions');
+      await r.ex.save();
+    } else {
+      for (let i = 0; i < 5; i++) {
+        try {
+          await Survey.create({ id: uuidv4(), agencyId, code: survey.makeCode(), role: r.role, active: true,
+            isDefault: false, title: r.p.title, questions: r.qs });
+          break;
+        } catch (e) { if (e.code !== 11000) throw e; }
+      }
+    }
+  }
+  res.json({ applied: true, plan });
+}));
+
 router.get('/:id', guard, asyncHandler(async (req, res) => {
   const s = await Survey.findOne({ agencyId: req.user.restaurantId, id: req.params.id }).lean();
   if (!s) return res.status(404).json({ error: 'Anketa topilmadi' });
@@ -132,15 +177,18 @@ router.post('/', guard, asyncHandler(async (req, res) => {
   if (!role) return res.status(400).json({ error: 'Lavozimni tanlang' });
   if (await roleTaken(agencyId, role)) return res.status(400).json({ error: 'Bu lavozim uchun anketa allaqachon bor' });
 
-  const base = await survey.ensureDefault(agencyId);
+  // Tayyor nusxa (xostess, oshpaz, ofitsiant) — lavozimga xos savollar bilan;
+  // qolganlari — umumiy anketadan nusxa (siz o'zgartirgan matnlar bilan)
+  const preset = survey.rolePreset(role);
+  const base = preset ? null : await survey.ensureDefault(agencyId);
   const label = (ROLES.find(r => r.key === role) || {}).label || role;
   for (let i = 0; i < 5; i++) {
     try {
       const s = await Survey.create({
         id: uuidv4(), agencyId, code: survey.makeCode(), role, active: true, isDefault: false,
-        title: { uz: str(b.title && b.title.uz, 80) || `${label} anketasi`,
-                 ru: str(b.title && b.title.ru, 80) || '' },
-        questions: (base.questions || []).map(q => (q.toObject ? q.toObject() : q))
+        title: { uz: str(b.title && b.title.uz, 80) || (preset ? preset.title.uz : `${label} anketasi`),
+                 ru: str(b.title && b.title.ru, 80) || (preset ? preset.title.ru : '') },
+        questions: preset ? preset.questions : (base.questions || []).map(q => (q.toObject ? q.toObject() : q))
       });
       return res.json(view(s));
     } catch (e) { if (e.code !== 11000) throw e; }      // kod band — qayta

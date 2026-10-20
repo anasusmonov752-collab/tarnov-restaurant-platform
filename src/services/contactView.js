@@ -63,6 +63,7 @@ function resumeOf(c) {
     })),
     sanitaryBook: c.sanitaryBook, sanitaryBookUntil: c.sanitaryBookUntil,
     jobStatus: c.jobStatus,
+    startWhen: c.startWhen,
     publicCode: c.publicCode
   };
 }

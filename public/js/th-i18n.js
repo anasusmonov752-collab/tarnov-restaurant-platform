@@ -450,6 +450,15 @@
       'ank.err.net': 'Internet bilan muammo — qayta urinib ko\'ring',
       'ank.err.isClient': 'Bu Telegram hisobi ish beruvchi sifatida ulangan — anketani boshqa hisobdan to\'ldiring.',
       'ank.err.notFound': 'Anketa topilmadi — botdagi havolani qayta bosing.',
+      'ank.err.fullName': 'Ism va familiyani yozing: Aziza Karimova',
+      'ank.sec.job': 'Ish haqida',
+      'ank.sec.me': 'Siz haqingizda',
+      'ank.sec.extra': 'Qo\'shimcha',
+      // "Qachondan ish boshlay olasiz" (Candidate.startWhen)
+      'start.now': 'Darhol', 'start.w1': '1 hafta ichida', 'start.w2': '2 hafta ichida', 'start.m1': '1 oydan keyin',
+      'rz.start': 'Ishga chiqa oladi',
+      'card.now': 'Darhol chiqa oladi',
+      'shift.weekend': 'Faqat dam olish kunlari',
 
       // ── ANKETA: bot xabarlari ──
       'ank.botInvite': 'Assalomu alaykum! Ishga ariza berish uchun qisqa anketani to\'ldiring — 3 daqiqa.',
@@ -859,6 +868,14 @@
       'ank.err.net': 'Проблема с интернетом — попробуйте ещё раз',
       'ank.err.isClient': 'Этот аккаунт Telegram подключён как работодатель — заполните анкету с другого аккаунта.',
       'ank.err.notFound': 'Анкета не найдена — нажмите ссылку в боте ещё раз.',
+      'ank.err.fullName': 'Укажите имя и фамилию: Азиза Каримова',
+      'ank.sec.job': 'О работе',
+      'ank.sec.me': 'О вас',
+      'ank.sec.extra': 'Дополнительно',
+      'start.now': 'Сразу', 'start.w1': 'В течение недели', 'start.w2': 'В течение 2 недель', 'start.m1': 'Через месяц',
+      'rz.start': 'Готов(а) выйти',
+      'card.now': 'Может выйти сразу',
+      'shift.weekend': 'Только выходные',
 
       'ank.botInvite': 'Здравствуйте! Чтобы откликнуться на работу, заполните короткую анкету — 3 минуты.',
       'ank.botInviteVac': '\n\nВакансия: {v}',

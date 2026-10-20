@@ -50,48 +50,84 @@ const DISTRICTS = [
 ];
 // Tajriba varianti -> experienceYears (qidiruv filtri son bilan ishlaydi)
 const EXP_YEARS = { none: 0, lt1: 0, y1_2: 1, y3_5: 3, y5: 5 };
+// "Qachondan" varianti -> necha kundan keyin chiqa oladi (availableFrom)
+const START_DAYS = { now: 0, w1: 7, w2: 14, m1: 30 };
 
 // ── Boshlang'ich shablon ──
-// Tarnovning Verifix'dagi ofitsiant anketasi asosida (2026-10-19 da
-// ko'rilgan): filial savoli -> tuman (agentlikda filial yo'q), "qayerdan
-// bildingiz" -> havoladagi kanal (aniqroq), qo'shildi: sanitar kitobcha,
-// lavozim (umumiy anketa), rozilik.
+// 1-versiya Tarnovning Verifix'dagi ofitsiant anketasidan olingan edi.
+// 2-versiya (2026-10-20, Anas bilan): agentlik uchun professional tartib —
+//   1) ISH haqida (oson, bir bosishli savollar — odam qiziqib qolsin)
+//   2) SIZ haqingizda (shaxsiy ma'lumot — qiziqish paydo bo'lgandan keyin)
+//   3) QO'SHIMCHA
+// Har izoh savol NEGA berilayotganini aytadi — javob halolroq bo'ladi.
+// Qo'shildi: "qachondan ish boshlay olasiz", ingliz tili, smenada "faqat
+// dam olish kunlari", maoshda "kelishamiz". Jins — ixtiyoriy (2023 Mehnat
+// kodeksi ishga olishda jins/yosh bo'yicha kamsitishni taqiqlaydi).
 function template() {
   return [
-    { id: 'role', type: 'choice', text: { uz: 'Qaysi lavozimda ishlamoqchisiz?', ru: 'На какую должность вы хотите?' },
+    // ── Ish haqida ──
+    { id: 'role', type: 'choice', text: { uz: 'Qaysi lavozimda ishlamoqchisiz?', ru: 'На какую должность вы претендуете?' },
+      hint: { uz: 'Bir nechtasi qiziq bo\'lsa — asosiysini tanlang.', ru: 'Если интересно несколько — выберите основную.' },
       options: ROLES.map(r => o(r.key, I18N.t('uz', 'role.' + r.key), I18N.t('ru', 'role.' + r.key))) },
-    { id: 'fullName', type: 'text', text: { uz: 'Ism va familiyangiz', ru: 'Ваше имя и фамилия' },
-      hint: { uz: 'Masalan: Aziza Karimova', ru: 'Например: Азиза Каримова' } },
-    { id: 'birthDate', type: 'date', text: { uz: 'Tug\'ilgan sanangiz', ru: 'Дата рождения' } },
-    { id: 'gender', type: 'choice', text: { uz: 'Jinsingiz', ru: 'Пол' },
-      options: [o('female', 'Ayol', 'Женский'), o('male', 'Erkak', 'Мужской')] },
-    { id: 'phone', type: 'contact', text: { uz: 'Telefon raqamingiz', ru: 'Ваш номер телефона' },
-      hint: { uz: 'Tugmani bosing — Telegram raqamingizni o\'zi yuboradi, xato bo\'lmaydi.',
-              ru: 'Нажмите кнопку — Telegram сам отправит ваш номер, без ошибок.' } },
-    { id: 'location', type: 'choice', text: { uz: 'Qaysi tumanda yashaysiz?', ru: 'В каком районе вы живёте?' },
-      options: DISTRICTS },
-    { id: 'experience', type: 'choice', text: { uz: 'Restoranda ish tajribangiz', ru: 'Опыт работы в ресторане' },
+    { id: 'experience', type: 'choice', text: { uz: 'Restoran sohasida qancha tajribangiz bor?', ru: 'Какой у вас опыт в ресторанной сфере?' },
+      hint: { uz: 'Har qanday lavozim hisobga olinadi: ofitsiant, xostess, oshpaz, kassir va boshqalar.',
+              ru: 'Учитывается любая должность: официант, хостес, повар, кассир и другие.' },
       options: [o('none', 'Tajribam yo\'q', 'Нет опыта'), o('lt1', '1 yilgacha', 'До 1 года'),
                 o('y1_2', '1–2 yil', '1–2 года'), o('y3_5', '3–5 yil', '3–5 лет'), o('y5', '5 yildan ortiq', 'Более 5 лет')] },
-    { id: 'lastJob', type: 'longtext', required: false,
+    { id: 'lastJob', type: 'longtext',
       text: { uz: 'Oxirgi ish joyingiz va lavozimingiz', ru: 'Последнее место работы и должность' },
-      hint: { uz: 'Masalan: Rayhon restorani, ofitsiant, 2023–2025', ru: 'Например: ресторан «Райхон», официант, 2023–2025' } },
-    { id: 'shift', type: 'choice', text: { uz: 'Qaysi smenada ishlay olasiz?', ru: 'В какую смену можете работать?' },
-      options: [o('kunduzgi', 'Kunduzgi', 'Дневная'), o('kechki', 'Kechki', 'Вечерняя'), o('ikkalasi', 'Farqi yo\'q', 'Любая')] },
-    { id: 'salary', type: 'choice', text: { uz: 'Qancha maosh kutyapsiz?', ru: 'Какую зарплату ожидаете?' },
+      hint: { uz: 'Masalan: «Rayhon» restorani, ofitsiant, 2023–2025', ru: 'Например: ресторан «Райхон», официант, 2023–2025' } },
+    { id: 'startWhen', type: 'choice', text: { uz: 'Qachondan ish boshlay olasiz?', ru: 'Когда вы можете приступить к работе?' },
+      hint: { uz: 'Ish beruvchilar avval tez chiqa oladigan nomzodlarni ko\'radi.',
+              ru: 'Работодатели в первую очередь смотрят тех, кто может выйти быстрее.' },
+      options: [o('now', 'Darhol', 'Сразу'), o('w1', '1 hafta ichida', 'В течение недели'),
+                o('w2', '2 hafta ichida', 'В течение 2 недель'), o('m1', '1 oydan keyin', 'Через месяц и позже')] },
+    { id: 'shift', type: 'choice', text: { uz: 'Qaysi smenada ishlay olasiz?', ru: 'В какую смену вы можете работать?' },
+      hint: { uz: 'Ish beruvchi ish jadvalini shunga qarab tuzadi.', ru: 'Работодатель составит график с учётом этого.' },
+      options: [o('kunduzgi', 'Kunduzgi', 'Дневная'), o('kechki', 'Kechki', 'Вечерняя'),
+                o('ikkalasi', 'Farqi yo\'q', 'Любая'), o('weekend', 'Faqat dam olish kunlari', 'Только выходные')] },
+    { id: 'salary', type: 'choice', text: { uz: 'Qancha oylik maosh kutyapsiz?', ru: 'Какую зарплату в месяц вы ожидаете?' },
+      hint: { uz: 'Qo\'lga tegadigan summa. Aniq bo\'lsa, mos takliflar tezroq keladi.',
+              ru: 'Сумма на руки. Чем точнее, тем быстрее придут подходящие предложения.' },
       options: [o('s4_6', '4–6 mln so\'m', '4–6 млн сум'), o('s6_9', '6–9 mln so\'m', '6–9 млн сум'),
-                o('s9_12', '9–12 mln so\'m', '9–12 млн сум'), o('s12', '12 mln so\'mdan ortiq', 'Более 12 млн сум')] },
-    { id: 'russian', type: 'choice', text: { uz: 'Rus tilini qay darajada bilasiz?', ru: 'Насколько хорошо вы знаете русский?' },
+                o('s9_12', '9–12 mln so\'m', '9–12 млн сум'), o('s12', '12 mln so\'mdan ortiq', 'Более 12 млн сум'),
+                o('agree', 'Kelishamiz', 'Договоримся')] },
+
+    // ── Siz haqingizda ──
+    { id: 'fullName', type: 'text', text: { uz: 'Ism va familiyangiz', ru: 'Ваши имя и фамилия' },
+      hint: { uz: 'Pasportdagidek yozing: Aziza Karimova', ru: 'Как в паспорте: Азиза Каримова' } },
+    { id: 'birthDate', type: 'date', text: { uz: 'Tug\'ilgan sanangiz', ru: 'Дата рождения' },
+      hint: { uz: 'Ba\'zi lavozimlarda yosh talabi bor — shuni hisobga olamiz.', ru: 'Для некоторых должностей есть требования по возрасту.' } },
+    { id: 'phone', type: 'contact', text: { uz: 'Telefon raqamingiz', ru: 'Ваш номер телефона' },
+      hint: { uz: 'Tugmani bosing — Telegram raqamingizni o\'zi yuboradi. Ish beruvchi shu raqamga qo\'ng\'iroq qiladi.',
+              ru: 'Нажмите кнопку — Telegram сам отправит ваш номер. Работодатель позвонит на него.' } },
+    { id: 'location', type: 'choice', text: { uz: 'Qaysi tumanda yashaysiz?', ru: 'В каком районе вы живёте?' },
+      hint: { uz: 'Uyingizga yaqin ish joylarini birinchi taklif qilamiz.', ru: 'В первую очередь предложим работу рядом с домом.' },
+      options: DISTRICTS },
+    { id: 'gender', type: 'choice', required: false, text: { uz: 'Jinsingiz', ru: 'Ваш пол' },
+      hint: { uz: 'Ixtiyoriy.', ru: 'Необязательно.' },
+      options: [o('female', 'Ayol', 'Женский'), o('male', 'Erkak', 'Мужской')] },
+
+    // ── Qo'shimcha ──
+    { id: 'russian', type: 'choice', text: { uz: 'Rus tilini qanchalik bilasiz?', ru: 'Насколько хорошо вы говорите по-русски?' },
+      hint: { uz: 'Mehmonlarning ko\'pchiligi rus tilida gaplashadi.', ru: 'Многие гости говорят по-русски.' },
       options: [o('fluent', 'Erkin gaplashaman', 'Свободно'), o('medium', 'Tushunaman, gaplasha olaman', 'Понимаю, могу объясниться'),
                 o('basic', 'Boshlang\'ich', 'Начальный уровень'), o('none', 'Bilmayman', 'Не знаю')] },
-    { id: 'sanitary', type: 'choice', text: { uz: 'Sanitar kitobchangiz bormi?', ru: 'Есть ли санитарная книжка?' },
+    { id: 'english', type: 'choice', text: { uz: 'Ingliz tilini bilasizmi?', ru: 'Говорите ли вы по-английски?' },
+      hint: { uz: 'Xorijlik mehmonlar keladigan joylarda muhim.', ru: 'Важно в заведениях с иностранными гостями.' },
+      options: [o('fluent', 'Erkin', 'Свободно'), o('medium', 'O\'rta — gaplasha olaman', 'Средне — могу объясниться'),
+                o('basic', 'Boshlang\'ich', 'Начальный уровень'), o('none', 'Bilmayman', 'Не знаю')] },
+    { id: 'sanitary', type: 'choice', text: { uz: 'Sanitar kitobchangiz bormi?', ru: 'Есть ли у вас санитарная книжка?' },
+      hint: { uz: 'Bo\'lmasa ham ariza beravering — ishga kirishda rasmiylashtirish mumkin.',
+              ru: 'Если нет — всё равно откликайтесь: её можно оформить при трудоустройстве.' },
       options: [o('yes', 'Bor', 'Есть'), o('expired', 'Muddati o\'tgan', 'Просрочена'), o('no', 'Yo\'q', 'Нет')] },
     { id: 'study', type: 'choice', text: { uz: 'Hozir o\'qiysizmi?', ru: 'Вы сейчас учитесь?' },
+      hint: { uz: 'Ish jadvalini o\'qishingizga moslash uchun.', ru: 'Чтобы согласовать график с учёбой.' },
       options: [o('no', 'Yo\'q', 'Нет'), o('day', 'Ha, kunduzgi', 'Да, очно'),
                 o('evening', 'Ha, kechki', 'Да, вечернее'), o('distance', 'Ha, sirtqi', 'Да, заочно')] },
-    { id: 'photo', type: 'photo', required: false, text: { uz: 'Rasmingizni yuboring', ru: 'Отправьте ваше фото' },
-      hint: { uz: 'Selfi ham bo\'ladi — rasmli anketani ish beruvchilar ko\'proq ko\'radi.',
-              ru: 'Подойдёт и селфи — анкеты с фото работодатели смотрят чаще.' } },
+    { id: 'photo', type: 'photo', required: false, text: { uz: 'Rasmingiz', ru: 'Ваше фото' },
+      hint: { uz: 'Yuzingiz aniq ko\'rinadigan rasm, selfi ham bo\'ladi. Rasmli anketani ish beruvchilar ko\'proq ochadi.',
+              ru: 'Фото, где хорошо видно лицо, подойдёт и селфи. Анкеты с фото работодатели открывают чаще.' } },
     { id: 'consent', type: 'consent', text: { uz: 'Rozilik', ru: 'Согласие' },
       hint: { uz: 'Ma\'lumotlarim TalentHub tomonidan saqlanishi va mos ish beruvchilarga ko\'rsatilishiga roziman. ' +
                   'Ism va telefonim ish beruvchiga faqat men bilan bog\'lanish uchun beriladi.',
@@ -110,23 +146,43 @@ function template() {
 //                 nomini o'zgartirish va yashirish mumkin, yangisi qo'shilmaydi
 //   keys:'open' — bazaga variant YOZUVI tushadi (tuman, maosh): qo'shish mumkin
 //   field       — panelda ko'rinadigan "qaysi maydonga tushadi"
+//   sec         — anketadagi bo'lim (job | me | extra); o'z savoli oldingisinikini oladi
+//   skipIf      — shu javob bo'lsa savol ko'rsatilmaydi va majburiy hisoblanmaydi
 const CATALOG = {
-  role:       { keys: 'fixed', field: 'Lavozim' },
-  fullName:   { locked: true,  field: 'Ism' },
-  birthDate:  {                field: 'Yosh' },
-  gender:     { keys: 'fixed', field: 'Jins' },
-  phone:      { locked: true,  field: 'Telefon' },
-  location:   { keys: 'open',  field: 'Hudud' },
-  experience: { keys: 'fixed', field: 'Tajriba (yil)' },
-  lastJob:    {                field: 'Tajriba haqida' },
-  shift:      { keys: 'fixed', field: 'Smena' },
-  salary:     { keys: 'open',  field: 'Kutilgan maosh' },
-  russian:    { keys: 'fixed', field: 'Tillar' },
-  sanitary:   { keys: 'fixed', field: 'Sanitar kitobcha' },
-  study:      { keys: 'open',  field: 'Ta\'lim' },
-  photo:      {                field: 'Foto' },
+  role:       { keys: 'fixed', field: 'Lavozim',          sec: 'job' },
+  experience: { keys: 'fixed', field: 'Tajriba (yil)',    sec: 'job' },
+  lastJob:    {                field: 'Tajriba haqida',   sec: 'job', skipIf: { q: 'experience', in: ['none'] } },
+  startWhen:  { keys: 'fixed', field: 'Ishga chiqish',    sec: 'job' },
+  shift:      { keys: 'fixed', field: 'Smena',            sec: 'job' },
+  salary:     { keys: 'open',  field: 'Kutilgan maosh',   sec: 'job' },
+  fullName:   { locked: true,  field: 'Ism',              sec: 'me' },
+  birthDate:  {                field: 'Yosh',             sec: 'me' },
+  phone:      { locked: true,  field: 'Telefon',          sec: 'me' },
+  location:   { keys: 'open',  field: 'Hudud',            sec: 'me' },
+  gender:     { keys: 'fixed', field: 'Jins',             sec: 'me' },
+  russian:    { keys: 'fixed', field: 'Tillar',           sec: 'extra' },
+  english:    { keys: 'fixed', field: 'Tillar',           sec: 'extra' },
+  sanitary:   { keys: 'fixed', field: 'Sanitar kitobcha', sec: 'extra' },
+  study:      { keys: 'open',  field: 'Ta\'lim',          sec: 'extra' },
+  photo:      {                field: 'Foto',             sec: 'extra' },
   consent:    { locked: true,  field: 'Rozilik' }
 };
+// Savol shu javoblarda o'tkazib yuboriladimi (anketa ham, server ham shu qoida)
+function skipped(q, answers) {
+  const s = (CATALOG[q.id] || {}).skipIf;
+  return !!(s && s.in.includes((answers || {})[s.q]));
+}
+// Ko'rinadigan savollarga bo'lim va o'tkazish shartini qo'shadi (anketa.html uchun)
+function withMeta(questions) {
+  let sec = 'job';
+  return questions.map(q => {
+    const c = CATALOG[q.id] || {};
+    if (c.sec) sec = c.sec;
+    const out = Object.assign({}, q.toObject ? q.toObject() : q, { sec: q.type === 'consent' ? '' : sec });
+    if (c.skipIf) out.skipIf = c.skipIf;
+    return out;
+  });
+}
 // O'z savoli — faqat shu turlar (sana, telefon, rasm, rozilik standart savolda)
 const CUSTOM_TYPES = ['text', 'longtext', 'choice'];
 
@@ -207,6 +263,83 @@ async function surveyForVacancy(v) {
   return ensureDefault(v.agencyId);
 }
 
+// ── Lavozim anketalari (tayyor nusxa) ──
+// Umumiy shablon + shu lavozimga xos savollar. Panelda "Lavozim anketasi"
+// yaratilganda shu olinadi (bo'lmasa umumiy anketadan nusxa); keyin
+// konstruktorda moslanadi. Variantlar bitta tanlov — "asosiysini" so'raymiz.
+const yn = () => [o('ha', 'Ha', 'Да'), o('yoq', 'Yo\'q', 'Нет')];
+const ROLE_PRESETS = {
+  xostess: {
+    title: { uz: 'Xostess anketasi', ru: 'Анкета хостес' },
+    after: 'experience',
+    add: [
+      { id: 'c_bron', type: 'choice', required: true,
+        text: { uz: 'Telefon orqali stol bron qilish bilan ishlaganmisiz?', ru: 'Работали ли вы с бронированием столов по телефону?' },
+        hint: { uz: 'Xostessning asosiy vazifalaridan biri.', ru: 'Одна из основных задач хостес.' }, options: yn() }
+    ],
+    patch: {
+      photo: { required: true, hint: { uz: 'Xostess — restoranning yuzi. Yuzingiz aniq ko\'rinadigan, tartibli rasm yuboring.',
+                                       ru: 'Хостес — лицо ресторана. Отправьте аккуратное фото, где хорошо видно лицо.' } }
+    }
+  },
+  oshpaz: {
+    title: { uz: 'Oshpaz anketasi', ru: 'Анкета повара' },
+    after: 'experience',
+    add: [
+      { id: 'c_kuxnya', type: 'choice', required: true,
+        text: { uz: 'Qaysi oshxonada tajribangiz bor?', ru: 'В какой кухне у вас опыт?' },
+        hint: { uz: 'Bir nechta bo\'lsa — asosiysini tanlang.', ru: 'Если несколько — выберите основную.' },
+        options: [o('milliy', 'Milliy (o\'zbek)', 'Национальная (узбекская)'), o('yevropa', 'Yevropa', 'Европейская'),
+                  o('osiyo', 'Osiyo (yapon, xitoy, koreys)', 'Азиатская (японская, китайская, корейская)'),
+                  o('fastfud', 'Fast-fud', 'Фастфуд'), o('qandolat', 'Qandolat', 'Кондитерская')] },
+      { id: 'c_sex', type: 'choice', required: true,
+        text: { uz: 'Qaysi sexda ishlagansiz?', ru: 'В каком цехе вы работали?' },
+        hint: { uz: 'Bir nechta bo\'lsa — asosiysini tanlang.', ru: 'Если несколько — выберите основной.' },
+        options: [o('issiq', 'Issiq sex', 'Горячий цех'), o('sovuq', 'Sovuq sex', 'Холодный цех'),
+                  o('mangal', 'Mangal, shashlik', 'Мангал, шашлык'), o('tandir', 'Tandir, non', 'Тандыр, выпечка'),
+                  o('qandolat', 'Qandolat', 'Кондитерский цех')] }
+    ],
+    remove: ['english'],
+    patch: { russian: { required: false } }
+  },
+  ofitsiant: {
+    title: { uz: 'Ofitsiant anketasi', ru: 'Анкета официанта' },
+    after: 'experience',
+    add: [
+      { id: 'c_stol', type: 'choice', required: true,
+        text: { uz: 'Bir vaqtda nechta stolga xizmat qilgansiz?', ru: 'Сколько столов вы обслуживали одновременно?' },
+        hint: { uz: 'Ish tezligi va tajribangizni tushunish uchun.', ru: 'Чтобы понять ваш темп и опыт.' },
+        options: [o('s5', '5 tagacha', 'До 5'), o('s6_10', '6–10', '6–10'), o('s10', '10 dan ortiq', 'Более 10'),
+                  o('none', 'Tajribam yo\'q', 'Нет опыта')] },
+      { id: 'c_kassa', type: 'choice', required: true,
+        text: { uz: 'Restoran kassa dasturida ishlaganmisiz (iiko, R-Keeper)?', ru: 'Работали ли вы с кассовой программой (iiko, R-Keeper)?' },
+        options: yn() }
+    ]
+  }
+};
+const PRESET_ROLES = Object.keys(ROLE_PRESETS);
+
+/** Lavozim anketasi savollari: umumiy shablon + lavozimga xos. Nusxa yo'q bo'lsa — null. */
+function rolePreset(role) {
+  const p = ROLE_PRESETS[role];
+  if (!p) return null;
+  let qs = template().filter(q => !(p.remove || []).includes(q.id));
+  for (const q of qs) if (p.patch && p.patch[q.id]) Object.assign(q, p.patch[q.id]);
+  const add = (p.add || []).map(q => Object.assign({ hint: { uz: '', ru: '' }, options: [] }, q));
+  const at = qs.findIndex(q => q.id === p.after) + 1;
+  qs.splice(at, 0, ...add);
+  return { title: p.title, questions: cleanQuestions(qs) };
+}
+
+// Mavjud anketani yangi shablonga o'tkazadi, siz qo'shgan o'z savollaringiz
+// (c_...) saqlanadi — rozilikdan oldin qo'yiladi.
+function upgradeQuestions(oldQs, newQs) {
+  const keep = (oldQs || []).filter(q => !CATALOG[q.id] && !newQs.some(n => n.id === q.id))
+    .map(q => (q.toObject ? q.toObject() : q));
+  const out = newQs.slice(0, -1).concat(keep, newQs.slice(-1));
+  return cleanQuestions(out);
+}
+
 // ── Havola kodi ──
 const CODE_ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';     // I, O, 0, 1 yo'q — o'qishda adashmasin
 function makeCode() {
@@ -283,6 +416,10 @@ function checkAnswer(q, value) {
     case 'text': {
       const s = String(value).trim().replace(/\s+/g, ' ');
       if (s.length < 2 || s.length > 80) err('length');
+      // Ism — ism VA familiya: bitta so'z bilan HR qo'ng'iroq qilganda
+      // kim ekanini, ish beruvchi esa rasmiylashtirishni bilmaydi
+      // (2026-10-20: birinchi haqiqiy anketada faqat "Aziza" yozilgan edi)
+      if (q.id === 'fullName' && s.split(' ').filter(w => w.length >= 2).length < 2) err('fullName');
       return s;
     }
     case 'longtext': {
@@ -356,8 +493,15 @@ function toFields(answers, survey, presetRole) {
   if (a.lastJob) f.experienceSummary = a.lastJob;
   if (a.shift) f.shift = a.shift;
   if (a.salary) f.salaryExpectation = opt('salary', a.salary);
-  // Rus tili: erkin/o'rta — tilni biladi (qidiruv filtri); daraja rawText'da
-  if (a.russian) f.languages = ['fluent', 'medium'].includes(a.russian) ? ['Rus'] : [];
+  // Tillar: erkin/o'rta — biladi (qidiruv filtri shu ro'yxat bo'yicha); daraja rawText'da
+  if (a.russian || a.english) {
+    const knows = k => ['fluent', 'medium'].includes(k);
+    f.languages = [knows(a.russian) && 'Rus', knows(a.english) && 'Ingliz'].filter(Boolean);
+  }
+  if (a.startWhen && START_DAYS[a.startWhen] != null) {
+    f.startWhen = a.startWhen;
+    f.availableFrom = new Date(Date.now() + START_DAYS[a.startWhen] * 864e5);
+  }
   if (a.sanitary) f.sanitaryBook = a.sanitary;
   if (a.study) f.education = a.study === 'no' ? 'O\'qimaydi' : 'O\'qiydi (' + opt('study', a.study).replace(/^Ha, /, '') + ')';
 
@@ -409,7 +553,7 @@ async function finalize(r, { appBase } = {}) {
   const f = toFields(a, survey, presetRole);
   for (const [k, v] of Object.entries(f)) {
     if (v === '' || v == null) continue;
-    if (k === 'extraAnswers' && !v.length && !created) continue;   // eski javoblar o'chmasin
+    if (Array.isArray(v) && !v.length && !created) continue;   // bo'sh ro'yxat eskisini (tillar, javoblar) o'chirmasin
     if (k === 'rawText' && cand.rawText && !created) continue;   // rezyume matni saqlansin
     cand[k] = v;
   }
@@ -450,7 +594,8 @@ async function finalize(r, { appBase } = {}) {
 }
 
 module.exports = {
-  CHANNELS, DISTRICTS, CATALOG, CUSTOM_TYPES, catalogInfo, cleanQuestions, surveyForVacancy,
+  CHANNELS, DISTRICTS, CATALOG, CUSTOM_TYPES, START_DAYS, catalogInfo, cleanQuestions, surveyForVacancy,
+  skipped, withMeta, rolePreset, upgradeQuestions, PRESET_ROLES,
   template, makeCode, ensureDefault,
   payloadFor, parsePayload, visibleQuestions, checkAnswer, toFields, finalize, normPhone, ageOf
 };

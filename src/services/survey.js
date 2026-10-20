@@ -585,14 +585,15 @@ async function finalize(r, { appBase } = {}) {
   const phone = r.phoneVerifiedAt ? r.phone : a.phone;
   const pk = phoneKey(phone);
 
-  // Kim? 1) shu Telegram akkaunti bog'langan nomzod  2) shu telefon
+  // Kim? 1) shu Telegram akkaunti bog'langan nomzod  2) shu telefon —
+  // FAQAT Telegram tasdiqlagan raqam bilan. Qo'lda yozilgan raqam bilan
+  // mavjud profilga ulanib bo'lmaydi: bazadagi 700+ hh nomzodi Telegramga
+  // ulanmagan, birovning raqamini yozgan odam uning profilini (ish tarixi,
+  // email) ochib olardi (2026-10-20 auditda topildi). Qo'lda raqamli
+  // anketa — yangi yozuv; takror bo'lsa panelda birlashtiriladi.
   let cand = await Candidate.findOne({ restaurantId: r.agencyId, tgChatId: r.tgUserId });
-  if (!cand && pk) {
-    const byPhone = await Candidate.findOne({ restaurantId: r.agencyId, phoneKey: pk });
-    // Telefon boshqa Telegram akkauntiga bog'langan bo'lsa — faqat Telegram
-    // tasdiqlagan raqamga ishonamiz (o'sha odam, yangi akkaunt). Qo'lda
-    // yozilgan raqam bilan birovning profilini egallab bo'lmasin.
-    if (byPhone && (!byPhone.tgChatId || r.phoneVerifiedAt)) cand = byPhone;
+  if (!cand && pk && r.phoneVerifiedAt) {
+    cand = await Candidate.findOne({ restaurantId: r.agencyId, phoneKey: pk });
   }
   const created = !cand;
   if (!cand) {

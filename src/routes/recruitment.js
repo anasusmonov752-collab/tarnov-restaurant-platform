@@ -304,6 +304,27 @@ router.get('/:id/file', guard, asyncHandler(async (req, res) => {
   res.send(buf);
 }));
 
+// Qayta tahlil natijasini mavjud yozuvga qo'shadi. Ilgari Object.assign
+// hammasini ustidan yozardi — qo'lda tuzatilgan ism, telefon va rol
+// (masalan Anas qarori bilan ajratilgan administratorlar) AI javobi bilan
+// almashib ketardi (2026-10-20 auditda topildi).
+//   ism, telefon, email — bo'sh bo'lsagina
+//   rol                 — bo'sh yoki 'boshqa' bo'lsagina
+//   qolganlari          — oldin AI tahlil qilgan bo'lsa faqat bo'sh joyga;
+//                         birinchi haqiqiy tahlil bo'lsa — yangilanadi
+//                         (oldingi qiymatlar AI'siz taxmin edi)
+const IDENTITY = ['fullName', 'phone', 'email'];
+function mergeParsed(doc, fields) {
+  const empty = v => v == null || v === '' || (Array.isArray(v) && !v.length);
+  for (const [k, v] of Object.entries(fields || {})) {
+    if (empty(v)) continue;
+    const cur = doc[k];
+    if (IDENTITY.includes(k)) { if (empty(cur)) doc[k] = v; continue; }
+    if (k === 'role') { if (empty(cur) || cur === 'boshqa') doc[k] = v; continue; }
+    if (!doc.aiParsed || empty(cur)) doc[k] = v;
+  }
+}
+
 // ── AI bilan qayta tahlil (o'qilmagan nomzodni qayta yuklamasdan) ──
 router.post('/:id/reanalyze', guard, asyncHandler(async (req, res) => {
   const doc = await Candidate.findOne({ restaurantId: req.user.restaurantId, id: req.params.id });
@@ -319,8 +340,15 @@ router.post('/:id/reanalyze', guard, asyncHandler(async (req, res) => {
     } catch { /* e'tiborsiz */ }
   }
 
+  // Allaqachon tahlil qilingan, faqat foto yetishmagan nomzod (ommaviy
+  // "Qayta tahlil" shunday yuboradi) — AI kvotasi bekorga ketmasin
+  if (doc.aiParsed && (req.body || {}).photoOnly) {
+    if (photoAdded) { doc.updatedAt = new Date(); await doc.save(); }
+    return res.json({ ok: true, photoAdded, aiParsed: false, skipped: 'ai' });
+  }
+
   const { fields, aiParsed, error } = await resumeParser.structure(doc.rawText, req.user.restaurantId);
-  if (aiParsed) { Object.assign(doc, fields); doc.aiParsed = true; }
+  if (aiParsed) { mergeParsed(doc, fields); doc.aiParsed = true; }
 
   // Foto yoki AI natijasi bo'lsa — saqlaymiz
   if (aiParsed || photoAdded) { doc.updatedAt = new Date(); await doc.save(); }
@@ -334,6 +362,7 @@ router.post('/:id/reanalyze', guard, asyncHandler(async (req, res) => {
     });
   }
   const o = doc.toObject(); delete o.fileData; delete o.rawText; delete o.photo;
+  delete o.tgInviteToken; delete o.tgLinkToken;      // ro'yxatdagi kabi — token brauzerga chiqmaydi
   o.photoAdded = photoAdded;
   res.json(o);
 }));

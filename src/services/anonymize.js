@@ -70,31 +70,54 @@ function forClient(c) {
   //   3. bazadagi ~799 eski yozuv — prompt o'zgarsa ham tozalanmaydi
   // Shuning uchun redaksiya CHIQISHDA, kod bilan qilinadi: uchalasini ham
   // qamrab oladi. Bu blok out.publicCode dan KEYIN turishi shart.
+  // Kontakt ham xuddi shunday: nomzod o'zi yozgan "tajriba haqida" yoki
+  // rezyume matnida telefon, email, @username, t.me havolasi bo'lishi
+  // mumkin — mijoz uni kreditsiz olardi (2026-10-20 auditda topildi).
   const FREE_TEXT = ['summary', 'experienceSummary', 'fitReason', 'education'];
   const nameParts = String(src.fullName || '')
     .split(/[^\p{L}\p{N}]+/u)
-    .filter(w => w.length >= 3);        // qisqa bo'laklar noto'g'ri mos keladi
-  if (nameParts.length) {
-    const rx = new RegExp(nameParts.join('|'), 'giu');
-    for (const f of FREE_TEXT) {
-      if (typeof out[f] === 'string') out[f] = out[f].replace(rx, out.publicCode);
-    }
-    if (Array.isArray(out.workHistory)) {
-      out.workHistory = out.workHistory.map(w => {
-        if (!w || typeof w !== 'object') return w;
-        const n = Object.assign({}, w);
-        if (typeof n.position === 'string')    n.position    = n.position.replace(rx, out.publicCode);
-        if (typeof n.description === 'string') n.description = n.description.replace(rx, out.publicCode);
-        return n;
-      });
-    }
+    .filter(w => w.length >= 3)         // qisqa bo'laklar noto'g'ri mos keladi
+    .map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const nameRx = nameParts.length ? new RegExp(nameParts.join('|'), 'giu') : null;
+  const clean = s => {
+    if (typeof s !== 'string' || !s) return s;
+    if (nameRx) s = s.replace(nameRx, out.publicCode);
+    return hideContacts(s);
+  };
+  for (const f of FREE_TEXT) out[f] = clean(out[f]);
+  if (Array.isArray(out.workHistory)) {
+    out.workHistory = out.workHistory.map(w => {
+      if (!w || typeof w !== 'object') return w;
+      const n = Object.assign({}, w);
+      n.position = clean(n.position);
+      n.description = clean(n.description);
+      return n;
+    });
   }
 
   return out;
+}
+
+// ── Matndagi kontaktlarni yashirish ──
+// Telefon: O'zbekiston formati (+998 90 123 45 67, 90-123-45-67, (90)1234567)
+// va har qanday "+" bilan boshlangan 10+ raqamli xalqaro raqam. Yillar
+// ("2015-2017"), maosh ("5 000 000") mos kelmaydi: operator kodi 2 raqam,
+// keyin 3-2-2 guruh talab qilinadi va oldidan/ortidan raqam turmasligi kerak.
+const HIDDEN = '•••';
+const CONTACT_RX = [
+  /(?<![\d+])(?:\+?998[\s-]*)?\(?\d{2}\)?[\s-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}(?!\d)/g,
+  /\+\d[\d\s()-]{8,}\d/g,
+  /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g,                                       // email
+  /(?:https?:\/\/)?(?:www\.)?(?:t\.me|telegram\.me|wa\.me|instagram\.com|facebook\.com)\/[\w./?=&-]+/gi,
+  /(?<![\w@])@[A-Za-z][\w]{3,31}\b/g                                     // @username
+];
+function hideContacts(s) {
+  for (const rx of CONTACT_RX) s = s.replace(rx, HIDDEN);
+  return s;
 }
 
 function forClientList(rows) {
   return (rows || []).map(forClient);
 }
 
-module.exports = { forClient, forClientList, makeCode, PUBLIC_FIELDS, JOB_STATUS_LABEL };
+module.exports = { forClient, forClientList, makeCode, hideContacts, PUBLIC_FIELDS, JOB_STATUS_LABEL };

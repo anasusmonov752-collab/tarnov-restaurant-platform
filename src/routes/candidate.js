@@ -28,6 +28,7 @@ const ChatThread = require('../models/ChatThread');
 const botRelay = require('../services/botRelay');
 const applications = require('../services/applications');
 const { publicBase } = require('../utils/publicBase');
+const { phoneKey } = require('../utils/candidateKeys');
 
 const router = express.Router();
 
@@ -150,9 +151,13 @@ router.patch('/me', guard, asyncHandler(async (req, res) => {
   const b = req.body || {};
   const c = req.cand;
 
+  const phoneBefore = phoneKey(c.phone);
   for (const [k, max] of Object.entries(TEXT)) {
     if (b[k] !== undefined) c[k] = String(b[k]).trim().slice(0, max);
   }
+  // Boshqa raqam yozilsa — u Telegram tasdiqlagan raqam emas: panelda
+  // "✓" turib qolmasin (format o'zgarishi — "+998 90..." -> "90..." — emas)
+  if (phoneKey(c.phone) !== phoneBefore) c.phoneVerifiedAt = null;
   for (const [k, maxLen] of Object.entries(LIST)) {
     if (Array.isArray(b[k])) {
       c[k] = b[k].map(x => String(x).trim().slice(0, 60)).filter(Boolean).slice(0, maxLen);

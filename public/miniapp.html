@@ -1638,13 +1638,19 @@ function drawMsgs(ms){
   b.scrollTop = b.scrollHeight;
 }
 
+// Matn o'zgaruvchisi `t` deb nomlanmasin — tarjima funksiyasi t() ni
+// yopib qo'yardi: xato bo'lsa catch ichida t('chat.fail') o'zi yiqilib,
+// tugma qotib qolardi (2026-10-20 auditda topildi). `sending` — Enter
+// ikki marta bosilsa xabar va Telegram push'i ikki marta ketmasin.
+let sending = false;
 async function sendMsg(){
-  const inp = $('cvIn'), t = inp.value.trim();
-  if (!t || !CUR) return;
+  const inp = $('cvIn'), txt = inp.value.trim();
+  if (!txt || !CUR || sending) return;
+  sending = true;
   $('cvSend').disabled = true;
   try {
     await api('/api/ma/chats/' + encodeURIComponent(CUR.id) + '/messages',
-      { method:'POST', body: JSON.stringify({ text: t }) });
+      { method:'POST', body: JSON.stringify({ text: txt }) });
     inp.value = '';
     await reloadMsgs();
     loadChats();
@@ -1654,6 +1660,7 @@ async function sendMsg(){
       '<div class="cmsg sys">' + esc(t('chat.fail', { e: e.message })) + '</div>');
     $('cvBody').scrollTop = $('cvBody').scrollHeight;
   }
+  sending = false;
   $('cvSend').disabled = false;
 }
 

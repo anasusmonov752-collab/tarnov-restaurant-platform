@@ -196,8 +196,9 @@ router.post('/shortlist', clientGuard, asyncHandler(async (req, res) => {
   const ses = await SearchSession.findOne({ key: String(b.key || ''), clientId: req.client.id });
   if (!ses) return res.status(404).json({ error: 'Qidiruv topilmadi yoki muddati tugagan' });
 
-  // Faqat shu seansdagi nomzodlar — mijoz boshqa id yubora olmasin
-  const picked = (Array.isArray(b.ids) ? b.ids : [])
+  // Faqat shu seansdagi nomzodlar — mijoz boshqa id yubora olmasin.
+  // Takror id bitta tanlovda ikki element (ikki kredit) bo'lmasin.
+  const picked = [...new Set((Array.isArray(b.ids) ? b.ids : []).map(String))]
     .filter(id => ses.candidateIds.includes(id))
     .slice(0, 20);
   if (!picked.length) return res.status(400).json({ error: 'Nomzod tanlanmadi' });

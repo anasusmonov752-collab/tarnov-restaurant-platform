@@ -14,6 +14,7 @@ const credits = require('./credits');
 const tg = require('./telegram');
 const pipeline = require('../data/pipeline');
 const chat = require('./chat');
+const contactView = require('./contactView');
 const { isValidRole } = require('../data/roles');
 const I18N = require('../../public/js/th-i18n');
 
@@ -169,6 +170,18 @@ async function reveal({ agencyId, shortlistId, candidateId, appBase = '', viaApp
     // Ochilgan yoki undan keyingi holat (interview/hired/not_fit/refunded):
     // takroriy bosish. Pul yechilmaydi va mijozning qarori saqlanadi.
     return { already: true, shortlist: sl, state: st };
+  }
+
+  // Shu mijoz bu nomzodni BOSHQA tanlovda allaqachon ochgan — kontakt
+  // uning qo'lida, ikkinchi marta kredit yechilmaydi. Bo'lardi: nomzod
+  // yangi qidiruvda yana chiqib tanlanadi; arizadan ochishda ikki bosish
+  // ikkita tanlov yaratadi (2026-10-20 auditda topildi). Bu tanlovda
+  // ham ochilgan bo'lib qoladi; xabar va chat qayta yuborilmaydi.
+  const prior = (await contactView.openPairs({ agencyId, clientId: claimed.clientId, candidateId }))
+    .filter(p => p.shortlistId !== shortlistId);
+  if (prior.length) {
+    await syncKanban(agencyId, candidateId, 'revealed');
+    return { already: true, shortlist: claimed, state: 'revealed', openedBefore: true };
   }
 
   let balance;

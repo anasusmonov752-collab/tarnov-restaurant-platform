@@ -1016,7 +1016,8 @@ async function reanalyzeAll(){
   const total=targets.length; let done=0, ok=0, fail=0, stop=false;
   document.getElementById('upText').textContent=`0 / ${total} qayta tahlil`; if(bar)bar.style.width='0%';
   for(const c of targets){
-    try{ await api('/api/recruitment/'+c.id+'/reanalyze', { method:'POST' }); ok++; }
+    // Tahlil qilingan, faqat fotosi yo'q — serverda AI chaqirilmaydi (kvota tejaladi)
+    try{ await api('/api/recruitment/'+c.id+'/reanalyze', { method:'POST', body: JSON.stringify({ photoOnly: !!c.aiParsed }) }); ok++; }
     catch(e){ fail++; if(String(e.message).toLowerCase().includes('limit')){ toast(e.message,'error'); stop=true; } }
     done++;
     document.getElementById('upText').textContent=`${done} / ${total} qayta tahlil`;

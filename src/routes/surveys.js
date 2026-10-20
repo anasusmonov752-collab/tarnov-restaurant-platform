@@ -188,7 +188,8 @@ router.post('/', guard, asyncHandler(async (req, res) => {
         id: uuidv4(), agencyId, code: survey.makeCode(), role, active: true, isDefault: false,
         title: { uz: str(b.title && b.title.uz, 80) || (preset ? preset.title.uz : `${label} anketasi`),
                  ru: str(b.title && b.title.ru, 80) || (preset ? preset.title.ru : '') },
-        questions: preset ? preset.questions : (base.questions || []).map(q => (q.toObject ? q.toObject() : q))
+        // boshqa lavozimlarga xos shartli savollar nusxaga o'tmaydi
+        questions: preset ? preset.questions : survey.forRole(base.questions, role)
       });
       return res.json(view(s));
     } catch (e) { if (e.code !== 11000) throw e; }      // kod band — qayta

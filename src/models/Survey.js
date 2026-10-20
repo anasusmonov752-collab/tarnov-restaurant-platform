@@ -22,7 +22,11 @@ const QuestionSchema = new mongoose.Schema({
   required: { type: Boolean, default: true },
   text:     { uz: { type: String, default: '' }, ru: { type: String, default: '' } },
   hint:     { uz: { type: String, default: '' }, ru: { type: String, default: '' } },
-  options:  { type: [OptionSchema], default: [] }
+  options:  { type: [OptionSchema], default: [] },
+  // Shart: faqat OLDINGI tanlov savolining javobi shu kalitlardan biri
+  // bo'lsa ko'rsatiladi (masalan { q:'role', in:['oshpaz'] }). Bo'sh — doim.
+  // Ko'rsatilmagan savol majburiy hisoblanmaydi. Qoida: survey.isShown.
+  showIf:   { q: { type: String, default: '' }, in: { type: [String], default: [] } }
 }, { _id: false });
 
 const SurveySchema = new mongoose.Schema({

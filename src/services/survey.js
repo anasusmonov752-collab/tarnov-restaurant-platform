@@ -64,6 +64,7 @@ const START_DAYS = { now: 0, w1: 7, w2: 14, m1: 30 };
 // dam olish kunlari", maoshda "kelishamiz". Jins — ixtiyoriy (2023 Mehnat
 // kodeksi ishga olishda jins/yosh bo'yicha kamsitishni taqiqlaydi).
 function template() {
+  const yesNo = () => [o('ha', 'Ha', 'Да'), o('yoq', 'Yo\'q', 'Нет')];
   return [
     // ── Ish haqida ──
     { id: 'role', type: 'choice', text: { uz: 'Qaysi lavozimda ishlamoqchisiz?', ru: 'На какую должность вы претендуете?' },
@@ -74,9 +75,35 @@ function template() {
               ru: 'Учитывается любая должность: официант, хостес, повар, кассир и другие.' },
       options: [o('none', 'Tajribam yo\'q', 'Нет опыта'), o('lt1', '1 yilgacha', 'До 1 года'),
                 o('y1_2', '1–2 yil', '1–2 года'), o('y3_5', '3–5 yil', '3–5 лет'), o('y5', '5 yildan ortiq', 'Более 5 лет')] },
-    { id: 'lastJob', type: 'longtext',
+    { id: 'lastJob', type: 'longtext', showIf: { q: 'experience', in: ['lt1', 'y1_2', 'y3_5', 'y5'] },
       text: { uz: 'Oxirgi ish joyingiz va lavozimingiz', ru: 'Последнее место работы и должность' },
       hint: { uz: 'Masalan: «Rayhon» restorani, ofitsiant, 2023–2025', ru: 'Например: ресторан «Райхон», официант, 2023–2025' } },
+
+    // Lavozimga xos — faqat shu lavozimni tanlaganga (shart: role). Vakansiya
+    // havolasida lavozim ma'lum — shart o'sha lavozim bo'yicha hisoblanadi.
+    { id: 'c_bron', type: 'choice', showIf: { q: 'role', in: ['xostess'] },
+      text: { uz: 'Telefon orqali stol bron qilish bilan ishlaganmisiz?', ru: 'Работали ли вы с бронированием столов по телефону?' },
+      hint: { uz: 'Xostessning asosiy vazifalaridan biri.', ru: 'Одна из основных задач хостес.' }, options: yesNo() },
+    { id: 'c_kuxnya', type: 'choice', showIf: { q: 'role', in: ['oshpaz'] },
+      text: { uz: 'Qaysi oshxonada tajribangiz bor?', ru: 'В какой кухне у вас опыт?' },
+      hint: { uz: 'Bir nechta bo\'lsa — asosiysini tanlang.', ru: 'Если несколько — выберите основную.' },
+      options: [o('milliy', 'Milliy (o\'zbek)', 'Национальная (узбекская)'), o('yevropa', 'Yevropa', 'Европейская'),
+                o('osiyo', 'Osiyo (yapon, xitoy, koreys)', 'Азиатская (японская, китайская, корейская)'),
+                o('fastfud', 'Fast-fud', 'Фастфуд'), o('qandolat', 'Qandolat', 'Кондитерская')] },
+    { id: 'c_sex', type: 'choice', showIf: { q: 'role', in: ['oshpaz'] },
+      text: { uz: 'Qaysi sexda ishlagansiz?', ru: 'В каком цехе вы работали?' },
+      hint: { uz: 'Bir nechta bo\'lsa — asosiysini tanlang.', ru: 'Если несколько — выберите основной.' },
+      options: [o('issiq', 'Issiq sex', 'Горячий цех'), o('sovuq', 'Sovuq sex', 'Холодный цех'),
+                o('mangal', 'Mangal, shashlik', 'Мангал, шашлык'), o('tandir', 'Tandir, non', 'Тандыр, выпечка'),
+                o('qandolat', 'Qandolat', 'Кондитерский цех')] },
+    { id: 'c_stol', type: 'choice', showIf: { q: 'role', in: ['ofitsiant'] },
+      text: { uz: 'Bir vaqtda nechta stolga xizmat qilgansiz?', ru: 'Сколько столов вы обслуживали одновременно?' },
+      hint: { uz: 'Ish tezligi va tajribangizni tushunish uchun.', ru: 'Чтобы понять ваш темп и опыт.' },
+      options: [o('s5', '5 tagacha', 'До 5'), o('s6_10', '6–10', '6–10'), o('s10', '10 dan ortiq', 'Более 10'),
+                o('none', 'Tajribam yo\'q', 'Нет опыта')] },
+    { id: 'c_kassa', type: 'choice', showIf: { q: 'role', in: ['ofitsiant'] },
+      text: { uz: 'Restoran kassa dasturida ishlaganmisiz (iiko, R-Keeper)?', ru: 'Работали ли вы с кассовой программой (iiko, R-Keeper)?' },
+      options: yesNo() },
     { id: 'startWhen', type: 'choice', text: { uz: 'Qachondan ish boshlay olasiz?', ru: 'Когда вы можете приступить к работе?' },
       hint: { uz: 'Ish beruvchilar avval tez chiqa oladigan nomzodlarni ko\'radi.',
               ru: 'Работодатели в первую очередь смотрят тех, кто может выйти быстрее.' },
@@ -121,10 +148,18 @@ function template() {
       hint: { uz: 'Bo\'lmasa ham ariza beravering — ishga kirishda rasmiylashtirish mumkin.',
               ru: 'Если нет — всё равно откликайтесь: её можно оформить при трудоустройстве.' },
       options: [o('yes', 'Bor', 'Есть'), o('expired', 'Muddati o\'tgan', 'Просрочена'), o('no', 'Yo\'q', 'Нет')] },
+    { id: 'c_sanit', type: 'choice', showIf: { q: 'sanitary', in: ['no', 'expired'] },
+      text: { uz: 'Sanitar kitobchani olishga (yangilashga) tayyormisiz?', ru: 'Готовы ли вы оформить (обновить) санитарную книжку?' },
+      hint: { uz: 'Ko\'pchilik restoranlar ishga kirgach bir necha kun ichida so\'raydi.',
+              ru: 'Большинство ресторанов просят её в первые дни работы.' }, options: yesNo() },
     { id: 'study', type: 'choice', text: { uz: 'Hozir o\'qiysizmi?', ru: 'Вы сейчас учитесь?' },
       hint: { uz: 'Ish jadvalini o\'qishingizga moslash uchun.', ru: 'Чтобы согласовать график с учёбой.' },
       options: [o('no', 'Yo\'q', 'Нет'), o('day', 'Ha, kunduzgi', 'Да, очно'),
                 o('evening', 'Ha, kechki', 'Да, вечернее'), o('distance', 'Ha, sirtqi', 'Да, заочно')] },
+    { id: 'c_vaqt', type: 'text', showIf: { q: 'study', in: ['day', 'evening', 'distance'] },
+      text: { uz: 'Qaysi kunlari va soatlarda ishlay olasiz?', ru: 'В какие дни и часы вы можете работать?' },
+      hint: { uz: 'Masalan: dushanba–juma 17:00 dan keyin, shanba–yakshanba kun bo\'yi',
+              ru: 'Например: пн–пт после 17:00, сб–вс весь день' } },
     { id: 'photo', type: 'photo', required: false, text: { uz: 'Rasmingiz', ru: 'Ваше фото' },
       hint: { uz: 'Yuzingiz aniq ko\'rinadigan rasm, selfi ham bo\'ladi. Rasmli anketani ish beruvchilar ko\'proq ochadi.',
               ru: 'Фото, где хорошо видно лицо, подойдёт и селфи. Анкеты с фото работодатели открывают чаще.' } },
@@ -133,7 +168,7 @@ function template() {
                   'Ism va telefonim ish beruvchiga faqat men bilan bog\'lanish uchun beriladi.',
               ru: 'Я согласен(на), чтобы TalentHub хранил мои данные и показывал их подходящим работодателям. ' +
                   'Имя и телефон передаются работодателю только для связи со мной.' } }
-  ].map(q => Object.assign({ required: true, hint: { uz: '', ru: '' }, options: [] }, q));
+  ].map(q => Object.assign({ required: true, hint: { uz: '', ru: '' }, options: [], showIf: { q: '', in: [] } }, q));
 }
 
 // ── Konstruktor qoidalari ──
@@ -147,11 +182,11 @@ function template() {
 //   keys:'open' — bazaga variant YOZUVI tushadi (tuman, maosh): qo'shish mumkin
 //   field       — panelda ko'rinadigan "qaysi maydonga tushadi"
 //   sec         — anketadagi bo'lim (job | me | extra); o'z savoli oldingisinikini oladi
-//   skipIf      — shu javob bo'lsa savol ko'rsatilmaydi va majburiy hisoblanmaydi
+// Ko'rsatish sharti (showIf) savolning o'zida — bazada, konstruktor tahrirlaydi.
 const CATALOG = {
   role:       { keys: 'fixed', field: 'Lavozim',          sec: 'job' },
   experience: { keys: 'fixed', field: 'Tajriba (yil)',    sec: 'job' },
-  lastJob:    {                field: 'Tajriba haqida',   sec: 'job', skipIf: { q: 'experience', in: ['none'] } },
+  lastJob:    {                field: 'Tajriba haqida',   sec: 'job' },
   startWhen:  { keys: 'fixed', field: 'Ishga chiqish',    sec: 'job' },
   shift:      { keys: 'fixed', field: 'Smena',            sec: 'job' },
   salary:     { keys: 'open',  field: 'Kutilgan maosh',   sec: 'job' },
@@ -167,19 +202,46 @@ const CATALOG = {
   photo:      {                field: 'Foto',             sec: 'extra' },
   consent:    { locked: true,  field: 'Rozilik' }
 };
-// Savol shu javoblarda o'tkazib yuboriladimi (anketa ham, server ham shu qoida)
-function skipped(q, answers) {
-  const s = (CATALOG[q.id] || {}).skipIf;
-  return !!(s && s.in.includes((answers || {})[s.q]));
+// ── Shartli savollar ──
+// Savol faqat OLDINGI tanlov savolining javobi showIf.in ichida bo'lsa
+// ko'rsatiladi. Ko'rsatilmagan savol majburiy emas, javobi nomzodga
+// tushmaydi (odam orqaga qaytib javobini o'zgartirgan bo'lishi mumkin).
+// Anketa (anketa.html) ham, server ham AYNAN shu qoida.
+function isShown(q, answers) {
+  const s = q.showIf;
+  return !s || !s.q || (s.in || []).includes((answers || {})[s.q]);
 }
-// Ko'rinadigan savollarga bo'lim va o'tkazish shartini qo'shadi (anketa.html uchun)
+const skipped = (q, answers) => !isShown(q, answers);
+// Ko'rsatiladigan savollar tartib bilan. Zanjir: yashirin savolning javobi
+// keyingi shartlarga ham hisobga olinmaydi. Lavozim ma'lum bo'lsa
+// (vakansiya yoki lavozim anketasi) — shart shu lavozim bo'yicha.
+function shownQuestions(questions, answers, presetRole) {
+  const a = answers || {};
+  const eff = presetRole ? { role: presetRole } : {};
+  const out = [];
+  for (const q of questions || []) {
+    if (!isShown(q, eff)) continue;
+    out.push(q);
+    if (q.id === 'role' && presetRole) continue;
+    if (a[q.id] != null && a[q.id] !== '') eff[q.id] = a[q.id];
+  }
+  return out;
+}
+// Lavozim uchun anketa: boshqa lavozimga xos savollar olib tashlanadi,
+// shu lavozimnikidan shart olinadi (lavozim anketasida u doim so'raladi)
+function forRole(questions, role) {
+  return (questions || []).map(q => (q.toObject ? q.toObject() : Object.assign({}, q)))
+    .filter(q => !(q.showIf && q.showIf.q === 'role' && !(q.showIf.in || []).includes(role)))
+    .map(q => (q.showIf && q.showIf.q === 'role' ? Object.assign(q, { showIf: { q: '', in: [] } }) : q));
+}
+// Ko'rinadigan savollarga bo'lim qo'shadi (anketa.html uchun); shart savolning o'zida
 function withMeta(questions) {
   let sec = 'job';
   return questions.map(q => {
     const c = CATALOG[q.id] || {};
     if (c.sec) sec = c.sec;
     const out = Object.assign({}, q.toObject ? q.toObject() : q, { sec: q.type === 'consent' ? '' : sec });
-    if (c.skipIf) out.skipIf = c.skipIf;
+    if (!out.showIf || !out.showIf.q) delete out.showIf;
     return out;
   });
 }
@@ -188,7 +250,8 @@ const CUSTOM_TYPES = ['text', 'longtext', 'choice'];
 
 /** Panel uchun: standart savollar (shablon matni bilan) va ularning qoidalari. */
 function catalogInfo() {
-  return template().map(q => Object.assign({}, q, CATALOG[q.id] || {}));
+  // Shablondagi lavozimga xos savollar (c_...) — o'z savoli, katalogda emas
+  return template().filter(q => CATALOG[q.id]).map(q => Object.assign({}, q, CATALOG[q.id]));
 }
 
 const shortId = () => [...crypto.randomBytes(4)].map(x => CODE_ABC[x % CODE_ABC.length]).join('').toLowerCase();
@@ -248,6 +311,24 @@ function cleanQuestions(input) {
   for (const id of Object.keys(CATALOG).filter(k => CATALOG[k].locked)) {
     if (!seen.has(id)) fail('Ism, telefon va rozilik savollarini olib tashlab bo\'lmaydi');
   }
+  // Shart: faqat OLDINGI tanlov savoliga va uning mavjud variantlariga.
+  // Ism, telefon, rozilik doim so'raladi — ularga shart yo'q.
+  out.forEach((q, i) => {
+    const s = (input[i] || {}).showIf || {};
+    const src = str(s.q, 40);
+    q.showIf = { q: '', in: [] };
+    if (!src) return;
+    const n = `${i + 1}-savol («${q.text.uz.slice(0, 40)}»)`;
+    if (q.type === 'consent' || (CATALOG[q.id] || {}).locked) fail(`${n}: bu savol doim so'raladi, shart qo'yib bo'lmaydi`);
+    const j = out.findIndex(x => x.id === src);
+    if (j < 0) fail(`${n}: shart qo'yilgan savol anketada yo'q`);
+    if (j >= i) fail(`${n}: shart faqat oldingi savolga qo'yiladi — savollar tartibini tekshiring`);
+    if (out[j].type !== 'choice') fail(`${n}: shart faqat variantli savolga qo'yiladi`);
+    const keys = new Set(out[j].options.map(x => x.key));
+    const inn = [...new Set((Array.isArray(s.in) ? s.in : []).map(k => str(k, 30)))].filter(k => keys.has(k));
+    if (!inn.length) fail(`${n}: shart uchun kamida bitta javobni belgilang`);
+    q.showIf = { q: src, in: inn };
+  });
   // Rozilik — oxirida: anketa oxirgi savolda yuboriladi
   const ci = out.findIndex(q => q.id === 'consent');
   out.push(out.splice(ci, 1)[0]);
@@ -264,19 +345,13 @@ async function surveyForVacancy(v) {
 }
 
 // ── Lavozim anketalari (tayyor nusxa) ──
-// Umumiy shablon + shu lavozimga xos savollar. Panelda "Lavozim anketasi"
-// yaratilganda shu olinadi (bo'lmasa umumiy anketadan nusxa); keyin
-// konstruktorda moslanadi. Variantlar bitta tanlov — "asosiysini" so'raymiz.
-const yn = () => [o('ha', 'Ha', 'Да'), o('yoq', 'Yo\'q', 'Нет')];
+// Umumiy shablonning o'zi, shu lavozim uchun: lavozimga xos savollar
+// (shablonda showIf role) qoladi, boshqa lavozimnikilar tushadi
+// (forRole). Bu yerda faqat FARQ: sarlavha, olib tashlanadigan va
+// o'zgaradigan savollar. Keyin konstruktorda moslanadi.
 const ROLE_PRESETS = {
   xostess: {
     title: { uz: 'Xostess anketasi', ru: 'Анкета хостес' },
-    after: 'experience',
-    add: [
-      { id: 'c_bron', type: 'choice', required: true,
-        text: { uz: 'Telefon orqali stol bron qilish bilan ishlaganmisiz?', ru: 'Работали ли вы с бронированием столов по телефону?' },
-        hint: { uz: 'Xostessning asosiy vazifalaridan biri.', ru: 'Одна из основных задач хостес.' }, options: yn() }
-    ],
     patch: {
       photo: { required: true, hint: { uz: 'Xostess — restoranning yuzi. Yuzingiz aniq ko\'rinadigan, tartibli rasm yuboring.',
                                        ru: 'Хостес — лицо ресторана. Отправьте аккуратное фото, где хорошо видно лицо.' } }
@@ -284,50 +359,21 @@ const ROLE_PRESETS = {
   },
   oshpaz: {
     title: { uz: 'Oshpaz anketasi', ru: 'Анкета повара' },
-    after: 'experience',
-    add: [
-      { id: 'c_kuxnya', type: 'choice', required: true,
-        text: { uz: 'Qaysi oshxonada tajribangiz bor?', ru: 'В какой кухне у вас опыт?' },
-        hint: { uz: 'Bir nechta bo\'lsa — asosiysini tanlang.', ru: 'Если несколько — выберите основную.' },
-        options: [o('milliy', 'Milliy (o\'zbek)', 'Национальная (узбекская)'), o('yevropa', 'Yevropa', 'Европейская'),
-                  o('osiyo', 'Osiyo (yapon, xitoy, koreys)', 'Азиатская (японская, китайская, корейская)'),
-                  o('fastfud', 'Fast-fud', 'Фастфуд'), o('qandolat', 'Qandolat', 'Кондитерская')] },
-      { id: 'c_sex', type: 'choice', required: true,
-        text: { uz: 'Qaysi sexda ishlagansiz?', ru: 'В каком цехе вы работали?' },
-        hint: { uz: 'Bir nechta bo\'lsa — asosiysini tanlang.', ru: 'Если несколько — выберите основной.' },
-        options: [o('issiq', 'Issiq sex', 'Горячий цех'), o('sovuq', 'Sovuq sex', 'Холодный цех'),
-                  o('mangal', 'Mangal, shashlik', 'Мангал, шашлык'), o('tandir', 'Tandir, non', 'Тандыр, выпечка'),
-                  o('qandolat', 'Qandolat', 'Кондитерский цех')] }
-    ],
     remove: ['english'],
     patch: { russian: { required: false } }
   },
   ofitsiant: {
-    title: { uz: 'Ofitsiant anketasi', ru: 'Анкета официанта' },
-    after: 'experience',
-    add: [
-      { id: 'c_stol', type: 'choice', required: true,
-        text: { uz: 'Bir vaqtda nechta stolga xizmat qilgansiz?', ru: 'Сколько столов вы обслуживали одновременно?' },
-        hint: { uz: 'Ish tezligi va tajribangizni tushunish uchun.', ru: 'Чтобы понять ваш темп и опыт.' },
-        options: [o('s5', '5 tagacha', 'До 5'), o('s6_10', '6–10', '6–10'), o('s10', '10 dan ortiq', 'Более 10'),
-                  o('none', 'Tajribam yo\'q', 'Нет опыта')] },
-      { id: 'c_kassa', type: 'choice', required: true,
-        text: { uz: 'Restoran kassa dasturida ishlaganmisiz (iiko, R-Keeper)?', ru: 'Работали ли вы с кассовой программой (iiko, R-Keeper)?' },
-        options: yn() }
-    ]
+    title: { uz: 'Ofitsiant anketasi', ru: 'Анкета официанта' }
   }
 };
 const PRESET_ROLES = Object.keys(ROLE_PRESETS);
 
-/** Lavozim anketasi savollari: umumiy shablon + lavozimga xos. Nusxa yo'q bo'lsa — null. */
+/** Lavozim anketasi savollari (shablondan). Nusxa yo'q bo'lsa — null. */
 function rolePreset(role) {
   const p = ROLE_PRESETS[role];
   if (!p) return null;
-  let qs = template().filter(q => !(p.remove || []).includes(q.id));
+  const qs = forRole(template(), role).filter(q => !(p.remove || []).includes(q.id));
   for (const q of qs) if (p.patch && p.patch[q.id]) Object.assign(q, p.patch[q.id]);
-  const add = (p.add || []).map(q => Object.assign({ hint: { uz: '', ru: '' }, options: [] }, q));
-  const at = qs.findIndex(q => q.id === p.after) + 1;
-  qs.splice(at, 0, ...add);
   return { title: p.title, questions: cleanQuestions(qs) };
 }
 
@@ -472,7 +518,11 @@ function normPhone(p) {
 // Bazaga o'zbekcha yoziladi (qidiruv va panel shu yozuvni biladi);
 // Mini App ko'rsatishda o'z tiliga keltiradi.
 function toFields(answers, survey, presetRole) {
-  const a = answers || {};
+  // Faqat nomzodga KO'RSATILGAN savollar javobi (orqaga qaytib javobni
+  // o'zgartirsa, yashirin bo'lib qolgan eski javob kartaga tushmasin)
+  const shown = shownQuestions(survey.questions, answers, presetRole);
+  const a = {};
+  for (const q of shown) if ((answers || {})[q.id] != null) a[q.id] = answers[q.id];
   const opt = (qid, key) => {
     const q = (survey.questions || []).find(x => x.id === qid);
     const x = q && (q.options || []).find(y => y.key === key);
@@ -507,12 +557,12 @@ function toFields(answers, survey, presetRole) {
 
   // Konstruktorda qo'shilgan o'z savollari — maydoni yo'q: kartadagi
   // "Anketa javoblari" bo'limiga (savol matni o'zbekcha, panel uchun)
-  f.extraAnswers = (survey.questions || [])
+  f.extraAnswers = shown
     .filter(q => !CATALOG[q.id] && a[q.id] != null && a[q.id] !== '')
     .map(q => ({ q: q.text.uz, a: q.type === 'choice' ? opt(q.id, a[q.id]) : String(a[q.id]) }));
 
   // Kalit so'z qidiruvi uchun to'liq matn (rezyumedagi rawText o'rnida)
-  f.rawText = (survey.questions || [])
+  f.rawText = shown
     .filter(q => a[q.id] != null && a[q.id] !== '' && !['photo', 'consent'].includes(q.type))
     .map(q => `${q.text.uz}: ${q.type === 'choice' ? opt(q.id, a[q.id]) : a[q.id]}`)
     .join('\n');
@@ -595,7 +645,7 @@ async function finalize(r, { appBase } = {}) {
 
 module.exports = {
   CHANNELS, DISTRICTS, CATALOG, CUSTOM_TYPES, START_DAYS, catalogInfo, cleanQuestions, surveyForVacancy,
-  skipped, withMeta, rolePreset, upgradeQuestions, PRESET_ROLES,
+  isShown, skipped, shownQuestions, forRole, withMeta, rolePreset, upgradeQuestions, PRESET_ROLES,
   template, makeCode, ensureDefault,
   payloadFor, parsePayload, visibleQuestions, checkAnswer, toFields, finalize, normPhone, ageOf
 };

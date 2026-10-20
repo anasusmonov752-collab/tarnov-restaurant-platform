@@ -84,6 +84,13 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold)}
 .chip.f{background:rgba(37,99,235,.08);color:var(--gold-d)}
 .chip.r{background:rgba(180,128,46,.12);color:var(--warn)}
 .chip.c{background:rgba(46,158,91,.1);color:var(--ok)}
+.chip.s{background:rgba(124,58,237,.1);color:#6D28D9}
+.chip.e{background:rgba(194,91,76,.12);color:var(--danger)}
+/* Ko'rsatish sharti */
+.cond{margin-top:14px;padding:12px;border:1px dashed #C9D6EA;border-radius:10px;background:var(--soft)}
+.cks{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.ck{display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 9px;font-size:12.5px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink);margin:0;cursor:pointer}
+.pv-cond{text-align:center;font-size:12px;font-weight:700;color:#6D28D9;margin:-2px 0 10px}
 .qb{padding:4px 14px 14px;border-top:1px solid var(--line)}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
 .opt-r{display:grid;grid-template-columns:1fr 1fr 28px;gap:8px;margin-top:7px;align-items:center}
@@ -197,6 +204,33 @@ let PL = 'uz';           // ko'rinish tili
 const TYPE_L = { text:'Qisqa matn', longtext:'Uzun matn', date:'Sana', choice:'Tanlov', contact:'Telefon', photo:'Rasm', consent:'Rozilik' };
 const CAT = id => CATALOG.find(c => c.id === id);
 const roleL = k => (ROLES.find(r => r.key === k) || {}).label || k;
+// Yangi savol/variant kaliti shu yerda beriladi (server qabul qiladigan
+// shaklda) — saqlanmagan savolga ham shart qo'yish mumkin bo'lsin
+const rnd = n => Array.from(crypto.getRandomValues(new Uint8Array(n)), x => 'abcdefghjkmnpqrstuvwxyz23456789'[x % 31]).join('');
+
+// ── Ko'rsatish sharti (showIf) ──
+// Savol faqat OLDINGI variantli savolning belgilangan javobida so'raladi.
+// Qoida serverda ham (survey.cleanQuestions) — bu yerda faqat oldindan ko'rsatish.
+const hasCond = q => !!(q.showIf && q.showIf.q);
+const srcOf = q => hasCond(q) ? CUR.questions.find(x => x.id === q.showIf.q) || null : null;
+const srcName = s => { const c = CAT(s.id); return c ? c.field : (s.text.uz || '(matn yo\'q)').slice(0, 30); };
+function condErr(q, i){
+  if (!hasCond(q)) return '';
+  const j = CUR.questions.findIndex(x => x.id === q.showIf.q);
+  if (j < 0) return 'shart qo\'yilgan savol olib tashlangan';
+  if (j >= i) return 'shart savoli pastda qolgan — tartibni tuzating';
+  const src = CUR.questions[j];
+  if (src.type !== 'choice') return 'shart faqat variantli savolga qo\'yiladi';
+  if (!q.showIf.in.some(k => src.options.some(o => o.key === k))) return 'qaysi javobda so\'ralishini belgilang';
+  return '';
+}
+function condLabel(q){
+  const s = srcOf(q);
+  const ls = q.showIf.in.map(k => (s.options.find(o => o.key === k) || {}).uz).filter(Boolean);
+  return `${srcName(s)} = ${ls.join(' / ')}`;
+}
+// Lavozim anketasida boshqa lavozim sharti — savol hech qachon chiqmaydi
+const neverHere = q => !!(CUR.role && hasCond(q) && q.showIf.q === 'role' && !q.showIf.in.includes(CUR.role));
 
 // ══ Ro'yxat ══
 async function loadList(selectId){
@@ -288,6 +322,9 @@ function qHeadHtml(q, i){
           ${q.required ? '<span class="chip r">Majburiy</span>' : ''}
           ${c && c.locked ? '<span class="chip">&#128274; o\'chirilmaydi</span>' : ''}
           ${q.id === 'role' && CUR.role ? '<span class="chip">nomzodga ko\'rinmaydi — lavozim ma\'lum</span>' : ''}
+          ${hasCond(q) ? (condErr(q, i) ? `<span class="chip e">&#9888; Shart: ${esc(condErr(q, i))}</span>`
+                                         : `<span class="chip s">Shart: ${esc(condLabel(q))}</span>`) : ''}
+          ${!condErr(q, i) && neverHere(q) ? '<span class="chip e">bu lavozim anketasida chiqmaydi</span>' : ''}
         </div></div>
       <button class="ic-btn" data-up="${i}" title="Yuqoriga" ${i === 0 || isCons ? 'disabled' : ''}>&#8593;</button>
       <button class="ic-btn" data-dn="${i}" title="Pastga" ${last || isCons || i === CUR.questions.length - 2 ? 'disabled' : ''}>&#8595;</button>
@@ -331,6 +368,32 @@ function qBodyHtml(q, i){
       <input type="checkbox" data-req="1" ${q.required ? 'checked' : ''} ${locked || isCons ? 'disabled' : ''}>
       Majburiy ${locked || isCons ? '<span class="note">(ularsiz nomzod yaratilmaydi)</span>' : ''}</label>
     ${opts}
+    ${condHtml(q, i)}
+  </div>`;
+}
+
+// Shart bloki: qaysi savol javobiga qarab va qaysi javoblarda so'raladi
+function condHtml(q, i){
+  const c = CAT(q.id);
+  if (q.type === 'consent' || (c && c.locked)) return '';      // ism, telefon, rozilik doim so'raladi
+  const srcs = CUR.questions.slice(0, i).filter(x => x.type === 'choice');
+  const on = hasCond(q), src = srcOf(q);
+  const tg = `<label class="tgl" style="text-transform:none;letter-spacing:0;color:var(--ink);margin:0">
+      <input type="checkbox" data-cnd="1" ${on ? 'checked' : ''} ${!on && !srcs.length ? 'disabled' : ''}> Faqat ma'lum javobda so'rash</label>`;
+  if (!on) return `<div class="cond">${tg}<div class="note" style="margin-top:4px">${srcs.length
+    ? 'Masalan: faqat oshpaz tanlaganlarga yoki tajribasi borlarga. Boshqalar bu savolni ko\'rmaydi.'
+    : 'Shart uchun bu savoldan OLDIN variantli savol bo\'lishi kerak.'}</div></div>`;
+  return `<div class="cond">${tg}
+    <div style="margin-top:10px"><label>Qaysi savol javobiga qarab</label>
+      <select data-cq="1">
+        ${src && srcs.includes(src) ? '' : `<option value="" selected>${src ? esc(srcName(src)) + ' — pastda qolgan!' : '— tanlang —'}</option>`}
+        ${srcs.map(s => `<option value="${esc(s.id)}" ${src === s ? 'selected' : ''}>${esc(s.text.uz || srcName(s))}</option>`).join('')}
+      </select></div>
+    ${src && src.type === 'choice' ? `<label style="margin-top:10px">Shu javoblardan birini tanlasa so'raladi</label>
+      <div class="cks">${src.options.filter(o => o.key).map(o => `<label class="ck">
+        <input type="checkbox" data-ci="${esc(o.key)}" ${q.showIf.in.includes(o.key) ? 'checked' : ''}> ${esc(o.uz || '…')}</label>`).join('')}</div>` : ''}
+    <div class="note" style="margin-top:8px">Boshqa javobda nomzod bu savolni ko'rmaydi va u majburiy hisoblanmaydi.${
+      q.showIf.q === 'role' && CUR.role ? ' Bu lavozim anketasida lavozim ma\'lum — shart shu lavozim bo\'yicha hisoblanadi.' : ''}</div>
   </div>`;
 }
 
@@ -362,14 +425,35 @@ function wireBody(i){
   if (req) req.onchange = () => { q.required = req.checked; markDirty(); drawQs(); };
   box.querySelectorAll('[data-ou]').forEach(el => el.oninput = () => { q.options[+el.dataset.ou].uz = el.value; markDirty(); drawPreview(); });
   box.querySelectorAll('[data-or]').forEach(el => el.oninput = () => { q.options[+el.dataset.or].ru = el.value; markDirty(); drawPreview(); });
-  box.querySelectorAll('[data-od]').forEach(b => b.onclick = () => { q.options.splice(+b.dataset.od, 1); markDirty(); drawQs(); });
+  box.querySelectorAll('[data-od]').forEach(b => b.onclick = () => {
+    const [o] = q.options.splice(+b.dataset.od, 1);
+    // Shu variantga bog'langan shartlardan ham olinadi
+    CUR.questions.forEach(x => { if (hasCond(x) && x.showIf.q === q.id) x.showIf.in = x.showIf.in.filter(k => k !== o.key); });
+    markDirty(); drawQs();
+  });
   box.querySelectorAll('[data-oa]').forEach(b => b.onclick = () => {
-    q.options.push({ key: '', uz: '', ru: '' }); markDirty(); drawQs();
+    q.options.push({ key: 'o_' + rnd(6), uz: '', ru: '' }); markDirty(); drawQs();
     const ins = $('qList').querySelectorAll(`.qc[data-i="${i}"] [data-ou]`); ins[ins.length - 1].focus();
   });
   box.querySelectorAll('[data-ob]').forEach(b => b.onclick = () => {
     const o = CAT(q.id).options.find(x => x.key === b.dataset.ob);
     q.options.push(clone(o)); markDirty(); drawQs();
+  });
+  // Shart
+  const cnd = box.querySelector('[data-cnd]');
+  if (cnd) cnd.onchange = () => {
+    if (cnd.checked) {
+      const srcs = CUR.questions.slice(0, i).filter(x => x.type === 'choice');
+      q.showIf = { q: srcs[srcs.length - 1].id, in: [] };         // eng yaqin variantli savol
+    } else q.showIf = { q: '', in: [] };
+    markDirty(); drawQs();
+  };
+  const cq = box.querySelector('[data-cq]');
+  if (cq) cq.onchange = () => { q.showIf = { q: cq.value, in: [] }; markDirty(); drawQs(); };
+  box.querySelectorAll('[data-ci]').forEach(el => el.onchange = () => {
+    const s = new Set(q.showIf.in);
+    if (el.checked) s.add(el.dataset.ci); else s.delete(el.dataset.ci);
+    q.showIf.in = [...s]; markDirty(); drawQs();
   });
 }
 
@@ -384,7 +468,10 @@ function move(i, d){
 function removeQ(i){
   const q = CUR.questions[i], c = CAT(q.id);
   if (c && c.locked) return;
-  if (!confirm(`"${q.text.uz}" savoli olib tashlansinmi?` + (c ? `\n\nNomzod kartasidagi "${c.field}" maydoni anketadan to'ldirilmaydi.` : ''))) return;
+  const deps = CUR.questions.filter(x => hasCond(x) && x.showIf.q === q.id);
+  if (!confirm(`"${q.text.uz}" savoli olib tashlansinmi?` + (c ? `\n\nNomzod kartasidagi "${c.field}" maydoni anketadan to'ldirilmaydi.` : '') +
+    (deps.length ? `\n\n${deps.length} ta savol shu savol javobiga bog'langan — ularning sharti ham olib tashlanadi (hammaga so'raladi).` : ''))) return;
+  deps.forEach(x => { x.showIf = { q: '', in: [] }; });
   CUR.questions.splice(i, 1);
   OPEN = -1; markDirty(); drawQs();
 }
@@ -417,18 +504,25 @@ function insertQ(q){
   if (el) { el.focus(); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
 }
 function addCustom(type){
-  // id server tomonda beriladi (c_xxxx); kalitsiz variantlarga ham
-  insertQ({ id: '', type, required: false, text: { uz: '', ru: '' }, hint: { uz: '', ru: '' },
-    options: type === 'choice' ? [{ key: '', uz: '', ru: '' }, { key: '', uz: '', ru: '' }] : [] });
+  insertQ({ id: 'c_' + rnd(6), type, required: false, text: { uz: '', ru: '' }, hint: { uz: '', ru: '' },
+    options: type === 'choice' ? [{ key: 'o_' + rnd(6), uz: '', ru: '' }, { key: 'o_' + rnd(6), uz: '', ru: '' }] : [],
+    showIf: { q: '', in: [] } });
 }
 function addStd(id){
   const c = CAT(id);
-  insertQ({ id: c.id, type: c.type, required: !!c.required, text: clone(c.text), hint: clone(c.hint), options: clone(c.options || []) });
+  insertQ({ id: c.id, type: c.type, required: !!c.required, text: clone(c.text), hint: clone(c.hint), options: clone(c.options || []),
+    showIf: clone(c.showIf || { q: '', in: [] }) });
 }
 
 // ── Saqlash ──
 async function save(){
   const b = $('bSave');
+  // Shart xatosi — o'sha savolni ochib ko'rsatamiz (server ham rad etadi)
+  const bad = CUR.questions.findIndex((q, i) => condErr(q, i));
+  if (bad >= 0) {
+    OPEN = bad; drawQs();
+    return toast(`${bad + 1}-savol sharti: ${condErr(CUR.questions[bad], bad)}`, 'error');
+  }
   b.disabled = true; b.textContent = 'Saqlanmoqda...';
   try {
     const s = await api('/api/surveys/' + CUR.id, { method:'PUT', body: JSON.stringify({
@@ -449,8 +543,8 @@ $('bNewS').onclick = () => {
   const free = ROLES.filter(r => !taken.has(r.key));
   if (!free.length) return toast('Hamma lavozim uchun anketa bor', 'info');
   openMd('Lavozim anketasi', `
-    <div class="note" style="margin-bottom:14px">Savollar umumiy anketadan nusxa olinadi — keyin shu lavozimga moslaysiz
-      (masalan, oshpazga "Qaysi oshxonada ishlagansiz?" qo'shasiz). Vakansiya havolasi shu lavozimda bu anketani ochadi.</div>
+    <div class="note" style="margin-bottom:14px">Savollar umumiy anketa asosida tuziladi: shu lavozimga xos savollar qoladi,
+      boshqa lavozimlarniki tushadi. Keyin konstruktorda moslaysiz. Vakansiya havolasi shu lavozimda bu anketani ochadi.</div>
     <div class="fld"><label>Lavozim</label><select id="nRole">${free.map(r => `<option value="${r.key}">${esc(r.label)}</option>`).join('')}</select></div>
     <button class="btn btn-p" id="nGo" style="width:100%">Yaratish</button>`);
   $('nGo').onclick = async () => {
@@ -505,10 +599,15 @@ document.querySelectorAll('[data-pl]').forEach(b => b.onclick = () => {
 });
 function drawPreview(){
   if (!CUR) return;
-  const vis = CUR.questions.filter(q => !(q.id === 'role' && CUR.role));
-  const q = CUR.questions[OPEN] && vis.includes(CUR.questions[OPEN]) ? CUR.questions[OPEN] : vis[0];
+  // Shartli savollar ham sanaladi (nomzodda soni javobga qarab o'zgaradi);
+  // lavozim anketasida boshqa lavozim savollari — yo'q
+  const vis = CUR.questions.filter(q => !(q.id === 'role' && CUR.role) && !neverHere(q));
+  const op = CUR.questions[OPEN];
+  const q = op && !(op.id === 'role' && CUR.role) ? op : vis[0];
   if (!q) { $('pv').innerHTML = ''; return; }
   const n = vis.indexOf(q);
+  const qi = CUR.questions.indexOf(q);
+  const cond = hasCond(q) && !condErr(q, qi) ? `<div class="pv-cond">Faqat: ${esc(condLabel(q))}</div>` : '';
   const L = o => (o && (o[PL] || o.uz)) || '';
   const RU = PL === 'ru';
   let body = '';
@@ -529,9 +628,9 @@ function drawPreview(){
     body = `<div class="ph-in" style="${q.type === 'longtext' ? 'height:80px' : ''}"></div>`;
   }
   const last = n === vis.length - 1;
-  $('pv').innerHTML = `<div class="phone">
-    <div class="ph-top"><span style="color:var(--gold)">&#10094;</span><div class="ph-pr"><i style="width:${Math.round(n / vis.length * 100)}%"></i></div>
-      <span class="ph-st">${n + 1} / ${vis.length}</span></div>
+  $('pv').innerHTML = `${cond}<div class="phone">
+    <div class="ph-top"><span style="color:var(--gold)">&#10094;</span><div class="ph-pr"><i style="width:${Math.round(Math.max(0, n) / vis.length * 100)}%"></i></div>
+      <span class="ph-st">${n < 0 ? '—' : n + 1} / ${vis.length}</span></div>
     <div class="ph-b"><div class="ph-card">
       <div class="ph-q">${esc(L(q.text) || '…')}</div>
       ${q.type !== 'consent' && L(q.hint) ? `<div class="ph-h">${esc(L(q.hint))}</div>` : ''}

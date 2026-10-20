@@ -43,12 +43,30 @@ jobs:
             echo "BACKUP_PASSPHRASE 20 belgidan qisqa — xavfsiz emas" && exit 1
           fi
 
+      # Faqat ilova bazasi: manzilda baza nomi bo'lmasa mongoose 'test' ni
+      # ishlatadi. Butun klasterni olishga urinsa Atlas foydalanuvchisi
+      # admin bazasiga kira olmay yiqiladi (2026-10-20, birinchi ishga tushirish).
+      # Xato matni annotatsiyada ko'rinadi; parol va manzil yashiriladi.
       - name: Dump (mongo:7 konteyneridagi mongodump)
         if: steps.check.outputs.skip != '1'
+        shell: bash
         run: |
+          URI=$(printf '%s' "$MONGODB_URI" | tr -d '[:space:]' | sed -E "s/^MONGODB_URI=//; s/^[\"']//; s/[\"']$//")
+          echo "::add-mask::$URI"
+          PASS=$(printf '%s' "$URI" | sed -nE 's#^[^:]+://[^:/@]+:([^@]+)@.*#\1#p')
+          [ -n "$PASS" ] && echo "::add-mask::$PASS"
+          case "$URI" in mongodb://*|mongodb+srv://*) ;; *) echo "::error title=MONGODB_URI::mongodb:// yoki mongodb+srv:// bilan boshlanmaydi"; exit 1;; esac
+          # Manzilda baza nomi bo'lsa mongodump o'zi shuni oladi; bo'lmasa --db test
+          DB=$(printf '%s' "$URI" | sed -nE 's#^[^:]+://[^/]+/([^?]+).*#\1#p')
+          DBARG=""; [ -z "$DB" ] && { DB=test; DBARG="--db test"; }
+          echo "::notice title=Baza::$DB"
           mkdir -p out
-          docker run --rm -e MONGODB_URI -v "$PWD/out:/out" mongo:7 \
-            sh -c 'mongodump --uri "$MONGODB_URI" --archive=/out/tarnov.archive.gz --gzip --quiet'
+          if ! docker run --rm -e URI="$URI" -e DBARG="$DBARG" -v "$PWD/out:/out" mongo:7 \
+               sh -c 'mongodump --uri "$URI" $DBARG --archive=/out/tarnov.archive.gz --gzip' 2> dump.err; then
+            tail -n 6 dump.err | while read -r l; do echo "::error title=mongodump::$l"; done
+            exit 1
+          fi
+          tail -n 3 dump.err
           ls -la out
 
       - name: Shifrlash (AES-256, PBKDF2)

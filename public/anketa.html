@@ -370,9 +370,18 @@ function pickPhoto(q){
 }
 
 // ── Saqlash va keyingisi ──
+// Bitta saqlash: variant bosilgach 160 ms da avtomatik saqlanadi — shu
+// orada "Keyingisi" ham bosilsa ikkinchi save keyingi savolning qiymatini
+// OLDINGI savolga yozib, bir savolni sakrab o'tardi (2026-10-20 sinovda topildi)
+let saving = false;
 async function save(q){
+  if (saving || Q[idx] !== q) return;
   const b = $('bNext');
   if (b.disabled && q.type !== 'choice') return;
+  saving = true;
+  try { await saveNow(q, b); } finally { saving = false; }
+}
+async function saveNow(q, b){
   $('err').textContent = '';
   let value = draft.value;
   if (q.type === 'photo') value = undefined;                    // rasm tanlanganda saqlangan
@@ -385,7 +394,7 @@ async function save(q){
       else if (q.type !== 'photo') S.answers[q.id] = value;
     }
     S.step = q.id;
-    if (idx === Q.length - 1) return submit();
+    if (idx === Q.length - 1) return await submit();
     go(1);
   } catch(e){
     $('err').textContent = errText(e.code);

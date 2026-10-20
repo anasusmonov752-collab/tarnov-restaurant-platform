@@ -350,7 +350,7 @@ async function showCredits(id){
     } catch(e){ toast(e.message, 'error'); $('aGo').disabled = false; }
   };
 
-  const REASON = { purchase:'To\'lov', bonus:'Bonus', reveal:'Kontakt ochildi', refund:'Qaytarildi' };
+  const REASON = { purchase:'To\'lov', bonus:'Bonus', reveal:'Kontakt ochildi', refund:'Qaytarildi', adjust:'Tuzatish' };
   try {
     const h = await api('/api/clients/' + id + '/credits');
     $('aHist').innerHTML = h.length
@@ -466,6 +466,8 @@ async function openShort(id){
           <button class="btn btn-sm btn-ok" data-st="candidate_ok" data-c="${esc(c.id)}">Nomzod rozi</button>
           <button class="btn btn-sm btn-no" data-no="${esc(c.id)}">Rad etdi</button>
           <button class="btn btn-sm btn-p"  data-rv="${esc(c.id)}">Kontaktni och (-1)</button>`}
+        ${['revealed', 'interview', 'not_fit'].includes(it.state)
+          ? `<button class="btn btn-sm" data-rf="${esc(c.id)}">Kreditni qaytarish (+1)</button>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -505,6 +507,32 @@ async function openShort(id){
         body: JSON.stringify({ state: b.dataset.st }) });
       openShort(id); loadShorts();
     } catch(e){ toast(e.message, 'error'); b.disabled = false; }
+  });
+
+  // Kreditni qaytarish — sababsiz emas (mijozga ham shu sabab boradi)
+  $('mdB').querySelectorAll('[data-rf]').forEach(b => b.onclick = async () => {
+    const cid = b.dataset.rf;
+    const m = await meta();
+    const box = $('act-' + cid);
+    box.innerHTML = `<div style="width:100%">
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:7px">Nega qaytariladi? Mijozga 1 kredit qaytadi va sababi bilan xabar boradi.</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${(m.refundReasons||[]).map(r =>
+          `<button class="btn btn-sm" data-rr="${esc(r.key)}">${esc(r.label)}</button>`).join('')}
+        <button class="btn btn-sm" data-cancel="1">Bekor</button>
+      </div></div>`;
+    box.querySelectorAll('[data-rr]').forEach(x => x.onclick = async () => {
+      box.querySelectorAll('button').forEach(y => y.disabled = true);
+      try {
+        const r = await api(`/api/shortlists/${id}/refund/${cid}`, { method:'POST',
+          body: JSON.stringify({ reason: x.dataset.rr }) });
+        toast(r.already ? 'Allaqachon qaytarilgan'
+          : r.credited ? 'Qaytarildi. Balans: ' + r.balance
+          : 'Holat yopildi — bu kontakt uchun kredit yechilmagan edi', 'success');
+        openShort(id); loadShorts();
+      } catch(e){ toast(e.message, 'error'); box.querySelectorAll('button').forEach(y => y.disabled = false); }
+    });
+    box.querySelector('[data-cancel]').onclick = () => openShort(id);
   });
 
   $('mdB').querySelectorAll('[data-rv]').forEach(b => b.onclick = async () => {

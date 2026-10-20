@@ -1,0 +1,26 @@
+# ── Avtomatik testlar ────────────────────────────────────────
+# Har push va PR'da: sof qoidalar (test/unit.test.js) va pul oqimi
+# haqiqiy MongoDB'da (test/credits.test.js, mongodb-memory-server
+# replika to'plami — tranzaksiya va unikal indeks ham tekshiriladi).
+name: test
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm i --no-save mongodb-memory-server@10
+      - run: npm test

@@ -11,6 +11,7 @@ const Shortlist = require('../models/Shortlist');
 const Candidate = require('../models/Candidate');
 const Client = require('../models/Client');
 const credits = require('./credits');
+const CreditLedger = require('../models/CreditLedger');
 const tg = require('./telegram');
 const pipeline = require('../data/pipeline');
 const chat = require('./chat');
@@ -217,6 +218,68 @@ async function reveal({ agencyId, shortlistId, candidateId, appBase = '', viaApp
   return { already: false, shortlist: claimed, balance, candidate: cand, prevState };
 }
 
+// ── Kreditni qaytarish (+1) ──
+// Kafolat: ishlamaydigan kontakt uchun mijoz to'lamaydi. Ilgari
+// 'refunded' holati kodda o'qilardi, lekin hech qayerda qo'yilmasdi —
+// qaytarishning yagona yo'li "qo'lda +1" edi va nomzod "ochilgan"
+// bo'lib qolardi (2026-10-20 auditda topildi).
+//   1. holatni atomik 'refunded' ga o'tkazamiz (ikki bosish ikki kredit
+//      qaytarmasin; refunded — yakuniy, qayta ochilmaydi)
+//   2. shu element uchun haqiqatan kredit yechilgan bo'lsa — +1. Boshqa
+//      tanlovda ochilgani uchun bepul ochilgan bo'lsa (openedBefore) —
+//      qaytariladigan pul yo'q
+//   3. kredit qaytmasa — holat avvalgisiga qaytadi
+async function refund({ agencyId, shortlistId, candidateId, reason }) {
+  if (!pipeline.REFUND_REASON_KEYS.includes(reason)) throw new Error('Qaytarish sababini tanlang');
+  const now = new Date();
+  const before = await Shortlist.findOneAndUpdate(
+    { agencyId, id: shortlistId,
+      items: { $elemMatch: { candidateId, state: { $in: pipeline.REFUNDABLE_STATES } } } },
+    { $set: { 'items.$.state': 'refunded', 'items.$.refundedAt': now, 'items.$.reason': reason, updatedAt: now } },
+    { new: false }
+  ).lean();
+
+  if (!before) {
+    const sl = await Shortlist.findOne({ agencyId, id: shortlistId, 'items.candidateId': candidateId }).lean();
+    if (!sl) throw new Error('Tanlov yoki nomzod topilmadi');
+    const st = ((sl.items || []).find(x => x.candidateId === candidateId) || {}).state;
+    if (st === 'refunded') return { already: true };
+    if (st === 'hired') throw new Error('Ishga olingan nomzod uchun kredit qaytarilmaydi');
+    throw new Error('Kontakt ochilmagan — qaytaradigan kredit yo\'q');
+  }
+  const prev = (before.items.find(x => x.candidateId === candidateId) || {});
+
+  const charged = await CreditLedger.exists({ agencyId, clientId: before.clientId, shortlistId, candidateId, reason: 'reveal' });
+  let balance = null;
+  if (charged) {
+    try {
+      const r = await credits.refund({ agencyId, clientId: before.clientId, shortlistId, candidateId,
+        note: pipeline.reasonLabel(reason) });
+      balance = r.balance;
+    } catch (e) {
+      await Shortlist.updateOne({ agencyId, id: shortlistId, 'items.candidateId': candidateId },
+        { $set: { 'items.$.state': prev.state, 'items.$.refundedAt': null, 'items.$.reason': prev.reason || '' } });
+      throw e;
+    }
+  }
+
+  // Mijozga — o'z tilida. Yiqilsa jim: kredit qaytgan, kabinetda ko'rinadi.
+  try {
+    const client = await Client.findOne({ agencyId, id: before.clientId }).lean();
+    const cand = await Candidate.findOne({ restaurantId: agencyId, id: candidateId }, 'publicCode').lean();
+    if (client && client.tgChatId && charged) {
+      const T = (k, v) => I18N.t(I18N.resolve(client.lang, client.tgLang), k, v);
+      await tg.sendMessage(tg.platformToken(), client.tgChatId, [
+        T('nc.refunded', { code: (cand && cand.publicCode) || '' }),
+        T('nc.refundWhy', { r: T('refund.' + reason) }),
+        '', T('nc.balance', { n: balance })
+      ].join('\n'));
+    }
+  } catch (e) { console.error('[SL] qaytarish xabari ketmadi:', e.message); }
+
+  return { already: false, credited: !!charged, balance };
+}
+
 // ── Ochilgan kontaktni mijozga yuborish ──
 // Yiqilsa throw qilmaydi: kontakt ochilgan, kredit yechilgan — xabar
 // ketmagani butun amalni bekor qilishga asos emas.
@@ -308,7 +371,7 @@ function cbKeyboard(shortlistId, candidateId) {
 }
 
 module.exports = {
-  setItemState, setClientState, reveal, notifyClient, notifyCandidate,
+  setItemState, setClientState, reveal, refund, notifyClient, notifyCandidate,
   MANUAL_STATES, isManualState,
   cbData, parseCb, cbKeyboard
 };

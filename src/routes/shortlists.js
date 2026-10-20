@@ -25,7 +25,9 @@ router.get('/meta', guard, (req, res) => res.json({
   agencyStates: pipeline.AGENCY_STATES,
   clientStates: pipeline.CLIENT_STATES,
   candReasons: pipeline.CAND_REASONS,
-  clientReasons: pipeline.CLIENT_REASONS
+  clientReasons: pipeline.CLIENT_REASONS,
+  refundReasons: pipeline.REFUND_REASONS,
+  refundableStates: pipeline.REFUNDABLE_STATES
 }));
 
 // Ro'yxatda nomzod tafsiloti kerak emas — faqat sanoq.
@@ -162,6 +164,21 @@ router.post('/:id/reveal/:candidateId', guard, asyncHandler(async (req, res) => 
     // Kredit yetmasligi — mijozning muammosi, server xatosi emas
     const code = /[Kk]redit yetarli emas/.test(e.message) ? 402 : 400;
     res.status(code).json({ error: e.message });
+  }
+}));
+
+// ── A5. Kreditni qaytarish (+1) — sabab ro'yxatdan (pipeline.REFUND_REASONS) ──
+router.post('/:id/refund/:candidateId', guard, asyncHandler(async (req, res) => {
+  try {
+    const r = await sl.refund({
+      agencyId: req.user.restaurantId,
+      shortlistId: req.params.id,
+      candidateId: req.params.candidateId,
+      reason: String((req.body || {}).reason || '')
+    });
+    res.json({ ok: true, ...r });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
 }));
 

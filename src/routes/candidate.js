@@ -20,6 +20,7 @@ const Client = require('../models/Client');
 const Restaurant = require('../models/Restaurant');
 const vac = require('../services/vacancy');
 const initData = require('../services/tgInitData');
+const photoToken = require('../utils/photoToken');
 const { isValidRole } = require('../data/roles');
 const chat = require('../services/chat');
 const contactView = require('../services/contactView');
@@ -45,6 +46,7 @@ const guard = asyncHandler(async (req, res, next) => {
   const v = initData.verify(raw);
   if (!v.ok) return res.status(401).json({ error: 'Avtorizatsiya: ' + v.error });
 
+  res.set('X-Photo-Token', photoToken.sign(v.user.id));   // rasm havolasi uchun (utils/photoToken)
   const cand = await Candidate.findOne({ tgChatId: String(v.user.id) });
   if (!cand) return res.status(403).json({ error: 'Profil topilmadi' });
   if (cand.tgState === 'blocked' || cand.tgState === 'stopped') {
@@ -330,10 +332,10 @@ router.get('/applications', guard, asyncHandler(async (req, res) => {
 
 // ── O'z fotosi ──
 router.get('/photo', asyncHandler(async (req, res) => {
-  const v = initData.verify(req.query.i || '');
-  if (!v.ok) return res.status(401).end();
+  const uid = photoToken.verify(req.query.t);
+  if (!uid) return res.status(401).end();
 
-  const c = await Candidate.findOne({ tgChatId: String(v.user.id) }, 'photo').lean();
+  const c = await Candidate.findOne({ tgChatId: uid }, 'photo').lean();
   if (!c || !c.photo) return res.status(404).end();
 
   const m = /^data:(image\/[a-z+]+);base64,(.+)$/i.exec(c.photo);

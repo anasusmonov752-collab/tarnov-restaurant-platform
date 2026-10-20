@@ -66,11 +66,25 @@ const CLIENT_REASONS = [
   { key: 'other',      label: 'Boshqa sabab' }
 ];
 
+// Kreditni qaytarish — siz qo'yasiz (shortlist.refund). Kafolat: mijoz
+// ishlamaydigan kontakt uchun to'lamaydi. Ishga olingan nomzoddan
+// qaytarilmaydi — xizmat ko'rsatilgan.
+const REFUND_REASONS = [
+  { key: 'dead_phone',   label: 'Telefon o\'chiq / javob bermaydi' },
+  { key: 'wrong_phone',  label: 'Raqam boshqa odamniki' },
+  { key: 'already_hired', label: 'Nomzod allaqachon ishga kirgan' },
+  { key: 'declined_after', label: 'Ochilgandan keyin bosh tortdi' },
+  { key: 'goodwill',     label: 'Mijozga yon berildi' }
+];
+const REFUNDABLE_STATES = ['revealed', 'interview', 'not_fit'];
+
 const CAND_REASON_KEYS   = CAND_REASONS.map(r => r.key);
 const CLIENT_REASON_KEYS = CLIENT_REASONS.map(r => r.key);
+const REFUND_REASON_KEYS = REFUND_REASONS.map(r => r.key);
 
 const reasonLabel = k =>
-  (CAND_REASONS.find(r => r.key === k) || CLIENT_REASONS.find(r => r.key === k) || {}).label || '';
+  (CAND_REASONS.find(r => r.key === k) || CLIENT_REASONS.find(r => r.key === k) ||
+   REFUND_REASONS.find(r => r.key === k) || {}).label || '';
 
 // ── Ikki voronkani bog'lash ──────────────────────────────────
 // Platformada IKKI xil bosqich bor va ular boshqa narsani o'lchaydi:
@@ -115,7 +129,7 @@ function isForward(fromStatus, toStatus) {
 module.exports = {
   STATES, STATE_KEYS, stateLabel, isFinal,
   AGENCY_STATES, CLIENT_STATES, REVEALABLE_STATES,
-  CAND_REASONS, CLIENT_REASONS,
-  CAND_REASON_KEYS, CLIENT_REASON_KEYS, reasonLabel,
+  CAND_REASONS, CLIENT_REASONS, REFUND_REASONS, REFUNDABLE_STATES,
+  CAND_REASON_KEYS, CLIENT_REASON_KEYS, REFUND_REASON_KEYS, reasonLabel,
   KANBAN_ORDER, STATE_TO_KANBAN, isForward
 };

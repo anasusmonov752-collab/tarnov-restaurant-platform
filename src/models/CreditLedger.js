@@ -24,5 +24,12 @@ const CreditLedgerSchema = new mongoose.Schema({
 });
 
 CreditLedgerSchema.index({ agencyId: 1, clientId: 1, createdAt: -1 });
+// Bitta tanlov elementi uchun bitta yechish va bitta qaytarish — kod
+// xato qilsa ham baza ikkinchisini qabul qilmaydi (credits.move
+// tranzaksiyasi balansni ham qaytaradi)
+CreditLedgerSchema.index({ agencyId: 1, shortlistId: 1, candidateId: 1 },
+  { unique: true, partialFilterExpression: { reason: 'reveal' }, name: 'one_reveal_per_item' });
+CreditLedgerSchema.index({ agencyId: 1, shortlistId: 1, candidateId: 1 },
+  { unique: true, partialFilterExpression: { reason: 'refund', shortlistId: { $gt: '' } }, name: 'one_refund_per_item' });
 
 module.exports = mongoose.model('CreditLedger', CreditLedgerSchema);

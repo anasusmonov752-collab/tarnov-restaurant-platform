@@ -16,6 +16,7 @@ const Restaurant = require('../models/Restaurant');
 const SearchSession = require('../models/SearchSession');
 const Shortlist = require('../models/Shortlist');
 const initData = require('../services/tgInitData');
+const photoToken = require('../utils/photoToken');
 const anonymize = require('../services/anonymize');
 const tg = require('../services/telegram');
 const shortlistSvc = require('../services/shortlist');
@@ -86,6 +87,8 @@ const clientGuard = asyncHandler(async (req, res, next) => {
     return res.status(401).json({ error: authText(req.lang, v.error), code: 'auth' });
   }
 
+  // Rasm havolalari uchun qisqa muddatli token (utils/photoToken)
+  res.set('X-Photo-Token', photoToken.sign(v.user.id));
   const client = await Client.findOne({ tgChatId: String(v.user.id) });
   if (!client) return res.status(403).json({ error: 'Mijoz topilmadi' });
   if (client.status !== 'active') {
@@ -171,10 +174,10 @@ router.post('/session/:key', clientGuard, asyncHandler(async (req, res) => {
 // ── Nomzod fotosi ──
 // Alohida endpoint: faqat shu mijozning seansidagi nomzod uchun.
 router.get('/photo/:key/:id', asyncHandler(async (req, res) => {
-  const v = initData.verify(req.query.i || '');
-  if (!v.ok) return res.status(401).end();
+  const uid = photoToken.verify(req.query.t);
+  if (!uid) return res.status(401).end();
 
-  const client = await Client.findOne({ tgChatId: String(v.user.id), status: 'active' });
+  const client = await Client.findOne({ tgChatId: uid, status: 'active' });
   if (!client) return res.status(403).end();
 
   const ses = await SearchSession.findOne({ key: req.params.key, clientId: client.id });
@@ -281,8 +284,14 @@ router.post('/shortlist', clientGuard, asyncHandler(async (req, res) => {
           c.email ? `✉️ ${c.email}` : ''
         ].filter(Boolean);
 
-        await tg.sendMessage(token, adminChat, parts.join('\n'),
-          { reply_markup: shortlistSvc.cbKeyboard(sl.id, c.id) });
+        // Har karta alohida: bittasi yiqilsa (429 qayta urinishdan keyin
+        // ham) qolganlari baribir yetib borsin — ular tugma bilan keladi
+        try {
+          await tg.sendMessage(token, adminChat, parts.join('\n'),
+            { reply_markup: shortlistSvc.cbKeyboard(sl.id, c.id) });
+        } catch (e) {
+          console.error('[MA] nomzod kartasi ketmadi:', c.id, e.message);
+        }
       }
     }
   } catch (e) {
@@ -548,10 +557,10 @@ async function funnelFor(agencyId, clientId, vacancies) {
 // o'chadi. Kabinetda tanlov umrbod turadi, shuning uchun tekshiruv ham
 // tanlov bo'yicha: nomzod shu mijozning tanlovida bo'lishi shart.
 router.get('/photo-sl/:shortlistId/:id', asyncHandler(async (req, res) => {
-  const v = initData.verify(req.query.i || '');
-  if (!v.ok) return res.status(401).end();
+  const uid = photoToken.verify(req.query.t);
+  if (!uid) return res.status(401).end();
 
-  const client = await Client.findOne({ tgChatId: String(v.user.id), status: 'active' });
+  const client = await Client.findOne({ tgChatId: uid, status: 'active' });
   if (!client) return res.status(403).end();
 
   const sl = await Shortlist.findOne({
@@ -1070,9 +1079,9 @@ router.get('/candidates/:id', clientGuard, asyncHandler(async (req, res) => {
 // yo'q. Foto qidiruv kartasida ham ko'rinadi (anonim emas), shuning uchun
 // shart: nomzod shu mijozning tanlovida yoki unga ariza bergan.
 router.get('/candidates/:id/photo', asyncHandler(async (req, res) => {
-  const v = initData.verify(req.query.i || '');
-  if (!v.ok) return res.status(401).end();
-  const client = await Client.findOne({ tgChatId: String(v.user.id), status: 'active' });
+  const uid = photoToken.verify(req.query.t);
+  if (!uid) return res.status(401).end();
+  const client = await Client.findOne({ tgChatId: uid, status: 'active' });
   if (!client) return res.status(403).end();
   if (!await clientKnows(client.agencyId, client.id, req.params.id)) return res.status(403).end();
 

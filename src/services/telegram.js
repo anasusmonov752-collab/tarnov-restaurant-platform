@@ -19,7 +19,23 @@ class TelegramError extends Error {
   }
 }
 
-async function call(token, method, payload, { timeoutMs = 15000 } = {}) {
+// 429 — Telegram "sekinroq" deydi va retry_after soniyani aytadi. Ilgari
+// bu xato bo'lib qaytardi: adminga ketayotgan nomzod kartalari tsikli
+// birinchi 429 da to'xtardi (2026-10-20 auditda topildi). Qisqa kutish
+// (≤10 s) bo'lsa 2 martagacha qayta urinamiz; uzog'ida — xato.
+async function call(token, method, payload, opts = {}) {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await callOnce(token, method, payload, opts);
+    } catch (e) {
+      const wait = e.code === 429 ? Number(e.retryAfter) || 1 : 0;
+      if (!wait || wait > 10 || attempt >= 2) throw e;
+      await new Promise(r => setTimeout(r, wait * 1000 + 200));
+    }
+  }
+}
+
+async function callOnce(token, method, payload, { timeoutMs = 15000 } = {}) {
   if (!token) throw new TelegramError('Bot tokeni sozlanmagan', 0, true);
 
   const ctl = new AbortController();
@@ -44,11 +60,13 @@ async function call(token, method, payload, { timeoutMs = 15000 } = {}) {
 
   if (!body.ok) {
     const code = body.error_code || res.status;
-    throw new TelegramError(
+    const err = new TelegramError(
       body.description || 'Telegram xatosi',
       code,
       FATAL_CODES.includes(code)
     );
+    err.retryAfter = body.parameters && body.parameters.retry_after;
+    throw err;
   }
   return body.result;
 }

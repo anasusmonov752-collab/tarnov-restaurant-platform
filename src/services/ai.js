@@ -78,6 +78,20 @@ function geminiParts(content) {
   });
 }
 
+// AI chaqiruvi chegarasiz kutmasin: chaqiruvlar model bo'yicha navbatda
+// (aiQuota.throttle) — bitta osilib qolgan so'rov bot javoblarini ham,
+// rezyume tahlilini ham daqiqalab to'xtatardi (2026-10-20 auditda
+// topildi). Muddat o'tsa xato — ai.complete zaxira provayderga o'tadi.
+const AI_TIMEOUT_MS = +(process.env.AI_TIMEOUT_MS || 45000);
+function raceTimeout(promise, label) {
+  let timer;
+  const t = new Promise((_, rej) => {
+    timer = setTimeout(() => rej(Object.assign(new Error(`${label} ${AI_TIMEOUT_MS / 1000} s ichida javob bermadi`),
+      { code: 'AI_TIMEOUT' })), AI_TIMEOUT_MS);
+  });
+  return Promise.race([promise, t]).finally(() => clearTimeout(timer));
+}
+
 function hasBinary(messages) {
   return messages.some(m => Array.isArray(m.content) && m.content.some(p => p && p.audio));
 }
@@ -99,11 +113,11 @@ async function completeGemini({ system, messages, json, schema, maxTokens, tier 
     if (schema) config.responseSchema = schema;
   }
 
-  const response = await geminiClient().models.generateContent({
+  const response = await raceTimeout(geminiClient().models.generateContent({
     model: spec.id,
     contents,
     config
-  });
+  }), 'Gemini');
 
   const text = response.text;
   if (!text) throw new Error('Gemini bo\'sh javob qaytardi');
@@ -121,12 +135,12 @@ async function completeAnthropic({ system, messages, json, maxTokens, tier }) {
   const msgs = messages.map(m => ({ role: m.role, content: String(m.content) }));
   if (json) msgs.push({ role: 'assistant', content: '{' });
 
-  const response = await anthropicClient().messages.create({
+  const response = await raceTimeout(anthropicClient().messages.create({
     model: MODELS.anthropic[tier].id,
     max_tokens: maxTokens,
     ...(system ? { system } : {}),
     messages: msgs
-  });
+  }), 'Anthropic');
 
   const text = response.content[0].text;
   return json ? '{' + text : text;

@@ -165,7 +165,10 @@ const RELAX_LABEL = {
 };
 
 function buildQuery(criteria, restaurantId, skip) {
-  const q = { restaurantId, status: { $ne: 'rejected' } };  // rad etilganlar chiqmaydi
+  // Rad etilganlar, ishga olinganlar va "ish qidirmayapman" deganlar
+  // chiqmaydi — mijoz ularni tanlab, keyin "band ekan" deb eshitardi
+  // (2026-10-20 auditda topildi). Yumshatish bu shartlarga tegmaydi.
+  const q = { restaurantId, status: { $nin: ['rejected', 'hired'] }, jobStatus: { $ne: 'not_looking' } };
   const and = [];
 
   if (criteria.role) q.role = criteria.role;

@@ -112,7 +112,9 @@ router.post('/:id/credits', guard, asyncHandler(async (req, res) => {
       agencyId: req.user.restaurantId,
       clientId: req.params.id,
       delta: amount,
-      reason: amount > 0 ? 'purchase' : 'refund',
+      // Qo'lda ayirish — 'adjust'. Ilgari 'refund' yozilardi va tarixda
+      // yechish "Qaytarildi" bo'lib ko'rinardi
+      reason: amount > 0 ? 'purchase' : 'adjust',
       note: String((req.body || {}).note || '').slice(0, 200)
     });
     res.json({ ok: true, balance: r.balance });

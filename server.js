@@ -23,8 +23,17 @@ if (!process.env.JWT_SECRET) {
 
 // ── Security headers ──────────────────────────────────────────────
 app.use(helmet({
-  contentSecurityPolicy: false // CDN resources (Lucide, fonts) need this off
+  contentSecurityPolicy: false, // CDN resources (Lucide, fonts) need this off
+  // X-Frame-Options: SAMEORIGIN Mini App'ni web.telegram.org ichida oq
+  // ekran qilardi (iframe). O'rniga frame-ancestors: faqat o'zimiz va
+  // Telegram veb-versiyasi joylay oladi — begona saytdan clickjacking yo'q.
+  frameguard: false
 }));
+app.use((req, res, next) => {
+  res.setHeader('Content-Security-Policy',
+    "frame-ancestors 'self' https://web.telegram.org https://*.telegram.org");
+  next();
+});
 app.set('trust proxy', 1);
 
 // ── Body & cookies ────────────────────────────────────────────────
@@ -138,6 +147,14 @@ app.use('/api/waiter', require('./src/routes/waiter'));
 
 // ── Global error handler ───────────────────────────────────────────
 app.use(errorHandler);
+
+// Fon ishlaridagi (bildirishnoma, AI, webhook) tutilmagan xatolar ham
+// egasiga boradi — ilgari faqat konsolda qolardi. Jarayon to'xtatilmaydi:
+// bitta yiqilgan bildirishnoma uchun server qayta ishga tushmasin.
+process.on('unhandledRejection', err => {
+  console.error('[UNHANDLED]', err);
+  require('./src/services/alert').report('unhandledRejection', err);
+});
 
 // ── Start ──────────────────────────────────────────────────────────
 async function startServer() {

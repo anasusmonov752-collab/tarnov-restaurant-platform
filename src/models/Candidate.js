@@ -122,6 +122,9 @@ CandidateSchema.index({ restaurantId: 1, id: 1 }, { unique: true });
 CandidateSchema.index({ tgInviteToken: 1 }, { sparse: true });
 // Kiruvchi Telegram xabarini nomzodga bog'lash
 CandidateSchema.index({ restaurantId: 1, tgChatId: 1 }, { sparse: true });
+// Nomzod kabineti guard'i agentliksiz, faqat tgChatId bo'yicha qidiradi —
+// yuqoridagi indeks ishlamasdi, har so'rovda butun kolleksiya ko'rilardi
+CandidateSchema.index({ tgChatId: 1 }, { sparse: true });
 // Mijoz ko'rgan qisqa kod bo'yicha topish
 CandidateSchema.index({ restaurantId: 1, publicCode: 1 }, { sparse: true });
 

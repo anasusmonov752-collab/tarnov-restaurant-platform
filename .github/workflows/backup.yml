@@ -1,0 +1,69 @@
+# ── Kunlik zaxira nusxa (MongoDB Atlas) ──────────────────────
+# Atlas bepul tarifi (M0) o'zi zaxira qilmaydi, Render bepul tarifida
+# cron ishonchsiz — shuning uchun GitHub Actions. Har kecha 03:00
+# (Toshkent) to'liq dump olinadi va SHIFRLANGAN holda artifact bo'lib
+# 30 kun saqlanadi. Repo ochiq: shifrsiz dump hech qachon yuklanmaydi.
+#
+# Kerakli sirlar (GitHub -> Settings -> Secrets and variables -> Actions):
+#   MONGODB_URI        — Render'dagi bilan bir xil
+#   BACKUP_PASSPHRASE  — uzun tasodifiy parol; YO'QOTMANG (usiz nusxa ochilmaydi)
+# Sirlar yo'q bo'lsa ish o'tkazib yuboriladi (xato bermaydi).
+#
+# Tiklash:
+#   openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in tarnov.archive.gz.enc \
+#     -out tarnov.archive.gz -pass pass:"$BACKUP_PASSPHRASE"
+#   mongorestore --uri "$MONGODB_URI" --archive=tarnov.archive.gz --gzip --drop
+#   (avval boshqa bazaga tiklab tekshiring: --nsFrom 'tarnov.*' --nsTo 'tiklash.*')
+
+name: backup
+
+on:
+  schedule:
+    - cron: '0 22 * * *'      # 22:00 UTC = 03:00 Toshkent
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      MONGODB_URI: ${{ secrets.MONGODB_URI }}
+      BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+    steps:
+      - name: Sirlar bormi
+        id: check
+        run: |
+          if [ -z "$MONGODB_URI" ] || [ -z "$BACKUP_PASSPHRASE" ]; then
+            echo "MONGODB_URI yoki BACKUP_PASSPHRASE sozlanmagan — zaxira o'tkazib yuborildi"
+            echo "skip=1" >> "$GITHUB_OUTPUT"
+          elif [ ${#BACKUP_PASSPHRASE} -lt 20 ]; then
+            echo "BACKUP_PASSPHRASE 20 belgidan qisqa — xavfsiz emas" && exit 1
+          fi
+
+      - name: Dump (mongo:7 konteyneridagi mongodump)
+        if: steps.check.outputs.skip != '1'
+        run: |
+          mkdir -p out
+          docker run --rm -e MONGODB_URI -v "$PWD/out:/out" mongo:7 \
+            sh -c 'mongodump --uri "$MONGODB_URI" --archive=/out/tarnov.archive.gz --gzip --quiet'
+          ls -la out
+
+      - name: Shifrlash (AES-256, PBKDF2)
+        if: steps.check.outputs.skip != '1'
+        run: |
+          openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt \
+            -in out/tarnov.archive.gz -out out/tarnov.archive.gz.enc -pass env:BACKUP_PASSPHRASE
+          rm -f out/tarnov.archive.gz
+          sha256sum out/tarnov.archive.gz.enc
+
+      - name: Saqlash (30 kun)
+        if: steps.check.outputs.skip != '1'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tarnov-db-${{ github.run_number }}
+          path: out/tarnov.archive.gz.enc
+          retention-days: 30
+          if-no-files-found: error

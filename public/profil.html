@@ -319,10 +319,13 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s==null?'':s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const haptic = () => { try { TG && TG.HapticFeedback && TG.HapticFeedback.selectionChanged(); } catch(e){} };
 
+// Rasm havolasi uchun token (X-Photo-Token) — havolaga Telegram imzosi qo'yilmaydi
+let PT = '';
 async function api(path, opt){
   const r = await fetch(path, Object.assign({
     headers:{ 'Content-Type':'application/json', 'X-Telegram-Init-Data': INIT }
   }, opt));
+  PT = r.headers.get('X-Photo-Token') || PT;
   const d = await r.json().catch(()=>({}));
   if(!r.ok) throw new Error(d.error || 'Xato');
   return d;
@@ -380,7 +383,7 @@ function render(p){
   $('app').innerHTML = `
   <div class="wrap">
     <div class="hero">
-      <div class="av">${p.hasPhoto ? `<img src="/api/cand/photo?i=${encodeURIComponent(INIT)}" alt="">` : esc(ini)}</div>
+      <div class="av">${p.hasPhoto ? `<img src="/api/cand/photo?t=${encodeURIComponent(PT)}" alt="">` : esc(ini)}</div>
       <div class="nm">${esc(p.fullName) || 'Ismingizni kiriting'}</div>
       <div class="sb">${esc(sub) || 'Profilni to\'ldiring'}</div>
       <button class="pill ${pcls}" data-e="status">${plbl}</button>

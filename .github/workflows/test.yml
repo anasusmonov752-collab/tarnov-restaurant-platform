@@ -21,6 +21,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      # npm ci emas: package-lock.json da pdf-parse yo'q (Render npm install ishlatadi)
+      - run: npm install --no-audit --no-fund
       - run: npm i --no-save mongodb-memory-server@10
       - run: npm test

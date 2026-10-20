@@ -249,9 +249,23 @@ shu mijoz BOSHQA tanlovda ochgan nomzod uchun kredit yechmaydi
 (`openedBefore`); qayta tahlil ism/telefon/email/rolni ustidan yozmaydi
 (`mergeParsed`), fotosi yo'qlarga AI chaqirmaydi (`photoOnly`); telefon
 o'zgarsa `phoneVerifiedAt` tushadi; `anonymize.hideContacts` matndan
-telefon/email/@username/havolani yashiradi. Qolgani: 1-bosqich (refund
-yo'li, kredit tranzaksiyasi, zaxira nusxa, monitoring, testlar, qidiruvda
-jobStatus filtri, AI timeout, indekslar), huquqiy (hh nomzodlari
+telefon/email/@username/havolani yashiradi.
+**1-bosqich — `6026fbb`..`bcfdbc1` da**: `shortlist.refund` (sabab
+`pipeline.REFUND_REASONS`, faqat jurnalda yechilgan bo'lsa +1, hired'dan
+yo'q; panelda tugma, mijozga UZ/RU xabar); `credits.move` balans+jurnal
+BITTA tranzaksiyada, jurnalda element boshiga bitta reveal/refund
+(partial unique indeks); qo'lda ayirish `adjust`; qidiruvda hired va
+not_looking chiqmaydi; `services/alert.js` — 500 va unhandledRejection
+egasiga Telegramda (`ALERT_CHAT_ID`, bo'lmasa agentlik admin chati;
+30 daq/kalit, 20/soat); AI 45 s timeout; Telegram 429 qayta urinish;
+rasm havolasida initData o'rniga `utils/photoToken` (12 soat, guard'lar
+`X-Photo-Token` sarlavhasida beradi); frameguard o'rniga frame-ancestors;
+kunlik shifrlangan zaxira `.github/workflows/backup.yml` (GitHub sirlari
+`MONGODB_URI`, `BACKUP_PASSPHRASE` kerak); testlar `npm test` (node:test,
+pul oqimi mongodb-memory-server replika to'plamida), CI har push'da,
+natija annotatsiyada. `package-lock.json` eskirgan (pdf-parse yo'q) —
+CI `npm install` ishlatadi. Qolgani: maosh filtri (maosh matn), Client
+tgChatId noyobligi (avval takrorni o'lchash). Keyingi: huquqiy (hh nomzodlari
 roziliksiz mijozga ko'rinadi, Gemini bepul tarifi, ma'lumot
 lokalizatsiyasi), 2-bosqich (panel sikli: agentlik natija/refund
 belgilay olmaydi, tanlov faqat mijozdan, arizalar faqat o'qish, TalentHub
@@ -318,6 +332,8 @@ Production values live in the Render dashboard only.
 | `ANTHROPIC_API_KEY` | Optional fallback when Gemini is unavailable |
 | `AI_PROVIDER` | `gemini` (default) or `anthropic` |
 | `SUPERADMIN_PASSWORD` | `admin@tarnov.uz` password (≥12 chars); DB hash is synced to it on every boot |
+| `ALERT_CHAT_ID` | Optional Telegram chat for server error alerts (default: agency admin chat) |
+| `AI_TIMEOUT_MS` | Optional AI call timeout, default 45000 |
 
 ## Architecture
 

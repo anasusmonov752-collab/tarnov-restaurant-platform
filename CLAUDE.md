@@ -194,12 +194,33 @@ ham). Panel: Vakansiyalar -> "Anketa" / "Umumiy anketa havolasi" (kanal
 tanlanadi, manba bo'yicha boshladi/yubordi). Jonli: sahifa, API himoyasi,
 havola yaratish tekshirildi (umumiy kod HMXT37).
 
-**DIQQAT (2026-10-20 o'lchandi):** Anas "anketa ishladi" dedi, lekin prod
-bazada `SurveyResponse` = 0, "anketa" manbali nomzod = 0. Bot `/start a_..`
-ni qabul qilsa BIRINCHI javob yozuvini yaratadi — demak havola hali hech
-kim tomonidan ishlatilmagan (ehtimol mijoz akkauntidan bosilgan: u holda
-bot "mijoz sifatida ulangan" deydi va hech narsa yozmaydi). Uchinchi
-Telegram akkauntdan qayta sinash kerak.
+**Birinchi haqiqiy anketa** (2026-10-20): uchinchi akkauntdan to'ldirildi
+("Aziza", xostess, telefon tasdiqlangan, kanal `bot`). Havolasiz `/start`
+endi begona odamga umumiy anketani ochadi (`a1b91f6`, `plainStart`).
+
+**ANKETA 2-VERSIYA + SHARTLI SAVOLLAR — PROD'GA YOZILDI** (2026-10-20,
+`81f5fd3`..`d90a69c`, Anas tasdig'i bilan `POST /api/surveys/upgrade`
+apply:true). Tartib: ISH haqida -> SIZ haqingizda -> QO'SHIMCHA (`sec`).
+Yangi: qachondan (`startWhen` -> `availableFrom`), ingliz tili, ism 2 so'z,
+smena "faqat dam olish kunlari", maosh "kelishamiz", jins ixtiyoriy.
+SHART (`showIf {q, in}`) savolning o'zida, bazada: faqat OLDINGI variantli
+savolning belgilangan javobida so'raladi; yashirin savol majburiy emas va
+javobi nomzodga tushmaydi. Qoida YAGONA: `survey.shownQuestions`
+(server: majburiylik, `toFields`) = `anketa.html shownList` (progress
+javobga qarab o'zgaradi). Lavozim ma'lum bo'lsa (vakansiya) shart shu
+lavozim bo'yicha. Umumiy anketada lavozimga xos savollar shartli
+(c_bron xostess, c_kuxnya/c_sex oshpaz, c_stol/c_kassa ofitsiant);
+lavozim anketalari shablondan `forRole` bilan yasaladi (`ROLE_PRESETS`da
+faqat farq). Prod: HMXT37 umumiy 24 savol, H7SDZW xostess 20 (rasm
+majburiy), 6C62ZP oshpaz 20 (ingliz yo'q), Y23KFT ofitsiant 21.
+Xostess vakansiyalari havolasi endi Xostess anketasini ochadi.
+Konstruktorda "Faqat ma'lum javobda so'rash"; yangi savol/variant
+kaliti brauzerda beriladi (saqlanmagan savolga shart qo'yish uchun).
+Shu ishda tuzatilgan: variant bosilib 160 ms ichida "Keyingisi" ham
+bosilsa javob ikki marta saqlanib, oldingi savolga keyingisining qiymati
+yozilardi. Jonli: qayta upgrade o'zgarishsiz, o'zgarishsiz saqlash
+ma'lumotni buzmadi, noto'g'ri shart 400. **Telegramda nomzod sifatida
+HALI SINALMAGAN.**
 
 **Konstruktor — DEPLOY QILINDI** (2026-10-20, `a661597`..`7d8b7e0`):
 `anketalar.html` (Vakansiyalar -> Anketalar): ro'yxat, savol tahriri UZ/RU,

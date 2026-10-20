@@ -236,8 +236,33 @@ indeksni quradi. Jonli: bitta anketa qoldi, o'zgarishsiz saqlash ma'lumotni
 buzmadi, roziliksiz saqlash 400. Keyingi: eslatma (Render bepul tarifida
 cron ishonchsiz), ovozli javob, ball/saralash, nomzod kabineti ruscha.
 
-**Eskiz SMS ochilmagan** — nomzod kabineti, tiriklik tekshiruvi va suhbat
-tasdiqlash shunga bog'liq. 742 nomzoddan ~1 tasi botga bog'langan.
+**TAYYORLIK AUDITI (2026-10-20)** — to'rt yo'nalish (backend, Mini App,
+panel, dizayn). Xulosa: yuzaki emas (mantiq puxta, qoidalar bir joyda),
+lekin pulli mijozlar uchun to'liq tayyor emas. To'liq hisobot ATAYLAB
+repoda EMAS (repo ochiq, tuzatilmagan teshiklar ro'yxati) — Anasda.
+**0-bosqich (7 ta) — `19f43e9` da tuzatildi**: superadmin paroli faqat
+`SUPERADMIN_PASSWORD` env'dan (har ishga tushishda bazadagi parol unga
+tenglashadi — ilovada parol almashtirish oynasi yo'q); anketa telefon
+bo'yicha mavjud profilga FAQAT Telegram tasdiqlagan raqam bilan ulanadi;
+mijoz chatida `t` o'zgaruvchisi `t()` ni yopib tugma qotardi; `reveal()`
+shu mijoz BOSHQA tanlovda ochgan nomzod uchun kredit yechmaydi
+(`openedBefore`); qayta tahlil ism/telefon/email/rolni ustidan yozmaydi
+(`mergeParsed`), fotosi yo'qlarga AI chaqirmaydi (`photoOnly`); telefon
+o'zgarsa `phoneVerifiedAt` tushadi; `anonymize.hideContacts` matndan
+telefon/email/@username/havolani yashiradi. Qolgani: 1-bosqich (refund
+yo'li, kredit tranzaksiyasi, zaxira nusxa, monitoring, testlar, qidiruvda
+jobStatus filtri, AI timeout, indekslar), huquqiy (hh nomzodlari
+roziliksiz mijozga ko'rinadi, Gemini bepul tarifi, ma'lumot
+lokalizatsiyasi), 2-bosqich (panel sikli: agentlik natija/refund
+belgilay olmaydi, tanlov faqat mijozdan, arizalar faqat o'qish, TalentHub
+RestoOne restoran tenant'i ichida), 3-bosqich (Telegram qorong'i mavzu,
+cold start/retry, chat jonli emas, BackButton chatda yo'q, profil.html
+faqat o'zbekcha, yagona token CSS, kontrast, brend).
+
+**Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
+ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
+O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda
+"Taklif navbati" (qurilmagan, avval telefonli nomzodlar sonini o'lchash).
 
 **Ma'lumot tozalash** — `boshqa` rollar, tahlil qilinmaganlar va
 dublikatlar bajarildi (yuqoriga qarang). Qolgani: 3 ta `SINOV` test yozuvi.
@@ -250,7 +275,9 @@ keyin jonli tekshirilmagan.
 
 **Ochilib ketgan kalitlarni bekor qilish** — GitHub token `ghp_VBxW...`,
 Telegram bot tokeni, `admin@tarnov.uz` paroli (eski skriptlarda qattiq
-yozilgan edi, endi so'raydigan qilib o'zgartirilgan).
+yozilgan edi, endi so'raydigan qilib o'zgartirilgan). Superadmin paroli
+endi Render'dagi `SUPERADMIN_PASSWORD` orqali almashtiriladi (eski
+boshlang'ich parol git tarixida qoladi — env qo'yilmaguncha u amal qiladi).
 
 ## Project Overview
 
@@ -290,6 +317,7 @@ Production values live in the Render dashboard only.
 | `GEMINI_API_KEY` | Google AI Studio key — powers AI chat and written-answer grading |
 | `ANTHROPIC_API_KEY` | Optional fallback when Gemini is unavailable |
 | `AI_PROVIDER` | `gemini` (default) or `anthropic` |
+| `SUPERADMIN_PASSWORD` | `admin@tarnov.uz` password (≥12 chars); DB hash is synced to it on every boot |
 
 ## Architecture
 

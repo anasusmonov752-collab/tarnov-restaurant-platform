@@ -273,6 +273,28 @@ RestoOne restoran tenant'i ichida), 3-bosqich (Telegram qorong'i mavzu,
 cold start/retry, chat jonli emas, BackButton chatda yo'q, profil.html
 faqat o'zbekcha, yagona token CSS, kontrast, brend).
 
+**TALENTHUB TARNOVDAN AJRATILDI (kod)** (2026-10-22, `dbb3b2a`): Tarnov
+paneliga boshqa xodimlar ham kiradi, Rekruting faqat TalentHub uchun, 742
+hh nomzodi Tarnov bilan kelishilgan holda TalentHub'ga o'tadi (Anas qarori).
+`Restaurant.kind='agency'`; `middleware/agency.js` — rekruting API'lari faqat
+agentlikka, O'TISH REJIMI: agentlik yo'q bo'lsa eskicha. Ko'chirish —
+super-admin "TalentHub'ni ajratish" (`POST /api/super/agency-split`, reja ->
+ko'chirish, takror xavfsiz, bot admin chati ham). Agentlik login ->
+`/talenthub.html`. **Ko'chirishni Anas o'zi qiladi** (yangi akkaunt paroli).
+
+**DIZAYN — iOS uslubi, DEPLOY QILINDI** (2026-10-22, `21f535b`..`f219ce6`):
+yagona tizim `public/css/th.css` (tizim shrifti — SF Pro'ni ulab bo'lmaydi,
+Dynamic Type o'lchamlari, iOS ranglarining KONTRASTLI variantlari, kunduz/tun
+`data-theme`). Panel: `js/th-shell.js` (bitta chap menyu, sanoqlar, telefonda
+☰), `css/th-app.css` (eski sahifa tokenlari body darajasida yangisiga
+bog'lanadi — sahifa CSS'i qayta yozilmagan), "Bugun" `/talenthub.html`
+(`GET /api/agency/today`). Mini App/profil/anketa: tokenlar th.css'ga,
+`applyTheme()` Telegram colorScheme -> data-theme + setHeaderColor; anonim
+kartada lavozim belgisi (`roleIcon`) va ishonch belgilari (`phoneVerified`,
+`fromAnketa` — anonymize, faqat ha/yo'q); "Ochish · 1 kredit". `js/uz-date.js`
+— brauzerda 'uz' sana formati yo'q (M10 22) — o'zi chiqaradi. Belgi:
+`img/talenthub-mark.svg`. Namuna: `docs/dizayn-taklif.html`.
+
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
 O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda

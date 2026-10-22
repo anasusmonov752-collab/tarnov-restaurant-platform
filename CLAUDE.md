@@ -295,6 +295,20 @@ kartada lavozim belgisi (`roleIcon`) va ishonch belgilari (`phoneVerified`,
 — brauzerda 'uz' sana formati yo'q (M10 22) — o'zi chiqaradi. Belgi:
 `img/talenthub-mark.svg`. Namuna: `docs/dizayn-taklif.html`.
 
+**PANEL ISH OQIMI (2-bosqich) — DEPLOY QILINDI** (2026-10-22, `213d667`..`0172466`):
+agentlik natijani o'zi belgilaydi (`POST /api/shortlists/:id/outcome/:cid` —
+`setClientState` clientId'siz; suhbat sana bilan, mos kelmadi sabab bilan,
+yakuniy qayta o'zgarmaydi); tanlovni paneldan yaratish ("Mijozga taklif",
+`POST /api/shortlists`, nomzodlar 'selected', mijozga `nc.proposed`);
+arizalar oynasida "Tanlovga qo'shish"/"Rad etish"/"Bazada ochish"
+(`POST /api/vacancies/:id/applications/:appId/shortlist|reject`, Mini App
+qoidasi bilan bir xil); recruitment `?q=` va publicCode bo'yicha qidiruv;
+telefonda: jadvallar kartaga (th-shell `data-label` + th-app.css), Nomzodlarda
+bosqich `<select>`, Suhbatlarda "‹ Suhbatlar". `test/workflow.test.js`.
+Hali qolgan: nomzodlar bazasi ikki sahifaga bo'lingan (ro'yxat/kanban
+birlashtirilmagan), 1000+ sahifalash, o'chirishda ogohlantirish, qo'lda
+qo'shishda dublikat tekshiruvi, profil.html ruscha.
+
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
 O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda

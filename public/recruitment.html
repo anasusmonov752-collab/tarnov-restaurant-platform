@@ -558,6 +558,8 @@ async function openThread(c){
       <div class="tg-head">
         <span class="tg-pill" style="background:rgba(34,158,217,.12);color:#1b87ba">Telegramga ulangan</span>
         ${c.tgUsername ? `<span>@${esc(c.tgUsername)}</span>` : ''}
+        <span style="flex:1"></span>
+        <span id="tgUnl"><button class="btn btn-sm" id="tgUnlAsk" title="Rezyume qoladi — faqat Telegram akkaunti uziladi">Telegramdan uzish</button></span>
       </div>
       <div class="chat" id="tgChat">Yuklanmoqda…</div>
       <div class="tg-send">
@@ -567,6 +569,18 @@ async function openThread(c){
     </div>`;
   document.getElementById('ov').classList.add('on');
   document.getElementById('mdX').onclick = closeMd;
+  // Ikki bosqichli tasdiq (sahifa ichida — brauzer confirm() o'chirilgan bo'lishi mumkin)
+  document.getElementById('tgUnlAsk').onclick = () => {
+    document.getElementById('tgUnl').innerHTML = `<span style="font-size:12.5px;color:var(--muted)">Rezyume qoladi. Uzilsinmi?</span>
+      <button class="btn btn-sm" id="tgUnlYes" style="color:var(--danger)">Ha, uzish</button>`;
+    document.getElementById('tgUnlYes').onclick = async () => {
+      try {
+        await api(`/api/recruitment/${c.id}/tg/unlink`, { method:'POST' });
+        Object.assign(c, { tgState:'none', tgChatId:'', tgUsername:'' });
+        toast('Telegramdan uzildi'); closeMd(); render();
+      } catch(e){ toast(e.message); }
+    };
+  };
 
   async function load(){
     try{

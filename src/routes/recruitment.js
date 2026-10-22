@@ -635,6 +635,20 @@ router.post('/:id/tg/invite', guard, asyncHandler(async (req, res) => {
   }
 }));
 
+// Telegramdan uzish — rezyume QOLADI, faqat akkaunt ulanishi o'chadi.
+// Xato odam ulanib qolganda (masalan, taklif havolasini boshqa odam
+// bosgan) yoki sinov akkauntini bo'shatish uchun: shundan keyin bot bu
+// akkauntni yangi odam kabi kutib oladi (anketa taklif qiladi).
+// Yozishma tarixi (BotMessage) saqlanadi — kim nima yozgani yo'qolmasin.
+router.post('/:id/tg/unlink', guard, asyncHandler(async (req, res) => {
+  const c = await Candidate.findOne({ restaurantId: req.user.restaurantId, id: req.params.id });
+  if (!c) return res.status(404).json({ error: 'Nomzod topilmadi' });
+  c.tgChatId = ''; c.tgUsername = ''; c.tgState = 'none'; c.tgLinkedAt = null; c.tgInviteToken = '';
+  c.updatedAt = new Date();
+  await c.save();
+  res.json({ ok: true, tgState: c.tgState });
+}));
+
 // Bog'langan nomzodga xabar
 router.post('/:id/tg/message', guard, asyncHandler(async (req, res) => {
   const text = String((req.body && req.body.text) || '').trim();

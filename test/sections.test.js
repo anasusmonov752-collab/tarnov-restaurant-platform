@@ -26,6 +26,7 @@ before(async () => {
   routes.patch = handler(rc, 'patch', '/:id');
   routes.bulk = handler(rc, 'post', '/bulk');
   routes.today = handler(ag, 'get', '/today');
+  routes.unlink = handler(rc, 'post', '/:id/tg/unlink');
 });
 after(async () => { await mongoose.disconnect(); if (rs) await rs.stop(); });
 
@@ -106,4 +107,19 @@ test('aloqa: qo\'ng\'iroq, bosqich o\'zgarishi va guruh amali', async () => {
   const s = await sec();
   assert.equal(s.anketa.waiting, 0);
   assert.equal(s.anketa.unseen, 0);
+});
+
+test('Telegramdan uzish: rezyume qoladi, akkaunt bo\'shaydi, boshqa agentlikka tegilmaydi', async () => {
+  await Candidate.create([
+    { id: 'u1', restaurantId: A, source: 'hh', fullName: 'Farina', fileName: 'cv.pdf', tgChatId: '5553596', tgState: 'linked', tgLinkedAt: new Date() },
+    { id: 'u2', restaurantId: 'boshqa', tgChatId: '777', tgState: 'linked' }
+  ]);
+  const r = await call(routes.unlink, { params: { id: 'u1' } });
+  assert.equal(r.code, 200);
+  const c = await get('u1');
+  assert.equal(c.tgChatId, ''); assert.equal(c.tgState, 'none'); assert.equal(c.tgLinkedAt, null);
+  assert.equal(c.fullName, 'Farina'); assert.equal(c.fileName, 'cv.pdf');          // rezyume joyida
+  assert.equal(await Candidate.countDocuments({ tgChatId: '5553596' }), 0);       // bot akkauntni tanimaydi
+  assert.equal((await call(routes.unlink, { params: { id: 'u2' } })).code, 404);
+  assert.equal((await Candidate.findOne({ id: 'u2' }).lean()).tgChatId, '777');
 });

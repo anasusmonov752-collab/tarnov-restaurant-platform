@@ -431,7 +431,7 @@
 
       // ── ANKETA: nomzod Mini App'i (anketa.html) ──
       'ank.title': 'Anketa',
-      'ank.introH': 'Ishga anketa — 3 daqiqa',
+      'ank.introH': 'Ishga anketa — 2 daqiqa',
       'ank.introP': 'Savollarga javob bering — ma\'lumotingiz mos ish beruvchilarga ko\'rsatiladi. Mos ish chiqsa, Telegram\'ga xabar keladi.',
       'ank.forVacancy': 'Vakansiya: {v}',
       'ank.start': 'Boshlash',
@@ -488,9 +488,9 @@
       'shift.weekend': 'Faqat dam olish kunlari',
 
       // ── ANKETA: bot xabarlari ──
-      'ank.botInvite': 'Assalomu alaykum! Ishga ariza berish uchun qisqa anketani to\'ldiring — 3 daqiqa.',
+      'ank.botInvite': 'Assalomu alaykum! Ishga ariza berish uchun qisqa anketani to\'ldiring — 2 daqiqa.',
       'ank.botInviteVac': '\n\nVakansiya: {v}',
-      'ank.botOpen': '📝 Anketani boshlash · 3 daqiqa',
+      'ank.botOpen': '📝 Anketani boshlash · 2 daqiqa',
       // /start dan keyingi birinchi xabar (routes/telegram startSurvey) — HTML
       'ank.hookHi': '👋 Assalomu alaykum{name}!',
       'ank.hookLead': '<b>TalentHub</b> — Toshkentdagi restoran va kafelar uchun xodim tanlash xizmati.',
@@ -498,7 +498,7 @@
       'ank.hookJobs': '🔥 Hozir <b>{n} ta ochiq ish</b>: {roles}.',
       'ank.hookVac': '📌 Siz <b>«{v}»</b> vakansiyasi bo\'yicha keldingiz — anketa bilan birga arizangiz ham yuboriladi.',
       'ank.hookClosed': '📌 Bu vakansiya yopilgan, lekin boshqa mos ishlar bor — anketani to\'ldiring, ko\'rsatamiz.',
-      'ank.hookPoints': '✅ Nomzod uchun bepul\n✅ Anketa — 3 daqiqa, telefondan\n✅ Tugashi bilan sizga mos ishlar chiqadi\n✅ HR 24 soat ichida qo\'ng\'iroq qiladi',
+      'ank.hookPoints': '✅ Nomzod uchun bepul\n✅ Anketa — 2 daqiqa, telefondan\n✅ Tugashi bilan sizga mos ishlar chiqadi\n✅ HR 24 soat ichida qo\'ng\'iroq qiladi',
       'ank.hookCta': '👇 Boshlash uchun tugmani bosing',
       'ank.botBadLink': 'Havola noto\'g\'ri yoki eskirgan.',
       'ank.botClosed': 'Bu vakansiya yopilgan. Umumiy anketani to\'ldiring — mos ish chiqsa xabar beramiz.',
@@ -884,7 +884,7 @@
       'slb.askOffer': 'Чтобы я поговорил с ними, скажите — что предлагаете? Зарплата, смена, с какого числа.',
 
       'ank.title': 'Анкета',
-      'ank.introH': 'Анкета на работу — 3 минуты',
+      'ank.introH': 'Анкета на работу — 2 минуты',
       'ank.introP': 'Ответьте на вопросы — ваши данные увидят подходящие работодатели. Когда появится подходящая работа, придёт сообщение в Telegram.',
       'ank.forVacancy': 'Вакансия: {v}',
       'ank.start': 'Начать',
@@ -938,16 +938,16 @@
       'card.anketa': 'Анкета заполнена',
       'shift.weekend': 'Только выходные',
 
-      'ank.botInvite': 'Здравствуйте! Чтобы откликнуться на работу, заполните короткую анкету — 3 минуты.',
+      'ank.botInvite': 'Здравствуйте! Чтобы откликнуться на работу, заполните короткую анкету — 2 минуты.',
       'ank.botInviteVac': '\n\nВакансия: {v}',
-      'ank.botOpen': '📝 Начать анкету · 3 минуты',
+      'ank.botOpen': '📝 Начать анкету · 2 минуты',
       'ank.hookHi': '👋 Здравствуйте{name}!',
       'ank.hookLead': '<b>TalentHub</b> — сервис подбора персонала для ресторанов и кафе Ташкента.',
       'ank.hookAbout': 'Рестораны обращаются к нам за сотрудниками — мы подбираем подходящих кандидатов и рекомендуем их работодателю. Вы один раз заполняете анкету, а когда появится подходящая работа — свяжемся сами.',
       'ank.hookJobs': ['🔥 Сейчас открыта <b>{n} вакансия</b>: {roles}.', '🔥 Сейчас открыто <b>{n} вакансии</b>: {roles}.', '🔥 Сейчас открыто <b>{n} вакансий</b>: {roles}.'],
       'ank.hookVac': '📌 Вы пришли по вакансии <b>«{v}»</b> — вместе с анкетой отправим и отклик.',
       'ank.hookClosed': '📌 Эта вакансия закрыта, но есть другие подходящие — заполните анкету, покажем.',
-      'ank.hookPoints': '✅ Для соискателей бесплатно\n✅ Анкета — 3 минуты, с телефона\n✅ Сразу после анкеты — подходящие вакансии\n✅ HR позвонит в течение 24 часов',
+      'ank.hookPoints': '✅ Для соискателей бесплатно\n✅ Анкета — 2 минуты, с телефона\n✅ Сразу после анкеты — подходящие вакансии\n✅ HR позвонит в течение 24 часов',
       'ank.hookCta': '👇 Нажмите кнопку, чтобы начать',
       'ank.botBadLink': 'Ссылка неверная или устарела.',
       'ank.botClosed': 'Эта вакансия закрыта. Заполните общую анкету — сообщим, когда появится подходящая работа.',

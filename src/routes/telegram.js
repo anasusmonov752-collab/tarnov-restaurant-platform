@@ -30,6 +30,7 @@ const Survey = require('../models/Survey');
 const SurveyResponse = require('../models/SurveyResponse');
 const surveySvc = require('../services/survey');
 const vac = require('../services/vacancy');
+const contactLog = require('../services/contactLog');
 
 const router = express.Router();
 // Faqat TalentHub agentligi (middleware/agency — o'tish rejimi bilan)
@@ -306,6 +307,7 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
       const cand = await Candidate.findOne({ restaurantId: adminRest.id, id: orig.candidateId });
       try {
         await relay.sendToCandidate(adminRest, cand, text, 'telegram');
+        await contactLog.contacted(adminRest.id, cand.id);
         await tg.sendMessage(token, chatId, `Yuborildi -> ${relay.displayName(cand)}`);
       } catch (e) {
         await tg.sendMessage(token, chatId, `Yuborilmadi: ${e.message}`);

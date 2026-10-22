@@ -91,7 +91,7 @@ router.get('/:id/applications', guard, asyncHandler(async (req, res) => {
 
   const cands = await Candidate.find(
     { restaurantId: agencyId, id: { $in: apps.map(a => a.candidateId) } },
-    'id publicCode fullName phone email role desiredPosition experienceYears age location jobStatus tgState'
+    'id publicCode fullName phone email role desiredPosition experienceYears age location jobStatus tgState source'
   ).lean();
   const byId = Object.fromEntries(cands.map(c => [c.id, c]));
 

@@ -22,6 +22,8 @@ const aiQuota = require('../services/aiQuota');
 const { isValidRole, guessRole } = require('../data/roles');
 const { mergeParsed } = require('../utils/mergeParsed');
 const { phoneKey, emailKey, textHash } = require('../utils/candidateKeys');
+const contactLog = require('../services/contactLog');
+const SurveyResponse = require('../models/SurveyResponse');
 
 const router = express.Router();
 // Faqat TalentHub agentligi (middleware/agency — o'tish rejimi bilan)
@@ -193,7 +195,9 @@ router.get('/', guard, asyncHandler(async (req, res) => {
 
   if (role && role !== 'all') query.role = role;
   if (status && status !== 'all') query.status = status;
-  if (source && source !== 'all') query.source = source;
+  // 'base' — hh.uz bazasi bo'limi: anketadan kelganlardan boshqa hammasi
+  if (source === 'base') query.source = { $ne: 'anketa' };
+  else if (source && source !== 'all') query.source = source;
   if (language && language !== 'all') query.languages = { $elemMatch: { $regex: escapeRegex(language), $options: 'i' } };
   const min = parseInt(minExp, 10);
   if (Number.isFinite(min) && min > 0) query.experienceYears = { $gte: min };
@@ -278,6 +282,33 @@ router.get('/analytics', guard, asyncHandler(async (req, res) => {
 }));
 
 // ── Bitta nomzod (to'liq, xom matn bilan, fayl base64'siz) ──
+// ── Bo'limlar sanog'i: "Anketadan" va "hh.uz bazasi" ──
+// (/:id dan OLDIN — aks holda 'sections' id deb o'qiladi)
+// waitingOld — bir kundan ortiq javobsiz turgan: shu raqam qizarmasligi kerak.
+router.get('/sections', guard, asyncHandler(async (req, res) => {
+  const restaurantId = req.user.restaurantId;
+  const A = { restaurantId, source: 'anketa' };
+  const day = new Date(Date.now() - 864e5), week = new Date(Date.now() - 7 * 864e5);
+  const [aTotal, unseen, waiting, waitingOld, aWeek, bTotal, bWeek, resp] = await Promise.all([
+    Candidate.countDocuments(A),
+    Candidate.countDocuments(Object.assign({}, A, contactLog.UNSEEN)),
+    Candidate.countDocuments(Object.assign({}, A, contactLog.WAITING)),
+    Candidate.countDocuments(Object.assign({}, A, contactLog.WAITING, { createdAt: { $lt: day } })),
+    Candidate.countDocuments(Object.assign({}, A, { createdAt: { $gte: week } })),
+    Candidate.countDocuments({ restaurantId, source: { $ne: 'anketa' } }),
+    Candidate.countDocuments({ restaurantId, source: { $ne: 'anketa' }, createdAt: { $gte: week } }),
+    SurveyResponse.aggregate([
+      { $match: { agencyId: restaurantId } },
+      { $group: { _id: null, started: { $sum: 1 }, done: { $sum: { $cond: [{ $eq: ['$status', 'done'] }, 1, 0] } } } }
+    ])
+  ]);
+  res.json({
+    anketa: { total: aTotal, unseen, waiting, waitingOld, week: aWeek,
+              started: (resp[0] || {}).started || 0, done: (resp[0] || {}).done || 0 },
+    base: { total: bTotal, week: bWeek }
+  });
+}));
+
 router.get('/:id', guard, asyncHandler(async (req, res) => {
   const c = await Candidate.findOne({ restaurantId: req.user.restaurantId, id: req.params.id }, '-fileData -photo').lean();
   if (!c) return res.status(404).json({ error: 'Nomzod topilmadi' });
@@ -356,7 +387,11 @@ router.patch('/:id', guard, asyncHandler(async (req, res) => {
   if (!doc) return res.status(404).json({ error: 'Nomzod topilmadi' });
 
   if (b.status !== undefined && VALID_STATUS.includes(b.status)) {
-    if (b.status !== doc.status) doc.statusChangedAt = new Date(); // yangi bosqichga o'tdi — taymer qayta boshlanadi
+    if (b.status !== doc.status) {
+      doc.statusChangedAt = new Date();                          // yangi bosqichga o'tdi — taymer qayta boshlanadi
+      if (!doc.firstContactAt) doc.firstContactAt = new Date();   // bosqich qarori = aloqa (contactLog)
+      if (!doc.seenAt) doc.seenAt = new Date();
+    }
     doc.status = b.status;
   }
   if (b.source !== undefined)  doc.source = VALID_SOURCE.includes(b.source) ? b.source : 'hh';
@@ -382,6 +417,20 @@ router.patch('/:id', guard, asyncHandler(async (req, res) => {
   const o = doc.toObject();
   delete o.fileData; delete o.rawText;
   res.json(o);
+}));
+
+// ── Ko'rildi / bog'lanildi (contactLog) ──
+// seen — kartani ochganda; contacted — "Qo'ng'iroq" tugmasi (tel: havolasi
+// ochiladi, natijasini bilmaymiz — urinish aloqa hisoblanadi).
+router.post('/:id/seen', guard, asyncHandler(async (req, res) => {
+  if (!await Candidate.exists({ restaurantId: req.user.restaurantId, id: req.params.id })) return res.status(404).json({ error: 'Nomzod topilmadi' });
+  await contactLog.seen(req.user.restaurantId, req.params.id);
+  res.json({ ok: true });
+}));
+router.post('/:id/contacted', guard, asyncHandler(async (req, res) => {
+  if (!await Candidate.exists({ restaurantId: req.user.restaurantId, id: req.params.id })) return res.status(404).json({ error: 'Nomzod topilmadi' });
+  await contactLog.contacted(req.user.restaurantId, req.params.id);
+  res.json({ ok: true });
 }));
 
 // ── O'chirish ──
@@ -557,6 +606,7 @@ router.post('/bulk', guard, asyncHandler(async (req, res) => {
   }
   if (b.action === 'status' && VALID_STATUS.includes(b.status)) {
     const r = await Candidate.updateMany(q, { $set: { status: b.status, statusChangedAt: new Date(), updatedAt: new Date() } });
+    await contactLog.contacted(req.user.restaurantId, ids);
     return res.json({ ok: true, updated: r.modifiedCount });
   }
   return res.status(400).json({ error: 'Noto\'g\'ri amal' });
@@ -596,6 +646,7 @@ router.post('/:id/tg/message', guard, asyncHandler(async (req, res) => {
 
   try {
     await relay.sendToCandidate(restaurant, candidate, text, 'panel');
+    await contactLog.contacted(req.user.restaurantId, candidate.id);
     res.json({ ok: true });
   } catch (e) {
     res.status(400).json({ error: e.message, tgState: candidate.tgState });

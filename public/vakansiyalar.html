@@ -377,7 +377,7 @@ async function showApps(id){
       ${it.message ? `<div class="m" style="color:var(--ink);margin-top:6px">"${esc(it.message)}"</div>` : ''}
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px">
         <span class="m" style="margin:0">${dt(it.createdAt)}</span>
-        <a class="btn btn-sm" style="margin-left:auto;text-decoration:none" href="/recruitment.html?q=${encodeURIComponent(c.publicCode || c.fullName || '')}">Bazada ochish</a>
+        <a class="btn btn-sm" style="margin-left:auto;text-decoration:none" href="/recruitment.html?${c.source === 'anketa' ? 'src=anketa&' : ''}q=${encodeURIComponent(c.publicCode || c.fullName || '')}">Bazada ochish</a>
         ${['new', 'seen'].includes(it.state) ? `
           <button class="btn btn-sm btn-p" data-apa="shortlist" data-app="${esc(it.id)}">Tanlovga qo'shish</button>
           <button class="btn btn-sm" data-apa="reject" data-app="${esc(it.id)}">Rad etish</button>` : ''}

@@ -178,6 +178,10 @@
 .th-nav-a.on svg{ color:#fff; }
 .th-nav-a .n{ margin-left:auto; font-size:var(--th-fs-foot); color:var(--th-muted); }
 .th-nav-a.on .n{ color:rgba(255,255,255,.85); }
+/* Javob kutayotgan narsa (ko'rilmagan anketalar) — iOS belgi uslubida */
+.th-nav-a .n.hot{ min-width:20px; height:20px; padding:0 6px; border-radius:10px; background:var(--th-brand); color:#fff;
+  font-weight:var(--th-fw-sb); display:inline-flex; align-items:center; justify-content:center; }
+.th-nav-a.on .n.hot{ background:#fff; color:var(--th-brand); }
 .th-main{ padding:28px 40px 56px; min-width:0; }
 .th-top{ display:flex; align-items:flex-end; gap:16px; margin-bottom:22px; }
 

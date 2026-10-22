@@ -111,12 +111,21 @@ const CandidateSchema = new mongoose.Schema({
   // Konstruktorda qo'shilgan o'z savollari javoblari (maydoni yo'q):
   // { q: savol matni, a: javob } — panel kartasida "Anketa javoblari"
   extraAnswers:    { type: [{ q: String, a: String, _id: false }], default: [] },
+  // ── O'zi kelgan nomzodga javob (panel "Anketadan" bo'limi) ──
+  // seenAt — agentlik kartani birinchi ochgan payt (ko'rilmagan belgisi);
+  // firstContactAt — birinchi aloqa: bosqich o'zgardi, xabar yozildi yoki
+  // qo'ng'iroq qilindi. "N kundan beri javobsiz" shundan hisoblanadi.
+  // Qoidasi bitta joyda — services/contactLog.js.
+  seenAt:          { type: Date,   default: null },
+  firstContactAt:  { type: Date,   default: null },
 
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
 
 CandidateSchema.index({ restaurantId: 1, createdAt: -1 });
+// Manba bo'yicha bo'limlar (Anketadan / hh.uz bazasi)
+CandidateSchema.index({ restaurantId: 1, source: 1, createdAt: -1 });
 CandidateSchema.index({ restaurantId: 1, id: 1 }, { unique: true });
 // Deep link tokenini yechish (sparse — ko'pchilikda bo'sh)
 CandidateSchema.index({ tgInviteToken: 1 }, { sparse: true });

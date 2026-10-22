@@ -499,8 +499,18 @@ function compressImage(file, max=160){
 })();
 
 // ── Load & render ──
+// Bo'lim (recruitment.html bilan bir xil): ?src=anketa — anketadan kelganlar,
+// usiz — hh.uz bazasi
+const MODE = new URLSearchParams(location.search).get('src') === 'anketa' ? 'anketa' : 'base';
+(function setupMode(){
+  const t = MODE === 'anketa' ? 'Anketadan kelganlar' : 'hh.uz bazasi';
+  document.title = 'TalentHub — ' + t + ' · Kanban';
+  document.querySelector('.tb-title').textContent = t;
+  if (MODE === 'anketa') document.querySelectorAll('a[href="/recruitment.html"]').forEach(a => a.href = '/recruitment.html?src=anketa');
+})();
 function qs(){
   const p = new URLSearchParams();
+  p.set('source', MODE);
   if(filters.q) p.set('q', filters.q);
   if(filters.role!=='all') p.set('role', filters.role);
   if(filters.branch!=='all') p.set('branch', filters.branch); // (server branch filtri yo'q — client'da ham filtrlaymiz)

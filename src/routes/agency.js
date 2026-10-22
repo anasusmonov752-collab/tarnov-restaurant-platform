@@ -11,6 +11,7 @@ const Application = require('../models/Application');
 const Client = require('../models/Client');
 const Candidate = require('../models/Candidate');
 const ChatThread = require('../models/ChatThread');
+const contactLog = require('../services/contactLog');
 
 const router = express.Router();
 
@@ -23,14 +24,17 @@ router.get('/today', guard, asyncHandler(async (req, res) => {
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const weekAgo = new Date(now - 7 * 864e5);
 
-  const [shortlists, appsNew, clients, candTotal, candWeek, unread] = await Promise.all([
+  const [shortlists, appsNew, clients, candTotal, candWeek, unread, anketaUnseen, baseWeek] = await Promise.all([
     Shortlist.find({ agencyId, status: { $ne: 'done' } }, 'id clientId items createdAt updatedAt summary').lean(),
     Application.countDocuments({ agencyId, state: 'new' }),
     Client.find({ agencyId }, 'id name credits status').lean(),
     Candidate.countDocuments({ restaurantId: agencyId }),
     Candidate.countDocuments({ restaurantId: agencyId, createdAt: { $gte: weekAgo } }),
     ChatThread.aggregate([{ $match: { agencyId, unreadAgency: { $gt: 0 } } },
-                          { $group: { _id: null, n: { $sum: '$unreadAgency' } } }])
+                          { $group: { _id: null, n: { $sum: '$unreadAgency' } } }]),
+    // Yon menyu: "Anketadan" — ko'rilmaganlar, "hh.uz bazasi" — shu hafta qo'shilgan
+    Candidate.countDocuments(Object.assign({ restaurantId: agencyId, source: 'anketa' }, contactLog.UNSEEN)),
+    Candidate.countDocuments({ restaurantId: agencyId, source: { $ne: 'anketa' }, createdAt: { $gte: weekAgo } })
   ]);
 
   // Shu oy ochilgan va ishga olingan — barcha tanlovlardan (yopilganlari ham)
@@ -61,7 +65,7 @@ router.get('/today', guard, asyncHandler(async (req, res) => {
     hiredMonth: (month[0] || {}).hired || 0,
     clientCredits: active.reduce((s, c) => s + (c.credits || 0), 0),
     activeClients: active.length,
-    candidates: candTotal, candidatesWeek: candWeek,
+    candidates: candTotal, candidatesWeek: candWeek, anketaUnseen, baseWeek,
     unreadChats: (unread[0] || {}).n || 0,
     queue: queue.slice(0, 20)
   });

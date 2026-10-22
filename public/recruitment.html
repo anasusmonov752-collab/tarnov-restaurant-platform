@@ -121,6 +121,17 @@ button,input,select{font-family:inherit}
 .tag{font-size:12px;font-weight:600;padding:4px 9px;border-radius:7px;background:#F1F5FA;color:var(--muted)}
 .tag.ok{background:rgba(46,158,91,.1);color:#1E7A46}
 .tag.ai{background:rgba(37,99,235,.1);color:var(--gold-d)}
+/* Anketadan kelgan: ko'rilmagan va javobsiz (services/contactLog) */
+.tag.nw{background:var(--gold);color:#fff}
+.tag.wt{background:rgba(217,142,43,.14);color:#9A5B0C}
+.rc.unseen{border-color:var(--gold);box-shadow:inset 3px 0 0 var(--gold)}
+.mx{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.mx div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 14px}
+.mx small{display:block;font-size:12.5px;color:var(--muted)}
+.mx b{font-size:20px;font-weight:700}
+.mx b.wr{color:#B4802E}
+.mx em{font-style:normal;font-size:12px;color:var(--muted);margin-left:4px}
+@media(max-width:1000px){.mx{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .rc-rows{margin-top:13px;border-top:1px solid var(--line)}
 .rc-row{display:grid;grid-template-columns:142px 1fr;gap:14px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px;align-items:baseline}
 .rc-row:last-child{border-bottom:none}
@@ -187,6 +198,7 @@ button,input,select{font-family:inherit}
 
   <section class="main">
     <select id="stageM" class="stage-m" aria-label="Bosqich"></select>
+    <div class="mx" id="mx" hidden></div>
     <div class="hint" id="hint">Yuklanmoqda…</div>
     <div class="bulk">
       <div class="srch"><input id="q" placeholder="Ism, lavozim, ko'nikma, telefon…" autocomplete="off"></div>
@@ -260,6 +272,52 @@ const START_L = { now:'Darhol', w1:'1 hafta ichida', w2:'2 hafta ichida', m1:'1 
 const CHANNEL_L = { tg:'Telegram', ig:'Instagram', fb:'Facebook', olx:'OLX', hh:'hh.uz', qr:'QR kod', ref:'Tanish orqali', site:'Sayt', bot:"Botni o'zi topgan", other:'Boshqa' };
 
 let ALL = [], FS = 'new', FR = '', Q = '', SEL = new Set();
+
+// ── Bo'lim: manba bo'yicha ──
+// ?src=anketa — o'zi anketa to'ldirganlar (rozilik bor, telefon tasdiqlangan,
+// tez javob kutadi); usiz — hh.uz bazasi (anketadan boshqa hamma manba).
+// Baza bitta: dublikat, qidiruv va tanlov hamma nomzod bo'yicha ishlaydi.
+const MODE = new URLSearchParams(location.search).get('src') === 'anketa' ? 'anketa' : 'base';
+const LIST_URL = '/api/recruitment?source=' + MODE;
+const isAnk = c => c.source === 'anketa';
+// Javobsiz (contactLog.WAITING): yangi bosqichda va hali bog'lanilmagan
+const waitingFor = c => isAnk(c) && (c.status || 'new') === 'new' && !c.firstContactAt
+  ? Date.now() - new Date(c.createdAt) : 0;
+function waitLabel(ms){
+  const h = Math.floor(ms / 36e5);
+  return h < 1 ? 'hozirgina keldi' : h < 24 ? `${h} soatdan beri javobsiz` : `${Math.floor(h / 24)} kundan beri javobsiz`;
+}
+(function setupMode(){
+  const t = MODE === 'anketa' ? 'Anketadan kelganlar' : 'hh.uz bazasi';
+  document.title = 'TalentHub — ' + t;
+  document.querySelector('.tb-title').textContent = t;
+  document.querySelector('.tb-sub').textContent = MODE === 'anketa'
+    ? 'O\'zi to\'ldirgan · rozilik bor' : 'hh.uz va qo\'lda qo\'shilgan rezyumelar';
+  if (MODE === 'anketa') {
+    document.getElementById('bUpload').hidden = true;          // anketa nomzodi yuklanmaydi — o'zi keladi
+    document.querySelectorAll('a[href="/recruitment-kanban.html"]').forEach(a => a.href = '/recruitment-kanban.html?src=anketa');
+  }
+})();
+
+// Tepadagi raqamlar (faqat Anketadan bo'limida) — serverda sanaladi
+async function loadMx(){
+  if (MODE !== 'anketa') return;
+  let s;
+  try { s = (await api('/api/recruitment/sections')).anketa; } catch(e){ return; }
+  const el = document.getElementById('mx');
+  el.hidden = false;
+  el.innerHTML = `
+    <div><small>Javob kutmoqda</small><b class="${s.waitingOld ? 'wr' : ''}">${s.waiting}</b>${s.waitingOld ? `<em>${s.waitingOld} tasi 1 kundan ortiq</em>` : ''}</div>
+    <div><small>Ko'rilmagan</small><b>${s.unseen}</b></div>
+    <div><small>Shu hafta keldi</small><b>${s.week}</b></div>
+    <div><small>Anketa: boshladi → yubordi</small><b>${s.started} → ${s.done}</b></div>`;
+}
+// Kartani ochish = ko'rildi; Qo'ng'iroq = aloqa (server faqat birinchisini yozadi)
+function markSeen(c){
+  if (!isAnk(c) || c.seenAt) return;
+  c.seenAt = new Date().toISOString();
+  api('/api/recruitment/' + c.id + '/seen', { method:'POST' }).then(() => { loadMx(); window.thShell && thShell.refreshCounts(); }).catch(() => {});
+}
 
 const esc = s => String(s==null?'':s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const toast = m => { const t=document.getElementById('toast'); t.textContent=m; t.style.display='block'; setTimeout(()=>t.style.display='none',2200); };
@@ -346,32 +404,47 @@ function card(c){
     c.email ? `<span>${esc(c.email)}</span>` : ''
   ].filter(Boolean).join('<span class="pt">•</span>') || '<span style="color:var(--muted)">Ko\'rsatilmagan</span>';
 
-  return `<article class="rc ${SEL.has(c.id)?'sel':''}" data-id="${c.id}">
+  const ank = isAnk(c);
+  const unseen = ank && !c.seenAt && (c.status || 'new') === 'new';
+  const wait = waitingFor(c);
+  const rows = ank ? `
+          <div class="rc-row"><div class="rc-k">Ishga chiqish</div><div class="rc-v">${esc(START_L[c.startWhen] || '—')}</div></div>
+          <div class="rc-row"><div class="rc-k">Tajriba</div><div class="rc-v">${esc(exp)}${c.experienceSummary?`<span class="pt">•</span><span style="color:var(--muted)">${esc(c.experienceSummary.slice(0,110))}${c.experienceSummary.length>110?'…':''}</span>`:''}</div></div>
+          <div class="rc-row"><div class="rc-k">Qayerda yashaydi</div><div class="rc-v">${esc(c.location||'—')}${c.salaryExpectation?`<span class="pt">•</span>${esc(c.salaryExpectation)}`:''}</div></div>
+          ${langs?`<div class="rc-row"><div class="rc-k">Tillar</div><div class="rc-v">${langs}</div></div>`:''}
+          <div class="rc-row"><div class="rc-k">Telefon</div><div class="rc-v">${c.phone ? `<span class="lnk">${esc(c.phone)}</span>` : '—'}${c.phoneVerifiedAt ? '<span class="pt">•</span><span style="color:var(--ok)">✓ Telegram tasdiqlagan</span>' : ''}</div></div>
+          <div class="rc-row"><div class="rc-k">Kanal</div><div class="rc-v">${esc(CHANNEL_L[c.channel] || c.channel || '—')}${(c.extraAnswers||[]).length ? `<span class="pt">•</span><span style="color:var(--muted)">${c.extraAnswers.length} qo'shimcha javob</span>` : ''}</div></div>`
+    : `
+          <div class="rc-row"><div class="rc-k">Asosiy ko'nikmalar</div><div class="rc-v">${skills}</div></div>
+          <div class="rc-row"><div class="rc-k">Tajriba</div><div class="rc-v">${esc(exp)}${c.experienceSummary?`<span class="pt">•</span><span style="color:var(--muted)">${esc(c.experienceSummary.slice(0,110))}${c.experienceSummary.length>110?'…':''}</span>`:''}</div></div>
+          ${langs?`<div class="rc-row"><div class="rc-k">Tillar</div><div class="rc-v">${langs}</div></div>`:''}
+          <div class="rc-row"><div class="rc-k">Qayerda yashaydi</div><div class="rc-v">${esc(c.location||'—')}${c.salaryExpectation?`<span class="pt">•</span>${esc(c.salaryExpectation)}`:''}</div></div>
+          <div class="rc-row"><div class="rc-k">Kontaktlar</div><div class="rc-v">${contacts}</div></div>`;
+
+  return `<article class="rc ${SEL.has(c.id)?'sel':''} ${unseen?'unseen':''}" data-id="${c.id}">
     <div class="rc-body">
       <div class="rc-ph" data-photo="${c.hasPhoto?c.id:''}">${ph}</div>
       <div class="rc-main">
         <span class="rc-pos" data-open="${c.id}">${esc(c.desiredPosition || ROLES[c.role] || 'Nomzod')}</span>
         <div class="rc-meta">
           ${esc(c.fullName||'Nomsiz')}${c.age && !hasAge(c.fullName) ? `, ${c.age} yosh` : ''}
-          <span class="sep">•</span><span class="dim">${esc(SRC[c.source]||c.source||'')}</span>
+          <span class="sep">•</span><span class="dim">${ank ? esc(CHANNEL_L[c.channel] || 'Anketa') : esc(SRC[c.source]||c.source||'')}</span>
           <span class="sep">•</span><span class="dim">${dayAgo(c.createdAt)} qo'shildi</span>
         </div>
         <div class="rc-tags">
+          ${unseen ? '<span class="tag nw">Ko\'rilmagan</span>' : ''}
+          ${wait ? `<span class="tag ${wait > 864e5 ? 'wt' : ''}">${waitLabel(wait)}</span>` : ''}
           ${c.fitScore ? `<span class="tag ai">AI moslik ${c.fitScore}</span>` : ''}
           <span class="tag" style="background:${st.c}1A;color:${st.c}">${st.l}</span>
-          ${c.aiParsed ? '<span class="tag ok">Tahlil qilingan</span>' : '<span class="tag">Tahlil kutilmoqda</span>'}
+          ${ank ? '' : (c.aiParsed ? '<span class="tag ok">Tahlil qilingan</span>' : '<span class="tag">Tahlil kutilmoqda</span>')}
         </div>
-        <div class="rc-rows">
-          <div class="rc-row"><div class="rc-k">Asosiy ko'nikmalar</div><div class="rc-v">${skills}</div></div>
-          <div class="rc-row"><div class="rc-k">Tajriba</div><div class="rc-v">${esc(exp)}${c.experienceSummary?`<span class="pt">•</span><span style="color:var(--muted)">${esc(c.experienceSummary.slice(0,110))}${c.experienceSummary.length>110?'…':''}</span>`:''}</div></div>
-          ${langs?`<div class="rc-row"><div class="rc-k">Tillar</div><div class="rc-v">${langs}</div></div>`:''}
-          <div class="rc-row"><div class="rc-k">Qayerda yashaydi</div><div class="rc-v">${esc(c.location||'—')}${c.salaryExpectation?`<span class="pt">•</span>${esc(c.salaryExpectation)}`:''}</div></div>
-          <div class="rc-row"><div class="rc-k">Kontaktlar</div><div class="rc-v">${contacts}</div></div>
+        <div class="rc-rows">${rows}
         </div>
       </div>
     </div>
     <div class="rc-foot">
       <div class="cb ${SEL.has(c.id)?'on':''}" data-sel="${c.id}"></div>
+      ${ank && c.phone ? `<a class="btn btn-sm" href="tel:${esc(String(c.phone).replace(/[^\d+]/g,''))}" data-call="${c.id}">Qo'ng'iroq</a>` : ''}
       <button class="btn btn-sm btn-p" data-mv="interview|${c.id}">Suhbatga chaqirish</button>
       <button class="btn btn-sm" data-mv="reserve|${c.id}">Zaxiraga</button>
       <button class="btn btn-sm" data-mv="rejected|${c.id}">Rad etish</button>
@@ -413,6 +486,15 @@ function render(){
     move([id], stage);
   });
   document.querySelectorAll('[data-tg]').forEach(el=>el.onclick=()=>openTg(el.dataset.tg));
+  // Qo'ng'iroq: tel: havolasi o'zi ochiladi, biz aloqani yozib qo'yamiz
+  document.querySelectorAll('[data-call]').forEach(el=>el.onclick=()=>{
+    const c = ALL.find(x=>x.id===el.dataset.call); if(!c) return;
+    const now = new Date().toISOString();
+    if(!c.firstContactAt) c.firstContactAt = now;
+    if(!c.seenAt) c.seenAt = now;
+    api('/api/recruitment/'+c.id+'/contacted', { method:'POST' }).then(()=>{ loadMx(); window.thShell && thShell.refreshCounts(); }).catch(()=>{});
+    setTimeout(render, 0);
+  });
 }
 
 // ══ TELEGRAM ════════════════════════════════════════════════
@@ -527,9 +609,11 @@ async function openThread(c){
 async function move(ids, stage){
   try{
     await Promise.all(ids.map(id=>api('/api/recruitment/'+id,{ method:'PATCH', body: JSON.stringify({ status: stage }) })));
-    ids.forEach(id=>{ const c = ALL.find(x=>x.id===id); if(c){ c.status=stage; c.statusChangedAt=new Date().toISOString(); } SEL.delete(id); });
+    const now = new Date().toISOString();
+    // Bosqich qarori = aloqa (server ham shunday yozadi — contactLog)
+    ids.forEach(id=>{ const c = ALL.find(x=>x.id===id); if(c){ c.status=stage; c.statusChangedAt=now; c.firstContactAt=c.firstContactAt||now; c.seenAt=c.seenAt||now; } SEL.delete(id); });
     toast(`${ids.length} ta → ${SMAP[stage].l}`);
-    render();
+    render(); loadMx(); window.thShell && thShell.refreshCounts();
   }catch(e){ toast('Xato: '+e.message); }
 }
 
@@ -546,6 +630,7 @@ function openPhoto(id){
 
 function openCard(id){
   const c = ALL.find(x=>x.id===id); if(!c) return;
+  markSeen(c);
   const st = SMAP[c.status] || STAGES[0];
   const hist = [
     { t:`${SRC[c.source]||c.source} dan qo'shildi`, d:c.createdAt },
@@ -697,7 +782,7 @@ document.getElementById('bTgInvite').onclick = async ()=>{
     const links = (r.items||[]).filter(x=>x.ok && x.link);
     toast(`${r.sent} ta tayyor${r.failed?`, ${r.failed} xato`:''}`);
     if(links.length) showLinks(links);
-    ALL = await api('/api/recruitment');
+    ALL = await api(LIST_URL);
     SEL.clear(); render();
   }catch(e){
     document.getElementById('prog').classList.remove('on');
@@ -748,6 +833,8 @@ const upOv = document.getElementById('upOv'), fi = document.getElementById('file
 document.getElementById('bUpload').onclick = ()=>upOv.classList.add('on');
 document.getElementById('upX').onclick = ()=>upOv.classList.remove('on');
 upOv.onclick = e => { if(e.target===upOv) upOv.classList.remove('on'); };
+// "Bugun" sahifasidagi "Rezyume yuklash" tezkor amali: ?upload=1
+if (MODE === 'base' && new URLSearchParams(location.search).get('upload') === '1') upOv.classList.add('on');
 upz.onclick = ()=>fi.click();
 upz.ondragover = e => { e.preventDefault(); upz.classList.add('over'); };
 upz.ondragleave = ()=>upz.classList.remove('over');
@@ -788,7 +875,7 @@ async function doUpload(fileList){
   if(agg.duplicates) msg += `, ${agg.duplicates} takror`;
   if(agg.failed) msg += `, ${agg.failed} xato`;
   toast(msg);
-  ALL = await api('/api/recruitment');
+  ALL = await api(LIST_URL);
   render();
 }
 
@@ -857,8 +944,9 @@ document.getElementById('tgStatusBtn').onclick = async ()=>{
 };
 
 (async function(){
+  loadMx();
   try{
-    ALL = await api('/api/recruitment');
+    ALL = await api(LIST_URL);
     render();
   }catch(e){
     document.getElementById('list').innerHTML = '<div class="empty">Yuklab bo\'lmadi: '+esc(e.message)+'</div>';

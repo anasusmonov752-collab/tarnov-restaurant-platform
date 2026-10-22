@@ -212,7 +212,7 @@ async function inboxForClient(agencyId, clientId) {
   ]);
   const head = Object.assign(row(pin.toObject ? pin.toObject() : pin, 'client'), {
     pinned: true, title: 'TalentHub', verified: true,
-    subtitle: pin.lastMsgText || 'Yordam kerakmi? Yozing'
+    subtitle: pin.lastMsgText || 'Yordam chati — savolingizni yozing'
   });
   return [head, ...threads.map(t => row(t, 'client'))];
 }
@@ -227,7 +227,7 @@ async function inboxForCandidate(agencyId, candidateId) {
   const head = {
     id: AGENCY_THREAD, kind: 'ca', state: 'open', pinned: true,
     title: 'TalentHub', verified: true,
-    subtitle: (last && last.text) ? String(last.text).slice(0, PREVIEW) : 'Yordam kerakmi? Yozing',
+    subtitle: (last && last.text) ? String(last.text).slice(0, PREVIEW) : 'Yordam chati — savolingizni yozing',
     lastMsgAt: last ? last.createdAt : null,
     lastMsgFrom: last ? (last.direction === 'in' ? 'candidate' : 'agency') : '',
     unread: 0

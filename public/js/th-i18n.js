@@ -256,10 +256,11 @@
       'chat.placeholder': 'Xabar yozing…',
       'chat.none': 'Hali suhbat yo\'q',
       'chat.noMsgs': 'Hali xabar yo\'q',
-      'chat.agency': 'Agentlik',
+      'chat.agency': 'Yordam chati',
       'chat.fail': 'Yuborilmadi: {e}',
       'chat.resumeLink': ' · rezyume ›',
-      'chat.helpPrompt': 'Yordam kerakmi? Yozing',
+      'chat.helpPrompt': 'Yordam chati — savolingizni yozing',
+      'chat.supportHello': 'Assalomu alaykum! Bu TalentHub yordam chati. Nomzodlar, kredit yoki vakansiya bo\'yicha savolingizni shu yerga yozing — javob beramiz.',
 
       // ── Rezyume ──
       'rz.sheet': 'Rezyume',
@@ -700,10 +701,11 @@
       'chat.placeholder': 'Напишите сообщение…',
       'chat.none': 'Чатов пока нет',
       'chat.noMsgs': 'Сообщений пока нет',
-      'chat.agency': 'Агентство',
+      'chat.agency': 'Чат поддержки',
       'chat.fail': 'Не отправлено: {e}',
       'chat.resumeLink': ' · резюме ›',
-      'chat.helpPrompt': 'Нужна помощь? Напишите',
+      'chat.helpPrompt': 'Чат поддержки — задайте вопрос',
+      'chat.supportHello': 'Здравствуйте! Это чат поддержки TalentHub. Пишите сюда вопросы о кандидатах, кредитах или вакансиях — мы ответим.',
 
       'rz.sheet': 'Резюме',
       'rz.code': 'Резюме · {c}',

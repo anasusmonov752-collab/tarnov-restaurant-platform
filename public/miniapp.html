@@ -9,7 +9,7 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>window.thViewerHostBack = true;</script>  <!-- orqaga tugmasi zanjiri onTgBack'da (rasm oynasi) -->
 <script src="/js/th-viewer.js" defer></script>
-<script src="/js/th-i18n.js?v=7"></script>
+<script src="/js/th-i18n.js?v=8"></script>
 <style>
 /* Ranglar — TalentHub dizayn tizimidan (css/th.css, iOS uslubi).
    Telegram'ning --tg-theme-* RANGLARI olinmaydi (avval shunday edi va
@@ -414,6 +414,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .ch-av{width:46px;height:46px;border-radius:50%;flex:none;display:flex;align-items:center;
   justify-content:center;font-weight:700;font-size:14px;background:var(--soft-blue);color:var(--blue)}
 .ch-av.ag{background:var(--blue);color:#fff;font-size:17px}
+.ch-av.ag svg{width:24px;height:24px}
 .ch-mid{flex:1;min-width:0}
 .ch-top{display:flex;align-items:center;gap:5px}
 .ch-name{font-weight:650;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -551,7 +552,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     <div class="cv-h">
       <button class="cv-back" id="cvBack">&#10094;</button>
       <div class="cv-who" id="cvWho">
-        <div class="ch-av" id="cvAv">—</div>
+        <div class="ch-av" id="cvAv" data-nozoom>—</div>
         <div style="flex:1;min-width:0">
           <div class="ch-top"><span class="ch-name" id="cvName">—</span><span id="cvVf"></span></div>
           <div class="ch-last" id="cvSub"></div>
@@ -1606,6 +1607,11 @@ const VF = '<svg class="ch-vf" width="14" height="14" viewBox="0 0 24 24" aria-h
   + '<circle cx="12" cy="12" r="11" fill="#2563EB"/>'
   + '<path d="M10.8 16.2l-3.4-3.4 1.3-1.3 2.1 2.1 5-5 1.3 1.3z" fill="#fff"/></svg>';
 
+// Agentlik suhbati — yordam chati (quloqchin: "bu yerda javob beriladi")
+const AG_IC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+  + '<path d="M3 11h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5Zm0 0a9 9 0 1 1 18 0m0 0v5a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3Z"/>'
+  + '<path d="M21 16v2a4 4 0 0 1-4 4h-5"/></svg>';
+
 let CHATS = [], CUR = null;
 
 function tmOf(s){
@@ -1635,7 +1641,7 @@ function drawChats(){
     const ag = !!c.pinned;
     const nm = c.title || '—';
     return '<div class="ch-row" data-i="' + i + '">'
-      + '<div class="ch-av' + (ag ? ' ag' : '') + '">' + (ag ? '&#9733;' : avatarHtml(c)) + '</div>'
+      + '<div class="ch-av' + (ag ? ' ag' : '') + '" data-nozoom>' + (ag ? AG_IC : avatarHtml(c)) + '</div>'
       + '<div class="ch-mid"><div class="ch-top"><span class="ch-name">' + esc(nm) + '</span>'
       + (ag ? VF + '<span class="ch-pin">&#128204;</span>' : '') + '</div>'
       + '<div class="ch-last">' + esc(c.subtitle || c.lastMsgText || '') + '</div></div>'
@@ -1664,7 +1670,7 @@ async function openChat(c){
   // "kim bilan gaplashyapman" ga javob beradi
   $('cvSub').textContent = ag ? t('chat.agency') : (c.position || c.subtitle || '');
   $('cvSub').dataset.after = t('chat.resumeLink');     // CSS ::after — " · rezyume ›"
-  $('cvAv').innerHTML = ag ? '&#9733;' : avatarHtml(c);
+  $('cvAv').innerHTML = ag ? AG_IC : avatarHtml(c);
   $('cvAv').className = 'ch-av' + (ag ? ' ag' : '');
   // Sarlavhani bosish — rezyume (faqat kontakt ochiq bo'lsa)
   const tap = !ag && c.open && c.candidateId;
@@ -1689,7 +1695,13 @@ async function reloadMsgs(){
 
 function drawMsgs(ms){
   const b = $('cvBody');
-  if (!ms.length){ b.innerHTML = '<div class="ch-empty">' + esc(t('chat.noMsgs')) + '</div>'; return; }
+  if (!ms.length){
+    // Yordam chati bo'sh — salomlashuv (bazaga yozilmaydi)
+    b.innerHTML = CUR && CUR.pinned
+      ? '<div class="cmsg them">' + esc(t('chat.supportHello')) + '</div>'
+      : '<div class="ch-empty">' + esc(t('chat.noMsgs')) + '</div>';
+    return;
+  }
   b.innerHTML = ms.map(m => {
     // Tizim xabari ALOHIDA ko'rinadi — uni odamning gapi bilan
     // adashtirish yozishmani dalil sifatida ishlatishni buzadi.

@@ -24,6 +24,7 @@ before(async () => {
   routes.clientPatch = handler(cl, 'patch', '/:id');
   routes.clientLogo = handler(cl, 'get', '/:id/logo');
   routes.candLogo = handler(cd, 'get', '/companies/:clientId/logo');
+  routes.candChats = handler(cd, 'get', '/chats');
 });
 after(async () => { await mongoose.disconnect(); if (rs) await rs.stop(); });
 
@@ -115,4 +116,26 @@ test('mijoz logotipi: format tekshiruvi, panel va nomzod (faqat kontakt ochilgan
   r = await callRaw(routes.clientPatch, { params: { id: 'cl1' }, body: { logo: '' } });
   assert.equal(r.j.hasLogo, false);
   assert.equal((await callRaw(routes.clientLogo, { params: { id: 'cl1' } })).code, 404);
+});
+
+test('nomzod suhbatlari: logotip belgisi faqat ochiq kontaktda, yordam chati matni', async () => {
+  const png = 'data:image/png;base64,' + Buffer.from('fakepng').toString('base64');
+  await callRaw(routes.clientPatch, { params: { id: 'cl1' }, body: { logo: png } });
+  const chats = async () => (await callRaw(routes.candChats, { cand: { id: 'k2', restaurantId: A } })).j;
+  let rows = await chats();
+  assert.equal(rows[0].pinned, true);
+  assert.equal(rows[0].subtitle, 'Yordam chati — savolingizni yozing');
+  const co = rows.find(r => r.clientId === 'cl1');
+  assert.ok(co, 'ochilgan kontakt uchun suhbat bor');
+  assert.equal(co.open, true);
+  assert.equal(co.hasLogo, true);
+  assert.ok(co.logoAt);
+  assert.ok(!JSON.stringify(rows).includes('base64'));                  // rasmning o'zi chiqmaydi
+  // Kredit qaytarilsa — kontakt yopiq, logotip ham yo'q
+  await M.Shortlist.updateOne({ id: 'sLogo' }, { $set: { 'items.0.state': 'refunded' } });
+  rows = await chats();
+  const co2 = rows.find(r => r.clientId === 'cl1');
+  assert.equal(co2.open, false);
+  assert.equal(co2.hasLogo, false);
+  assert.equal(co2.logoAt, null);
 });

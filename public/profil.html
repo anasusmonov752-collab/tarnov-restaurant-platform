@@ -226,6 +226,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .ch-av{width:46px;height:46px;border-radius:50%;flex:none;display:flex;align-items:center;
   justify-content:center;font-weight:700;font-size:14px;background:var(--soft-blue);color:var(--blue)}
 .ch-av.ag{background:var(--blue);color:#fff;font-size:17px}
+.ch-av{overflow:hidden}.ch-av img{width:100%;height:100%;object-fit:cover}
+.ch-av.ag svg{width:24px;height:24px}
 .ch-mid{flex:1;min-width:0}
 .ch-top{display:flex;align-items:center;gap:5px}
 .ch-name{font-weight:650;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -309,7 +311,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   <div class="cv-h">
     <button class="cv-back" id="cvBack">&#10094;</button>
     <div class="cv-who" id="cvWho">
-      <div class="ch-av" id="cvAv">—</div>
+      <div class="ch-av" id="cvAv" data-nozoom>—</div>
       <div style="flex:1;min-width:0">
         <div class="ch-top"><span class="ch-name" id="cvName">—</span><span id="cvVf"></span></div>
         <div class="ch-last" id="cvSub"></div>
@@ -744,6 +746,11 @@ const VF = '<svg class="ch-vf" width="14" height="14" viewBox="0 0 24 24" aria-h
   + '<circle cx="12" cy="12" r="11" fill="#2563EB"/>'
   + '<path d="M10.8 16.2l-3.4-3.4 1.3-1.3 2.1 2.1 5-5 1.3 1.3z" fill="#fff"/></svg>';
 
+// Agentlik suhbati — yordam chati (yulduzcha emas, quloqchin: "bu yerda javob beriladi")
+const AG_IC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+  + '<path d="M3 11h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5Zm0 0a9 9 0 1 1 18 0m0 0v5a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3Z"/>'
+  + '<path d="M21 16v2a4 4 0 0 1-4 4h-5"/></svg>';
+
 let CHATS = [], CUR = null;
 
 const initialsOf = s => String(s || '—').replace(/[^\p{L}\p{N} ]/gu, '').trim().slice(0, 2).toUpperCase();
@@ -773,7 +780,7 @@ function drawChats(){
     const ag = !!c.pinned;
     const nm = c.title || '—';
     return '<div class="ch-row" data-i="' + i + '">'
-      + '<div class="ch-av' + (ag ? ' ag' : '') + '">' + (ag ? '&#9733;' : esc(initialsOf(nm))) + '</div>'
+      + '<div class="ch-av' + (ag ? ' ag' : '') + '" data-nozoom>' + (ag ? AG_IC : coAvatar(c)) + '</div>'
       + '<div class="ch-mid"><div class="ch-top"><span class="ch-name">' + esc(nm) + '</span>'
       + (ag ? VF + '<span class="ch-pin">&#128204;</span>' : '') + '</div>'
       + '<div class="ch-last">' + esc(c.subtitle || c.lastMsgText || '') + '</div></div>'
@@ -785,13 +792,22 @@ function drawChats(){
   });
 }
 
+// Ish beruvchi — logotipi (kontakt ochiq va yuklangan bo'lsa), aks holda bosh harflar.
+// Ro'yxatda bosish suhbatni ochadi (data-nozoom); to'liq ko'rish — kompaniya kartasida.
+function coAvatar(c){
+  return c.open && c.hasLogo
+    ? '<img src="/api/cand/companies/' + encodeURIComponent(c.clientId) + '/logo?t=' + encodeURIComponent(PT)
+      + '&v=' + encodeURIComponent(c.logoAt || '') + '" alt="">'
+    : esc(initialsOf(c.title));
+}
+
 async function openChat(c){
   CUR = c;
   const ag = !!c.pinned;
   $('cvName').textContent = c.title || '—';
   $('cvVf').innerHTML = ag ? VF : '';
-  $('cvSub').textContent = ag ? 'Agentlik' : (c.subtitle || '');
-  $('cvAv').textContent = ag ? '★' : initialsOf(c.title);
+  $('cvSub').textContent = ag ? 'Yordam chati' : (c.subtitle || '');
+  $('cvAv').innerHTML = ag ? AG_IC : coAvatar(c);
   $('cvAv').className = 'ch-av' + (ag ? ' ag' : '');
   // Mijoz nomini bosish — kompaniya va vakansiya (faqat kontakt ochiq bo'lsa)
   const tap = !ag && c.open && c.clientId;
@@ -816,7 +832,13 @@ async function reloadMsgs(){
 
 function drawMsgs(ms){
   const b = $('cvBody');
-  if (!ms.length){ b.innerHTML = '<div class="ch-empty">Hali xabar yo\'q</div>'; return; }
+  if (!ms.length){
+    // Yordam chati bo'sh — salomlashuv (bazaga yozilmaydi), "nima yozaman" savoliga javob
+    b.innerHTML = CUR && CUR.pinned
+      ? '<div class="cmsg them">Assalomu alaykum! Bu TalentHub yordam chati. Ish, ariza yoki profil bo\'yicha savolingizni shu yerga yozing — javob beramiz.</div>'
+      : '<div class="ch-empty">Hali xabar yo\'q</div>';
+    return;
+  }
   b.innerHTML = ms.map(m => {
     if (m.kind === 'system') return '<div class="cmsg sys">' + esc(m.text) + '</div>';
     const me = m.from === 'candidate';

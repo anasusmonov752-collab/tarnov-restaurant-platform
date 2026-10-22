@@ -361,7 +361,7 @@ router.get('/chats', guard, asyncHandler(async (req, res) => {
   // allaqachon bo'lgan. Anonimlik faqat kontaktgacha amal qiladi.
   const ids = rows.filter(r => r.clientId).map(r => r.clientId);
   const cl = ids.length
-    ? await Client.find({ agencyId, id: { $in: ids } }, 'id name location').lean()
+    ? await Client.find({ agencyId, id: { $in: ids } }, 'id name location logoAt').lean()   // logoAt — bor/yo'q (rasmning o'zi emas)
     : [];
   const by = Object.fromEntries(cl.map(c => [c.id, c]));
 
@@ -377,7 +377,9 @@ router.get('/chats', guard, asyncHandler(async (req, res) => {
     return Object.assign({}, r, {
       title: c.name || 'Ish beruvchi',
       subtitle: r.lastMsgText || c.location || '',
-      open: open.has(r.clientId)
+      open: open.has(r.clientId),
+      // Logotip faqat ochiq kontaktda (endpoint ham shuni tekshiradi)
+      hasLogo: open.has(r.clientId) && !!c.logoAt, logoAt: open.has(r.clientId) ? c.logoAt : null
     });
   }));
 }));

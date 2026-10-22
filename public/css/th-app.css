@@ -1,0 +1,106 @@
+/* ══ TalentHub panel: qobiq va eski sahifalar uchun ko'prik ═══
+   th-shell.js body'ga .th-app qo'yadi. Eski sahifalar o'z :root
+   tokenlarini (--gold, --ink, --card ...) ishlatadi — ularni shu yerda
+   body darajasida yangi tizimga (th.css) bog'laymiz: har sahifaning
+   CSS'ini qayta yozmasdan rang, shrift va fon yangilanadi.
+   ═══════════════════════════════════════════════════════════ */
+
+body.th-app{
+  /* eski nom          -> yangi token */
+  --bg: var(--th-bg);
+  --ink: var(--th-ink);
+  --card: var(--th-surface);
+  --line: #E3E3E8;                 /* chegaralar 1px chiziq — shaffof emas, aniq */
+  --line2: #D1D1D6;
+  --muted: var(--th-muted);
+  --gold: var(--th-brand);         /* eski nom, aslida asosiy ko'k */
+  --gold-d: var(--th-brand-2);
+  --blue: var(--th-brand);
+  --link: var(--th-link);
+  --green: var(--th-ink);          /* eski "navy" — sarlavha va qoramtir urg'u */
+  --green2: #000;
+  --soft: var(--th-surface-2);
+  --ok: var(--th-ok);
+  --warn: var(--th-warn);
+  --danger: var(--th-danger);
+  --shadow: var(--th-shadow-1);
+  --shadow-lg: var(--th-shadow-2);
+  --btn: var(--th-brand);
+  --btn-ink: #fff;
+
+  display:grid !important; grid-template-columns:248px minmax(0,1fr); height:100vh; overflow:hidden !important;
+  margin:0; background:var(--th-bg); color:var(--th-ink);
+  font-size:15px; line-height:1.45;   /* eski sahifalar brauzerning 16px'iga yozilgan; th.css 17px — panel zichroq */
+}
+body.th-app, body.th-app button, body.th-app input, body.th-app select, body.th-app textarea{
+  font-family:var(--th-font) !important; letter-spacing:-.005em;
+}
+
+/* Sahifa mazmuni — eski body'ning o'rni: ustun, to'liq balandlik */
+.th-page{ display:flex; flex-direction:column; min-width:0; height:100vh; overflow:hidden; position:relative; }
+
+/* ── Yon menyu ── */
+.th-app .th-side{ grid-row:1; height:100vh; overflow-y:auto; }
+.th-app .th-logo{ display:flex; align-items:center; gap:10px; padding:6px 10px 18px; text-decoration:none; color:var(--th-ink);
+  font:700 19px/1 var(--th-font); letter-spacing:-.02em; }
+.th-app .th-logo .wt span{ color:var(--th-link); }
+.th-app .th-nav-a span:not(.n){ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.th-app .th-nav-a .n:empty{ display:none; }
+.th-side-foot{ margin-top:auto; display:flex; align-items:center; gap:8px; padding:12px 6px 4px 10px; border-top:1px solid var(--th-line); }
+.th-side-foot .who{ flex:1; min-width:0; }
+.th-side-foot b{ display:block; font-size:var(--th-fs-sub); font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.th-side-foot small{ font-size:var(--th-fs-caption); color:var(--th-muted); }
+.th-app .th-icon-btn{ width:36px; height:36px; display:inline-grid; place-items:center; border:0; border-radius:10px; background:transparent;
+  color:var(--th-muted); cursor:pointer; }
+.th-app .th-icon-btn:hover{ background:var(--th-fill); color:var(--th-ink); }
+.th-app .th-icon-btn svg{ width:20px; height:20px; }
+.th-burger{ display:none !important; }
+.th-scrim{ display:none; }
+
+/* ── Eski topbar -> iOS navigatsiya paneli ── */
+.th-app .topbar{ background:var(--th-glass) !important; -webkit-backdrop-filter:var(--th-blur); backdrop-filter:var(--th-blur);
+  border-bottom:1px solid var(--th-line) !important; padding:14px 24px !important; min-height:64px; gap:12px !important; }
+.th-app .tb-title{ font:700 var(--th-fs-title2)/1.2 var(--th-font) !important; letter-spacing:-.01em; color:var(--th-ink); }
+.th-app .tb-sub{ font:400 var(--th-fs-foot)/1.3 var(--th-font) !important; letter-spacing:0 !important; text-transform:none !important; color:var(--th-muted) !important; margin-top:3px; }
+.th-app .topbar .view-sw{ border:0 !important; background:var(--th-fill); color:var(--th-ink) !important; border-radius:9px !important; padding:7px 14px !important; font-weight:500; }
+.th-app .topbar .view-sw.on{ background:var(--th-surface) !important; box-shadow:0 3px 8px rgba(0,0,0,.12); color:var(--th-ink) !important; font-weight:600; }
+
+/* ── Tugmalar: kapsula ── */
+.th-app .btn{ border-radius:var(--th-r-pill) !important; border:0 !important; background:var(--th-fill) !important; color:var(--th-link) !important;
+  font-weight:600 !important; min-height:36px; padding:0 16px !important; transition:opacity .15s, transform .1s; }
+.th-app .btn:hover{ opacity:.88; }
+.th-app .btn:active{ transform:scale(.97); }
+.th-app .btn-p, .th-app .btn.primary, .th-app .btn-primary{ background:var(--th-brand) !important; color:#fff !important; }
+.th-app .btn-ok{ background:var(--th-ok-soft) !important; color:var(--th-ok) !important; }
+.th-app .btn-no, .th-app .btn-danger{ background:var(--th-danger-soft) !important; color:var(--th-danger) !important; }
+.th-app .btn-sm{ min-height:30px; padding:0 12px !important; font-size:var(--th-fs-foot) !important; }
+.th-app .btn:disabled{ opacity:.4 !important; }
+
+/* ── Kartalar va maydonlar ── */
+.th-app .card{ border:0 !important; border-radius:var(--th-r-md) !important; box-shadow:var(--th-shadow-1) !important; }
+.th-app input[type=text], .th-app input[type=search], .th-app input[type=number], .th-app input[type=email], .th-app input[type=tel],
+.th-app input[type=date], .th-app select, .th-app textarea{
+  border:1px solid #E3E3E8 !important; border-radius:var(--th-r-sm) !important; background:var(--th-surface) !important; }
+.th-app input:focus, .th-app select:focus, .th-app textarea:focus{ outline:none !important; border-color:var(--th-brand) !important; box-shadow:var(--th-focus) !important; }
+.th-app .pill, .th-app .chip{ border-radius:var(--th-r-pill) !important; }
+
+/* ── Modal -> iOS varaq ── */
+.th-app .ov, .th-app .modal-overlay{ background:rgba(0,0,0,.32) !important; -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); }
+.th-app .md, .th-app .modal{ border-radius:var(--th-r-lg) !important; box-shadow:var(--th-shadow-2) !important; }
+.th-app .md-top{ border-bottom:1px solid var(--th-line) !important; }
+.th-app .md-top b{ font-weight:600 !important; font-size:var(--th-fs-body) !important; }
+
+/* ── Toast -> iOS bildirishnoma ── */
+.th-app .toast{ border:0 !important; border-radius:16px !important; background:var(--th-glass) !important;
+  -webkit-backdrop-filter:var(--th-blur); backdrop-filter:var(--th-blur); box-shadow:var(--th-shadow-2) !important; }
+
+/* ── Telefon ── */
+@media (max-width: 900px){
+  body.th-app{ grid-template-columns:1fr; }
+  .th-app .th-side{ position:fixed; inset:0 auto 0 0; width:280px; z-index:90; transform:translateX(-100%); transition:transform .25s;
+    background:var(--th-surface); box-shadow:var(--th-shadow-2); }
+  .th-app .th-side.open{ transform:none; }
+  .th-burger{ display:inline-grid !important; flex:none; }
+  .th-scrim.on{ display:block; position:fixed; inset:0; z-index:80; background:rgba(0,0,0,.3); }
+  .th-app .topbar{ padding:10px 14px !important; }
+}

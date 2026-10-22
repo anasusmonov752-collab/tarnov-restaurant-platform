@@ -134,6 +134,7 @@ app.use('/api/auth', require('./src/routes/auth'));
 app.use('/api/super', require('./src/routes/super'));
 app.use('/api/restaurant', require('./src/routes/restaurant'));
 app.use('/api/recruitment', require('./src/routes/recruitment'));
+app.use('/api/agency', require('./src/routes/agency'));          // Bugun sahifasi, menyu sanoqlari
 app.use('/api/shortlists', require('./src/routes/shortlists'));
 app.use('/api/vacancies', require('./src/routes/vacancies'));
 app.use('/api/tg', require('./src/routes/telegram'));

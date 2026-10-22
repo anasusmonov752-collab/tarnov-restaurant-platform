@@ -10,7 +10,7 @@ const Restaurant = require('../models/Restaurant');
 const router = express.Router();
 
 // TalentHub agentligining bosh sahifasi (login va qayta kirishda)
-const AGENCY_HOME = '/recruitment.html';
+const AGENCY_HOME = '/talenthub.html';
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,

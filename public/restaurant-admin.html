@@ -481,7 +481,7 @@ async function init() {
   const info = await api('/api/restaurant/info');
   S.info = info || {};
   // Agentlik akkaunti trening paneliga emas — o'z paneliga
-  if (S.info.kind === 'agency') { location.href = '/recruitment.html'; return; }
+  if (S.info.kind === 'agency') { location.href = '/talenthub.html'; return; }
   const name = S.info.adminName || S.info.name || 'Admin';
   const rest = S.info.name || 'Restoran';
   document.getElementById('sbName').textContent = name;

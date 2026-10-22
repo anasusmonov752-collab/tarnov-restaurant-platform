@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TalentHub — Bugun</title>
+<link rel="icon" href="/img/talenthub-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/th.css">
+<link rel="stylesheet" href="/css/th-app.css">
+<script src="/js/th-shell.js" defer></script>
+<style>
+  /* Bugun — agentlik bosh sahifasi: kirganda "nima meni kutyapti?" */
+  .wrap{ flex:1; overflow-y:auto; }
+  .inner{ max-width:1080px; padding:28px 36px 56px; }
+  .hd{ display:flex; align-items:flex-end; gap:12px; margin-bottom:22px; flex-wrap:wrap; }
+  .hd .acts{ margin-left:auto; display:flex; gap:8px; }
+  .kpis{ display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:14px; }
+  .kpi{ padding:16px 18px; text-decoration:none; color:inherit; display:block; }
+  .kpi:hover{ box-shadow:var(--th-shadow-2); }
+  .kpi .l{ font-size:var(--th-fs-foot); color:var(--th-muted); }
+  .kpi .v{ font:700 var(--th-fs-title1)/1.1 var(--th-font); margin-top:6px; }
+  .kpi .d{ font-size:var(--th-fs-foot); margin-top:4px; color:var(--th-muted); }
+  .sh{ display:flex; align-items:center; margin:28px 0 8px; }
+  .sh .th-section{ padding:0 16px; }
+  .sh a{ margin-left:auto; font-size:var(--th-fs-sub); color:var(--th-link); text-decoration:none; padding:0 4px; }
+  .th-row{ text-decoration:none; color:inherit; cursor:pointer; }
+  .th-row:hover{ background:var(--th-surface-2); }
+  .av{ width:36px; height:36px; border-radius:50%; background:var(--th-brand-soft); color:var(--th-link); display:grid; place-items:center;
+       font-weight:600; font-size:14px; flex:none; }
+  .empty{ padding:28px 16px; text-align:center; color:var(--th-muted); font-size:var(--th-fs-sub); }
+  .quick{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:14px; }
+  .quick a{ padding:16px; display:flex; gap:12px; align-items:center; text-decoration:none; color:inherit; }
+  .quick .ic{ width:36px; height:36px; border-radius:10px; display:grid; place-items:center; color:#fff; flex:none; }
+  .quick .ic svg{ width:20px; height:20px; }
+  .quick b{ font-weight:600; font-size:var(--th-fs-sub); display:block; } .quick small{ color:var(--th-muted); font-size:var(--th-fs-foot); }
+  .err{ padding:16px; color:var(--th-danger); }
+  @media (max-width: 900px){
+    .inner{ padding:16px 16px 40px; }
+    .kpis{ grid-template-columns:repeat(2, minmax(0,1fr)); }
+    .quick{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div><div class="tb-title">Bugun</div><div class="tb-sub" id="today">—</div></div>
+</div>
+<div class="wrap"><div class="inner">
+  <div class="kpis" id="kpis">
+    <a class="th-card kpi" href="/vakansiyalar.html"><div class="l">Ko'rilmagan arizalar</div><div class="v" id="kApps">—</div><div class="d" id="kAppsD">&nbsp;</div></a>
+    <a class="th-card kpi" href="/mijozlar.html"><div class="l">Sizni kutayotgan tanlovlar</div><div class="v" id="kWait">—</div><div class="d" id="kWaitD">&nbsp;</div></a>
+    <a class="th-card kpi" href="/mijozlar.html"><div class="l">Shu oy ochilgan kontakt</div><div class="v" id="kRev">—</div><div class="d" id="kRevD">&nbsp;</div></a>
+    <a class="th-card kpi" href="/mijozlar.html"><div class="l">Mijozlar krediti</div><div class="v" id="kCred" style="color:var(--th-amber)">—</div><div class="d" id="kCredD">&nbsp;</div></a>
+  </div>
+
+  <div class="sh"><div class="th-section">Sizni kutayotgan tanlovlar</div><a href="/mijozlar.html">Hammasi</a></div>
+  <div class="th-group" id="queue"><div class="empty">Yuklanmoqda…</div></div>
+
+  <div class="sh"><div class="th-section">Tez amallar</div></div>
+  <div class="quick">
+    <a class="th-card" href="/recruitment.html"><span class="ic" style="background:#0066E0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg></span>
+      <span><b>Rezyume yuklash</b><small>PDF — AI o'zi tahlil qiladi</small></span></a>
+    <a class="th-card" href="/vakansiyalar.html"><span class="ic" style="background:#248A3D"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>
+      <span><b>Vakansiya ochish</b><small>Mijoz uchun e'lon va anketa havolasi</small></span></a>
+    <a class="th-card" href="/anketalar.html"><span class="ic" style="background:#FF9500"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
+      <span><b>Anketa havolasi</b><small>E'longa qo'yish uchun</small></span></a>
+  </div>
+</div></div>
+
+<div id="toast-container"></div>
+<script src="/js/utils.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+const initials = n => String(n || '?').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+const ago = d => {
+  const h = Math.floor((Date.now() - new Date(d)) / 36e5);
+  return h < 1 ? 'hozirgina' : h < 24 ? h + ' soat' : Math.floor(h / 24) + ' kun';
+};
+
+$('today').textContent = new Date().toLocaleDateString('uz-UZ', { weekday: 'long', day: 'numeric', month: 'long' });
+
+(async function(){
+  let d;
+  try { d = await api('/api/agency/today'); }
+  catch(e){
+    $('queue').innerHTML = `<div class="err">${esc(e.message)}</div>`;
+    if (/Avtorizatsiya|Token/.test(e.message)) location.href = '/';
+    return;
+  }
+  $('kApps').textContent = d.appsNew;
+  $('kAppsD').textContent = d.appsNew ? 'vakansiyalarga kelgan' : 'hammasi ko\'rilgan';
+  $('kWait').textContent = d.waitingShortlists;
+  $('kWaitD').textContent = d.oldestWaitingDays >= 1 ? `eng eskisi ${d.oldestWaitingDays} kundan beri` : (d.waitingShortlists ? 'bugun kelgan' : 'navbat bo\'sh');
+  if (d.oldestWaitingDays >= 2) $('kWaitD').style.color = 'var(--th-warn)';
+  $('kRev').textContent = d.revealedMonth;
+  $('kRevD').textContent = d.hiredMonth ? `${d.hiredMonth} tasi ishga olindi` : 'ishga olingan hali yo\'q';
+  $('kCred').textContent = d.clientCredits;
+  $('kCredD').textContent = `${d.activeClients} ta faol mijoz`;
+
+  $('queue').innerHTML = d.queue.length ? d.queue.map(q => `
+    <a class="th-row" href="/mijozlar.html#sl=${encodeURIComponent(q.id)}">
+      <span class="av">${esc(initials(q.clientName))}</span>
+      <div class="t"><b>${esc(q.clientName)}${q.summary ? ' — ' + esc(q.summary) : ''}</b>
+        <small>${q.waiting} ta nomzod kutyapti${q.contacting ? ` · ${q.contacting} tasi bilan bog'lanilmoqda` : ''} · ${ago(q.since)}</small></div>
+      ${(Date.now() - new Date(q.since)) / 864e5 >= 2 ? '<span class="th-pill warn">Kechikdi</span>' : ''}
+      <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>
+    </a>`).join('') : '<div class="empty">Hozir sizni kutayotgan tanlov yo\'q.</div>';
+})();
+</script>
+</body>
+</html>

@@ -140,6 +140,8 @@ window.addEventListener('load', () => {
 
 // ── Banner renderer ──
 function showInstallBanner(type) {
+  // TalentHub agentlik paneli — "Tarnov Training" ilovasini taklif qilmaymiz
+  if (document.body.classList.contains('th-app') || /\/(talenthub|recruitment|recruitment-kanban|mijozlar|vakansiyalar|anketalar|suhbatlar)\.html$/.test(location.pathname)) return;
   if (document.getElementById('pwa-banner')) return;
   if (localStorage.getItem('pwaInstalled') || localStorage.getItem('pwaDismissed')) return;
 

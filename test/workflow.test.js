@@ -20,6 +20,10 @@ before(async () => {
   routes.propose = handler(sl, 'post', '/');
   routes.outcome = handler(sl, 'post', '/:id/outcome/:candidateId');
   routes.appAct = handler(vc, 'post', '/:id/applications/:appId/:action');
+  const cl = require('../src/routes/clients'), cd = require('../src/routes/candidate');
+  routes.clientPatch = handler(cl, 'patch', '/:id');
+  routes.clientLogo = handler(cl, 'get', '/:id/logo');
+  routes.candLogo = handler(cd, 'get', '/companies/:clientId/logo');
 });
 after(async () => { await mongoose.disconnect(); if (rs) await rs.stop(); });
 
@@ -76,4 +80,39 @@ test('ariza: tanlovga qo\'shish (mijozning vakansiya tanlovi) va rad etish', asy
   assert.equal(r.code, 200);
   assert.equal((await M.Application.findOne({ id: 'a2' }).lean()).state, 'rejected');
   assert.equal((await call(routes.appAct, { id: 'v1', appId: 'a2', action: 'boshqa' })).code, 400);
+});
+
+// Rasm javobini (res.send) ham ushlaydigan chaqiruv
+const callRaw = (h, req) => new Promise((resolve, reject) => {
+  const res = { code: 200, headers: {}, status(c) { this.code = c; return this; }, set(k, v) { this.headers[k] = v; return this; },
+    json(j) { resolve({ code: this.code, j }); }, send(b) { resolve({ code: this.code, body: b, type: this.headers['Content-Type'] }); },
+    end() { resolve({ code: this.code }); } };
+  h(Object.assign({ user: { restaurantId: A }, params: {}, body: {}, query: {} }, req), res, e => (e ? reject(e) : resolve({ code: 0 })));
+});
+
+test('mijoz logotipi: format tekshiruvi, panel va nomzod (faqat kontakt ochilgan)', async () => {
+  const png = 'data:image/png;base64,' + Buffer.from('fakepng').toString('base64');
+  let r = await callRaw(routes.clientPatch, { params: { id: 'cl1' }, body: { logo: 'data:text/html;base64,PHNjcmlwdD4=' } });
+  assert.equal(r.code, 400);                                             // rasm emas
+  r = await callRaw(routes.clientPatch, { params: { id: 'cl1' }, body: { logo: png } });
+  assert.equal(r.j.hasLogo, true);
+  assert.ok(!('logo' in r.j));                                           // ro'yxatga base64 chiqmaydi
+  r = await callRaw(routes.clientLogo, { params: { id: 'cl1' } });
+  assert.equal(r.type, 'image/png');
+  assert.equal(String(r.body), 'fakepng');
+
+  // Nomzod: kontakt ochilmagan — 403, ochilgan — rasm, tokensiz — 401
+  const photoToken = require('../src/utils/photoToken');
+  await M.Candidate.updateOne({ id: 'k2' }, { $set: { tgChatId: '5005' } });
+  const t = photoToken.sign('5005');
+  assert.equal((await callRaw(routes.candLogo, { params: { clientId: 'cl1' }, query: {} })).code, 401);
+  assert.equal((await callRaw(routes.candLogo, { params: { clientId: 'cl1' }, query: { t } })).code, 403);
+  await M.Shortlist.create({ id: 'sLogo', agencyId: A, clientId: 'cl1', items: [{ candidateId: 'k2', state: 'revealed', revealedAt: new Date() }] });
+  r = await callRaw(routes.candLogo, { params: { clientId: 'cl1' }, query: { t } });
+  assert.equal(r.type, 'image/png');
+
+  // O'chirish
+  r = await callRaw(routes.clientPatch, { params: { id: 'cl1' }, body: { logo: '' } });
+  assert.equal(r.j.hasLogo, false);
+  assert.equal((await callRaw(routes.clientLogo, { params: { id: 'cl1' } })).code, 404);
 });

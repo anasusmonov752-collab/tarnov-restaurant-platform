@@ -24,6 +24,11 @@ const ClientSchema = new mongoose.Schema({
   location: { type: String, default: '' },   // tuman: "Chilonzor"
   address:  { type: String, default: '' },   // to'liq manzil / mo'ljal
   about:    { type: String, default: '' },   // "150 o'rinli, yevropa oshxonasi"
+  // Restoran logotipi — agentlik panelda yuklaydi (brauzer 256px gacha
+  // kichraytiradi, ~20-40 KB). Nomzod kontakt ochilgach kompaniya kartasida
+  // ko'radi (contactView.companyOf), bosganda kattalashadi (th-viewer).
+  logo:   { type: String, default: '' },     // data:image/...;base64
+  logoAt: { type: Date, default: null },     // kesh uchun (?v=)
 
   // ── Telegram ──
   tgChatId:    { type: String, default: '' },

@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="/css/th.css">
 <link rel="stylesheet" href="/css/th-app.css">
 <script src="/js/th-shell.js" defer></script>
+<script src="/js/th-viewer.js" defer></script>
 <style>
 :root{
   --bg:#EEF3FB; --ink:#16233A; --green:#0F2747; --green2:#0A1B33;
@@ -185,7 +186,7 @@ async function loadClients(){
   const rows = CLIENTS.map(c => {
     const st = CST[c.status] || CST.pending;
     return `<tr>
-      <td><b>${esc(c.name)}</b>${c.contactName ? '<div style="font-size:12px;color:var(--muted)">' + esc(c.contactName) + '</div>' : ''}</td>
+      <td><div style="display:flex;align-items:center;gap:10px"><span style="width:32px;height:32px;border-radius:9px;overflow:hidden;flex:none;display:grid;place-items:center;background:var(--soft);font-weight:700;color:var(--gold);font-size:14px">${logoHtml(c)}</span><div><b>${esc(c.name)}</b>${c.contactName ? '<div style="font-size:12px;color:var(--muted)">' + esc(c.contactName) + '</div>' : ''}</div></div></td>
       <td>${esc(c.phone) || '—'}</td>
       <td><span class="pill p-cr">${c.credits}</span></td>
       <td><span class="pill ${st.cls}">${st.lbl}</span></td>
@@ -219,9 +220,46 @@ async function loadClients(){
     : '');
 }
 
+// ── Logotip ──
+// Rasm brauzerda 256px gacha kichraytiriladi (server 200 KB gacha qabul
+// qiladi). PNG/WebP — shaffoflik saqlanadi; JPEG — 85% sifat.
+const logoHtml = c => c.hasLogo
+  ? `<img src="/api/clients/${encodeURIComponent(c.id)}/logo?v=${encodeURIComponent(c.logoAt || '')}" alt="" style="width:100%;height:100%;object-fit:cover">`
+  : esc(String(c.name || '?').trim().slice(0, 1).toUpperCase());
+function shrinkLogo(file){
+  return new Promise((resolve, reject) => {
+    if (!/^image\/(png|jpeg|webp)$/.test(file.type)) return reject(new Error('Faqat PNG, JPEG yoki WebP rasm'));
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const k = Math.min(1, 256 / Math.max(img.width, img.height));
+      const cv = document.createElement('canvas');
+      cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k);
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      URL.revokeObjectURL(url);
+      let data = file.type === 'image/jpeg' ? cv.toDataURL('image/jpeg', 0.85) : cv.toDataURL('image/png');
+      if (data.length > 200000) data = cv.toDataURL('image/jpeg', 0.8);     // juda katta PNG — JPEG'ga
+      data.length > 200000 ? reject(new Error('Rasm juda katta')) : resolve(data);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Rasmni o\'qib bo\'lmadi')); };
+    img.src = url;
+  });
+}
+
 function showEdit(id){
   const c = CLIENTS.find(x => x.id === id);
   openMd('Tahrirlash — ' + c.name, `
+    <div class="fld"><label>Logotip</label>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div id="eLg" style="width:64px;height:64px;border-radius:16px;overflow:hidden;flex:none;display:grid;place-items:center;
+          background:var(--soft);font-weight:700;color:var(--gold);font-size:22px">${logoHtml(c)}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-sm" id="eLgUp">${c.hasLogo ? 'Almashtirish' : 'Logotip yuklash'}</button>
+          ${c.hasLogo ? '<button class="btn btn-sm btn-no" id="eLgDel">O\'chirish</button>' : ''}
+        </div>
+        <input type="file" id="eLgF" accept="image/png,image/jpeg,image/webp" hidden>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:6px">Nomzod kontakt ochilgach kompaniya kartasida ko'radi. Kvadrat rasm yaxshi chiqadi.</div>
+    </div>
     <div class="fld"><label>Restoran nomi</label><input type="text" id="eNm" value="${esc(c.name)}"></div>
     <div class="row2">
       <div class="fld"><label>Menejer ismi</label><input type="text" id="eCn" value="${esc(c.contactName)}"></div>
@@ -231,6 +269,25 @@ function showEdit(id){
     <div class="fld"><label>Manzil / mo'ljal</label><input type="text" id="eAd" value="${esc(c.address)}" placeholder="Bunyodkor 12, Mega Planet ro'parasi"></div>
     <div class="fld"><label>Restoran haqida</label><input type="text" id="eAb" value="${esc(c.about)}" placeholder="150 o'rinli, yevropa oshxonasi"></div>
     <button class="btn btn-p" id="eSave" style="width:100%">Saqlash</button>`);
+
+  // Logotip darhol saqlanadi (Saqlash tugmasini kutmaydi)
+  const saveLogo = async (logo) => {
+    try {
+      const r = await api('/api/clients/' + id, { method:'PATCH', body: JSON.stringify({ logo }) });
+      Object.assign(c, { hasLogo: r.hasLogo, logoAt: r.logoAt });
+      $('eLg').innerHTML = logoHtml(c);
+      toast(logo ? 'Logotip saqlandi' : 'Logotip o\'chirildi', 'success');
+      loadClients();
+      showEdit(id);                                     // tugmalar holati yangilansin
+    } catch(e){ toast(e.message, 'error'); }
+  };
+  $('eLgUp').onclick = () => $('eLgF').click();
+  $('eLgF').onchange = async () => {
+    const f = $('eLgF').files[0];
+    if (!f) return;
+    try { saveLogo(await shrinkLogo(f)); } catch(e){ toast(e.message, 'error'); }
+  };
+  if ($('eLgDel')) $('eLgDel').onclick = () => { if (confirm('Logotip o\'chirilsinmi?')) saveLogo(''); };
 
   $('eSave').onclick = async () => {
     $('eSave').disabled = true;

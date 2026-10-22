@@ -27,9 +27,12 @@ function publicClient(c) {
     location: c.location, address: c.address, about: c.about,
     note: c.note, status: c.status, credits: c.credits,
     linked: !!c.tgChatId, tgUsername: c.tgUsername,
+    hasLogo: !!c.logo, logoAt: c.logoAt,    // logotipning o'zi alohida endpoint'da (GET /:id/logo)
     createdAt: c.createdAt, lastSeenAt: c.lastSeenAt
   };
 }
+// Logotip: faqat rasm, 200 KB gacha (brauzer oldindan kichraytiradi)
+const LOGO_RX = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/;
 
 router.get('/', guard, asyncHandler(async (req, res) => {
   const list = await Client.find({ agencyId: req.user.restaurantId })
@@ -86,8 +89,23 @@ router.patch('/:id', guard, asyncHandler(async (req, res) => {
   if (b.about !== undefined)       c.about = String(b.about).slice(0, 300);
   if (b.note !== undefined)        c.note = String(b.note).slice(0, 500);
   if (b.status !== undefined && VALID_STATUS.includes(b.status)) c.status = b.status;
+  if (b.logo !== undefined) {
+    const v = String(b.logo || '');
+    if (v && (!LOGO_RX.test(v) || v.length > 200000)) return res.status(400).json({ error: 'Logotip rasm bo\'lishi va 200 KB dan oshmasligi kerak' });
+    c.logo = v; c.logoAt = v ? new Date() : null;
+  }
   await c.save();
   res.json(publicClient(c));
+}));
+
+// Logotip rasmi (panel)
+router.get('/:id/logo', guard, asyncHandler(async (req, res) => {
+  const c = await Client.findOne({ agencyId: req.user.restaurantId, id: req.params.id }, 'logo').lean();
+  const m = c && /^data:(image\/[a-z+]+);base64,(.+)$/i.exec(c.logo || '');
+  if (!m) return res.status(404).end();
+  res.set('Content-Type', m[1]);
+  res.set('Cache-Control', 'private, max-age=86400');
+  res.send(Buffer.from(m[2], 'base64'));
 }));
 
 // Botga ulash havolasi. Mijoz menejeri shuni bosadi.

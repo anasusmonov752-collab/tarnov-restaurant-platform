@@ -75,7 +75,9 @@ function resumeOf(c) {
 function companyOf(cl) {
   return {
     id: cl.id, name: cl.name,
-    location: cl.location || '', address: cl.address || '', about: cl.about || ''
+    location: cl.location || '', address: cl.address || '', about: cl.about || '',
+    // logotipning o'zi emas — bor/yo'q va kesh vaqti (rasm: /api/cand/companies/:id/logo)
+    hasLogo: !!cl.logo, logoAt: cl.logoAt || null
   };
 }
 

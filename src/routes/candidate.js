@@ -382,6 +382,24 @@ router.get('/chats', guard, asyncHandler(async (req, res) => {
   }));
 }));
 
+// ── Kompaniya logotipi — faqat kontakt ochilgan bo'lsa (kartadagi qoida) ──
+// <img> sarlavha yubora olmaydi — rasm tokeni (?t=, utils/photoToken).
+router.get('/companies/:clientId/logo', asyncHandler(async (req, res) => {
+  const uid = photoToken.verify(req.query.t);
+  if (!uid) return res.status(401).end();
+  const cand = await Candidate.findOne({ tgChatId: uid }, 'id restaurantId').lean();
+  if (!cand) return res.status(403).end();
+  if (!await contactView.isOpenPair({ agencyId: cand.restaurantId, clientId: req.params.clientId, candidateId: cand.id })) {
+    return res.status(403).end();
+  }
+  const cl = await Client.findOne({ agencyId: cand.restaurantId, id: req.params.clientId }, 'logo').lean();
+  const m = cl && /^data:(image\/[a-z+]+);base64,(.+)$/i.exec(cl.logo || '');
+  if (!m) return res.status(404).end();
+  res.set('Content-Type', m[1]);
+  res.set('Cache-Control', 'private, max-age=86400');
+  res.send(Buffer.from(m[2], 'base64'));
+}));
+
 // ── Kompaniya kartasi va vakansiya — faqat kontakt ochilgan bo'lsa ──
 // Vakansiya tanlovdan olinadi: qidiruvdan kelgan tanlovda u avtomatik
 // yaratilgan (vacancyAuto), arizadan kelganda — nomzod ariza bergani.

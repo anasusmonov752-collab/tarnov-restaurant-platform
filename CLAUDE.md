@@ -330,6 +330,22 @@ oynasini emas (aks holda mijoz Mini App'ida nomzod fotosini bossa chat
 ochilmasdi). Qadalgan TalentHub — "Yordam chati": quloqchin belgisi
 (`AG_IC`), bo'sh chatda salomlashuv (bazaga yozilmaydi, `chat.supportHello`).
 
+**ANKETALAR KONSTRUKTORI — iOS USLUBI, DEPLOY QILINDI** (2026-10-22,
+`f4e1721`, `3717bdd`): bo'limlar (`sections()` = `survey.withMeta` qoidasi:
+standart savol bo'limni belgilaydi, o'z savoli oldingisinikini oladi),
+har savol bitta qator (tur ikonkasi, `*`, kulrang izoh), shart inson
+tilida (`condLabel`: ko'p variant tanlangan bo'lsa teskarisi — "«Yo'q»
+bo'lmasa"). Anketalar segment tugmalarida, nom/lavozim/faollik
+"Sozlamalar"da. AVTOMATIK SAQLASH: o'zgarishdan 0.9 s keyin butun anketa
+PUT; holat yopishqoq sarlavhada; shart xatosi bo'lsa yuborilmaydi; server
+rad etsa sabab + "Qayta urinish". Saqlangach `CUR`ga tegilmaydi (yozish
+davom etishi mumkin). Tartib: sudrash (sichqoncha) + ochiq savolda
+Yuqoriga/Pastga (telefon). Tahrir qator ostida — telefon ko'rinishi yonida
+qoladi. "Call operator" -> "Call-markaz operatori" (roles.js, i18n, panel);
+prod'dagi 4 anketaning lavozim varianti ham Anas roziligi bilan
+o'zgartirildi (boshqa hech narsa o'zgarmagani solishtirib tekshirildi).
+Variant matnlari BAZADA — roles.js o'zgarsa eski anketalar o'zgarmaydi.
+
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
 O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda

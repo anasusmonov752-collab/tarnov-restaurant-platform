@@ -864,8 +864,8 @@ async function loadApps(){
       const v = a.vacancy;
       return `<div class="jb">
         <div class="ti">${v ? esc(v.title) : 'Vakansiya o\'chirilgan'}</div>
-        ${v ? `<div class="pl">${esc(v.place)}</div>` : ''}
-        ${v && v.salaryText ? `<div class="sl">${esc(v.salaryText)}</div>` : ''}
+        ${v ? `<div class="pl">${esc(v.companyOpen ? v.place : [v.venue, placeOf(v)].filter(Boolean).join(' · '))}</div>` : ''}
+        ${v && v.salaryText ? `<div class="sl">${salLine(v)}</div>` : ''}
         <div class="row">
           <span class="tg2 ${v && v.companyOpen ? 'ok' : ({ ok:'ok', no:'no', go:'fresh', wait:'wait' }[a.tone] || AST[a.state] || 'wait')}">${esc(a.stateLabel)}</span>
           <span style="font-size:12.5px;color:var(--muted)">${dmy(a.createdAt)}</span>

@@ -31,7 +31,9 @@ after(async () => { await mongoose.disconnect(); if (rs) await rs.stop(); });
 const A = 'ag1';
 const call = (h, params, body) => new Promise((resolve, reject) => {
   const res = { code: 200, status(c) { this.code = c; return this; }, json(j) { resolve({ code: this.code, j }); } };
-  h({ user: { restaurantId: A }, params, body: body || {} }, res, e => (e ? reject(e) : resolve({ code: 0 })));
+  // get/protocol/headers — haqiqiy so'rovdagidek (publicBase: nomzodga xabar havolasi)
+  h({ user: { restaurantId: A }, params, body: body || {}, headers: {}, protocol: 'https', get: () => 'test.local' },
+    res, e => (e ? reject(e) : resolve({ code: 0 })));
 });
 
 test('mijozga taklif: tanlov yaratiladi, takror va begona id tashlanadi', async () => {

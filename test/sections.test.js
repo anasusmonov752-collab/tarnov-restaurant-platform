@@ -37,13 +37,13 @@ const sec = async () => (await call(routes.sections, {})).j;
 const get = id => Candidate.findOne({ restaurantId: A, id }).lean();
 
 test('manba bo\'yicha ro\'yxat va bo\'lim sanoqlari', async () => {
-  const old = new Date(Date.now() - 3 * 864e5);
+  const old = new Date(Date.now() - 3 * 864e5), older = new Date(Date.now() - 10 * 864e5);
   await Candidate.create([
     { id: 'h1', restaurantId: A, source: 'hh' },
     { id: 'm1', restaurantId: A, source: 'manual' },
     { id: 'a1', restaurantId: A, source: 'anketa' },                                     // bugun keldi
     { id: 'a2', restaurantId: A, source: 'anketa', createdAt: old },                     // 3 kundan beri javobsiz
-    { id: 'a3', restaurantId: A, source: 'anketa', status: 'reserve', createdAt: old },  // ishlangan
+    { id: 'a3', restaurantId: A, source: 'anketa', status: 'reserve', createdAt: older }, // ishlangan, haftadan eski
     { id: 'x1', restaurantId: 'boshqa', source: 'anketa' }                               // boshqa agentlik
   ]);
   const base = (await call(routes.list, { query: { source: 'base' } })).j.map(c => c.id).sort();
@@ -59,7 +59,7 @@ test('manba bo\'yicha ro\'yxat va bo\'lim sanoqlari', async () => {
   assert.equal(s.anketa.unseen, 2);         // a3 bosqichi o'zgargan — ko'rilgan hisoblanadi
   assert.equal(s.anketa.waiting, 2);
   assert.equal(s.anketa.waitingOld, 1);     // a2
-  assert.equal(s.anketa.week, 1);
+  assert.equal(s.anketa.week, 2);           // a1 (bugun) va a2 (3 kun) — a3 10 kunlik
 
   const t = (await call(routes.today, {})).j;
   assert.equal(t.anketaUnseen, 2);

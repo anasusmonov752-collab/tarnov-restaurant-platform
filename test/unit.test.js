@@ -91,3 +91,14 @@ test('anketa: noto\'g\'ri shart rad etiladi', () => {
   q2.find(x => x.id === 'fullName').showIf = { q: 'role', in: ['oshpaz'] };
   assert.throws(() => survey.cleanQuestions(q2), /doim/);
 });
+
+test('anketa havolasi: kanal kaliti bot payload\'idan qaytib o\'qiladi', () => {
+  // Telegram /start payload'i 64 belgigacha, kanal kaliti — kichik lotin, 8 tagacha
+  for (const ch of Object.keys(survey.CHANNELS)) assert.match(ch, /^[a-z]{1,8}$/, ch);
+  const p = survey.payloadFor({ code: 'HMXT37', channel: 'vakuz' });
+  assert.deepEqual(survey.parsePayload(p), { code: 'HMXT37', channel: 'vakuz' });
+  const v = survey.payloadFor({ vacancyId: '0b6f3c1e-1234-4abc-9def-0123456789ab', channel: 'vakuz' });
+  assert.ok(v.length <= 64);
+  assert.equal(survey.parsePayload(v).channel, 'vakuz');
+  assert.equal(survey.parsePayload('a_HMXT37_yoq').channel, '');   // noma'lum kanal — belgisiz
+});

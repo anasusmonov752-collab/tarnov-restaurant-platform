@@ -737,7 +737,7 @@ async function newSurvey(){
 // ══ Havola ══
 $('bLink').onclick = async () => {
   await save();
-  let ch = 'ig';
+  let ch = 'vakuz';                                   // asosiy e'lon joyi — o'z kanalimiz (survey.CHANNELS)
   const draw = async () => {
     let d;
     try { d = await api(`/api/surveys/link?surveyId=${encodeURIComponent(CUR.id)}&channel=${ch}`); }

@@ -24,6 +24,7 @@ const I18N = require('../../public/js/th-i18n');
 // ── E'lon manbalari (havoladagi kanal) ──
 // Kalit faqat kichik lotin harflari: payload'da '_' ajratuvchi.
 const CHANNELS = {
+  vakuz: 'vakansiya.uz kanali',     // agentlikning o'z Telegram kanali — havola oynasida birinchi
   tg:    'Telegram',
   ig:    'Instagram',
   fb:    'Facebook',

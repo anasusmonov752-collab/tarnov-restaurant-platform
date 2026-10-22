@@ -226,7 +226,7 @@ function statsHtml(st){
 
 async function showAnketaLink(vid, title){
   openMd(vid ? 'Anketa havolasi — ' + title : 'Umumiy anketa havolasi', '<div class="empty">Yuklanmoqda...</div>');
-  let ch = 'ig';
+  let ch = 'vakuz';                                   // asosiy e'lon joyi — o'z kanalimiz (survey.CHANNELS)
   const qv = vid ? '&vacancyId=' + encodeURIComponent(vid) : '';
   const draw = async () => {
     let d, st;

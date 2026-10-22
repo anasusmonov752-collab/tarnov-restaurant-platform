@@ -356,6 +356,11 @@
       'perk.ovqat': 'Ovqat', 'perk.forma': 'Forma', 'perk.yol': 'Yo\'l kira',
       'perk.transport': 'Xizmat transporti', 'perk.rasmiy': 'Rasmiy ishga joylashtirish',
       'perk.bonus': 'Bonus', 'perk.choy': 'Choy puli', 'perk.turar': 'Turar joy', 'perk.oqitish': 'O\'qitish',
+      'perk.tajribasiz': 'Tajribasiz ham', 'perk.talaba': 'Talabalarga qulay grafik',
+      // Maosh davri va to'lov tartibi (vacancy.salaryPeriod / payout)
+      'sal.per.day': '/ kun', 'sal.per.shift': '/ smena',
+      'pay.daily': 'Har kuni to\'lanadi', 'pay.weekly': 'Har hafta to\'lanadi',
+      'pay.twice': 'Oyiga 2 marta to\'lanadi', 'pay.monthly': 'Oyiga 1 marta to\'lanadi',
 
       // ── BOT: mijoz bilan yozishma (routes/telegram.js) ──
       'bot.hello': 'Salom! Bu TalentHub HR boti.\n\nBog\'lanish uchun sizga yuborilgan havoladan kiring.',
@@ -790,6 +795,10 @@
       'perk.ovqat': 'Питание', 'perk.forma': 'Форма', 'perk.yol': 'Проезд',
       'perk.transport': 'Служебный транспорт', 'perk.rasmiy': 'Официальное оформление',
       'perk.bonus': 'Бонусы', 'perk.choy': 'Чаевые', 'perk.turar': 'Жильё', 'perk.oqitish': 'Обучение',
+      'perk.tajribasiz': 'Без опыта', 'perk.talaba': 'Удобно студентам',
+      'sal.per.day': '/ день', 'sal.per.shift': '/ смена',
+      'pay.daily': 'Выплата каждый день', 'pay.weekly': 'Выплата каждую неделю',
+      'pay.twice': 'Выплата 2 раза в месяц', 'pay.monthly': 'Выплата раз в месяц',
 
       'bot.hello': 'Здравствуйте! Это HR-бот TalentHub.\n\nЧтобы подключиться, перейдите по ссылке, которую вам отправили.',
       'bot.linkExpired': 'Ссылка устарела. Свяжитесь с HR.',
@@ -988,7 +997,7 @@
   // Vakansiya sharoitlari bazada "Ovqat · Forma · ..." matni (vacancyAuto
   // PERKS yig'adi). Ma'lum so'zlar o'quvchi tiliga o'giriladi — ikkala
   // tildan ham taniladi, mijozning erkin izohi o'z holicha qoladi.
-  const PERK_KEYS = ['ovqat', 'forma', 'yol', 'transport', 'rasmiy', 'bonus', 'choy', 'turar', 'oqitish'];
+  const PERK_KEYS = ['ovqat', 'forma', 'yol', 'transport', 'rasmiy', 'bonus', 'choy', 'turar', 'oqitish', 'tajribasiz', 'talaba'];
   function perksText(text, lang) {
     if (!text) return text || '';
     return String(text).split(' · ').map(part => {

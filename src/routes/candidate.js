@@ -240,7 +240,7 @@ router.get('/vacancies', guard, asyncHandler(async (req, res) => {
   // Hudud uchun mijoz ma'lumoti; NOM faqat kontakt ochilgan mijozda (vacFor)
   const cids = [...new Set(rows.map(r => r.clientId))];
   const [clients, openSet] = await Promise.all([
-    Client.find({ agencyId: c.restaurantId, id: { $in: cids } }, 'id name location').lean(),
+    Client.find({ agencyId: c.restaurantId, id: { $in: cids } }, 'id name location status').lean(),
     openClientIds(c)
   ]);
   const byId = Object.fromEntries(clients.map(x => [x.id, x]));
@@ -311,7 +311,7 @@ router.get('/applications', guard, asyncHandler(async (req, res) => {
 
   const cids = [...new Set(vs.map(v => v.clientId))];
   const [clients, openSet] = await Promise.all([
-    Client.find({ agencyId: c.restaurantId, id: { $in: cids } }, 'id name location').lean(),
+    Client.find({ agencyId: c.restaurantId, id: { $in: cids } }, 'id name location status').lean(),
     openClientIds(c)
   ]);
   const clById = Object.fromEntries(clients.map(x => [x.id, x]));

@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="/css/th-app.css?v=2">
 <script src="/js/th-shell.js?v=2" defer></script>
 <script src="/js/th-viewer.js?v=2" defer></script>
+<script src="/js/th-i18n.js?v=10"></script>  <!-- afzalliklar ro'yxati serverniki bilan bir xil (PERK_KEYS) -->
 <style>
 :root{
   --bg:#EEF3FB; --ink:#16233A; --green:#0F2747; --green2:#0A1B33;
@@ -172,6 +173,7 @@ async function load(){
       const [cls, lbl] = ST[v.status] || ST.open;
       return `<tr>
         <td><b>${esc(v.title)}</b>
+          ${v.venue ? `<div style="font-size:12px;color:var(--muted)">${esc(v.venue)}</div>` : ''}
           ${v.headcount > 1 ? `<div style="font-size:12px;color:var(--muted)">${v.headcount} ta odam</div>` : ''}</td>
         <td>${esc(v.clientName)}
           ${v.clientLocation ? `<div style="font-size:12px;color:var(--muted)">${esc(v.clientLocation)}</div>` : ''}</td>
@@ -181,11 +183,13 @@ async function load(){
         <td>${v.shortlists || '—'}</td>
         <td><span class="pill ${cls}">${lbl}</span>
           ${!v.listed ? '<div><span class="pill p-off" style="margin-top:4px" title="Qidiruvdan o\'zi yaratilgan, nomzodlar ko\'rmaydi">yopiq</span></div>' : ''}
-          ${v.listed && v.stale && v.status === 'open' ? '<div><span class="pill p-no" style="margin-top:4px">tasdiqlang</span></div>' : ''}</td>
+          ${v.listed && v.stale && v.status === 'open' ? '<div><span class="pill p-no" style="margin-top:4px">tasdiqlang</span></div>' : ''}
+          ${v.verifiedAt ? '<div><span class="pill p-ok" style="margin-top:4px" title="Nomzod «TalentHub tekshirgan ✓» belgisini ko\'radi">tekshirilgan ✓</span></div>' : ''}</td>
         <td style="text-align:right;white-space:nowrap">
           <button class="btn btn-sm" data-app="${v.id}">Arizalar</button>
           <button class="btn btn-sm" data-ank="${v.id}">Anketa</button>
           <button class="btn btn-sm" data-cf="${v.id}">Tasdiqlash</button>
+          <button class="btn btn-sm" data-vf="${v.id}" title="Ish beruvchiga qo'ng'iroq qilib o'rin ochiqligini tasdiqlatdingizmi?">${v.verifiedAt ? 'Tekshiruvni olish' : 'Tekshirildi'}</button>
           <button class="btn btn-sm" data-ed="${v.id}">Tahrirlash</button>
         </td></tr>`;
     }).join('')}</tbody></table>`;
@@ -200,6 +204,16 @@ async function load(){
     b.disabled = true;
     try { await api(`/api/vacancies/${b.dataset.cf}/confirm`, { method:'POST' }); toast('Tasdiqlandi', 'success'); load(); }
     catch(e){ toast(e.message, 'error'); b.disabled = false; }
+  });
+  // "Tekshirildi" — faqat ish beruvchiga qo'ng'iroqdan keyin: nomzod ishonch belgisini ko'radi
+  $('list').querySelectorAll('[data-vf]').forEach(b => b.onclick = async () => {
+    const v = ROWS.find(x => x.id === b.dataset.vf);
+    if (!v.verifiedAt && !confirm('Ish beruvchiga qo\'ng\'iroq qilib, o\'rin hali ochiqligini tasdiqlatdingizmi?\nNomzod «TalentHub tekshirgan ✓» belgisini ko\'radi.')) return;
+    b.disabled = true;
+    try {
+      await api(`/api/vacancies/${v.id}/verify`, { method:'POST', body: JSON.stringify({ off: !!v.verifiedAt }) });
+      toast(v.verifiedAt ? 'Belgi olindi' : 'Tekshirildi', 'success'); load();
+    } catch(e){ toast(e.message, 'error'); b.disabled = false; }
   });
 }
 $('fSt').onchange = load;
@@ -267,6 +281,8 @@ $('bAnk').onclick = () => showAnketaLink('', '');
 const ROLES = [['ofitsiant','Ofitsiant'],['barmen','Barmen'],['xostess','Xostess'],
   ['oshpaz','Oshpaz'],['kassir','Kassir'],['menejer','Menejer'],['operator','Call-markaz operatori']];
 const SHIFT_T = { kunduzgi:'kunduzgi smena', kechki:'kechki smena', ikkalasi:'kunduzgi/kechki smena' };
+// Afzalliklar — server bilan bir xil kalitlar va yozuvlar (th-i18n PERK_KEYS)
+const PERKS = THI18N.PERK_KEYS.map(k => [k, THI18N.t('uz', 'perk.' + k)]);
 // Server shabloni bilan bir xil sarlavha (vacancyAuto.makeTitle)
 const autoTitle = (r, s) => {
   const l = (ROLES.find(x => x[0] === r) || [])[1];
@@ -303,8 +319,32 @@ function form(v){
       <div class="fld"><label>Maosh (dan)</label><input type="number" id="fSf" value="${d.salaryFrom ?? ''}" placeholder="4000000"></div>
       <div class="fld"><label>Maosh (gacha)</label><input type="number" id="fSt2" value="${d.salaryTo ?? ''}" placeholder="5000000"></div>
     </div>
+    <div class="row2">
+      <div class="fld"><label>Maosh nimaga</label><select id="fSp">
+        <option value="month" ${(d.salaryPeriod || 'month') === 'month' ? 'selected' : ''}>Oyiga</option>
+        <option value="day"   ${d.salaryPeriod === 'day' ? 'selected' : ''}>Kuniga</option>
+        <option value="shift" ${d.salaryPeriod === 'shift' ? 'selected' : ''}>Smenasiga</option>
+      </select></div>
+      <div class="fld"><label>To'lov</label><select id="fPo">
+        <option value="">—</option>
+        <option value="daily"   ${d.payout === 'daily' ? 'selected' : ''}>Har kuni</option>
+        <option value="weekly"  ${d.payout === 'weekly' ? 'selected' : ''}>Har hafta</option>
+        <option value="twice"   ${d.payout === 'twice' ? 'selected' : ''}>Oyiga 2 marta</option>
+        <option value="monthly" ${d.payout === 'monthly' ? 'selected' : ''}>Oyiga 1 marta</option>
+      </select></div>
+    </div>
     <div class="fld"><label>Grafik</label><input type="text" id="fSc" value="${esc(d.schedule)}" placeholder="6/1, 16:00-24:00"></div>
-    <div class="fld"><label>Qo'shimcha shartlar</label><textarea id="fCo" rows="2" placeholder="Ovqat, forma, yo'l kira">${esc(d.conditions)}</textarea></div>
+    <div class="fld"><label>Afzalliklar</label><div style="display:flex;flex-wrap:wrap;gap:6px">${PERKS.map(([k, l]) =>
+      `<label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:5px 9px;margin:0;cursor:pointer">
+        <input type="checkbox" data-pk="${k}" ${(d.perks || []).includes(k) ? 'checked' : ''}> ${esc(l)}</label>`).join('')}</div></div>
+
+    <div class="sec">Nomzod uchun tavsif — restoran NOMISIZ</div>
+    <div class="fld"><label>Joy tavsifi</label><input type="text" id="fVn" value="${esc(d.venue)}" maxlength="80" placeholder="Uyg'ur oshxonasi restorani, 3 filial"></div>
+    <div class="fld"><label>Mo'ljal</label><input type="text" id="fLm" value="${esc(d.landmark)}" maxlength="80" placeholder="Bodomzor metrosi yonida"></div>
+    <div class="fld"><label>Bir qatorli jalb (e'londagi haqiqiy fakt)</label><input type="text" id="fHk" value="${esc(d.hook)}" maxlength="160" placeholder="Yangi filial: jamoa noldan yig'ilmoqda"></div>
+    <div class="fld"><label>Vazifalar (har qatorda bittadan)</label><textarea id="fDu" rows="3">${esc((d.duties || []).join('\n'))}</textarea></div>
+    <div class="fld"><label>Talablar (har qatorda bittadan)</label><textarea id="fRq" rows="3">${esc((d.requirements || []).join('\n'))}</textarea></div>
+    <div class="fld"><label>Qo'shimcha (erkin matn)</label><textarea id="fCo" rows="2">${esc(d.conditions)}</textarea></div>
     ${v ? `<div class="fld"><label>Holat</label><select id="fStt">
       <option value="open"   ${d.status==='open'?'selected':''}>Ochiq</option>
       <option value="paused" ${d.status==='paused'?'selected':''}>To'xtatilgan</option>
@@ -327,7 +367,11 @@ function form(v){
       role, title, minExp: $('fEx').value, headcount: $('fHc').value,
       shift: $('fSh').value, location: $('fLo').value.trim(),
       salaryFrom: $('fSf').value, salaryTo: $('fSt2').value,
-      schedule: $('fSc').value.trim(), conditions: $('fCo').value.trim()
+      schedule: $('fSc').value.trim(), conditions: $('fCo').value.trim(),
+      salaryPeriod: $('fSp').value, payout: $('fPo').value,
+      perks: [...document.querySelectorAll('[data-pk]:checked')].map(x => x.dataset.pk),
+      venue: $('fVn').value.trim(), landmark: $('fLm').value.trim(), hook: $('fHk').value.trim(),
+      duties: $('fDu').value, requirements: $('fRq').value
     };
     if (!v) body.clientId = $('fCl').value;
     if (v && $('fStt')) body.status = $('fStt').value;

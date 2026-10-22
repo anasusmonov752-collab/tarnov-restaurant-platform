@@ -37,6 +37,22 @@ const VacancySchema = new mongoose.Schema({
 
   notes: { type: String, default: '' },
 
+  // ── NOMZOD UCHUN TAVSIF (2026-10-22) ──
+  // Ilgari 13 ta vakansiya "Ofitsiant · Toshkentda restoran" bo'lib bir-
+  // biridan farq qilmasdi, kunlik maosh matn ichida yashirin edi — soxtaga
+  // o'xshardi. Hammasi ixtiyoriy: eski vakansiyalar o'zgarishsiz ishlaydi.
+  venue:        { type: String, default: '' },   // joy tavsifi NOMSIZ: "Uyg'ur oshxonasi restorani, 3 filial"
+  landmark:     { type: String, default: '' },   // mo'ljal: "Bodomzor metrosi yonida"
+  salaryPeriod: { type: String, default: 'month' }, // month | day | shift — salaryFrom/To nimaga
+  payout:       { type: String, default: '' },   // daily | weekly | twice | monthly — qachon to'lanadi
+  perks:        { type: [String], default: [] }, // th-i18n PERK_KEYS
+  duties:       { type: [String], default: [] }, // vazifalar — qisqa bandlar
+  requirements: { type: [String], default: [] }, // talablar — qisqa bandlar (minExp/yosh/tildan tashqari)
+  hook:         { type: String, default: '' },   // bir qatorli jalb — e'londagi haqiqiy fakt
+  // Agentlik ish beruvchiga qo'ng'iroq qilib o'rin ochiqligini tasdiqladi.
+  // confirmedAt'dan farqi: u — "ro'yxatda tursin" taymeri, bu — ishonch belgisi.
+  verifiedAt:   { type: Date, default: null },
+
   status: { type: String, default: 'open' },    // open | paused | closed
 
   // Qayerdan paydo bo'lgan: manual = mijoz/agentlik qo'lda yozgan,

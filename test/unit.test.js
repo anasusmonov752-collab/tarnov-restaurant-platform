@@ -102,3 +102,29 @@ test('anketa havolasi: kanal kaliti bot payload\'idan qaytib o\'qiladi', () => {
   assert.equal(survey.parsePayload(v).channel, 'vakuz');
   assert.equal(survey.parsePayload('a_HMXT37_yoq').channel, '');   // noma'lum kanal — belgisiz
 });
+
+test('vakansiya shabloni: maosh davri, afzalliklar, bandlar va ishonch belgisi', () => {
+  const vac = require('../src/services/vacancy');
+  const c = vac.clean({ title: 'Ofitsiant', role: 'ofitsiant', salaryFrom: 300000, salaryTo: 250000, salaryPeriod: 'shift',
+    payout: 'twice', perks: ['ovqat', 'rasmiy', 'yoq', 'ovqat'], duties: '• Mehmonni kutib olish\n\n- Buyurtma olish',
+    requirements: ['Rus tili'], venue: 'Steak-house', hook: 'Yangi filial' });
+  assert.equal(c.salaryFrom, 250000);                          // chalkash kiritilsa almashtiriladi
+  assert.deepEqual(c.perks, ['ovqat', 'rasmiy']);              // noma'lum kalit va takror tushadi
+  assert.deepEqual(c.duties, ['Mehmonni kutib olish', 'Buyurtma olish']);
+  assert.equal(vac.clean({ salaryPeriod: 'yil', payout: 'har soat' }).salaryPeriod, 'month');
+  assert.equal(vac.clean({ payout: 'har soat' }).payout, '');
+
+  assert.equal(vac.salaryText(Object.assign({}, c)), "250 000 – 300 000 so'm / smena");
+  assert.equal(vac.salaryText({ salaryFrom: 4000000, salaryTo: 6000000 }), "4 000 000 – 6 000 000 so'm");   // oylik — qo'shimchasiz
+  assert.equal(vac.salaryText({ salaryFrom: 200000, salaryPeriod: 'day' }, 'ru'), 'от 200 000 сум / день');
+  assert.equal(vac.payoutText(c), "Oyiga 2 marta to'lanadi");
+
+  // Nomzod: restoran nomi yo'q; ishonch belgisi faqat haqiqat bo'lsa
+  const v = Object.assign({ id: 'v1', createdAt: new Date(), confirmedAt: new Date() }, c);
+  const posted = vac.forCandidate(v, { name: 'MASA', status: 'pending', location: 'Yakkasaroy' });
+  assert.equal(posted.trust, 'posted');
+  assert.ok(!JSON.stringify(posted).includes('MASA'));
+  assert.deepEqual(posted.perkLabels, ['Ovqat', 'Rasmiy ishga joylashtirish']);
+  assert.equal(vac.forCandidate(v, { status: 'active' }).trust, 'client');
+  assert.equal(vac.forCandidate(Object.assign({}, v, { verifiedAt: new Date() }), { status: 'pending' }).trust, 'verified');
+});

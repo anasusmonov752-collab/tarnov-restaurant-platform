@@ -186,4 +186,18 @@ router.post('/:id/confirm', guard, asyncHandler(async (req, res) => {
   res.json(vac.full(v));
 }));
 
+// ── Agentlik tekshirdi ──
+// Ish beruvchiga qo'ng'iroq qilib "o'rin ochiq" deb tasdiqlatganda bosiladi.
+// Nomzod "TalentHub tekshirgan ✓" belgisini ko'radi — faqat shundan keyin.
+// off:true — belgini olib tashlash (xato bosilgan bo'lsa).
+router.post('/:id/verify', guard, asyncHandler(async (req, res) => {
+  const agencyId = req.user.restaurantId;
+  const off = !!(req.body && req.body.off);
+  const set = off ? { verifiedAt: null, updatedAt: new Date() }
+                  : { verifiedAt: new Date(), confirmedAt: new Date(), updatedAt: new Date() };
+  const v = await Vacancy.findOneAndUpdate({ agencyId, id: req.params.id }, { $set: set }, { new: true });
+  if (!v) return res.status(404).json({ error: 'Vakansiya topilmadi' });
+  res.json(vac.full(v));
+}));
+
 module.exports = router;

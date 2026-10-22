@@ -17,6 +17,13 @@ const { langsLabel } = require('../utils/labels');
 
 const VALID_STATUS = ['open', 'paused', 'closed'];
 const SHIFTS = ['kunduzgi', 'kechki', 'ikkalasi'];
+// Maosh nimaga (salaryFrom/To): restoranlarda kunlik va smenalik to'lov
+// odatiy — oylikka aylantirib yozsak, ish beruvchi aytmagan raqam chiqardi.
+const PERIODS = ['month', 'day', 'shift'];
+const PAYOUTS = ['daily', 'weekly', 'twice', 'monthly'];
+// Ro'yxat maydonlari: bitta band — bitta qator, ko'pi bilan 6 ta
+const lines = x => (Array.isArray(x) ? x : String(x || '').split('\n'))
+  .map(s => String(s).replace(/^[\s•\-–—*]+/, '').trim().slice(0, 140)).filter(Boolean).slice(0, 6);
 
 // Vakansiya necha kundan keyin "eskirgan" hisoblanadi.
 // hh'da soxta e'lon muammosi shundan kelib chiqadi: e'lon osilib turadi,
@@ -61,6 +68,17 @@ function clean(b, prev = {}) {
   if (b.schedule !== undefined)   out.schedule = String(b.schedule).trim().slice(0, 120);
   if (b.conditions !== undefined) out.conditions = String(b.conditions).trim().slice(0, 400);
   if (b.notes !== undefined)      out.notes = String(b.notes).trim().slice(0, 600);
+  // Nomzod uchun tavsif — joy NOMSIZ yoziladi (forCandidate restoran nomini bermaydi)
+  if (b.venue !== undefined)      out.venue = String(b.venue).trim().slice(0, 80);
+  if (b.landmark !== undefined)   out.landmark = String(b.landmark).trim().slice(0, 80);
+  if (b.hook !== undefined)       out.hook = String(b.hook).trim().slice(0, 160);
+  if (b.salaryPeriod !== undefined) out.salaryPeriod = PERIODS.includes(b.salaryPeriod) ? b.salaryPeriod : 'month';
+  if (b.payout !== undefined)     out.payout = PAYOUTS.includes(b.payout) ? b.payout : '';
+  if (b.perks !== undefined) {
+    out.perks = [...new Set((Array.isArray(b.perks) ? b.perks : []).filter(k => I18N.PERK_KEYS.includes(k)))];
+  }
+  if (b.duties !== undefined)       out.duties = lines(b.duties);
+  if (b.requirements !== undefined) out.requirements = lines(b.requirements);
   if (b.headcount !== undefined)  out.headcount = num(b.headcount, 1, 200) || 1;
   if (b.autoNotify !== undefined) out.autoNotify = !!b.autoNotify;
   // E'lon qilish — "hozir ochiq" degani, shuning uchun tasdiq ham yangilanadi.
@@ -98,12 +116,18 @@ const money = n => n ? String(Math.round(Number(n))).replace(/\B(?=(\d{3})+(?!\d
 /** Maosh satri: "4 000 000 – 5 000 000 so'm" / "... сум". lang — o'quvchining tili. */
 function salaryText(v, lang = 'uz') {
   // Bitta summa aytilsa ikkalasi teng bo'ladi — "4 000 000 – 4 000 000" emas
-  if (v.salaryFrom && v.salaryTo && v.salaryFrom === v.salaryTo) return t(lang, 'sal.eq', { a: money(v.salaryFrom) });
-  if (v.salaryFrom && v.salaryTo) return t(lang, 'sal.range', { a: money(v.salaryFrom), b: money(v.salaryTo) });
-  if (v.salaryFrom) return t(lang, 'sal.from', { a: money(v.salaryFrom) });
-  if (v.salaryTo)   return t(lang, 'sal.to', { a: money(v.salaryTo) });
-  return '';
+  let s = '';
+  if (v.salaryFrom && v.salaryTo && v.salaryFrom === v.salaryTo) s = t(lang, 'sal.eq', { a: money(v.salaryFrom) });
+  else if (v.salaryFrom && v.salaryTo) s = t(lang, 'sal.range', { a: money(v.salaryFrom), b: money(v.salaryTo) });
+  else if (v.salaryFrom) s = t(lang, 'sal.from', { a: money(v.salaryFrom) });
+  else if (v.salaryTo)   s = t(lang, 'sal.to', { a: money(v.salaryTo) });
+  if (!s) return '';
+  // "250 000 – 300 000 so'm / smena" — oylik (odatiy) bo'lsa qo'shimchasiz
+  if (v.salaryPeriod === 'day' || v.salaryPeriod === 'shift') s += ' ' + t(lang, 'sal.per.' + v.salaryPeriod);
+  return s;
 }
+const payoutText = (v, lang = 'uz') => (PAYOUTS.includes(v.payout) ? t(lang, 'pay.' + v.payout) : '');
+const perkLabels = (v, lang = 'uz') => (v.perks || []).filter(k => I18N.PERK_KEYS.includes(k)).map(k => t(lang, 'perk.' + k));
 
 // Avtomatik yasalgan sarlavha ("Ofitsiant, kechki smena") — o'quvchi tilida.
 // Qo'lda yozilgan sarlavhaga TEGMAYMIZ: u mijozning o'z so'zi.
@@ -132,6 +156,11 @@ function full(v, extra = {}, lang) {
     schedule: v.schedule,
     // "Ovqat · Forma" — ma'lum so'zlar o'quvchi tilida (th-i18n.perksText)
     conditions: lang ? I18N.perksText(v.conditions, lang) : v.conditions,
+    venue: v.venue || '', landmark: v.landmark || '', hook: v.hook || '',
+    salaryPeriod: v.salaryPeriod || 'month', payout: v.payout || '', payoutText: payoutText(v, lang || 'uz'),
+    perks: v.perks || [], perkLabels: perkLabels(v, lang || 'uz'),
+    duties: v.duties || [], requirements: v.requirements || [],
+    verifiedAt: v.verifiedAt || null,
     startDate: v.startDate, headcount: v.headcount,
     notes: v.notes, status: v.status,
     source: v.source || 'manual', listed: v.listed !== false,
@@ -147,13 +176,27 @@ function full(v, extra = {}, lang) {
  */
 function forCandidate(v, client) {
   const where = v.location || (client && client.location) || '';
+  // Ishonch belgisi faqat haqiqat bo'lsa: agentlik ish beruvchiga qo'ng'iroq
+  // qilib tekshirgan (verifiedAt) yoki vakansiyani ish beruvchining o'zi
+  // tasdiqlagan (faol mijoz). Aks holda — faqat "qachon joylangan".
+  const trust = v.verifiedAt ? 'verified' : (client && client.status === 'active' ? 'client' : 'posted');
+  const since = v.verifiedAt || (trust === 'client' ? v.confirmedAt : v.createdAt) || v.createdAt;
   return {
     id: v.id,
     title: v.title,
     role: v.role,
     where,
     place: where ? `${where}da restoran` : 'Toshkentda restoran',
+    venue: v.venue || '',
+    landmark: v.landmark || '',
+    hook: v.hook || '',
     salaryText: salaryText(v),
+    payoutText: payoutText(v),
+    perkLabels: perkLabels(v),
+    duties: v.duties || [],
+    requirements: v.requirements || [],
+    trust,
+    trustDays: Math.floor((Date.now() - new Date(since).getTime()) / 864e5),
     shift: v.shift,
     schedule: v.schedule,
     conditions: v.conditions,
@@ -167,4 +210,5 @@ function forCandidate(v, client) {
   };
 }
 
-module.exports = { clean, full, forCandidate, salaryText, titleFor, isStale, guessRole, VALID_STATUS, SHIFTS, STALE_DAYS };
+module.exports = { clean, full, forCandidate, salaryText, payoutText, perkLabels, titleFor, isStale, guessRole,
+  VALID_STATUS, SHIFTS, PERIODS, PAYOUTS, STALE_DAYS };

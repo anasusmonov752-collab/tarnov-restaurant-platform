@@ -144,6 +144,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .vd-chips{display:flex;flex-wrap:wrap;gap:6px}
 .vd-chips span{font-size:13px;padding:5px 11px;border-radius:8px;background:var(--bg)}
 .vd-tx{font-size:14.5px;line-height:1.55;white-space:pre-line}
+/* Vakansiya: joy tavsifi, jalb, afzalliklar, ishonch belgisi */
+.jb .vn{font-size:13.5px;color:var(--ink);margin-top:3px}
+.jb .sl small,.vd-sl small{font-size:12.5px;font-weight:500;color:var(--muted)}
+.jb .sl.no{color:var(--muted);font-weight:500;font-size:14px}
+.jb .hk{font-size:13.5px;line-height:1.45;margin-top:8px}
+.pk{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.pk span{font-size:12px;padding:3px 9px;border-radius:7px;background:var(--bg);color:var(--ink)}
+.vd-hk{font-size:14.5px;line-height:1.5;margin-top:12px;padding:11px 13px;border-radius:12px;background:var(--bg)}
+.vd-ul{margin:0;padding-left:18px;font-size:14.5px;line-height:1.6}
+.vd-ul li{margin:2px 0}
 .co-hd{display:flex;gap:13px;align-items:center;padding:6px 0 4px}
 .co-av{width:56px;height:56px;border-radius:14px;flex:none;background:var(--soft-blue);color:var(--blue);
   display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px}
@@ -581,14 +591,36 @@ const SHIFT_L = { kunduzgi:'Kunduzgi', kechki:'Kechki', ikkalasi:'Kunduzgi va ke
 const OYLAR = ['yanvar','fevral','mart','aprel','may','iyun','iyul','avgust','sentabr','oktabr','noyabr','dekabr'];
 // Server shabloni bilan bir xil: Toshkent vaqti (+5), o'zbekcha oy nomi
 const dLong = s => { const x = new Date(new Date(s).getTime() + 5 * 3600e3); return x.getUTCDate() + '-' + OYLAR[x.getUTCMonth()]; };
+// Joy satri: tuman va mo'ljal ("Yunusobod · Bodomzor metrosi yonida")
+const placeOf = v => [v.where || (v.landmark ? '' : 'Toshkent'), v.landmark].filter(Boolean).join(' · ') || v.place || '';
+// Afzalliklar: yangi shablonda kalitlar (perkLabels); eski vakansiyada
+// "Ovqat · Forma" matni. Erkin matn belgi emas — "Qo'shimcha" bo'lib chiqadi.
+function perksOf(v){
+  if ((v.perkLabels || []).length) return { chips: v.perkLabels, text: v.conditions || '' };
+  const c = String(v.conditions || '');
+  return / · /.test(c) ? { chips: c.split(/\s*·\s*/).filter(Boolean), text: '' } : { chips: [], text: c };
+}
+// Ishonch belgisi faqat haqiqat bo'lsa (server: forCandidate.trust)
+function trustTag(v){
+  const d = v.trustDays === 0 ? 'bugun' : v.trustDays === 1 ? 'kecha' : v.trustDays + ' kun oldin';
+  if (v.trust === 'verified') return `<span class="tg2 ok">TalentHub tekshirgan ✓ · ${d}</span>`;
+  if (v.trust === 'client') return `<span class="tg2 fresh">Ish beruvchi tasdiqlagan · ${d}</span>`;
+  if (v.trust === 'posted') return `<span class="tg2 fresh">Joylandi: ${d}</span>`;
+  return v.freshDays != null ? `<span class="tg2 fresh">${v.freshDays === 0 ? 'Bugun tasdiqlangan' : v.freshDays + ' kun oldin tasdiqlangan'}</span>` : '';
+}
+const salLine = v => v.salaryText
+  ? esc(v.salaryText).replace(/ (\/ \S+)$/, ' <small>$1</small>')
+  : '';
 
 function vacancyHtml(v){
   const kv = (k, val) => val ? `<div class="vd-kv"><span class="k">${k}</span><span class="v">${esc(val)}</span></div>` : '';
+  const ul = xs => `<ul class="vd-ul">${xs.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;
   const age = v.minAge && v.maxAge ? `${v.minAge}–${v.maxAge} yosh`
             : v.minAge ? `${v.minAge} yoshdan` : v.maxAge ? `${v.maxAge} yoshgacha` : '';
   const work = [
     kv('Jadval', v.schedule),
     kv('Smena', SHIFT_L[v.shift] || v.shift),
+    kv('To\'lov', v.payoutText),
     kv('Boshlash', v.startDate ? dLong(v.startDate) : ''),
     kv('Kerak', v.headcount > 1 ? v.headcount + ' kishi' : '')
   ].join('');
@@ -597,17 +629,20 @@ function vacancyHtml(v){
     kv('Yosh', age),
     kv('Tillar', (v.languages || []).join(', '))
   ].join('');
-  // Sharoit shablonda " · " bilan yig'ilgan — alohida belgilar qilib ko'rsatamiz
-  const perks = String(v.conditions || '').split(/\s*·\s*/).filter(Boolean);
+  const pk = perksOf(v);
+  const trust = trustTag(v);
   return `<div class="vd-ti">${esc(v.title)}</div>
-    <div class="vd-pl">${esc(v.place || '')}</div>
-    <div class="vd-sl">${esc(v.salaryText || 'Maosh suhbatda kelishiladi')}</div>
+    ${v.venue ? `<div class="vd-pl" style="color:var(--ink)">${esc(v.venue)}</div>` : ''}
+    <div class="vd-pl">${esc(placeOf(v))}</div>
+    <div class="vd-sl">${salLine(v) || 'Maosh suhbatda aytiladi'}</div>
+    ${v.hook ? `<div class="vd-hk">${esc(v.hook)}</div>` : ''}
+    ${(v.duties || []).length ? `<div class="vd-sec">Vazifalar</div>${ul(v.duties)}` : ''}
+    <div class="vd-sec">Talablar</div>${(v.requirements || []).length ? ul(v.requirements) : ''}${need}
     ${work ? `<div class="vd-sec">Ish sharoiti</div>${work}` : ''}
-    ${perks.length ? `<div class="vd-sec">Beriladi</div><div class="vd-chips">${perks.map(p => `<span>${esc(p)}</span>`).join('')}</div>` : ''}
-    <div class="vd-sec">Talablar</div>${need}
-    ${v.freshDays != null ? `<div class="row" style="display:flex;gap:7px;margin-top:14px;flex-wrap:wrap">
-      ${v.match ? '<span class="tg2 fit">Sizga mos</span>' : ''}
-      <span class="tg2 fresh">${v.freshDays === 0 ? 'Bugun tasdiqlangan' : v.freshDays + ' kun oldin tasdiqlangan'}</span></div>` : ''}`;
+    ${pk.chips.length ? `<div class="vd-sec">Afzalliklar</div><div class="vd-chips">${pk.chips.map(p => `<span>${esc(p)}</span>`).join('')}</div>` : ''}
+    ${pk.text ? `<div class="vd-sec">Qo'shimcha</div><div class="vd-tx">${esc(pk.text)}</div>` : ''}
+    ${trust || v.match ? `<div class="row" style="display:flex;gap:7px;margin-top:14px;flex-wrap:wrap">
+      ${v.match ? '<span class="tg2 fit">Sizga mos</span>' : ''}${trust}</div>` : ''}`;
 }
 
 function showSheet(title, html){ $('shT').textContent = title; $('shB').innerHTML = html; $('sheet').classList.add('on'); }
@@ -667,16 +702,21 @@ async function loadJobs(){
         v.shift ? v.shift + ' smena' : '',
         (v.languages || []).join(', ')
       ].filter(Boolean).join(' · ');
+      // Karta qisqa: kim (joy), qayerda, qancha, nima beriladi. Qolgani — "Batafsil"
+      const pk = perksOf(v);
+      const sub = [v.payoutText, v.schedule].filter(Boolean).join(' · ');
       return `<div class="jb tap" data-vi="${i}">
         <div class="ti">${esc(v.title)}</div>
-        <div class="pl">${esc(v.place)}</div>
-        ${v.salaryText ? `<div class="sl">${esc(v.salaryText)}</div>` : ''}
-        ${v.schedule ? `<div class="ln">${esc(v.schedule)}</div>` : ''}
-        ${v.conditions ? `<div class="ln">${esc(v.conditions)}</div>` : ''}
+        ${v.venue ? `<div class="vn">${esc(v.venue)}</div>` : ''}
+        <div class="pl">${esc(placeOf(v))}</div>
+        <div class="sl ${v.salaryText ? '' : 'no'}">${salLine(v) || 'Maosh suhbatda aytiladi'}</div>
+        ${sub ? `<div class="ln" style="margin-top:3px">${esc(sub)}</div>` : ''}
+        ${pk.chips.length ? `<div class="pk">${pk.chips.slice(0, 3).map(p => `<span>${esc(p)}</span>`).join('')}</div>` : ''}
+        ${v.hook ? `<div class="hk">${esc(v.hook)}</div>` : ''}
         ${need ? `<div class="ln" style="margin-top:7px">Talab: ${esc(need)}</div>` : ''}
         <div class="row">
           ${v.match ? '<span class="tg2 fit">Sizga mos</span>' : ''}
-          <span class="tg2 fresh">${v.freshDays === 0 ? 'Bugun tasdiqlangan' : v.freshDays + ' kun oldin tasdiqlangan'}</span>
+          ${trustTag(v)}
         </div>
         <div class="more">Batafsil ›</div>
         <div class="row">

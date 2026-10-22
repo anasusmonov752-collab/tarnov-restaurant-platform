@@ -376,6 +376,23 @@ MODEL: ariza kelsa — 24 soatda nomzodga qo'ng'iroq, tekshirib, restoranga
 "birinchi 3 nomzod bepul" bilan chiqish; rozi bo'lsa mijozga 3 sinov krediti
 (Mijozlar → Kredit). Nomzodga kontaktdan oldin restoran nomini aytish.
 
+**VAKANSIYA SHABLONI — NOMZOD UCHUN TAVSIF, JONLI** (2026-10-22, `99aa3e9`):
+Anas "soxtaga o'xshaydi, hammasi bir xil" dedi. Sabablar: 13 ta "Ofitsiant ·
+Toshkentda restoran", kunlik maosh matnda yashirin (maosh qatori 4/33),
+sharoit bitta blok, "Bugun tasdiqlangan" asossiz. Yangi ixtiyoriy maydonlar
+(`Vacancy`): `venue` (joy tavsifi NOMSIZ), `landmark`, `salaryPeriod`
+(month|day|shift — salaryText "… / smena"), `payout` (daily|weekly|twice|
+monthly), `perks` (th-i18n PERK_KEYS, + tajribasiz, talaba), `duties`,
+`requirements` (bandlar, ≤6), `hook` (e'londagi haqiqiy fakt), `verifiedAt`.
+ISHONCH (`forCandidate.trust`): verified — agentlik ish beruvchiga
+qo'ng'iroq qilib "Tekshirildi" bosgan (`POST /api/vacancies/:id/verify`),
+client — faol mijoz, posted — faqat "Joylandi: N kun oldin". Talab bandlarida
+minExp/yosh takrorlanmaydi (jadvalda bor). Nomzod kabineti (profil.html):
+karta — sarlavha, joy, maosh/davr, to'lov, 3 belgi, jalb; batafsil —
+Vazifalar/Talablar/Ish sharoiti/Afzalliklar. 33 ta import vakansiya qayta
+yozildi (maosh 16 tasida — qolganlarida e'londa raqam yo'q edi). Mijoz
+Mini App formasi yangi maydonlarni hali bermaydi.
+
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
 O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda

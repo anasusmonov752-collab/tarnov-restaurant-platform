@@ -54,8 +54,10 @@ app.use(express.static(path.join(__dirname, 'public'), {
       // HTML — hech qachon keshlamasin, har safar server dan olsin
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     } else if (filePath.endsWith('.css') || filePath.endsWith('.js')) {
-      // CSS/JS — 1 soat kesh, ETag bilan yangilanishni tekshiradi
-      res.setHeader('Cache-Control', 'public, max-age=3600, must-revalidate');
+      // CSS/JS — har safar Last-Modified bilan tekshiriladi (o'zgarmagan bo'lsa
+      // 304, fayl qayta yuklanmaydi). Ilgari max-age=3600 edi: deploy'dan keyin
+      // bir soatgacha eski menyu/stil ko'rinardi (2026-10-22 jonli topildi).
+      res.setHeader('Cache-Control', 'public, no-cache');
     }
   }
 }));

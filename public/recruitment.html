@@ -7,10 +7,10 @@
 <!-- TalentHub dizayn tizimi va umumiy menyu (th-shell) -->
 <link rel="icon" href="/img/talenthub-mark.svg" type="image/svg+xml">
 <script src="/js/uz-date.js"></script>
-<link rel="stylesheet" href="/css/th.css">
-<link rel="stylesheet" href="/css/th-app.css">
-<script src="/js/th-shell.js" defer></script>
-<script src="/js/th-viewer.js" defer></script>
+<link rel="stylesheet" href="/css/th.css?v=2">
+<link rel="stylesheet" href="/css/th-app.css?v=2">
+<script src="/js/th-shell.js?v=2" defer></script>
+<script src="/js/th-viewer.js?v=2" defer></script>
 <style>
 :root{
   --bg:#EEF3FB; --ink:#16233A; --green:#0F2747; --green2:#0A1B33;
@@ -317,6 +317,7 @@ async function loadMx(){
 function markSeen(c){
   if (!isAnk(c) || c.seenAt) return;
   c.seenAt = new Date().toISOString();
+  render();                                                    // ko'k "ko'rilmagan" belgisi darhol tushsin
   api('/api/recruitment/' + c.id + '/seen', { method:'POST' }).then(() => { loadMx(); window.thShell && thShell.refreshCounts(); }).catch(() => {});
 }
 

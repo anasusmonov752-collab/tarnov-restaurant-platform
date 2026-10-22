@@ -289,7 +289,7 @@
       'role.oshpaz': 'Oshpaz',
       'role.kassir': 'Kassir',
       'role.menejer': 'Menejer',
-      'role.operator': 'Call operator',
+      'role.operator': 'Call-markaz operatori',
       'role.other': 'Xodim',
 
       // ── SERVER: mijozga ko'rinadigan tanlov holati ──

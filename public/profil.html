@@ -846,6 +846,7 @@ async function loadJobs(){
 }
 
 const AST = { new:'wait', seen:'wait', shortlisted:'ok', rejected:'no' };
+let APPS = [];
 
 async function loadApps(){
   try{
@@ -855,9 +856,10 @@ async function loadApps(){
         "Ish o'rinlari" bo'limidan mos ishni tanlang.</div>`;
       return;
     }
-    $('appList').innerHTML = rows.map(a => {
+    APPS = rows;
+    $('appList').innerHTML = rows.map((a, i) => {
       const v = a.vacancy;
-      return `<div class="jb">
+      return `<div class="jb ${v ? 'tap' : ''}" data-ai="${i}">
         <div class="ti">${v ? esc(v.title) : 'Vakansiya o\'chirilgan'}</div>
         ${v ? `<div class="pl">${esc(v.companyOpen ? v.place : [v.venue, placeOf(v)].filter(Boolean).join(' · '))}</div>` : ''}
         ${v && v.salaryText ? `<div class="sl">${salLine(v)}</div>` : ''}
@@ -873,7 +875,17 @@ async function loadApps(){
       </div>`;
     }).join('');
     // Kontakt ochilgan — kompaniya kartasi (chatdagi bilan bir xil)
-    document.querySelectorAll('[data-co]').forEach(el => el.onclick = () => showCompany(el.dataset.co));
+    document.querySelectorAll('[data-co]').forEach(el => el.onclick = ev => { ev.stopPropagation(); showCompany(el.dataset.co); });
+    // Kartaning o'zini bosish: kontakt ochilgan bo'lsa — kompaniya, aks holda —
+    // vakansiya sahifasi (restoran nomi kontaktgacha ko'rinmaydi)
+    document.querySelectorAll('[data-ai]').forEach(el => el.onclick = ev => {
+      if (ev.target.closest('button, a')) return;
+      const a = APPS[+el.dataset.ai], v = a && a.vacancy;
+      if (!v) return;
+      haptic();
+      if (v.companyOpen && v.clientId) showCompany(v.clientId);
+      else showJob(Object.assign({}, v, { applied: true }));
+    });
   }catch(e){ $('appList').innerHTML = `<div class="msg">${esc(e.message)}</div>`; }
 }
 

@@ -410,8 +410,21 @@ Panel `/arizalar.html`: hamma vakansiyalar bo'yicha bitta quti
 (`GET /api/vacancies/applications/inbox`, tab new/work/done), ko'rilmagan,
 "N kundan beri javobsiz", Qo'ng'iroq/Bog'landim (`POST .../applications/:id/
 seen|contacted`), taklif, ikki bosqichli rad. Yon menyu: Arizalar
-(`appsUnseen`). `test/applications.test.js`. Nomzod tomoni Telegramda HALI
-haqiqiy nomzod bilan sinalmagan.
+(`appsUnseen`). `test/applications.test.js`. Anas nomzod akkauntidan ariza
+berdi — "Arizalarim"da bosqichlar chiqdi (2026-10-22). Xat maydoni Anas
+qarori bilan olib tashlandi (ko'k yoqa uchun ortiqcha). Kartani bosish:
+mijozda rezyume (`wireCardTap`, tugmalar `CARD_SKIP`), nomzodning arizasida
+kompaniya (kontakt ochiq) yoki vakansiya (`72050ee`).
+
+**NOMZODNI USHLAB QOLISH** (2026-10-22, `37b8005`): anketa tugagach nomzod
+"Rahmat" ekranida qolmaydi — 2 s da o'zi `profil.html#jobs` (ariza bergan
+bo'lsa `#apps`); ekranda "Sizga mos N ta ish" (finish javobida `jobs`,
+`matches`, `next` — nomzod kabineti ro'yxati qoidasi bilan bir xil). initData
+sahifalar orasida saqlanadi (telegram-web-app.js sessionStorage). Botdagi
+rahmat va qaytgan nomzodning `/start` xabari — "💼 Ishlarni ko'rish" /
+"👤 Profilim" tugmalari bilan. Yo'q: chala anketa eslatmasi (Render bepul
+cron ishonchsiz — GitHub Actions soatlik vazifa taklif qilingan).
+`test/unit.test.js` endi hamma marshrut faylini yuklaydi (sintaksis xatosi CI'da).
 
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.

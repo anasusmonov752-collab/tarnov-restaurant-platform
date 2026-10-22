@@ -1,148 +1,189 @@
-/* ══ TalentHub dizayn tizimi (2026-10-22) ════════════════════
-   Yagona manba: ranglar, shrift o'lchamlari, burchaklar, soyalar va
-   asosiy komponentlar. Ilgari har sahifa o'z :root nusxasini saqlardi
-   (9 nusxa, bir-biridan farq qila boshlagan edi; --gold aslida ko'k).
+/* ══ TalentHub dizayn tizimi — iOS uslubida (2026-10-22) ═════
+   Yagona manba: ranglar, shrift o'lchamlari, burchaklar, materiallar
+   va asosiy komponentlar. Ilgari har sahifa o'z :root nusxasini saqlardi
+   (9 nusxa, bir-biridan farq qila boshlagan edi).
 
-   Yo'nalish: "salobatli" — tinch, ishonchli, ortiqcha bezaksiz.
-   Iliq qog'oz foni, chuqur siyoh matn, bitta asosiy rang (chuqur ko'k),
-   kredit/pul uchun yagona iliq rang (kahrabo). Barcha matn ranglari
-   oq/fon ustida WCAG AA (4.5:1) dan yuqori.
+   Yo'nalish (Anas, 2026-10-22): iOS'dan — shrift, katta sarlavhalar,
+   guruhlangan ro'yxatlar, kapsula tugmalar, shishasimon materiallar.
+   Lekin:
+   • SF Pro'ni saytga ulab bo'lmaydi (Apple litsenziyasi) — TIZIM shrifti:
+     iPhone/Mac'da SF Pro, Android'da Roboto, Windows'da Segoe UI.
+   • O'zbekistonda ko'pchilik Android — faqat iOS'ga xos imo-ishoralar
+     (chetdan surish va h.k.) ishlatilmaydi, faqat ko'rinish uslubi.
+   • iOS ranglari kichik matnda WCAG AA (4.5:1) dan past (asl ko'k 4.2:1,
+     ikkinchi matn 3.4:1) — Apple'ning "kontrastni oshirish" variantlari
+     olingan: ko'rinishi deyarli bir xil, o'qilishi me'yorda.
 
-   Qorong'i mavzu: <html data-theme="dark"> yoki tizim sozlamasi
-   (prefers-color-scheme). Mini App Telegram mavzusiga moslaydi.
+   Tungi mavzu: <html data-theme="dark">; Mini App Telegram mavzusidan
+   oladi. data-theme-auto — tizim sozlamasiga ergashish.
    ═══════════════════════════════════════════════════════════ */
 
 :root{
-  /* Sirt */
-  --th-bg:        #F6F5F1;   /* iliq qog'oz */
-  --th-surface:   #FFFFFF;
-  --th-surface-2: #FAF9F6;   /* ichki blok, jadval sarlavhasi */
-  --th-line:      #E6E2DA;
-  --th-line-2:    #D6D1C6;
+  /* Fon va sirt — iOS grouped */
+  --th-bg:        #F2F2F7;   /* systemGroupedBackground */
+  --th-surface:   #FFFFFF;   /* hujayra, karta */
+  --th-surface-2: #F7F7FA;   /* ichki blok */
+  --th-fill:      rgba(118,118,128,.12);   /* tertiarySystemFill: qidiruv, segment foni */
+  --th-line:      rgba(60,60,67,.18);      /* separator (0.5px ekvivalent) */
+  --th-line-2:    rgba(60,60,67,.29);
 
-  /* Matn (oq ustida): ink 16.8:1 · ink-2 9.4:1 · muted 5.9:1 */
-  --th-ink:       #121A26;
-  --th-ink-2:     #3A4454;
-  --th-muted:     #5B6576;
+  /* Matn: label 19:1 · secondary 5.4:1 (iOS asl 3.4:1 edi) · tertiary — faqat bezak */
+  --th-ink:       #000000;
+  --th-ink-2:     #3C3C43;
+  --th-muted:     #6C6C70;
+  --th-tertiary:  rgba(60,60,67,.30);
 
-  /* Asosiy rang — chuqur ko'k (oq matn bilan 8.6:1) */
-  --th-brand:     #1F3FA8;
-  --th-brand-2:   #183285;   /* hover/bosilgan */
-  --th-brand-soft:#E9EEFB;   /* fon, tanlangan qator */
+  /* Asosiy — iOS ko'k, kontrastli varianti (oq ustida 5.3:1; asl #007AFF 4.2:1) */
+  --th-brand:     #0066E0;
+  --th-brand-2:   #0052B8;
+  --th-brand-soft:rgba(0,102,224,.10);
+  --th-link:      #0066E0;   /* matn/havola/ikonka ko'k (tungida ochroq) */
 
-  /* Kredit va pul — kahrabo (faqat shu ma'noda ishlatiladi) */
-  --th-amber:     #8A5A0F;   /* matn: 5.8:1 */
-  --th-amber-soft:#FBF1DE;
+  /* Kredit va pul — iOS to'q sariq, kontrastli (faqat shu ma'noda) */
+  --th-amber:     #A05A00;
+  --th-amber-soft:rgba(255,149,0,.14);
 
-  /* Holatlar (matn sifatida oq ustida >= 4.8:1) */
-  --th-ok:        #17703F;   --th-ok-soft:   #E6F3EB;
-  --th-warn:      #8A5A0F;   --th-warn-soft: #FBF1DE;
-  --th-danger:    #A8321F;   --th-danger-soft:#FBEAE6;
+  /* Holatlar — iOS kontrastli tizim ranglari (matn sifatida >= 4.8:1) */
+  --th-ok:        #1F7A35;   --th-ok-soft:    rgba(52,199,89,.14);
+  --th-warn:      #A05A00;   --th-warn-soft:  rgba(255,149,0,.14);
+  --th-danger:    #D70015;   --th-danger-soft:rgba(255,59,48,.12);
 
-  /* Shrift: 6 o'lcham, 3 qalinlik */
-  --th-font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --th-fs-xs: 12px;  --th-fs-sm: 13px;  --th-fs-md: 15px;
-  --th-fs-lg: 17px;  --th-fs-xl: 21px;  --th-fs-2xl: 28px;
-  --th-fw-r: 400;  --th-fw-m: 560;  --th-fw-b: 680;
+  /* Shrift — tizim (SF Pro / Roboto / Segoe) */
+  --th-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI Variable Text",
+             "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* iOS Dynamic Type o'lchamlari (Large) */
+  --th-fs-caption: 12px;     /* Caption 1 */
+  --th-fs-foot:    13px;     /* Footnote */
+  --th-fs-sub:     15px;     /* Subheadline */
+  --th-fs-body:    17px;     /* Body, Headline */
+  --th-fs-title3:  20px;
+  --th-fs-title2:  22px;
+  --th-fs-title1:  28px;
+  --th-fs-large:   34px;     /* Large Title */
+  --th-fw-r: 400; --th-fw-m: 500; --th-fw-sb: 600; --th-fw-b: 700;
 
-  /* Burchak: 3 ta */
-  --th-r-sm: 8px;  --th-r-md: 12px;  --th-r-lg: 16px;
+  /* Burchaklar — iOS 26 (konsentrik, yumaloqroq) */
+  --th-r-sm: 10px;           /* maydon, kichik tugma */
+  --th-r-md: 14px;           /* hujayra guruhi */
+  --th-r-lg: 22px;           /* karta, varaq */
+  --th-r-pill: 999px;        /* kapsula tugma, belgi */
 
-  /* Masofa: 4px qadam */
+  /* Masofa — 4px qadam; iOS chekka 16/20 */
   --th-s1: 4px; --th-s2: 8px; --th-s3: 12px; --th-s4: 16px; --th-s5: 20px; --th-s6: 24px; --th-s8: 32px;
 
-  /* Soya: yumshoq, bitta yorug'lik manbai */
-  --th-shadow-1: 0 1px 2px rgba(18,26,38,.05), 0 1px 1px rgba(18,26,38,.03);
-  --th-shadow-2: 0 6px 20px rgba(18,26,38,.08), 0 1px 3px rgba(18,26,38,.05);
-  --th-focus: 0 0 0 3px rgba(31,63,168,.28);
+  /* Materiallar va soya */
+  --th-glass:      rgba(255,255,255,.72);    /* navigatsiya, tab bar (blur bilan) */
+  --th-glass-line: rgba(255,255,255,.6);
+  --th-blur:       saturate(180%) blur(20px);
+  --th-shadow-1:   0 1px 2px rgba(0,0,0,.04);
+  --th-shadow-2:   0 10px 30px rgba(0,0,0,.10), 0 2px 6px rgba(0,0,0,.05);
+  --th-focus:      0 0 0 4px rgba(0,102,224,.30);
 
-  --th-tap: 44px;            /* eng kichik bosiladigan o'lcham */
+  --th-tap: 44px;            /* iOS HIG: eng kichik bosiladigan o'lcham */
   color-scheme: light;
 }
 
-/* Qorong'i mavzu */
-:root[data-theme="dark"]{
-  --th-bg:#0E1117; --th-surface:#161A22; --th-surface-2:#1B2029; --th-line:#262C37; --th-line-2:#333B48;
-  --th-ink:#E8ECF2; --th-ink-2:#C2CAD6; --th-muted:#9AA4B3;
-  --th-brand:#8FB0FF; --th-brand-2:#AFC6FF; --th-brand-soft:#1C2742;
-  --th-amber:#E7B566; --th-amber-soft:#2E2414;
-  --th-ok:#6FCF97; --th-ok-soft:#14261C; --th-warn:#E7B566; --th-warn-soft:#2E2414;
-  --th-danger:#F2907D; --th-danger-soft:#2E1714;
-  --th-shadow-1: 0 1px 2px rgba(0,0,0,.4);
-  --th-shadow-2: 0 8px 24px rgba(0,0,0,.45);
-  --th-focus: 0 0 0 3px rgba(143,176,255,.35);
+/* Tungi mavzu — iOS dark */
+:root[data-theme="dark"], [data-theme="dark"]{
+  --th-bg:#000000; --th-surface:#1C1C1E; --th-surface-2:#2C2C2E; --th-fill:rgba(118,118,128,.24);
+  --th-line:rgba(84,84,88,.6); --th-line-2:rgba(84,84,88,.9);
+  --th-ink:#FFFFFF; --th-ink-2:#EBEBF5; --th-muted:#AEAEB2; --th-tertiary:rgba(235,235,245,.3);
+  --th-brand:#0A84FF; --th-brand-2:#409CFF; --th-brand-soft:rgba(10,132,255,.18); --th-link:#409CFF;
+  --th-amber:#FF9F0A; --th-amber-soft:rgba(255,159,10,.18);
+  --th-ok:#30D158; --th-ok-soft:rgba(48,209,88,.18); --th-warn:#FF9F0A; --th-warn-soft:rgba(255,159,10,.18);
+  --th-danger:#FF453A; --th-danger-soft:rgba(255,69,58,.18);
+  --th-glass: rgba(30,30,32,.72); --th-glass-line: rgba(255,255,255,.08);
+  --th-shadow-1: none; --th-shadow-2: 0 10px 30px rgba(0,0,0,.6);
+  --th-focus: 0 0 0 4px rgba(10,132,255,.4);
   color-scheme: dark;
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]):where([data-theme-auto]){
-    --th-bg:#0E1117; --th-surface:#161A22; --th-surface-2:#1B2029; --th-line:#262C37; --th-line-2:#333B48;
-    --th-ink:#E8ECF2; --th-ink-2:#C2CAD6; --th-muted:#9AA4B3;
-    --th-brand:#8FB0FF; --th-brand-2:#AFC6FF; --th-brand-soft:#1C2742;
-    --th-amber:#E7B566; --th-amber-soft:#2E2414;
-    --th-ok:#6FCF97; --th-ok-soft:#14261C; --th-warn:#E7B566; --th-warn-soft:#2E2414;
-    --th-danger:#F2907D; --th-danger-soft:#2E1714;
-    color-scheme: dark;
-  }
 }
 
 /* ── Asos ── */
 .th, .th *{ box-sizing:border-box; }
-.th{ font-family:var(--th-font); color:var(--th-ink); background:var(--th-bg); font-size:var(--th-fs-md);
-     line-height:1.5; -webkit-font-smoothing:antialiased; }
-.th :focus-visible{ outline:none; box-shadow:var(--th-focus); border-radius:var(--th-r-sm); }
+.th{ font-family:var(--th-font); color:var(--th-ink); background:var(--th-bg); font-size:var(--th-fs-body);
+     line-height:1.35; letter-spacing:-.01em; -webkit-font-smoothing:antialiased; }
+.th :focus-visible{ outline:none; box-shadow:var(--th-focus); }
 
-/* ── Tugmalar ── */
-.th-btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:40px; padding:0 16px;
-  border-radius:var(--th-r-sm); border:1px solid var(--th-line-2); background:var(--th-surface); color:var(--th-ink);
-  font:var(--th-fw-m) var(--th-fs-sm)/1 var(--th-font); cursor:pointer; transition:background .15s, border-color .15s; }
-.th-btn:hover{ background:var(--th-surface-2); }
-.th-btn:disabled{ opacity:.5; cursor:not-allowed; }
-.th-btn-p{ background:var(--th-brand); border-color:var(--th-brand); color:#fff; }
-.th-btn-p:hover{ background:var(--th-brand-2); border-color:var(--th-brand-2); }
-:root[data-theme="dark"] .th-btn-p{ color:#0E1117; }
-.th-btn-ghost{ border-color:transparent; background:transparent; color:var(--th-ink-2); }
-.th-btn-danger{ color:var(--th-danger); border-color:color-mix(in srgb, var(--th-danger) 35%, transparent); }
-.th-btn-lg{ min-height:var(--th-tap); padding:0 20px; font-size:var(--th-fs-md); border-radius:var(--th-r-md); }
-.th-icon-btn{ width:40px; height:40px; display:inline-grid; place-items:center; border-radius:var(--th-r-sm);
-  border:1px solid transparent; background:transparent; color:var(--th-ink-2); cursor:pointer; }
-.th-icon-btn:hover{ background:var(--th-surface-2); border-color:var(--th-line); }
+/* Sarlavhalar — iOS Large Title va Title'lar */
+.th-large{ font:var(--th-fw-b) var(--th-fs-large)/1.2 var(--th-font); letter-spacing:.012em; margin:0; }
+.th-title2{ font:var(--th-fw-b) var(--th-fs-title2)/1.27 var(--th-font); margin:0; }
+.th-headline{ font:var(--th-fw-sb) var(--th-fs-body)/1.3 var(--th-font); }
+.th-foot{ font-size:var(--th-fs-foot); color:var(--th-muted); line-height:1.38; }
+.th-section{ font:var(--th-fw-r) var(--th-fs-foot)/1.3 var(--th-font); text-transform:uppercase; letter-spacing:.02em;
+             color:var(--th-muted); padding:0 16px 7px; }
 
-/* ── Kartalar, belgilar ── */
-.th-card{ background:var(--th-surface); border:1px solid var(--th-line); border-radius:var(--th-r-lg); box-shadow:var(--th-shadow-1); }
-.th-pill{ display:inline-flex; align-items:center; gap:6px; height:24px; padding:0 10px; border-radius:999px;
-  font:var(--th-fw-m) var(--th-fs-xs)/1 var(--th-font); background:var(--th-surface-2); color:var(--th-ink-2); white-space:nowrap; }
+/* ── Tugmalar: kapsula (iOS 26) ── */
+.th-btn{ display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:var(--th-tap); padding:0 18px;
+  border-radius:var(--th-r-pill); border:0; background:var(--th-fill); color:var(--th-link);
+  font:var(--th-fw-sb) var(--th-fs-body)/1 var(--th-font); cursor:pointer; white-space:nowrap;
+  transition:opacity .15s, transform .1s; -webkit-tap-highlight-color:transparent; }
+.th-btn:active{ transform:scale(.97); opacity:.85; }
+.th-btn:disabled{ opacity:.4; cursor:not-allowed; }
+.th-btn-p{ background:var(--th-brand); color:#fff; }
+.th-btn-plain{ background:transparent; padding:0 8px; }
+.th-btn-danger{ color:var(--th-danger); }
+.th-btn-sm{ min-height:34px; padding:0 14px; font-size:var(--th-fs-sub); }
+
+/* ── Guruhlangan ro'yxat (inset grouped) ── */
+.th-group{ background:var(--th-surface); border-radius:var(--th-r-md); overflow:hidden; }
+.th-row{ display:flex; align-items:center; gap:12px; min-height:var(--th-tap); padding:11px 16px; position:relative; }
+.th-row + .th-row::before{ content:''; position:absolute; top:0; left:16px; right:0; height:1px; background:var(--th-line); transform:scaleY(.5); transform-origin:top; }
+.th-row.has-ic + .th-row.has-ic::before{ left:60px; }
+.th-row .ic{ width:30px; height:30px; border-radius:8px; display:grid; place-items:center; color:#fff; flex:none; }
+.th-row .t{ flex:1; min-width:0; } .th-row .t b{ font-weight:var(--th-fw-r); display:block; }
+.th-row .t small{ display:block; font-size:var(--th-fs-foot); color:var(--th-muted); margin-top:2px; }
+.th-row .v{ color:var(--th-muted); font-size:var(--th-fs-body); }
+.th-row .chev{ color:var(--th-tertiary); flex:none; }
+
+/* ── Karta, belgi, segment ── */
+.th-card{ background:var(--th-surface); border-radius:var(--th-r-lg); box-shadow:var(--th-shadow-1); }
+.th-pill{ display:inline-flex; align-items:center; gap:5px; height:24px; padding:0 10px; border-radius:var(--th-r-pill);
+  font:var(--th-fw-m) var(--th-fs-foot)/1 var(--th-font); background:var(--th-fill); color:var(--th-ink-2); white-space:nowrap; }
 .th-pill.ok{ background:var(--th-ok-soft); color:var(--th-ok); }
 .th-pill.warn{ background:var(--th-warn-soft); color:var(--th-warn); }
 .th-pill.danger{ background:var(--th-danger-soft); color:var(--th-danger); }
-.th-pill.brand{ background:var(--th-brand-soft); color:var(--th-brand); }
+.th-pill.brand{ background:var(--th-brand-soft); color:var(--th-link); }
 .th-pill.amber{ background:var(--th-amber-soft); color:var(--th-amber); }
+.th-seg{ display:inline-flex; padding:2px; border-radius:9px; background:var(--th-fill); }
+.th-seg button{ border:0; background:transparent; min-height:28px; padding:0 14px; border-radius:7px;
+  font:var(--th-fw-m) var(--th-fs-foot)/1 var(--th-font); color:var(--th-ink); cursor:pointer; }
+.th-seg button.on{ background:var(--th-surface); box-shadow:0 3px 8px rgba(0,0,0,.12), 0 1px 1px rgba(0,0,0,.04); font-weight:var(--th-fw-sb); }
 
 /* ── Maydonlar ── */
-.th-label{ display:block; font:var(--th-fw-m) var(--th-fs-xs)/1.3 var(--th-font); color:var(--th-muted); margin-bottom:6px; }
-.th-input{ width:100%; min-height:40px; padding:8px 12px; border:1px solid var(--th-line-2); border-radius:var(--th-r-sm);
-  background:var(--th-surface); color:var(--th-ink); font:var(--th-fw-r) var(--th-fs-md)/1.4 var(--th-font); }
-.th-input:focus{ outline:none; border-color:var(--th-brand); box-shadow:var(--th-focus); }
+.th-label{ display:block; font-size:var(--th-fs-foot); color:var(--th-muted); margin:0 0 6px 16px; }
+.th-input{ width:100%; min-height:var(--th-tap); padding:10px 16px; border:0; border-radius:var(--th-r-sm);
+  background:var(--th-surface); color:var(--th-ink); font:var(--th-fw-r) var(--th-fs-body)/1.3 var(--th-font); }
+.th-input:focus{ outline:none; box-shadow:var(--th-focus); }
+.th-search{ display:flex; align-items:center; gap:6px; height:36px; padding:0 10px; border-radius:10px; background:var(--th-fill); color:var(--th-muted); }
+.th-search input{ border:0; background:transparent; outline:none; flex:1; font:var(--th-fw-r) var(--th-fs-body)/1 var(--th-font); color:var(--th-ink); }
 
-/* ── Panel qobig'i: chap menyu + kontent ── */
-.th-shell{ display:grid; grid-template-columns:248px minmax(0,1fr); min-height:100vh; }
-.th-side{ background:var(--th-surface); border-right:1px solid var(--th-line); padding:20px 12px; display:flex; flex-direction:column; gap:4px;
-  position:sticky; top:0; height:100vh; }
-.th-side .th-logo{ padding:4px 10px 18px; }
-.th-nav-g{ font:var(--th-fw-m) 11px/1 var(--th-font); letter-spacing:.06em; text-transform:uppercase; color:var(--th-muted); padding:16px 12px 8px; }
-.th-nav-a{ display:flex; align-items:center; gap:12px; min-height:40px; padding:0 12px; border-radius:var(--th-r-sm);
-  color:var(--th-ink-2); text-decoration:none; font:var(--th-fw-m) var(--th-fs-sm)/1 var(--th-font); }
-.th-nav-a:hover{ background:var(--th-surface-2); color:var(--th-ink); }
-.th-nav-a.on{ background:var(--th-brand-soft); color:var(--th-brand); }
-.th-nav-a .n{ margin-left:auto; min-width:20px; height:20px; padding:0 6px; border-radius:999px; background:var(--th-brand); color:#fff;
-  font-size:11px; display:inline-grid; place-items:center; }
-.th-main{ padding:24px 32px 48px; min-width:0; }
-.th-top{ display:flex; align-items:center; gap:16px; margin-bottom:24px; }
-.th-h1{ font:var(--th-fw-b) var(--th-fs-2xl)/1.15 var(--th-font); letter-spacing:-.01em; margin:0; }
-.th-sub{ color:var(--th-muted); font-size:var(--th-fs-sm); margin-top:4px; }
+/* ── Shishasimon material (navigatsiya, tab bar) ── */
+.th-glass{ background:var(--th-glass); -webkit-backdrop-filter:var(--th-blur); backdrop-filter:var(--th-blur);
+  border:1px solid var(--th-glass-line); }
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .th-glass{ background:var(--th-surface); }
+}
+
+/* ── Panel qobig'i (iPadOS/macOS: yon menyu + kontent) ── */
+.th-shell{ display:grid; grid-template-columns:260px minmax(0,1fr); min-height:100vh; }
+.th-side{ padding:14px 10px; display:flex; flex-direction:column; gap:2px; position:sticky; top:0; height:100vh;
+  background:var(--th-glass); -webkit-backdrop-filter:var(--th-blur); backdrop-filter:var(--th-blur); border-right:1px solid var(--th-line); }
+.th-side .th-logo{ padding:6px 10px 16px; }
+.th-nav-g{ font:var(--th-fw-sb) var(--th-fs-caption)/1 var(--th-font); color:var(--th-muted); padding:16px 12px 6px; }
+.th-nav-a{ display:flex; align-items:center; gap:10px; min-height:36px; padding:0 10px; border-radius:10px;
+  color:var(--th-ink); text-decoration:none; font:var(--th-fw-r) var(--th-fs-sub)/1 var(--th-font); cursor:pointer; }
+.th-nav-a svg{ width:20px; height:20px; color:var(--th-link); flex:none; }
+.th-nav-a:hover{ background:var(--th-fill); }
+.th-nav-a.on{ background:var(--th-brand); color:#fff; font-weight:var(--th-fw-m); }
+.th-nav-a.on svg{ color:#fff; }
+.th-nav-a .n{ margin-left:auto; font-size:var(--th-fs-foot); color:var(--th-muted); }
+.th-nav-a.on .n{ color:rgba(255,255,255,.85); }
+.th-main{ padding:28px 40px 56px; min-width:0; }
+.th-top{ display:flex; align-items:flex-end; gap:16px; margin-bottom:22px; }
 
 @media (max-width: 900px){
   .th-shell{ grid-template-columns:1fr; }
-  .th-side{ position:fixed; inset:0 auto 0 0; width:268px; z-index:60; transform:translateX(-100%); transition:transform .2s; box-shadow:var(--th-shadow-2); }
+  .th-side{ position:fixed; inset:0 auto 0 0; width:280px; z-index:60; transform:translateX(-100%); transition:transform .25s; box-shadow:var(--th-shadow-2); }
   .th-side.open{ transform:none; }
   .th-main{ padding:16px 16px 40px; }
 }

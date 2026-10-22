@@ -1,6 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" role="img" aria-label="TalentHub">
-  <rect width="40" height="40" rx="11" fill="#1F3FA8"/>
-  <path d="M10.5 14h15.5" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
-  <path d="M18.5 14v15.5" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
-  <circle cx="29.5" cy="14" r="3.8" fill="#F2C46D"/>
+  <defs>
+    <linearGradient id="thg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2F8BFF"/>
+      <stop offset="1" stop-color="#0050C8"/>
+    </linearGradient>
+    <linearGradient id="thh" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity=".28"/>
+      <stop offset=".5" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="40" height="40" rx="9" fill="url(#thg)"/>
+  <rect width="40" height="40" rx="9" fill="url(#thh)"/>
+  <path d="M10.5 14h15.5" stroke="#fff" stroke-width="4.2" stroke-linecap="round"/>
+  <path d="M18.25 14v15.5" stroke="#fff" stroke-width="4.2" stroke-linecap="round"/>
+  <circle cx="29.5" cy="14" r="3.9" fill="#FFC53D"/>
 </svg>

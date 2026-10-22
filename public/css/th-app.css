@@ -119,3 +119,12 @@ body.th-app, body.th-app button, body.th-app input, body.th-app select, body.th-
   .th-app table.th-stack td[data-label=""]::before{ display:none; }
   .th-app table.th-stack td:first-child{ font-weight:600; font-size:15px; }
 }
+
+/* Telefonda sahifa sarlavha qatori (Vakansiyalar, Mijozlar: .head) — tugmalar keyingi qatorga o'tadi */
+@media (max-width: 760px){
+  .th-app .head{ flex-wrap:wrap; }
+  .th-app .head h2{ flex:1 1 100%; }
+  .th-app .head .sp{ display:none; }
+  .th-app .wrap{ padding:14px 14px 32px !important; }
+  .th-app .topbar{ flex-wrap:wrap; }
+}

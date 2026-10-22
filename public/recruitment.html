@@ -123,6 +123,7 @@ button,input,select{font-family:inherit}
 .tag.ai{background:rgba(37,99,235,.1);color:var(--gold-d)}
 /* Anketadan kelgan: ko'rilmagan va javobsiz (services/contactLog) */
 .tag.nw{background:var(--gold);color:#fff}
+a.btn{text-decoration:none;display:inline-flex;align-items:center}
 .tag.wt{background:rgba(217,142,43,.14);color:#9A5B0C}
 .rc.unseen{border-color:var(--gold);box-shadow:inset 3px 0 0 var(--gold)}
 .mx{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
@@ -408,7 +409,7 @@ function card(c){
   const unseen = ank && !c.seenAt && (c.status || 'new') === 'new';
   const wait = waitingFor(c);
   const rows = ank ? `
-          <div class="rc-row"><div class="rc-k">Ishga chiqish</div><div class="rc-v">${esc(START_L[c.startWhen] || '—')}</div></div>
+          ${c.startWhen ? `<div class="rc-row"><div class="rc-k">Ishga chiqish</div><div class="rc-v">${esc(START_L[c.startWhen] || c.startWhen)}</div></div>` : ''}
           <div class="rc-row"><div class="rc-k">Tajriba</div><div class="rc-v">${esc(exp)}${c.experienceSummary?`<span class="pt">•</span><span style="color:var(--muted)">${esc(c.experienceSummary.slice(0,110))}${c.experienceSummary.length>110?'…':''}</span>`:''}</div></div>
           <div class="rc-row"><div class="rc-k">Qayerda yashaydi</div><div class="rc-v">${esc(c.location||'—')}${c.salaryExpectation?`<span class="pt">•</span>${esc(c.salaryExpectation)}`:''}</div></div>
           ${langs?`<div class="rc-row"><div class="rc-k">Tillar</div><div class="rc-v">${langs}</div></div>`:''}

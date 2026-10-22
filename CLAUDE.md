@@ -346,6 +346,22 @@ prod'dagi 4 anketaning lavozim varianti ham Anas roziligi bilan
 o'zgartirildi (boshqa hech narsa o'zgarmagani solishtirib tekshirildi).
 Variant matnlari BAZADA — roles.js o'zgarsa eski anketalar o'zgarmaydi.
 
+**NOMZODLAR MANBA BO'YICHA IKKI BO'LIM — JONLI TEKSHIRILDI** (2026-10-22,
+`daf58c4`..`4a8c3ba`): baza BITTA (dublikat, qidiruv, tanlov hamma bo'yicha),
+bo'lim — `recruitment.html?src=anketa` ("Anketadan") va usiz ("hh.uz bazasi",
+`source $ne anketa`); kanban ham `?src=`. Anketadan: tepada javob kutmoqda /
+ko'rilmagan / shu hafta / boshladi→yubordi (`GET /api/recruitment/sections`),
+kartada ko'rilmagan (ko'k), "N kundan beri javobsiz", ishga chiqish, tasdiqlangan
+telefon, kanal, "Qo'ng'iroq". Qoida YAGONA — `services/contactLog.js`:
+`seenAt` (kartani ochish, `POST /:id/seen`), `firstContactAt` (bosqich
+o'zgarishi, guruh amali, Telegram xabari — panel va admin reply,
+`POST /:id/contacted`); faqat birinchisi yoziladi; bosqichi 'new' dan boshqa —
+ko'rilgan/bog'lanilgan. Yon menyu: `anketaUnseen`, `baseWeek` (/api/agency/today).
+`test/sections.test.js`. Jonli: sanoqlar bazaga mos, Aziza "ko'rildi" 1→0.
+KESH: CSS/JS endi `Cache-Control: public, no-cache` (304 bilan) — ilgari 1 soat
+eski menyu ko'rinardi; panel sahifalarida `?v=2`. CI yiqilgan test tafsilotini
+(expected/actual/qator) annotatsiyada beradi.
+
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
 O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda

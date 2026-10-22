@@ -393,6 +393,26 @@ Vazifalar/Talablar/Ish sharoiti/Afzalliklar. 33 ta import vakansiya qayta
 yozildi (maosh 16 tasida — qolganlarida e'londa raqam yo'q edi). Mijoz
 Mini App formasi yangi maydonlarni hali bermaydi.
 
+**ARIZA OQIMI — QAYTA QURILDI, JONLI** (2026-10-22, `5406931`..`2fcc5be`):
+Anas: "bosdim, hech narsa bo'lmadi". Sabab: kabinet xatoni `alert()` bilan
+ko'rsatardi — Telegram ichida chiqmaydi, tugma jimgina qaytardi (bazada 33
+yangi vakansiyaga 0 ariza). Eng ehtimolli xato — initData 24 soatdan eskirgan
+(guard endi `code:'expired'` qaytaradi). profil.html'da `alert()` QOLMADI —
+xato oyna ichida (`fail()`), har biriga yechim tugmasi. Ariza oynasi: profil
+tekshiruvi (ism+telefon majburiy), ixtiyoriy xat (`message`), muvaffaqiyat
+ekrani 3 qadam bilan. Apply xato kodlari: no_name, no_phone, bad_phone,
+closed, duplicate. HAYOT YO'LI — `services/appLife.stepsFor` (saqlanmaydi,
+yig'iladi): Application (yuborildi, ko'rib chiqildi — agencySeenAt/seenAt,
+HR bog'landi — contactedAt, taklif/rad) + Shortlist elementi (suhbat sanasi,
+natija). Nomzodga Telegram: taklif qilindi / rad (yumshoq) — panel ham, mijoz
+Mini App ham (`appLife.notify`; 'open' yo'lida reveal() o'zi yozadi).
+Panel `/arizalar.html`: hamma vakansiyalar bo'yicha bitta quti
+(`GET /api/vacancies/applications/inbox`, tab new/work/done), ko'rilmagan,
+"N kundan beri javobsiz", Qo'ng'iroq/Bog'landim (`POST .../applications/:id/
+seen|contacted`), taklif, ikki bosqichli rad. Yon menyu: Arizalar
+(`appsUnseen`). `test/applications.test.js`. Nomzod tomoni Telegramda HALI
+haqiqiy nomzod bilan sinalmagan.
+
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
 O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda

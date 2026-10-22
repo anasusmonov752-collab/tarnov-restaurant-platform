@@ -187,3 +187,6 @@
   .th-side.open{ transform:none; }
   .th-main{ padding:16px 16px 40px; }
 }
+
+/* Tungi segment: tanlangan tugma iOS'dagi kabi ochroq kulrang */
+:root[data-theme="dark"] .th-seg button.on, [data-theme="dark"] .th-seg button.on{ background:#636366; box-shadow:none; }

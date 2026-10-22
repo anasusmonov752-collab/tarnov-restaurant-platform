@@ -128,3 +128,11 @@ test('vakansiya shabloni: maosh davri, afzalliklar, bandlar va ishonch belgisi',
   assert.equal(vac.forCandidate(v, { status: 'active' }).trust, 'client');
   assert.equal(vac.forCandidate(Object.assign({}, v, { verifiedAt: new Date() }), { status: 'pending' }).trust, 'verified');
 });
+
+test('hamma marshrut fayllari yuklanadi (sintaksis va require xatosi CI\'da ushlansin)', () => {
+  const fs = require('fs'), path = require('path');
+  const dir = path.join(__dirname, '../src/routes');
+  for (const f of fs.readdirSync(dir).filter(x => x.endsWith('.js'))) {
+    assert.doesNotThrow(() => require(path.join(dir, f)), f);
+  }
+});

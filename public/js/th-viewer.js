@@ -6,8 +6,9 @@
 // Kichik rasm (hh rezyumesidan ajratilgan) cheksiz cho'zilmaydi: ekranda
 // ko'pi bilan asl o'lchamidan 2 baravar — aks holda xira/pikselli bo'lardi.
 //
-// Ulash: <script src="/js/th-viewer.js"></script> — sahifa rasmlarini o'zi
+// Ulash: sahifaga shu faylni (defer bilan) qo'shish kifoya — rasmlarni o'zi
 // ushlaydi: img[data-zoom] yoki src'da /photo yoki /logo bo'lgan rasm.
+// (Izohda yopuvchi script tegini yozmang — ichki joylashtirilsa yopib qo'yadi.)
 // Telegram BackButton zanjiri bo'lgan sahifa (miniapp.html) o'z
 // onTgBack'ida thViewer.consumeBack() ni chaqiradi va
 // window.thViewerHostBack = true qo'yadi.

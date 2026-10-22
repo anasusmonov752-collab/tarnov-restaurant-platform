@@ -73,7 +73,11 @@ function convertToMp4(inputPath, outputPath, info) {
 router.get('/info', guard, asyncHandler(async (req, res) => {
   const r = await Restaurant.findOne({ id: req.user.restaurantId }, '-adminPassword');
   if (!r) return res.status(404).json({ error: 'Restoran topilmadi' });
-  res.json(r);
+  // recruiting — panelda "Rekruting" menyusi ko'rinadimi (middleware/agency:
+  // agentlik akkaunti yoki hali agentlik yo'q — o'tish rejimi)
+  const out = r.toObject();
+  out.recruiting = await require('../middleware/agency').canRecruit(r.id);
+  res.json(out);
 }));
 
 // ---- MENU ----

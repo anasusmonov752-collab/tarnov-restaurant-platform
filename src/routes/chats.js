@@ -18,7 +18,8 @@ const Candidate = require('../models/Candidate');
 const chat = require('../services/chat');
 
 const router = express.Router();
-const guard = auth(['restaurant']);
+// Faqat TalentHub agentligi (middleware/agency — o'tish rejimi bilan)
+const guard = require('../middleware/agency').agencyAuth;
 
 // ── Barcha suhbatlar ──
 router.get('/', guard, asyncHandler(async (req, res) => {

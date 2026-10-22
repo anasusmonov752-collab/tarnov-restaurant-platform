@@ -9,6 +9,9 @@ const Restaurant = require('../models/Restaurant');
 
 const router = express.Router();
 
+// TalentHub agentligining bosh sahifasi (login va qayta kirishda)
+const AGENCY_HOME = '/recruitment.html';
+
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
@@ -35,12 +38,15 @@ router.post('/login', loginLimiter, asyncHandler(async (req, res) => {
     if (!restaurant) return res.status(401).json({ error: 'Noto\'g\'ri email yoki parol' });
     const valid = await bcrypt.compare(password, restaurant.adminPassword);
     if (!valid) return res.status(401).json({ error: 'Noto\'g\'ri email yoki parol' });
+    const kind = restaurant.kind || 'restaurant';
     const token = jwt.sign(
-      { role: 'restaurant', restaurantId: restaurant.id, restaurantName: restaurant.name },
+      { role: 'restaurant', restaurantId: restaurant.id, restaurantName: restaurant.name, kind },
       JWT_SECRET, { expiresIn: '24h' }
     );
     res.cookie('token', token, { httpOnly: true, maxAge: 86400000, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' });
-    return res.json({ success: true, role: 'restaurant', redirect: '/restaurant-admin.html' });
+    // Agentlik (TalentHub) — o'z paneliga; restoran — trening paneliga
+    return res.json({ success: true, role: 'restaurant', kind,
+      redirect: kind === 'agency' ? AGENCY_HOME : '/restaurant-admin.html' });
   }
 
   if (loginType === 'waiter') {

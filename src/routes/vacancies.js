@@ -16,7 +16,8 @@ const Candidate = require('../models/Candidate');
 const vac = require('../services/vacancy');
 
 const router = express.Router();
-const guard = auth(['restaurant']);
+// Faqat TalentHub agentligi (middleware/agency — o'tish rejimi bilan)
+const guard = require('../middleware/agency').agencyAuth;
 
 // ── Ro'yxat ──
 router.get('/', guard, asyncHandler(async (req, res) => {

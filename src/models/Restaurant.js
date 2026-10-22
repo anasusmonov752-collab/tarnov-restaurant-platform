@@ -394,6 +394,9 @@ const TelegramSchema = new mongoose.Schema({
 const RestaurantSchema = new mongoose.Schema({
   id: { type: String, default: () => uuidv4(), unique: true },
   name: { type: String, required: true, trim: true },
+  // 'agency' — TalentHub rekruting agentligi (middleware/agency.js): login
+  // TalentHub paneliga olib boradi, rekruting API'lari faqat unga ochiq
+  kind: { type: String, enum: ['restaurant', 'agency'], default: 'restaurant' },
   location: { type: String, default: '', trim: true },
   active: { type: Boolean, default: true },
   plan: { type: String, default: 'basic', enum: ['basic', 'pro', 'enterprise'] },

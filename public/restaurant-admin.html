@@ -480,6 +480,8 @@ async function init() {
 
   const info = await api('/api/restaurant/info');
   S.info = info || {};
+  // Agentlik akkaunti trening paneliga emas — o'z paneliga
+  if (S.info.kind === 'agency') { location.href = '/recruitment.html'; return; }
   const name = S.info.adminName || S.info.name || 'Admin';
   const rest = S.info.name || 'Restoran';
   document.getElementById('sbName').textContent = name;
@@ -514,7 +516,9 @@ async function loadAll() {
 
 // ════════════ NAV ════════════
 function buildNav() {
-  document.getElementById('sbNav').innerHTML = NAV.map(g=>`
+  // Rekruting — faqat TalentHub agentligi akkauntida (server: info.recruiting)
+  const groups = NAV.filter(g => g.g !== 'Rekruting' || S.info.recruiting);
+  document.getElementById('sbNav').innerHTML = groups.map(g=>`
     <div class="sb-group">
       <div class="sb-group-label">${g.g}</div>
       ${g.items.map(it=>`

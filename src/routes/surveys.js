@@ -16,7 +16,8 @@ const survey = require('../services/survey');
 const { ROLES, isValidRole } = require('../data/roles');
 
 const router = express.Router();
-const guard = auth(['restaurant']);
+// Faqat TalentHub agentligi (middleware/agency — o'tish rejimi bilan)
+const guard = require('../middleware/agency').agencyAuth;
 
 const view = s => ({
   id: s.id, code: s.code, title: s.title, role: s.role, active: s.active, isDefault: !!s.isDefault,

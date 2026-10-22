@@ -32,7 +32,8 @@ const surveySvc = require('../services/survey');
 const vac = require('../services/vacancy');
 
 const router = express.Router();
-const guard = auth(['restaurant']);
+// Faqat TalentHub agentligi (middleware/agency — o'tish rejimi bilan)
+const guard = require('../middleware/agency').agencyAuth;
 
 // ── Mijoz tili ──
 // O'zi tanlagan (Client.lang) bo'lsa — o'sha; aks holda Telegram tili.

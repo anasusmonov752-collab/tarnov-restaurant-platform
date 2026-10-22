@@ -14,7 +14,8 @@ const relay = require('../services/botRelay');
 const credits = require('../services/credits');
 
 const router = express.Router();
-const guard = auth(['restaurant']);
+// Faqat TalentHub agentligi (middleware/agency — o'tish rejimi bilan)
+const guard = require('../middleware/agency').agencyAuth;
 
 const VALID_STATUS = ['pending', 'active', 'blocked'];
 

@@ -183,6 +183,22 @@
           </div>
           <div id="rest-table-dashboard"></div>
         </div>
+
+        <!-- TalentHub'ni ajratish (2026-10-22) -->
+        <div data-reveal="up" style="background:#fff; border:1px solid rgba(27,58,45,.1); border-radius:12px; padding:24px 28px; margin-top:18px;">
+          <div style="display:flex; align-items:center; gap:13px; margin-bottom:8px;"><span style="width:28px; height:1px; background:#C9A84C;"></span><span style="font-size:23px; font-weight:600;">TalentHub'ni ajratish</span></div>
+          <div style="font-size:13px; color:rgba(27,58,45,.6); line-height:1.6; max-width:760px;">
+            Rekruting ma'lumoti (nomzodlar, mijozlar, kreditlar, vakansiyalar, tanlovlar, suhbatlar, anketalar, bot sozlamasi)
+            restoran akkauntidan agentlik akkauntiga ko'chadi. Restoranning menyu, ofitsiant va test ma'lumotiga tegilmaydi.
+            Avval yuqoridagi <b>+ Yangi restoran</b> bilan agentlik akkauntini o'z email va parolingiz bilan yarating
+            (nomi: TalentHub), keyin shu yerda tanlang.</div>
+          <div style="display:flex; gap:14px; flex-wrap:wrap; margin-top:18px; align-items:flex-end;">
+            <div style="flex:1; min-width:220px;"><label class="field-label">Qayerdan (restoran)</label><select id="sp-from" class="field-input"></select></div>
+            <div style="flex:1; min-width:220px;"><label class="field-label">Qayerga (agentlik)</label><select id="sp-to" class="field-input"></select></div>
+            <button class="btn-gold" onclick="splitPlan()" style="background:#1B3A2D; color:#F5F0E8; border:none; font-size:12px; font-weight:800; letter-spacing:.06em; padding:13px 18px; border-radius:6px; text-transform:uppercase;">Rejani ko'rish</button>
+          </div>
+          <div id="sp-out" style="margin-top:16px;"></div>
+        </div>
       </div>
 
       <!-- RESTAURANTS -->
@@ -212,7 +228,7 @@
     <div><label class="field-label">Admin paroli <span id="pass-hint" style="color:rgba(27,58,45,.4); text-transform:none; letter-spacing:0; font-weight:400;">(yangilash uchun to'ldiring)</span></label><input id="r-password" type="password" class="field-input" placeholder="••••••••"></div>
     <div style="display:flex; gap:14px;">
       <div style="flex:1;"><label class="field-label">Tarif</label>
-        <select id="r-plan" class="field-input"><option value="basic">Basic</option><option value="premium">Premium</option><option value="enterprise">Enterprise</option></select>
+        <select id="r-plan" class="field-input"><option value="basic">Basic</option><option value="pro">Pro</option><option value="enterprise">Enterprise</option></select>
       </div>
       <div style="flex:1;"><label class="field-label">Oylik narx</label><input id="r-price" type="number" class="field-input" placeholder="500000"></div>
     </div>
@@ -238,6 +254,7 @@ async function loadDashboard() {
     dashData = await api('/api/super/dashboard');
     renderStats();
     renderRestaurants();
+    fillSplit();
   } catch (e) {
     toast(e.message, 'error');
   }
@@ -304,6 +321,48 @@ function filterRestaurants(q){
 }
 
 function escapeHtml(s){ return String(s==null?'':s).replace(/[&<>]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]; }); }
+
+// ── TalentHub'ni ajratish ──
+// Qayerdan: agentlik bo'lmagan akkauntlar; qayerga: hammasi (odatda yangi
+// yaratilgan "TalentHub"). Avval reja (hech narsa yozilmaydi), keyin tasdiq.
+const SPLIT_L = { Candidate:'Nomzodlar', BotMessage:'Bot yozishmalari', Client:'Mijozlar', CreditLedger:'Kredit jurnali',
+  Shortlist:'Tanlovlar', Vacancy:'Vakansiyalar', Application:'Arizalar', SearchSession:'Qidiruvlar',
+  Conversation:'Bot suhbatlari (AI)', ChatThread:'Suhbatlar', ChatMessage:'Suhbat xabarlari', Survey:'Anketalar', SurveyResponse:'Anketa javoblari' };
+function fillSplit(){
+  const rs = (dashData && dashData.restaurants) || [];
+  const opt = r => '<option value="'+escapeAttr(r.id)+'">'+escapeHtml(r.name)+(r.kind==='agency'?' (agentlik)':'')+' — '+escapeHtml(r.adminEmail||'')+'</option>';
+  document.getElementById('sp-from').innerHTML = rs.filter(r => r.kind !== 'agency').map(opt).join('');
+  document.getElementById('sp-to').innerHTML = '<option value="">— tanlang —</option>' + rs.map(opt).join('');
+}
+async function splitPlan(){
+  const fromId = document.getElementById('sp-from').value, toId = document.getElementById('sp-to').value;
+  const out = document.getElementById('sp-out');
+  if (!fromId || !toId) return toast('Ikkala akkauntni tanlang', 'error');
+  out.innerHTML = '<div style="color:rgba(27,58,45,.5); font-size:13px;">Sanalmoqda…</div>';
+  let d;
+  try { d = await api('/api/super/agency-split', { method:'POST', body: JSON.stringify({ fromId, toId, apply:false }) }); }
+  catch(e){ out.innerHTML = ''; return toast(e.message, 'error'); }
+  const total = d.plan.reduce((s, x) => s + x.from, 0);
+  out.innerHTML = '<div style="font-size:13.5px; margin-bottom:10px;"><b>'+escapeHtml(d.from.name)+'</b> → <b>'+escapeHtml(d.to.name)+'</b>: jami '+total+' ta yozuv ko\'chadi'
+    + (d.telegram ? ', bot admin chati ham' : '') + '</div>'
+    + '<div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:6px 18px; font-size:13px;">'
+    + d.plan.map(x => '<div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(27,58,45,.07); padding:5px 0;"><span>'+(SPLIT_L[x.model]||x.model)+'</span><b>'+x.from+(x.to?' <span style="color:rgba(27,58,45,.45); font-weight:400;">(+'+x.to+' bor)</span>':'')+'</b></div>').join('')
+    + '</div>'
+    + (d.to.kind !== 'agency' ? '<div style="font-size:12.5px; color:#9a7d2f; margin-top:10px;">"'+escapeHtml(d.to.name)+'" agentlik akkauntiga aylanadi: login TalentHub paneliga olib boradi, "'+escapeHtml(d.from.name)+'" panelida Rekruting bo\'limi yo\'qoladi.</div>' : '')
+    + (total ? '<button onclick="splitApply()" style="margin-top:14px; background:#C0492F; color:#fff; border:none; font-size:12px; font-weight:800; letter-spacing:.06em; padding:13px 18px; border-radius:6px; text-transform:uppercase; cursor:pointer;">Ko\'chirish</button>'
+             : '<div style="font-size:13px; margin-top:10px;">Ko\'chiradigan narsa yo\'q.</div>');
+}
+async function splitApply(){
+  const fromId = document.getElementById('sp-from').value, toId = document.getElementById('sp-to').value;
+  if (!confirm('Rekruting ma\'lumoti ko\'chiriladi. Avval zaxira nusxa olinganiga ishonch hosil qiling. Davom etamizmi?')) return;
+  try {
+    const d = await api('/api/super/agency-split', { method:'POST', body: JSON.stringify({ fromId, toId, apply:true }) });
+    const n = Object.values(d.moved || {}).reduce((s, x) => s + x, 0);
+    toast('Ko\'chirildi: ' + n + ' ta yozuv', 'success');
+    await loadDashboard();
+    document.getElementById('sp-out').innerHTML = '<div style="font-size:13.5px; color:#2E7D5B;">Tayyor: '+n+' ta yozuv ko\'chdi. Endi TalentHub akkaunti bilan kiring.</div>';
+  } catch(e){ toast(e.message, 'error'); }
+}
 function escapeAttr(s){ return String(s==null?'':s).replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
 
 function showPage(page) {

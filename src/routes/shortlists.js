@@ -17,7 +17,8 @@ const pipeline = require('../data/pipeline');
 const { publicBase } = require('../utils/publicBase');
 
 const router = express.Router();
-const guard = auth(['restaurant']);
+// Faqat TalentHub agentligi (middleware/agency — o'tish rejimi bilan)
+const guard = require('../middleware/agency').agencyAuth;
 
 // Holat va sabab ro'yxatlari — frontend ularni nusxalab yurmasin
 router.get('/meta', guard, (req, res) => res.json({

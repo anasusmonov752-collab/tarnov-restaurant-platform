@@ -261,7 +261,7 @@
   // Auto-redirect if already logged in
   api('/api/auth/me').then(function(u){
     if (u.role === 'superadmin') location.href = '/super-admin.html';
-    else if (u.role === 'restaurant') location.href = '/restaurant-admin.html';
+    else if (u.role === 'restaurant') location.href = u.kind === 'agency' ? '/recruitment.html' : '/restaurant-admin.html';
     else if (u.role === 'waiter') location.href = '/waiter.html';
   }).catch(function(){});
 })();

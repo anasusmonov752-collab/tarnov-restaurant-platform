@@ -24,7 +24,8 @@ const { mergeParsed } = require('../utils/mergeParsed');
 const { phoneKey, emailKey, textHash } = require('../utils/candidateKeys');
 
 const router = express.Router();
-const guard = auth(['restaurant']);
+// Faqat TalentHub agentligi (middleware/agency — o'tish rejimi bilan)
+const guard = require('../middleware/agency').agencyAuth;
 
 const MAX_RAW = 20000;                 // saqlanadigan xom matn chegarasi
 const MAX_FILE_STORE = 5 * 1024 * 1024; // 5 MB dan katta faylni base64 saqlmaymiz

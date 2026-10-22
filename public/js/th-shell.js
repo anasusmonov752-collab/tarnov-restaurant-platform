@@ -3,9 +3,9 @@
 // boshqa tugmalar qatori va "← Admin" bor edi). Sahifaning o'z mazmuni
 // .th-page ichiga ko'chadi; eski topbar'dagi bo'limlararo havolalar
 // yashiriladi — ular endi menyuda.
-// Ulash: <head> ichida
-//   <link rel="stylesheet" href="/css/th.css"><link rel="stylesheet" href="/css/th-app.css">
-//   <script src="/js/th-shell.js" defer></script>
+// Ulash: <head> ichida /css/th.css va /css/th-app.css stillari hamda
+// shu fayl (defer bilan). Izohda yopuvchi script tegini yozmang — sahifaga
+// ichki joylashtirilsa skriptni yopib qo'yadi.
 (function () {
   const I = {
     sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>',

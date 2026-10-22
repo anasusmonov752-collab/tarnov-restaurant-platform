@@ -16,6 +16,7 @@
     form: '<rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M12 11h4M12 16h4M8 11h.01M8 16h.01"/>',
     out: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/>',
     menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+    send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
     inbox: '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>'
   };
   const svg = n => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
@@ -28,7 +29,8 @@
         n: 'anketaUnseen', nTitle: 'ko\'rilmagan anketalar', hot: true },
       { href: '/recruitment.html', also: ['/recruitment-kanban.html'], l: 'hh.uz bazasi', ic: 'users', n: 'baseWeek', nTitle: 'shu hafta qo\'shilgan' },
       { href: '/mijozlar.html', l: 'Mijozlar va tanlovlar', ic: 'building', n: 'waitingShortlists', nTitle: 'sizni kutayotgan tanlovlar' },
-      { href: '/vakansiyalar.html', l: 'Vakansiyalar', ic: 'briefcase', n: 'appsNew', nTitle: 'ko\'rilmagan arizalar' },
+      { href: '/arizalar.html', l: 'Arizalar', ic: 'send', n: 'appsUnseen', nTitle: 'ko\'rilmagan arizalar', hot: true },
+      { href: '/vakansiyalar.html', l: 'Vakansiyalar', ic: 'briefcase' },
       { href: '/suhbatlar.html', l: 'Suhbatlar', ic: 'chat', n: 'unreadChats', nTitle: 'o\'qilmagan xabarlar' }
     ] },
     { g: 'Sozlash', items: [{ href: '/anketalar.html', l: 'Anketalar', ic: 'form' }] }

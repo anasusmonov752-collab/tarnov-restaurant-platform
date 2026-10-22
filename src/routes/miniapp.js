@@ -36,6 +36,7 @@ const agent = require('../services/agent');
 const chat = require('../services/chat');
 const ChatThread = require('../models/ChatThread');
 const { publicBase } = require('../utils/publicBase');
+const appLife = require('../services/appLife');
 const I18N = require('../../public/js/th-i18n');
 
 const router = express.Router();
@@ -876,6 +877,10 @@ router.post('/applications/:id/:action', clientGuard, asyncHandler(async (req, r
     a.reason = String((req.body || {}).reason || '').slice(0, 60);
     a.decidedAt = new Date();
     await a.save();
+    // Nomzodga yumshoq xabar (appLife) — "Arizalarim"da ham ko'rinadi
+    const rv = await Vacancy.findOne({ agencyId, id: a.vacancyId }, 'title').lean();
+    const rc = await Candidate.findOne({ restaurantId: agencyId, id: a.candidateId }, 'id tgChatId tgState').lean();
+    await appLife.notify(rc, 'rejected', { vacTitle: rv && rv.title, appBase: publicBase(req) });
     return res.json({ ok: true, state: a.state });
   }
 
@@ -951,6 +956,13 @@ router.post('/applications/:id/:action', clientGuard, asyncHandler(async (req, r
 
     return res.json({ ok: true, state: a.state, shortlistId: sl.id, candidateId: a.candidateId,
       balance: r.balance, already: !!r.already });
+  }
+
+  // Nomzodga: arizasi ish beruvchiga o'tdi ('open' yo'lida reveal() o'zi
+  // restoran nomi bilan xabar beradi — bu yerda faqat 'pick')
+  {
+    const pc = await Candidate.findOne({ restaurantId: agencyId, id: a.candidateId }, 'id tgChatId tgState').lean();
+    await appLife.notify(pc, 'proposed', { vacTitle: v && v.title, appBase: publicBase(req) });
   }
 
   // Sizga to'liq kontakt bilan xabar

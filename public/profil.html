@@ -154,6 +154,40 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .vd-hk{font-size:14.5px;line-height:1.5;margin-top:12px;padding:11px 13px;border-radius:12px;background:var(--bg)}
 .vd-ul{margin:0;padding-left:18px;font-size:14.5px;line-height:1.6}
 .vd-ul li{margin:2px 0}
+/* Ariza oynasi: tekshiruv, xat, xato, muvaffaqiyat */
+.ap-v{padding:12px 14px;border-radius:12px;background:var(--bg);margin-top:4px}
+.ap-v b{font-size:15px;display:block}
+.ap-v span{font-size:13px;color:var(--muted)}
+.ck-l{margin-top:4px}
+.ck-r{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+.ck-r:last-child{border-bottom:none}
+.ck-r i{width:22px;height:22px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:13px;font-weight:700}
+.ck-r i.y{background:rgba(46,158,91,.14);color:var(--ok)}
+.ck-r i.n{background:rgba(194,91,76,.12);color:var(--danger)}
+.ck-r i.o{background:var(--bg);color:var(--muted)}
+.ck-r .v{margin-left:auto;color:var(--muted);font-size:13.5px;text-align:right;max-width:55%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ap-ta{width:100%;min-height:84px;border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;font-size:15px;resize:vertical;background:var(--card);color:var(--ink)}
+.ap-cn{text-align:right;font-size:12px;color:var(--muted);margin-top:4px}
+.ap-er{margin-top:12px;padding:12px 14px;border-radius:12px;background:rgba(194,91,76,.1);color:var(--danger);font-size:14px;line-height:1.5}
+.ap-er button{margin-top:9px;border:0;background:none;color:var(--blue);font:inherit;font-weight:600;padding:0;cursor:pointer}
+.ap-ok{text-align:center;padding:18px 6px 6px}
+.ap-ok .ic{width:64px;height:64px;border-radius:50%;margin:0 auto 12px;background:rgba(46,158,91,.14);color:var(--ok);display:flex;align-items:center;justify-content:center;font-size:32px}
+.ap-ok h3{font-size:19px;margin-bottom:6px}
+.ap-ok p{font-size:14.5px;color:var(--muted);line-height:1.55}
+.nx{text-align:left;margin:16px 0 4px}
+.nx div{display:flex;gap:10px;padding:8px 0;font-size:14.5px;line-height:1.45}
+.nx b{width:22px;height:22px;border-radius:50%;flex:none;background:var(--blue);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center}
+.btn2{width:100%;padding:13px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--blue);font:inherit;font-weight:600;font-size:15px;margin-top:9px;cursor:pointer}
+/* Arizalarim: bosqichlar yo'li */
+.stp{margin-top:10px;padding-left:4px}
+.stp div{position:relative;padding:0 0 9px 20px;font-size:13.5px;line-height:1.35}
+.stp div::before{content:'';position:absolute;left:3px;top:4px;width:8px;height:8px;border-radius:50%;background:var(--blue)}
+.stp div::after{content:'';position:absolute;left:6px;top:13px;bottom:-1px;width:2px;background:var(--line)}
+.stp div:last-child::after{display:none}
+.stp div.cur{font-weight:600}
+.stp div.no::before{background:var(--danger)}
+.stp div.ok::before{background:var(--ok)}
+.stp small{color:var(--muted);font-weight:400;margin-left:6px}
 .co-hd{display:flex;gap:13px;align-items:center;padding:6px 0 4px}
 .co-av{width:56px;height:56px;border-radius:14px;flex:none;background:var(--soft-blue);color:var(--blue);
   display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px}
@@ -371,7 +405,8 @@ async function api(path, opt){
   }, opt));
   PT = r.headers.get('X-Photo-Token') || PT;
   const d = await r.json().catch(()=>({}));
-  if(!r.ok) throw new Error(d.error || 'Xato');
+  // status va code — ariza oynasi xatoni tushunarli qilib ko'rsatadi
+  if(!r.ok){ const e = new Error(d.error || 'Xato'); e.status = r.status; e.code = d.code || ''; throw e; }
   return d;
 }
 
@@ -543,7 +578,7 @@ function openSheet(key){
     document.querySelectorAll('.opt').forEach(b => b.onclick = async () => {
       haptic();
       try { await save({ jobStatus: b.dataset.s }); closeSheet(); }
-      catch(e){ alert(e.message); }
+      catch(e){ $('shB').insertAdjacentHTML('beforeend', fail(e.status === 401 ? 'Sessiya eskirgan — ilovani yopib, qayta oching.' : e.message)); }
     });
     return;
   }
@@ -562,7 +597,12 @@ function openSheet(key){
       if ($(id)) payload[id] = $(id).value.split(',').map(s=>s.trim()).filter(Boolean);
     }
     try { await save(payload); closeSheet(); }
-    catch(e){ b.disabled = false; b.textContent = 'Qayta urinish'; alert(e.message); }
+    catch(e){
+      // alert() Telegram ichida chiqmasligi mumkin — xato oynaning o'zida
+      b.disabled = false; b.textContent = 'Qayta urinish';
+      const old = $('shB').querySelector('.ap-er'); if (old) old.remove();
+      b.insertAdjacentHTML('beforebegin', fail(e.status === 401 ? 'Sessiya eskirgan — ilovani yopib, qayta oching.' : e.message));
+    }
   };
 }
 function closeSheet(){ $('sheet').classList.remove('on'); $('shB').innerHTML = ''; }
@@ -647,20 +687,93 @@ function vacancyHtml(v){
 
 function showSheet(title, html){ $('shT').textContent = title; $('shB').innerHTML = html; $('sheet').classList.add('on'); }
 
-async function applyTo(id){
-  await api(`/api/cand/vacancies/${id}/apply`, { method:'POST', body: JSON.stringify({}) });
-  try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
-}
-
 let JOBS = [];
 function showJob(v){
   showSheet('Vakansiya', vacancyHtml(v) +
     `<button class="btn" id="vdAp" ${v.applied ? 'disabled' : ''}>${v.applied ? 'Ariza berilgan' : 'Ariza berish'}</button>`);
-  $('vdAp').onclick = async () => {
-    $('vdAp').disabled = true; $('vdAp').textContent = 'Yuborilmoqda…';
-    try { await applyTo(v.id); v.applied = true; $('vdAp').textContent = 'Ariza berilgan'; loadJobs(); }
-    catch(e){ alert(e.message); $('vdAp').disabled = false; $('vdAp').textContent = 'Ariza berish'; }
-  };
+  $('vdAp').onclick = () => openApply(v);
+}
+
+// ── ARIZA OYNASI ──
+// Ilgari bitta bosish bilan ketardi, xato bo'lsa alert() — Telegram ichida
+// u ko'pincha chiqmaydi, tugma jimgina qaytib qolardi (2026-10-22: "bosdim,
+// hech narsa bo'lmadi"). Endi: nima yuborilayotgani, profil tekshiruvi,
+// ixtiyoriy xat, xato SHU oynada va tushunarli, muvaffaqiyat — keyingi qadamlar bilan.
+const fail = (msg, btn) => `<div class="ap-er">${esc(msg)}${btn ? `<br><button id="apFix">${esc(btn)}</button>` : ''}</div>`;
+function openApply(v){
+  const p = P || {};
+  const row = (ok, label, val, opt) => `<div class="ck-r"><i class="${ok ? 'y' : opt ? 'o' : 'n'}">${ok ? '✓' : opt ? '–' : '!'}</i>${label}
+    <span class="v">${esc(val || (opt ? 'ixtiyoriy' : 'yo\'q'))}</span></div>`;
+  const hasName = !!String(p.fullName || '').trim(), hasPhone = !!String(p.phone || '').trim();
+  const ready = hasName && hasPhone;
+  showSheet('Ariza', `
+    <div class="ap-v"><b>${esc(v.title)}</b><span>${esc([v.venue, placeOf(v)].filter(Boolean).join(' · '))}</span>
+      ${v.salaryText ? `<div style="font-weight:600;color:var(--ok);margin-top:4px">${salLine(v)}</div>` : ''}</div>
+    <div class="vd-sec">Ish beruvchi ko'radi</div>
+    <div class="ck-l">
+      ${row(hasName, 'Ism', p.fullName)}
+      ${row(hasPhone, 'Telefon', p.phone)}
+      ${row(!!(p.desiredPosition || p.role), 'Lavozim', p.desiredPosition, true)}
+      ${row(!!p.experienceYears, 'Tajriba', p.experienceYears ? p.experienceYears + ' yil' : '', true)}
+      ${row(!!p.hasPhoto, 'Rasm', p.hasPhoto ? 'bor' : '', true)}
+    </div>
+    ${ready ? '' : fail('Ariza uchun ism va telefon kerak — HR sizga shu raqam orqali qo\'ng\'iroq qiladi.', 'Profilni to\'ldirish')}
+    <div class="vd-sec">Nega aynan siz? <span style="text-transform:none;letter-spacing:0">(ixtiyoriy)</span></div>
+    <textarea class="ap-ta" id="apMsg" maxlength="500" placeholder="Masalan: 2 yil ofitsiant bo'lib ishlaganman, rus tilini bilaman, ertaga chiqa olaman."></textarea>
+    <div class="ap-cn" id="apCn">0 / 500</div>
+    <div id="apEr"></div>
+    <button class="btn" id="apGo" style="margin-top:12px" ${ready ? '' : 'disabled'}>Arizani yuborish</button>`);
+  $('apMsg').oninput = () => { $('apCn').textContent = $('apMsg').value.length + ' / 500'; };
+  if ($('apFix')) $('apFix').onclick = () => { closeSheet(); pickTab('tP'); };
+  $('apGo').onclick = () => sendApply(v);
+}
+
+async function sendApply(v){
+  const b = $('apGo');
+  b.disabled = true; b.textContent = 'Yuborilmoqda…'; $('apEr').innerHTML = '';
+  try {
+    await api(`/api/cand/vacancies/${encodeURIComponent(v.id)}/apply`, { method:'POST', body: JSON.stringify({ message: $('apMsg').value.trim() }) });
+    try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
+    v.applied = true;
+    applied(v);
+    loadJobs();
+  } catch(e){
+    try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('error'); } catch(_){}
+    b.disabled = false; b.textContent = 'Arizani yuborish';
+    let html, fix = null;
+    if (e.code === 'expired' || e.status === 401) {
+      html = fail('Sessiya eskirgan: ilova uzoq vaqt ochiq turdi. Ilovani yopib, botdan qayta oching — ariza matni saqlanmaydi.', 'Ilovani yopish');
+      fix = () => { try { TG.close(); } catch(_){} };
+    } else if (['no_name', 'no_phone', 'bad_phone'].includes(e.code)) {
+      html = fail(e.message, 'Profilni to\'ldirish'); fix = () => { closeSheet(); pickTab('tP'); };
+    } else if (e.code === 'duplicate') {
+      v.applied = true; html = fail(e.message, 'Arizalarimni ko\'rish'); fix = () => { closeSheet(); pickTab('tA'); };
+    } else if (e.code === 'closed') {
+      html = fail(e.message, 'Boshqa vakansiyalar'); fix = () => { closeSheet(); loadJobs(); };
+    } else if (!e.status) {
+      html = fail('Internet aloqasi yo\'q yoki server javob bermadi. Qayta urinib ko\'ring.');
+    } else {
+      html = fail(e.message || 'Xato yuz berdi. Qayta urinib ko\'ring.');
+    }
+    $('apEr').innerHTML = html;
+    if (fix && $('apFix')) $('apFix').onclick = fix;
+  }
+}
+
+function applied(v){
+  showSheet('Ariza yuborildi', `<div class="ap-ok">
+    <div class="ic">✓</div>
+    <h3>Ariza yuborildi</h3>
+    <p>${esc(v.title)}${v.venue ? ' · ' + esc(v.venue) : ''}</p>
+    <div class="nx">
+      <div><b>1</b>TalentHub HR arizangizni ko'rib chiqadi va 24 soat ichida qo'ng'iroq qiladi.</div>
+      <div><b>2</b>Mos kelsangiz, sizni ish beruvchiga taklif qilamiz — ish joyi nomini shunda aytamiz.</div>
+      <div><b>3</b>Har bosqich "Arizalarim"da va Telegram xabarida ko'rinadi.</div>
+    </div>
+    <button class="btn" id="okA">Arizalarim</button>
+    <button class="btn2" id="okJ">Boshqa vakansiyalar</button></div>`);
+  $('okA').onclick = () => { closeSheet(); pickTab('tA'); };
+  $('okJ').onclick = () => closeSheet();
 }
 
 // ── Kompaniya kartasi (suhbatdan) — faqat kontakt ochilgan bo'lsa ──
@@ -728,17 +841,11 @@ async function loadJobs(){
 
     // Kartani bosish — to'liq sahifa. Tugma bosilsa karta ochilmasin.
     document.querySelectorAll('[data-vi]').forEach(el => el.onclick = () => showJob(JOBS[+el.dataset.vi]));
-    document.querySelectorAll('[data-ap]').forEach(b => b.onclick = async ev => {
+    // "Ariza berish" — darhol yubormaydi, ariza oynasini ochadi (tekshiruv + xat)
+    document.querySelectorAll('[data-ap]').forEach(b => b.onclick = ev => {
       ev.stopPropagation();
-      b.disabled = true; b.textContent = 'Yuborilmoqda…';
-      try {
-        await applyTo(b.dataset.ap);
-        b.textContent = 'Ariza berilgan';
-        const j = JOBS.find(x => x.id === b.dataset.ap); if (j) j.applied = true;
-      } catch(e){
-        alert(e.message);
-        b.disabled = false; b.textContent = 'Ariza berish';
-      }
+      const j = JOBS.find(x => x.id === b.dataset.ap);
+      if (j) openApply(j);
     });
   }catch(e){ $('jobList').innerHTML = `<div class="msg">${esc(e.message)}</div>`; }
 }
@@ -760,9 +867,13 @@ async function loadApps(){
         ${v ? `<div class="pl">${esc(v.place)}</div>` : ''}
         ${v && v.salaryText ? `<div class="sl">${esc(v.salaryText)}</div>` : ''}
         <div class="row">
-          <span class="tg2 ${v && v.companyOpen ? 'ok' : (AST[a.state] || 'wait')}">${esc(a.stateLabel)}</span>
+          <span class="tg2 ${v && v.companyOpen ? 'ok' : ({ ok:'ok', no:'no', go:'fresh', wait:'wait' }[a.tone] || AST[a.state] || 'wait')}">${esc(a.stateLabel)}</span>
           <span style="font-size:12.5px;color:var(--muted)">${dmy(a.createdAt)}</span>
         </div>
+        ${(a.steps || []).length ? `<div class="stp">${a.steps.map((s, i) =>
+          `<div class="${i === a.steps.length - 1 ? 'cur' : ''} ${s.key === 'hired' ? 'ok' : s.key === 'closed' ? 'no' : ''}">${esc(s.label)}${s.at ? `<small>${dmy(s.at)}</small>` : ''}</div>`).join('')}
+          ${a.final ? '' : '<div style="color:var(--muted)">Keyingi qadam haqida xabar beramiz</div>'}</div>` : ''}
+        ${a.message ? `<div class="ln" style="margin-top:6px">Xatingiz: «${esc(a.message)}»</div>` : ''}
         ${v && v.companyOpen ? `<div class="more" data-co="${esc(v.clientId)}" style="cursor:pointer">Kompaniya haqida ›</div>` : ''}
       </div>`;
     }).join('');
@@ -923,6 +1034,9 @@ $('cvIn').onkeydown = e => { if (e.key === 'Enter') sendMsg(); };
 // shu holda darhol Xabarlar tabini ochamiz.
 // Element tekshiriladi: INIT bo'lmasa tablar yo'qoladi.
 if (location.hash === '#chat') setTimeout(() => { if ($('tM')) pickTab('tM'); }, 0);
+// Ariza xabaridagi tugmalar: #apps — Arizalarim, #jobs — Ish o'rinlari (services/appLife)
+if (location.hash === '#apps') setTimeout(() => { if ($('tA')) pickTab('tA'); }, 0);
+if (location.hash === '#jobs') setTimeout(() => { if ($('tJ')) pickTab('tJ'); }, 0);
 // ── Tablar ──
 const TABS = [['tP','app'], ['tJ','vJ'], ['tA','vA'], ['tM','vM']];
 function pickTab(id){

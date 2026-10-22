@@ -30,6 +30,7 @@ const botRelay = require('../services/botRelay');
 const applications = require('../services/applications');
 const { publicBase } = require('../utils/publicBase');
 const { phoneKey } = require('../utils/candidateKeys');
+const appLife = require('../services/appLife');
 
 const router = express.Router();
 
@@ -44,7 +45,10 @@ router.use(rateLimit({
 const guard = asyncHandler(async (req, res, next) => {
   const raw = req.get('X-Telegram-Init-Data') || (req.body && req.body.initData) || '';
   const v = initData.verify(raw);
-  if (!v.ok) return res.status(401).json({ error: 'Avtorizatsiya: ' + v.error });
+  // expired — Mini App bir kundan ortiq ochiq turgan (initData 24 soat amal
+  // qiladi). Kabinet "ilovani yopib qayta oching" deydi — ilgari xato
+  // ko'rinmay, tugma jimgina qaytib qolardi (2026-10-22, ariza berilmadi).
+  if (!v.ok) return res.status(401).json({ error: 'Avtorizatsiya: ' + v.error, code: v.error === 'imzo eskirgan' ? 'expired' : 'auth' });
 
   res.set('X-Photo-Token', photoToken.sign(v.user.id));   // rasm havolasi uchun (utils/photoToken)
   const cand = await Candidate.findOne({ tgChatId: String(v.user.id) });
@@ -267,38 +271,35 @@ router.post('/vacancies/:id/apply', guard, asyncHandler(async (req, res) => {
   const v = await Vacancy.findOne({
     agencyId: c.restaurantId, id: req.params.id, status: 'open', listed: { $ne: false }
   }).lean();
-  if (!v) return res.status(404).json({ error: 'Vakansiya topilmadi yoki yopilgan' });
+  // code — kabinet xatoni tushunarli qilib ko'rsatadi va kerakli joyga yo'naltiradi
+  if (!v) return res.status(404).json({ error: 'Bu vakansiya yopilgan yoki o\'chirilgan', code: 'closed' });
 
-  // Telefon bo'lmasa ariza befoyda — mijoz tanlasa ham bog'lana olmaymiz.
+  // Ism va telefonsiz ariza befoyda — HR kimga qo'ng'iroq qilishini bilmaydi.
   // Format ham tekshiriladi: arizadan mijoz kontaktni o'zi ochadi (kredit
   // bilan) — bitta harf yozilgan "telefon" uchun pul ketmasin (audit #20).
+  if (!String(c.fullName || '').trim()) {
+    return res.status(400).json({ error: 'Avval profilingizga ismingizni yozing', code: 'no_name' });
+  }
   if (!c.phone) {
-    return res.status(400).json({ error: 'Avval profilingizga telefon raqamini kiriting' });
+    return res.status(400).json({ error: 'Avval profilingizga telefon raqamini kiriting', code: 'no_phone' });
   }
   if (!applyReveal.validPhone(c.phone)) {
-    return res.status(400).json({ error: 'Telefon raqamingizni to\'g\'ri kiriting: +998 90 123 45 67' });
+    return res.status(400).json({ error: 'Telefon raqamingizni to\'g\'ri kiriting: +998 90 123 45 67', code: 'bad_phone' });
   }
 
   try {
     // Ariza, holat va ikki xabar — yagona yo'l (anketa ham shundan o'tadi)
     const a = await applications.submit({ cand: c, vacancy: v,
       message: (req.body || {}).message, appBase: publicBase(req), via: 'kabinet' });
-    res.json({ ok: true, id: a.id });
+    res.json({ ok: true, id: a.id, stageLabel: appLife.STEP_LABEL.sent });
   } catch (e) {
     // unique indeks: takroriy ariza
-    if (e.code === 11000) return res.status(409).json({ error: 'Bu vakansiyaga allaqachon ariza bergansiz' });
+    if (e.code === 11000) return res.status(409).json({ error: 'Bu vakansiyaga allaqachon ariza bergansiz', code: 'duplicate' });
     throw e;
   }
 }));
 
-// ── Arizalarim ──
-const APP_LABEL = {
-  new:         'Ko\'rib chiqilmoqda',
-  seen:        'Ko\'rildi',
-  shortlisted: 'Tanlandi — HR bog\'lanadi',
-  rejected:    'Rad etildi'
-};
-
+// ── Arizalarim ── (bosqichlar — services/appLife)
 router.get('/applications', guard, asyncHandler(async (req, res) => {
   const c = req.cand;
   const rows = await Application.find({ agencyId: c.restaurantId, candidateId: c.id })
@@ -315,15 +316,25 @@ router.get('/applications', guard, asyncHandler(async (req, res) => {
     openClientIds(c)
   ]);
   const clById = Object.fromEntries(clients.map(x => [x.id, x]));
+  // Tanlovga o'tganlarining bosqichi (suhbat, natija) — Shortlist elementidan
+  const sls = await Shortlist.find({ agencyId: c.restaurantId, id: { $in: rows.map(r => r.shortlistId).filter(Boolean) } }, 'id items').lean();
+  const slById = Object.fromEntries(sls.map(s => [s.id, s]));
 
   res.json(rows.map(a => {
     const v = vById[a.vacancyId];
     const vv = v ? vacFor(v, clById[v.clientId], openSet) : null;
+    const sl = slById[a.shortlistId];
+    const item = sl ? (sl.items || []).find(i => i.candidateId === c.id) : null;
+    const life = appLife.stepsFor(a, item);
     return {
       id: a.id,
       state: a.state,
-      // Kontakt ochilgan bo'lsa — "Tanlandi — HR bog'lanadi" emas, aniq holat
-      stateLabel: vv && vv.companyOpen ? 'Kontakt ochildi — ish beruvchi bog\'lanadi' : (APP_LABEL[a.state] || a.state),
+      // Kontakt ochilgan bo'lsa — aniq holat; aks holda bosqichlar yo'li
+      stateLabel: vv && vv.companyOpen && !life.final ? 'Kontakt ochildi — ish beruvchi bog\'lanadi' : life.stageLabel,
+      tone: life.tone,
+      steps: life.steps,
+      final: life.final,
+      message: a.message,
       createdAt: a.createdAt,
       vacancy: vv
     };

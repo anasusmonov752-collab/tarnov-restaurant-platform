@@ -14,6 +14,8 @@ const Shortlist = require('../models/Shortlist');
 const Application = require('../models/Application');
 const Candidate = require('../models/Candidate');
 const vac = require('../services/vacancy');
+const appLife = require('../services/appLife');
+const { publicBase } = require('../utils/publicBase');
 
 const router = express.Router();
 // Faqat TalentHub agentligi (middleware/agency — o'tish rejimi bilan)
@@ -64,6 +66,69 @@ router.get('/', guard, asyncHandler(async (req, res) => {
     apps: (appMap[v.id] || {}).total || 0,
     appsNew: (appMap[v.id] || {}).fresh || 0
   })));
+}));
+
+// ══ ARIZALAR — HAMMA VAKANSIYALAR BO'YICHA BITTA QUTI ══
+// (/:id dan OLDIN — aks holda 'applications' id deb o'qiladi)
+// Ilgari arizani ko'rish uchun har vakansiyani alohida ochish kerak edi
+// va agentlikka faqat Telegram xabari kelardi. Bu yerda: kim, qaysi
+// vakansiyaga, qachon, ko'rildimi, bog'lanildimi, qaysi bosqichda.
+// tab: new — hali bog'lanilmagan, work — jarayonda, done — yakunlangan
+const DAY = 864e5;
+router.get('/applications/inbox', guard, asyncHandler(async (req, res) => {
+  const agencyId = req.user.restaurantId;
+  const apps = await Application.find({ agencyId }).sort({ createdAt: -1 }).limit(300).lean();
+  const [cands, vs, sls] = await Promise.all([
+    Candidate.find({ restaurantId: agencyId, id: { $in: [...new Set(apps.map(a => a.candidateId))] } },
+      'id publicCode fullName phone role desiredPosition experienceYears age location source channel phoneVerifiedAt hasPhoto tgState updatedAt').lean(),
+    Vacancy.find({ agencyId, id: { $in: [...new Set(apps.map(a => a.vacancyId))] } }, 'id title clientId venue role').lean(),
+    Shortlist.find({ agencyId, id: { $in: apps.map(a => a.shortlistId).filter(Boolean) } }, 'id items').lean()
+  ]);
+  const clients = await Client.find({ agencyId, id: { $in: [...new Set(vs.map(v => v.clientId))] } }, 'id name status').lean();
+  const C = Object.fromEntries(cands.map(x => [x.id, x])), V = Object.fromEntries(vs.map(x => [x.id, x]));
+  const K = Object.fromEntries(clients.map(x => [x.id, x])), S = Object.fromEntries(sls.map(x => [x.id, x]));
+
+  const now = Date.now();
+  const items = apps.map(a => {
+    const sl = S[a.shortlistId];
+    const item = sl ? (sl.items || []).find(i => i.candidateId === a.candidateId) : null;
+    const life = appLife.stepsFor(a, item);
+    const v = V[a.vacancyId] || {};
+    const decided = a.state === 'shortlisted' || a.state === 'rejected';
+    const tab = life.final ? 'done' : (!a.contactedAt && !decided ? 'new' : 'work');
+    return {
+      id: a.id, vacancyId: a.vacancyId, state: a.state, message: a.message,
+      createdAt: a.createdAt, contactedAt: a.contactedAt, agencySeenAt: a.agencySeenAt,
+      unseen: !a.agencySeenAt && !decided,
+      // Javobsiz: hali bog'lanilmagan va qaror yo'q — 24 soatdan oshsa sariq
+      waitingMs: tab === 'new' ? now - new Date(a.createdAt).getTime() : 0,
+      tab, stage: life.stage, stageLabel: life.stageLabel, tone: life.tone,
+      vacancy: { id: v.id, title: v.title || 'Vakansiya o\'chirilgan', venue: v.venue || '' },
+      client: { id: v.clientId, name: (K[v.clientId] || {}).name || '', status: (K[v.clientId] || {}).status || '' },
+      candidate: C[a.candidateId] || null
+    };
+  });
+  const count = t => items.filter(x => x.tab === t).length;
+  res.json({
+    items,
+    counts: { new: count('new'), work: count('work'), done: count('done'), all: items.length,
+              unseen: items.filter(x => x.unseen).length,
+              waitingOld: items.filter(x => x.waitingMs > DAY).length }
+  });
+}));
+
+// Ko'rildi (kartani ochganda) va bog'lanildi ("Qo'ng'iroq qildim") —
+// faqat birinchi marta yoziladi. Nomzod "HR ko'rib chiqdi / bog'landi"ni
+// sana bilan ko'radi (appLife.stepsFor).
+router.post('/applications/:appId/:mark(seen|contacted)', guard, asyncHandler(async (req, res) => {
+  const agencyId = req.user.restaurantId;
+  const field = req.params.mark === 'seen' ? 'agencySeenAt' : 'contactedAt';
+  const set = { [field]: new Date() };
+  const a = await Application.findOneAndUpdate({ agencyId, id: req.params.appId, [field]: null }, { $set: set }, { new: true });
+  if (!a && !await Application.exists({ agencyId, id: req.params.appId })) return res.status(404).json({ error: 'Ariza topilmadi' });
+  // Bog'lanildi — ko'rildi ham (ochmasdan qo'ng'iroq qilingan bo'lishi mumkin)
+  if (field === 'contactedAt') await Application.updateOne({ agencyId, id: req.params.appId, agencySeenAt: null }, { $set: { agencySeenAt: new Date() } });
+  res.json({ ok: true });
 }));
 
 // ── Bitta vakansiya ──
@@ -118,9 +183,14 @@ router.post('/:id/applications/:appId/:action', guard, asyncHandler(async (req, 
   if (!a) return res.status(404).json({ error: 'Ariza topilmadi' });
   if (a.state === 'shortlisted' || a.state === 'rejected') return res.status(400).json({ error: 'Bu ariza bo\'yicha qaror qabul qilingan' });
 
+  const v0 = await Vacancy.findOne({ agencyId, id: a.vacancyId }, 'title').lean();
+  const cand = await Candidate.findOne({ restaurantId: agencyId, id: a.candidateId }, 'id tgChatId tgState').lean();
+  if (!a.agencySeenAt) a.agencySeenAt = new Date();
+
   if (act === 'reject') {
     a.state = 'rejected'; a.reason = 'agency'; a.decidedAt = new Date();
     await a.save();
+    await appLife.notify(cand, 'rejected', { vacTitle: v0 && v0.title, appBase: publicBase(req) });
     return res.json({ ok: true, state: a.state });
   }
 
@@ -137,6 +207,7 @@ router.post('/:id/applications/:appId/:action', guard, asyncHandler(async (req, 
   }
   a.state = 'shortlisted'; a.shortlistId = sl.id; a.decidedAt = new Date();
   await a.save();
+  await appLife.notify(cand, 'proposed', { vacTitle: v0 && v0.title, appBase: publicBase(req) });
   res.json({ ok: true, state: a.state, shortlistId: sl.id });
 }));
 

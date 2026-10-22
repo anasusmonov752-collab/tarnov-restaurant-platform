@@ -24,7 +24,7 @@ router.get('/today', guard, asyncHandler(async (req, res) => {
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const weekAgo = new Date(now - 7 * 864e5);
 
-  const [shortlists, appsNew, clients, candTotal, candWeek, unread, anketaUnseen, baseWeek] = await Promise.all([
+  const [shortlists, appsNew, clients, candTotal, candWeek, unread, anketaUnseen, baseWeek, appsUnseen] = await Promise.all([
     Shortlist.find({ agencyId, status: { $ne: 'done' } }, 'id clientId items createdAt updatedAt summary').lean(),
     Application.countDocuments({ agencyId, state: 'new' }),
     Client.find({ agencyId }, 'id name credits status').lean(),
@@ -34,7 +34,9 @@ router.get('/today', guard, asyncHandler(async (req, res) => {
                           { $group: { _id: null, n: { $sum: '$unreadAgency' } } }]),
     // Yon menyu: "Anketadan" — ko'rilmaganlar, "hh.uz bazasi" — shu hafta qo'shilgan
     Candidate.countDocuments(Object.assign({ restaurantId: agencyId, source: 'anketa' }, contactLog.UNSEEN)),
-    Candidate.countDocuments({ restaurantId: agencyId, source: { $ne: 'anketa' }, createdAt: { $gte: weekAgo } })
+    Candidate.countDocuments({ restaurantId: agencyId, source: { $ne: 'anketa' }, createdAt: { $gte: weekAgo } }),
+    // "Arizalar" — agentlik hali ochmagan va qaror qilinmagan arizalar
+    Application.countDocuments({ agencyId, agencySeenAt: null, state: { $in: ['new', 'seen'] } })
   ]);
 
   // Shu oy ochilgan va ishga olingan — barcha tanlovlardan (yopilganlari ham)
@@ -65,7 +67,7 @@ router.get('/today', guard, asyncHandler(async (req, res) => {
     hiredMonth: (month[0] || {}).hired || 0,
     clientCredits: active.reduce((s, c) => s + (c.credits || 0), 0),
     activeClients: active.length,
-    candidates: candTotal, candidatesWeek: candWeek, anketaUnseen, baseWeek,
+    candidates: candTotal, candidatesWeek: candWeek, anketaUnseen, baseWeek, appsUnseen,
     unreadChats: (unread[0] || {}).n || 0,
     queue: queue.slice(0, 20)
   });

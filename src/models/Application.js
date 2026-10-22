@@ -32,8 +32,12 @@ const ApplicationSchema = new mongoose.Schema({
   shortlistId: { type: String, default: '' },      // tanlangach to'ladi
 
   createdAt: { type: Date, default: Date.now },
-  seenAt:    { type: Date, default: null },
-  decidedAt: { type: Date, default: null }
+  seenAt:    { type: Date, default: null },      // mijoz ko'rdi
+  decidedAt: { type: Date, default: null },
+  // Agentlik tomoni (panel "Arizalar"): nomzod "HR ko'rib chiqdi / bog'landi"ni
+  // sana bilan ko'radi — services/appLife.stepsFor
+  agencySeenAt: { type: Date, default: null },
+  contactedAt:  { type: Date, default: null }
 });
 
 // Bitta nomzod bitta vakansiyaga bir marta ariza beradi

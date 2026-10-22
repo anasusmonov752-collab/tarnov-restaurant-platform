@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TalentHub — Arizalar</title>
+<!-- TalentHub dizayn tizimi va umumiy menyu (th-shell) -->
+<link rel="icon" href="/img/talenthub-mark.svg" type="image/svg+xml">
+<script src="/js/uz-date.js"></script>
+<link rel="stylesheet" href="/css/th.css?v=2">
+<link rel="stylesheet" href="/css/th-app.css?v=2">
+<script src="/js/th-shell.js?v=3" defer></script>
+<script src="/js/th-viewer.js?v=2" defer></script>
+<style>
+/* Hamma vakansiyalar bo'yicha arizalar — bitta quti (routes/vacancies /applications/inbox) */
+:root{ --bg:#EEF3FB; --ink:#16233A; --gold:#2563EB; --card:#FFFFFF; --line:#E1E8F2; --muted:#64748B; --danger:#C25B4C; --ok:#2E9E5B; --warn:#B4802E; --soft:#F3F7FD; }
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+button{font-family:inherit}
+.topbar{flex:none;background:var(--card);border-bottom:1px solid var(--line);padding:12px 20px;display:flex;align-items:center;gap:14px}
+.tb-title{font-size:16.5px;font-weight:700;line-height:1}
+.tb-sub{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:3px}
+.main{flex:1;overflow-y:auto;padding:20px 24px 40px}
+.wrap{max-width:900px;margin:0 auto}
+.mx{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.mx div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 14px}
+.mx small{display:block;font-size:12.5px;color:var(--muted)}
+.mx b{font-size:20px;font-weight:700}
+.mx b.wr{color:var(--warn)}
+.mx em{font-style:normal;font-size:12px;color:var(--muted);margin-left:4px}
+.seg{display:flex;background:var(--th-fill,#E9EEF5);border-radius:10px;padding:2px;gap:2px;margin-bottom:14px}
+.seg button{flex:1;border:0;background:none;border-radius:8px;padding:7px 10px;font-size:13px;cursor:pointer;color:var(--ink);font-weight:500}
+.seg button .n{color:var(--muted);margin-left:4px;font-weight:400}
+.seg button.on{background:var(--th-surface,#fff);box-shadow:0 3px 8px rgba(0,0,0,.12);font-weight:600}
+.ap{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:10px}
+.ap.unseen{border-color:var(--gold);box-shadow:inset 3px 0 0 var(--gold)}
+.ap-h{display:flex;gap:12px;align-items:flex-start}
+.av{width:44px;height:44px;border-radius:50%;flex:none;background:var(--soft);color:var(--gold);font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.av img{width:100%;height:100%;object-fit:cover}
+.nm{font-size:15.5px;font-weight:600}
+.sb{font-size:13px;color:var(--muted);margin-top:2px;line-height:1.45}
+.vc{font-size:13.5px;margin-top:6px}
+.vc b{font-weight:600}
+.tm{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap}
+.msg{font-size:13.5px;margin-top:8px;padding:8px 11px;border-radius:9px;background:var(--soft);line-height:1.45}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.tag{font-size:12px;font-weight:600;padding:3px 9px;border-radius:7px;background:#F1F5FA;color:var(--muted)}
+.tag.nw{background:var(--gold);color:#fff}
+.tag.wt{background:rgba(217,142,43,.14);color:#9A5B0C}
+.tag.ok{background:rgba(46,158,91,.12);color:#1E7A46}
+.tag.go{background:rgba(37,99,235,.1);color:#1D4ED8}
+.tag.no{background:rgba(194,91,76,.12);color:var(--danger)}
+.acts{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 12px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center}
+.btn:hover{background:var(--soft)}
+.btn-p{background:var(--gold);border-color:var(--gold);color:#fff}
+.btn-p:hover{background:#1D4ED8}
+.btn-no{color:var(--danger)}
+.btn:disabled{opacity:.45;cursor:default}
+.sp{flex:1}
+.empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px;background:var(--card);border-radius:12px;border:1px solid var(--line)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:300;background:#16233A;color:#fff;padding:11px 18px;border-radius:11px;font-size:13.5px;font-weight:600;display:none}
+@media(max-width:760px){ .mx{grid-template-columns:repeat(2,minmax(0,1fr))} .main{padding:14px} .tm{display:none} }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div><div class="tb-title">Arizalar</div><div class="tb-sub">Hamma vakansiyalar bo'yicha</div></div>
+</div>
+
+<div class="main"><div class="wrap">
+  <div class="mx" id="mx"></div>
+  <div class="seg" id="seg"></div>
+  <div id="list"><div class="empty">Yuklanmoqda…</div></div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/js/utils.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const toastMsg = m => { const t = $('toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(() => t.style.display = 'none', 2400); };
+const ROLES = { ofitsiant:'Ofitsiant', barmen:'Barmen', xostess:'Xostess', oshpaz:'Oshpaz', kassir:'Kassir', menejer:'Menejer', operator:'Call-markaz operatori' };
+const SRC = { hh:'hh.uz', anketa:'Anketa', manual:"Qo'lda", telegram:'Telegram', referral:'Tavsiya', other:'Boshqa' };
+const TABS = [['new','Yangi'], ['work','Jarayonda'], ['done','Yakunlangan'], ['all','Hammasi']];
+
+let DATA = { items: [], counts: {} }, TAB = 'new', ASK = '';   // ASK — rad etishni tasdiqlash kutilayotgan ariza
+
+const initials = n => (n || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || '?';
+function ago(d){
+  const h = Math.floor((Date.now() - new Date(d)) / 36e5);
+  return h < 1 ? 'hozirgina' : h < 24 ? h + ' soat oldin' : Math.floor(h / 24) + ' kun oldin';
+}
+function waitLabel(ms){
+  const h = Math.floor(ms / 36e5);
+  return h < 24 ? `${Math.max(1, h)} soatdan beri javobsiz` : `${Math.floor(h / 24)} kundan beri javobsiz`;
+}
+
+async function load(){
+  try { DATA = await api('/api/vacancies/applications/inbox'); }
+  catch(e){ $('list').innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
+  render();
+}
+
+function render(){
+  const c = DATA.counts || {};
+  $('mx').innerHTML = `
+    <div><small>Javob kutmoqda</small><b class="${c.waitingOld ? 'wr' : ''}">${c.new || 0}</b>${c.waitingOld ? `<em>${c.waitingOld} tasi 1 kundan ortiq</em>` : ''}</div>
+    <div><small>Ko'rilmagan</small><b>${c.unseen || 0}</b></div>
+    <div><small>Jarayonda</small><b>${c.work || 0}</b></div>
+    <div><small>Yakunlangan</small><b>${c.done || 0}</b></div>`;
+  $('seg').innerHTML = TABS.map(([k, l]) => `<button data-t="${k}" class="${TAB === k ? 'on' : ''}">${l}<span class="n">${c[k] || 0}</span></button>`).join('');
+  $('seg').querySelectorAll('[data-t]').forEach(b => b.onclick = () => { TAB = b.dataset.t; ASK = ''; render(); });
+
+  const rows = DATA.items.filter(x => TAB === 'all' || x.tab === TAB);
+  if (!rows.length) {
+    $('list').innerHTML = `<div class="empty">${TAB === 'new' ? 'Javob kutayotgan ariza yo\'q.' : 'Bu bo\'lim bo\'sh.'}</div>`;
+    return;
+  }
+  $('list').innerHTML = rows.map(card).join('');
+  wire();
+}
+
+function card(x){
+  const c = x.candidate || {};
+  const role = ROLES[c.role] || c.desiredPosition || 'Nomzod';
+  const sub = [role, c.experienceYears ? c.experienceYears + ' yil tajriba' : 'Tajribasiz', c.location].filter(Boolean).join(' · ');
+  const decided = x.state === 'shortlisted' || x.state === 'rejected';
+  const tel = c.phone ? String(c.phone).replace(/[^\d+]/g, '') : '';
+  const base = `/recruitment.html?${c.source === 'anketa' ? 'src=anketa&' : ''}q=${encodeURIComponent(c.publicCode || c.fullName || '')}`;
+  return `<article class="ap ${x.unseen ? 'unseen' : ''}" data-id="${x.id}">
+    <div class="ap-h">
+      <div class="av">${c.hasPhoto ? `<img src="/api/recruitment/${encodeURIComponent(c.id)}/photo?v=${encodeURIComponent(c.updatedAt || '')}" alt="">` : esc(initials(c.fullName))}</div>
+      <div style="min-width:0;flex:1">
+        <div class="nm">${esc(c.fullName || 'Nomsiz')}${c.age ? `, ${c.age} yosh` : ''}</div>
+        <div class="sb">${esc(sub)}</div>
+        <div class="vc">→ <b>${esc(x.vacancy.title)}</b>${x.client.name ? ` · ${esc(x.client.name)}` : ''}${x.client.status === 'pending' ? ' <span class="tag" title="Hali mijoz emas — qo\'ng\'iroqda «3 nomzod bepul» taklifi">potensial mijoz</span>' : ''}</div>
+      </div>
+      <div class="tm">${ago(x.createdAt)}</div>
+    </div>
+    ${x.message ? `<div class="msg">«${esc(x.message)}»</div>` : ''}
+    <div class="tags">
+      ${x.unseen ? '<span class="tag nw">Ko\'rilmagan</span>' : ''}
+      ${x.waitingMs ? `<span class="tag ${x.waitingMs > 864e5 ? 'wt' : ''}">${waitLabel(x.waitingMs)}</span>` : ''}
+      <span class="tag ${x.tone === 'wait' ? '' : x.tone}">${esc(x.stageLabel)}</span>
+      <span class="tag">${esc(SRC[c.source] || c.source || '')}</span>
+      ${c.phoneVerifiedAt ? '<span class="tag ok">Telefon tasdiqlangan</span>' : ''}
+    </div>
+    <div class="acts">
+      ${tel ? `<a class="btn ${x.contactedAt ? '' : 'btn-p'}" href="tel:${esc(tel)}" data-call="${x.id}">${x.contactedAt ? 'Qayta qo\'ng\'iroq' : 'Qo\'ng\'iroq qilish'}</a>` : ''}
+      ${!x.contactedAt && !decided ? `<button class="btn" data-ct="${x.id}">Bog'landim</button>` : ''}
+      ${!decided ? `<button class="btn" data-sl="${x.id}" title="Mijozning shu vakansiyadagi tanloviga qo'shiladi, nomzodga xabar boradi">Ish beruvchiga taklif</button>` : ''}
+      ${!decided ? (ASK === x.id
+        ? `<button class="btn btn-no" data-rj="${x.id}">Ha, rad etish</button><button class="btn" data-rjx="1">Bekor</button>`
+        : `<button class="btn btn-no" data-ask="${x.id}">Rad etish</button>`) : ''}
+      <span class="sp"></span>
+      <a class="btn" href="${base}" data-open="${x.id}">Bazada ochish</a>
+    </div>
+  </article>`;
+}
+
+// Ko'rildi — kartaga birinchi tegilganda (bosish yoki amal); faqat bir marta
+function markSeen(id){
+  const x = DATA.items.find(i => i.id === id);
+  if (!x || !x.unseen) return;
+  x.unseen = false; x.agencySeenAt = new Date().toISOString();
+  DATA.counts.unseen = Math.max(0, (DATA.counts.unseen || 1) - 1);
+  api(`/api/vacancies/applications/${id}/seen`, { method:'POST' }).then(() => window.thShell && thShell.refreshCounts()).catch(() => {});
+}
+async function markContacted(id){
+  const x = DATA.items.find(i => i.id === id);
+  markSeen(id);
+  try { await api(`/api/vacancies/applications/${id}/contacted`, { method:'POST' }); }
+  catch(e){ toastMsg(e.message); return; }
+  if (x && !x.contactedAt) x.contactedAt = new Date().toISOString();
+  await load();
+}
+async function decide(id, action){
+  const x = DATA.items.find(i => i.id === id);
+  try {
+    await api(`/api/vacancies/${encodeURIComponent(x.vacancyId)}/applications/${id}/${action}`, { method:'POST' });
+    toastMsg(action === 'shortlist' ? 'Ish beruvchiga taklif qilindi — nomzodga xabar ketdi' : 'Rad etildi — nomzodga yumshoq xabar ketdi');
+    ASK = '';
+    await load();
+    window.thShell && thShell.refreshCounts();
+  } catch(e){ toastMsg(e.message); }
+}
+
+function wire(){
+  const L = $('list');
+  L.querySelectorAll('.ap').forEach(el => el.addEventListener('click', () => markSeen(el.dataset.id)));
+  // Qo'ng'iroq: tel: havolasi o'zi ochiladi, biz "bog'lanildi"ni yozamiz
+  L.querySelectorAll('[data-call]').forEach(a => a.addEventListener('click', () => markContacted(a.dataset.call)));
+  L.querySelectorAll('[data-ct]').forEach(b => b.onclick = () => { b.disabled = true; markContacted(b.dataset.ct); });
+  L.querySelectorAll('[data-sl]').forEach(b => b.onclick = () => { b.disabled = true; decide(b.dataset.sl, 'shortlist'); });
+  // Rad etish ikki bosqichli (sahifa ichida — brauzer confirm() o'chirilgan bo'lishi mumkin)
+  L.querySelectorAll('[data-ask]').forEach(b => b.onclick = () => { ASK = b.dataset.ask; render(); });
+  L.querySelectorAll('[data-rjx]').forEach(b => b.onclick = () => { ASK = ''; render(); });
+  L.querySelectorAll('[data-rj]').forEach(b => b.onclick = () => { b.disabled = true; decide(b.dataset.rj, 'reject'); });
+}
+
+(async function(){ await requireRole('restaurant'); load(); })();
+</script>
+</body>
+</html>

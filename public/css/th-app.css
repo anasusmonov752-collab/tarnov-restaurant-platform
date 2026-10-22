@@ -107,3 +107,15 @@ body.th-app, body.th-app button, body.th-app input, body.th-app select, body.th-
 
 /* th-shell yashirgan eski elementlar (sahifa CSS'idagi display:flex hidden'ni bosib ketmasin) */
 .th-app [hidden]{ display:none !important; }
+
+/* ── Telefonda jadval -> kartalar (th-shell data-label yozadi) ── */
+@media (max-width: 760px){
+  .th-app table.th-stack, .th-app table.th-stack tbody, .th-app table.th-stack tr, .th-app table.th-stack td{ display:block; width:100%; }
+  .th-app table.th-stack thead{ display:none; }
+  .th-app table.th-stack tr{ background:var(--th-surface); border-radius:var(--th-r-md); padding:10px 14px; margin:0 0 10px; box-shadow:var(--th-shadow-1); }
+  .th-app table.th-stack td{ border:0 !important; padding:6px 0 !important; display:flex; align-items:center; justify-content:space-between; gap:12px; text-align:right; white-space:normal !important; }
+  .th-app table.th-stack td::before{ content:attr(data-label); color:var(--th-muted); font-size:12px; font-weight:500; text-align:left; flex:none; }
+  .th-app table.th-stack td[data-label=""]{ justify-content:flex-start; flex-wrap:wrap; text-align:left; }
+  .th-app table.th-stack td[data-label=""]::before{ display:none; }
+  .th-app table.th-stack td:first-child{ font-weight:600; font-size:15px; }
+}

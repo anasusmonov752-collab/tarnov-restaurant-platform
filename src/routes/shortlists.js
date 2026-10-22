@@ -12,6 +12,10 @@ const { asyncHandler } = require('../middleware/errorHandler');
 const Shortlist = require('../models/Shortlist');
 const Candidate = require('../models/Candidate');
 const Client = require('../models/Client');
+const Vacancy = require('../models/Vacancy');
+const { v4: uuidv4 } = require('uuid');
+const tg = require('../services/telegram');
+const I18N = require('../../public/js/th-i18n');
 const sl = require('../services/shortlist');
 const pipeline = require('../data/pipeline');
 const { publicBase } = require('../utils/publicBase');
@@ -76,6 +80,44 @@ router.get('/', guard, asyncHandler(async (req, res) => {
     createdAt: r.createdAt,
     updatedAt: r.updatedAt
   })));
+}));
+
+// ── A1b. Tanlovni agentlik yaratadi (mijozga taklif) ──
+// Mijoz telefonda "3 ta ofitsiant yuboring" deydi — ilgari buni faqat u
+// o'zi Mini App'da qila olardi (2026-10-20 audit). Nomzodlar 'selected'
+// bilan tushadi: keyingi oqim odatdagidek (bog'lanish -> rozi -> ochish),
+// mijoz kabinetida anonim ko'radi. Mijozga Telegramda xabar boradi.
+router.post('/', guard, asyncHandler(async (req, res) => {
+  const agencyId = req.user.restaurantId;
+  const b = req.body || {};
+  const client = await Client.findOne({ agencyId, id: String(b.clientId || '') }).lean();
+  if (!client) return res.status(404).json({ error: 'Mijoz topilmadi' });
+  const want = [...new Set((Array.isArray(b.candidateIds) ? b.candidateIds : []).map(String))].slice(0, 20);
+  const found = await Candidate.find({ restaurantId: agencyId, id: { $in: want } }, 'id').lean();
+  const ids = want.filter(id => found.some(c => c.id === id));
+  if (!ids.length) return res.status(400).json({ error: 'Nomzod tanlanmagan' });
+
+  let vacancyId = '';
+  if (b.vacancyId) {
+    const v = await Vacancy.findOne({ agencyId, clientId: client.id, id: String(b.vacancyId) }, 'id').lean();
+    if (v) vacancyId = v.id;
+  }
+  const summary = String(b.summary || '').trim().slice(0, 200) || 'Agentlik taklifi';
+  const row = await Shortlist.create({
+    id: uuidv4(), agencyId, clientId: client.id, vacancyId, summary,
+    items: ids.map(candidateId => ({ candidateId, state: 'selected' })), status: 'new'
+  });
+  await Candidate.updateMany({ restaurantId: agencyId, id: { $in: ids } }, { $addToSet: { shownToClients: client.id } });
+
+  // Mijozga — o'z tilida (yiqilsa ham tanlov saqlangan)
+  try {
+    if (client.tgChatId) {
+      const T = (k, v) => I18N.t(I18N.resolve(client.lang, client.tgLang), k, v);
+      await tg.sendMessage(tg.platformToken(), client.tgChatId, T('nc.proposed', { n: ids.length, s: summary }));
+    }
+  } catch (e) { console.error('[SL] taklif xabari ketmadi:', e.message); }
+
+  res.json({ ok: true, id: row.id, count: ids.length });
 }));
 
 // ── A2. Bitta tanlov — nomzodlar bilan ──
@@ -143,6 +185,28 @@ router.patch('/:id/items/:candidateId', guard, asyncHandler(async (req, res) => 
       state: String(state || ''),
       reason: String(reason || ''),
       note: String(note || '')
+    });
+    res.json({ ok: true, counts: counts(row.items) });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+}));
+
+// ── A3b. Natijani agentlik belgilaydi (suhbat / ishga olindi / mos kelmadi) ──
+// Mijoz Mini App'da bosmasa ham — telefonda aytgan bo'lsa — siz qo'yasiz.
+// Qoida mijozniki bilan bir xil (shortlist.setClientState): faqat kontakt
+// ochilgandan keyin, ishga olindi/mos kelmadi — yakuniy.
+router.post('/:id/outcome/:candidateId', guard, asyncHandler(async (req, res) => {
+  const b = req.body || {};
+  try {
+    const row = await sl.setClientState({
+      agencyId: req.user.restaurantId,
+      shortlistId: req.params.id,
+      clientId: '',                       // agentlik — mijoz cheklovisiz
+      candidateId: req.params.candidateId,
+      state: String(b.state || ''),
+      reason: String(b.reason || ''),
+      interviewAt: b.interviewAt || null
     });
     res.json({ ok: true, counts: counts(row.items) });
   } catch (e) {

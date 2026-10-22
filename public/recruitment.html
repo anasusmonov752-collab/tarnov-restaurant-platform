@@ -156,7 +156,8 @@ button,input,select{font-family:inherit}
 .tl-t{font-size:13.5px;font-weight:600}
 .tl-d{font-size:12px;color:var(--muted);margin-top:2px}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:300;background:var(--green);color:#F5EFDF;padding:11px 18px;border-radius:11px;font-size:13.5px;font-weight:600;display:none}
-@media(max-width:1000px){.wrap{grid-template-columns:1fr}.side{display:none}.md-grid{grid-template-columns:1fr}}
+.stage-m{display:none}
+@media(max-width:1000px){.wrap{grid-template-columns:1fr}.side{display:none}.stage-m{display:block;width:100%;margin-bottom:10px;padding:10px 12px;font-size:15px}.md-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -184,6 +185,7 @@ button,input,select{font-family:inherit}
   </aside>
 
   <section class="main">
+    <select id="stageM" class="stage-m" aria-label="Bosqich"></select>
     <div class="hint" id="hint">Yuklanmoqda…</div>
     <div class="bulk">
       <div class="srch"><input id="q" placeholder="Ism, lavozim, ko'nikma, telefon…" autocomplete="off"></div>
@@ -194,6 +196,7 @@ button,input,select{font-family:inherit}
       <button class="btn btn-sm" id="bReserve" disabled>Zaxiraga</button>
       <button class="btn btn-sm" id="bReject" disabled>Rad etish</button>
       <button class="btn btn-sm tgb" id="bTgInvite" disabled>Telegramga taklif</button>
+      <button class="btn btn-sm" id="bPropose" disabled>Mijozga taklif</button>
       <span style="font-size:12.5px;color:var(--muted);font-weight:600" id="selCnt"></span>
     </div>
     <div class="list" id="list">
@@ -294,6 +297,12 @@ function renderSide(){
     `<div class="sitem ${FR===''?'on':''}" data-role=""><span class="lbl">Barchasi</span><span class="cnt">${ALL.filter(c=>(c.status||'new')===FS).length}</span></div>` +
     rs.map(r=>`<div class="sitem sub ${FR===r?'on':''}" data-role="${r}"><span class="lbl">${ROLES[r]||r}</span><span class="cnt">${byRole[r]}</span></div>`).join('');
 
+  // Telefon: chap ustun yashirin — bosqich tanlovi ochiladigan ro'yxatda
+  const sm = document.getElementById('stageM');
+  if (sm) {
+    sm.innerHTML = STAGES.map(s => `<option value="${s.k}" ${FS===s.k?'selected':''}>${s.l} (${byStage[s.k]||0})</option>`).join('');
+    sm.onchange = () => { FS = sm.value; FR = ''; SEL.clear(); render(); };
+  }
   document.querySelectorAll('[data-stage]').forEach(el=>el.onclick=()=>{ FS=el.dataset.stage; FR=''; SEL.clear(); render(); });
   document.querySelectorAll('[data-role]').forEach(el=>el.onclick=()=>{ FR=el.dataset.role; SEL.clear(); render(); });
 }
@@ -312,7 +321,7 @@ function tgInfo(c){ return TG[c.tgState] || TG.none; }
 
 function matchQ(c){
   if(!Q) return true;
-  const hay = [c.fullName, c.desiredPosition, c.phone, c.email, c.location, c.experienceSummary,
+  const hay = [c.fullName, c.publicCode, c.desiredPosition, c.phone, c.email, c.location, c.experienceSummary,
                (c.skills||[]).join(' '), (c.languages||[]).join(' '), ROLES[c.role]].join(' ').toLowerCase();
   return Q.split(/\s+/).every(w => hay.includes(w));
 }
@@ -388,7 +397,7 @@ function render(){
 
   const n = SEL.size;
   document.getElementById('selCnt').textContent = n ? `${n} ta tanlandi` : '';
-  ['bInvite','bReserve','bReject','bTgInvite'].forEach(id=>document.getElementById(id).disabled = !n);
+  ['bInvite','bReserve','bReject','bTgInvite','bPropose'].forEach(id=>document.getElementById(id).disabled = !n);
 
   document.querySelectorAll('[data-sel]').forEach(el=>el.onclick=e=>{
     e.stopPropagation();
@@ -621,6 +630,53 @@ document.getElementById('bSelAll').onclick = ()=>{
 };
 document.getElementById('bInvite').onclick  = ()=>move([...SEL],'interview');
 document.getElementById('bReserve').onclick = ()=>move([...SEL],'reserve');
+
+// ── Mijozga taklif: tanlangan nomzodlardan tanlov yaratiladi ──
+// Mijoz telefonda buyurtma bersa — u Mini App'da o'zi tanlashini kutmaymiz.
+// Keyingi oqim Mijozlar sahifasida odatdagidek: bog'lanish -> rozi -> ochish.
+document.getElementById('bPropose').onclick = async () => {
+  const ids = [...SEL];
+  let clients;
+  try { clients = (await api('/api/clients')).filter(c => c.status === 'active'); }
+  catch(e){ return toast(e.message, 'error'); }
+  if (!clients.length) return toast('Avval Mijozlar sahifasida mijoz qo\'shing', 'info');
+  document.getElementById('md').innerHTML = `
+    <div class="md-top"><b style="font-size:16px">Mijozga taklif — ${ids.length} ta nomzod</b><button class="md-x" id="mdX" aria-label="Yopish">✕</button></div>
+    <div style="padding:18px;display:flex;flex-direction:column;gap:14px;max-width:520px">
+      <div><div style="font-size:12px;color:var(--muted);margin-bottom:6px">Mijoz</div>
+        <select id="pCl" style="width:100%;padding:9px 10px">${clients.map(c => `<option value="${esc(c.id)}">${esc(c.name)} — ${c.credits ?? 0} kredit</option>`).join('')}</select></div>
+      <div><div style="font-size:12px;color:var(--muted);margin-bottom:6px">Vakansiya (ixtiyoriy)</div>
+        <select id="pVc" style="width:100%;padding:9px 10px"><option value="">— vakansiyasiz —</option></select></div>
+      <div><div style="font-size:12px;color:var(--muted);margin-bottom:6px">Qisqacha (mijoz kabinetida sarlavha bo'ladi)</div>
+        <input id="pSm" maxlength="200" placeholder="Masalan: 2 ta xostess, kunduzgi smena" style="width:100%;padding:9px 10px"></div>
+      <div style="font-size:12.5px;color:var(--muted);line-height:1.5">Mijoz nomzodlarni kabinetida anonim ko'radi. Kontaktni nomzod rozi bo'lgach,
+        Mijozlar sahifasidan ochasiz (1 kredit).</div>
+      <button class="btn btn-p" id="pGo" style="align-self:flex-start">Taklif qilish</button>
+    </div>`;
+  document.getElementById('ov').classList.add('on');
+  document.getElementById('mdX').onclick = closeMd;
+  const loadVac = async () => {
+    const sel = document.getElementById('pVc');
+    sel.innerHTML = '<option value="">— vakansiyasiz —</option>';
+    try {
+      const vs = await api('/api/vacancies?status=open&clientId=' + encodeURIComponent(document.getElementById('pCl').value));
+      sel.innerHTML += vs.map(v => `<option value="${esc(v.id)}">${esc(v.title || v.role || 'Vakansiya')}</option>`).join('');
+    } catch(e){ /* vakansiyasiz ham bo'ladi */ }
+  };
+  document.getElementById('pCl').onchange = loadVac;
+  loadVac();
+  document.getElementById('pGo').onclick = async () => {
+    const b = document.getElementById('pGo'); b.disabled = true;
+    try {
+      const r = await api('/api/shortlists', { method:'POST', body: JSON.stringify({
+        clientId: document.getElementById('pCl').value, vacancyId: document.getElementById('pVc').value,
+        summary: document.getElementById('pSm').value, candidateIds: ids }) });
+      closeMd(); SEL.clear(); render();
+      toast(`Taklif yaratildi: ${r.count} ta nomzod. Mijozlar sahifasida davom eting.`, 'success');
+      if (window.thShell) thShell.refreshCounts();
+    } catch(e){ toast(e.message, 'error'); b.disabled = false; }
+  };
+};
 document.getElementById('bReject').onclick  = ()=>move([...SEL],'rejected');
 
 // Guruh taklifi — allaqachon ulanganlarni o'tkazib yuboramiz
@@ -680,6 +736,11 @@ document.getElementById('q').oninput = e => {
   clearTimeout(qt);
   qt = setTimeout(()=>{ Q = e.target.value.trim().toLowerCase(); SEL.clear(); render(); }, 180);
 };
+// Boshqa sahifadan (masalan, vakansiya arizasidan "Bazada ochish"): ?q=A-7K2M
+(function(){
+  const q0 = new URLSearchParams(location.search).get('q');
+  if (q0) { document.getElementById('q').value = q0; Q = q0.trim().toLowerCase(); }
+})();
 
 // ── Rezyume yuklash ──
 const upOv = document.getElementById('upOv'), fi = document.getElementById('fileInput'), upz = document.getElementById('upz');

@@ -94,10 +94,12 @@ button,input{font-family:inherit}
 .toast-error{border-left-color:var(--danger)} .toast-error .toast-icon{color:var(--danger)}
 .toast-info{border-left-color:var(--blue)}    .toast-info .toast-icon{color:var(--blue)}
 
+.back-m{display:none;border:0;background:transparent;color:var(--link,#0066E0);font:inherit;font-weight:600;padding:0 10px 0 0;cursor:pointer}
 @media(max-width:820px){
   .side{width:100%}
   .main.open .side{display:none}
   .main:not(.open) .pane{display:none}
+  .back-m{display:inline-flex !important}
 }
 </style>
 </head>
@@ -179,9 +181,12 @@ async function openThread(t){
   CUR = t; draw();
   $('main').classList.add('open');
   const cc = t.kind === 'cc';
-  $('ph').innerHTML = '<b>' + esc(cc ? (t.clientName + ' ↔ ' + t.candidateName) : t.clientName) + '</b>'
+  // Telefonda ro'yxatga qaytish (ilgari .open olib tashlanmasdi — qaytib bo'lmasdi)
+  $('ph').innerHTML = '<button class="back-m" id="backM" aria-label="Suhbatlar ro\x27yxati">&#10094; Suhbatlar</button>'
+    + '<b>' + esc(cc ? (t.clientName + ' ↔ ' + t.candidateName) : t.clientName) + '</b>'
     + (cc && t.candidateCode ? ' <span class="kd cc">' + esc(t.candidateCode) + '</span>' : '')
     + (t.position ? '<div class="sb">' + esc(t.position) + '</div>' : '');
+  $('backM').onclick = function(){ $('main').classList.remove('open'); };
   $('pb').innerHTML = '<div class="empty">Yuklanmoqda…</div>';
   $('inp').disabled = false;
   $('snd').disabled = false;

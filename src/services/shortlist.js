@@ -108,11 +108,14 @@ async function setClientState({ agencyId, shortlistId, clientId, candidateId, st
   // Oldingi holat: kontakt ochilgan yoki suhbat belgilangan bo'lishi
   // kerak. 'hired'/'not_fit' esa yakuniy — qayta o'zgartirilmaydi.
   const allowedFrom = state === 'interview' ? ['revealed'] : ['revealed', 'interview'];
+  // clientId berilmasa — agentlik belgilayapti (mijoz telefonda aytgan,
+  // Mini App'da bosmagan). Ilgari natijani faqat mijoz qo'ya olardi va
+  // ko'p tanlov "kontakt ochilgan"da qotib qolardi (2026-10-20 audit).
+  const filter = { agencyId, id: shortlistId,
+    items: { $elemMatch: { candidateId, state: { $in: allowedFrom } } } };
+  if (clientId) filter.clientId = clientId;
   const sl = await Shortlist.findOneAndUpdate(
-    {
-      agencyId, id: shortlistId, clientId,
-      items: { $elemMatch: { candidateId, state: { $in: allowedFrom } } }
-    },
+    filter,
     { $set: set },
     { new: true }
   );

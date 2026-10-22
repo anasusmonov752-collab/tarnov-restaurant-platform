@@ -374,9 +374,28 @@ async function showApps(id){
       <div class="m">${esc(meta)}</div>
       <div class="m"><b style="color:var(--ink)">${esc(c.phone) || 'telefon yo\'q'}</b>${c.email ? ' · ' + esc(c.email) : ''}</div>
       ${it.message ? `<div class="m" style="color:var(--ink);margin-top:6px">"${esc(it.message)}"</div>` : ''}
-      <div class="m" style="margin-top:6px">${dt(it.createdAt)}</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px">
+        <span class="m" style="margin:0">${dt(it.createdAt)}</span>
+        <a class="btn btn-sm" style="margin-left:auto;text-decoration:none" href="/recruitment.html?q=${encodeURIComponent(c.publicCode || c.fullName || '')}">Bazada ochish</a>
+        ${['new', 'seen'].includes(it.state) ? `
+          <button class="btn btn-sm btn-p" data-apa="shortlist" data-app="${esc(it.id)}">Tanlovga qo'shish</button>
+          <button class="btn btn-sm" data-apa="reject" data-app="${esc(it.id)}">Rad etish</button>` : ''}
+      </div>
     </div>`;
   }).join('');
+
+  // Agentlik qarori: tanlovga (mijozning shu vakansiyadagi tanlovi) yoki rad
+  $('mdB').querySelectorAll('[data-apa]').forEach(b => b.onclick = async () => {
+    const act = b.dataset.apa;
+    if (act === 'reject' && !confirm('Ariza rad etiladi. Davom etamizmi?')) return;
+    b.disabled = true;
+    try {
+      await api(`/api/vacancies/${id}/applications/${b.dataset.app}/${act}`, { method:'POST' });
+      toast(act === 'shortlist' ? 'Tanlovga qo\'shildi — Mijozlar sahifasida davom eting' : 'Rad etildi', 'success');
+      showApps(id); load();
+      if (window.thShell) thShell.refreshCounts();
+    } catch(e){ toast(e.message, 'error'); b.disabled = false; }
+  });
 }
 
 (async () => {

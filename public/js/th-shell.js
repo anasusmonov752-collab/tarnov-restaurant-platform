@@ -88,6 +88,21 @@
       fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }).finally(() => { location.href = '/'; });
     };
 
+    // Telefonda jadval -> kartalar: har katakka ustun nomi (data-label).
+    // Jadvallar innerHTML bilan qayta chiziladi — kuzatuvchi har safar yozadi.
+    const labelTables = () => page.querySelectorAll('table').forEach(tb => {
+      const heads = [...tb.querySelectorAll('thead th')].map(th => th.textContent.trim());
+      if (!heads.length) return;
+      tb.classList.add('th-stack');
+      tb.querySelectorAll('tbody tr').forEach(tr => [...tr.children].forEach((td, i) => {
+        if (!td.hasAttribute('data-label')) td.setAttribute('data-label', heads[i] || '');
+      }));
+    });
+    let lt = 0;
+    new MutationObserver(() => { cancelAnimationFrame(lt); lt = requestAnimationFrame(labelTables); })
+      .observe(page, { childList: true, subtree: true });
+    labelTables();
+
     fetch('/api/auth/me', { credentials: 'same-origin' }).then(r => r.ok ? r.json() : null).then(u => {
       if (u && u.restaurantName) side.querySelector('#thWho').textContent = u.restaurantName;
     }).catch(() => {});

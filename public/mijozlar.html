@@ -469,6 +469,10 @@ async function openShort(id){
           <button class="btn btn-sm btn-ok" data-st="candidate_ok" data-c="${esc(c.id)}">Nomzod rozi</button>
           <button class="btn btn-sm btn-no" data-no="${esc(c.id)}">Rad etdi</button>
           <button class="btn btn-sm btn-p"  data-rv="${esc(c.id)}">Kontaktni och (-1)</button>`}
+        ${['revealed', 'interview'].includes(it.state) ? `
+          ${it.state === 'revealed' ? `<button class="btn btn-sm" data-oc="interview" data-c="${esc(c.id)}">Suhbat belgilandi</button>` : ''}
+          <button class="btn btn-sm btn-ok" data-oc="hired" data-c="${esc(c.id)}">Ishga olindi</button>
+          <button class="btn btn-sm btn-no" data-oc="not_fit" data-c="${esc(c.id)}">Mos kelmadi</button>` : ''}
         ${['revealed', 'interview', 'not_fit'].includes(it.state)
           ? `<button class="btn btn-sm" data-rf="${esc(c.id)}">Kreditni qaytarish (+1)</button>` : ''}
       </div>
@@ -510,6 +514,47 @@ async function openShort(id){
         body: JSON.stringify({ state: b.dataset.st }) });
       openShort(id); loadShorts();
     } catch(e){ toast(e.message, 'error'); b.disabled = false; }
+  });
+
+  // Natija — agentlik belgilaydi (mijoz telefonda aytgan, Mini App'da bosmagan).
+  // Suhbat — sana bilan; Mos kelmadi — sabab bilan (mijoz sabablari ro'yxati).
+  $('mdB').querySelectorAll('[data-oc]').forEach(b => b.onclick = async () => {
+    const cid = b.dataset.c, st = b.dataset.oc, box = $('act-' + cid);
+    const send = async (extra, btns) => {
+      btns.forEach(x => x.disabled = true);
+      try {
+        await api(`/api/shortlists/${id}/outcome/${cid}`, { method:'POST', body: JSON.stringify(Object.assign({ state: st }, extra)) });
+        toast(st === 'hired' ? 'Ishga olindi deb belgilandi' : st === 'interview' ? 'Suhbat belgilandi' : 'Mos kelmadi deb belgilandi', 'success');
+        openShort(id); loadShorts();
+      } catch(e){ toast(e.message, 'error'); btns.forEach(x => x.disabled = false); }
+    };
+    if (st === 'hired') {
+      if (!confirm('Nomzod ishga olindi deb belgilanadi (yakuniy). Davom etamizmi?')) return;
+      return send({}, [b]);
+    }
+    if (st === 'interview') {
+      const d = new Date(Date.now() + 864e5); d.setMinutes(0, 0, 0);
+      const local = new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 16);
+      box.innerHTML = `<div style="width:100%;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <span style="font-size:12.5px;color:var(--muted)">Suhbat qachon?</span>
+        <input type="datetime-local" id="ivAt-${esc(cid)}" value="${local}" style="max-width:220px">
+        <button class="btn btn-sm btn-p" data-go="1">Saqlash</button><button class="btn btn-sm" data-cancel="1">Bekor</button></div>`;
+      box.querySelector('[data-go]').onclick = () => {
+        const v = box.querySelector('input').value;
+        if (!v) return toast('Sanani tanlang', 'error');
+        send({ interviewAt: new Date(v).toISOString() }, [...box.querySelectorAll('button')]);
+      };
+      box.querySelector('[data-cancel]').onclick = () => openShort(id);
+      return;
+    }
+    const m = await meta();
+    box.innerHTML = `<div style="width:100%">
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:7px">Nega mos kelmadi? (mijoz aytgan sabab)</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${(m.clientReasons||[]).map(r => `<button class="btn btn-sm" data-cr="${esc(r.key)}">${esc(r.label)}</button>`).join('')}
+        <button class="btn btn-sm" data-cancel="1">Bekor</button></div></div>`;
+    box.querySelectorAll('[data-cr]').forEach(x => x.onclick = () => send({ reason: x.dataset.cr }, [...box.querySelectorAll('button')]));
+    box.querySelector('[data-cancel]').onclick = () => openShort(id);
   });
 
   // Kreditni qaytarish — sababsiz emas (mijozga ham shu sabab boradi)

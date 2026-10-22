@@ -105,6 +105,41 @@ router.get('/:id/applications', guard, asyncHandler(async (req, res) => {
   });
 }));
 
+// ── Arizaga agentlik qarori: tanlovga qo'shish yoki rad etish ──
+// Ilgari arizalar oynasi faqat ko'rish uchun edi (2026-10-20 audit).
+// Qoida Mini App'dagi bilan bir xil (routes/miniapp.js applications/:action):
+// tanlovga — mijozning shu vakansiyadagi ochiq tanloviga ('selected'),
+// bo'lmasa yangisi; qaror qabul qilingan arizaga tegilmaydi.
+router.post('/:id/applications/:appId/:action', guard, asyncHandler(async (req, res) => {
+  const agencyId = req.user.restaurantId;
+  const act = req.params.action;
+  if (!['shortlist', 'reject'].includes(act)) return res.status(400).json({ error: 'Amal noto\'g\'ri' });
+  const a = await Application.findOne({ agencyId, vacancyId: req.params.id, id: req.params.appId });
+  if (!a) return res.status(404).json({ error: 'Ariza topilmadi' });
+  if (a.state === 'shortlisted' || a.state === 'rejected') return res.status(400).json({ error: 'Bu ariza bo\'yicha qaror qabul qilingan' });
+
+  if (act === 'reject') {
+    a.state = 'rejected'; a.reason = 'agency'; a.decidedAt = new Date();
+    await a.save();
+    return res.json({ ok: true, state: a.state });
+  }
+
+  const v = await Vacancy.findOne({ agencyId, id: a.vacancyId }).lean();
+  let sl = await Shortlist.findOne({ agencyId, clientId: a.clientId, vacancyId: a.vacancyId, status: { $ne: 'done' } });
+  if (!sl) {
+    sl = await Shortlist.create({ id: uuidv4(), agencyId, clientId: a.clientId, vacancyId: a.vacancyId,
+      summary: (v && v.title) || 'Arizalar', items: [], status: 'new' });
+  }
+  if (!sl.items.some(i => i.candidateId === a.candidateId)) {
+    sl.items.push({ candidateId: a.candidateId, state: 'selected' });
+    sl.updatedAt = new Date();
+    await sl.save();
+  }
+  a.state = 'shortlisted'; a.shortlistId = sl.id; a.decidedAt = new Date();
+  await a.save();
+  res.json({ ok: true, state: a.state, shortlistId: sl.id });
+}));
+
 // ── Yaratish (mijoz nomidan) ──
 // Mijoz o'zi ham yarata oladi, lekin telefonda aytsa siz kiritasiz.
 router.post('/', guard, asyncHandler(async (req, res) => {

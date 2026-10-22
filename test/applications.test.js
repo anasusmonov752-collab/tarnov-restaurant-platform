@@ -105,3 +105,24 @@ test('panel: kirish qutisi, ko\'rildi/bog\'landim va taklif — nomzod bosqichi 
   assert.deepEqual(mine[0].steps.map(s => s.key), ['sent', 'reviewed', 'contacted', 'proposed']);
   assert.equal(mine[0].stateLabel, 'Ish beruvchiga taklif qilindi');
 });
+
+test('/start birinchi xabari: ism, haqiqiy ochiq ishlar soni va lavozimlar, uz/ru, HTML xavfsiz', async () => {
+  const { hookText } = require('../src/routes/telegram');
+  await M.Vacancy.create([
+    { id: 'h1', agencyId: 'agH', clientId: 'c', title: 'Ofitsiant', role: 'ofitsiant', status: 'open' },
+    { id: 'h2', agencyId: 'agH', clientId: 'c', title: 'Ofitsiant 2', role: 'ofitsiant', status: 'open' },
+    { id: 'h3', agencyId: 'agH', clientId: 'c', title: 'Oshpaz', role: 'oshpaz', status: 'open' },
+    { id: 'h4', agencyId: 'agH', clientId: 'c', title: 'Yopiq', role: 'kassir', status: 'closed' },
+    { id: 'h5', agencyId: 'agH', clientId: 'c', title: 'Yashirin', role: 'xostess', status: 'open', listed: false }
+  ]);
+  const uz = await hookText({ lang: 'uz', from: { first_name: 'Ali<b>' }, agencyId: 'agH' });
+  assert.match(uz, /Assalomu alaykum, Ali&lt;b&gt;!/);
+  assert.match(uz, /<b>3 ta ochiq ish<\/b>: ofitsiant, oshpaz\./);      // yopiq va yashirin sanalmaydi
+  assert.ok(!/\n{3,}/.test(uz));
+  const ru = await hookText({ lang: 'ru', from: {}, agencyId: 'agH', v: { title: 'Ofitsiant', role: 'ofitsiant' } });
+  assert.match(ru, /^👋 Здравствуйте!/);
+  assert.match(ru, /открыто <b>3 вакансии<\/b>/);
+  assert.match(ru, /по вакансии <b>«/);
+  const empty = await hookText({ lang: 'uz', from: {}, agencyId: 'yoq' });
+  assert.ok(!/ochiq ish/.test(empty));                                   // ish yo'q — raqam aytilmaydi
+});

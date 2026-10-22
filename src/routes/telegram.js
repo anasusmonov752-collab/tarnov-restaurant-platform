@@ -508,11 +508,38 @@ async function startSurvey(msg, chatId, ank, appBase) {
     await r.save();
   }
 
-  const text = closed ? T(lang, 'ank.botClosed')
-    : T(lang, 'ank.botInvite') + (v ? T(lang, 'ank.botInviteVac', { v: vac.titleFor(v, lang) }) : '');
-  await tg.sendMessage(token, chatId, text, { reply_markup: { inline_keyboard: [[
+  const text = await hookText({ lang, from: msg.from, agencyId: s.agencyId, v, closed });
+  await tg.sendMessage(token, chatId, text, { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[
     { text: T(lang, 'ank.botOpen'), web_app: { url: `${appBase}/anketa.html?r=${r.id}` } }
   ]] } });
+}
+
+// ── Birinchi xabar: odam botni nega ochishi kerakligini bilsin ──
+// Ilgari "Ishga ariza berish uchun anketani to'ldiring" bitta qatori edi —
+// nima beradi, qancha vaqt, keyin nima bo'ladi — aytilmasdi. Endi: ism bilan
+// salom, kimmiz, HOZIR nechta ochiq ish va qaysi lavozimlar (bazadan, to'qima
+// emas), to'rt va'da va bitta tugma. Raqam nomzod kabinetidagi ro'yxat
+// qoidasi bilan bir xil (ochiq, e'lon qilingan, 14 kundan yangi).
+const escHtml = s => String(s == null ? '' : s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+async function hookText({ lang, from, agencyId, v, closed }) {
+  const first = String((from && from.first_name) || '').trim().slice(0, 30);
+  const fresh = new Date(Date.now() - vac.STALE_DAYS * 864e5);
+  const byRole = await Vacancy.aggregate([
+    { $match: { agencyId, status: 'open', listed: { $ne: false }, confirmedAt: { $gte: fresh } } },
+    { $group: { _id: '$role', n: { $sum: 1 } } }, { $sort: { n: -1 } }
+  ]);
+  const n = byRole.reduce((s, x) => s + x.n, 0);
+  const roles = byRole.filter(x => x._id && x._id !== 'boshqa').slice(0, 5)
+    .map(x => T(lang, 'role.' + x._id)).filter(l => l && !/^role\./.test(l)).map(l => l.toLowerCase()).join(', ');
+  return [
+    T(lang, 'ank.hookHi', { name: first ? ', ' + escHtml(first) : '' }), '',
+    T(lang, 'ank.hookLead'), '',
+    n ? T(lang, 'ank.hookJobs', { n, roles: escHtml(roles) }) : '',
+    v ? T(lang, 'ank.hookVac', { v: escHtml(vac.titleFor(v, lang)) }) : closed ? T(lang, 'ank.hookClosed') : '',
+    n || v || closed ? '' : null,
+    T(lang, 'ank.hookPoints'), '',
+    T(lang, 'ank.hookCta')
+  ].filter(x => x !== null).join('\n').replace(/\n{3,}/g, '\n\n');
 }
 
 // ── Kontakt xabari ───────────────────────────────────────────
@@ -945,3 +972,4 @@ router.post('/unlink-admin', guard, asyncHandler(async (req, res) => {
 }));
 
 module.exports = router;
+module.exports.hookText = hookText;   // test uchun (test/applications.test.js)

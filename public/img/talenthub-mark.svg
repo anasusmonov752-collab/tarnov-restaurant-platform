@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" role="img" aria-label="TalentHub">
+  <rect width="40" height="40" rx="11" fill="#1F3FA8"/>
+  <path d="M10.5 14h15.5" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+  <path d="M18.5 14v15.5" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="29.5" cy="14" r="3.8" fill="#F2C46D"/>
+</svg>

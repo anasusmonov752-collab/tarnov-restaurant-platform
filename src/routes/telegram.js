@@ -447,7 +447,11 @@ async function plainStart(msg, chatId, tgLang, appBase) {
   if (cand && cand.tgState === 'linked') {
     const lang = I18N.LANGS.includes(cand.lang) ? cand.lang : tgLang;
     await tg.setChatMenuButton(token, chatId, T(lang, 'ank.menu'), `${appBase}/profil.html`).catch(() => {});
-    await tg.sendMessage(token, chatId, T(lang, 'bot.candHello'));
+    // Qaytib kelgan nomzod — bir bosishda ishlar ro'yxatiga (menyu tugmasini hamma ham topmaydi)
+    await tg.sendMessage(token, chatId, T(lang, 'bot.candHello'), { reply_markup: { inline_keyboard: [[
+      { text: T(lang, 'ank.botJobs'), web_app: { url: `${appBase}/profil.html#jobs` } },
+      { text: T(lang, 'ank.botProfile'), web_app: { url: `${appBase}/profil.html` } }
+    ]] } });
     return;
   }
   // Begona odam — ish izlab botni o'zi topgan: umumiy anketa. Platformada

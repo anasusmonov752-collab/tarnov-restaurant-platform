@@ -143,13 +143,30 @@ router.post('/:rid/submit', guard, asyncHandler(async (req, res) => {
   const c = out.candidate;
   const lang = I18N.LANGS.includes(r.lang) ? r.lang : I18N.fromTelegram(req.tgUser.language_code);
 
-  // Nomzodga — rahmat va "Profilim" tugmasi (endi u bog'langan nomzod)
+  // Ochiq ishlar soni — nomzod anketadan keyin bo'sh ekranda qolmasin:
+  // "Sizga mos N ta ish" bilan darhol kabinetga (anketa.html renderDone).
+  // Nomzod kabinetidagi ro'yxat qoidasi bilan bir xil (routes/candidate /vacancies).
+  const fresh = new Date(Date.now() - vac.STALE_DAYS * 864e5);
+  const vq = { agencyId: r.agencyId, status: 'open', listed: { $ne: false }, confirmedAt: { $gte: fresh } };
+  const [jobs, matches] = await Promise.all([
+    Vacancy.countDocuments(vq),
+    c.role && c.role !== 'boshqa' ? Vacancy.countDocuments(Object.assign({ role: c.role }, vq)) : 0
+  ]);
+  const next = out.applied ? 'apps' : 'jobs';
+
+  // Nomzodga — rahmat va TUGMA bilan (ilgari faqat matn: "pastdagi Profilim
+  // tugmasi" — menyu tugmasini hamma ham topmaydi)
   try {
     const token = tg.platformToken();
     await tg.setChatMenuButton(token, r.chatId || r.tgUserId, I18N.t(lang, 'ank.menu'), `${appBase}/profil.html`)
       .catch(e => console.error('[ANKETA] menyu tugmasi:', e.message));
     await tg.sendMessage(token, r.chatId || r.tgUserId,
-      I18N.t(lang, 'ank.botThanks', { name: (c.fullName || '').split(' ')[0] || '' }));
+      I18N.t(lang, 'ank.botThanks2', { name: (c.fullName || '').split(' ')[0] || '',
+        jobs: matches ? I18N.t(lang, 'ank.botThanksJobs', { n: matches }) : '' }),
+      { reply_markup: { inline_keyboard: [[
+        { text: I18N.t(lang, 'ank.botJobs'), web_app: { url: `${appBase}/profil.html#jobs` } },
+        { text: I18N.t(lang, 'ank.botProfile'), web_app: { url: `${appBase}/profil.html` } }
+      ]] } });
   } catch (e) { console.error('[ANKETA] rahmat xabari ketmadi:', e.message); }
 
   // Agentlikka. Ariza bo'lsa applications.submit o'zi xabar bergan —
@@ -169,7 +186,8 @@ router.post('/:rid/submit', guard, asyncHandler(async (req, res) => {
   }
 
   res.json({ ok: true, created: out.created, applied: out.applied,
-    vacancyTitle: out.vacancy ? vac.titleFor(out.vacancy, lang) : '' });
+    vacancyTitle: out.vacancy ? vac.titleFor(out.vacancy, lang) : '',
+    jobs, matches, next });
 }));
 
 module.exports = router;

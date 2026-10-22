@@ -362,6 +362,20 @@ KESH: CSS/JS endi `Cache-Control: public, no-cache` (304 bilan) — ilgari 1 soa
 eski menyu ko'rinardi; panel sahifalarida `?v=2`. CI yiqilgan test tafsilotini
 (expected/actual/qator) annotatsiyada beradi.
 
+**VAKANSIYA.UZ SINOVI** (2026-10-22, Anas qarori): Anas o'z "vakansiya.uz"
+Telegram kanaliga anketa havolasini tashlab oqimni sinaydi. Kanal kaliti
+`vakuz` (`survey.CHANNELS`, havola oynasida birinchi va asosiy; `bd39cd1`,
+jonli: `a_HMXT37_vakuz`, vakansiya havolasi 44 belgi). Ro'yxat bo'sh
+ko'rinmasligi uchun «Работа в ресторане Уз» (@workinrestaurant) guruhining
+22.10 e'lonlaridan 19 restoran "Kutilmoqda" mijoz (izohda manba, qo'shimcha
+tel/TG) va 33 ochiq vakansiya yaratildi (ofitsiant 13, oshpaz 12, xostess 3,
+kassir 3, barmen 2). Nomzodga restoran nomi ko'rinmaydi (`vac.forCandidate`).
+Kunlik to'lov — `conditions` matnida (oylik maosh to'qilmagan). Shubhali
+(karaoke/raqqosa), restoran bo'lmagan va kamsituvchi talabli e'lonlar olinmadi.
+MODEL: ariza kelsa — 24 soatda nomzodga qo'ng'iroq, tekshirib, restoranga
+"birinchi 3 nomzod bepul" bilan chiqish; rozi bo'lsa mijozga 3 sinov krediti
+(Mijozlar → Kredit). Nomzodga kontaktdan oldin restoran nomini aytish.
+
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
 O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda

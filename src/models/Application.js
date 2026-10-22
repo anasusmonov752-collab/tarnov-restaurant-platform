@@ -34,7 +34,7 @@ const ApplicationSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   seenAt:    { type: Date, default: null },      // mijoz ko'rdi
   decidedAt: { type: Date, default: null },
-  // Agentlik tomoni (panel "Arizalar"): nomzod "HR ko'rib chiqdi / bog'landi"ni
+  // Agentlik tomoni (panel "Arizalar"): nomzod "ko'rib chiqildi / HR bog'landi"ni
   // sana bilan ko'radi — services/appLife.stepsFor
   agencySeenAt: { type: Date, default: null },
   contactedAt:  { type: Date, default: null }

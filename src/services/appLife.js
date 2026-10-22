@@ -13,7 +13,8 @@ const tg = require('./telegram');
 
 const STEP_LABEL = {
   sent:      'Ariza yuborildi',
-  reviewed:  'HR ko\'rib chiqdi',
+  // agentlik (agencySeenAt) yoki mijoz (seenAt) ko'rgan — kim ekanini nomzodga aytmaymiz
+  reviewed:  'Arizangiz ko\'rib chiqildi',
   contacted: 'HR siz bilan bog\'landi',
   proposed:  'Ish beruvchiga taklif qilindi',
   interview: 'Suhbat',

@@ -118,7 +118,7 @@ router.get('/applications/inbox', guard, asyncHandler(async (req, res) => {
 }));
 
 // Ko'rildi (kartani ochganda) va bog'lanildi ("Qo'ng'iroq qildim") —
-// faqat birinchi marta yoziladi. Nomzod "HR ko'rib chiqdi / bog'landi"ni
+// faqat birinchi marta yoziladi. Nomzod "ko'rib chiqildi / HR bog'landi"ni
 // sana bilan ko'radi (appLife.stepsFor).
 router.post('/applications/:appId/:mark(seen|contacted)', guard, asyncHandler(async (req, res) => {
   const agencyId = req.user.restaurantId;

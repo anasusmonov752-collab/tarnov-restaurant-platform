@@ -119,6 +119,7 @@ test('/start birinchi xabari: ism, haqiqiy ochiq ishlar soni va lavozimlar, uz/r
   assert.match(uz, /Assalomu alaykum, Ali&lt;b&gt;!/);
   assert.match(uz, /<b>3 ta ochiq ish<\/b>: ofitsiant, oshpaz\./);      // yopiq va yashirin sanalmaydi
   assert.ok(!/\n{3,}/.test(uz));
+  assert.match(uz, /xodim tanlash xizmati\.\nRestoranlar bizga/);       // kimmiz + qanday ishlaymiz
   const ru = await hookText({ lang: 'ru', from: {}, agencyId: 'agH', v: { title: 'Ofitsiant', role: 'ofitsiant' } });
   assert.match(ru, /^👋 Здравствуйте!/);
   assert.match(ru, /открыто <b>3 вакансии<\/b>/);

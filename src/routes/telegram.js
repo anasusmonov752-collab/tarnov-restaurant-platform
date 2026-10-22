@@ -533,7 +533,8 @@ async function hookText({ lang, from, agencyId, v, closed }) {
     .map(x => T(lang, 'role.' + x._id)).filter(l => l && !/^role\./.test(l)).map(l => l.toLowerCase()).join(', ');
   return [
     T(lang, 'ank.hookHi', { name: first ? ', ' + escHtml(first) : '' }), '',
-    T(lang, 'ank.hookLead'), '',
+    T(lang, 'ank.hookLead'),
+    T(lang, 'ank.hookAbout'), '',
     n ? T(lang, 'ank.hookJobs', { n, roles: escHtml(roles) }) : '',
     v ? T(lang, 'ank.hookVac', { v: escHtml(vac.titleFor(v, lang)) }) : closed ? T(lang, 'ank.hookClosed') : '',
     n || v || closed ? '' : null,

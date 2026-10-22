@@ -425,6 +425,13 @@ rahmat va qaytgan nomzodning `/start` xabari — "💼 Ishlarni ko'rish" /
 "👤 Profilim" tugmalari bilan. Yo'q: chala anketa eslatmasi (Render bepul
 cron ishonchsiz — GitHub Actions soatlik vazifa taklif qilingan).
 `test/unit.test.js` endi hamma marshrut faylini yuklaydi (sintaksis xatosi CI'da).
+`/start` birinchi xabari (`97ffb4f`, `telegram.js hookText`, HTML): ism bilan
+salom, kimmiz, HOZIR nechta ochiq ish va 5 ta asosiy lavozim (bazadan —
+kabinet ro'yxati qoidasi), to'rt va'da ("HR 24 soat ichida qo'ng'iroq
+qiladi" — jamoa majburiyati), "📝 Anketani boshlash · 3 daqiqa"; vakansiya
+havolasida qo'shimcha qator. uz/ru, rus ko'plik shakllari. Nomzodni
+Telegramdan uzish — panel Telegram oynasida (`POST /api/recruitment/:id/tg/
+unlink`, rezyume qoladi; `abced18`). Farina (hh) test akkauntidan uzildi.
 
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.

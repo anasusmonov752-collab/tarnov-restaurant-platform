@@ -433,6 +433,17 @@ havolasida qo'shimcha qator. uz/ru, rus ko'plik shakllari. Nomzodni
 Telegramdan uzish — panel Telegram oynasida (`POST /api/recruitment/:id/tg/
 unlink`, rezyume qoladi; `abced18`). Farina (hh) test akkauntidan uzildi.
 
+**ANKETA QISQARTIRILDI — PROD'GA YOZILDI** (2026-10-22, Anas qarori): ko'k yoqa
+uchun 20–24 savol ko'p edi. To'rtala anketada qoldi: role, experience,
+startWhen, shift, salary, fullName, birthDate, phone, location, russian,
+photo, consent (+ c_kuxnya oshpazga). Olib tashlandi: lastJob, gender,
+english, sanitary, c_sanit, study, c_vaqt, c_bron, c_sex, c_stol, c_kassa
+(konstruktorning "Olib tashlangan standart savollar" menyusidan qaytadi).
+Nomzod ko'radi: umumiy 12 (oshpaz 13), xostess/ofitsiant 11, oshpaz 12.
+Qolgan savollar mazmuni o'zgarishsiz (solishtirildi). Matn "2 daqiqa"
+(`a837df7`). Diqqat: `survey.template()` (yangi agentlik/upgrade) hali
+eski uzun ro'yxat — kerak bo'lsa shablonni ham qisqartirish.
+
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
 O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda

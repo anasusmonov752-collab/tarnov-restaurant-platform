@@ -113,7 +113,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   padding:18px 16px 16px;position:sticky;top:0;z-index:6}
 .chead .nm{font-size:15px;color:var(--muted);font-weight:500}
 .chead .cr{display:flex;align-items:baseline;gap:9px;margin-top:6px}
-.chead .cr b{font-size:34px;font-weight:600;color:var(--blue);line-height:1}
+.chead .cr b{font-size:34px;font-weight:600;color:var(--th-amber);line-height:1}   /* kredit — pul rangi */
 .chead .cr span{font-size:13px;color:var(--muted);line-height:1.4}
 
 .stats{display:flex;gap:8px;padding:12px 12px 0}
@@ -213,6 +213,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .stc.no,.stc.refunded{background:rgba(100,116,139,.13);color:var(--muted)}
 .cd-wait{font-size:13px;color:var(--muted);margin-top:10px;line-height:1.45}
 .cd-acts{display:flex;gap:8px;margin-top:12px}
+/* Pullik amal (kontaktni ochish) — alohida keng qatorda, narxi bilan; qolganlari ostida (iOS) */
+.cd-acts.paid{flex-wrap:wrap}
+.cd-acts.paid .cd-btn[data-open]{flex:1 0 100%;order:-1;white-space:nowrap;padding:12px 10px}
 .cd-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 6px;
   border-radius:11px;border:1px solid var(--line);background:var(--card);color:var(--ink);
   font-family:inherit;font-size:13.5px;font-weight:600;text-decoration:none;cursor:pointer}
@@ -1467,7 +1470,7 @@ function appCardHtml(it){
     </div>`;
   }
   return `<div class="cd">${head}
-    <div class="cd-acts">
+    <div class="cd-acts${!done && it.instant ? ' paid' : ''}">
       <button class="cd-btn" data-rz="${esc(c.id)}">${IC.doc}${esc(t('act.resume'))}</button>
       ${done ? '' : it.instant
         // Yangi ariza — kontaktni o'zi ochadi (tasdiq bilan, -1 kredit)

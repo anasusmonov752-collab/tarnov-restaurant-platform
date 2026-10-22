@@ -166,8 +166,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .ck-r i.n{background:rgba(194,91,76,.12);color:var(--danger)}
 .ck-r i.o{background:var(--bg);color:var(--muted)}
 .ck-r .v{margin-left:auto;color:var(--muted);font-size:13.5px;text-align:right;max-width:55%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ap-ta{width:100%;min-height:84px;border:1px solid var(--line);border-radius:12px;padding:11px 12px;font:inherit;font-size:15px;resize:vertical;background:var(--card);color:var(--ink)}
-.ap-cn{text-align:right;font-size:12px;color:var(--muted);margin-top:4px}
 .ap-er{margin-top:12px;padding:12px 14px;border-radius:12px;background:rgba(194,91,76,.1);color:var(--danger);font-size:14px;line-height:1.5}
 .ap-er button{margin-top:9px;border:0;background:none;color:var(--blue);font:inherit;font-weight:600;padding:0;cursor:pointer}
 .ap-ok{text-align:center;padding:18px 6px 6px}
@@ -698,7 +696,7 @@ function showJob(v){
 // Ilgari bitta bosish bilan ketardi, xato bo'lsa alert() — Telegram ichida
 // u ko'pincha chiqmaydi, tugma jimgina qaytib qolardi (2026-10-22: "bosdim,
 // hech narsa bo'lmadi"). Endi: nima yuborilayotgani, profil tekshiruvi,
-// ixtiyoriy xat, xato SHU oynada va tushunarli, muvaffaqiyat — keyingi qadamlar bilan.
+// xato SHU oynada va tushunarli, muvaffaqiyat — keyingi qadamlar bilan.
 const fail = (msg, btn) => `<div class="ap-er">${esc(msg)}${btn ? `<br><button id="apFix">${esc(btn)}</button>` : ''}</div>`;
 function openApply(v){
   const p = P || {};
@@ -718,12 +716,8 @@ function openApply(v){
       ${row(!!p.hasPhoto, 'Rasm', p.hasPhoto ? 'bor' : '', true)}
     </div>
     ${ready ? '' : fail('Ariza uchun ism va telefon kerak — HR sizga shu raqam orqali qo\'ng\'iroq qiladi.', 'Profilni to\'ldirish')}
-    <div class="vd-sec">Nega aynan siz? <span style="text-transform:none;letter-spacing:0">(ixtiyoriy)</span></div>
-    <textarea class="ap-ta" id="apMsg" maxlength="500" placeholder="Masalan: 2 yil ofitsiant bo'lib ishlaganman, rus tilini bilaman, ertaga chiqa olaman."></textarea>
-    <div class="ap-cn" id="apCn">0 / 500</div>
     <div id="apEr"></div>
     <button class="btn" id="apGo" style="margin-top:12px" ${ready ? '' : 'disabled'}>Arizani yuborish</button>`);
-  $('apMsg').oninput = () => { $('apCn').textContent = $('apMsg').value.length + ' / 500'; };
   if ($('apFix')) $('apFix').onclick = () => { closeSheet(); pickTab('tP'); };
   $('apGo').onclick = () => sendApply(v);
 }
@@ -732,7 +726,8 @@ async function sendApply(v){
   const b = $('apGo');
   b.disabled = true; b.textContent = 'Yuborilmoqda…'; $('apEr').innerHTML = '';
   try {
-    await api(`/api/cand/vacancies/${encodeURIComponent(v.id)}/apply`, { method:'POST', body: JSON.stringify({ message: $('apMsg').value.trim() }) });
+    // Xat maydoni yo'q (Anas qarori: ko'k yoqa uchun ortiqcha qadam) — profilning o'zi yetadi
+    await api(`/api/cand/vacancies/${encodeURIComponent(v.id)}/apply`, { method:'POST', body: JSON.stringify({}) });
     try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
     v.applied = true;
     applied(v);
@@ -742,7 +737,7 @@ async function sendApply(v){
     b.disabled = false; b.textContent = 'Arizani yuborish';
     let html, fix = null;
     if (e.code === 'expired' || e.status === 401) {
-      html = fail('Sessiya eskirgan: ilova uzoq vaqt ochiq turdi. Ilovani yopib, botdan qayta oching — ariza matni saqlanmaydi.', 'Ilovani yopish');
+      html = fail('Sessiya eskirgan: ilova uzoq vaqt ochiq turdi. Ilovani yopib, botdan qayta oching.', 'Ilovani yopish');
       fix = () => { try { TG.close(); } catch(_){} };
     } else if (['no_name', 'no_phone', 'bad_phone'].includes(e.code)) {
       html = fail(e.message, 'Profilni to\'ldirish'); fix = () => { closeSheet(); pickTab('tP'); };

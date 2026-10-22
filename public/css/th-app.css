@@ -104,3 +104,6 @@ body.th-app, body.th-app button, body.th-app input, body.th-app select, body.th-
   .th-scrim.on{ display:block; position:fixed; inset:0; z-index:80; background:rgba(0,0,0,.3); }
   .th-app .topbar{ padding:10px 14px !important; }
 }
+
+/* th-shell yashirgan eski elementlar (sahifa CSS'idagi display:flex hidden'ni bosib ketmasin) */
+.th-app [hidden]{ display:none !important; }

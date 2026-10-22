@@ -78,7 +78,11 @@ const ago = d => {
   return h < 1 ? 'hozirgina' : h < 24 ? h + ' soat' : Math.floor(h / 24) + ' kun';
 };
 
-$('today').textContent = new Date().toLocaleDateString('uz-UZ', { weekday: 'long', day: 'numeric', month: 'long' });
+// toLocaleDateString('uz-UZ') ko'p brauzerda "M10 22, Thu" beradi — o'zimiz yozamiz
+const KUN = ['Yakshanba', 'Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba'];
+const OY = ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr'];
+const nowD = new Date();
+$('today').textContent = `${KUN[nowD.getDay()]}, ${nowD.getDate()}-${OY[nowD.getMonth()]}`;
 
 (async function(){
   let d;

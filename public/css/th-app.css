@@ -78,8 +78,8 @@ body.th-app, body.th-app button, body.th-app input, body.th-app select, body.th-
 
 /* ── Kartalar va maydonlar ── */
 .th-app .card{ border:0 !important; border-radius:var(--th-r-md) !important; box-shadow:var(--th-shadow-1) !important; }
-.th-app input[type=text], .th-app input[type=search], .th-app input[type=number], .th-app input[type=email], .th-app input[type=tel],
-.th-app input[type=date], .th-app select, .th-app textarea{
+.th-app input:not([type]), .th-app input[type=text], .th-app input[type=search], .th-app input[type=number], .th-app input[type=email], .th-app input[type=tel],
+.th-app input:not([type]), .th-app input[type=date], .th-app select, .th-app textarea{
   border:1px solid #E3E3E8 !important; border-radius:var(--th-r-sm) !important; background:var(--th-surface) !important; }
 .th-app input:focus, .th-app select:focus, .th-app textarea:focus{ outline:none !important; border-color:var(--th-brand) !important; box-shadow:var(--th-focus) !important; }
 .th-app .pill, .th-app .chip{ border-radius:var(--th-r-pill) !important; }

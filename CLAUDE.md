@@ -309,6 +309,21 @@ Hali qolgan: nomzodlar bazasi ikki sahifaga bo'lingan (ro'yxat/kanban
 birlashtirilmagan), 1000+ sahifalash, o'chirishda ogohlantirish, qo'lda
 qo'shishda dublikat tekshiruvi, profil.html ruscha.
 
+**RASM OYNASI VA MIJOZ LOGOTIPI — DEPLOY QILINDI** (2026-10-22, `4492a2a`,
+`51b80a8`): `public/js/th-viewer.js` — yagona iOS Photos uslubidagi oyna
+(Mini App, profil, panel sahifalari). Sahifaga ulash kifoya: `img[data-zoom]`
+yoki src'da `/photo`/`/logo` bo'lgan rasmni o'zi ushlaydi (`data-nozoom` —
+chiqarib tashlash). Ikki marta bosish/ikki barmoq — kattalashtirish (asl
+o'lchamdan 2x dan oshmaydi), pastga surish/✕/Esc/Telegram "orqaga" — yopish.
+miniapp.html BackButton zanjiri: `window.thViewerHostBack = true` va
+`onTgBack` boshida `thViewer.consumeBack()`; boshqa sahifada oyna o'zi
+boshqaradi. Izohda yopuvchi script tegini yozmang (ichki joylashtirishni
+buzadi). Logotip: `Client.logo` (data URL, ≤200 KB, png/jpeg/webp,
+`logoAt`), panel Mijozlar → Tahrirlash (brauzerda 256px gacha kichraytiriladi,
+darhol saqlanadi); `GET /api/clients/:id/logo` (agentlik),
+`GET /api/cand/companies/:id/logo?t=<photoToken>` — faqat kontakt ochilgan
+nomzodga. Ro'yxat javobida faqat `hasLogo`, base64 chiqmaydi.
+
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
 O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda

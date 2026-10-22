@@ -323,6 +323,12 @@ buzadi). Logotip: `Client.logo` (data URL, ≤200 KB, png/jpeg/webp,
 darhol saqlanadi); `GET /api/clients/:id/logo` (agentlik),
 `GET /api/cand/companies/:id/logo?t=<photoToken>` — faqat kontakt ochilgan
 nomzodga. Ro'yxat javobida faqat `hasLogo`, base64 chiqmaydi.
+`fc6c080`: nomzod Xabarlar ro'yxati va chat sarlavhasida ham logotip
+(`/api/cand/chats` → `hasLogo` faqat ochiq kontaktda). Chat ro'yxati va
+sarlavha avatarlari `data-nozoom` — bosish chatni/kartani ochadi, rasm
+oynasini emas (aks holda mijoz Mini App'ida nomzod fotosini bossa chat
+ochilmasdi). Qadalgan TalentHub — "Yordam chati": quloqchin belgisi
+(`AG_IC`), bo'sh chatda salomlashuv (bazaga yozilmaydi, `chat.supportHello`).
 
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.

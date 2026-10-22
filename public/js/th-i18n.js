@@ -242,7 +242,7 @@
       'ap.seen': 'Ko\'rildi',
       'ap.date': 'Ariza: {d}',
       'ap.stagesInSl': ' · bosqichlar "Tanlovlar"da',
-      'ap.openContact': 'Kontaktni ochish',
+      'ap.openContact': 'Ochish · 1 kredit',          // narx tugmaning o'zida (audit)
       'ap.pick': 'Tanlash',
       'ap.reject': 'Rad etish',
       'ap.instant': ' · 1 kredit, darhol ochiladi',
@@ -466,6 +466,8 @@
       'start.now': 'Darhol', 'start.w1': '1 hafta ichida', 'start.w2': '2 hafta ichida', 'start.m1': '1 oydan keyin',
       'rz.start': 'Ishga chiqa oladi',
       'card.now': 'Darhol chiqa oladi',
+      'card.verified': 'Telefon tasdiqlangan',
+      'card.anketa': 'Anketa to\'liq',
       'shift.weekend': 'Faqat dam olish kunlari',
 
       // ── ANKETA: bot xabarlari ──
@@ -684,7 +686,7 @@
       'ap.seen': 'Просмотрен',
       'ap.date': 'Отклик: {d}',
       'ap.stagesInSl': ' · этапы — в «Подборках»',
-      'ap.openContact': 'Открыть контакт',
+      'ap.openContact': 'Открыть · 1 кредит',
       'ap.pick': 'Выбрать',
       'ap.reject': 'Отклонить',
       'ap.instant': ' · 1 кредит, откроется сразу',
@@ -891,6 +893,8 @@
       'start.now': 'Сразу', 'start.w1': 'В течение недели', 'start.w2': 'В течение 2 недель', 'start.m1': 'Через месяц',
       'rz.start': 'Готов(а) выйти',
       'card.now': 'Может выйти сразу',
+      'card.verified': 'Телефон подтверждён',
+      'card.anketa': 'Анкета заполнена',
       'shift.weekend': 'Только выходные',
 
       'ank.botInvite': 'Здравствуйте! Чтобы откликнуться на работу, заполните короткую анкету — 3 минуты.',

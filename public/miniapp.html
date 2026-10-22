@@ -5,19 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>TalentHub</title>
 <script src="/js/uz-date.js"></script>  <!-- o'zbekcha sana: brauzerda uz formati bo'lmasa -->
+<link rel="stylesheet" href="/css/th.css">  <!-- dizayn tizimi: ranglar, kunduz/tun -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="/js/th-i18n.js?v=6"></script>
+<script src="/js/th-i18n.js?v=7"></script>
 <style>
-/* Rang Telegram mavzusidan OLINMAYDI.
-   Avval --tg-theme-* o'zgaruvchilariga tayanardik, natijada mijozda tungi
-   rejim yoqilgan bo'lsa ilova qora ochilar va platformaning oq/ko'k
-   ko'rinishi yo'qolardi. Brend bir xil bo'lishi uchun palitra qattiq. */
+/* Ranglar — TalentHub dizayn tizimidan (css/th.css, iOS uslubi).
+   Telegram'ning --tg-theme-* RANGLARI olinmaydi (avval shunday edi va
+   tungi rejimda brend yo'qolardi), faqat kunduz/tun HOLATI olinadi:
+   applyTheme() <html data-theme> qo'yadi, th.css o'z tungi palitrasini
+   beradi — ko'k brend va kredit rangi ikkala rejimda ham o'zimizniki. */
 :root{
-  --bg:#EEF3FB; --card:#FFFFFF; --ink:#16233A; --muted:#64748B;
-  --line:#E1E8F2; --blue:#2563EB; --blue-d:#1D4ED8;
-  --ok:#2E9E5B; --warn:#B4802E; --danger:#C25B4C;
-  --btn:var(--blue); --btn-ink:#fff; --link:var(--blue);
+  --bg:var(--th-bg); --card:var(--th-surface); --ink:var(--th-ink); --ink-2:var(--th-ink-2); --muted:var(--th-muted);
+  --line:var(--th-line); --blue:var(--th-brand); --blue-d:var(--th-brand-2);
+  --ok:var(--th-ok); --warn:var(--th-warn); --danger:var(--th-danger);
+  --btn:var(--blue); --btn-ink:#fff; --link:var(--th-link);
+  --soft-blue:#E8EFFA;          /* avatar va tizim xabari foni */
 }
+:root[data-theme="dark"]{ --soft-blue:rgba(10,132,255,.18); }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   background:var(--bg);color:var(--ink);font-size:15px;
@@ -42,14 +46,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   background:var(--bg);display:flex;align-items:center;justify-content:center;
   font-size:15px;font-weight:600;color:var(--muted)}
 .ph img{width:100%;height:100%;object-fit:cover}
+/* Anonim nomzod — lavozim belgisi (kod harflari o'rniga) */
+.role-ic{width:28px;height:28px;color:var(--link)}
+.cd-ph .role-ic{width:24px;height:24px}
 .b{flex:1;min-width:0}
 .code{font-size:12px;color:var(--muted);font-family:ui-monospace,monospace}
 .pos{font-size:15.5px;font-weight:600;margin-top:1px;line-height:1.25}
 .meta{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.45}
 .tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
 .t{font-size:11.5px;padding:3px 8px;border-radius:7px;background:var(--bg);color:var(--muted)}
-.t.ai{color:#1E7A46}
-.t.act{color:#1E7A46}
+.t.ai{color:var(--ok)}
+.t.act{color:var(--ok)}
 .t.no{color:#B4542B}
 .seenmark{font-size:11.5px;color:var(--muted);margin-top:6px;display:none}
 .c.seen .seenmark{display:block}
@@ -191,7 +198,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .cd{background:var(--card);border-radius:16px;padding:14px;margin-bottom:10px;
   box-shadow:0 1px 2px rgba(15,39,71,.05)}
 .cd-top{display:flex;gap:12px;align-items:center}
-.cd-ph{width:52px;height:52px;border-radius:50%;flex:none;overflow:hidden;background:#E8EFFA;
+.cd-ph{width:52px;height:52px;border-radius:50%;flex:none;overflow:hidden;background:var(--soft-blue);
   color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px}
 .cd-ph img{width:100%;height:100%;object-fit:cover}
 .cd-mid{flex:1;min-width:0}
@@ -248,7 +255,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .flt button{flex:none;border:1px solid var(--line);background:var(--card);border-radius:20px;padding:7px 13px;
   font-family:inherit;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;white-space:nowrap}
 .flt button b{font-weight:700;opacity:.5;margin-left:5px}
-.flt button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.flt button.on{background:var(--ink);border-color:var(--ink);color:var(--card)}
 .flt button.on b{opacity:.75}
 /* Yangi arizalar — ko'zga tashlanadigan YASHIL belgi. Qizil emas: ilovada
    qizil "rad/xato" ma'nosida (Mos kelmadi, Rad etish), ariza esa imkoniyat.
@@ -331,7 +338,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   background:rgba(255,255,255,.96);border:1px solid rgba(225,232,242,.9);
   box-shadow:0 10px 30px rgba(15,39,71,.16),0 2px 6px rgba(15,39,71,.08)}
 @supports ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){
-  .tabs{background:linear-gradient(180deg,rgba(255,255,255,.34),rgba(255,255,255,.14));
+  .tabs{background:linear-gradient(180deg,rgba(255,255,255,.80),rgba(255,255,255,.66));   /* audit: .34/.14 da orqadagi matn ko'rinardi */
     -webkit-backdrop-filter:blur(14px) saturate(210%);backdrop-filter:blur(14px) saturate(210%);
     border:1px solid rgba(255,255,255,.6);
     box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(255,255,255,.35),
@@ -365,8 +372,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     0 10px 24px rgba(15,39,71,.2),0 2px 4px rgba(15,39,71,.1)}
 .tb.hov{color:var(--ink)}
 
+/* Tungi rejim: qoramtir shisha (iOS dark material), linza xira oq */
+:root[data-theme="dark"] .tabs{ background:rgba(28,28,30,.94); border-color:rgba(255,255,255,.08);
+  box-shadow:0 10px 30px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.4); }
+@supports ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){
+  :root[data-theme="dark"] .tabs{ background:linear-gradient(180deg,rgba(44,44,46,.82),rgba(28,28,30,.74));
+    border:1px solid rgba(255,255,255,.08);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.10), 0 10px 30px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.4); }
+}
+:root[data-theme="dark"] .tabs::before{ background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,0)); }
+:root[data-theme="dark"] .lens, :root[data-theme="dark"] .lens.drag{
+  background:radial-gradient(120% 100% at 50% 0%,rgba(255,255,255,.22),rgba(255,255,255,.10) 60%,rgba(255,255,255,.05));
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.25), 0 4px 14px rgba(0,0,0,.4); }
+
 .tb{position:relative;z-index:1;flex:1;min-width:0;border:none;background:transparent;border-radius:21px;
-  padding:7px 2px 6px;cursor:pointer;font-family:inherit;color:var(--muted);font-size:10.5px;
+  padding:7px 2px 6px;cursor:pointer;font-family:inherit;color:var(--muted);font-size:11px;
   font-weight:600;line-height:1.2;white-space:nowrap;display:flex;flex-direction:column;
   align-items:center;gap:3px;transition:color .2s;-webkit-tap-highlight-color:transparent}
 .tb .ic{position:relative;display:block;width:23px;height:23px;transition:transform .3s cubic-bezier(.34,1.45,.5,1)}
@@ -376,7 +396,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .tb.on .ic svg{stroke-width:2.3}
 /* O'qilmagan xabar — qizil nuqta */
 .tb .dot{position:absolute;top:-1px;right:-3px;width:10px;height:10px;border-radius:50%;
-  background:#EF4444;border:2px solid #fff;display:none}
+  background:#EF4444;border:2px solid var(--card);display:none}
 .tb .dot.on{display:block}
 
 /* ══ SUHBATLAR ══════════════════════════════════════════════
@@ -387,7 +407,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   border-bottom:1px solid var(--line);cursor:pointer}
 .ch-row:active{background:#F3F7FD}
 .ch-av{width:46px;height:46px;border-radius:50%;flex:none;display:flex;align-items:center;
-  justify-content:center;font-weight:700;font-size:14px;background:#E8EFFA;color:var(--blue)}
+  justify-content:center;font-weight:700;font-size:14px;background:var(--soft-blue);color:var(--blue)}
 .ch-av.ag{background:var(--blue);color:#fff;font-size:17px}
 .ch-mid{flex:1;min-width:0}
 .ch-top{display:flex;align-items:center;gap:5px}
@@ -417,7 +437,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 
 /* ══ REZYUME (kontakt ochilgandan keyin) ═══════════════════ */
 .rs-hd{display:flex;gap:13px;align-items:center;padding:6px 0 14px}
-.rs-ph{width:64px;height:76px;border-radius:12px;flex:none;overflow:hidden;background:#E8EFFA;
+.rs-ph{width:64px;height:76px;border-radius:12px;flex:none;overflow:hidden;background:var(--soft-blue);
   color:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px}
 .rs-ph img{width:100%;height:100%;object-fit:cover}
 .rs-nm{font-size:18px;font-weight:700;line-height:1.25}
@@ -465,7 +485,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .cmsg.them{align-self:flex-start;background:var(--card);border:1px solid var(--line);
   border-bottom-left-radius:5px}
 /* Tizim xabari ataylab boshqacha: uni odamning gapi bilan adashtirmaslik kerak */
-.cmsg.sys{align-self:center;background:#E8EFFA;color:#3A5070;font-size:12.5px;
+.cmsg.sys{align-self:center;background:var(--soft-blue);color:var(--ink-2);font-size:12.5px;
   text-align:center;border-radius:12px;max-width:92%}
 .cmsg-t{font-size:10.5px;opacity:.65;margin-top:3px;text-align:right}
 </style>
@@ -559,7 +579,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 
 <script>
 const TG = window.Telegram && window.Telegram.WebApp;
-if (TG) { TG.ready(); TG.expand(); }
+// Kunduz/tun — Telegram sozlamasidan. Sarlavha, fon va pastki panel
+// ranglari ham ilovaga moslanadi: ilgari tungi Telegram'da qora
+// sarlavha ostida oq sahifa chiqardi (2026-10-20 audit).
+function applyTheme(){
+  const dark = !!(TG && TG.colorScheme === 'dark');
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  const bg = dark ? '#000000' : '#F2F2F7';
+  try {
+    if (TG && TG.isVersionAtLeast && TG.isVersionAtLeast('6.9')) { TG.setHeaderColor(bg); TG.setBackgroundColor(bg); }
+    if (TG && TG.isVersionAtLeast && TG.isVersionAtLeast('7.10') && TG.setBottomBarColor) TG.setBottomBarColor(bg);
+  } catch(e){}
+}
+applyTheme();
+if (TG) { TG.ready(); TG.expand(); try { TG.onEvent('themeChanged', applyTheme); } catch(e){} }
 
 // ── Til ──
 // Hamma matn t('kalit') orqali — lug'at public/js/th-i18n.js da, server
@@ -647,12 +680,13 @@ function cardHtml(c){
   // Kimlik qoidasi (whoOf): oldin kontaktini ochgan nomzod — ism bilan
   const w = whoOf(c);
   return `<div class="c ${SEL.has(c.id)?'on':''} ${SEEN.has(c.id)?'seen':''}" data-id="${c.id}">
-    <div class="ph">${c.hasPhoto ? `<img src="${photoUrl(c)}" alt="">` : esc(w.ini)}</div>
+    <div class="ph">${c.hasPhoto ? `<img src="${photoUrl(c)}" alt="">` : w.avatar}</div>
     <div class="b">
       <div class="code">${esc(w.open ? w.sub : c.publicCode)}</div>
       <div class="pos">${esc(w.title)}</div>
       <div class="meta">${esc(factLine(c))}</div>
       <div class="tags">
+        ${trustTags(c)}
         ${c.fitScore ? `<span class="t ai">${esc(t('card.ai', { n: c.fitScore }))}</span>` : ''}
         ${statusChip(c)}
         ${c.startWhen === 'now' ? `<span class="t act">${esc(t('card.now'))}</span>` : ''}
@@ -832,10 +866,26 @@ const nameIni = s => String(s || '').trim().split(/\s+/).slice(0, 2).map(w => w[
 function whoOf(c){
   const role = c.roleText || c.roleLabel || c.desiredPosition || t('role.candidate');
   const name = c.contact && c.contact.fullName;
+  // avatar — tayyor HTML: ochilganda ism bosh harflari, anonimda lavozim
+  // belgisi ("7K" kabi kod harflari kartalarni bir-biridan ajratmasdi — audit)
   return name
-    ? { open: true, title: name, sub: role, ini: nameIni(name) }
-    : { open: false, title: role, sub: c.publicCode || '', ini: initialsOf(c.publicCode) };
+    ? { open: true, title: name, sub: role, ini: nameIni(name), avatar: esc(nameIni(name)) }
+    : { open: false, title: role, sub: c.publicCode || '', ini: initialsOf(c.publicCode), avatar: roleIcon(c.role) };
 }
+// Lavozim belgisi (Lucide uslubida). Ro'yxatda yo'q lavozim — odam belgisi.
+const ROLE_IC = {
+  xostess: '<path d="M3 20a1 1 0 0 1-1-1v-1a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v1a1 1 0 0 1-1 1Z"/><path d="M20 16a8 8 0 1 0-16 0M12 4v4M10 4h4"/>',
+  oshpaz: '<path d="M17 21a1 1 0 0 0 1-1v-5.35c0-.46.32-.84.73-1.04a4 4 0 0 0-2.14-7.59 5 5 0 0 0-9.18 0 4 4 0 0 0-2.14 7.59c.41.2.73.58.73 1.04V20a1 1 0 0 0 1 1ZM6 17h12"/>',
+  ofitsiant: '<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>',
+  barmen: '<path d="M8 22h8M7 10h10M12 15v7M12 15a5 5 0 0 0 5-5c0-2-.5-4-2-8H9c-1.5 4-2 6-2 8a5 5 0 0 0 5 5Z"/>',
+  kassir: '<rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/>',
+  menejer: '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>',
+  _: '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'
+};
+const roleIcon = r => `<svg class="role-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ROLE_IC[r] || ROLE_IC._}</svg>`;
+// Ishonch belgilari (server: faqat ha/yo'q, raqamsiz)
+const trustTags = c => (c.phoneVerified ? `<span class="t act">✓ ${esc(t('card.verified'))}</span>` : '')
+                     + (c.fromAnketa ? `<span class="t">${esc(t('card.anketa'))}</span>` : '');
 const IC = {
   phone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
   chat:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>',
@@ -880,7 +930,7 @@ function candHtml(it){
   const sub = [w.sub, ...meta].filter(Boolean).join(' · ');
   const photo = it.hasPhoto
     ? `<img src="/api/ma/photo-sl/${encodeURIComponent(it.shortlistId)}/${encodeURIComponent(it.candidateId)}?t=${encodeURIComponent(PT)}" alt="">`
-    : esc(w.ini);
+    : w.avatar;
   // stateLabel serverdan mijoz tilida keladi
   const chipTxt = it.state === 'no' ? it.stateLabel : (chipOf(it.state) || it.stateLabel);
 
@@ -1394,13 +1444,14 @@ function appCardHtml(it){
   const chip = w.open ? ['open', t('ap.open')]
              : it.state === 'shortlisted' ? ['waiting', t('ap.picked')] : it.state === 'rejected' ? ['no', t('ap.rejected')]
              : it.isNew ? ['waiting', t('ap.new')] : ['no', t('ap.seen')];
-  const photo = c.hasPhoto ? `<img src="${candPhoto(c.id)}" alt="">` : esc(w.ini);
+  const photo = c.hasPhoto ? `<img src="${candPhoto(c.id)}" alt="">` : w.avatar;
   const head = `<div class="cd-top">
       <div class="cd-ph">${photo}</div>
       <div class="cd-mid"><div class="cd-nm">${esc(w.title)}</div>
         <div class="cd-sub">${esc([w.sub, meta].filter(Boolean).join(' · '))}</div></div>
       <span class="stc ${chip[0]}">${esc(chip[1])}</span>
     </div>
+    ${!w.open && trustTags(c) ? `<div class="tags" style="margin-top:8px">${trustTags(c)}</div>` : ''}
     ${it.message ? `<div class="cd-wait" style="color:var(--ink)">"${esc(it.message)}"</div>` : ''}`;
 
   // Kontakt ochilgan — Tanlovlardagi kabi: qo'ng'iroq, chat, rezyume
@@ -1715,7 +1766,7 @@ async function showResume(id){
 
   $('shB').innerHTML =
     '<div class="rs-hd"><div class="rs-ph">'
-    + (r.hasPhoto ? '<img src="' + candPhoto(r.id) + '" alt="">' : esc(open ? nameIni(nm) : initialsOf(r.publicCode)))
+    + (r.hasPhoto ? '<img src="' + candPhoto(r.id) + '" alt="">' : (open ? esc(nameIni(nm)) : roleIcon(r.role)))
     + '</div><div style="min-width:0"><div class="rs-nm">' + esc(nm) + '</div>'
     + '<div class="rs-po">' + esc(open ? role : (r.publicCode || '')) + '</div>'
     + '<div class="rs-mt">' + esc(meta) + '</div></div></div>'

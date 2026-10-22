@@ -63,6 +63,11 @@ function forClient(c) {
   // Ism o'rniga kod. Kod hali yo'q bo'lsa — ro'yxatda bo'sh ko'rinmasin.
   out.publicCode = src.publicCode || '—';
 
+  // Ishonch belgilari — faqat HA/YO'Q (raqamning o'zi emas): mijoz
+  // anonim kartalarni shu bilan ham ajratadi (2026-10-20 audit)
+  out.phoneVerified = !!src.phoneVerifiedAt;
+  out.fromAnketa = src.source === 'anketa';
+
   // Erkin matnli maydonlarda ism qolib ketadi. Buning uch manbasi bor va
   // faqat bittasini AI prompt'i hal qiladi:
   //   1. AI yozgan summary/fitReason — prompt ismni taqiqlamaydi

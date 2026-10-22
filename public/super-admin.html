@@ -337,6 +337,7 @@ function fillSplit(){
 async function splitPlan(){
   const fromId = document.getElementById('sp-from').value, toId = document.getElementById('sp-to').value;
   const out = document.getElementById('sp-out');
+  splitArmed = false;
   if (!fromId || !toId) return toast('Ikkala akkauntni tanlang', 'error');
   out.innerHTML = '<div style="color:rgba(27,58,45,.5); font-size:13px;">Sanalmoqda…</div>';
   let d;
@@ -349,19 +350,36 @@ async function splitPlan(){
     + d.plan.map(x => '<div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(27,58,45,.07); padding:5px 0;"><span>'+(SPLIT_L[x.model]||x.model)+'</span><b>'+x.from+(x.to?' <span style="color:rgba(27,58,45,.45); font-weight:400;">(+'+x.to+' bor)</span>':'')+'</b></div>').join('')
     + '</div>'
     + (d.to.kind !== 'agency' ? '<div style="font-size:12.5px; color:#9a7d2f; margin-top:10px;">"'+escapeHtml(d.to.name)+'" agentlik akkauntiga aylanadi: login TalentHub paneliga olib boradi, "'+escapeHtml(d.from.name)+'" panelida Rekruting bo\'limi yo\'qoladi.</div>' : '')
-    + (total ? '<button onclick="splitApply()" style="margin-top:14px; background:#C0492F; color:#fff; border:none; font-size:12px; font-weight:800; letter-spacing:.06em; padding:13px 18px; border-radius:6px; text-transform:uppercase; cursor:pointer;">Ko\'chirish</button>'
+    // Ma'lumot ko'chgan-u, oxirgi qadam (agentlik belgisi, bot chati) bajarilmagan bo'lsa ham tugma chiqsin
+    + ((total || d.to.kind !== 'agency' || d.telegram) ? '<div id="spWarn" style="font-size:13px; color:#C0492F; margin-top:12px; font-weight:600;"></div><button id="spGo" onclick="splitApply()" style="margin-top:10px; background:#C0492F; color:#fff; border:none; font-size:12px; font-weight:800; letter-spacing:.06em; padding:13px 18px; border-radius:6px; text-transform:uppercase; cursor:pointer;">Ko\'chirish</button>'
              : '<div style="font-size:13px; margin-top:10px;">Ko\'chiradigan narsa yo\'q.</div>');
 }
+// Tasdiq sahifaning o'zida, ikki bosqichda: brauzer confirm() oynasi
+// ("bu sahifaga boshqa oyna ochishga ruxsat bermang" belgilangan bo'lsa)
+// jim false qaytarib, tugma "ishlamayotgandek" bo'lardi (2026-10-22).
+let splitArmed = false;
 async function splitApply(){
   const fromId = document.getElementById('sp-from').value, toId = document.getElementById('sp-to').value;
-  if (!confirm('Rekruting ma\'lumoti ko\'chiriladi. Avval zaxira nusxa olinganiga ishonch hosil qiling. Davom etamizmi?')) return;
+  const btn = document.getElementById('spGo');
+  if (!splitArmed) {
+    splitArmed = true;
+    btn.textContent = 'Ha, ko\'chirilsin';
+    document.getElementById('spWarn').textContent = 'Zaxira nusxa olinganiga ishonchingiz komilmi? Tasdiqlash uchun yana bir marta bosing.';
+    return;
+  }
+  btn.disabled = true; btn.textContent = 'Ko\'chirilmoqda…';
   try {
     const d = await api('/api/super/agency-split', { method:'POST', body: JSON.stringify({ fromId, toId, apply:true }) });
     const n = Object.values(d.moved || {}).reduce((s, x) => s + x, 0);
     toast('Ko\'chirildi: ' + n + ' ta yozuv', 'success');
     await loadDashboard();
     document.getElementById('sp-out').innerHTML = '<div style="font-size:13.5px; color:#2E7D5B;">Tayyor: '+n+' ta yozuv ko\'chdi. Endi TalentHub akkaunti bilan kiring.</div>';
-  } catch(e){ toast(e.message, 'error'); }
+  } catch(e){
+    toast(e.message, 'error');
+    // Xato kartaning o'zida ham ko'rinsin (toast tez yo'qoladi); takror bosish xavfsiz
+    document.getElementById('spWarn').textContent = 'Xato: ' + e.message + '. Qayta urinib ko\'rishingiz mumkin — takror bosish xavfsiz.';
+    btn.disabled = false; btn.textContent = 'Qayta urinish';
+  }
 }
 function escapeAttr(s){ return String(s==null?'':s).replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
 

@@ -75,3 +75,18 @@ test('ajratish: reja, ko\'chirish, takror, guard', async () => {
   const bad = await call({ fromId: 'th', toId: 'tarnov', apply: false });
   assert.equal(bad.code, 400);
 });
+
+test('ajratish: eski formatdagi restoran hujjati (save() yiqiladigan) ham to\'xtatmaydi', async () => {
+  // 2026-10-22 prod: "Ko'chirish ishlamayapti" — restoran hujjati save() tekshiruvidan o'tmasdi
+  await Restaurant.collection.insertOne({ id: 'old', name: 'Eski', adminEmail: 'o@o.uz', adminPassword: 'x'.repeat(10),
+    plan: 'premium', kind: 'restaurant', telegram: { adminChatId: '777', enabled: true } });
+  await Restaurant.create({ id: 'th2', name: 'TH2', adminEmail: 'b@th.uz', adminPassword: 'x'.repeat(10) });
+  await Candidate.create({ id: 'k9', restaurantId: 'old' });
+  const r = await call({ fromId: 'old', toId: 'th2', apply: true });
+  assert.equal(r.j.applied, true, JSON.stringify(r));
+  assert.equal(await Candidate.countDocuments({ restaurantId: 'th2' }), 1);
+  const th2 = await Restaurant.findOne({ id: 'th2' }).lean();
+  assert.equal(th2.kind, 'agency');
+  assert.equal(th2.telegram.adminChatId, '777');
+  assert.equal((await Restaurant.collection.findOne({ id: 'old' })).telegram.adminChatId, '');
+});

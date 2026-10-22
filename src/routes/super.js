@@ -112,15 +112,18 @@ router.post('/agency-split', guard, asyncHandler(async (req, res) => {
     const r = await require('../models/' + model).updateMany({ [key]: fromId }, { $set: { [key]: toId } });
     moved[model] = r.modifiedCount;
   }
-  // Bot sozlamasi (admin chati) agentlik bilan birga ketadi
+  // Bot sozlamasi (admin chati) agentlik bilan birga ketadi.
+  // updateOne — save() EMAS: restoran hujjatida menyu, testlar, natijalar
+  // bor; save() hammasini qayta tekshiradi va birorta eski formatdagi
+  // yozuv butun amalni yiqitardi (2026-10-22: "Ko'chirish ishlamayapti").
+  const toSet = { kind: 'agency' };
   if (tgFrom.adminChatId || tgFrom.enabled) {
-    to.telegram = { adminChatId: tgFrom.adminChatId || '', adminLinkToken: '', enabled: !!tgFrom.enabled,
-                    connectedAt: tgFrom.connectedAt || null };
-    from.telegram = { adminChatId: '', adminLinkToken: '', enabled: false, connectedAt: null };
-    await from.save();
+    toSet.telegram = { adminChatId: tgFrom.adminChatId || '', adminLinkToken: '', enabled: !!tgFrom.enabled,
+                       connectedAt: tgFrom.connectedAt || null };
+    await Restaurant.updateOne({ id: fromId },
+      { $set: { telegram: { adminChatId: '', adminLinkToken: '', enabled: false, connectedAt: null } } });
   }
-  to.kind = 'agency';
-  await to.save();
+  await Restaurant.updateOne({ id: toId }, { $set: toSet });
   require('../middleware/agency').invalidate();
   res.json({ applied: true, ...summary, moved });
 }));

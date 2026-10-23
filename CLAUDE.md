@@ -422,8 +422,7 @@ bo'lsa `#apps`); ekranda "Sizga mos N ta ish" (finish javobida `jobs`,
 `matches`, `next` — nomzod kabineti ro'yxati qoidasi bilan bir xil). initData
 sahifalar orasida saqlanadi (telegram-web-app.js sessionStorage). Botdagi
 rahmat va qaytgan nomzodning `/start` xabari — "💼 Ishlarni ko'rish" /
-"👤 Profilim" tugmalari bilan. Yo'q: chala anketa eslatmasi (Render bepul
-cron ishonchsiz — GitHub Actions soatlik vazifa taklif qilingan).
+"👤 Profilim" tugmalari bilan. Chala anketa eslatmasi — pastda.
 `test/unit.test.js` endi hamma marshrut faylini yuklaydi (sintaksis xatosi CI'da).
 `/start` birinchi xabari (`97ffb4f`, `telegram.js hookText`, HTML): ism bilan
 salom, kimmiz, HOZIR nechta ochiq ish va 5 ta asosiy lavozim (bazadan —
@@ -443,6 +442,21 @@ Nomzod ko'radi: umumiy 12 (oshpaz 13), xostess/ofitsiant 11, oshpaz 12.
 Qolgan savollar mazmuni o'zgarishsiz (solishtirildi). Matn "2 daqiqa"
 (`a837df7`). Diqqat: `survey.template()` (yangi agentlik/upgrade) hali
 eski uzun ro'yxat — kerak bo'lsa shablonni ham qisqartirish.
+
+**CHALA ANKETA ESLATMASI — JONLI ISHLADI** (2026-10-23, `85cfbdb`): botda
+/start bosib anketani ochmagan yoki yarmida qoldirganlarga bot yozadi.
+Qoida YAGONA — `services/reminders.js`: faqat `started`, 7 kundan yangi;
+1-eslatma 2 soatdan keyin, 2-(oxirgi) 22 soatdan keyin, keyin jim; tunda
+emas (Toshkent 22:00–09:00); shu Telegram nomzodga/mijozga ulangan yoki
+boshqa anketani tugatgan bo'lsa — yozilmaydi; 403 (bloklagan) ->
+`remindStop`. Matn ikki xil (ochmagan / yarmida — "Davom ettirish",
+javoblar saqlangan), tugma `anketa.html?r=<id>`. Chaqiruvchi —
+`.github/workflows/reminders.yml` (soatlik :20, qo'lda ham) ->
+`POST /api/cron/reminders`, sarlavha `X-Cron-Secret` = Render va GitHub'dagi
+`CRON_SECRET` (ikkalasi BIR XIL; Render'da Environment Variables, Secret
+Files EMAS). `{dry:true}` — kimga ketishini ko'rsatadi. Logda faqat sonlar.
+Jonli: birinchi ishga tushishda 7/7 yuborildi (6 ochmagan, 1 yarmida),
+qayta tekshiruvda navbat 0. `test/reminders.test.js`.
 
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
@@ -505,6 +519,7 @@ Production values live in the Render dashboard only.
 | `SUPERADMIN_PASSWORD` | `admin@tarnov.uz` password (≥12 chars); DB hash is synced to it on every boot |
 | `ALERT_CHAT_ID` | Optional Telegram chat for server error alerts (default: agency admin chat) |
 | `AI_TIMEOUT_MS` | Optional AI call timeout, default 45000 |
+| `CRON_SECRET` | Shared secret for `/api/cron/*` (GitHub Actions reminders job); same value in GitHub Actions secrets |
 
 ## Architecture
 

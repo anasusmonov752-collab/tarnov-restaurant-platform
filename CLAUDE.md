@@ -473,7 +473,8 @@ lavozim (emoji) -> muddat), matn bosqichida oyna butun ekran (iOS'da
 klaviatura ko'tarish kodi oynani tepaga chiqarib yuborardi — olib tashlandi).
 "Talabamisiz?" (study: Kunduzgi/Kechki ta'lim/Masofaviy/Yo'q) shablonda smena
 o'rnida, `STUDY_SHIFT` bilan smena javobdan yoziladi; shift `legacyQuestions`da.
-**Prod anketalarida smena HALI almashtirilmagan** (panel sessiyasi tugagan edi).
+Prod: 4 anketada `shift` o'rnida `study` (zaxira bilan solishtirildi — boshqa hech narsa
+o'zgarmadi). Ko'chirish jonli ishladi: 3 anketa nomzodiga `experienceMonths` yozildi.
 `Candidate.experienceMonths` — 0 yil, lekin 6–12 oy ishlagan "Tajribasiz" bo'lib
 chiqardi (mijoz kartasi, profil); eski anketa nomzodlari server ishga tushganda
 `services/migrations.js` bilan to'ldiriladi. Panel kartasi: anketa nomzodida

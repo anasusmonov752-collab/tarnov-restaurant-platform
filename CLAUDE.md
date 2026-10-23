@@ -475,6 +475,9 @@ klaviatura ko'tarish kodi oynani tepaga chiqarib yuborardi — olib tashlandi).
 o'rnida, `STUDY_SHIFT` bilan smena javobdan yoziladi; shift `legacyQuestions`da.
 Prod: 4 anketada `shift` o'rnida `study` (zaxira bilan solishtirildi — boshqa hech narsa
 o'zgarmadi). Ko'chirish jonli ishladi: 3 anketa nomzodiga `experienceMonths` yozildi.
+BARCHA SAVOLLAR MAJBURIY (Anas, 2026-10-23): prod'dagi 4 anketada rasm (3 tasida) va
+oshpazda rus tili ham majburiy qilindi, shablon ham (jins — ixtiyoriy, anketalarda yo'q).
+Rasm majburiyligi tugatishni kamaytirishi mumkin — anketa statistikasida (`dropAt`) kuzatish.
 `Candidate.experienceMonths` — 0 yil, lekin 6–12 oy ishlagan "Tajribasiz" bo'lib
 chiqardi (mijoz kartasi, profil); eski anketa nomzodlari server ishga tushganda
 `services/migrations.js` bilan to'ldiriladi. Panel kartasi: anketa nomzodida

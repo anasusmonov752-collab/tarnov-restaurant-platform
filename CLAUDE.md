@@ -439,9 +439,31 @@ photo, consent (+ c_kuxnya oshpazga). Olib tashlandi: lastJob, gender,
 english, sanitary, c_sanit, study, c_vaqt, c_bron, c_sex, c_stol, c_kassa
 (konstruktorning "Olib tashlangan standart savollar" menyusidan qaytadi).
 Nomzod ko'radi: umumiy 12 (oshpaz 13), xostess/ofitsiant 11, oshpaz 12.
+(2026-10-23: `experience` o'rnini `lastJob` — ish tajribasi ekrani oldi, soni o'sha.)
 Qolgan savollar mazmuni o'zgarishsiz (solishtirildi). Matn "2 daqiqa"
 (`a837df7`). Diqqat: `survey.template()` (yangi agentlik/upgrade) hali
 eski uzun ro'yxat — kerak bo'lsa shablonni ham qisqartirish.
+
+**ANKETADA ISH TAJRIBASI — PROD'GA YOZILDI** (2026-10-23, `27823c5`..`86084c3`):
+Anas: "rezyumeda deyarli hech narsa yo'q, filtr qilib bo'lmaydi". "Qancha
+tajribangiz bor?" o'rniga "Qayerda ishlagansiz?" (`lastJob`, tur `work`):
+tepada "Tajribam yo'q" almashtirgichi (javob `'none'`), aks holda 1–3 ish joyi
+— joy nomi, lavozim, muddat oralig'i (`th-i18n` WORK_ROLES, WORK_DURS:
+6 oygacha · 6 oy–1 yil · 1–3 · 3–5 · 5+). Oy/yil, vazifalar, izoh ATAYLAB yo'q
+(birinchi variant "juda yuzaki va qiyin" deb rad etildi). Dizayn iOS
+Sozlamalari: guruhlangan qatorlar, Lavozim/Muddat pastdan ✓ ro'yxatli oyna
+(`openSheet`, Telegram BackButton avval oynani yopadi). Javob ->
+`Candidate.workHistory` (company/position/period), `experienceYears` =
+oraliqlar PASTKI chegarasi yig'indisi (`DUR_MONTHS`; panelda anketa
+nomzodiga "1+ yil"), `experienceSummary`. Eski `experience` savoli
+`legacyQuestions()` da (katalog, eski anketalar buzilmaydi). Panel kartasi:
+"Ish tajribasi" bloki — ro'yxatda workHistory yo'q, karta ochilganda
+`GET /api/recruitment/:id` dan olinadi (hh nomzodlarida ham chiqadi), Smena
+qatori, tarix "Qo'shildi · manba", anketa nomzodida AI qatori yo'q.
+Prod: 4 anketada `experience` o'rnida `lastJob` (zaxira bilan solishtirildi —
+boshqa hech narsa o'zgarmadi). Jonli: fayllar, prod anketalari, hh kartasida
+blok. **Telegramda nomzod sifatida HALI TO'LDIRILMAGAN.** Eski anketa
+nomzodlarida (oldin to'ldirganlar) workHistory yo'q.
 
 **CHALA ANKETA ESLATMASI — JONLI ISHLADI** (2026-10-23, `85cfbdb`): botda
 /start bosib anketani ochmagan yoki yarmida qoldirganlarga bot yozadi.

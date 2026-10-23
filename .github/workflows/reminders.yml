@@ -1,0 +1,40 @@
+# ── Chala anketa eslatmasi (soatda bir marta) ────────────────
+# Botda /start bosib anketani ochmagan yoki yarmida qoldirganlarga bot
+# eslatma yuboradi (services/reminders.js: 2 soatdan keyin va ertasi kuni,
+# ko'pi bilan 2 marta, tunda emas). Render bepul tarifida o'z cron'imiz
+# ishonchsiz — shuning uchun GitHub Actions ilovani chaqiradi.
+#
+# Kerakli sir (GitHub -> Settings -> Secrets and variables -> Actions):
+#   CRON_SECRET — Render'dagi CRON_SECRET bilan AYNAN bir xil (16+ belgi)
+# Sir yo'q bo'lsa ish o'tkazib yuboriladi (xato bermaydi).
+# Repo ochiq: logga faqat sonlar chiqadi (kimga ketgani emas).
+
+name: reminders
+
+on:
+  schedule:
+    - cron: '20 * * * *'      # har soat :20 da (GitHub biroz kechiktirishi mumkin)
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Eslatmalarni yuborish
+        shell: bash
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          APP_URL: https://tarnov-restaurant-platform.onrender.com
+        run: |
+          if [ -z "$CRON_SECRET" ]; then echo "::notice title=Eslatma::CRON_SECRET yo'q — o'tkazib yuborildi"; exit 0; fi
+          # Render uxlagan bo'lishi mumkin (~50 s) — kutamiz va qayta urinamiz
+          code=$(curl -sS -o out.json -w '%{http_code}' --retry 3 --retry-delay 20 --retry-all-errors --max-time 120 \
+            -X POST -H "X-Cron-Secret: $CRON_SECRET" -H 'Content-Type: application/json' -d '{}' \
+            "$APP_URL/api/cron/reminders" || echo 000)
+          sum=$(jq -c '{quiet,due,sent,blocked,failed,error}' out.json 2>/dev/null || echo '{}')
+          echo "::notice title=Eslatma::HTTP $code $sum"
+          [ "$code" = "200" ] || exit 1

@@ -146,6 +146,7 @@ app.use('/api/ma', require('./src/routes/miniapp'));
 app.use('/api/cand', require('./src/routes/candidate'));
 app.use('/api/anketa', require('./src/routes/anketa'));     // nomzod anketasi (Mini App, initData)
 app.use('/api/surveys', require('./src/routes/surveys'));   // anketa havolasi va natijasi (panel)
+app.use('/api/cron', require('./src/routes/cron'));         // rejali vazifalar (GitHub Actions, CRON_SECRET)
 app.use('/api/waiter', require('./src/routes/waiter'));
 
 // ── Global error handler ───────────────────────────────────────────

@@ -34,7 +34,13 @@ const SurveyResponseSchema = new mongoose.Schema({
 
   startedAt:   { type: Date, default: Date.now },
   updatedAt:   { type: Date, default: Date.now },
-  completedAt: { type: Date, default: null }
+  completedAt: { type: Date, default: null },
+
+  // Chala anketa eslatmasi (services/reminders): nechta yuborildi, oxirgisi
+  // qachon; remindStop — botni bloklagan, boshqa yozilmaydi
+  reminders:   { type: Number, default: 0 },
+  remindedAt:  { type: Date, default: null },
+  remindStop:  { type: Boolean, default: false }
 });
 
 SurveyResponseSchema.index({ agencyId: 1, id: 1 }, { unique: true });

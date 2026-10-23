@@ -669,9 +669,13 @@ function openCard(id){
   // Ro'yxat yengil (ish tarixisiz) — ish tajribasi to'liq yozuvdan olinadi;
   // karta hali ochiq bo'lsa qayta chiziladi
   if (!c._full) api('/api/recruitment/' + id).then(full => {
-    c.workHistory = full.workHistory || []; c._full = true;
-    if (c.workHistory.length && CARD_ID === id && document.getElementById('ov').classList.contains('on')) openCard(id);
+    c.workHistory = full.workHistory || []; c.rawText = full.rawText || ''; c._full = true;
+    if (CARD_ID === id && document.getElementById('ov').classList.contains('on')) openCard(id);
   }).catch(() => {});
+  // Anketa nomzodida rezyume maydonlari (email, ko'nikmalar, fayl) yo'q —
+  // o'rniga anketaning HAMMA javobi (Anas, 2026-10-23)
+  const ank = isAnk(c);
+  const answers = ank ? ankAnswers(c) : [];
   const st = SMAP[c.status] || STAGES[0];
   const hist = [
     { t:`Qo'shildi · ${SRC[c.source]||c.source}`, d:c.createdAt },
@@ -709,14 +713,14 @@ function openCard(id){
         </div>
         <div class="md-box" style="margin-top:14px">
           <h4>Kontaktlar</h4>
-          <div class="rc-row"><div class="rc-k">Telefon</div><div class="rc-v">${c.phone?`<span class="lnk">${esc(c.phone)}</span>`:'<span style="color:var(--muted)">—</span>'}</div></div>
-          <div class="rc-row"><div class="rc-k">Email</div><div class="rc-v">${c.email?esc(c.email):'<span style="color:var(--muted)">—</span>'}</div></div>
+          <div class="rc-row"><div class="rc-k">Telefon</div><div class="rc-v">${c.phone?`<span class="lnk">${esc(c.phone)}</span>`:'<span style="color:var(--muted)">—</span>'}${ank && c.phoneVerifiedAt ? '<span class="pt">•</span><span style="color:var(--ok)">✓ Telegram tasdiqlagan</span>' : ''}</div></div>
+          ${ank ? (c.tgUsername ? `<div class="rc-row"><div class="rc-k">Telegram</div><div class="rc-v">@${esc(c.tgUsername)}</div></div>` : '') : `<div class="rc-row"><div class="rc-k">Email</div><div class="rc-v">${c.email?esc(c.email):'<span style="color:var(--muted)">—</span>'}</div></div>
           <div class="rc-row"><div class="rc-k">Ta'lim</div><div class="rc-v">${esc(c.education||'—')}</div></div>
           <div class="rc-row"><div class="rc-k">Tillar</div><div class="rc-v">${(c.languages||[]).map(esc).join(', ')||'—'}</div></div>
           <div class="rc-row"><div class="rc-k">Ko'nikmalar</div><div class="rc-v">${(c.skills||[]).map(esc).join(', ')||'—'}</div></div>
           <div class="rc-row"><div class="rc-k">Tajriba</div><div class="rc-v">${(c.workHistory||[]).length
             ? esc([yearsTxt(c), c.workHistory.length + ' ta ish joyi'].filter(Boolean).join(' · '))
-            : (expRow(c) || '—')}</div></div>
+            : (expRow(c) || '—')}</div></div>`}
         </div>
         ${(c.workHistory||[]).length ? `<div class="md-box" style="margin-top:14px">
           <h4>Ish tajribasi</h4>
@@ -726,14 +730,17 @@ function openCard(id){
             ${w.description ? `<div class="wh-d">${esc(w.description)}</div>` : ''}
           </div>`).join('')}
         </div>` : ''}
-        ${c.source === 'anketa' || (c.extraAnswers||[]).length ? `<div class="md-box" style="margin-top:14px">
-          <h4>Anketa</h4>
-          <div class="rc-row"><div class="rc-k">Telefon</div><div class="rc-v">${c.phoneVerifiedAt ? '✓ Telegram tasdiqlagan' : 'qo\'lda kiritilgan'}</div></div>
-          ${c.startWhen ? `<div class="rc-row"><div class="rc-k">Ishga chiqish</div><div class="rc-v">${esc(START_L[c.startWhen] || c.startWhen)}${c.availableFrom ? ` <span style="color:var(--muted)">(~${new Date(c.availableFrom).toLocaleDateString('uz')})</span>` : ''}</div></div>` : ''}
-          ${c.shift ? `<div class="rc-row"><div class="rc-k">Smena</div><div class="rc-v">${esc(SHIFT_L[c.shift] || c.shift)}</div></div>` : ''}
+        ${ank ? `<div class="md-box" style="margin-top:14px">
+          <h4>Anketa javoblari</h4>
+          ${answers.length ? answers.map(x => `<div class="rc-row"><div class="rc-k">${esc(x.q)}</div><div class="rc-v">${esc(x.a)}</div></div>`).join('')
+            : `<div style="font-size:13px;color:var(--muted)">${c._full ? 'Javoblar topilmadi' : 'Yuklanmoqda…'}</div>`}
+          ${c.availableFrom ? `<div class="rc-row"><div class="rc-k">Ishga chiqa oladi</div><div class="rc-v">~${new Date(c.availableFrom).toLocaleDateString('uz')}</div></div>` : ''}
+          ${c.shift && !answers.some(x => /smena/i.test(x.q)) ? `<div class="rc-row"><div class="rc-k">Smena</div><div class="rc-v">${esc(SHIFT_L[c.shift] || c.shift)} <span style="color:var(--muted)">(o'qishidan)</span></div></div>` : ''}
           ${c.channel ? `<div class="rc-row"><div class="rc-k">Manba</div><div class="rc-v">${esc(CHANNEL_L[c.channel] || c.channel)}</div></div>` : ''}
           ${c.consentAt ? `<div class="rc-row"><div class="rc-k">Rozilik</div><div class="rc-v">${new Date(c.consentAt).toLocaleDateString('uz')}</div></div>` : ''}
-          ${(c.extraAnswers||[]).map(x => `<div class="rc-row"><div class="rc-k">${esc(x.q)}</div><div class="rc-v">${esc(x.a)}</div></div>`).join('')}
+        </div>` : (c.extraAnswers||[]).length ? `<div class="md-box" style="margin-top:14px">
+          <h4>Anketa</h4>
+          ${c.extraAnswers.map(x => `<div class="rc-row"><div class="rc-k">${esc(x.q)}</div><div class="rc-v">${esc(x.a)}</div></div>`).join('')}
         </div>` : ''}
       </div>
       <div>
@@ -743,16 +750,28 @@ function openCard(id){
             ${hist.map(h=>`<div class="tl-i"><div class="tl-t">${esc(h.t)}</div><div class="tl-d">${new Date(h.d).toLocaleDateString('uz')} · ${dayAgo(h.d)}</div></div>`).join('')}
           </div>
         </div>
-        <div class="md-box" style="margin-top:14px">
+        ${ank && !c.fileName ? '' : `<div class="md-box" style="margin-top:14px">
           <h4>Fayl</h4>
           <div style="font-size:13px;color:var(--muted)">${esc(c.fileName||'—')}</div>
-        </div>
+        </div>`}
       </div>
     </div>`;
 
   document.getElementById('ov').classList.add('on');
   document.getElementById('mdX').onclick = closeMd;
   document.querySelectorAll('[data-mv2]').forEach(el=>el.onclick=async()=>{ await move([c.id], el.dataset.mv2); closeMd(); });
+}
+// Anketa javoblari — nomzodning rawText'idan ("Savol: javob" qatorlari,
+// survey.toFields yozadi). Savol matni o'sha paytdagi anketadan — keyin
+// savollar o'zgarsa ham eski nomzodning javobi to'g'ri ko'rinadi.
+// Ism, telefon (yuqorida), rasm, rozilik va ish tajribasi (o'z bloki) takrorlanmaydi.
+const ANK_SKIP = /^(Ism va familiyangiz|Telefon raqamingiz|Rasmingiz|Rozilik)/i;
+function ankAnswers(c){
+  return String(c.rawText || '').split('\n').map(l => {
+    const k = l.indexOf(': ');
+    return k > 0 ? { q: l.slice(0, k).trim(), a: l.slice(k + 2).trim() } : null;
+  }).filter(x => x && x.a && !ANK_SKIP.test(x.q) && !((c.workHistory || []).length && /^Qayerda ishlagansiz/i.test(x.q)))
+    .map(x => ({ q: x.q.replace(/\?$/, ''), a: /^\d{4}-\d{2}-\d{2}$/.test(x.a) ? x.a.split('-').reverse().join('.') : x.a }));
 }
 function closeMd(){ document.getElementById('ov').classList.remove('on'); CARD_ID = null; }
 document.getElementById('ov').onclick = e => { if(e.target.id==='ov') closeMd(); };

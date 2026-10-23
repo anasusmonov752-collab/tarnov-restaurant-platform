@@ -53,6 +53,8 @@ const DISTRICTS = [
 const EXP_YEARS = { none: 0, lt1: 0, y1_2: 1, y3_5: 3, y5: 5 };
 // "Qachondan" varianti -> necha kundan keyin chiqa oladi (availableFrom)
 const START_DAYS = { now: 0, w1: 7, w2: 14, m1: 30 };
+// "Talabamisiz?" -> smena (smena savoli o'rniga keldi, qidiruv filtri shift'ni o'qiydi)
+const STUDY_SHIFT = { day: 'kechki', evening: 'kunduzgi', distance: 'ikkalasi', no: 'ikkalasi' };
 
 // ── Boshlang'ich shablon ──
 // 1-versiya Tarnovning Verifix'dagi ofitsiant anketasidan olingan edi.
@@ -112,10 +114,13 @@ function template() {
               ru: 'Работодатели в первую очередь смотрят тех, кто может выйти быстрее.' },
       options: [o('now', 'Darhol', 'Сразу'), o('w1', '1 hafta ichida', 'В течение недели'),
                 o('w2', '2 hafta ichida', 'В течение 2 недель'), o('m1', '1 oydan keyin', 'Через месяц и позже')] },
-    { id: 'shift', type: 'choice', text: { uz: 'Qaysi smenada ishlay olasiz?', ru: 'В какую смену вы можете работать?' },
-      hint: { uz: 'Ish beruvchi ish jadvalini shunga qarab tuzadi.', ru: 'Работодатель составит график с учётом этого.' },
-      options: [o('kunduzgi', 'Kunduzgi', 'Дневная'), o('kechki', 'Kechki', 'Вечерняя'),
-                o('ikkalasi', 'Farqi yo\'q', 'Любая'), o('weekend', 'Faqat dam olish kunlari', 'Только выходные')] },
+    // "Talabamisiz?" smena savoli o'rniga (Anas, 2026-10-23): restoran
+    // xodimlarining ko'pi talaba, jadvalni shu belgilaydi. Smena javobdan
+    // yoziladi (toFields: kunduzgi ta'lim -> kechki smena va h.k.).
+    { id: 'study', type: 'choice', text: { uz: 'Talabamisiz?', ru: 'Вы студент?' },
+      hint: { uz: 'Ish jadvalini o\'qishingizga moslaymiz.', ru: 'Подберём график под вашу учёбу.' },
+      options: [o('day', 'Kunduzgi ta\'lim', 'Дневное обучение'), o('evening', 'Kechki ta\'lim', 'Вечернее обучение'),
+                o('distance', 'Masofaviy (sirtqi)', 'Заочное / дистанционное'), o('no', 'Yo\'q, talaba emasman', 'Нет, не студент')] },
     { id: 'salary', type: 'choice', text: { uz: 'Qancha oylik maosh kutyapsiz?', ru: 'Какую зарплату в месяц вы ожидаете?' },
       hint: { uz: 'Qo\'lga tegadigan summa. Aniq bo\'lsa, mos takliflar tezroq keladi.',
               ru: 'Сумма на руки. Чем точнее, тем быстрее придут подходящие предложения.' },
@@ -155,10 +160,6 @@ function template() {
       text: { uz: 'Sanitar kitobchani olishga (yangilashga) tayyormisiz?', ru: 'Готовы ли вы оформить (обновить) санитарную книжку?' },
       hint: { uz: 'Ko\'pchilik restoranlar ishga kirgach bir necha kun ichida so\'raydi.',
               ru: 'Большинство ресторанов просят её в первые дни работы.' }, options: yesNo() },
-    { id: 'study', type: 'choice', text: { uz: 'Hozir o\'qiysizmi?', ru: 'Вы сейчас учитесь?' },
-      hint: { uz: 'Ish jadvalini o\'qishingizga moslash uchun.', ru: 'Чтобы согласовать график с учёбой.' },
-      options: [o('no', 'Yo\'q', 'Нет'), o('day', 'Ha, kunduzgi', 'Да, очно'),
-                o('evening', 'Ha, kechki', 'Да, вечернее'), o('distance', 'Ha, sirtqi', 'Да, заочно')] },
     { id: 'c_vaqt', type: 'text', showIf: { q: 'study', in: ['day', 'evening', 'distance'] },
       text: { uz: 'Qaysi kunlari va soatlarda ishlay olasiz?', ru: 'В какие дни и часы вы можете работать?' },
       hint: { uz: 'Masalan: dushanba–juma 17:00 dan keyin, shanba–yakshanba kun bo\'yi',
@@ -183,7 +184,12 @@ function legacyQuestions() {
       hint: { uz: 'Har qanday lavozim hisobga olinadi: ofitsiant, xostess, oshpaz, kassir va boshqalar.',
               ru: 'Учитывается любая должность: официант, хостес, повар, кассир и другие.' },
       options: [o('none', 'Tajribam yo\'q', 'Нет опыта'), o('lt1', '1 yilgacha', 'До 1 года'),
-                o('y1_2', '1–2 yil', '1–2 года'), o('y3_5', '3–5 yil', '3–5 лет'), o('y5', '5 yildan ortiq', 'Более 5 лет')] }
+                o('y1_2', '1–2 yil', '1–2 года'), o('y3_5', '3–5 yil', '3–5 лет'), o('y5', '5 yildan ortiq', 'Более 5 лет')] },
+    // shift: "Talabamisiz?" (study) uning o'rniga keldi (2026-10-23)
+    { id: 'shift', type: 'choice', text: { uz: 'Qaysi smenada ishlay olasiz?', ru: 'В какую смену вы можете работать?' },
+      hint: { uz: 'Ish beruvchi ish jadvalini shunga qarab tuzadi.', ru: 'Работодатель составит график с учётом этого.' },
+      options: [o('kunduzgi', 'Kunduzgi', 'Дневная'), o('kechki', 'Kechki', 'Вечерняя'),
+                o('ikkalasi', 'Farqi yo\'q', 'Любая'), o('weekend', 'Faqat dam olish kunlari', 'Только выходные')] }
   ].map(q => Object.assign({ required: true, hint: { uz: '', ru: '' }, options: [], showIf: { q: '', in: [] } }, q));
 }
 const standardQuestions = () => template().concat(legacyQuestions());
@@ -215,7 +221,7 @@ const CATALOG = {
   russian:    { keys: 'fixed', field: 'Tillar',           sec: 'extra' },
   english:    { keys: 'fixed', field: 'Tillar',           sec: 'extra' },
   sanitary:   { keys: 'fixed', field: 'Sanitar kitobcha', sec: 'extra' },
-  study:      { keys: 'open',  field: 'Ta\'lim',          sec: 'extra' },
+  study:      { keys: 'open',  field: 'Ta\'lim · smena',  sec: 'job' },
   photo:      {                field: 'Foto',             sec: 'extra' },
   consent:    { locked: true,  field: 'Rozilik' }
 };
@@ -623,6 +629,8 @@ function toFields(answers, survey, presetRole) {
   }
   if (a.sanitary) f.sanitaryBook = a.sanitary;
   if (a.study) f.education = a.study === 'no' ? 'O\'qimaydi' : 'O\'qiydi (' + opt('study', a.study).replace(/^Ha, /, '') + ')';
+  // Smena savoli yo'q bo'lsa — o'qishdan: kunduzi o'qiydigan kechqurun ishlaydi
+  if (a.study && !a.shift && STUDY_SHIFT[a.study]) f.shift = STUDY_SHIFT[a.study];
 
   // Konstruktorda qo'shilgan o'z savollari — maydoni yo'q: kartadagi
   // "Anketa javoblari" bo'limiga (savol matni o'zbekcha, panel uchun)

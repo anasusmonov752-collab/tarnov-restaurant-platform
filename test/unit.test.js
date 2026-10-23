@@ -123,7 +123,7 @@ test('anketa: ish tajribasi — joy, lavozim, muddat yoki "Tajribam yo\'q"', () 
 
 test('anketa: noto\'g\'ri shart rad etiladi', () => {
   const q = JSON.parse(JSON.stringify(survey.cleanQuestions(survey.template())));
-  q.find(x => x.id === 'role').showIf = { q: 'shift', in: ['kechki'] };
+  q.find(x => x.id === 'role').showIf = { q: 'study', in: ['day'] };
   assert.throws(() => survey.cleanQuestions(q), /oldingi/);
   const q2 = JSON.parse(JSON.stringify(survey.cleanQuestions(survey.template())));
   q2.find(x => x.id === 'fullName').showIf = { q: 'role', in: ['oshpaz'] };
@@ -173,4 +173,22 @@ test('hamma marshrut fayllari yuklanadi (sintaksis va require xatosi CI\'da ushl
   for (const f of fs.readdirSync(dir).filter(x => x.endsWith('.js'))) {
     assert.doesNotThrow(() => require(path.join(dir, f)), f);
   }
+});
+
+test('anketa: "Talabamisiz?" smena o\'rniga — smena javobdan yoziladi', () => {
+  const qs = survey.cleanQuestions(survey.template());
+  assert.ok(!qs.some(q => q.id === 'shift') && qs.some(q => q.id === 'study'));
+  const f = survey.toFields({ study: 'day' }, { questions: qs }, '');
+  assert.equal(f.shift, 'kechki');                                   // kunduzi o'qiydi -> kechqurun ishlaydi
+  assert.equal(f.education, 'O\'qiydi (Kunduzgi ta\'lim)');
+  assert.equal(survey.toFields({ study: 'evening' }, { questions: qs }, '').shift, 'kunduzgi');
+  const n = survey.toFields({ study: 'no' }, { questions: qs }, '');
+  assert.equal(n.education, 'O\'qimaydi');
+  assert.equal(n.shift, 'ikkalasi');
+  // Eski anketa (smena savoli bilan) buzilmaydi; smena javobi bo'lsa — o'sha
+  const old = survey.template();
+  old.splice(2, 0, Object.assign({}, survey.catalogInfo().find(x => x.id === 'shift')));
+  const oq = survey.cleanQuestions(old);
+  assert.equal(oq.find(x => x.id === 'shift').type, 'choice');
+  assert.equal(survey.toFields({ shift: 'kunduzgi', study: 'day' }, { questions: oq }, '').shift, 'kunduzgi');
 });

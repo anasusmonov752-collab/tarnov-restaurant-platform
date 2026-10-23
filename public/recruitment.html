@@ -659,9 +659,17 @@ function openPhoto(id){
   ov.onclick = close; document.addEventListener('keydown', k); document.body.appendChild(ov);
 }
 
+let CARD_ID = null;
 function openCard(id){
   const c = ALL.find(x=>x.id===id); if(!c) return;
+  CARD_ID = id;
   markSeen(c);
+  // Ro'yxat yengil (ish tarixisiz) — ish tajribasi to'liq yozuvdan olinadi;
+  // karta hali ochiq bo'lsa qayta chiziladi
+  if (!c._full) api('/api/recruitment/' + id).then(full => {
+    c.workHistory = full.workHistory || []; c._full = true;
+    if (c.workHistory.length && CARD_ID === id && document.getElementById('ov').classList.contains('on')) openCard(id);
+  }).catch(() => {});
   const st = SMAP[c.status] || STAGES[0];
   const hist = [
     { t:`${SRC[c.source]||c.source} dan qo'shildi`, d:c.createdAt },
@@ -704,7 +712,7 @@ function openCard(id){
           <div class="rc-row"><div class="rc-k">Tillar</div><div class="rc-v">${(c.languages||[]).map(esc).join(', ')||'—'}</div></div>
           <div class="rc-row"><div class="rc-k">Ko'nikmalar</div><div class="rc-v">${(c.skills||[]).map(esc).join(', ')||'—'}</div></div>
           <div class="rc-row"><div class="rc-k">Tajriba</div><div class="rc-v">${(c.workHistory||[]).length
-            ? esc([c.experienceYears ? c.experienceYears + ' yil' : '1 yildan kam', c.workHistory.length + ' ta ish joyi'].join(' · '))
+            ? esc([c.experienceYears ? c.experienceYears + ' yil' : '', c.workHistory.length + ' ta ish joyi'].filter(Boolean).join(' · '))
             : (expRow(c) || '—')}</div></div>
         </div>
         ${(c.workHistory||[]).length ? `<div class="md-box" style="margin-top:14px">
@@ -743,7 +751,7 @@ function openCard(id){
   document.getElementById('mdX').onclick = closeMd;
   document.querySelectorAll('[data-mv2]').forEach(el=>el.onclick=async()=>{ await move([c.id], el.dataset.mv2); closeMd(); });
 }
-function closeMd(){ document.getElementById('ov').classList.remove('on'); }
+function closeMd(){ document.getElementById('ov').classList.remove('on'); CARD_ID = null; }
 document.getElementById('ov').onclick = e => { if(e.target.id==='ov') closeMd(); };
 document.addEventListener('keydown', e=>{
   if(e.key!=='Escape') return;

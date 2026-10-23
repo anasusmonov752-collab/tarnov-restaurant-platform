@@ -1,7 +1,11 @@
 // ── RestoPro Training Platform — Service Worker ──
-const VERSION   = 'restopro-v6';
-const STATIC    = 'restopro-static-v5';
-const API_CACHE = 'restopro-api-v5';
+const VERSION   = 'restopro-v7';
+// v6: JS/CSS endi "avval tarmoq" — ilgari "avval kesh" edi va deploydan
+// keyin bir xil manzildagi skript (?v= o'zgarmasa) abadiy eski qolardi
+// (2026-10-24: th-i18n.js yangi kalitlari panel ochilgan brauzerda chiqmadi).
+// Kesh nomi o'zgargani uchun activate eski keshni o'chiradi.
+const STATIC    = 'restopro-static-v6';
+const API_CACHE = 'restopro-api-v6';
 
 // Static assets to precache
 const PRECACHE = [
@@ -65,9 +69,29 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Static assets (css, js, images): Cache first, fallback to network
+  // JS va CSS: tarmoq birinchi (server 304 bilan tez javob beradi), oflaynda kesh
+  if (/\.(js|css)$/.test(url.pathname)) {
+    e.respondWith(networkFirstStatic(e.request));
+    return;
+  }
+
+  // Rasmlar va boshqa statik: Cache first, fallback to network
   e.respondWith(cacheFirst(e.request));
 });
+
+async function networkFirstStatic(req) {
+  try {
+    const res = await fetch(req);
+    if (res.ok) {
+      const cache = await caches.open(STATIC);
+      cache.put(req, res.clone());
+    }
+    return res;
+  } catch {
+    const cached = await caches.match(req);
+    return cached || new Response('Offline', { status: 503 });
+  }
+}
 
 // HTML uchun: har doim serverdan oladi, xato bo'lsa keshdan
 async function networkFirstHTML(req) {

@@ -487,6 +487,38 @@ avtomatik to'lov jonli sinalmagan; endpoint'lar kalitsiz to'g'ri rad etadi.
 Mini App: balans oynasida tarif holati, "Tarif tanlash" -> kartalar -> to'lov
 usuli. `test/billing.test.js`. Taqdimot va savdo rejasi artifact'larda (Anasda).
 
+**TO'LOV 2-BOSQICH — DEPLOY QILINDI** (2026-10-24, `a163f23`): rasmiy hujjatlar
+o'rganildi (developer.help.paycom.uz, docs.click.uz, developer.uzumbank.uz).
+Payme: sinov sahifasi `test.paycom.uz`; boshqa faol tranzaksiyali buyurtmaga
+Create -31008 (sandbox talabi), CheckPerform -31099; 12 soat Payme `time` dan
+(`paymeTime`), GetStatement shu bo'yicha; ichki xato -32400; Cancel state 2 dan
+-2 — `billing.refundOrder` (faqat tarif kreditlari ishlatilmagan bo'lsa;
+oldingi tarif `Order.prevPlan` dan tiklanadi), aks holda -31007; SetFiscalData
+saqlanadi; fiskal `detail` — `PAYME_IKPU`+`PAYME_PACKAGE_CODE` (+`PAYME_VAT`).
+Click: tekshirish tartibi rasmiy kutubxonadagidek (-8,-1,-3,-5,-6,-4,-2,-9),
+summa ±0.01, havola `/services/pay/?..amount=N.00`. **Uzum Bank Merchant API**
+(`services/uzum.js`, `/api/pay/uzum/check|create|confirm|reverse|status`,
+Basic `UZUM_LOGIN:UZUM_PASSWORD`, `UZUM_SERVICE_ID`, xato HTTP 400 + errorCode,
+confirm 30 daqiqa). Buyurtmada qisqa `code` (8 raqam) — Uzum'da qo'lda yoziladi;
+deep link `uzumbank.uz/open-service` RASMIY EMAS (Uzum bilan tasdiqlash).
+Yangiliklar: **kafolat avtomatik** (`billing.guaranteeProgress`: davrda kontakti
+ochilgan yoki candidate_ok nomzodlar, Max — hired; bajarilmasa `tick` muddatni
+bir marta `plan.days` ga uzaytiradi, `bill.extended`); **kam balans** (reveal
+dan keyin ≤2 — botda Pro taklifi `?open=plans`, davrda bir marta `plan.lowAt`);
+faol tarifda yangilash muddat OXIRIDAN; **avto-yangilash** (`paymeSubscribe.js`:
+karta Mini App'da to'g'ridan-to'g'ri Payme'da tokenlanadi, server cards.check,
+1 kun oldin receipts.create+pay, tarifni Merchant API yoqadi; kafolat
+bajarilmagan bo'lsa yechilmaydi; `PAYME_SUBSCRIBE=1`); **hisob-faktura**
+(provider `invoice`, kompaniya+STIR); **oferta** `/oferta.html` (uz/ru, LOYIHA —
+rekvizitlar `[ ]`, yuristga ko'rsatish kerak); **tavsiya** (`Client.referralCode`,
+`ref_<kod>` botda kutilmoqda mijoz yaratadi, birinchi to'lovda ikkalasiga +3).
+Mini App `alert()` -> `showMsg` (TG.showAlert). `test/billing-extra.test.js`.
+Jonli: endpoint'lar kalitsiz to'g'ri rad etadi, oynalar soxta ma'lumot bilan
+tekshirildi. Merchant shartnoma bo'lmagani uchun haqiqiy to'lov HALI SINALMAGAN.
+**SERVICE WORKER**: `sw.js` (RestoOne PWA, panel sahifalari `utils.js` orqali
+o'rnatadi, scope `/`) JS/CSS'ni "avval kesh" berardi — deploydan keyin ?v=
+o'zgarmagan skript abadiy eski qolardi. Endi JS/CSS tarmoqdan (v6 kesh).
+
 **ANKETA C VARIANT + TALABA + NOMZOD KABINETI TUZATISHLARI** (2026-10-23,
 `4addf87`..`6689dea`): ish tajribasi ekrani — REZYUME KARTALARI (Anas uchta
 variantdan C'ni tanladi): bo'sh holatda "Ish joyi qo'shish" (pastki tugma) va

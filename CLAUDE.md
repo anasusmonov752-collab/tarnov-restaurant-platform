@@ -465,6 +465,29 @@ boshqa hech narsa o'zgarmadi). Jonli: fayllar, prod anketalari, hh kartasida
 blok. **Telegramda nomzod sifatida HALI TO'LDIRILMAGAN.** Eski anketa
 nomzodlarida (oldin to'ldirganlar) workHistory yo'q.
 
+**ADMIN TEST REJIMI — DEPLOY QILINDI** (2026-10-23, `0252539`..`126903c`):
+botda `/test` (faqat agentlik admin chati — `Restaurant.telegram.adminChatId`):
+👔 Mijoz · 👤 Nomzod · 🛠 Admin · 🔄 Anketani qaytadan (callback `tm:`).
+Qoida YAGONA — `services/testMode.js`, holat `TestMode` (rejim, sinov mijozi/
+nomzodi, test rejimidan oldingi ulanishlar `saved`). Bot va Mini App'lar odamni
+FAQAT tgChatId bo'yicha taniydi — rejim almashganda sinov yozuvi akkauntga
+ULANADI, boshqalari uziladi (mavjud kod o'zgarmagan); admin rejimida oldingi
+ulanishlar tiklanadi. Test rejimida (mijoz/nomzod) admin chati tarmog'i
+chetlab o'tiladi (admin reply faqat admin rejimida). Sinov mijozi — «🧪 Sinov
+restoran» (`Client.isTest`, kredit 2 dan kam bo'lsa 5 gacha `credits.bonus`
+bilan). Sinov nomzodi — test rejimida to'ldirilgan anketadan
+(`SurveyResponse.isTest` -> `Candidate.isTest`; telefon bo'yicha haqiqiy profilga
+ulanmaydi). "Anketani qaytadan": shu akkaunt SurveyResponse'lari o'chadi, sinov
+nomzodi uziladi (panelda "🧪 SINOV" bo'lib qoladi), keyingi /start — yangi odam.
+HIMOYA: `shortlist.reveal` — sinov mijozi faqat sinov nomzodini ochadi (holat va
+kreditdan OLDIN); `candidateSearch` — sinov nomzodi faqat `includeTest`
+(sinov mijozi / sinov vakansiyasi) qidiruvida; `Vacancy` pre-validate hook —
+sinov mijozining vakansiyasi `isTest`, haqiqiy nomzodlarga ko'rinmaydi;
+"Bugun", "Anketadan", anketa statistikasi, arizalar sanog'i, ochiq ishlar soni
+sinov yozuvlarini hisoblamaydi. `test/testmode.test.js`. Jonli: deploy'dan
+oldin va keyin sanoqlar bir xil, webhook sog'. **Telegramda /test HALI
+BOSILMAGAN** (Anas sinaydi).
+
 **CHALA ANKETA ESLATMASI — JONLI ISHLADI** (2026-10-23, `85cfbdb`): botda
 /start bosib anketani ochmagan yoki yarmida qoldirganlarga bot yozadi.
 Qoida YAGONA — `services/reminders.js`: faqat `started`, 7 kundan yangi;

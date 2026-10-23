@@ -96,6 +96,8 @@ textarea.in{min-height:110px;resize:vertical;line-height:1.5}
 .sh{width:100%;background:var(--card);border-radius:20px 20px 0 0;padding:8px 16px calc(18px + env(safe-area-inset-bottom));
   transform:translateY(100%);transition:transform .24s ease-out;max-height:88vh;overflow:auto}
 .sh-ov.on .sh{transform:none}
+.sh.full{height:100%;max-height:none;border-radius:0;padding-top:calc(10px + env(safe-area-inset-top))}
+.sh.full .sh-grab{visibility:hidden}
 .sh-grab{width:38px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 8px}
 .sh-top{display:grid;grid-template-columns:32px 1fr 32px;align-items:center;gap:10px;margin-bottom:14px}
 .sh-bk,.sh-x{border:0;background:none;color:var(--muted);font-size:17px;cursor:pointer;padding:4px;font-family:inherit}
@@ -420,14 +422,12 @@ function openEditor(i){
   const sh = ov.querySelector('.sh');
   requestAnimationFrame(() => ov.classList.add('on'));
 
-  // Klaviatura ochilganda oyna uning ustida tursin (iOS'da fixed pastki element yopilib qolardi)
-  const vv = window.visualViewport;
-  const lift = () => { if (vv) sh.style.marginBottom = Math.max(0, window.innerHeight - vv.height - vv.offsetTop) + 'px'; };
-  if (vv) { vv.addEventListener('resize', lift); vv.addEventListener('scroll', lift); }
-
+  // Matn bosqichlarida oyna butun ekran (.full): maydon tepada, klaviatura
+  // uni yopmaydi. Ilgari pastki oynani klaviatura balandligiga ko'tarardik —
+  // iOS Telegram o'zi ham surgani uchun oyna tepaga chiqib ketardi (2026-10-23).
   const close = () => {
     closeSheet = null;
-    if (vv) { vv.removeEventListener('resize', lift); vv.removeEventListener('scroll', lift); }
+    if (document.activeElement) document.activeElement.blur();
     ov.classList.remove('on'); setTimeout(() => ov.remove(), 220);
   };
   const order = ['place', 'role', 'other', 'dur'];
@@ -467,6 +467,7 @@ function openEditor(i){
         <div class="sh-h">${esc(isR ? w.place : t('ank.w.durHint'))}</div>
         <div class="sh-list ${isR ? 'ic' : ''}">${opts.map(([k, l]) => `<button class="opt ${k === cur ? 'on' : ''}" data-k="${esc(k)}"><i></i>${esc(l)}</button>`).join('')}</div>`;
     }
+    sh.classList.toggle('full', s === 'place' || s === 'other');
     sh.innerHTML = head + body;
     sh.querySelector('.sh-x').onclick = close;
     const bk = sh.querySelector('.sh-bk'); if (bk) bk.onclick = back;
@@ -484,7 +485,7 @@ function openEditor(i){
       };
       go.onclick = next;
       inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); next(); } };
-      setTimeout(() => { inp.focus(); lift(); }, 260);
+      setTimeout(() => inp.focus(), 280);
       const del = $('shDel');
       if (del) del.onclick = () => { list.splice(ed.i, 1); close(); drawWork(); };
     } else {

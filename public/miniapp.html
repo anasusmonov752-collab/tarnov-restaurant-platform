@@ -406,6 +406,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .tb .dot{position:absolute;top:-1px;right:-3px;width:10px;height:10px;border-radius:50%;
   background:#EF4444;border:2px solid var(--card);display:none}
 .tb .dot.on{display:block}
+/* Son bilan — Telegram/Instagram kabi: nechta o'qilmagan */
+.tb .dot.n{width:auto;min-width:19px;height:19px;padding:0 5px;border-radius:10px;top:-7px;right:-13px;
+  color:#fff;font-size:11px;font-weight:700;font-style:normal;line-height:15px;text-align:center}
 
 /* ══ SUHBATLAR ══════════════════════════════════════════════
    Inbox: tepada qadalgan agentlik (galochka bilan), ostida
@@ -677,9 +680,10 @@ function statusChip(c){
   return `<span class="t ${cls}">${esc(t('job.' + c.jobStatus))}</span>`;
 }
 // "3 yil tajriba · 24 yosh · Toshkent" — kartalar, arizalar, rezyumeda bir xil
-const expTxt = n => n ? t('fact.exp', { n }) : t('fact.noExp');
+// 0 yil, lekin oylar bor (anketa: "6 oy – 1 yil") — "1 yilgacha", tajribasiz emas
+const expTxt = (n, m) => n ? t('fact.exp', { n }) : m ? t('fact.expLt1') : t('fact.noExp');
 function factLine(c){
-  const b = [expTxt(c.experienceYears)];
+  const b = [expTxt(c.experienceYears, c.experienceMonths)];
   if (c.age) b.push(t('fact.age', { n: c.age }));
   if (c.location) b.push(c.location);
   return b.join(' · ');
@@ -935,7 +939,7 @@ function stepsHtml(it){
 
 function candHtml(it){
   const w = whoOf(it), open = w.open, name = w.title;
-  const meta = [factLine({ experienceYears: it.experienceYears, age: it.age, location: it.location })];
+  const meta = [factLine({ experienceYears: it.experienceYears, experienceMonths: it.experienceMonths, age: it.age, location: it.location })];
   const sub = [w.sub, ...meta].filter(Boolean).join(' · ');
   const photo = it.hasPhoto
     ? `<img src="/api/ma/photo-sl/${encodeURIComponent(it.shortlistId)}/${encodeURIComponent(it.candidateId)}?t=${encodeURIComponent(PT)}" alt="">`
@@ -1779,7 +1783,7 @@ async function showResume(id){
   const role = r.roleText || r.roleLabel || r.desiredPosition || t('role.candidate');
   const nm = open ? (r.fullName || t('role.candidate')) : role;
   $('shT').textContent = open ? (r.fullName || t('rz.sheet')) : t('rz.code', { c: r.publicCode || '' });
-  const meta = [r.age ? t('fact.age', { n: r.age }) : '', r.location || '', expTxt(r.experienceYears)]
+  const meta = [r.age ? t('fact.age', { n: r.age }) : '', r.location || '', expTxt(r.experienceYears, r.experienceMonths)]
     .filter(Boolean).join(' · ');
   const kv = (k, v) => v ? '<div class="rs-kv"><span class="k">' + esc(t(k)) + '</span><span class="v">' + esc(v) + '</span></div>' : '';
   const info = [
@@ -1820,9 +1824,11 @@ async function showResume(id){
 // ── Qizil nuqta: o'qilmagan xabarlar ──
 // Kirganda, suhbatdan chiqqanda va ilovaga qaytganda yangilanadi.
 // Suhbatlar ro'yxati ochiq bo'lsa — qo'shimcha so'rovsiz, ro'yxatdan.
-function setDot(n){ const d = $('dMS'); if (d) d.classList.toggle('on', n > 0); }
+// Pastki menyuda o'qilmaganlar SONI (nuqta emas)
+function badge(d, n){ if (!d) return; d.classList.toggle('on', n > 0); d.classList.toggle('n', n > 0); d.textContent = n > 0 ? (n > 99 ? '99+' : String(n)) : ''; }
+function setDot(n){ badge($('dMS'), n); }
 // Arizalar tabidagi nuqta — ko'rilmagan arizalar
-function setAppsDot(n){ const d = $('dAP'); if (d) d.classList.toggle('on', n > 0); }
+function setAppsDot(n){ badge($('dAP'), n); }
 function refreshUnread(){
   if (!INIT || $('cabMode').classList.contains('hide')) return;
   api('/api/ma/unread').then(d => { setDot(d.chats); setAppsDot(d.apps); }).catch(() => {});

@@ -58,6 +58,7 @@
       // ── Nomzod faktlari ──
       'fact.exp': '{n} yil tajriba',
       'fact.noExp': 'Tajribasiz',
+      'fact.expLt1': '1 yilgacha tajriba',
       'fact.age': '{n} yosh',
       'unit.years': '{n} yil',
       'unit.people': '{n} kishi',
@@ -570,6 +571,7 @@
 
       'fact.exp': ['опыт {n} год', 'опыт {n} года', 'опыт {n} лет'],
       'fact.noExp': 'Без опыта',
+      'fact.expLt1': 'опыт до 1 года',
       'fact.age': ['{n} год', '{n} года', '{n} лет'],
       'unit.years': ['{n} год', '{n} года', '{n} лет'],
       'unit.people': ['{n} человек', '{n} человека', '{n} человек'],

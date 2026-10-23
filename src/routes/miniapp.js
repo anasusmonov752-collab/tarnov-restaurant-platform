@@ -259,7 +259,7 @@ router.post('/shortlist', clientGuard, asyncHandler(async (req, res) => {
       const token = tg.platformToken();
       const cands = await Candidate.find(
         { restaurantId: ses.agencyId, id: { $in: picked } },
-        'id fullName phone email desiredPosition publicCode age location experienceYears'
+        'id fullName phone email desiredPosition publicCode age location experienceYears experienceMonths'
       ).lean();
       const byId = Object.fromEntries(cands.map(c => [c.id, c]));
 
@@ -278,7 +278,7 @@ router.post('/shortlist', clientGuard, asyncHandler(async (req, res) => {
           `${c.fullName || 'Nomsiz'}  (${c.publicCode || '—'})`,
           c.desiredPosition || '',
           [c.age ? c.age + ' yosh' : '', c.location || '',
-           c.experienceYears ? c.experienceYears + ' yil tajriba' : '']
+           c.experienceYears ? c.experienceYears + ' yil tajriba' : (c.experienceMonths ? '1 yilgacha tajriba' : '')]
             .filter(Boolean).join(' · '),
           '',
           `📞 ${c.phone || 'telefon yo\'q'}`,
@@ -446,7 +446,7 @@ async function shortlistView(agencyId, clientId, rows, lang = 'uz') {
   const vids = [...new Set(rows.map(r => r.vacancyId).filter(Boolean))];
   const [cands, vs, threads] = await Promise.all([
     Candidate.find({ restaurantId: agencyId, id: { $in: ids } },
-      'id publicCode role desiredPosition age location experienceYears hasPhoto ' +
+      'id publicCode role desiredPosition age location experienceYears experienceMonths hasPhoto ' +
       'languages shift jobStatus fullName phone email').lean(),
     // role/shift — avtomatik sarlavhani mijoz tilida ko'rsatish uchun (titleFor)
     vids.length ? Vacancy.find({ agencyId, id: { $in: vids } }, 'id title status role shift').lean() : [],
@@ -481,6 +481,7 @@ async function shortlistView(agencyId, clientId, rows, lang = 'uz') {
         age: c.age || null,
         location: placeLabel(c.location, lang),
         experienceYears: c.experienceYears || 0,
+        experienceMonths: c.experienceMonths || 0,
         languages: c.languages || [],
         shift: c.shift || '',
         hasPhoto: !!c.hasPhoto,

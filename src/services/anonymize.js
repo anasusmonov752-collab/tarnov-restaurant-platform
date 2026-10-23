@@ -17,7 +17,7 @@ const { roleLabel } = require('../data/roles');
 // Qora ro'yxat ishlatmaymiz: modelga yangi maydon qo'shilganda u
 // avtomatik sizib chiqmasligi kerak.
 const PUBLIC_FIELDS = [
-  'publicCode', 'role', 'desiredPosition', 'experienceYears', 'experienceSummary',
+  'publicCode', 'role', 'desiredPosition', 'experienceYears', 'experienceMonths', 'experienceSummary',
   'workHistory', 'skills', 'languages', 'location', 'age', 'education',
   'salaryExpectation', 'summary', 'fitScore', 'fitReason', 'shift',
   'jobStatus', 'hasPhoto', 'source',

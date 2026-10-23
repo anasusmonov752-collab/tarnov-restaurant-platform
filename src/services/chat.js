@@ -217,8 +217,18 @@ async function inboxForClient(agencyId, clientId) {
   return [head, ...threads.map(t => row(t, 'client'))];
 }
 
+// Qadalgan "TalentHub" suhbatida o'qilmaganlar: agentlik xabarlari nomzod
+// shu suhbatni oxirgi ochganidan (Candidate.supportSeenAt) keyin. BotMessage'da
+// o'qilganlik maydoni yo'q — vaqt bo'yicha sanaymiz. seenAt yo'q — 0
+// (birinchi ko'rishda chegara qo'yiladi, eski xabarlar "yangi" bo'lib chiqmasin).
+async function supportUnread(agencyId, candidateId, seenAt) {
+  if (!seenAt) return 0;
+  return BotMessage.countDocuments(Object.assign(CANDIDATE_VISIBLE(agencyId, candidateId),
+    { direction: { $ne: 'in' }, createdAt: { $gt: new Date(seenAt) } }));
+}
+
 // Nomzod inboxi: qadalgan agentlik (BotMessage'dan) + uni ochgan mijozlar
-async function inboxForCandidate(agencyId, candidateId) {
+async function inboxForCandidate(agencyId, candidateId, seenAt = null) {
   await backfill({ agencyId, candidateId });
   const [last, threads] = await Promise.all([
     BotMessage.findOne(CANDIDATE_VISIBLE(agencyId, candidateId)).sort({ createdAt: -1 }).lean(),
@@ -230,7 +240,7 @@ async function inboxForCandidate(agencyId, candidateId) {
     subtitle: (last && last.text) ? String(last.text).slice(0, PREVIEW) : 'Yordam chati — savolingizni yozing',
     lastMsgAt: last ? last.createdAt : null,
     lastMsgFrom: last ? (last.direction === 'in' ? 'candidate' : 'agency') : '',
-    unread: 0
+    unread: await supportUnread(agencyId, candidateId, seenAt)
   };
   return [head, ...threads.map(t => row(t, 'candidate'))];
 }
@@ -257,6 +267,6 @@ async function messages({ agencyId, threadId, candidateId = '', limit = 200 }) {
 }
 module.exports = {
   ensureThread, post, markRead, onReveal, backfill,
-  inboxForClient, inboxForCandidate, messages,
+  inboxForClient, inboxForCandidate, supportUnread, messages,
   PREVIEW, AGENCY_THREAD
 };

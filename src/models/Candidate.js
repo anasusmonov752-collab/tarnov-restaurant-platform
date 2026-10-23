@@ -33,6 +33,9 @@ const CandidateSchema = new mongoose.Schema({
   desiredPosition:   { type: String, default: '' },   // rezyumedagi asl lavozim matni
   role:              { type: String, default: 'boshqa' }, // normallashtirilgan: ROLE_KEYS yoki 'boshqa'
   experienceYears:   { type: Number, default: 0 },
+  // Tajriba oylarda (anketa: muddat oraliqlarining pastki chegarasi, "6 oygacha" = 1).
+  // 0 yil, lekin 6–12 oy ishlagan nomzod "Tajribasiz" bo'lib chiqmasin
+  experienceMonths:  { type: Number, default: 0 },
   experienceSummary: { type: String, default: '' },
   workHistory:       { type: [WorkSchema], default: [] }, // ish tarixi (kompaniya/lavozim/muddat)
   shift:             { type: String, default: '' },   // kunduzgi | kechki | ikkalasi
@@ -58,6 +61,8 @@ const CandidateSchema = new mongoose.Schema({
   // Sinov nomzodi (admin test rejimi): haqiqiy mijozlar qidiruvida chiqmaydi,
   // sanoqlarga kirmaydi; panelda "SINOV" belgisi bilan ko'rinadi
   isTest:  { type: Boolean, default: false },
+  // Qadalgan "TalentHub" suhbatini oxirgi ochgan payt — o'qilmaganlar sanog'i (chat.supportUnread)
+  supportSeenAt: { type: Date, default: null },
   status:  { type: String, default: 'new' },           // kanban bosqichi (VALID_STATUS)
   statusChangedAt: { type: Date, default: Date.now },  // shu bosqichga qachon o'tgan ("N kun bu bosqichda")
   rating:  { type: Number, default: 0 },               // 0-5 qo'lda baho

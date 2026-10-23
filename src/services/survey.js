@@ -603,12 +603,14 @@ function toFields(answers, survey, presetRole) {
   if (a.experience) f.experienceYears = EXP_YEARS[a.experience] || 0;
   if (a.lastJob === 'none') {
     f.experienceYears = 0;
+    f.experienceMonths = 0;
     f.experienceSummary = 'Tajribasiz';
   } else if (Array.isArray(a.lastJob) && a.lastJob.length) {
     // Jami yil — muddatlar oralig'ining pastki chegarasi yig'indisi
     // (oshirib ko'rsatilmasin); eski tajriba savoli ham bo'lsa — kattasi
     const months = a.lastJob.reduce((s, w) => s + (I18N.DUR_MONTHS[w.dur] || 0), 0);
     f.experienceYears = Math.max(f.experienceYears || 0, Math.floor(months / 12));
+    f.experienceMonths = a.lastJob.reduce((s, w) => s + Math.max(1, I18N.DUR_MONTHS[w.dur] || 0), 0);
     f.workHistory = workToHistory(a.lastJob);
     const h = f.workHistory[0];
     f.experienceSummary = `${h.position} — ${h.company}, ${h.period}` +

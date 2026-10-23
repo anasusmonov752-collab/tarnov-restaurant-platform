@@ -257,6 +257,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .tb .dot{position:absolute;top:-1px;right:-3px;width:10px;height:10px;border-radius:50%;
   background:#EF4444;border:2px solid var(--card);display:none}
 .tb .dot.on{display:block}
+/* Son bilan — Telegram/Instagram kabi: nechta o'qilmagan */
+.tb .dot.n{width:auto;min-width:19px;height:19px;padding:0 5px;border-radius:10px;top:-7px;right:-13px;
+  color:#fff;font-size:11px;font-weight:700;font-style:normal;line-height:15px;text-align:center}
 
 /* ══ SUHBATLAR ══════════════════════════════════════════════
    Inbox: tepada qadalgan agentlik (galochka bilan), ostida
@@ -319,6 +322,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 :root[data-theme="dark"] .lens, :root[data-theme="dark"] .lens.drag{
   background:radial-gradient(120% 100% at 50% 0%,rgba(255,255,255,.22),rgba(255,255,255,.10) 60%,rgba(255,255,255,.05));
   box-shadow:inset 0 1px 1px rgba(255,255,255,.25), 0 4px 14px rgba(0,0,0,.4); }
+/* Ish o'rinlari: qidiruv va filtr chiplari */
+#jobBar{margin:4px 0 12px}
+.js{display:flex;align-items:center;gap:8px;background:var(--card);border-radius:12px;padding:0 12px;height:42px}
+.js svg{width:18px;height:18px;color:var(--muted);flex:none}
+.js input{flex:1;min-width:0;border:0;outline:none;background:none;font-family:inherit;font-size:16px;color:var(--ink)}
+.jf{display:flex;gap:7px;overflow-x:auto;padding:10px 0 2px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.jf::-webkit-scrollbar{display:none}
+.jf button{flex:none;border:1.5px solid var(--line);background:var(--card);border-radius:99px;padding:7px 13px;
+  font-family:inherit;font-size:14px;color:var(--ink);cursor:pointer;white-space:nowrap}
+.jf button.on{border-color:var(--blue);background:var(--blue);color:#fff;font-weight:600}
+.msg .lnk{border:0;background:none;color:var(--blue);font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;margin-top:6px}
 </style>
 </head>
 <body>
@@ -327,6 +341,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 
 <div id="vJ" class="hide"><div class="wrap">
   <div class="h3">Ish o'rinlari</div>
+  <div id="jobBar" class="hide">
+    <div class="js"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="jobQ" type="search" placeholder="Qidirish: lavozim, joy, tuman" autocomplete="off"></div>
+    <div class="jf" id="jobF"></div>
+  </div>
   <div id="jobList"><div class="msg">Yuklanmoqda…</div></div>
 </div></div>
 
@@ -440,11 +459,32 @@ function skillsHtml(sk){
 // Bo'sh qiymatda "ko'rsatilmagan" so'zini har qatorda takrorlamaymiz —
 // yetishmaganlar yuqorida alohida chiqadi, bu yerda tire yetarli.
 const row = (k,v) => `<div class="kv"><span class="k">${k}</span><span class="v ${v?'':'em'}">${v?esc(v):'—'}</span></div>`;
+const SHIFT_LBL = { kunduzgi: 'Kunduzgi', kechki: 'Kechki', ikkalasi: 'Farqi yo\'q', weekend: 'Faqat dam olish kunlari' };
+// Tajriba: yil bo'lsa yil; anketada yil oraliqning pastki chegarasidan ("1+ yil");
+// 0 yil, lekin ish joyi bor ("6 oy – 1 yil") — o'sha muddat; "Tajribam yo'q" — Tajribasiz
+function expText(p){
+  const wh = p.workHistory || [], ank = p.source === 'anketa';
+  if (p.experienceYears) return p.experienceYears + (ank ? '+' : '') + ' yil';
+  if (wh.length) return wh.length === 1 && wh[0].period ? wh[0].period : '1 yilgacha';
+  if (p.experienceMonths) return '1 yilgacha';
+  if (ank && /^(Tajribasiz|Tajribam yo'q)$/.test(p.experienceSummary || '')) return 'Tajribasiz';
+  return '';
+}
+// Anketa experienceSummary'ga TIZIM yozuvini qo'yadi (birinchi ish joyi yoki
+// tanlangan javob) — bu "O'zingiz haqingizda" emas, u ish tarixida ko'rinadi.
+// Bunday matnni o'zi yozgandek ko'rsatmaymiz; nomzod o'zi yozsa — ko'rinadi.
+function autoSummary(p){
+  const s = p.experienceSummary || '';
+  if (p.source !== 'anketa' || !s) return false;
+  if (/^(Tajribasiz|Tajribam yo'q|1 yilgacha|1–2 yil|3–5 yil|5 yildan ortiq)$/.test(s)) return true;
+  return (p.workHistory || []).some(w => w.company && s.startsWith(`${w.position} — ${w.company}`));
+}
 
 function render(p){
   P = p;
   const ini = (p.fullName || '?').trim().split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();
-  const sub = [p.desiredPosition||'', p.experienceYears ? p.experienceYears+' yil tajriba' : ''].filter(Boolean).join(' · ');
+  const sub = [p.desiredPosition||'', expText(p) && expText(p) !== 'Tajribasiz' ? expText(p) + ' tajriba' : ''].filter(Boolean).join(' · ');
+  const about = autoSummary(p) ? '' : (p.experienceSummary || '');
   const cm = p.completeness || { percent:0, missing:[] };
   const st = p.stats || { picked:0, opened:0 };
   const cur = p.jobStatus && p.jobStatus !== 'unknown' ? p.jobStatus : 'active';
@@ -494,8 +534,8 @@ function render(p){
     <div class="card">
       <div class="sec-h"><b>Qidirayotgan ish</b><button class="ed" data-e="job">Tahrirlash</button></div>
       ${row('Lavozim', p.desiredPosition)}
-      ${row('Tajriba', p.experienceYears ? p.experienceYears + ' yil' : '')}
-      ${row('Smena', p.shift)}
+      ${row('Tajriba', expText(p))}
+      ${row('Smena', SHIFT_LBL[p.shift] || p.shift)}
       ${row('Kutilgan maosh', p.salaryExpectation)}
     </div>
 
@@ -508,8 +548,8 @@ function render(p){
 
     <div class="card">
       <div class="sec-h"><b>O'zingiz haqingizda</b><button class="ed" data-e="about">Tahrirlash</button></div>
-      <div class="pad" style="padding-top:9px;font-size:14.5px;line-height:1.6;color:${p.experienceSummary?'var(--ink)':'var(--muted)'}">
-        ${p.experienceSummary ? esc(p.experienceSummary)
+      <div class="pad" style="padding-top:9px;font-size:14.5px;line-height:1.6;color:${about?'var(--ink)':'var(--muted)'}">
+        ${about ? esc(about)
           : "Qisqacha yozing: qayerda ishlagansiz, nimani yaxshi bilasiz. Restoran shuni birinchi o'qiydi."}
       </div>
     </div>
@@ -517,7 +557,7 @@ function render(p){
     ${work ? `<div class="card">
       <div class="sec-h"><b>Ish tarixi</b></div>
       ${work}
-      <div class="pad" style="padding-top:9px"><div class="need">Rezyumengizdan olingan. O'zgartirish kerak bo'lsa HR'ga yozing.</div></div>
+      <div class="pad" style="padding-top:9px"><div class="need">${p.source === 'anketa' ? 'Anketangizdan olingan' : 'Rezyumengizdan olingan'}. O'zgartirish kerak bo'lsa HR'ga yozing.</div></div>
     </div>` : ''}
   </div>`;
 
@@ -543,7 +583,9 @@ const FORMS = {
   job: ['Qidirayotgan ish', p => `
     <div class="f"><label>Qaysi lavozim</label><input id="desiredPosition" value="${esc(p.desiredPosition)}" placeholder="Ofitsiant"></div>
     <div class="f"><label>Tajriba (yil)</label><input id="experienceYears" value="${p.experienceYears||''}" inputmode="numeric"></div>
-    <div class="f"><label>Smena</label><input id="shift" value="${esc(p.shift)}" placeholder="kunduzgi / kechki / ikkalasi"></div>
+    <div class="f"><label>Smena</label><select id="shift" class="sel">
+      ${['', 'kunduzgi', 'kechki', 'ikkalasi', 'weekend'].map(k => `<option value="${k}" ${p.shift === k ? 'selected' : ''}>${k ? SHIFT_LBL[k] : 'Tanlang'}</option>`).join('')}
+    </select></div>
     <div class="f"><label>Kutilayotgan maosh</label><input id="salaryExpectation" value="${esc(p.salaryExpectation)}" placeholder="4-5 mln">
       <div class="hint">Aniq yozing — restoran shu bo'yicha tanlaydi.</div></div>`],
 
@@ -555,7 +597,7 @@ const FORMS = {
     <div class="f"><label>Ta'lim</label><input id="education" value="${esc(p.education)}"></div>`],
 
   about: ["O'zingiz haqingizda", p => `
-    <div class="f"><textarea id="experienceSummary" placeholder="Masalan: 3 yil ofitsiant bo'lib ishlaganman, kechki smenada tezkor xizmat ko'rsataman, rus tilida erkin gaplashaman.">${esc(p.experienceSummary)}</textarea>
+    <div class="f"><textarea id="experienceSummary" placeholder="Masalan: 3 yil ofitsiant bo'lib ishlaganman, kechki smenada tezkor xizmat ko'rsataman, rus tilida erkin gaplashaman.">${esc(autoSummary(p) ? '' : p.experienceSummary)}</textarea>
       <div class="hint">2-3 jumla yetarli.</div></div>`]
 };
 
@@ -795,19 +837,60 @@ async function showCompany(clientId){
           Shartlarni suhbatda aniqlashtiring.</div>`}`;
 }
 
+// Qidiruv va filtr — brauzerda (ro'yxat 60 tagacha): matn (sarlavha, joy,
+// mo'ljal, tavsif), "Sizga mos", lavozim. Lavozim chiplari — ro'yxatda borlari.
+const JF = { q: '', mos: false, role: '' };
+const ROLE_LBL = { ofitsiant: 'Ofitsiant', oshpaz: 'Oshpaz', xostess: 'Xostess', barmen: 'Barmen', kassir: 'Kassir', menejer: 'Menejer', operator: 'Operator' };
+const norm = s => String(s || '').toLowerCase().replace(/[ʻʼ‘’`']/g, '');
+function drawJobFilter(){
+  const roles = [...new Set(JOBS.map(v => v.role).filter(r => ROLE_LBL[r]))];
+  const n = JOBS.filter(v => v.match).length;
+  $('jobF').innerHTML = [
+    `<button class="${!JF.mos && !JF.role ? 'on' : ''}" data-f="all">Hammasi · ${JOBS.length}</button>`,
+    n ? `<button class="${JF.mos ? 'on' : ''}" data-f="mos">Sizga mos · ${n}</button>` : '',
+    ...roles.map(r => `<button class="${JF.role === r ? 'on' : ''}" data-f="r:${r}">${ROLE_LBL[r]}</button>`)
+  ].join('');
+  $('jobF').querySelectorAll('[data-f]').forEach(b => b.onclick = () => {
+    const f = b.dataset.f;
+    if (f === 'all') { JF.mos = false; JF.role = ''; }
+    else if (f === 'mos') JF.mos = !JF.mos;
+    else { const r = f.slice(2); JF.role = JF.role === r ? '' : r; }
+    drawJobFilter(); drawJobs();
+  });
+}
+$('jobQ').oninput = () => { JF.q = $('jobQ').value; drawJobs(); };
+
 async function loadJobs(){
   try{
     const rows = await api('/api/cand/vacancies');
     JOBS = rows;
     if (!rows.length) {
+      $('jobBar').classList.add('hide');
       $('jobList').innerHTML = `<div class="msg">Hozircha ochiq ish o'rni yo'q.<br><br>
         Profilingiz to'liq bo'lsa, mos ish chiqishi bilan o'zimiz yozamiz.</div>`;
       return;
     }
-    $('jobList').innerHTML = rows.map((v, i) => {
+    $('jobBar').classList.toggle('hide', rows.length < 4);     // 3 ta ish uchun qidiruv ortiqcha
+    drawJobFilter();
+    drawJobs();
+  }catch(e){ $('jobList').innerHTML = `<div class="msg">${esc(e.message)}</div>`; }
+}
+
+function drawJobs(){
+  const q = norm(JF.q).trim();
+  const list = JOBS.map((v, i) => [v, i]).filter(([v]) =>
+    (!JF.mos || v.match) && (!JF.role || v.role === JF.role) &&
+    (!q || norm([v.title, v.venue, placeOf(v), v.hook, v.description, v.conditions].join(' ')).includes(q)));
+  if (!list.length) {
+    $('jobList').innerHTML = `<div class="msg">Bu bo'yicha ish topilmadi.<br><button class="lnk" id="jobReset">Filtrni tozalash</button></div>`;
+    $('jobReset').onclick = () => { JF.q = ''; JF.mos = false; JF.role = ''; $('jobQ').value = ''; drawJobFilter(); drawJobs(); };
+    return;
+  }
+  {
+    $('jobList').innerHTML = list.map(([v, i]) => {
       const need = [
         v.minExp ? v.minExp + ' yildan tajriba' : '',
-        v.shift ? v.shift + ' smena' : '',
+        v.shift ? (SHIFT_LBL[v.shift] || v.shift).toLowerCase() + ' smena' : '',
         (v.languages || []).join(', ')
       ].filter(Boolean).join(' · ');
       // Karta qisqa: kim (joy), qayerda, qancha, nima beriladi. Qolgani — "Batafsil"
@@ -842,7 +925,7 @@ async function loadJobs(){
       const j = JOBS.find(x => x.id === b.dataset.ap);
       if (j) openApply(j);
     });
-  }catch(e){ $('jobList').innerHTML = `<div class="msg">${esc(e.message)}</div>`; }
+  }
 }
 
 const AST = { new:'wait', seen:'wait', shortlisted:'ok', rejected:'no' };
@@ -1026,7 +1109,9 @@ async function sendMsg(){
 
 // ── Qizil nuqta: o'qilmagan xabarlar (mijozlardan) ──
 // Kirganda, suhbatdan chiqqanda va ilovaga qaytganda yangilanadi.
-function setDot(n){ const d = $('dM'); if (d) d.classList.toggle('on', n > 0); }
+// Pastki menyuda o'qilmaganlar SONI (nuqta emas)
+function badge(d, n){ if (!d) return; d.classList.toggle('on', n > 0); d.classList.toggle('n', n > 0); d.textContent = n > 0 ? (n > 99 ? '99+' : String(n)) : ''; }
+function setDot(n){ badge($('dM'), n); }
 function refreshUnread(){
   if (!INIT) return;
   api('/api/cand/unread').then(d => setDot(d.chats)).catch(() => {});

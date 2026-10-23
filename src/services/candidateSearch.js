@@ -148,7 +148,7 @@ function langPattern(lang) {
   return parts.map(escapeRegex).join('|');
 }
 
-const FIELDS = 'id fullName phone email role desiredPosition experienceYears languages location salaryExpectation fitScore fitReason summary status tgState';
+const FIELDS = 'id fullName phone email role desiredPosition experienceYears experienceMonths languages location salaryExpectation fitScore fitReason summary status tgState';
 
 // Shartlarni bosqichma-bosqich yumshatish tartibi.
 // Rol — asosiy niyat, u hech qachon tashlanmaydi. Qolganlari

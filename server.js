@@ -188,6 +188,9 @@ async function startServer() {
   // o'tkazamiz. allowed_updates Telegram tomonida saqlanadi: koddagi
   // ro'yxat o'zgarsa ham, setWebhook qayta chaqirilmaguncha eskisi
   // amal qiladi. Bir marta shu sabab inline tugmalar jim turgan edi.
+  // Kichik ma'lumot ko'chirishlari (takror xavfsiz)
+  require('./src/services/migrations').run().catch(e => console.error('✦ Ko\'chirish xatosi:', e.message));
+
   const tgSvc = require('./src/services/telegram');
   if (process.env.APP_URL) {
     const r = await tgSvc.ensureWebhook(process.env.APP_URL);

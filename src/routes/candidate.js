@@ -68,13 +68,14 @@ function profileOf(c) {
     fullName: c.fullName, phone: c.phone, email: c.email,
     desiredPosition: c.desiredPosition, role: c.role,
     age: c.age, location: c.location, shift: c.shift,
-    experienceYears: c.experienceYears, experienceSummary: c.experienceSummary,
+    experienceYears: c.experienceYears, experienceMonths: c.experienceMonths || 0, experienceSummary: c.experienceSummary,
     education: c.education, salaryExpectation: c.salaryExpectation,
     languages: c.languages || [], skills: c.skills || [],
     workHistory: (c.workHistory || []).map(w => ({
       company: w.company, position: w.position, period: w.period
     })),
     hasPhoto: !!c.hasPhoto,
+    source: c.source,                 // anketa nomzodida tajriba yozuvi tizimniki (profil.html autoSummary)
     jobStatus: c.jobStatus,
     sanitaryBook: c.sanitaryBook,
     sanitaryBookUntil: c.sanitaryBookUntil,
@@ -368,7 +369,13 @@ router.get('/photo', asyncHandler(async (req, res) => {
 
 router.get('/chats', guard, asyncHandler(async (req, res) => {
   const agencyId = req.cand.restaurantId;
-  const rows = await chat.inboxForCandidate(agencyId, req.cand.id);
+  // "TalentHub" suhbatining o'qilganlik chegarasi — birinchi ko'rishda qo'yiladi
+  let seenAt = req.cand.supportSeenAt;
+  if (!seenAt) {
+    seenAt = new Date();
+    await Candidate.updateOne({ restaurantId: agencyId, id: req.cand.id }, { $set: { supportSeenAt: seenAt } });
+  }
+  const rows = await chat.inboxForCandidate(agencyId, req.cand.id, seenAt);
 
   // Mijozni NOMI bilan ko'rsatamiz: kontakt ochilgan, ya'ni tanishish
   // allaqachon bo'lgan. Anonimlik faqat kontaktgacha amal qiladi.
@@ -444,15 +451,17 @@ router.get('/companies/:clientId', guard, asyncHandler(async (req, res) => {
   });
 }));
 
-// ── O'qilmaganlar soni — pastki paneldagi qizil nuqta uchun ──
-// Faqat mijoz suhbatlari: agentlik ("TalentHub") yozishmasi BotMessage'da
-// va o'qilganlik holati yo'q — u xabarlar nomzodga Telegramda keladi.
+// ── O'qilmaganlar soni — pastki paneldagi belgi uchun ──
+// Mijoz suhbatlari (ChatThread) + qadalgan "TalentHub" (BotMessage, vaqt bo'yicha)
 router.get('/unread', guard, asyncHandler(async (req, res) => {
-  const r = await ChatThread.aggregate([
-    { $match: { agencyId: req.cand.restaurantId, candidateId: req.cand.id, kind: 'cc', unreadCandidate: { $gt: 0 } } },
-    { $group: { _id: null, n: { $sum: '$unreadCandidate' } } }
+  const [r, sup] = await Promise.all([
+    ChatThread.aggregate([
+      { $match: { agencyId: req.cand.restaurantId, candidateId: req.cand.id, kind: 'cc', unreadCandidate: { $gt: 0 } } },
+      { $group: { _id: null, n: { $sum: '$unreadCandidate' } } }
+    ]),
+    chat.supportUnread(req.cand.restaurantId, req.cand.id, req.cand.supportSeenAt)
   ]);
-  res.json({ chats: (r[0] && r[0].n) || 0 });
+  res.json({ chats: ((r[0] && r[0].n) || 0) + sup });
 }));
 
 router.get('/chats/:id/messages', guard, asyncHandler(async (req, res) => {
@@ -460,6 +469,8 @@ router.get('/chats/:id/messages', guard, asyncHandler(async (req, res) => {
 
   if (req.params.id === chat.AGENCY_THREAD) {
     const msgs = await chat.messages({ agencyId, threadId: chat.AGENCY_THREAD, candidateId: req.cand.id });
+    // Ochdi — o'qildi
+    await Candidate.updateOne({ restaurantId: agencyId, id: req.cand.id }, { $set: { supportSeenAt: new Date() } });
     return res.json({ id: chat.AGENCY_THREAD, kind: 'ca', state: 'open', messages: msgs });
   }
 

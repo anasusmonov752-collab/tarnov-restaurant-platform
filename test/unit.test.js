@@ -192,3 +192,19 @@ test('anketa: "Talabamisiz?" smena o\'rniga — smena javobdan yoziladi', () => 
   assert.equal(oq.find(x => x.id === 'shift').type, 'choice');
   assert.equal(survey.toFields({ shift: 'kunduzgi', study: 'day' }, { questions: oq }, '').shift, 'kunduzgi');
 });
+
+test('tajriba oylari: 6–12 oy ishlagan "Tajribasiz" emas', () => {
+  const qs = survey.cleanQuestions(survey.template());
+  const q = qs.find(x => x.id === 'lastJob');
+  const f = survey.toFields({ lastJob: survey.checkAnswer(q, [{ place: 'Bon', role: 'xostess', dur: 'm6_12' }]) }, { questions: qs }, '');
+  assert.equal(f.experienceYears, 0);
+  assert.equal(f.experienceMonths, 6);
+  const g = survey.toFields({ lastJob: survey.checkAnswer(q, [{ place: 'Bon', role: 'xostess', dur: 'lt6' }]) }, { questions: qs }, '');
+  assert.equal(g.experienceMonths, 1);                                  // "6 oygacha" — tajriba bor
+  assert.equal(survey.toFields({ lastJob: 'none' }, { questions: qs }, '').experienceMonths, 0);
+  // Eski nomzodlar uchun ko'chirish jadvali — workHistory.period yozuvidan
+  const mig = require('../src/services/migrations');
+  assert.equal(mig.PERIOD_MONTHS['6 oy – 1 yil'], 6);
+  assert.equal(mig.PERIOD_MONTHS['6 oygacha'], 1);
+  assert.equal(mig.PERIOD_MONTHS['1–3 yil'], 12);
+});

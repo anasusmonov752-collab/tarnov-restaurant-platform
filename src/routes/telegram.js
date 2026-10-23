@@ -536,10 +536,13 @@ async function startSurvey(msg, chatId, ank, appBase) {
   if (asClient) {
     // Agentlik admini (test rejimida emas — akkaunti mijozga ulangan): anketani
     // sinamoqchi — "ish beruvchi" deb rad etish o'rniga yo'lni ko'rsatamiz
+    // Bir bosishda: nomzod rejimiga o'tadi va SHU havoladagi anketani ochadi (tma:)
     if (await testMode.testerAgency(chatId)) {
       await tg.sendMessage(token, chatId,
-        `🧪 Akkauntingiz hozir «${asClient.name}» mijoziga ulangan — anketa nomzod uchun.\n\n` +
-        `Sinash uchun: /test → 👤 Nomzod (yoki 🔄 Anketani qaytadan), keyin havolani qayta bosing.`);
+        `🧪 Akkauntingiz hozir «${asClient.name}» mijoziga ulangan — anketa nomzod uchun.`,
+        { reply_markup: { inline_keyboard: [[
+          { text: '👤 Nomzod sifatida to\'ldirish', callback_data: 'tma:' + surveySvc.payloadFor(ank) }
+        ]] } });
       return;
     }
     await tg.sendMessage(token, chatId, T(langOf(asClient, msg.from), 'bot.asCandidate', { name: asClient.name }));
@@ -806,6 +809,20 @@ async function handleCallback(cq, appBase) {
 
   // Mijoz hali topilmagan joyda — Telegram tili
   const cqLang = I18N.fromTelegram(cq.from && cq.from.language_code);
+
+  // ── Admin test rejimi: anketa havolasidan nomzod rejimiga o'tib, anketani ochish ──
+  if (data.startsWith('tma:')) {
+    if (!(await testMode.testerAgency(chatId))) { await done('Faqat agentlik admini uchun', true); return; }
+    const ank = surveySvc.parsePayload(data.slice(4));
+    if (!ank) { await done('Havola eskirgan', true); return; }
+    try {
+      const out = await testMode.setMode(chatId, 'candidate', cq.from);
+      await applyTestMenu(token, chatId, 'candidate', out, appBase);
+      await done('Nomzod rejimi');
+      await startSurvey({ from: cq.from }, chatId, ank, appBase);
+    } catch (e) { await done(e.message, true); }
+    return;
+  }
 
   // ── Admin test rejimi: rejim tugmalari (/test) ──
   if (/^tm:(admin|client|candidate|reset)$/.test(data)) {

@@ -465,6 +465,28 @@ boshqa hech narsa o'zgarmadi). Jonli: fayllar, prod anketalari, hh kartasida
 blok. **Telegramda nomzod sifatida HALI TO'LDIRILMAGAN.** Eski anketa
 nomzodlarida (oldin to'ldirganlar) workHistory yo'q.
 
+**TARIFLAR VA TO'LOV — DEPLOY QILINDI** (2026-10-23, `cfde213`): Anas bilan
+kelishilgan (birinchi 20 restoran uchun, keyin 690k/1.29m/3.99m): Base 499 000 /
+14 kun / 10 kontakt, Pro 999 000 / 30 kun / 30, Max 2 999 000 / 30 kun / "cheksiz"
+(ichki 100) + shaxsiy HR; bepul sinov 3 kontakt / 7 kun (bir marta). Kafolat:
+Base/Pro — kamida 5/15 ta tekshirilgan nomzod, bo'lmasa muddat uzayadi; Max —
+oy ichida 1 xodim ishga chiqadi, bo'lmasa keyingi oy bepul; shart: maosh bozor
+darajasida, 48 soatda javob, oshpaz/menejer kafolatsiz. Jadval YAGONA —
+`src/data/plans.js`. Tarif = kredit (`credits.purchase`) + `Client.plan`
+(key/endsAt); qolgan kreditlar yangi tarifga o'tadi, muddat tugaganda yonadi
+('expire'), 3 kun oldin eslatma — `billing.tick` soatlik cron ichida (kunduzi).
+Buyurtma `Order`; faollashtirish YAGONA — `billing.activate` (takror xavfsiz):
+Payme Merchant API (`services/payme.js`, `/api/pay/payme`, Basic Paycom:KEY,
+tiyin, 12 soat timeout), Click SHOP API (`services/click.js`,
+`/api/pay/click/prepare|complete`, md5 imzo), qo'lda — panel `/tolovlar.html`
+yoki botdagi "✅ To'landi" tugmasi (`bo:`). Kalitlar Render env'da:
+`PAYME_MERCHANT_ID`, `PAYME_KEY` (`PAYME_TEST=1` sinov kassasi), `CLICK_SERVICE_ID`,
+`CLICK_MERCHANT_ID`, `CLICK_SECRET_KEY` — yo'q bo'lsa Mini App faqat "Menejer
+orqali" taklif qiladi. **Merchant shartnoma (YaTT/yuridik shaxs) hali YO'Q** —
+avtomatik to'lov jonli sinalmagan; endpoint'lar kalitsiz to'g'ri rad etadi.
+Mini App: balans oynasida tarif holati, "Tarif tanlash" -> kartalar -> to'lov
+usuli. `test/billing.test.js`. Taqdimot va savdo rejasi artifact'larda (Anasda).
+
 **ANKETA C VARIANT + TALABA + NOMZOD KABINETI TUZATISHLARI** (2026-10-23,
 `4addf87`..`6689dea`): ish tajribasi ekrani — REZYUME KARTALARI (Anas uchta
 variantdan C'ni tanladi): bo'sh holatda "Ish joyi qo'shish" (pastki tugma) va
@@ -588,6 +610,8 @@ Production values live in the Render dashboard only.
 | `SUPERADMIN_PASSWORD` | `admin@tarnov.uz` password (≥12 chars); DB hash is synced to it on every boot |
 | `ALERT_CHAT_ID` | Optional Telegram chat for server error alerts (default: agency admin chat) |
 | `AI_TIMEOUT_MS` | Optional AI call timeout, default 45000 |
+| `PAYME_MERCHANT_ID`, `PAYME_KEY` | Payme kassa (merchant shartnomadan keyin); `PAYME_TEST=1` — sinov kassasi |
+| `CLICK_SERVICE_ID`, `CLICK_MERCHANT_ID`, `CLICK_SECRET_KEY` | Click SHOP API |
 | `CRON_SECRET` | Shared secret for `/api/cron/*` (GitHub Actions reminders job); same value in GitHub Actions secrets |
 
 ## Architecture

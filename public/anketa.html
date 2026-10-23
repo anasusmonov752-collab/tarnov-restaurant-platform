@@ -93,6 +93,8 @@ textarea.in{min-height:110px;resize:vertical;line-height:1.5}
 .wdur{margin-top:10px;font-size:13.5px;color:var(--blue);font-weight:600;min-height:18px}
 .wadd{width:100%;margin-top:14px;border:1.5px dashed var(--line);background:none;border-radius:14px;padding:13px;
   font-family:inherit;font-size:15px;font-weight:600;color:var(--blue);cursor:pointer}
+.wadd:disabled{opacity:.4;cursor:default}
+.wtot:empty{display:none}
 .wtot{margin-top:14px;font-size:14px;font-weight:700;text-align:center}
 
 /* Pastki tugma */
@@ -399,14 +401,19 @@ function drawWork(){
         <input class="in" data-wn="${i}" value="${esc(w.note)}" maxlength="120" placeholder="${esc(t('ank.w.notePh'))}">` : ''}
     </div>`;
   }).join('') +
-  (list.length < MAX_JOBS && list.every(jobDone) ? `<button class="wadd" id="wAdd">+ ${esc(t('ank.w.add'))}</button>` : '') +
-  (list.length > 1 && list.every(jobDone) ? `<div class="wtot">${esc(t('ank.w.total', { d: I18N.durText(LANG, I18N.workMonths(list)) }))}</div>` : '');
+  // Qo'shish tugmasi va jami — doim joyida, holatini syncWork boshqaradi
+  // (matn yozilganda qayta chizilmaydi)
+  (list.length < MAX_JOBS ? `<button class="wadd" id="wAdd">+ ${esc(t('ank.w.add'))}</button>` : '') +
+  `<div class="wtot" id="wTot"></div>`;
   wireWork();
   syncWork();
 }
 function syncWork(){
   const list = draft.value;
-  $('bNext').disabled = !list.length || !list.every(jobDone);
+  const all = list.length > 0 && list.every(jobDone);
+  $('bNext').disabled = !all;
+  if ($('wAdd')) $('wAdd').disabled = !all;
+  $('wTot').textContent = all && list.length > 1 ? t('ank.w.total', { d: I18N.durText(LANG, I18N.workMonths(list)) }) : '';
   $('err').textContent = list.some(badDates) ? t('ank.err.workDates') : '';
   $('wk').querySelectorAll('.wj').forEach((el, i) => {
     const w = list[i];

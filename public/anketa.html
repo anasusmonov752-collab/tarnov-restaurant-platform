@@ -70,20 +70,48 @@ textarea.in{min-height:110px;resize:vertical;line-height:1.5}
 .chk{display:flex;align-items:center;gap:11px;margin-top:16px;font-size:16px;font-weight:600;cursor:pointer}
 .chk input{width:22px;height:22px;accent-color:var(--blue)}
 
-/* Ish tajribasi: har ish joyi — alohida blok */
-.wj{margin-top:18px;padding:16px 14px;border:1.5px solid var(--line);border-radius:16px}
-.wj-h{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:700;color:var(--muted);
-  text-transform:uppercase;letter-spacing:.5px}
-.wj-x{border:0;background:none;color:var(--danger);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;padding:2px 0;text-transform:none;letter-spacing:0}
-.wl{font-size:13.5px;font-weight:600;color:var(--ink-2);margin:14px 0 7px}
-.wj input.in{margin-top:0;font-size:16px;padding:12px 13px}
-.chips{display:flex;flex-wrap:wrap;gap:7px}
-.chip{border:1.5px solid var(--line);background:var(--card);border-radius:999px;padding:8px 13px;font-family:inherit;
-  font-size:14.5px;color:var(--ink);cursor:pointer}
-.chip.on{border-color:var(--blue);background:var(--sel);color:var(--blue);font-weight:600}
-.wadd{width:100%;margin-top:14px;border:1.5px dashed var(--line);background:none;border-radius:14px;padding:13px;
-  font-family:inherit;font-size:15px;font-weight:600;color:var(--blue);cursor:pointer}
-.wadd:disabled{opacity:.4;cursor:default}
+/* Ish tajribasi — iOS guruhlangan ro'yxat (Sozlamalar uslubi): savol kartasi
+   shaffof, oq guruhlar kulrang fonda, qatorlar orasida ingichka chiziq */
+.card.flat{background:none;box-shadow:none;padding:14px 2px 6px}
+.grp{background:var(--card);border-radius:var(--th-r-md,14px);overflow:hidden;margin-top:14px}
+.g-hd{display:flex;align-items:flex-end;justify-content:space-between;margin:22px 16px -6px;font-size:13px;
+  color:var(--muted);text-transform:uppercase;letter-spacing:.2px}
+.g-del{border:0;background:none;color:var(--danger);font-family:inherit;font-size:15px;cursor:pointer;padding:0;text-transform:none;letter-spacing:0}
+.g-row{position:relative;display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:0 16px;border:0;
+  background:none;font-family:inherit;font-size:17px;color:var(--ink);text-align:left;cursor:pointer}
+.g-row + .g-row::before{content:'';position:absolute;top:0;left:16px;right:0;height:1px;background:var(--line);transform:scaleY(.6);transform-origin:top}
+.g-row:active{background:var(--th-fill,rgba(118,118,128,.12))}
+label.g-row:active{background:none}
+.g-l{flex:none;white-space:nowrap}
+.g-in{flex:1;min-width:0;border:0;outline:none;background:none;font-family:inherit;font-size:17px;color:var(--ink);text-align:right;padding:13px 0}
+.g-in::placeholder{color:var(--th-tertiary,rgba(60,60,67,.3))}
+.g-v{flex:1;min-width:0;text-align:right;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.g-v.ph{color:var(--th-tertiary,rgba(60,60,67,.3))}
+.g-chev{flex:none;width:8px;height:14px;color:var(--th-tertiary,rgba(60,60,67,.3))}
+.g-add{color:var(--th-link,var(--blue));gap:12px}
+.g-add svg{width:22px;height:22px;flex:none}
+.g-add:disabled{opacity:.4;cursor:default}
+/* iOS almashtirgichi */
+.g-sw input{position:absolute;opacity:0;pointer-events:none}
+.g-sw .g-l{flex:1}
+.sw{flex:none;position:relative;width:51px;height:31px;border-radius:16px;background:var(--th-fill,rgba(120,120,128,.16));transition:background .2s}
+.sw::after{content:'';position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;
+  box-shadow:0 3px 8px rgba(0,0,0,.15),0 1px 1px rgba(0,0,0,.16);transition:transform .2s}
+.g-sw input:checked + .sw{background:#34C759}
+.g-sw input:checked + .sw::after{transform:translateX(20px)}
+:root[data-theme="dark"] .g-sw input:checked + .sw{background:#30D158}
+/* Pastdan chiqadigan tanlov oynasi */
+.sh-ov{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,0);transition:background .22s;display:flex;align-items:flex-end}
+.sh-ov.on{background:rgba(0,0,0,.32)}
+.sh{width:100%;background:var(--bg);border-radius:14px 14px 0 0;padding:6px 10px calc(14px + env(safe-area-inset-bottom));
+  transform:translateY(100%);transition:transform .22s ease-out;max-height:85vh;overflow:auto}
+.sh-ov.on .sh{transform:none}
+.sh-grab{width:36px;height:5px;border-radius:3px;background:var(--th-line-2,rgba(60,60,67,.29));margin:2px auto 10px}
+.sh-t{text-align:center;font-size:15px;font-weight:600;color:var(--muted)}
+.sh .grp{margin-top:10px}
+.sh-list .g-l{flex:1}
+.sh-ck{color:var(--th-link,var(--blue));font-size:18px;font-weight:600}
+.sh-x{justify-content:center;color:var(--th-link,var(--blue));font-weight:600}
 
 /* Pastki tugma */
 .bar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));
@@ -281,7 +309,7 @@ function renderQ(){
   } else if (q.type === 'work') {
     body = `<div id="wk"></div>`;
   }
-  $('main').innerHTML = `<div class="card">${head}${body}<div class="err" id="err"></div></div>`;
+  $('main').innerHTML = `<div class="card ${q.type === 'work' ? 'flat' : ''}">${head}${body}<div class="err" id="err"></div></div>`;
   wireQ(q);
 }
 
@@ -339,30 +367,39 @@ function wireQ(q){
 }
 
 // ── Ish tajribasi ──
-// Tepada "Tajribam yo'q"; aks holda har ish joyi: joy nomi, lavozim, qancha
-// ishlagani (oraliq). Server (survey.checkAnswer 'work') shu qoidani qayta
-// tekshiradi; javob nomzodning workHistory maydoniga tushadi.
+// iOS "Sozlamalar" uslubi: oq guruhlar kulrang fonda. Tepada "Tajribam yo'q"
+// almashtirgichi; har ish joyi — guruh: Ish joyi (shu qatorda yoziladi),
+// Lavozim ›, Muddat › (pastdan ✓ ro'yxatli oyna). Server (survey.checkAnswer
+// 'work') shu qoidani qayta tekshiradi; javob nomzodning workHistory'siga.
 const MAX_JOBS = 3;
 function newJob(){ return { place: '', role: '', other: '', dur: '' }; }
 const jobDone = w => w.place.trim().length >= 2 && !!w.role && !!w.dur && (w.role !== 'boshqa' || w.other.trim().length >= 2);
+const roleLabel = r => r === 'boshqa' ? t('ank.w.roleOther') : t('role.' + r);
+const CHEV = '<svg class="g-chev" viewBox="0 0 8 14" aria-hidden="true"><path d="M1 1l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 function drawWork(){
   const v = draft.value, none = v === 'none';
   const list = none ? [] : v;
-  $('wk').innerHTML = `<div class="opts" style="margin-top:16px">
-      <button class="opt ${none ? 'on' : ''}" id="wNone"><i></i>${esc(t('ank.w.none'))}</button></div>` +
-    (none ? '' : list.map((w, i) => `<div class="wj">
-      <div class="wj-h"><span>${esc(t('ank.w.n', { n: i + 1 }))}</span>
-        ${list.length > 1 ? `<button class="wj-x" data-wx="${i}">${esc(t('ank.w.remove'))}</button>` : ''}</div>
-      <div class="wl">${esc(t('ank.w.place'))}</div>
-      <input class="in" data-wp="${i}" value="${esc(w.place)}" maxlength="80" placeholder="${esc(t('ank.w.placePh'))}">
-      <div class="wl">${esc(t('ank.w.role'))}</div>
-      <div class="chips">${I18N.WORK_ROLES.map(r => `<button class="chip ${w.role === r ? 'on' : ''}" data-wr="${i}:${r}">${esc(r === 'boshqa' ? t('ank.w.roleOther') : t('role.' + r))}</button>`).join('')}</div>
-      ${w.role === 'boshqa' ? `<input class="in" data-wo="${i}" value="${esc(w.other)}" maxlength="60" placeholder="${esc(t('ank.w.otherPh'))}" style="margin-top:9px">` : ''}
-      <div class="wl">${esc(t('ank.w.dur'))}</div>
-      <div class="chips">${I18N.WORK_DURS.map(d => `<button class="chip ${w.dur === d ? 'on' : ''}" data-wd="${i}:${d}">${esc(t('ank.w.dur.' + d))}</button>`).join('')}</div>
+  $('wk').innerHTML = `<div class="grp">
+      <label class="g-row g-sw"><span class="g-l">${esc(t('ank.w.none'))}</span>
+        <input type="checkbox" id="wNone" ${none ? 'checked' : ''}><i class="sw"></i></label>
+    </div>` +
+    (none ? '' : list.map((w, i) => `
+    <div class="g-hd"><span>${esc(t('ank.w.n', { n: i + 1 }))}</span>
+      ${list.length > 1 ? `<button class="g-del" data-wx="${i}">${esc(t('ank.w.remove'))}</button>` : ''}</div>
+    <div class="grp">
+      <label class="g-row"><span class="g-l">${esc(t('ank.w.place'))}</span>
+        <input class="g-in" data-wp="${i}" value="${esc(w.place)}" maxlength="80" placeholder="${esc(t('ank.w.placePh'))}"></label>
+      <button class="g-row" data-sheet="role:${i}"><span class="g-l">${esc(t('ank.w.role'))}</span>
+        <span class="g-v ${w.role ? '' : 'ph'}">${esc(w.role ? roleLabel(w.role) : t('ank.w.pick'))}</span>${CHEV}</button>
+      ${w.role === 'boshqa' ? `<label class="g-row"><span class="g-l">${esc(t('ank.w.otherL'))}</span>
+        <input class="g-in" data-wo="${i}" value="${esc(w.other)}" maxlength="60" placeholder="${esc(t('ank.w.otherPh'))}"></label>` : ''}
+      <button class="g-row" data-sheet="dur:${i}"><span class="g-l">${esc(t('ank.w.durL'))}</span>
+        <span class="g-v ${w.dur ? '' : 'ph'}">${esc(w.dur ? t('ank.w.dur.' + w.dur) : t('ank.w.pick'))}</span>${CHEV}</button>
     </div>`).join('') +
-    (list.length < MAX_JOBS ? `<button class="wadd" id="wAdd">+ ${esc(t('ank.w.add'))}</button>` : ''));
+    (list.length < MAX_JOBS ? `<div class="grp"><button class="g-row g-add" id="wAdd">
+      <svg viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="10" fill="currentColor"/><path d="M11 6.5v9M6.5 11h9" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+      ${esc(t('ank.w.add'))}</button></div>` : ''));
   wireWork();
   syncWork();
 }
@@ -375,29 +412,53 @@ function syncWork(){
 }
 function wireWork(){
   const box = $('wk');
-  $('wNone').onclick = () => {
-    // Qayta bossa — bo'sh forma (yozganlari yo'qolmasin: oldingi ro'yxat saqlanadi)
-    if (draft.value === 'none') draft.value = draft._jobs || [newJob()];
-    else { draft._jobs = draft.value; draft.value = 'none'; }
+  $('wNone').onchange = () => {
+    // O'chirilsa — oldin yozilgani qaytadi
+    if ($('wNone').checked) { draft._jobs = draft.value === 'none' ? draft._jobs : draft.value; draft.value = 'none'; }
+    else draft.value = draft._jobs || [newJob()];
     haptic(); drawWork();
-    if (draft.value === 'none') setTimeout(() => save(Q[idx]), 160);    // variant kabi — darhol keyingisiga
+    if (draft.value === 'none') setTimeout(() => save(Q[idx]), 350);   // variant kabi — darhol keyingisiga
   };
   if (draft.value === 'none') return;
   const list = draft.value;
   box.querySelectorAll('[data-wp]').forEach(el => el.oninput = () => { list[+el.dataset.wp].place = el.value; syncWork(); });
   box.querySelectorAll('[data-wo]').forEach(el => el.oninput = () => { list[+el.dataset.wo].other = el.value; syncWork(); });
-  box.querySelectorAll('[data-wr]').forEach(b => b.onclick = () => {
-    const [i, r] = b.dataset.wr.split(':');
-    list[+i].role = r; haptic(); drawWork();
-  });
-  box.querySelectorAll('[data-wd]').forEach(b => b.onclick = () => {
-    const [i, d] = b.dataset.wd.split(':');
-    list[+i].dur = d; haptic(); drawWork();
+  box.querySelectorAll('[data-sheet]').forEach(b => b.onclick = () => {
+    const [kind, i] = b.dataset.sheet.split(':');
+    const w = list[+i];
+    const opts = kind === 'role' ? I18N.WORK_ROLES.map(r => [r, roleLabel(r)]) : I18N.WORK_DURS.map(d => [d, t('ank.w.dur.' + d)]);
+    openSheet(kind === 'role' ? t('ank.w.role') : t('ank.w.dur'), opts, w[kind], k => {
+      w[kind] = k; haptic(); drawWork();
+      // "Boshqa" — nomini darhol yozsin
+      if (kind === 'role' && k === 'boshqa') setTimeout(() => { const el = box.querySelector(`[data-wo="${i}"]`); el && el.focus(); }, 280);
+    });
   });
   box.querySelectorAll('[data-wx]').forEach(b => b.onclick = () => { list.splice(+b.dataset.wx, 1); drawWork(); });
   const add = $('wAdd');
   if (add) add.onclick = () => { list.push(newJob()); drawWork(); setTimeout(() => { const ins = box.querySelectorAll('[data-wp]'); ins[ins.length - 1].focus(); }, 50); };
 }
+
+// Pastdan chiqadigan tanlov oynasi (iOS action sheet): ✓ — joriy qiymat.
+// Telegram "orqaga" tugmasi avval oynani yopadi (closeSheet).
+let closeSheet = null;
+function openSheet(title, opts, cur, onPick){
+  if (document.activeElement) document.activeElement.blur();
+  const ov = document.createElement('div');
+  ov.className = 'sh-ov';
+  ov.innerHTML = `<div class="sh" role="dialog" aria-label="${esc(title)}">
+    <div class="sh-grab"></div><div class="sh-t">${esc(title)}</div>
+    <div class="grp sh-list">${opts.map(([k, l]) => `<button class="g-row" data-k="${esc(k)}"><span class="g-l">${esc(l)}</span>${k === cur ? '<span class="sh-ck">&#10003;</span>' : ''}</button>`).join('')}</div>
+    <div class="grp"><button class="g-row sh-x">${esc(t('ank.w.cancel'))}</button></div>
+  </div>`;
+  document.body.appendChild(ov);
+  requestAnimationFrame(() => ov.classList.add('on'));
+  const close = () => { closeSheet = null; ov.classList.remove('on'); setTimeout(() => ov.remove(), 220); };
+  closeSheet = close;
+  ov.onclick = e => { if (e.target === ov) close(); };
+  ov.querySelector('.sh-x').onclick = close;
+  ov.querySelectorAll('[data-k]').forEach(b => b.onclick = () => { close(); onPick(b.dataset.k); });
+}
+
 
 // ── Telefon ──
 // "Raqamni ulashish" — Telegram kontaktni BOTGA yuboradi, server uni
@@ -519,6 +580,7 @@ function go(d){
 }
 $('bBack').onclick = () => go(-1);
 try { TG && TG.BackButton && TG.BackButton.onClick(() => {
+  if (closeSheet) { closeSheet(); return; }                       // avval tanlov oynasi yopiladi
   if (idx < 0) return;
   if (nextShown(idx, -1) >= 0) go(-1); else renderIntro();
 }); } catch(e){}

@@ -23,7 +23,13 @@ function secretOk(req) {
 router.post('/reminders', asyncHandler(async (req, res) => {
   if (!process.env.CRON_SECRET) return res.status(503).json({ error: 'CRON_SECRET sozlanmagan' });
   if (!secretOk(req)) return res.status(401).json({ error: 'Ruxsat yo\'q' });
-  const r = await reminders.run({ appBase: publicBase(req), dry: !!(req.body && req.body.dry) });
+  const dry = !!(req.body && req.body.dry);
+  const r = await reminders.run({ appBase: publicBase(req), dry });
+  // Tariflar: muddati tugaganlar (kreditlar yonadi) va 3 kun qolganlarga eslatma — kunduzi
+  if (!dry && !r.quiet) {
+    try { r.billing = await require('../services/billing').tick(); }
+    catch (e) { r.billing = { error: e.message }; }
+  }
   res.json(r);
 }));
 

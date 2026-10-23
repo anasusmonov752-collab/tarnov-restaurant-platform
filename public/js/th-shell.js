@@ -12,6 +12,7 @@
     users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
     building: '<path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2M10 6h4M10 10h4M10 14h4M10 18h4"/>',
     briefcase: '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>',
+    card: '<rect width="20" height="14" x="2" y="5" rx="2"/><path d="M2 10h20"/>',
     chat: '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>',
     form: '<rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M12 11h4M12 16h4M8 11h.01M8 16h.01"/>',
     out: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/>',
@@ -30,6 +31,7 @@
       { href: '/recruitment.html', also: ['/recruitment-kanban.html'], l: 'hh.uz bazasi', ic: 'users', n: 'baseWeek', nTitle: 'shu hafta qo\'shilgan' },
       { href: '/mijozlar.html', l: 'Mijozlar va tanlovlar', ic: 'building', n: 'waitingShortlists', nTitle: 'sizni kutayotgan tanlovlar' },
       { href: '/arizalar.html', l: 'Arizalar', ic: 'send', n: 'appsUnseen', nTitle: 'ko\'rilmagan arizalar', hot: true },
+      { href: '/tolovlar.html', l: 'To\'lovlar', ic: 'card', n: 'ordersPending', nTitle: 'tasdiq kutayotgan tarif so\'rovlari', hot: true },
       { href: '/vakansiyalar.html', l: 'Vakansiyalar', ic: 'briefcase' },
       { href: '/suhbatlar.html', l: 'Suhbatlar', ic: 'chat', n: 'unreadChats', nTitle: 'o\'qilmagan xabarlar' }
     ] },

@@ -810,6 +810,20 @@ async function handleCallback(cq, appBase) {
   // Mijoz hali topilmagan joyda — Telegram tili
   const cqLang = I18N.fromTelegram(cq.from && cq.from.language_code);
 
+  // ── Agentlik: tarif to'lovini qo'lda tasdiqlash (billing.createOrder 'manual' xabari) ──
+  if (data.startsWith('bo:')) {
+    const ag = await Restaurant.findOne({ 'telegram.adminChatId': chatId, active: true }, 'id').lean();
+    const Order = require('../models/Order');
+    const o = ag && await Order.findOne({ agencyId: ag.id, id: data.slice(3) }).lean();
+    if (!o) { await done('Buyurtma topilmadi', true); return; }
+    try {
+      const r = await require('../services/billing').activate(o.id, { by: 'admin' });
+      await done(r.already ? 'Allaqachon yoqilgan' : 'Tarif yoqildi');
+      await tg.editMessageText(token, chatId, msgId, (cq.message.text || '') + (r.already ? '\n\n✅ Allaqachon yoqilgan' : '\n\n✅ To\'landi — tarif yoqildi')).catch(() => {});
+    } catch (e) { await done(e.message, true); }
+    return;
+  }
+
   // ── Admin test rejimi: anketa havolasidan nomzod rejimiga o'tib, anketani ochish ──
   if (data.startsWith('tma:')) {
     if (!(await testMode.testerAgency(chatId))) { await done('Faqat agentlik admini uchun', true); return; }

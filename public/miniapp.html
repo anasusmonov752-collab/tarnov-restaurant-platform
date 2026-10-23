@@ -252,6 +252,31 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .sh-bk{border:none;background:transparent;font-size:18px;color:var(--blue);padding:0 12px 0 0;cursor:pointer;line-height:1}
 .cr-big{display:flex;align-items:baseline;gap:9px;padding:6px 0 14px}
 .cr-big b{font-size:40px;font-weight:700;color:var(--blue);line-height:1}
+/* Tariflar (src/data/plans.js): holat qatori, kartalar, to'lov usuli */
+.pl-now{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--bg);border-radius:12px;padding:11px 13px;margin-bottom:12px;font-size:14px}
+.pl-now b{font-size:15px}
+.pl-now span{color:var(--muted);font-size:13px}
+.pl-note{font-size:12.5px;color:var(--blue);font-weight:600;margin:0 0 10px}
+.pl-card{border:1.5px solid var(--line);border-radius:16px;padding:15px 15px 14px;margin-bottom:11px;background:var(--card)}
+.pl-card.pop{border-color:var(--blue)}
+.pl-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pl-name{font-size:18px;font-weight:700}
+.pl-tag{font-size:11.5px;font-weight:700;color:#fff;background:var(--blue);border-radius:99px;padding:3px 9px}
+.pl-price{font-size:26px;font-weight:800;margin-top:6px;letter-spacing:-.3px}
+.pl-price small{font-size:14px;font-weight:600;color:var(--muted);margin-left:4px}
+.pl-meta{font-size:14px;font-weight:600;color:var(--blue);margin-top:2px}
+.pl-f{list-style:none;margin:10px 0 12px;padding:0;display:flex;flex-direction:column;gap:6px;font-size:13.5px;line-height:1.4}
+.pl-f li{display:flex;gap:7px}
+.pl-f li::before{content:'✓';color:var(--ok);font-weight:700;flex:none}
+.pl-f li.g{color:var(--ink)}
+.pl-f li.g::before{content:'★';color:#E8A317}
+.pl-terms{font-size:12px;color:var(--muted);line-height:1.5;margin-top:4px}
+.pl-banner{background:rgba(232,163,23,.13);color:#8A5A00;border-radius:12px;padding:10px 12px;font-size:13.5px;margin-bottom:12px}
+.pay-o{width:100%;display:flex;align-items:center;gap:12px;border:1.5px solid var(--line);background:var(--card);border-radius:14px;
+  padding:13px 14px;margin-bottom:9px;font-family:inherit;text-align:left;cursor:pointer;color:var(--ink)}
+.pay-o b{display:block;font-size:15.5px}
+.pay-o span{font-size:12.5px;color:var(--muted)}
+.pay-ic{width:40px;height:40px;border-radius:11px;flex:none;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff}
 .cr-big span{font-size:13px;color:var(--muted)}
 #crTap{cursor:pointer}
 .crgo{font-style:normal;font-size:12.5px;font-weight:600;color:var(--blue);margin-left:auto;white-space:nowrap}
@@ -844,7 +869,7 @@ async function loadMe(){
     useLang(m.lang);                     // haqiqiy tanlov — serverda (Client.lang)
     $('cName').textContent = m.name || t('cab.client');
     $('cCred').textContent = m.credits;
-    $('cCredNote').textContent = t('cab.credits', { n: m.credits });
+    $('cCredNote').textContent = t('cab.credits', { n: m.credits }) + (m.plan && m.plan.key ? ' · ' + t('plan.' + m.plan.key) : '');
     CREDITS = m.credits;                 // "Kontaktni ochish" tasdig'ida balans
     const s = m.stats || {};
     $('cStats').innerHTML = `
@@ -1595,24 +1620,112 @@ function renderApps(){
 
 // ── Balans — tepadagi kredit raqamini bosganda ──
 // Kamdan-kam ishlatiladi, shuning uchun tab emas, oyna.
+// ── Balans: kredit, joriy tarif, tarif tanlash ──
+// Tarif = muddat + kontakt limiti; to'lov Payme/Click (ulangan bo'lsa) yoki
+// menejer orqali (billing.createOrder 'manual' — agentlik botda tasdiqlaydi)
+let PLANS = null;
+const fmtSum = n => Number(n || 0).toLocaleString('ru-RU');
+const planNow = p => p && p.key
+  ? `<div class="pl-now"><div><b>${esc(t('plan.' + p.key))}</b><br><span>${esc(t('pl.until', { date: new Date(p.endsAt).toLocaleDateString(LOC()), n: p.daysLeft }))}</span></div></div>`
+  : `<div class="pl-now"><div><b>${esc(t('pl.none'))}</b></div></div>`;
+
 async function showCredits(){
   sheetEnter('credits', showCredits);
   openSheet(t('cr.sheet'), `
     <div class="cr-big"><b>${CREDITS == null ? '—' : CREDITS}</b><span>${esc(t('cab.credits', { n: CREDITS || 0 }))}</span></div>
-    <button class="btn" id="bTop" style="width:100%">${esc(t('cr.ask'))}</button>
-    <div style="font-size:12.5px;color:var(--muted);margin-top:10px;line-height:1.5">${esc(t('cr.askHint'))}</div>
+    <div id="plNow"></div>
+    <button class="btn" id="bPlans" style="width:100%">${esc(t('pl.choose'))}</button>
     <div class="vd-sec">${esc(t('cr.hist'))}</div>
     <div class="card" id="crList"><div class="msg">${esc(t('common.loading'))}</div></div>`);
-  $('bTop').onclick = async () => {
-    const b = $('bTop');
-    b.disabled = true; b.textContent = t('common.sending');
-    try{
-      await api('/api/ma/topup', { method:'POST', body: JSON.stringify({ amount: 10 }) });
-      b.textContent = t('cr.sent');
-      try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
-    }catch(e){ b.disabled = false; b.textContent = t('common.retry'); }
-  };
+  $('bPlans').onclick = () => showPlans();
+  api('/api/ma/plans').then(d => {
+    PLANS = d;
+    if (!$('plNow')) return;
+    $('plNow').innerHTML = planNow(d.current);
+    if (d.current && d.current.key && d.current.key !== 'trial') $('bPlans').textContent = t('pl.renew');
+  }).catch(() => {});
   loadCredits();
+}
+
+function planCard(p){
+  const g = p.guarantee || {};
+  const f = [
+    g.candidates ? `<li class="g">${esc(t('pl.gCand', { n: g.candidates }))}</li>` : '',
+    g.hire ? `<li class="g">${esc(t('pl.gHire'))}</li>` : '',
+    p.personalHr ? `<li>${esc(t('pl.fHr'))}</li>` : '',
+    g.replace ? `<li>${esc(t('pl.fReplace'))}</li>` : '',
+    p.key === 'max' ? `<li>${esc(t('pl.fFirst'))}</li>` : '',
+    `<li>${esc(t('pl.fCarry'))}</li>`
+  ].join('');
+  return `<div class="pl-card ${p.popular ? 'pop' : ''}">
+    <div class="pl-top"><span class="pl-name">${esc(t('plan.' + p.key))}</span>${p.popular ? `<span class="pl-tag">${esc(t('pl.popular'))}</span>` : ''}</div>
+    <div class="pl-price">${fmtSum(p.price)}<small>${esc(t('pl.sum'))}</small></div>
+    <div class="pl-meta">${esc(t('pl.days', { n: p.days }))} · ${esc(p.unlimited ? t('pl.unlimited') : t('pl.contacts', { n: p.contacts }))}</div>
+    <ul class="pl-f">${f}</ul>
+    <button class="btn ${p.popular ? '' : 'ghost'}" data-buy="${p.key}" style="width:100%">${esc(t('pl.buy'))}</button>
+  </div>`;
+}
+
+async function showPlans(){
+  sheetEnter('plans', showPlans);
+  openSheet(t('pl.title'), `<div class="msg">${esc(t('common.loading'))}</div>`);
+  let d;
+  try { d = PLANS = await api('/api/ma/plans'); }
+  catch(e){ $('shB').innerHTML = `<div class="msg">${esc(e.message)}</div>`; return; }
+  const c = d.current || {};
+  $('shB').innerHTML = `
+    <div class="pl-note">${esc(t('pl.launch'))}</div>
+    ${d.pendingManual ? `<div class="pl-banner">${esc(t('pl.pending', { plan: t('plan.' + d.pendingManual.planKey) }))}</div>` : ''}
+    ${c.trialAvailable ? `<div class="pl-card">
+      <div class="pl-name">${esc(t('pl.trialT'))}</div>
+      <div class="pl-meta" style="margin-top:4px">${esc(t('pl.trialD'))}</div>
+      <button class="btn" id="bTrial" style="width:100%;margin-top:12px">${esc(t('pl.trialBtn'))}</button></div>` : ''}
+    ${d.plans.map(planCard).join('')}
+    <div class="pl-terms">${esc(t('pl.terms'))}</div>`;
+  if ($('bTrial')) $('bTrial').onclick = async () => {
+    const b = $('bTrial'); b.disabled = true;
+    try {
+      const r = await api('/api/ma/trial', { method:'POST', body:'{}' });
+      CREDITS = r.balance; loadMe();
+      b.textContent = t('pl.trialOk');
+      try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
+    } catch(e){ b.disabled = false; b.textContent = e.message; }
+  };
+  $('shB').querySelectorAll('[data-buy]').forEach(b => b.onclick = () => choosePay(b.dataset.buy));
+}
+
+// To'lov usuli: ulangan tizimlar + doim "menejer orqali"
+function choosePay(key){
+  const p = (PLANS && PLANS.plans || []).find(x => x.key === key);
+  if (!p) return;
+  sheetEnter('pay:' + key, () => choosePay(key));
+  const PV = { payme: ['Payme', '#33CCCC', 'Payme'], click: ['Click', '#0073FF', 'Click'] };
+  const opts = (PLANS.providers || []).map(k => `<button class="pay-o" data-pay="${k}">
+      <span class="pay-ic" style="background:${PV[k][1]}">${PV[k][2]}</span><div><b>${PV[k][0]}</b><span>${esc(t('pl.afterPay'))}</span></div></button>`).join('');
+  openSheet(t('pl.pay'), `
+    <div class="pl-now"><div><b>${esc(t('plan.' + key))} — ${fmtSum(p.price)} ${esc(t('pl.sum'))}</b><br>
+      <span>${esc(t('pl.days', { n: p.days }))} · ${esc(p.unlimited ? t('pl.unlimited') : t('pl.contacts', { n: p.contacts }))}</span></div></div>
+    ${opts}
+    <button class="pay-o" data-pay="manual"><span class="pay-ic" style="background:#64748B">HR</span>
+      <div><b>${esc(t('pl.manual'))}</b><span>${esc(t('pl.manualD'))}</span></div></button>
+    <div class="err" id="payErr" style="color:var(--danger);font-size:13px;min-height:18px"></div>`);
+  $('shB').querySelectorAll('[data-pay]').forEach(b => b.onclick = async () => {
+    $('shB').querySelectorAll('[data-pay]').forEach(x => x.disabled = true);
+    $('payErr').textContent = '';
+    try {
+      const r = await api('/api/ma/orders', { method:'POST', body: JSON.stringify({ plan: key, provider: b.dataset.pay }) });
+      if (r.url) {
+        $('shB').insertAdjacentHTML('beforeend', `<div class="msg">${esc(t('pl.opening'))}</div>`);
+        try { TG && TG.openLink ? TG.openLink(r.url) : (location.href = r.url); } catch(e){ location.href = r.url; }
+      } else {
+        $('shB').innerHTML = `<div class="msg" style="line-height:1.55">✅<br>${esc(t('pl.manualSent'))}</div>`;
+        try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
+      }
+    } catch(e){
+      $('payErr').textContent = e.message;
+      $('shB').querySelectorAll('[data-pay]').forEach(x => x.disabled = false);
+    }
+  });
 }
 
 

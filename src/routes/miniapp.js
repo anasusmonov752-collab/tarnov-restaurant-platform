@@ -38,6 +38,8 @@ const ChatThread = require('../models/ChatThread');
 const { publicBase } = require('../utils/publicBase');
 const appLife = require('../services/appLife');
 const I18N = require('../../public/js/th-i18n');
+const billing = require('../services/billing');
+const PL = require('../data/plans');
 
 const router = express.Router();
 
@@ -359,6 +361,7 @@ router.get('/me', clientGuard, asyncHandler(async (req, res) => {
   res.json({
     name: req.client.name,
     credits: req.client.credits,
+    plan: billing.planView(req.client),
     lang: req.lang,
     stats: {
       searches: rows.length,
@@ -1013,6 +1016,39 @@ router.post('/topup', clientGuard, asyncHandler(async (req, res) => {
       `Panel -> Mijozlar -> Kredit`).catch(() => {});
   }
   res.json({ ok: true });
+}));
+
+// ── Tariflar: ro'yxat, holat, ulangan to'lov usullari ──
+// providers bo'sh — to'lov tizimi hali ulanmagan: Mini App qo'lda so'rov yuboradi
+router.get('/plans', clientGuard, asyncHandler(async (req, res) => {
+  const Order = require('../models/Order');
+  const pending = await Order.findOne({ agencyId: req.client.agencyId, clientId: req.client.id, status: 'pending', provider: 'manual' },
+    'id planKey createdAt').sort({ createdAt: -1 }).lean();
+  res.json({
+    plans: PL.PLAN_KEYS.map(k => PL.PLANS[k]),
+    trial: PL.TRIAL,
+    current: billing.planView(req.client),
+    credits: req.client.credits,
+    providers: billing.providers(),
+    pendingManual: pending ? { id: pending.id, planKey: pending.planKey, createdAt: pending.createdAt } : null
+  });
+}));
+
+// ── Tarif sotib olish: buyurtma + to'lov havolasi (yoki qo'lda so'rov) ──
+router.post('/orders', clientGuard, asyncHandler(async (req, res) => {
+  const b = req.body || {};
+  try {
+    const o = await billing.createOrder({ client: req.client, planKey: String(b.plan || ''), provider: String(b.provider || 'manual') });
+    // To'lovdan keyin — botga qaytadi: u yerda "tarif yoqildi" xabari turadi
+    const back = 'https://t.me/' + ((await tg.platformUsername().catch(() => '')) || 'TalentHubUzBot');
+    res.json({ id: o.id, provider: o.provider, amount: o.amount, url: billing.checkoutUrl(o, back) });
+  } catch (e) { res.status(e.status || 400).json({ error: e.message }); }
+}));
+
+// ── Bepul sinov: 3 kredit, 7 kun (bir marta) ──
+router.post('/trial', clientGuard, asyncHandler(async (req, res) => {
+  try { const r = await billing.startTrial(req.client); res.json({ ok: true, balance: r.balance, endsAt: r.endsAt }); }
+  catch (e) { res.status(e.status || 400).json({ error: e.message }); }
 }));
 
 // ══ SUHBATLAR ═══════════════════════════════════════════════

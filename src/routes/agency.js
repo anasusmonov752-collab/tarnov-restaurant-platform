@@ -39,6 +39,8 @@ router.get('/today', guard, asyncHandler(async (req, res) => {
     // "Arizalar" — agentlik hali ochmagan va qaror qilinmagan arizalar
     Application.countDocuments({ agencyId, agencySeenAt: null, state: { $in: ['new', 'seen'] }, isTest: { $ne: true } })
   ]);
+  // Yon menyu "To'lovlar" — tasdiq kutayotgan tarif so'rovlari
+  const ordersPending = await require('../models/Order').countDocuments({ agencyId, status: 'pending', provider: 'manual' });
 
   // Shu oy ochilgan va ishga olingan — barcha tanlovlardan (yopilganlari ham);
   // sinov mijozining tanlovlari hisobga olinmaydi
@@ -70,7 +72,7 @@ router.get('/today', guard, asyncHandler(async (req, res) => {
     hiredMonth: (month[0] || {}).hired || 0,
     clientCredits: active.reduce((s, c) => s + (c.credits || 0), 0),
     activeClients: active.length,
-    candidates: candTotal, candidatesWeek: candWeek, anketaUnseen, baseWeek, appsUnseen,
+    candidates: candTotal, candidatesWeek: candWeek, anketaUnseen, baseWeek, appsUnseen, ordersPending,
     unreadChats: (unread[0] || {}).n || 0,
     queue: queue.slice(0, 20)
   });

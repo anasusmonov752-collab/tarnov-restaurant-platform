@@ -46,6 +46,17 @@ const ClientSchema = new mongoose.Schema({
   // kontaktini ocha olmaydi, "Bugun" sanoqlari va kreditlar jamiga kirmaydi
   isTest: { type: Boolean, default: false },
 
+  // Tarif (src/data/plans.js, services/billing): faol tarif va muddati.
+  // key '' — tarifsiz; 'trial' — bepul sinov. trialUsedAt — sinov olingan payt.
+  plan: {
+    key:        { type: String, default: '' },
+    startedAt:  { type: Date, default: null },
+    endsAt:     { type: Date, default: null },
+    remindedAt: { type: Date, default: null },   // 3 kun oldin eslatildi
+    expiredAt:  { type: Date, default: null }    // muddat tugadi, kreditlar yondi
+  },
+  trialUsedAt: { type: Date, default: null },
+
   // Interfeys tili: 'uz' | 'ru'. Bo'sh — hali tanlamagan, Telegram
   // language_code bo'yicha taxmin qilinadi (public/js/th-i18n.js).
   // Brauzerda emas, shu yerda: bot xabarlari ham shu tilda bo'lishi kerak.

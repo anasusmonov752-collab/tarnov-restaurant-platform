@@ -164,7 +164,8 @@ function template() {
       text: { uz: 'Qaysi kunlari va soatlarda ishlay olasiz?', ru: 'В какие дни и часы вы можете работать?' },
       hint: { uz: 'Masalan: dushanba–juma 17:00 dan keyin, shanba–yakshanba kun bo\'yi',
               ru: 'Например: пн–пт после 17:00, сб–вс весь день' } },
-    { id: 'photo', type: 'photo', required: false, text: { uz: 'Rasmingiz', ru: 'Ваше фото' },
+    // Barcha savollar majburiy — o'tkazib yuborish yo'q (Anas, 2026-10-23)
+    { id: 'photo', type: 'photo', text: { uz: 'Rasmingiz', ru: 'Ваше фото' },
       hint: { uz: 'Yuzingiz aniq ko\'rinadigan rasm, selfi ham bo\'ladi. Rasmli anketani ish beruvchilar ko\'proq ochadi.',
               ru: 'Фото, где хорошо видно лицо, подойдёт и селфи. Анкеты с фото работодатели открывают чаще.' } },
     { id: 'consent', type: 'consent', text: { uz: 'Rozilik', ru: 'Согласие' },
@@ -382,8 +383,7 @@ const ROLE_PRESETS = {
   },
   oshpaz: {
     title: { uz: 'Oshpaz anketasi', ru: 'Анкета повара' },
-    remove: ['english'],
-    patch: { russian: { required: false } }
+    remove: ['english']
   },
   ofitsiant: {
     title: { uz: 'Ofitsiant anketasi', ru: 'Анкета официанта' }

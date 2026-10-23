@@ -208,3 +208,9 @@ test('tajriba oylari: 6–12 oy ishlagan "Tajribasiz" emas', () => {
   assert.equal(mig.PERIOD_MONTHS['6 oygacha'], 1);
   assert.equal(mig.PERIOD_MONTHS['1–3 yil'], 12);
 });
+
+test('anketa: barcha savollar majburiy (jinsdan tashqari — u anketalarda yo\'q)', () => {
+  const opt = qs => qs.filter(q => !q.required).map(q => q.id);
+  assert.deepEqual(opt(survey.cleanQuestions(survey.template())).filter(id => id !== 'gender'), []);
+  for (const role of survey.PRESET_ROLES) assert.deepEqual(opt(survey.rolePreset(role).questions).filter(id => id !== 'gender'), [], role);
+});

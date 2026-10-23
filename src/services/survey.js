@@ -76,9 +76,14 @@ function template() {
               ru: 'Учитывается любая должность: официант, хостес, повар, кассир и другие.' },
       options: [o('none', 'Tajribam yo\'q', 'Нет опыта'), o('lt1', '1 yilgacha', 'До 1 года'),
                 o('y1_2', '1–2 yil', '1–2 года'), o('y3_5', '3–5 yil', '3–5 лет'), o('y5', '5 yildan ortiq', 'Более 5 лет')] },
-    { id: 'lastJob', type: 'longtext', showIf: { q: 'experience', in: ['lt1', 'y1_2', 'y3_5', 'y5'] },
-      text: { uz: 'Oxirgi ish joyingiz va lavozimingiz', ru: 'Последнее место работы и должность' },
-      hint: { uz: 'Masalan: «Rayhon» restorani, ofitsiant, 2023–2025', ru: 'Например: ресторан «Райхон», официант, 2023–2025' } },
+    // Ish tajribasi — tuzilgan (joy, lavozim, oy/yil, vazifalar), erkin matn
+    // emas: ish beruvchi "qayerda, kim bo'lib, qancha" ni ko'rishi va panel
+    // tajriba bo'yicha saralashi kerak (2026-10-23, Anas: "rezyumeda hech
+    // narsa yo'q, filtr qilib bo'lmaydi"). Javob -> Candidate.workHistory.
+    { id: 'lastJob', type: 'work', showIf: { q: 'experience', in: ['lt1', 'y1_2', 'y3_5', 'y5'] },
+      text: { uz: 'Qayerda ishlagansiz?', ru: 'Где вы работали?' },
+      hint: { uz: 'Oxirgi ish joyingizdan boshlang. Ish beruvchi tajribangizni aynan shu yerdan ko\'radi.',
+              ru: 'Начните с последнего места работы. Работодатель смотрит опыт именно здесь.' } },
 
     // Lavozimga xos — faqat shu lavozimni tanlaganga (shart: role). Vakansiya
     // havolasida lavozim ma'lum — shart o'sha lavozim bo'yicha hisoblanadi.
@@ -187,7 +192,7 @@ function template() {
 const CATALOG = {
   role:       { keys: 'fixed', field: 'Lavozim',          sec: 'job' },
   experience: { keys: 'fixed', field: 'Tajriba (yil)',    sec: 'job' },
-  lastJob:    {                field: 'Tajriba haqida',   sec: 'job' },
+  lastJob:    {                field: 'Ish tajribasi',    sec: 'job' },
   startWhen:  { keys: 'fixed', field: 'Ishga chiqish',    sec: 'job' },
   shift:      { keys: 'fixed', field: 'Smena',            sec: 'job' },
   salary:     { keys: 'open',  field: 'Kutilgan maosh',   sec: 'job' },
@@ -494,9 +499,55 @@ function checkAnswer(q, value) {
     case 'consent':
       if (value !== true) err('consent');
       return true;
+    case 'work':
+      return checkWork(q, value, err);
     default:
       err('type');
   }
+}
+
+// Ish tajribasi: 1–3 ish joyi { place, role, from:'YYYY-MM', to:'YYYY-MM'|'now',
+// duties:[kalit], note }. Vazifa kalitlari lavozim ro'yxatidan (th-i18n DUTIES).
+const MAX_JOBS = 3;
+function checkWork(q, value, err) {
+  const list = Array.isArray(value) ? value : [];
+  if (!list.length) { if (q.required) err('required'); return ''; }
+  if (list.length > MAX_JOBS) err('work');
+  const nowIdx = I18N.monthIdx('now');
+  const okMonth = s => /^\d{4}-(0[1-9]|1[0-2])$/.test(String(s || '')) && +String(s).slice(0, 4) >= 1970
+    && I18N.monthIdx(s) <= nowIdx;
+  return list.map(raw => {
+    const w = raw || {};
+    const place = String(w.place || '').trim().replace(/\s+/g, ' ');
+    const role = String(w.role || '');
+    if (place.length < 2 || place.length > 80 || !I18N.WORK_ROLES.includes(role) || !okMonth(w.from)) err('work');
+    const to = w.to === 'now' ? 'now' : String(w.to || '');
+    if (to !== 'now' && (!okMonth(to) || I18N.monthIdx(to) < I18N.monthIdx(w.from))) err('workDates');
+    const allowed = I18N.DUTIES[role] || [];
+    const duties = [...new Set((Array.isArray(w.duties) ? w.duties : []).map(String))].filter(k => allowed.includes(k));
+    const note = String(w.note || '').trim().replace(/\s+/g, ' ').slice(0, 120);
+    // "Boshqa" lavozim — nomini nomzod yozadi (izoh maydonida)
+    if (role === 'boshqa' && note.length < 2) err('work');
+    return { place, role, from: w.from, to, duties, note };
+  });
+}
+// Ish joylari -> Candidate.workHistory (panel, Mini App rezyumesi, kanban
+// shu maydonni ko'rsatadi; hh rezyumesidagi kabi o'zbekcha matn)
+const ymText = s => (s === 'now' ? 'hozir' : `${String(s).slice(5, 7)}.${String(s).slice(0, 4)}`);
+function workToHistory(list) {
+  const sorted = list.slice().sort((a, b) => I18N.monthIdx(b.to) - I18N.monthIdx(a.to) || I18N.monthIdx(b.from) - I18N.monthIdx(a.from));
+  return sorted.map(w => {
+    const other = w.role === 'boshqa';
+    return {
+      company: w.place,
+      position: other ? w.note : I18N.t('uz', 'role.' + w.role),
+      period: `${ymText(w.from)} – ${ymText(w.to)} (${I18N.durText('uz', I18N.workMonths([w]))})`,
+      description: [w.duties.map(k => I18N.t('uz', 'duty.' + k)).join(', '), other ? '' : w.note].filter(Boolean).join('. ')
+    };
+  });
+}
+function workText(list) {
+  return workToHistory(list).map(h => `${h.position}, ${h.company}, ${h.period}${h.description ? ': ' + h.description : ''}`).join('; ');
 }
 
 function ageOf(d) {
@@ -541,7 +592,18 @@ function toFields(answers, survey, presetRole) {
   if (a.gender) f.gender = a.gender;
   if (a.location) f.location = a.location === 'viloyat' ? opt('location', 'viloyat') : 'Toshkent, ' + opt('location', a.location);
   if (a.experience) f.experienceYears = EXP_YEARS[a.experience] || 0;
-  if (a.lastJob) f.experienceSummary = a.lastJob;
+  if (Array.isArray(a.lastJob) && a.lastJob.length) {
+    // Haqiqiy muddatlar tanlangan oraliqdan ko'p bo'lsa — haqiqiysi
+    // ("1–2 yil" tanlab, 4 yillik ish yozgan odam 4 yil deb topilsin)
+    const months = I18N.workMonths(a.lastJob);
+    f.experienceYears = Math.max(f.experienceYears || 0, Math.floor(months / 12));
+    f.workHistory = workToHistory(a.lastJob);
+    const h = f.workHistory[0];
+    f.experienceSummary = `${h.position} — ${h.company}, ${h.period}` +
+      (f.workHistory.length > 1 ? `; jami ${I18N.durText('uz', months)}` : '');
+  } else if (typeof a.lastJob === 'string' && a.lastJob) f.experienceSummary = a.lastJob;   // eski matnli savol
+  // Ish joyi yozilmagan — tanlangan javob ("1 yilgacha" 0 yil, lekin tajribasiz emas)
+  else if (a.experience) f.experienceSummary = opt('experience', a.experience);
   if (a.shift) f.shift = a.shift;
   if (a.salary) f.salaryExpectation = opt('salary', a.salary);
   // Tillar: erkin/o'rta — biladi (qidiruv filtri shu ro'yxat bo'yicha); daraja rawText'da
@@ -565,7 +627,7 @@ function toFields(answers, survey, presetRole) {
   // Kalit so'z qidiruvi uchun to'liq matn (rezyumedagi rawText o'rnida)
   f.rawText = shown
     .filter(q => a[q.id] != null && a[q.id] !== '' && !['photo', 'consent'].includes(q.type))
-    .map(q => `${q.text.uz}: ${q.type === 'choice' ? opt(q.id, a[q.id]) : a[q.id]}`)
+    .map(q => `${q.text.uz}: ${q.type === 'choice' ? opt(q.id, a[q.id]) : q.type === 'work' && Array.isArray(a[q.id]) ? workText(a[q.id]) : a[q.id]}`)
     .join('\n');
   return f;
 }
@@ -649,5 +711,5 @@ module.exports = {
   CHANNELS, DISTRICTS, CATALOG, CUSTOM_TYPES, START_DAYS, catalogInfo, cleanQuestions, surveyForVacancy,
   isShown, skipped, shownQuestions, forRole, withMeta, rolePreset, upgradeQuestions, PRESET_ROLES,
   template, makeCode, ensureDefault,
-  payloadFor, parsePayload, visibleQuestions, checkAnswer, toFields, finalize, normPhone, ageOf
+  payloadFor, parsePayload, visibleQuestions, checkAnswer, toFields, finalize, normPhone, ageOf, workToHistory
 };

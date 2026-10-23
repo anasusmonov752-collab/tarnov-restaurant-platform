@@ -161,6 +161,13 @@ a.btn{text-decoration:none;display:inline-flex;align-items:center}
 .md-grid{display:grid;grid-template-columns:1fr 290px;gap:18px;padding:18px}
 .md-box{border:1px solid var(--line);border-radius:12px;padding:15px}
 .md-box h4{font-size:15px;font-weight:700;margin-bottom:11px}
+/* Ish tajribasi: lavozim, joy · muddat, vazifalar — chap chiziqli ro'yxat */
+.wh{position:relative;padding:0 0 14px 16px;border-left:2px solid var(--line);margin-left:4px}
+.wh:last-child{padding-bottom:2px}
+.wh::before{content:'';position:absolute;left:-6px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--gold, #0A66D8)}
+.wh-p{font-weight:700;font-size:14.5px}
+.wh-c{font-size:13px;color:var(--muted);margin-top:2px}
+.wh-d{font-size:13.5px;margin-top:6px;line-height:1.5}
 .tl{position:relative;padding-left:18px}
 .tl::before{content:'';position:absolute;left:4px;top:5px;bottom:5px;width:2px;background:var(--line)}
 .tl-i{position:relative;padding-bottom:14px}
@@ -269,6 +276,15 @@ const ROLES = { ofitsiant:'Ofitsiant', barmen:'Barmen', xostess:'Xostess', oshpa
 const SRC = { hh:'hh.uz', manual:"Qo'lda", referral:'Tavsiya', telegram:'Telegram', anketa:'Anketa', other:'Boshqa' };
 // Anketadagi "qachondan ish boshlay oladi" (Candidate.startWhen)
 const START_L = { now:'Darhol', w1:'1 hafta ichida', w2:'2 hafta ichida', m1:'1 oydan keyin' };
+const SHIFT_L = { kunduzgi:'Kunduzgi', kechki:'Kechki', ikkalasi:'Farqi yo\'q', weekend:'Faqat dam olish kunlari' };
+// Tajriba yili. 0 yil — "Tajribasiz" faqat izoh ham bo'lmasa: anketada
+// "1 yilgacha" tanlagan yoki 8 oy ishlagan odam tajribasiz emas (izohda
+// ish joyi yoki tanlangan javob turadi — survey.toFields)
+const expYears = c => c.experienceYears ? c.experienceYears + ' yil tajriba' : (c.experienceSummary ? '' : 'Tajribasiz');
+const expRow = c => {
+  const y = expYears(c), s = c.experienceSummary || '';
+  return esc(y) + (s ? `${y ? '<span class="pt">•</span>' : ''}<span style="color:var(--muted)">${esc(s.slice(0,110))}${s.length>110?'…':''}</span>` : '');
+};
 // Anketa havolasidagi e'lon manbasi (services/survey CHANNELS bilan bir xil)
 const CHANNEL_L = { vakuz:'vakansiya.uz kanali', tg:'Telegram', ig:'Instagram', fb:'Facebook', olx:'OLX', hh:'hh.uz', qr:'QR kod', ref:'Tanish orqali', site:'Sayt', bot:"Botni o'zi topgan", other:'Boshqa' };
 
@@ -400,7 +416,6 @@ function card(c){
     : esc(initials(c.fullName));
   const skills = (c.skills||[]).slice(0,5).map(esc).join('<span class="pt">•</span>') || '<span style="color:var(--muted)">—</span>';
   const langs  = (c.languages||[]).slice(0,5).map(esc).join('<span class="pt">•</span>');
-  const exp = c.experienceYears ? c.experienceYears+' yil tajriba' : 'Tajribasiz';
   const contacts = [
     c.phone ? `<span class="lnk">${esc(c.phone)}</span>` : '',
     c.email ? `<span>${esc(c.email)}</span>` : ''
@@ -411,14 +426,14 @@ function card(c){
   const wait = waitingFor(c);
   const rows = ank ? `
           ${c.startWhen ? `<div class="rc-row"><div class="rc-k">Ishga chiqish</div><div class="rc-v">${esc(START_L[c.startWhen] || c.startWhen)}</div></div>` : ''}
-          <div class="rc-row"><div class="rc-k">Tajriba</div><div class="rc-v">${esc(exp)}${c.experienceSummary?`<span class="pt">•</span><span style="color:var(--muted)">${esc(c.experienceSummary.slice(0,110))}${c.experienceSummary.length>110?'…':''}</span>`:''}</div></div>
+          <div class="rc-row"><div class="rc-k">Tajriba</div><div class="rc-v">${expRow(c)}</div></div>
           <div class="rc-row"><div class="rc-k">Qayerda yashaydi</div><div class="rc-v">${esc(c.location||'—')}${c.salaryExpectation?`<span class="pt">•</span>${esc(c.salaryExpectation)}`:''}</div></div>
           ${langs?`<div class="rc-row"><div class="rc-k">Tillar</div><div class="rc-v">${langs}</div></div>`:''}
           <div class="rc-row"><div class="rc-k">Telefon</div><div class="rc-v">${c.phone ? `<span class="lnk">${esc(c.phone)}</span>` : '—'}${c.phoneVerifiedAt ? '<span class="pt">•</span><span style="color:var(--ok)">✓ Telegram tasdiqlagan</span>' : ''}</div></div>
           <div class="rc-row"><div class="rc-k">Kanal</div><div class="rc-v">${esc(CHANNEL_L[c.channel] || c.channel || '—')}${(c.extraAnswers||[]).length ? `<span class="pt">•</span><span style="color:var(--muted)">${c.extraAnswers.length} qo'shimcha javob</span>` : ''}</div></div>`
     : `
           <div class="rc-row"><div class="rc-k">Asosiy ko'nikmalar</div><div class="rc-v">${skills}</div></div>
-          <div class="rc-row"><div class="rc-k">Tajriba</div><div class="rc-v">${esc(exp)}${c.experienceSummary?`<span class="pt">•</span><span style="color:var(--muted)">${esc(c.experienceSummary.slice(0,110))}${c.experienceSummary.length>110?'…':''}</span>`:''}</div></div>
+          <div class="rc-row"><div class="rc-k">Tajriba</div><div class="rc-v">${expRow(c)}</div></div>
           ${langs?`<div class="rc-row"><div class="rc-k">Tillar</div><div class="rc-v">${langs}</div></div>`:''}
           <div class="rc-row"><div class="rc-k">Qayerda yashaydi</div><div class="rc-v">${esc(c.location||'—')}${c.salaryExpectation?`<span class="pt">•</span>${esc(c.salaryExpectation)}`:''}</div></div>
           <div class="rc-row"><div class="rc-k">Kontaktlar</div><div class="rc-v">${contacts}</div></div>`;
@@ -688,12 +703,23 @@ function openCard(id){
           <div class="rc-row"><div class="rc-k">Ta'lim</div><div class="rc-v">${esc(c.education||'—')}</div></div>
           <div class="rc-row"><div class="rc-k">Tillar</div><div class="rc-v">${(c.languages||[]).map(esc).join(', ')||'—'}</div></div>
           <div class="rc-row"><div class="rc-k">Ko'nikmalar</div><div class="rc-v">${(c.skills||[]).map(esc).join(', ')||'—'}</div></div>
-          <div class="rc-row"><div class="rc-k">Tajriba</div><div class="rc-v">${esc(c.experienceSummary||'—')}</div></div>
+          <div class="rc-row"><div class="rc-k">Tajriba</div><div class="rc-v">${(c.workHistory||[]).length
+            ? esc([c.experienceYears ? c.experienceYears + ' yil' : '1 yildan kam', c.workHistory.length + ' ta ish joyi'].join(' · '))
+            : (expRow(c) || '—')}</div></div>
         </div>
+        ${(c.workHistory||[]).length ? `<div class="md-box" style="margin-top:14px">
+          <h4>Ish tajribasi</h4>
+          ${c.workHistory.map(w => `<div class="wh">
+            <div class="wh-p">${esc(w.position || '—')}</div>
+            <div class="wh-c">${esc([w.company, w.period].filter(Boolean).join(' · '))}</div>
+            ${w.description ? `<div class="wh-d">${esc(w.description)}</div>` : ''}
+          </div>`).join('')}
+        </div>` : ''}
         ${c.source === 'anketa' || (c.extraAnswers||[]).length ? `<div class="md-box" style="margin-top:14px">
           <h4>Anketa</h4>
           <div class="rc-row"><div class="rc-k">Telefon</div><div class="rc-v">${c.phoneVerifiedAt ? '✓ Telegram tasdiqlagan' : 'qo\'lda kiritilgan'}</div></div>
           ${c.startWhen ? `<div class="rc-row"><div class="rc-k">Ishga chiqish</div><div class="rc-v">${esc(START_L[c.startWhen] || c.startWhen)}${c.availableFrom ? ` <span style="color:var(--muted)">(~${new Date(c.availableFrom).toLocaleDateString('uz')})</span>` : ''}</div></div>` : ''}
+          ${c.shift ? `<div class="rc-row"><div class="rc-k">Smena</div><div class="rc-v">${esc(SHIFT_L[c.shift] || c.shift)}</div></div>` : ''}
           ${c.channel ? `<div class="rc-row"><div class="rc-k">Manba</div><div class="rc-v">${esc(CHANNEL_L[c.channel] || c.channel)}</div></div>` : ''}
           ${c.consentAt ? `<div class="rc-row"><div class="rc-k">Rozilik</div><div class="rc-v">${new Date(c.consentAt).toLocaleDateString('uz')}</div></div>` : ''}
           ${(c.extraAnswers||[]).map(x => `<div class="rc-row"><div class="rc-k">${esc(x.q)}</div><div class="rc-v">${esc(x.a)}</div></div>`).join('')}

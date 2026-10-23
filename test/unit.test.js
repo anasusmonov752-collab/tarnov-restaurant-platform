@@ -79,8 +79,51 @@ test('anketa: shartli savollar (zanjir va lavozim)', () => {
   v = ids({ role: 'oshpaz' }, 'xostess');
   assert.ok(v.includes('c_bron') && !v.includes('c_kuxnya'));
   const f = survey.toFields({ role: 'xostess', experience: 'none', lastJob: 'X', c_bron: 'ha', c_kuxnya: 'milliy' }, { questions: qs }, '');
-  assert.equal(f.experienceSummary, undefined);
+  assert.equal(f.experienceSummary, 'Tajribam yo\'q');      // yashirin lastJob ('X') tushmadi
   assert.deepEqual(f.extraAnswers.map(x => x.a), ['Ha']);
+});
+
+test('anketa: ish tajribasi — tekshiruv, muddat, workHistory', () => {
+  const qs = survey.cleanQuestions(survey.template());
+  const q = qs.find(x => x.id === 'lastJob');
+  assert.equal(q.type, 'work');
+  const code = v => { try { survey.checkAnswer(q, v); return 'ok'; } catch (e) { return e.code; } };
+  const ok = { place: ' Rayhon  restorani ', role: 'ofitsiant', from: '2022-03', to: '2024-05', duties: ['order', 'serve', 'hot', 'order'], note: '' };
+  assert.equal(code([ok]), 'ok');
+  assert.equal(code([]), 'required');
+  assert.equal(code([Object.assign({}, ok, { place: 'R' })]), 'work');
+  assert.equal(code([Object.assign({}, ok, { role: 'pilot' })]), 'work');
+  assert.equal(code([Object.assign({}, ok, { from: '2099-01' })]), 'work');            // kelajak
+  assert.equal(code([Object.assign({}, ok, { to: '2021-01' })]), 'workDates');         // tugashi boshlanishidan oldin
+  assert.equal(code([Object.assign({}, ok, { role: 'boshqa', note: '' })]), 'work');   // boshqa lavozim — nomi kerak
+  assert.equal(code([ok, ok, ok, ok]), 'work');                                         // ko'pi bilan 3
+  const clean = survey.checkAnswer(q, [ok]);
+  assert.equal(clean[0].place, 'Rayhon restorani');
+  assert.deepEqual(clean[0].duties, ['order', 'serve']);                                // boshqa lavozim vazifasi va takror tushdi
+
+  // Ikki joy, muddatlar ustma-ust: 2022-03..2024-05 (27 oy) va 2024-01..2024-12 -> jami 34 oy
+  const second = { place: 'Plov Center', role: 'boshqa', from: '2024-01', to: '2024-12', duties: [], note: 'Katta ofitsiant' };
+  const f = survey.toFields({ role: 'ofitsiant', experience: 'y1_2', lastJob: survey.checkAnswer(q, [ok, second]) }, { questions: qs }, '');
+  assert.equal(f.experienceYears, 2);
+  assert.equal(f.workHistory.length, 2);
+  assert.deepEqual(f.workHistory[0], { company: 'Plov Center', position: 'Katta ofitsiant', period: '01.2024 – 12.2024 (1 yil)', description: '' });
+  assert.deepEqual(f.workHistory[1], { company: 'Rayhon restorani', position: 'Ofitsiant', period: '03.2022 – 05.2024 (2 yil 3 oy)',
+    description: 'Buyurtma qabul qilish, Taom va ichimlik tortish' });
+  assert.match(f.experienceSummary, /^Katta ofitsiant — Plov Center, 01\.2024 – 12\.2024 \(1 yil\); jami 2 yil 10 oy$/);
+  assert.match(f.rawText, /Qayerda ishlagansiz\?: Katta ofitsiant, Plov Center/);
+
+  // "1–2 yil" tanlab 4 yillik ish yozgan — 4 yil; hozir ham ishlayotgan
+  const now = new Date();
+  const from = `${now.getFullYear() - 4}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const g = survey.toFields({ experience: 'y1_2', lastJob: [{ place: 'Bon', role: 'xostess', from, to: 'now', duties: ['greet'], note: '' }] }, { questions: qs }, '');
+  assert.equal(g.experienceYears, 4);
+  assert.match(g.workHistory[0].period, / – hozir \(4 yil 1 oy\)$/);
+
+  // Ruscha muddat va ko'plik shakli
+  const I18N = require('../public/js/th-i18n');
+  assert.equal(I18N.durText('ru', 26), '2 года 2 месяца');
+  assert.equal(I18N.durText('ru', 60), '5 лет');
+  assert.equal(I18N.durText('uz', 0), '1 oydan kam');
 });
 
 test('anketa: noto\'g\'ri shart rad etiladi', () => {

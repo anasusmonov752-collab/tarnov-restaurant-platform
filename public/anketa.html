@@ -6,7 +6,7 @@
 <title>TalentHub — Anketa</title>
 <link rel="stylesheet" href="/css/th.css?v=2">  <!-- dizayn tizimi: ranglar, kunduz/tun -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="/js/th-i18n.js?v=13"></script>
+<script src="/js/th-i18n.js?v=14"></script>
 <style>
 /* Ranglar — dizayn tizimidan (css/th.css), miniapp/profil bilan bir xil;
    kunduz/tun Telegram'dan (applyTheme). */
@@ -69,6 +69,31 @@ textarea.in{min-height:110px;resize:vertical;line-height:1.5}
 .cons{margin-top:16px;padding:14px;border-radius:12px;background:var(--bg);font-size:14px;line-height:1.55}
 .chk{display:flex;align-items:center;gap:11px;margin-top:16px;font-size:16px;font-weight:600;cursor:pointer}
 .chk input{width:22px;height:22px;accent-color:var(--blue)}
+
+/* Ish tajribasi: har ish joyi — alohida blok */
+.wj{margin-top:18px;padding:16px 14px;border:1.5px solid var(--line);border-radius:16px}
+.wj-h{display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.5px}
+.wj-x{border:0;background:none;color:var(--danger);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;padding:2px 0;text-transform:none;letter-spacing:0}
+.wl{font-size:13.5px;font-weight:600;color:var(--ink-2);margin:14px 0 7px}
+.wl small{font-weight:400;color:var(--muted)}
+.wj input.in{margin-top:0;font-size:16px;padding:12px 13px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{border:1.5px solid var(--line);background:var(--card);border-radius:999px;padding:8px 13px;font-family:inherit;
+  font-size:14.5px;color:var(--ink);cursor:pointer}
+.chip.on{border-color:var(--blue);background:var(--sel);color:var(--blue);font-weight:600}
+.dates{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ym{display:flex;gap:6px}
+.ym select{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:11px;padding:11px 6px;font-family:inherit;
+  font-size:15px;color:var(--ink);background:var(--card);-webkit-appearance:none;appearance:none;text-align:center}
+.ym select:disabled{opacity:.4}
+.ym select.bad{border-color:var(--danger)}
+.wnow{display:flex;align-items:center;gap:9px;margin-top:10px;font-size:14.5px;cursor:pointer}
+.wnow input{width:20px;height:20px;accent-color:var(--blue)}
+.wdur{margin-top:10px;font-size:13.5px;color:var(--blue);font-weight:600;min-height:18px}
+.wadd{width:100%;margin-top:14px;border:1.5px dashed var(--line);background:none;border-radius:14px;padding:13px;
+  font-family:inherit;font-size:15px;font-weight:600;color:var(--blue);cursor:pointer}
+.wtot{margin-top:14px;font-size:14px;font-weight:700;text-align:center}
 
 /* Pastki tugma */
 .bar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));
@@ -263,6 +288,8 @@ function renderQ(){
   } else if (q.type === 'consent') {
     body = `<div class="cons">${esc(L(q.hint))}</div>
       <label class="chk"><input type="checkbox" id="fChk" ${draft.value === true ? 'checked' : ''}>${esc(t('ank.consentChk'))}</label>`;
+  } else if (q.type === 'work') {
+    body = `<div id="wk"></div>`;
   }
   $('main').innerHTML = `<div class="card">${head}${body}<div class="err" id="err"></div></div>`;
   wireQ(q);
@@ -271,6 +298,11 @@ function renderQ(){
 function valueOf(q){
   if (q.type === 'contact') return S.phoneVerified ? '' : (S.answers.phone || '');
   if (q.type === 'photo') return S.hasPhoto ? 'have' : '';
+  if (q.type === 'work') {
+    // Nusxa: tahrir saqlanmaguncha S.answers'ga tegmaydi. Eski matnli javob — bo'sh forma
+    const v = Array.isArray(S.answers[q.id]) ? S.answers[q.id] : [];
+    return v.length ? JSON.parse(JSON.stringify(v)) : [newJob()];
+  }
   return S.answers[q.id] != null ? S.answers[q.id] : '';
 }
 function isoYearsAgo(n){ const d = new Date(); d.setFullYear(d.getFullYear() - n); return d.toISOString().slice(0, 10); }
@@ -302,6 +334,9 @@ function wireQ(q){
   } else if (q.type === 'consent') {
     $('fChk').onchange = () => { draft.value = $('fChk').checked; $('bNext').disabled = !draft.value; };
     showBar(nextTxt, draft.value === true, () => save(q));
+  } else if (q.type === 'work') {
+    showBar(nextTxt, false, () => save(q));
+    drawWork();
   }
   // Ixtiyoriy savol — o'tkazib yuborish
   if (!q.required && q.type !== 'consent') {
@@ -309,6 +344,118 @@ function wireQ(q){
     $('bSkip').classList.remove('hide');
     $('bSkip').onclick = () => go(1);
   } else $('bSkip').classList.add('hide');
+}
+
+// ── Ish tajribasi ──
+// Har ish joyi: joy nomi, lavozim (bitta), qachondan–qachongacha (oy/yil
+// yoki "hozir ham"), vazifalar (lavozimga qarab belgilar), izoh. Muddat
+// darhol hisoblanadi. Server (survey.checkAnswer 'work') shu qoidani
+// qayta tekshiradi; javob nomzodning workHistory maydoniga tushadi.
+const MAX_JOBS = 3;
+function newJob(){ return { place: '', role: '', from: '', to: '', duties: [], note: '' }; }
+const MONTHS = () => t('ank.w.months').split(',');
+const NOW_IDX = I18N.monthIdx('now');
+const jobDone = w => w.place.trim().length >= 2 && !!w.role && !!w.from && /^\d{4}-\d{2}$/.test(w.from)
+  && (w.role !== 'boshqa' || w.note.trim().length >= 2)
+  && (w.to === 'now' || (/^\d{4}-\d{2}$/.test(w.to) && I18N.monthIdx(w.to) >= I18N.monthIdx(w.from)));
+const badDates = w => /^\d{4}-\d{2}$/.test(w.from) && /^\d{4}-\d{2}$/.test(w.to) && I18N.monthIdx(w.to) < I18N.monthIdx(w.from);
+
+function ymHtml(i, which, val, disabled){
+  const [y, m] = /^\d{4}-\d{2}$/.test(val) ? val.split('-') : ['', ''];
+  const yNow = new Date().getFullYear();
+  const years = Array.from({ length: 36 }, (_, k) => yNow - k);
+  return `<div class="ym">
+    <select data-ym="${i}:${which}:m" ${disabled ? 'disabled' : ''}><option value="">${esc(t('ank.w.month'))}</option>${MONTHS().map((n, k) => {
+      const v = String(k + 1).padStart(2, '0');
+      return `<option value="${v}" ${m === v ? 'selected' : ''}>${esc(n)}</option>`; }).join('')}</select>
+    <select data-ym="${i}:${which}:y" ${disabled ? 'disabled' : ''}><option value="">${esc(t('ank.w.year'))}</option>${years.map(v =>
+      `<option value="${v}" ${y === String(v) ? 'selected' : ''}>${v}</option>`).join('')}</select>
+  </div>`;
+}
+// Tanlangan qism (oy yoki yil) — to'liq bo'lmaguncha ichki holatda turadi
+const YM = {};
+function drawWork(){
+  const list = draft.value;
+  $('wk').innerHTML = list.map((w, i) => {
+    const duties = I18N.DUTIES[w.role] || [];
+    const done = jobDone(w);
+    return `<div class="wj">
+      <div class="wj-h"><span>${esc(t('ank.w.n', { n: i + 1 }))}</span>
+        ${list.length > 1 ? `<button class="wj-x" data-wx="${i}">${esc(t('ank.w.remove'))}</button>` : ''}</div>
+      <div class="wl">${esc(t('ank.w.place'))}</div>
+      <input class="in" data-wp="${i}" value="${esc(w.place)}" maxlength="80" placeholder="${esc(t('ank.w.placePh'))}">
+      <div class="wl">${esc(t('ank.w.role'))}</div>
+      <div class="chips">${I18N.WORK_ROLES.map(r => `<button class="chip ${w.role === r ? 'on' : ''}" data-wr="${i}:${r}">${esc(r === 'boshqa' ? t('ank.w.roleOther') : t('role.' + r))}</button>`).join('')}</div>
+      ${w.role === 'boshqa' ? `<input class="in" data-wn="${i}" value="${esc(w.note)}" maxlength="120" placeholder="${esc(t('ank.w.otherPh'))}" style="margin-top:9px">` : ''}
+      <div class="dates">
+        <div><div class="wl">${esc(t('ank.w.from'))}</div>${ymHtml(i, 'from', w.from || YM[i + ':from'] || '', false)}</div>
+        <div><div class="wl">${esc(t('ank.w.to'))}</div>${ymHtml(i, 'to', w.to === 'now' ? '' : (w.to || YM[i + ':to'] || ''), w.to === 'now')}</div>
+      </div>
+      <label class="wnow"><input type="checkbox" data-wnow="${i}" ${w.to === 'now' ? 'checked' : ''}>${esc(t('ank.w.now'))}</label>
+      <div class="wdur">${done ? esc(I18N.durText(LANG, I18N.workMonths([w]))) : ''}</div>
+      ${duties.length ? `<div class="wl">${esc(t('ank.w.duties'))} <small>· ${esc(t('ank.w.dutiesHint'))}</small></div>
+        <div class="chips">${duties.map(k => `<button class="chip ${w.duties.includes(k) ? 'on' : ''}" data-wd="${i}:${k}">${esc(t('duty.' + k))}</button>`).join('')}</div>` : ''}
+      ${w.role && w.role !== 'boshqa' ? `<div class="wl">${esc(t('ank.w.note'))}</div>
+        <input class="in" data-wn="${i}" value="${esc(w.note)}" maxlength="120" placeholder="${esc(t('ank.w.notePh'))}">` : ''}
+    </div>`;
+  }).join('') +
+  (list.length < MAX_JOBS && list.every(jobDone) ? `<button class="wadd" id="wAdd">+ ${esc(t('ank.w.add'))}</button>` : '') +
+  (list.length > 1 && list.every(jobDone) ? `<div class="wtot">${esc(t('ank.w.total', { d: I18N.durText(LANG, I18N.workMonths(list)) }))}</div>` : '');
+  wireWork();
+  syncWork();
+}
+function syncWork(){
+  const list = draft.value;
+  $('bNext').disabled = !list.length || !list.every(jobDone);
+  $('err').textContent = list.some(badDates) ? t('ank.err.workDates') : '';
+  $('wk').querySelectorAll('.wj').forEach((el, i) => {
+    const w = list[i];
+    el.querySelector('.wdur').textContent = jobDone(w) ? I18N.durText(LANG, I18N.workMonths([w])) : '';
+    el.querySelectorAll('[data-ym$=":to:m"],[data-ym$=":to:y"]').forEach(s => s.classList.toggle('bad', badDates(w)));
+  });
+}
+function wireWork(){
+  const box = $('wk'), list = draft.value;
+  // Matn — qayta chizmasdan (klaviatura yopilmasin)
+  box.querySelectorAll('[data-wp]').forEach(el => el.oninput = () => { list[+el.dataset.wp].place = el.value; syncWork(); });
+  box.querySelectorAll('[data-wn]').forEach(el => el.oninput = () => { list[+el.dataset.wn].note = el.value; syncWork(); });
+  box.querySelectorAll('[data-wr]').forEach(b => b.onclick = () => {
+    const [i, r] = b.dataset.wr.split(':');
+    const w = list[+i];
+    if (w.role !== r) {
+      // "Boshqa"da izoh — lavozim nomi, boshqasida — qo'shimcha: almashganda tozalanadi
+      if (r === 'boshqa' || w.role === 'boshqa') w.note = '';
+      w.role = r; w.duties = [];
+    }
+    haptic(); drawWork();
+  });
+  box.querySelectorAll('[data-wd]').forEach(b => b.onclick = () => {
+    const [i, k] = b.dataset.wd.split(':');
+    const d = list[+i].duties;
+    const at = d.indexOf(k);
+    if (at >= 0) d.splice(at, 1); else d.push(k);
+    b.classList.toggle('on', at < 0); haptic();
+  });
+  box.querySelectorAll('[data-ym]').forEach(s => s.onchange = () => {
+    const [i, which] = s.dataset.ym.split(':');
+    const m = box.querySelector(`[data-ym="${i}:${which}:m"]`).value;
+    const y = box.querySelector(`[data-ym="${i}:${which}:y"]`).value;
+    let v = m && y ? `${y}-${m}` : '';
+    // Kelajakdagi oy — joriy oyga tushiriladi
+    if (v && I18N.monthIdx(v) > NOW_IDX) { const d = new Date(); v = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; }
+    list[+i][which] = v;
+    YM[i + ':' + which] = m || y ? `${y || '0000'}-${m || '00'}` : '';
+    if (v && v !== `${y}-${m}`) drawWork(); else syncWork();
+  });
+  box.querySelectorAll('[data-wnow]').forEach(c => c.onchange = () => {
+    const w = list[+c.dataset.wnow];
+    w.to = c.checked ? 'now' : '';
+    delete YM[c.dataset.wnow + ':to'];
+    drawWork();
+  });
+  box.querySelectorAll('[data-wx]').forEach(b => b.onclick = () => { list.splice(+b.dataset.wx, 1); drawWork(); });
+  const add = $('wAdd');
+  if (add) add.onclick = () => { list.push(newJob()); drawWork(); setTimeout(() => { const ins = box.querySelectorAll('[data-wp]'); ins[ins.length - 1].focus(); }, 50); };
 }
 
 // ── Telefon ──
@@ -403,6 +550,8 @@ async function saveNow(q, b){
   let value = draft.value;
   if (q.type === 'photo') value = undefined;                    // rasm tanlanganda saqlangan
   if (q.type === 'contact' && S.phoneVerified) value = '';
+  if (q.type === 'work') value = value.map(w => ({ place: w.place.trim(), role: w.role, from: w.from, to: w.to,
+    duties: w.duties.slice(), note: w.note.trim() }));
   b.disabled = true;
   try {
     if (value !== undefined) {

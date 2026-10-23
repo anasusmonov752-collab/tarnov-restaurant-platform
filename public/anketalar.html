@@ -265,6 +265,7 @@ const P = {
   date: '<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/>',
   contact: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>',
   photo: '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
+  work: '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>',
   consent: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
   lock: '<rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
   branch: '<path d="M6 3v12"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/>',
@@ -289,7 +290,7 @@ const CAT = id => CATALOG.find(c => c.id === id);
 const roleL = k => (ROLES.find(r => r.key === k) || {}).label || k;
 const SEC_L = { job: 'Ish haqida', me: 'Siz haqingizda', extra: 'Qo\'shimcha', end: 'Yakun' };
 const SUB = { text: 'Qisqa matn', longtext: 'Uzun matn', date: 'Sana', contact: 'Telefon · Telegram orqali tasdiqlanadi',
-              photo: 'Rasm', consent: 'Rozilik · doim oxirida' };
+              photo: 'Rasm', consent: 'Rozilik · doim oxirida', work: 'Ish tajribasi · joy, lavozim, muddat, vazifalar' };
 // Yangi savol/variant kaliti shu yerda beriladi (server qabul qiladigan
 // shaklda) — saqlanmagan savolga ham shart qo'yish mumkin bo'lsin
 const rnd = n => Array.from(crypto.getRandomValues(new Uint8Array(n)), x => 'abcdefghjkmnpqrstuvwxyz23456789'[x % 31]).join('');
@@ -803,6 +804,15 @@ function drawPreview(){
       <div style="margin-top:10px;font-weight:700;font-size:13.5px">☐ ${RU ? 'Согласен(на)' : 'Roziman'}</div>`;
   } else if (q.type === 'date') {
     body = `<div class="ph-in">${RU ? 'дд.мм.гггг' : 'kk.oo.yyyy'}</div>`;
+  } else if (q.type === 'work') {
+    // anketa.html'dagi ish joyi bloki (qisqartirilgan ko'rinish)
+    const ch = a => a.map(x => `<span style="display:inline-block;border:1px solid var(--line);border-radius:99px;padding:3px 8px;margin:0 4px 4px 0;font-size:11px">${x}</span>`).join('');
+    body = `<div style="margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:10px">
+      <div class="ph-in" style="margin-top:0">${RU ? 'Место работы' : 'Ish joyi'}</div>
+      <div style="margin-top:8px">${ch(RU ? ['Официант', 'Хостес', 'Повар', '…'] : ['Ofitsiant', 'Xostess', 'Oshpaz', '…'])}</div>
+      <div style="display:flex;gap:6px;margin-top:4px"><div class="ph-in" style="flex:1;margin-top:0">${RU ? 'с' : 'dan'}</div><div class="ph-in" style="flex:1;margin-top:0">${RU ? 'по' : 'gacha'}</div></div>
+      <div style="margin-top:8px">${ch(RU ? ['Приём заказов', 'Подача', '…'] : ['Buyurtma', 'Tortish', '…'])}</div>
+    </div><div style="color:var(--gold);font-weight:700;font-size:12.5px;margin-top:8px;text-align:center">+ ${RU ? 'Ещё место работы' : 'Yana ish joyi'}</div>`;
   } else {
     body = `<div class="ph-in" style="${q.type === 'longtext' ? 'height:80px' : ''}"></div>`;
   }

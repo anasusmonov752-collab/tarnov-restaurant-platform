@@ -86,7 +86,7 @@ label.g-row:active{background:none}
 .g-in{flex:1;min-width:0;border:0;outline:none;background:none;font-family:inherit;font-size:17px;color:var(--ink);text-align:right;padding:13px 0}
 .g-in::placeholder{color:var(--th-tertiary,rgba(60,60,67,.3))}
 .g-v{flex:1;min-width:0;text-align:right;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.g-v.ph{color:var(--th-tertiary,rgba(60,60,67,.3))}
+.g-v.empty{color:var(--th-tertiary,rgba(60,60,67,.3))}
 .g-chev{flex:none;width:8px;height:14px;color:var(--th-tertiary,rgba(60,60,67,.3))}
 .g-add{color:var(--th-link,var(--blue));gap:12px}
 .g-add svg{width:22px;height:22px;flex:none}
@@ -391,11 +391,11 @@ function drawWork(){
       <label class="g-row"><span class="g-l">${esc(t('ank.w.place'))}</span>
         <input class="g-in" data-wp="${i}" value="${esc(w.place)}" maxlength="80" placeholder="${esc(t('ank.w.placePh'))}"></label>
       <button class="g-row" data-sheet="role:${i}"><span class="g-l">${esc(t('ank.w.role'))}</span>
-        <span class="g-v ${w.role ? '' : 'ph'}">${esc(w.role ? roleLabel(w.role) : t('ank.w.pick'))}</span>${CHEV}</button>
+        <span class="g-v ${w.role ? '' : 'empty'}">${esc(w.role ? roleLabel(w.role) : t('ank.w.pick'))}</span>${CHEV}</button>
       ${w.role === 'boshqa' ? `<label class="g-row"><span class="g-l">${esc(t('ank.w.otherL'))}</span>
         <input class="g-in" data-wo="${i}" value="${esc(w.other)}" maxlength="60" placeholder="${esc(t('ank.w.otherPh'))}"></label>` : ''}
       <button class="g-row" data-sheet="dur:${i}"><span class="g-l">${esc(t('ank.w.durL'))}</span>
-        <span class="g-v ${w.dur ? '' : 'ph'}">${esc(w.dur ? t('ank.w.dur.' + w.dur) : t('ank.w.pick'))}</span>${CHEV}</button>
+        <span class="g-v ${w.dur ? '' : 'empty'}">${esc(w.dur ? t('ank.w.dur.' + w.dur) : t('ank.w.pick'))}</span>${CHEV}</button>
     </div>`).join('') +
     (list.length < MAX_JOBS ? `<div class="grp"><button class="g-row g-add" id="wAdd">
       <svg viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="10" fill="currentColor"/><path d="M11 6.5v9M6.5 11h9" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>

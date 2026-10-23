@@ -11,8 +11,16 @@ const OrderSchema = new mongoose.Schema({
   clientId:  { type: String, required: true },
   planKey:   { type: String, required: true },
   amount:    { type: Number, required: true },          // so'm
-  provider:  { type: String, default: 'manual' },       // payme | click | manual
-  status:    { type: String, default: 'pending' },      // pending | paid | canceled
+  provider:  { type: String, default: 'manual' },       // payme | click | uzum | manual | invoice
+  status:    { type: String, default: 'pending' },      // pending | paid | canceled | refunded
+  // Qisqa buyurtma raqami (8 raqam): Uzum ilovasida qo'lda yozish, bank
+  // o'tkazmasida to'lov maqsadi, mijoz bilan gaplashganda
+  code:      { type: String, default: '' },
+  auto:      { type: Boolean, default: false },         // avto-yangilash (saqlangan karta) yaratgan
+
+  // Hisob-faktura (yuridik shaxs, bank o'tkazmasi)
+  invoiceCompany: { type: String, default: '' },
+  invoiceInn:     { type: String, default: '' },        // STIR, 9 raqam
 
   // Payme
   paymeId:         { type: String, default: '' },
@@ -21,6 +29,18 @@ const OrderSchema = new mongoose.Schema({
   paymePerformTime:{ type: Number, default: 0 },
   paymeCancelTime: { type: Number, default: 0 },
   paymeReason:     { type: Number, default: null },
+  paymeTime:       { type: Number, default: 0 },        // Payme'dagi yaratilish vaqti (GetStatement, timeout)
+  paymeFiscal:     { type: Array, default: [] },        // SetFiscalData: [{type, receipt_id, qr_code_url, ...}]
+
+  // Uzum Bank (Merchant API)
+  uzumTransId:     { type: String, default: '' },
+  uzumState:       { type: String, default: '' },        // CREATED | CONFIRMED | REVERSED | FAILED
+  uzumCreateTime:  { type: Number, default: 0 },
+  uzumConfirmTime: { type: Number, default: 0 },
+  uzumReverseTime: { type: Number, default: 0 },
+
+  // Payme Subscribe (saqlangan karta bilan avto-yangilash)
+  receiptId:       { type: String, default: '' },
 
   // Click
   clickTransId:    { type: String, default: '' },
@@ -30,11 +50,16 @@ const OrderSchema = new mongoose.Schema({
   paidBy:     { type: String, default: '' },            // payme | click | admin
   createdAt:  { type: Date, default: Date.now },
   paidAt:     { type: Date, default: null },
-  canceledAt: { type: Date, default: null }
+  canceledAt: { type: Date, default: null },
+  refundedAt: { type: Date, default: null },
+  // To'lovdan oldingi tarif — qaytarilsa tiklanadi (billing.refundOrder)
+  prevPlan:   { type: Object, default: null }
 });
 
 OrderSchema.index({ id: 1 }, { unique: true });
 OrderSchema.index({ agencyId: 1, status: 1, createdAt: -1 });
 OrderSchema.index({ paymeId: 1 }, { sparse: true });
+OrderSchema.index({ uzumTransId: 1 }, { partialFilterExpression: { uzumTransId: { $gt: '' } } });
+OrderSchema.index({ code: 1 }, { unique: true, partialFilterExpression: { code: { $gt: '' } } });
 
 module.exports = mongoose.model('Order', OrderSchema);

@@ -196,6 +196,12 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
         return;
       }
 
+      // Tavsiya havolasi (mijoz kabineti "Do'stni taklif qiling"): ref_<kod>
+      if (/^ref_[A-Z0-9]{4,12}$/.test(payload)) {
+        await referralStart(msg, chatId, payload.slice(4), tgLang, publicBase(req));
+        return;
+      }
+
       // E'lon havolasi — anketa (a_<kod>_<kanal> yoki v_<vakansiya>_<kanal>)
       const ank = surveySvc.parsePayload(payload);
       if (ank) {
@@ -332,7 +338,13 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
       const lang = langOf(client, msg.from);
       if (client.status !== 'active') {
         await tg.sendMessage(token, chatId,
-          T(lang, client.status === 'blocked' ? 'bot.blocked' : 'bot.pending'));
+          T(lang, client.status === 'blocked' ? 'bot.blocked' : client.referredBy ? 'bot.refPending' : 'bot.pending'));
+        // Tasdiqlanmagan mijoz yozgani agentlikka — restoran nomini, ehtiyojni ko'radi
+        if (client.status === 'pending' && text) {
+          const ag = await Restaurant.findOne({ id: client.agencyId }, 'telegram').lean();
+          const adm = ag && ag.telegram && ag.telegram.adminChatId;
+          if (adm) await tg.sendMessage(token, adm, `📩 Tasdiqlanmagan mijoz «${client.name}»${client.tgUsername ? ' @' + client.tgUsername : ''}:\n\n${text.slice(0, 1500)}\n\nPanel → Mijozlar: ma'lumotini to'ldirib, faollashtiring.`).catch(() => {});
+        }
         return;
       }
       client.lastSeenAt = new Date();
@@ -590,6 +602,30 @@ async function startSurvey(msg, chatId, ank, appBase) {
 // salom, kimmiz, HOZIR nechta ochiq ish va qaysi lavozimlar (bazadan, to'qima
 // emas), to'rt va'da va bitta tugma. Raqam nomzod kabinetidagi ro'yxat
 // qoidasi bilan bir xil (ochiq, e'lon qilingan, 14 kundan yangi).
+// ── Tavsiya havolasi: yangi restoran (kutilmoqda) + agentlikka xabar ──
+// Hisob avtomatik faollashmaydi (raqobatchi bazani ko'rmasin) — menejer
+// gaplashib tasdiqlaydi. Bonus — birinchi to'lovda (billing.rewardReferral).
+async function referralStart(msg, chatId, code, tgLang, appBase) {
+  const token = tg.platformToken();
+  const ref = await Client.findOne({ referralCode: code }).lean();
+  const [asClient, asCand] = await Promise.all([
+    Client.findOne({ tgChatId: chatId }).lean(),
+    Candidate.findOne({ tgChatId: chatId }, 'id').lean()
+  ]);
+  if (!ref || asClient || asCand || ref.tgChatId === chatId) return plainStart(msg, chatId, tgLang, appBase);
+  const f = msg.from || {};
+  const who = [f.first_name, f.last_name].filter(Boolean).join(' ').trim() || (f.username ? '@' + f.username : 'Telegram');
+  await Client.create({ id: uuidv4(), agencyId: ref.agencyId, name: `${who} (tavsiya)`, contactName: who,
+    status: 'pending', tgChatId: chatId, tgUsername: f.username || '', tgLang: f.language_code || '',
+    referredBy: ref.id, note: `Tavsiya: ${ref.name}` });
+  await tg.sendMessage(token, chatId, T(tgLang, 'bot.refHello', { n: require('../services/billing').REFERRAL_BONUS }));
+  const ag = await Restaurant.findOne({ id: ref.agencyId }, 'telegram').lean();
+  const adm = ag && ag.telegram && ag.telegram.adminChatId;
+  if (adm) await tg.sendMessage(token, adm,
+    `🎁 Tavsiya orqali yangi restoran: ${who}${f.username ? ' @' + f.username : ''}\nTaklif qilgan: ${ref.name}\n\n` +
+    `Mijozlar ro'yxatida "Kutilmoqda" holatida. Bog'lanib, nomini to'ldiring va faollashtiring — birinchi to'lovda ikkalasiga bonus avtomatik.`).catch(() => {});
+}
+
 const escHtml = s => String(s == null ? '' : s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 async function hookText({ lang, from, agencyId, v, closed }) {
   const first = String((from && from.first_name) || '').trim().slice(0, 30);

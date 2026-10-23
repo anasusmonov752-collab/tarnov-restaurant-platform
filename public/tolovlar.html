@@ -85,9 +85,10 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&am
 const toastMsg = m => { const t = $('toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(() => t.style.display = 'none', 2400); };
 const sum = n => Number(n || 0).toLocaleString('ru-RU');
 const PLAN = { base: 'Base', pro: 'Pro', max: 'Max', trial: 'Sinov' };
-const PROV = { payme: 'Payme', click: 'Click', manual: 'Menejer orqali' };
-const BY = { payme: 'Payme', click: 'Click', admin: 'qo\'lda tasdiqlandi' };
-const TABS = [['pending', 'Kutilmoqda'], ['paid', 'To\'langan'], ['canceled', 'Bekor'], ['all', 'Hammasi']];
+const PROV = { payme: 'Payme', click: 'Click', uzum: 'Uzum Bank', manual: 'Menejer orqali', invoice: 'Hisob-faktura' };
+const BY = { payme: 'Payme', click: 'Click', uzum: 'Uzum Bank', admin: 'qo\'lda tasdiqlandi' };
+const offline = o => o.provider === 'manual' || o.provider === 'invoice';
+const TABS = [['pending', 'Kutilmoqda'], ['paid', 'To\'langan'], ['canceled', 'Bekor'], ['refunded', 'Qaytarilgan'], ['all', 'Hammasi']];
 let DATA = { orders: [], providers: [] }, TAB = 'pending', ASK = '';   // ASK — tasdiqlash kutilayotgan buyurtma (ikki bosqich)
 
 function when(d){ const x = new Date(d); return x.toLocaleDateString('uz') + ' ' + x.toLocaleTimeString('uz', { hour: '2-digit', minute: '2-digit' }); }
@@ -104,7 +105,7 @@ function render(){
   const month = new Date(); month.setDate(1); month.setHours(0, 0, 0, 0);
   const paidM = real.filter(o => o.status === 'paid' && new Date(o.paidAt) >= month);
   $('mx').innerHTML = `
-    <div><small>Tasdiq kutmoqda</small><b class="${os.some(o => o.status === 'pending' && o.provider === 'manual') ? 'wr' : ''}">${os.filter(o => o.status === 'pending' && o.provider === 'manual').length}</b></div>
+    <div><small>Tasdiq kutmoqda</small><b class="${os.some(o => o.status === 'pending' && offline(o)) ? 'wr' : ''}">${os.filter(o => o.status === 'pending' && offline(o)).length}</b></div>
     <div><small>Shu oy to'langan</small><b>${paidM.length}</b></div>
     <div><small>Shu oy tushum, so'm</small><b>${sum(paidM.reduce((s, o) => s + o.amount, 0))}</b></div>`;
 
@@ -113,10 +114,17 @@ function render(){
   $('prov').innerHTML = `<b>To'lov tizimlari:</b>
     Payme <span class="pill ${pv.includes('payme') ? 'on' : 'off'}">${pv.includes('payme') ? 'ulangan' : 'ulanmagan'}</span>
     · Click <span class="pill ${pv.includes('click') ? 'on' : 'off'}">${pv.includes('click') ? 'ulangan' : 'ulanmagan'}</span>
-    ${pv.length < 2 ? `<br><span style="color:var(--muted)">Ulanmagan bo'lsa, mijoz "Menejer orqali" so'rov yuboradi — shu yerda yoki botdagi tugma bilan tasdiqlaysiz.
-      Ulash: merchant shartnomasidan keyin Render'ga <code>PAYME_MERCHANT_ID</code>, <code>PAYME_KEY</code> /
-      <code>CLICK_SERVICE_ID</code>, <code>CLICK_MERCHANT_ID</code>, <code>CLICK_SECRET_KEY</code>;
-      kabinetlarda manzil: <code>${esc(base)}/api/pay/payme</code>, <code>${esc(base)}/api/pay/click/prepare</code> va <code>/complete</code>.</span>` : ''}`;
+    · Uzum <span class="pill ${pv.includes('uzum') ? 'on' : 'off'}">${pv.includes('uzum') ? 'ulangan' : 'ulanmagan'}</span>
+    · Avto-yangilash <span class="pill ${DATA.subscribe ? 'on' : 'off'}">${DATA.subscribe ? 'ulangan' : 'ulanmagan'}</span>
+    ${pv.length < 3 ? `<details style="margin-top:6px"><summary style="cursor:pointer;color:var(--muted)">Qanday ulanadi</summary>
+      <div style="color:var(--muted);line-height:1.6;margin-top:6px">Ulanmagan tizim o'rniga mijoz "Menejer orqali" yoki "Hisob-faktura" so'rovini yuboradi — shu yerda yoki botdagi tugma bilan tasdiqlaysiz.<br>
+      <b>Payme</b> (business.payme.uz, kassa → "order_id" hisob maydoni, bir martalik): Render'ga <code>PAYME_MERCHANT_ID</code>, <code>PAYME_KEY</code>
+      (sinovda TEST_KEY va <code>PAYME_TEST=1</code>); endpoint <code>${esc(base)}/api/pay/payme</code>. Fiskal chek: <code>PAYME_IKPU</code>, <code>PAYME_PACKAGE_CODE</code> (soliq.uz MXIK), <code>PAYME_VAT</code>.
+      Avto-yangilash: kassada Subscribe ruxsati + <code>PAYME_SUBSCRIBE=1</code>.<br>
+      <b>Click</b> (merchant.click.uz): <code>CLICK_SERVICE_ID</code>, <code>CLICK_MERCHANT_ID</code>, <code>CLICK_SECRET_KEY</code>;
+      Prepare <code>${esc(base)}/api/pay/click/prepare</code>, Complete <code>${esc(base)}/api/pay/click/complete</code>.<br>
+      <b>Uzum Bank</b> (merchants.uzumbank.uz, Merchant API): <code>UZUM_SERVICE_ID</code>, <code>UZUM_LOGIN</code>, <code>UZUM_PASSWORD</code>;
+      vebhuk asosi <code>${esc(base)}/api/pay/uzum</code> (/check, /create, /confirm, /reverse, /status), to'lov maydoni — <code>order_id</code>.</div></details>` : ''}`;
 
   const count = k => k === 'all' ? os.length : os.filter(o => o.status === k).length;
   $('seg').innerHTML = TABS.map(([k, l]) => `<button class="${TAB === k ? 'on' : ''}" data-t="${k}">${l}<span class="n">${count(k)}</span></button>`).join('');
@@ -127,12 +135,14 @@ function render(){
   $('list').innerHTML = rows.map(o => {
     const c = o.client || {};
     const st = o.status === 'paid' ? `<span class="tag ok">To'landi · ${esc(BY[o.paidBy] || o.paidBy)}</span>`
-      : o.status === 'canceled' ? '<span class="tag no">Bekor qilingan</span>' : '<span class="tag wt">To\'lov kutilmoqda</span>';
+      : o.status === 'canceled' ? '<span class="tag no">Bekor qilingan</span>'
+      : o.status === 'refunded' ? '<span class="tag no">Qaytarilgan</span>' : '<span class="tag wt">To\'lov kutilmoqda</span>';
+    const inv = o.provider === 'invoice' ? `<div class="sb" style="margin-top:6px">📄 ${esc(o.invoiceCompany)} · STIR ${esc(o.invoiceInn)}</div>` : '';
     const now = c.plan && c.plan.key ? `<span class="tag">Hozir: ${esc(PLAN[c.plan.key] || c.plan.key)} · ${c.plan.daysLeft} kun</span>` : '';
     return `<div class="od ${o.status === 'pending' ? 'pend' : ''}">
       <div class="od-h">
         <div><div class="nm">${esc(c.name || '—')}</div>
-          <div class="sb">${esc(PLAN[o.planKey] || o.planKey)} · ${esc(PROV[o.provider] || o.provider)} · ${esc(when(o.createdAt))}</div></div>
+          <div class="sb">${o.code ? '№' + esc(o.code) + ' · ' : ''}${esc(PLAN[o.planKey] || o.planKey)} · ${esc(PROV[o.provider] || o.provider)}${o.auto ? ' · avto' : ''} · ${esc(when(o.createdAt))}</div>${inv}</div>
         <div class="sum"><b>${sum(o.amount)}</b><small>so'm</small></div>
       </div>
       <div class="tags">${st}${now}<span class="tag">Balans: ${c.credits == null ? '—' : c.credits} kredit</span>${c.isTest ? '<span class="tag ts">🧪 SINOV</span>' : ''}</div>

@@ -16,15 +16,17 @@ const guard = require('../middleware/agency').agencyAuth;
 router.get('/orders', guard, asyncHandler(async (req, res) => {
   const agencyId = req.user.restaurantId;
   const q = { agencyId };
-  if (['pending', 'paid', 'canceled'].includes(req.query.status)) q.status = req.query.status;
+  if (['pending', 'paid', 'canceled', 'refunded'].includes(req.query.status)) q.status = req.query.status;
   const rows = await Order.find(q).sort({ createdAt: -1 }).limit(200).lean();
   const cl = await Client.find({ agencyId, id: { $in: [...new Set(rows.map(r => r.clientId))] } }, 'id name credits plan isTest').lean();
   const by = Object.fromEntries(cl.map(c => [c.id, c]));
   res.json({
     plans: PL.PLANS,
     providers: billing.providers(),
+    subscribe: require('../services/paymeSubscribe').enabled(),
     orders: rows.map(o => ({
-      id: o.id, planKey: o.planKey, amount: o.amount, provider: o.provider, status: o.status,
+      id: o.id, code: o.code, auto: !!o.auto, invoiceCompany: o.invoiceCompany, invoiceInn: o.invoiceInn,
+      planKey: o.planKey, amount: o.amount, provider: o.provider, status: o.status,
       paidBy: o.paidBy, createdAt: o.createdAt, paidAt: o.paidAt, canceledAt: o.canceledAt,
       client: by[o.clientId] ? { id: o.clientId, name: by[o.clientId].name, credits: by[o.clientId].credits,
         isTest: !!by[o.clientId].isTest, plan: billing.planView(by[o.clientId]) } : { id: o.clientId, name: '—' }

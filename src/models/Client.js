@@ -53,9 +53,29 @@ const ClientSchema = new mongoose.Schema({
     startedAt:  { type: Date, default: null },
     endsAt:     { type: Date, default: null },
     remindedAt: { type: Date, default: null },   // 3 kun oldin eslatildi
-    expiredAt:  { type: Date, default: null }    // muddat tugadi, kreditlar yondi
+    expiredAt:  { type: Date, default: null },   // muddat tugadi, kreditlar yondi
+    lowAt:      { type: Date, default: null },   // "kredit kam qoldi" taklifi yuborildi (davrda bir marta)
+    guaranteeExtendedAt: { type: Date, default: null }  // kafolat bajarilmay muddat uzaytirildi (bir marta)
   },
   trialUsedAt: { type: Date, default: null },
+
+  // Avto-yangilash: Payme Subscribe karta tokeni (karta raqami bizga KELMAYDI —
+  // Mini App to'g'ridan-to'g'ri Payme'da tokenlaydi). Muddat tugashidan 1 kun
+  // oldin billing.tick shu tarifni qayta sotib oladi.
+  autoRenew: {
+    on:       { type: Boolean, default: false },
+    provider: { type: String, default: '' },       // payme
+    token:    { type: String, default: '' },
+    masked:   { type: String, default: '' },       // 860006******6311
+    triedAt:  { type: Date, default: null },       // shu davrda urinildi
+    error:    { type: String, default: '' }
+  },
+
+  // Tavsiya dasturi (billing.referralLink/rewardReferral): kod — t.me/<bot>?start=ref_<kod>.
+  // Taklif qilingan restoran birinchi marta to'lasa ikkalasiga bonus kredit.
+  referralCode:       { type: String, default: '' },
+  referredBy:         { type: String, default: '' },   // taklif qilgan mijoz id
+  referralRewardedAt: { type: Date, default: null },
 
   // Interfeys tili: 'uz' | 'ru'. Bo'sh — hali tanlamagan, Telegram
   // language_code bo'yicha taxmin qilinadi (public/js/th-i18n.js).
@@ -74,5 +94,7 @@ ClientSchema.index({ agencyId: 1, createdAt: -1 });
 ClientSchema.index({ agencyId: 1, id: 1 }, { unique: true });
 ClientSchema.index({ tgChatId: 1 }, { sparse: true });
 ClientSchema.index({ tgLinkToken: 1 }, { sparse: true });
+ClientSchema.index({ referralCode: 1 }, { unique: true, partialFilterExpression: { referralCode: { $gt: '' } } });
+ClientSchema.index({ agencyId: 1, referredBy: 1 }, { partialFilterExpression: { referredBy: { $gt: '' } } });
 
 module.exports = mongoose.model('Client', ClientSchema);

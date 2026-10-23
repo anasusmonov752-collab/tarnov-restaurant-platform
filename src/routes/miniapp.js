@@ -1022,26 +1022,52 @@ router.post('/topup', clientGuard, asyncHandler(async (req, res) => {
 // providers bo'sh — to'lov tizimi hali ulanmagan: Mini App qo'lda so'rov yuboradi
 router.get('/plans', clientGuard, asyncHandler(async (req, res) => {
   const Order = require('../models/Order');
-  const pending = await Order.findOne({ agencyId: req.client.agencyId, clientId: req.client.id, status: 'pending', provider: 'manual' },
-    'id planKey createdAt').sort({ createdAt: -1 }).lean();
+  const sub = require('../services/paymeSubscribe');
+  const [pending, guarantee] = await Promise.all([
+    Order.findOne({ agencyId: req.client.agencyId, clientId: req.client.id, status: 'pending', provider: { $in: ['manual', 'invoice'] } },
+      'id code planKey provider createdAt').sort({ createdAt: -1 }).lean(),
+    billing.planView(req.client).key ? billing.guaranteeProgress(req.client) : null
+  ]);
   res.json({
     plans: PL.PLAN_KEYS.map(k => PL.PLANS[k]),
     trial: PL.TRIAL,
     current: billing.planView(req.client),
     credits: req.client.credits,
     providers: billing.providers(),
-    pendingManual: pending ? { id: pending.id, planKey: pending.planKey, createdAt: pending.createdAt } : null
+    guarantee,
+    auto: billing.autoView(req.client),
+    // Karta formasi Payme'ga to'g'ridan-to'g'ri yuboradi (kassa id ochiq ma'lumot)
+    cardForm: sub.enabled() ? { merchantId: process.env.PAYME_MERCHANT_ID, api: sub.apiUrl() } : null,
+    pendingManual: pending ? { id: pending.id, code: pending.code, planKey: pending.planKey, provider: pending.provider, createdAt: pending.createdAt } : null
   });
+}));
+
+// ── Avto-yangilash: karta tokeni (Payme'dan) / yoqish-o'chirish / olib tashlash ──
+router.post('/card', clientGuard, asyncHandler(async (req, res) => {
+  try { res.json(await billing.saveCard(req.client, String((req.body || {}).token || ''))); }
+  catch (e) { res.status(e.status || 400).json({ error: e.message }); }
+}));
+router.post('/autorenew', clientGuard, asyncHandler(async (req, res) => {
+  const b = req.body || {};
+  try { res.json(await billing.setAutoRenew(req.client, b.remove ? 'remove' : !!b.on)); }
+  catch (e) { res.status(e.status || 400).json({ error: e.message }); }
+}));
+
+// ── Tavsiya dasturi: havola va natija ──
+router.get('/referral', clientGuard, asyncHandler(async (req, res) => {
+  const bot = (await tg.platformUsername().catch(() => '')) || 'TalentHubUzBot';
+  res.json(await billing.referralLink(req.client, bot));
 }));
 
 // ── Tarif sotib olish: buyurtma + to'lov havolasi (yoki qo'lda so'rov) ──
 router.post('/orders', clientGuard, asyncHandler(async (req, res) => {
   const b = req.body || {};
   try {
-    const o = await billing.createOrder({ client: req.client, planKey: String(b.plan || ''), provider: String(b.provider || 'manual') });
+    const o = await billing.createOrder({ client: req.client, planKey: String(b.plan || ''), provider: String(b.provider || 'manual'),
+      invoice: b.invoice });
     // To'lovdan keyin — botga qaytadi: u yerda "tarif yoqildi" xabari turadi
     const back = 'https://t.me/' + ((await tg.platformUsername().catch(() => '')) || 'TalentHubUzBot');
-    res.json({ id: o.id, provider: o.provider, amount: o.amount, url: billing.checkoutUrl(o, back) });
+    res.json({ id: o.id, code: o.code, provider: o.provider, amount: o.amount, url: billing.checkoutUrl(o, back) });
   } catch (e) { res.status(e.status || 400).json({ error: e.message }); }
 }));
 

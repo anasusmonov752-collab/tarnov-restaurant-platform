@@ -272,6 +272,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .pl-f li.g::before{content:'★';color:#E8A317}
 .pl-terms{font-size:12px;color:var(--muted);line-height:1.5;margin-top:4px}
 .pl-banner{background:rgba(232,163,23,.13);color:#8A5A00;border-radius:12px;padding:10px 12px;font-size:13.5px;margin-bottom:12px}
+.pl-g{background:var(--bg);border-radius:12px;padding:11px 13px;margin:-4px 0 12px}
+.pl-g-t{display:flex;justify-content:space-between;align-items:baseline;font-size:13.5px;gap:8px}
+.pl-g-t b{font-size:15px}
+.pl-g-bar{height:6px;border-radius:99px;background:var(--line);margin:8px 0 6px;overflow:hidden}
+.pl-g-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#E8A317,#F5C04A)}
+.pl-g-d{font-size:12px;color:var(--muted);line-height:1.4}
+.pl-auto-l{font-size:13px;color:var(--muted);margin:-4px 0 12px}
+.pl-auto-r{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;font-size:14px}
+.pl-auto-e{font-size:12.5px;color:var(--danger);margin-top:6px}
+.lnk{background:none;border:none;padding:0;color:var(--blue);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.pl-terms a{color:var(--blue)}
+.ref-o{margin-top:10px}
+.ref-hero{font-size:44px;text-align:center;margin:4px 0 6px}
+.ref-d{font-size:15px;line-height:1.5;text-align:center;margin-bottom:14px}
+.ref-link{background:var(--bg);border-radius:12px;padding:12px;font-size:13.5px;word-break:break-all;margin-bottom:10px;user-select:all;-webkit-user-select:all}
+.ref-st{font-size:13px;color:var(--muted);text-align:center;margin:12px 0 4px}
+.ref-steps{font-size:13.5px;line-height:1.5;padding-left:20px;color:var(--ink);margin:10px 0 0}
+.pm-note{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;color:var(--muted);line-height:1.45;margin-top:10px}
+.pm-note a{color:var(--blue)}
+.pm-logo{flex:none;background:#33CCCC;color:#fff;font-weight:800;border-radius:8px;padding:5px 8px;font-size:12px}
+.pm-pw{text-align:center;font-size:11.5px;color:var(--muted);margin-top:12px;letter-spacing:.3px}
 .pay-o{width:100%;display:flex;align-items:center;gap:12px;border:1.5px solid var(--line);background:var(--card);border-radius:14px;
   padding:13px 14px;margin-bottom:9px;font-family:inherit;text-align:left;cursor:pointer;color:var(--ink)}
 .pay-o b{display:block;font-size:15.5px}
@@ -1113,7 +1134,7 @@ function wireCards(root, refresh){
       if (!v) return;
       ok.disabled = true;
       try { await decide(sl, id, { state:'interview', interviewAt: new Date(v).toISOString() }); refresh(); }
-      catch(e){ alert(e.message); ok.disabled = false; }
+      catch(e){ showMsg(e.message); ok.disabled = false; }
     };
     no.onclick = () => { box.innerHTML = ''; };
   });
@@ -1123,7 +1144,7 @@ function wireCards(root, refresh){
     if (!confirm(t('hire.confirm'))) return;
     b.disabled = true;
     try { await decide(b.dataset.sl, b.dataset.hire, { state:'hired' }); refresh(); }
-    catch(e){ alert(e.message); b.disabled = false; }
+    catch(e){ showMsg(e.message); b.disabled = false; }
   });
 
   // Mos kelmadi — sabab bilan, aks holda keyingi qidiruv yaxshilanmaydi
@@ -1136,7 +1157,7 @@ function wireCards(root, refresh){
       if (!x.dataset.r) { box.innerHTML = ''; return; }
       x.disabled = true;
       try { await decide(sl, id, { state:'not_fit', reason: x.dataset.r }); refresh(); }
-      catch(e){ alert(e.message); x.disabled = false; }
+      catch(e){ showMsg(e.message); x.disabled = false; }
     });
   });
 }
@@ -1285,7 +1306,7 @@ function renderVacs(){
   root.querySelectorAll('[data-conf]').forEach(b => b.onclick = async () => {
     b.disabled = true;
     try { await api(`/api/ma/vacancies/${b.dataset.conf}/confirm`, { method:'POST' }); haptic(); loadVacancies(); }
-    catch(e){ alert(e.message); b.disabled = false; }
+    catch(e){ showMsg(e.message); b.disabled = false; }
   });
 }
 
@@ -1299,9 +1320,9 @@ async function startMatches(id, b){
   b.disabled = true; const was = b.textContent; b.textContent = t('common.searching');
   try {
     const r = await api(`/api/ma/vacancies/${id}/matches`, { method:'POST', body:'{}' });
-    if (!r.key) { alert(r.message || t('vac.noMatch')); b.disabled = false; b.textContent = was; return; }
+    if (!r.key) { showMsg(r.message || t('vac.noMatch')); b.disabled = false; b.textContent = was; return; }
     haptic(); closeSheet(); openSearch(r.key, true);
-  } catch(e){ alert(e.message); b.disabled = false; b.textContent = was; }
+  } catch(e){ showMsg(e.message); b.disabled = false; b.textContent = was; }
 }
 
 // ── Vakansiya sahifasi: voronka, shartlar, nomzodlar, arizalar ──
@@ -1366,7 +1387,7 @@ function vacMenu(id, vObj){
     try {
       await api('/api/ma/vacancies/' + encodeURIComponent(id), { method:'PATCH', body: JSON.stringify(body) });
       closeSheet(); haptic(); loadVacancies();
-    } catch(e){ alert(e.message); b.disabled = false; }
+    } catch(e){ showMsg(e.message); b.disabled = false; }
   });
 }
 
@@ -1429,7 +1450,7 @@ function vacForm(v){
 
   $('fSave').onclick = async () => {
     const role = $('fRo').value;
-    if (!role) return alert(t('form.roleReq'));
+    if (!role) return showMsg(t('form.roleReq'));
     const title = $('fTi').value.trim() || autoTitle(role, $('fSh').value);
     const body = {
       role, title, minExp: $('fEx').value, headcount: $('fHc').value, shift: $('fSh').value,
@@ -1441,7 +1462,7 @@ function vacForm(v){
       if (v) await api('/api/ma/vacancies/' + v.id, { method:'PATCH', body: JSON.stringify(body) });
       else   await api('/api/ma/vacancies', { method:'POST', body: JSON.stringify(body) });
       closeSheet(); loadVacancies();
-    } catch(e){ alert(e.message); $('fSave').disabled = false; $('fSave').textContent = t('common.retry'); }
+    } catch(e){ showMsg(e.message); $('fSave').disabled = false; $('fSave').textContent = t('common.retry'); }
   };
 }
 $('bNewV').onclick = () => vacForm(null);
@@ -1461,10 +1482,16 @@ function askConfirm(text){
 
 // refresh — arizalar qaysi joyda ko'rsatilgan bo'lsa (tab yoki vakansiya
 // oynasi), o'shani qayta chizish
+// Telegram ichida brauzer showMsg() ko'rinmasligi mumkin — Telegram oynasi
+function showMsg(text){
+  try { if (TG && TG.showAlert && TG.isVersionAtLeast && TG.isVersionAtLeast('6.2')) return TG.showAlert(String(text)); } catch(e){}
+  alert(text);
+}
+
 async function openFromApp(b, refresh){
   if (CREDITS != null && CREDITS < 1) {
-    alert(t('open.noCredit'));
-    showCredits(); return;
+    showMsg(t('open.noCredit'));
+    showPlans(); return;
   }
   const bal = CREDITS != null ? t('open.bal', { a: CREDITS, b: CREDITS - 1 }) : '';
   const ok = await askConfirm(t('open.confirm', { bal }));
@@ -1478,7 +1505,7 @@ async function openFromApp(b, refresh){
     if (!$('vAP').classList.contains('hide')) loadApps();
     showResume(r.candidateId || b.dataset.cand);          // darhol ism va telefon
   } catch(e){
-    alert(e.message);
+    showMsg(e.message);
     b.disabled = false; b.innerHTML = was;
     refresh();                                            // holat o'zgargan bo'lishi mumkin
   }
@@ -1542,13 +1569,13 @@ function wireApps(root, refresh){
     b.disabled = true;
     try { await api(`/api/ma/applications/${b.dataset.pick}/pick`, { method:'POST' });
       haptic(); refresh(); if (VACS.length) loadVacancies(); loadShortlists(); }
-    catch(e){ alert(e.message); b.disabled = false; }
+    catch(e){ showMsg(e.message); b.disabled = false; }
   });
   root.querySelectorAll('[data-rej]').forEach(b => b.onclick = async () => {
     b.disabled = true;
     try { await api(`/api/ma/applications/${b.dataset.rej}/reject`, { method:'POST', body: JSON.stringify({}) });
       refresh(); }
-    catch(e){ alert(e.message); b.disabled = false; }
+    catch(e){ showMsg(e.message); b.disabled = false; }
   });
   // Server arizalarni ochilganda 'seen' qildi — nuqta va qizil belgilar o'chsin
   refreshUnread();
@@ -1618,16 +1645,27 @@ function renderApps(){
   wireApps($('apList'), loadApps);
 }
 
-// ── Balans — tepadagi kredit raqamini bosganda ──
-// Kamdan-kam ishlatiladi, shuning uchun tab emas, oyna.
 // ── Balans: kredit, joriy tarif, tarif tanlash ──
-// Tarif = muddat + kontakt limiti; to'lov Payme/Click (ulangan bo'lsa) yoki
-// menejer orqali (billing.createOrder 'manual' — agentlik botda tasdiqlaydi)
+// Kamdan-kam ishlatiladi, shuning uchun tab emas, oyna (tepadagi kredit raqami).
+// Tarif = muddat + kontakt limiti; to'lov Payme/Click/Uzum (ulangan bo'lsa),
+// menejer orqali yoki hisob-faktura (billing.createOrder — agentlik botda tasdiqlaydi)
 let PLANS = null;
 const fmtSum = n => Number(n || 0).toLocaleString('ru-RU');
 const planNow = p => p && p.key
   ? `<div class="pl-now"><div><b>${esc(t('plan.' + p.key))}</b><br><span>${esc(t('pl.until', { date: new Date(p.endsAt).toLocaleDateString(LOC()), n: p.daysLeft }))}</span></div></div>`
   : `<div class="pl-now"><div><b>${esc(t('pl.none'))}</b></div></div>`;
+
+// Kafolat holati: "5 tadan 3 ta nomzod berildi" (billing.guaranteeProgress)
+function guaranteeHtml(g){
+  if (!g) return '';
+  const hire = g.needHire > 0;
+  const need = hire ? g.needHire : g.needCandidates, got = hire ? g.hired : g.candidates;
+  if (!need) return '';
+  const pct = Math.min(100, Math.round(got / need * 100));
+  return `<div class="pl-g"><div class="pl-g-t"><span>${esc(t(hire ? 'pl.gProgHire' : 'pl.gProg'))}</span><b>${got} / ${need}</b></div>
+    <div class="pl-g-bar"><i style="width:${pct}%"></i></div>
+    <div class="pl-g-d">${esc(t(got >= need ? 'pl.gDone' : 'pl.gLeft'))}</div></div>`;
+}
 
 async function showCredits(){
   sheetEnter('credits', showCredits);
@@ -1635,13 +1673,17 @@ async function showCredits(){
     <div class="cr-big"><b>${CREDITS == null ? '—' : CREDITS}</b><span>${esc(t('cab.credits', { n: CREDITS || 0 }))}</span></div>
     <div id="plNow"></div>
     <button class="btn" id="bPlans" style="width:100%">${esc(t('pl.choose'))}</button>
+    <button class="pay-o ref-o" id="bRef"><span class="pay-ic" style="background:#E8A317">🎁</span>
+      <div><b>${esc(t('ref.title'))}</b><span>${esc(t('ref.short'))}</span></div></button>
     <div class="vd-sec">${esc(t('cr.hist'))}</div>
     <div class="card" id="crList"><div class="msg">${esc(t('common.loading'))}</div></div>`);
   $('bPlans').onclick = () => showPlans();
+  $('bRef').onclick = () => showReferral();
   api('/api/ma/plans').then(d => {
     PLANS = d;
     if (!$('plNow')) return;
-    $('plNow').innerHTML = planNow(d.current);
+    $('plNow').innerHTML = planNow(d.current) + guaranteeHtml(d.guarantee) +
+      (d.auto && d.auto.on ? `<div class="pl-auto-l">🔄 ${esc(t('pl.autoOn', { card: d.auto.masked }))}</div>` : '');
     if (d.current && d.current.key && d.current.key !== 'trial') $('bPlans').textContent = t('pl.renew');
   }).catch(() => {});
   loadCredits();
@@ -1666,22 +1708,39 @@ function planCard(p){
   </div>`;
 }
 
+// Avto-yangilash bloki (Payme Subscribe ulangan bo'lsa)
+function autoHtml(a){
+  if (!a || !a.available) return '';
+  const body = a.masked
+    ? `<div class="pl-auto-r"><span>${esc(t(a.on ? 'pl.autoOn' : 'pl.autoPaused', { card: a.masked }))}</span>
+        <button class="lnk" data-auto="${a.on ? 'off' : 'on'}">${esc(t(a.on ? 'pl.autoOff' : 'pl.autoOnBtn'))}</button></div>
+       ${a.error ? `<div class="pl-auto-e">${esc(t('pl.autoErr', { e: a.error }))}</div>` : ''}
+       <button class="lnk" data-auto="remove" style="margin-top:6px">${esc(t('pl.autoRemove'))}</button>`
+    : `<button class="btn ghost" data-auto="add" style="width:100%;margin-top:10px">${esc(t('pl.autoAdd'))}</button>`;
+  return `<div class="pl-card pl-auto"><div class="pl-name" style="font-size:16px">🔄 ${esc(t('pl.auto'))}</div>
+    <div class="pl-meta" style="color:var(--muted);font-weight:500;margin-top:4px">${esc(t('pl.autoD'))}</div>${body}</div>`;
+}
+
 async function showPlans(){
   sheetEnter('plans', showPlans);
   openSheet(t('pl.title'), `<div class="msg">${esc(t('common.loading'))}</div>`);
   let d;
   try { d = PLANS = await api('/api/ma/plans'); }
   catch(e){ $('shB').innerHTML = `<div class="msg">${esc(e.message)}</div>`; return; }
-  const c = d.current || {};
+  const c = d.current || {}, pm = d.pendingManual;
   $('shB').innerHTML = `
     <div class="pl-note">${esc(t('pl.launch'))}</div>
-    ${d.pendingManual ? `<div class="pl-banner">${esc(t('pl.pending', { plan: t('plan.' + d.pendingManual.planKey) }))}</div>` : ''}
+    ${pm ? `<div class="pl-banner">${esc(t(pm.provider === 'invoice' ? 'pl.pendingInv' : 'pl.pending', { plan: t('plan.' + pm.planKey), code: pm.code || '' }))}</div>` : ''}
+    ${c.key ? planNow(c) + guaranteeHtml(d.guarantee) : ''}
     ${c.trialAvailable ? `<div class="pl-card">
       <div class="pl-name">${esc(t('pl.trialT'))}</div>
       <div class="pl-meta" style="margin-top:4px">${esc(t('pl.trialD'))}</div>
       <button class="btn" id="bTrial" style="width:100%;margin-top:12px">${esc(t('pl.trialBtn'))}</button></div>` : ''}
     ${d.plans.map(planCard).join('')}
-    <div class="pl-terms">${esc(t('pl.terms'))}</div>`;
+    ${autoHtml(d.auto)}
+    <button class="pay-o ref-o" id="bRef2"><span class="pay-ic" style="background:#E8A317">🎁</span>
+      <div><b>${esc(t('ref.title'))}</b><span>${esc(t('ref.short'))}</span></div></button>
+    <div class="pl-terms">${esc(t('pl.terms'))} <a href="#" id="lOferta">${esc(t('pl.oferta'))}</a></div>`;
   if ($('bTrial')) $('bTrial').onclick = async () => {
     const b = $('bTrial'); b.disabled = true;
     try {
@@ -1692,33 +1751,52 @@ async function showPlans(){
     } catch(e){ b.disabled = false; b.textContent = e.message; }
   };
   $('shB').querySelectorAll('[data-buy]').forEach(b => b.onclick = () => choosePay(b.dataset.buy));
+  $('bRef2').onclick = () => showReferral();
+  $('lOferta').onclick = e => { e.preventDefault(); openExt(location.origin + '/oferta.html?lang=' + LANG); };
+  $('shB').querySelectorAll('[data-auto]').forEach(b => b.onclick = async () => {
+    const a = b.dataset.auto;
+    if (a === 'add') return showCard();
+    if (a === 'remove' && !(await askConfirm(t('pl.autoRemoveQ')))) return;
+    b.disabled = true;
+    try {
+      await api('/api/ma/autorenew', { method:'POST', body: JSON.stringify(a === 'remove' ? { remove: true } : { on: a === 'on' }) });
+      showPlans();
+    } catch(e){ b.disabled = false; showMsg(e.message); }
+  });
 }
 
-// To'lov usuli: ulangan tizimlar + doim "menejer orqali"
+function openExt(url){
+  try { TG && TG.openLink ? TG.openLink(url) : window.open(url, '_blank'); } catch(e){ location.href = url; }
+}
+
+// To'lov usuli: ulangan tizimlar + doim "menejer orqali" va hisob-faktura
 function choosePay(key){
   const p = (PLANS && PLANS.plans || []).find(x => x.key === key);
   if (!p) return;
   sheetEnter('pay:' + key, () => choosePay(key));
-  const PV = { payme: ['Payme', '#33CCCC', 'Payme'], click: ['Click', '#0073FF', 'Click'] };
-  const opts = (PLANS.providers || []).map(k => `<button class="pay-o" data-pay="${k}">
-      <span class="pay-ic" style="background:${PV[k][1]}">${PV[k][2]}</span><div><b>${PV[k][0]}</b><span>${esc(t('pl.afterPay'))}</span></div></button>`).join('');
+  const PV = { payme: ['Payme', '#33CCCC', 'Payme'], click: ['Click', '#0073FF', 'Click'], uzum: ['Uzum Bank', '#7000FF', 'Uzum'] };
+  const opts = (PLANS.providers || []).filter(k => PV[k]).map(k => `<button class="pay-o" data-pay="${k}">
+      <span class="pay-ic" style="background:${PV[k][1]}">${PV[k][2]}</span><div><b>${PV[k][0]}</b><span>${esc(t(k === 'uzum' ? 'pl.uzumD' : 'pl.afterPay'))}</span></div></button>`).join('');
   openSheet(t('pl.pay'), `
     <div class="pl-now"><div><b>${esc(t('plan.' + key))} — ${fmtSum(p.price)} ${esc(t('pl.sum'))}</b><br>
       <span>${esc(t('pl.days', { n: p.days }))} · ${esc(p.unlimited ? t('pl.unlimited') : t('pl.contacts', { n: p.contacts }))}</span></div></div>
     ${opts}
     <button class="pay-o" data-pay="manual"><span class="pay-ic" style="background:#64748B">HR</span>
       <div><b>${esc(t('pl.manual'))}</b><span>${esc(t('pl.manualD'))}</span></div></button>
+    <button class="pay-o" data-inv="1"><span class="pay-ic" style="background:#0F766E">📄</span>
+      <div><b>${esc(t('pl.invoice'))}</b><span>${esc(t('pl.invoiceD'))}</span></div></button>
     <div class="err" id="payErr" style="color:var(--danger);font-size:13px;min-height:18px"></div>`);
+  $('shB').querySelector('[data-inv]').onclick = () => showInvoice(key);
   $('shB').querySelectorAll('[data-pay]').forEach(b => b.onclick = async () => {
     $('shB').querySelectorAll('[data-pay]').forEach(x => x.disabled = true);
     $('payErr').textContent = '';
     try {
       const r = await api('/api/ma/orders', { method:'POST', body: JSON.stringify({ plan: key, provider: b.dataset.pay }) });
       if (r.url) {
-        $('shB').insertAdjacentHTML('beforeend', `<div class="msg">${esc(t('pl.opening'))}</div>`);
-        try { TG && TG.openLink ? TG.openLink(r.url) : (location.href = r.url); } catch(e){ location.href = r.url; }
+        $('shB').insertAdjacentHTML('beforeend', `<div class="msg">${esc(t('pl.opening'))}<br><small>${esc(t('pl.order', { code: r.code }))}</small></div>`);
+        openExt(r.url);
       } else {
-        $('shB').innerHTML = `<div class="msg" style="line-height:1.55">✅<br>${esc(t('pl.manualSent'))}</div>`;
+        $('shB').innerHTML = `<div class="msg" style="line-height:1.55">✅<br>${esc(t('pl.manualSent'))}<br><small>${esc(t('pl.order', { code: r.code }))}</small></div>`;
         try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
       }
     } catch(e){
@@ -1728,6 +1806,116 @@ function choosePay(key){
   });
 }
 
+// Yuridik shaxs: kompaniya nomi + STIR -> agentlik hisob-faktura yuboradi
+function showInvoice(key){
+  const p = (PLANS && PLANS.plans || []).find(x => x.key === key);
+  if (!p) return;
+  sheetEnter('inv:' + key, () => showInvoice(key));
+  openSheet(t('pl.invoice'), `
+    <div class="pl-now"><div><b>${esc(t('plan.' + key))} — ${fmtSum(p.price)} ${esc(t('pl.sum'))}</b></div></div>
+    <div class="fl"><label>${esc(t('pl.company'))}</label><input id="iCo" maxlength="120" autocomplete="organization"></div>
+    <div class="fl"><label>${esc(t('pl.inn'))}</label><input id="iInn" inputmode="numeric" maxlength="9" placeholder="123456789"></div>
+    <div class="pl-terms" style="margin:6px 0 12px">${esc(t('pl.invoiceNote'))}</div>
+    <button class="btn" id="iSend" style="width:100%">${esc(t('pl.invoiceSend'))}</button>
+    <div class="err" id="iErr" style="color:var(--danger);font-size:13px;min-height:18px;margin-top:8px"></div>`);
+  $('iInn').oninput = () => { $('iInn').value = $('iInn').value.replace(/\D/g, '').slice(0, 9); };
+  $('iSend').onclick = async () => {
+    const company = $('iCo').value.trim(), inn = $('iInn').value;
+    if (company.length < 2 || inn.length !== 9) { $('iErr').textContent = t('pl.invoiceReq'); return; }
+    $('iSend').disabled = true; $('iErr').textContent = '';
+    try {
+      const r = await api('/api/ma/orders', { method:'POST', body: JSON.stringify({ plan: key, provider: 'invoice', invoice: { company, inn } }) });
+      $('shB').innerHTML = `<div class="msg" style="line-height:1.55">✅<br>${esc(t('pl.invoiceSent', { code: r.code }))}</div>`;
+      try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
+    } catch(e){ $('iErr').textContent = e.message; $('iSend').disabled = false; }
+  };
+}
+
+// ── Karta qo'shish (avto-yangilash) ──
+// Karta raqami TalentHub serveriga KELMAYDI: so'rovlar to'g'ridan-to'g'ri
+// Payme Subscribe API'ga (X-Auth: kassa id), bizga faqat token beriladi.
+// Inputlarda name yo'q, formada action yo'q — Payme talabi.
+async function paymeCall(method, params){
+  const cf = PLANS && PLANS.cardForm;
+  if (!cf) throw new Error(t('pl.autoNA'));
+  const r = await fetch(cf.api, { method:'POST', headers:{ 'Content-Type':'application/json', 'X-Auth': cf.merchantId },
+    body: JSON.stringify({ id: Date.now(), method, params }) });
+  const j = await r.json().catch(() => ({}));
+  if (j.error) throw new Error((j.error.message && (j.error.message[LANG] || j.error.message.ru)) || j.error.message || 'Payme');
+  return j.result;
+}
+
+function showCard(){
+  sheetEnter('card', showCard);
+  openSheet(t('pl.autoAdd'), `
+    <form id="cForm" onsubmit="return false" autocomplete="off">
+      <div class="fl"><label>${esc(t('pl.cardNum'))}</label><input id="cNum" inputmode="numeric" placeholder="8600 0000 0000 0000" maxlength="19"></div>
+      <div class="fl"><label>${esc(t('pl.cardExp'))}</label><input id="cExp" inputmode="numeric" placeholder="MM/YY" maxlength="5"></div>
+      <div id="cCodeBox" class="hide"><div class="fl"><label><span id="cSent"></span></label><input id="cCode" inputmode="numeric" maxlength="6" placeholder="••••••"></div></div>
+      <button class="btn" id="cGo" style="width:100%">${esc(t('pl.cardSend'))}</button>
+    </form>
+    <div class="err" id="cErr" style="color:var(--danger);font-size:13px;min-height:18px;margin-top:8px"></div>
+    <div class="pm-note"><span class="pm-logo">Payme</span>
+      <span>${esc(t('pl.cardNote'))} <a href="#" id="lPmOf">${esc(t('pl.pmOferta'))}</a></span></div>
+    <div class="pm-pw">Powered by Payme</div>`);
+  $('lPmOf').onclick = e => { e.preventDefault(); openExt('https://cdn.payme.uz/terms/main.html'); };
+  $('cNum').oninput = () => { const v = $('cNum').value.replace(/\D/g, '').slice(0, 16); $('cNum').value = v.replace(/(\d{4})(?=\d)/g, '$1 '); };
+  $('cExp').oninput = () => { const v = $('cExp').value.replace(/\D/g, '').slice(0, 4); $('cExp').value = v.length > 2 ? v.slice(0, 2) + '/' + v.slice(2) : v; };
+  let token = '';
+  $('cGo').onclick = async () => {
+    const b = $('cGo'); $('cErr').textContent = ''; b.disabled = true;
+    try {
+      if (!token) {
+        const number = $('cNum').value.replace(/\D/g, ''), exp = $('cExp').value.replace(/\D/g, '');
+        if (number.length !== 16 || exp.length !== 4) throw new Error(t('pl.cardReq'));
+        const r = await paymeCall('cards.create', { card: { number, expire: exp }, save: true });
+        token = r.card.token;
+        const v = await paymeCall('cards.get_verify_code', { token });
+        $('cSent').textContent = t('pl.cardSent', { phone: v.phone || '' });
+        $('cCodeBox').classList.remove('hide'); $('cNum').disabled = $('cExp').disabled = true;
+        b.textContent = t('pl.cardVerify'); $('cCode').focus();
+      } else {
+        const code = $('cCode').value.replace(/\D/g, '');
+        if (code.length < 4) throw new Error(t('pl.cardCodeReq'));
+        const v = await paymeCall('cards.verify', { token, code });
+        await api('/api/ma/card', { method:'POST', body: JSON.stringify({ token: v.card.token }) });
+        try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
+        showMsg(t('pl.cardOk'));
+        sheetBack();
+        return;
+      }
+    } catch(e){ $('cErr').textContent = e.message; }
+    b.disabled = false;
+  };
+}
+
+// ── Tavsiya dasturi: havola, nusxa, Telegramda yuborish ──
+async function showReferral(){
+  sheetEnter('ref', showReferral);
+  openSheet(t('ref.title'), `<div class="msg">${esc(t('common.loading'))}</div>`);
+  let r;
+  try { r = await api('/api/ma/referral'); }
+  catch(e){ $('shB').innerHTML = `<div class="msg">${esc(e.message)}</div>`; return; }
+  $('shB').innerHTML = `
+    <div class="ref-hero">🎁</div>
+    <div class="ref-d">${esc(t('ref.d', { n: r.bonus }))}</div>
+    <div class="ref-link" id="rLink">${esc(r.link)}</div>
+    <div style="display:flex;gap:8px">
+      <button class="btn ghost" id="rCopy" style="flex:1">${esc(t('ref.copy'))}</button>
+      <button class="btn" id="rShare" style="flex:1">${esc(t('ref.share'))}</button>
+    </div>
+    <div class="ref-st">${esc(t('ref.stats', { a: r.invited, b: r.paid }))}</div>
+    <ol class="ref-steps"><li>${esc(t('ref.s1'))}</li><li>${esc(t('ref.s2'))}</li><li>${esc(t('ref.s3', { n: r.bonus }))}</li></ol>`;
+  $('rCopy').onclick = async () => {
+    try { await navigator.clipboard.writeText(r.link); }
+    catch(e){ const s = getSelection(), rg = document.createRange(); rg.selectNodeContents($('rLink')); s.removeAllRanges(); s.addRange(rg); try { document.execCommand('copy'); } catch(_){} }
+    $('rCopy').textContent = t('ref.copied'); haptic('sel');
+  };
+  $('rShare').onclick = () => {
+    const u = 'https://t.me/share/url?url=' + encodeURIComponent(r.link) + '&text=' + encodeURIComponent(t('ref.shareText', { n: r.bonus }));
+    try { TG && TG.openTelegramLink ? TG.openTelegramLink(u) : window.open(u, '_blank'); } catch(e){ location.href = u; }
+  };
+}
 
 // ══════════════════════════════════════════════════════════
 //  SUHBATLAR
@@ -2133,6 +2321,8 @@ $('bBackCab').onclick = backToCab;
   // Telegram'dagi "yangi ariza" xabarining "Ko'rish" tugmasi: ?apps=<vakansiya>
   const APPS = new URLSearchParams(location.search).get('apps');
   if (APPS) pickTab('tAP');                     // Arizalar bo'limi
+  // Bot "kredit kam qoldi" xabarining tugmasi: ?open=plans
+  if (new URLSearchParams(location.search).get('open') === 'plans') showPlans();
 })();
 </script>
 </body>

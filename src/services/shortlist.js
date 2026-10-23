@@ -231,6 +231,9 @@ async function reveal({ agencyId, shortlistId, candidateId, appBase = '', viaApp
 
   await notifyCandidate({ cand, clientName: client && client.name, appBase, viaApplication });
   await syncKanban(agencyId, candidateId, 'revealed');
+  // Kredit kam qoldi — tarif taklifi (davrda bir marta)
+  await require('./billing').lowBalance({ agencyId, clientId: claimed.clientId, balance, appBase })
+    .catch(e => console.error('[SL] kam balans:', e.message));
 
   return { already: false, shortlist: claimed, balance, candidate: cand, prevState };
 }

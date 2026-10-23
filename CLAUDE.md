@@ -465,6 +465,26 @@ boshqa hech narsa o'zgarmadi). Jonli: fayllar, prod anketalari, hh kartasida
 blok. **Telegramda nomzod sifatida HALI TO'LDIRILMAGAN.** Eski anketa
 nomzodlarida (oldin to'ldirganlar) workHistory yo'q.
 
+**ANKETA C VARIANT + TALABA + NOMZOD KABINETI TUZATISHLARI** (2026-10-23,
+`4addf87`..`6689dea`): ish tajribasi ekrani — REZYUME KARTALARI (Anas uchta
+variantdan C'ni tanladi): bo'sh holatda "Ish joyi qo'shish" (pastki tugma) va
+"Hali tajribam yo'q" havolasi; qo'shish/tahrir pastdan oynada 3 bosqich (joy ->
+lavozim (emoji) -> muddat), matn bosqichida oyna butun ekran (iOS'da
+klaviatura ko'tarish kodi oynani tepaga chiqarib yuborardi — olib tashlandi).
+"Talabamisiz?" (study: Kunduzgi/Kechki ta'lim/Masofaviy/Yo'q) shablonda smena
+o'rnida, `STUDY_SHIFT` bilan smena javobdan yoziladi; shift `legacyQuestions`da.
+**Prod anketalarida smena HALI almashtirilmagan** (panel sessiyasi tugagan edi).
+`Candidate.experienceMonths` — 0 yil, lekin 6–12 oy ishlagan "Tajribasiz" bo'lib
+chiqardi (mijoz kartasi, profil); eski anketa nomzodlari server ishga tushganda
+`services/migrations.js` bilan to'ldiriladi. Panel kartasi: anketa nomzodida
+rezyume maydonlari (email, ko'nikma, fayl) yo'q — "Anketa javoblari" rawText'dan
+(`ankAnswers`, standart savollarga qisqa nom). Nomzod kabineti: Tajriba
+(`expText`), Smena yozuvi (xom kalit emas), "O'zingiz haqingizda" anketa tizim
+matnini ko'rsatmaydi (`autoSummary`), ishlar ro'yxatida qidiruv va filtr
+(Hammasi / Sizga mos / lavozim), pastki menyuda o'qilmaganlar SONI (ikkala
+Mini App), qadalgan "TalentHub" chatida o'qilmaganlar (`Candidate.supportSeenAt`,
+`chat.supportUnread`).
+
 **ADMIN TEST REJIMI — DEPLOY QILINDI** (2026-10-23, `0252539`..`126903c`):
 botda `/test` (faqat agentlik admin chati — `Restaurant.telegram.adminChatId`):
 👔 Mijoz · 👤 Nomzod · 🛠 Admin · 🔄 Anketani qaytadan (callback `tm:`).

@@ -6,7 +6,7 @@
 <title>TalentHub — Anketa</title>
 <link rel="stylesheet" href="/css/th.css?v=2">  <!-- dizayn tizimi: ranglar, kunduz/tun -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="/js/th-i18n.js?v=14"></script>
+<script src="/js/th-i18n.js?v=15"></script>
 <style>
 /* Ranglar — dizayn tizimidan (css/th.css), miniapp/profil bilan bir xil;
    kunduz/tun Telegram'dan (applyTheme). */
@@ -107,6 +107,7 @@ textarea.in{min-height:110px;resize:vertical;line-height:1.5}
 .sh-h{font-size:14px;color:var(--muted);margin-top:5px}
 .sh-in{margin-top:14px}
 .sh-list{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+.sh-list.ic .opt i{display:none}          /* lavozimlar: emoji bor, doiracha ortiqcha */
 .sh-del{display:block;margin:12px auto 0;color:var(--danger)}
 
 /* Pastki tugma */
@@ -388,7 +389,7 @@ function drawWork(){
   if (!v.length) {
     $('wk').innerHTML = `<div class="w-empty">
       <div class="w-ic">&#128188;</div>
-      <div class="w-et">${esc(t('ank.w.cardsHint'))}</div>
+      <div class="w-et">${esc(t('ank.w.emptyT'))}</div>
       <button class="lnk" id="wNone">${esc(t('ank.w.noneLink'))}</button></div>`;
     $('wNone').onclick = () => { draft.value = 'none'; haptic(); drawWork(); setTimeout(() => save(q), 200); };
     bar(t('ank.w.addFirst'), () => openEditor(-1));
@@ -464,7 +465,7 @@ function openEditor(i){
       const cur = isR ? w.role : w.dur;
       body = `<div class="sh-q">${esc(t(isR ? 'ank.w.qRole' : 'ank.w.dur'))}</div>
         <div class="sh-h">${esc(isR ? w.place : t('ank.w.durHint'))}</div>
-        <div class="sh-list">${opts.map(([k, l]) => `<button class="opt ${k === cur ? 'on' : ''}" data-k="${esc(k)}"><i></i>${esc(l)}</button>`).join('')}</div>`;
+        <div class="sh-list ${isR ? 'ic' : ''}">${opts.map(([k, l]) => `<button class="opt ${k === cur ? 'on' : ''}" data-k="${esc(k)}"><i></i>${esc(l)}</button>`).join('')}</div>`;
     }
     sh.innerHTML = head + body;
     sh.querySelector('.sh-x').onclick = close;

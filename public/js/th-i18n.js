@@ -482,6 +482,7 @@
       // Ish tajribasi ekrani (anketa savoli turi 'work'): rezyume kartalari,
       // qo'shish pastdan oynada (joy -> lavozim -> muddat)
       'ank.w.cardsHint': 'Ish beruvchi aynan shu kartalarni ko\'radi',
+      'ank.w.emptyT': 'Ish joyini qo\'shing — yarim daqiqa vaqt oladi',
       'ank.w.addFirst': 'Ish joyi qo\'shish',
       'ank.w.add': 'Yana ish joyi qo\'shish',
       'ank.w.noneLink': 'Hali tajribam yo\'q',
@@ -964,6 +965,7 @@
       'ank.sec.me': 'О вас',
       'ank.sec.extra': 'Дополнительно',
       'ank.w.cardsHint': 'Работодатель видит именно эти карточки',
+      'ank.w.emptyT': 'Добавьте место работы — это полминуты',
       'ank.w.addFirst': 'Добавить место работы',
       'ank.w.add': 'Добавить ещё место работы',
       'ank.w.noneLink': 'У меня пока нет опыта',

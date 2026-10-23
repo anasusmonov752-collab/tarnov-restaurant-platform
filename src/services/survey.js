@@ -71,16 +71,13 @@ function template() {
     { id: 'role', type: 'choice', text: { uz: 'Qaysi lavozimda ishlamoqchisiz?', ru: 'На какую должность вы претендуете?' },
       hint: { uz: 'Bir nechtasi qiziq bo\'lsa — asosiysini tanlang.', ru: 'Если интересно несколько — выберите основную.' },
       options: ROLES.map(r => o(r.key, I18N.t('uz', 'role.' + r.key), I18N.t('ru', 'role.' + r.key))) },
-    { id: 'experience', type: 'choice', text: { uz: 'Restoran sohasida qancha tajribangiz bor?', ru: 'Какой у вас опыт в ресторанной сфере?' },
-      hint: { uz: 'Har qanday lavozim hisobga olinadi: ofitsiant, xostess, oshpaz, kassir va boshqalar.',
-              ru: 'Учитывается любая должность: официант, хостес, повар, кассир и другие.' },
-      options: [o('none', 'Tajribam yo\'q', 'Нет опыта'), o('lt1', '1 yilgacha', 'До 1 года'),
-                o('y1_2', '1–2 yil', '1–2 года'), o('y3_5', '3–5 yil', '3–5 лет'), o('y5', '5 yildan ortiq', 'Более 5 лет')] },
-    // Ish tajribasi — tuzilgan (joy, lavozim, oy/yil, vazifalar), erkin matn
-    // emas: ish beruvchi "qayerda, kim bo'lib, qancha" ni ko'rishi va panel
-    // tajriba bo'yicha saralashi kerak (2026-10-23, Anas: "rezyumeda hech
-    // narsa yo'q, filtr qilib bo'lmaydi"). Javob -> Candidate.workHistory.
-    { id: 'lastJob', type: 'work', showIf: { q: 'experience', in: ['lt1', 'y1_2', 'y3_5', 'y5'] },
+    // Ish tajribasi — har ish joyi: joy, lavozim, muddat oralig'i; tepada
+    // "Tajribam yo'q". Erkin matn emas: ish beruvchi "qayerda, kim bo'lib,
+    // qancha" ni ko'rishi, panel tajriba bo'yicha saralashi kerak (2026-10-23,
+    // Anas: "rezyumeda hech narsa yo'q, filtr qilib bo'lmaydi"). Alohida
+    // "Qancha tajribangiz bor?" savoli o'rnini bosadi (jami yil muddatlardan).
+    // Javob -> Candidate.workHistory, experienceYears.
+    { id: 'lastJob', type: 'work',
       text: { uz: 'Qayerda ishlagansiz?', ru: 'Где вы работали?' },
       hint: { uz: 'Oxirgi ish joyingizdan boshlang. Ish beruvchi tajribangizni aynan shu yerdan ko\'radi.',
               ru: 'Начните с последнего места работы. Работодатель смотрит опыт именно здесь.' } },
@@ -177,6 +174,20 @@ function template() {
   ].map(q => Object.assign({ required: true, hint: { uz: '', ru: '' }, options: [], showIf: { q: '', in: [] } }, q));
 }
 
+// Shablondan chiqqan, lekin eski anketalarda turgan standart savollar —
+// katalog (tur, kalitlar) shulardan ham olinadi; konstruktorda qaytarish mumkin.
+// experience: "Qayerda ishlagansiz?" (lastJob) uni o'z ichiga oldi (2026-10-23).
+function legacyQuestions() {
+  return [
+    { id: 'experience', type: 'choice', text: { uz: 'Restoran sohasida qancha tajribangiz bor?', ru: 'Какой у вас опыт в ресторанной сфере?' },
+      hint: { uz: 'Har qanday lavozim hisobga olinadi: ofitsiant, xostess, oshpaz, kassir va boshqalar.',
+              ru: 'Учитывается любая должность: официант, хостес, повар, кассир и другие.' },
+      options: [o('none', 'Tajribam yo\'q', 'Нет опыта'), o('lt1', '1 yilgacha', 'До 1 года'),
+                o('y1_2', '1–2 yil', '1–2 года'), o('y3_5', '3–5 yil', '3–5 лет'), o('y5', '5 yildan ortiq', 'Более 5 лет')] }
+  ].map(q => Object.assign({ required: true, hint: { uz: '', ru: '' }, options: [], showIf: { q: '', in: [] } }, q));
+}
+const standardQuestions = () => template().concat(legacyQuestions());
+
 // ── Konstruktor qoidalari ──
 // Standart savollar nomzod maydoniga bog'langan (toFields id va kalit
 // bo'yicha o'qiydi). Konstruktor ularning MATNINI, tartibini, majburiyligini
@@ -257,7 +268,7 @@ const CUSTOM_TYPES = ['text', 'longtext', 'choice'];
 /** Panel uchun: standart savollar (shablon matni bilan) va ularning qoidalari. */
 function catalogInfo() {
   // Shablondagi lavozimga xos savollar (c_...) — o'z savoli, katalogda emas
-  return template().filter(q => CATALOG[q.id]).map(q => Object.assign({}, q, CATALOG[q.id]));
+  return standardQuestions().filter(q => CATALOG[q.id]).map(q => Object.assign({}, q, CATALOG[q.id]));
 }
 
 const shortId = () => [...crypto.randomBytes(4)].map(x => CODE_ABC[x % CODE_ABC.length]).join('').toLowerCase();
@@ -270,7 +281,7 @@ function cleanQuestions(input) {
   const fail = m => { throw Object.assign(new Error(m), { status: 400 }); };
   if (!Array.isArray(input) || !input.length) fail('Savollar ro\'yxati bo\'sh');
   if (input.length > 40) fail('Ko\'pi bilan 40 ta savol');
-  const tpl = Object.fromEntries(template().map(q => [q.id, q]));
+  const tpl = Object.fromEntries(standardQuestions().map(q => [q.id, q]));
   const str = (s, max) => String(s == null ? '' : s).trim().slice(0, max);
   const seen = new Set();
 
@@ -506,48 +517,40 @@ function checkAnswer(q, value) {
   }
 }
 
-// Ish tajribasi: 1–3 ish joyi { place, role, from:'YYYY-MM', to:'YYYY-MM'|'now',
-// duties:[kalit], note }. Vazifa kalitlari lavozim ro'yxatidan (th-i18n DUTIES).
+// Ish tajribasi: 'none' (tajribasi yo'q) yoki 1–3 ish joyi { place, role, dur }.
+// Ataylab sodda (Anas, 2026-10-23): ko'k yoqa nomzodi oy/yil va vazifalarni
+// to'ldirmaydi — joy, lavozim va muddat oralig'i ish beruvchiga yetarli.
 const MAX_JOBS = 3;
 function checkWork(q, value, err) {
+  if (value === 'none') return 'none';
   const list = Array.isArray(value) ? value : [];
   if (!list.length) { if (q.required) err('required'); return ''; }
   if (list.length > MAX_JOBS) err('work');
-  const nowIdx = I18N.monthIdx('now');
-  const okMonth = s => /^\d{4}-(0[1-9]|1[0-2])$/.test(String(s || '')) && +String(s).slice(0, 4) >= 1970
-    && I18N.monthIdx(s) <= nowIdx;
   return list.map(raw => {
     const w = raw || {};
     const place = String(w.place || '').trim().replace(/\s+/g, ' ');
     const role = String(w.role || '');
-    if (place.length < 2 || place.length > 80 || !I18N.WORK_ROLES.includes(role) || !okMonth(w.from)) err('work');
-    const to = w.to === 'now' ? 'now' : String(w.to || '');
-    if (to !== 'now' && (!okMonth(to) || I18N.monthIdx(to) < I18N.monthIdx(w.from))) err('workDates');
-    const allowed = I18N.DUTIES[role] || [];
-    const duties = [...new Set((Array.isArray(w.duties) ? w.duties : []).map(String))].filter(k => allowed.includes(k));
-    const note = String(w.note || '').trim().replace(/\s+/g, ' ').slice(0, 120);
-    // "Boshqa" lavozim — nomini nomzod yozadi (izoh maydonida)
-    if (role === 'boshqa' && note.length < 2) err('work');
-    return { place, role, from: w.from, to, duties, note };
+    const dur = String(w.dur || '');
+    // "Boshqa" lavozim — nomini nomzod yozadi
+    const other = role === 'boshqa' ? String(w.other || '').trim().replace(/\s+/g, ' ').slice(0, 60) : '';
+    if (place.length < 2 || place.length > 80 || !I18N.WORK_ROLES.includes(role) || !I18N.WORK_DURS.includes(dur)
+        || (role === 'boshqa' && other.length < 2)) err('work');
+    return { place, role, other, dur };
   });
 }
 // Ish joylari -> Candidate.workHistory (panel, Mini App rezyumesi, kanban
 // shu maydonni ko'rsatadi; hh rezyumesidagi kabi o'zbekcha matn)
-const ymText = s => (s === 'now' ? 'hozir' : `${String(s).slice(5, 7)}.${String(s).slice(0, 4)}`);
 function workToHistory(list) {
-  const sorted = list.slice().sort((a, b) => I18N.monthIdx(b.to) - I18N.monthIdx(a.to) || I18N.monthIdx(b.from) - I18N.monthIdx(a.from));
-  return sorted.map(w => {
-    const other = w.role === 'boshqa';
-    return {
-      company: w.place,
-      position: other ? w.note : I18N.t('uz', 'role.' + w.role),
-      period: `${ymText(w.from)} – ${ymText(w.to)} (${I18N.durText('uz', I18N.workMonths([w]))})`,
-      description: [w.duties.map(k => I18N.t('uz', 'duty.' + k)).join(', '), other ? '' : w.note].filter(Boolean).join('. ')
-    };
-  });
+  return list.map(w => ({
+    company: w.place,
+    position: w.role === 'boshqa' ? w.other : I18N.t('uz', 'role.' + w.role),
+    period: I18N.t('uz', 'ank.w.dur.' + w.dur),
+    description: ''
+  }));
 }
 function workText(list) {
-  return workToHistory(list).map(h => `${h.position}, ${h.company}, ${h.period}${h.description ? ': ' + h.description : ''}`).join('; ');
+  if (list === 'none') return I18N.t('uz', 'ank.w.none');
+  return workToHistory(list).map(h => `${h.position}, ${h.company}, ${h.period}`).join('; ');
 }
 
 function ageOf(d) {
@@ -592,15 +595,18 @@ function toFields(answers, survey, presetRole) {
   if (a.gender) f.gender = a.gender;
   if (a.location) f.location = a.location === 'viloyat' ? opt('location', 'viloyat') : 'Toshkent, ' + opt('location', a.location);
   if (a.experience) f.experienceYears = EXP_YEARS[a.experience] || 0;
-  if (Array.isArray(a.lastJob) && a.lastJob.length) {
-    // Haqiqiy muddatlar tanlangan oraliqdan ko'p bo'lsa — haqiqiysi
-    // ("1–2 yil" tanlab, 4 yillik ish yozgan odam 4 yil deb topilsin)
-    const months = I18N.workMonths(a.lastJob);
+  if (a.lastJob === 'none') {
+    f.experienceYears = 0;
+    f.experienceSummary = 'Tajribasiz';
+  } else if (Array.isArray(a.lastJob) && a.lastJob.length) {
+    // Jami yil — muddatlar oralig'ining pastki chegarasi yig'indisi
+    // (oshirib ko'rsatilmasin); eski tajriba savoli ham bo'lsa — kattasi
+    const months = a.lastJob.reduce((s, w) => s + (I18N.DUR_MONTHS[w.dur] || 0), 0);
     f.experienceYears = Math.max(f.experienceYears || 0, Math.floor(months / 12));
     f.workHistory = workToHistory(a.lastJob);
     const h = f.workHistory[0];
     f.experienceSummary = `${h.position} — ${h.company}, ${h.period}` +
-      (f.workHistory.length > 1 ? `; jami ${I18N.durText('uz', months)}` : '');
+      (f.workHistory.length > 1 ? `; yana ${f.workHistory.length - 1} ta ish joyi` : '');
   } else if (typeof a.lastJob === 'string' && a.lastJob) f.experienceSummary = a.lastJob;   // eski matnli savol
   // Ish joyi yozilmagan — tanlangan javob ("1 yilgacha" 0 yil, lekin tajribasiz emas)
   else if (a.experience) f.experienceSummary = opt('experience', a.experience);
@@ -627,7 +633,7 @@ function toFields(answers, survey, presetRole) {
   // Kalit so'z qidiruvi uchun to'liq matn (rezyumedagi rawText o'rnida)
   f.rawText = shown
     .filter(q => a[q.id] != null && a[q.id] !== '' && !['photo', 'consent'].includes(q.type))
-    .map(q => `${q.text.uz}: ${q.type === 'choice' ? opt(q.id, a[q.id]) : q.type === 'work' && Array.isArray(a[q.id]) ? workText(a[q.id]) : a[q.id]}`)
+    .map(q => `${q.text.uz}: ${q.type === 'choice' ? opt(q.id, a[q.id]) : q.type === 'work' && (Array.isArray(a[q.id]) || a[q.id] === 'none') ? workText(a[q.id]) : a[q.id]}`)
     .join('\n');
   return f;
 }

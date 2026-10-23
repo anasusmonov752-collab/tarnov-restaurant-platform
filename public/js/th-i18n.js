@@ -480,63 +480,23 @@
       'ank.sec.me': 'Siz haqingizda',
       'ank.sec.extra': 'Qo\'shimcha',
       // Ish tajribasi ekrani (anketa savoli turi 'work')
+      'ank.w.none': 'Tajribam yo\'q',
+      'ank.w.noneHint': 'Hech qayerda ishlamagan bo\'lsangiz — shuni bosing',
       'ank.w.n': '{n}-ish joyi',
       'ank.w.place': 'Ish joyi',
       'ank.w.placePh': 'Masalan: Rayhon restorani',
       'ank.w.role': 'Lavozim',
-      'ank.w.from': 'Qachondan',
-      'ank.w.to': 'Qachongacha',
-      'ank.w.month': 'Oy',
-      'ank.w.year': 'Yil',
-      'ank.w.now': 'Hozir ham shu yerda ishlayman',
-      'ank.w.duties': 'Nima ishlar qilgansiz?',
-      'ank.w.dutiesHint': 'Bir nechtasini belgilang',
-      'ank.w.note': 'Qo\'shimcha (ixtiyoriy)',
-      'ank.w.notePh': 'Masalan: 60 o\'rinli zal, banketlar',
       'ank.w.otherPh': 'Lavozimingizni yozing',
+      'ank.w.roleOther': 'Boshqa',
+      'ank.w.dur': 'Qancha ishlagansiz?',
+      'ank.w.dur.lt6': '6 oygacha',
+      'ank.w.dur.m6_12': '6 oy – 1 yil',
+      'ank.w.dur.y1_3': '1–3 yil',
+      'ank.w.dur.y3_5': '3–5 yil',
+      'ank.w.dur.y5': '5 yildan ko\'p',
       'ank.w.add': 'Yana ish joyi qo\'shish',
       'ank.w.remove': 'Olib tashlash',
-      'ank.w.total': 'Jami tajriba: {d}',
-      'ank.w.y': '{n} yil',
-      'ank.w.m': '{n} oy',
-      'ank.w.lt1m': '1 oydan kam',
-      'ank.w.nowShort': 'hozir',
-      'ank.w.months': 'Yan,Fev,Mar,Apr,May,Iyun,Iyul,Avg,Sen,Okt,Noy,Dek',
-      'ank.w.roleOther': 'Boshqa',
-      'ank.err.work': 'Ish joyi, lavozim va qachondan ishlaganingizni to\'ldiring',
-      'ank.err.workDates': 'Tugagan sana boshlangan sanadan keyin bo\'lsin',
-      'duty.menu': 'Menyu bo\'yicha maslahat',
-      'duty.order': 'Buyurtma qabul qilish',
-      'duty.serve': 'Taom va ichimlik tortish',
-      'duty.table': 'Stolni tayyorlash va yig\'ish',
-      'duty.bill': 'Hisob-kitob, to\'lov qabul qilish',
-      'duty.upsell': 'Qo\'shimcha sotuv',
-      'duty.banket': 'Banket va tadbirlar',
-      'duty.greet': 'Mehmonlarni kutib olish',
-      'duty.seat': 'Mehmonlarni joylashtirish',
-      'duty.booking': 'Stol bron qilish (telefon)',
-      'duty.hall': 'Zal bandligini boshqarish',
-      'duty.complaint': 'Shikoyat va savollar bilan ishlash',
-      'duty.hot': 'Issiq sex',
-      'duty.cold': 'Sovuq sex',
-      'duty.national': 'Milliy taomlar',
-      'duty.europe': 'Yevropa taomlari',
-      'duty.grill': 'Mangal, shashlik',
-      'duty.prep': 'Zagotovka (tayyorlov)',
-      'duty.pastry': 'Qandolat, non',
-      'duty.stock': 'Mahsulot qabul qilish va hisobi',
-      'duty.drinks': 'Ichimliklar tayyorlash',
-      'duty.coffee': 'Qahva (barista)',
-      'duty.cocktail': 'Kokteyllar',
-      'duty.inventory': 'Bar inventarizatsiyasi',
-      'duty.pos': 'Kassa dasturi (iiko, R-Keeper)',
-      'duty.cashclose': 'Kassani yopish, hisobot',
-      'duty.delivery': 'Yetkazib berish buyurtmalari',
-      'duty.calls': 'Qo\'ng\'iroqlarni qabul qilish',
-      'duty.staff': 'Xodimlarni boshqarish',
-      'duty.schedule': 'Smena jadvalini tuzish',
-      'duty.train': 'Xodim tanlash va o\'qitish',
-      'duty.report': 'Savdo va hisobot nazorati',
+      'ank.err.work': 'Ish joyi, lavozim va muddatni to\'ldiring',
       // "Qachondan ish boshlay olasiz" (Candidate.startWhen)
       'start.now': 'Darhol', 'start.w1': '1 hafta ichida', 'start.w2': '2 hafta ichida', 'start.m1': '1 oydan keyin',
       'rz.start': 'Ishga chiqa oladi',
@@ -995,63 +955,23 @@
       'ank.sec.job': 'О работе',
       'ank.sec.me': 'О вас',
       'ank.sec.extra': 'Дополнительно',
+      'ank.w.none': 'Нет опыта',
+      'ank.w.noneHint': 'Если вы ещё нигде не работали — нажмите сюда',
       'ank.w.n': 'Место работы {n}',
       'ank.w.place': 'Место работы',
       'ank.w.placePh': 'Например: ресторан «Райхон»',
       'ank.w.role': 'Должность',
-      'ank.w.from': 'С какого времени',
-      'ank.w.to': 'По какое время',
-      'ank.w.month': 'Месяц',
-      'ank.w.year': 'Год',
-      'ank.w.now': 'Работаю здесь сейчас',
-      'ank.w.duties': 'Чем вы занимались?',
-      'ank.w.dutiesHint': 'Отметьте несколько',
-      'ank.w.note': 'Дополнительно (необязательно)',
-      'ank.w.notePh': 'Например: зал на 60 мест, банкеты',
       'ank.w.otherPh': 'Напишите вашу должность',
+      'ank.w.roleOther': 'Другое',
+      'ank.w.dur': 'Сколько вы там работали?',
+      'ank.w.dur.lt6': 'До 6 месяцев',
+      'ank.w.dur.m6_12': '6 месяцев – 1 год',
+      'ank.w.dur.y1_3': '1–3 года',
+      'ank.w.dur.y3_5': '3–5 лет',
+      'ank.w.dur.y5': 'Более 5 лет',
       'ank.w.add': 'Добавить ещё место работы',
       'ank.w.remove': 'Удалить',
-      'ank.w.total': 'Общий опыт: {d}',
-      'ank.w.y': ['{n} год', '{n} года', '{n} лет'],
-      'ank.w.m': ['{n} месяц', '{n} месяца', '{n} месяцев'],
-      'ank.w.lt1m': 'меньше месяца',
-      'ank.w.nowShort': 'сейчас',
-      'ank.w.months': 'Янв,Фев,Мар,Апр,Май,Июн,Июл,Авг,Сен,Окт,Ноя,Дек',
-      'ank.w.roleOther': 'Другое',
-      'ank.err.work': 'Укажите место работы, должность и с какого времени работали',
-      'ank.err.workDates': 'Дата окончания должна быть позже даты начала',
-      'duty.menu': 'Консультация по меню',
-      'duty.order': 'Приём заказов',
-      'duty.serve': 'Подача блюд и напитков',
-      'duty.table': 'Сервировка и уборка столов',
-      'duty.bill': 'Расчёт гостей',
-      'duty.upsell': 'Допродажи',
-      'duty.banket': 'Банкеты и мероприятия',
-      'duty.greet': 'Встреча гостей',
-      'duty.seat': 'Рассадка гостей',
-      'duty.booking': 'Бронирование столов (телефон)',
-      'duty.hall': 'Управление загрузкой зала',
-      'duty.complaint': 'Работа с жалобами и вопросами',
-      'duty.hot': 'Горячий цех',
-      'duty.cold': 'Холодный цех',
-      'duty.national': 'Национальная кухня',
-      'duty.europe': 'Европейская кухня',
-      'duty.grill': 'Мангал, шашлык',
-      'duty.prep': 'Заготовки',
-      'duty.pastry': 'Кондитерка, выпечка',
-      'duty.stock': 'Приёмка и учёт продуктов',
-      'duty.drinks': 'Приготовление напитков',
-      'duty.coffee': 'Кофе (бариста)',
-      'duty.cocktail': 'Коктейли',
-      'duty.inventory': 'Инвентаризация бара',
-      'duty.pos': 'Кассовая программа (iiko, R-Keeper)',
-      'duty.cashclose': 'Закрытие кассы, отчёт',
-      'duty.delivery': 'Заказы на доставку',
-      'duty.calls': 'Приём звонков',
-      'duty.staff': 'Управление персоналом',
-      'duty.schedule': 'Составление графика смен',
-      'duty.train': 'Подбор и обучение персонала',
-      'duty.report': 'Контроль продаж и отчётность',
+      'ank.err.work': 'Укажите место работы, должность и срок',
       'start.now': 'Сразу', 'start.w1': 'В течение недели', 'start.w2': 'В течение 2 недель', 'start.m1': 'Через месяц',
       'rz.start': 'Готов(а) выйти',
       'card.now': 'Может выйти сразу',
@@ -1177,45 +1097,14 @@
   }
 
   // ── Ish tajribasi (anketa savoli 'work') ──
-  // Lavozim -> nomzod belgilaydigan vazifalar. Anketa (anketa.html) shu
-  // ro'yxatni ko'rsatadi, server (survey.checkAnswer) shu bo'yicha tekshiradi.
+  // Har ish joyi: joy, lavozim, muddat (oraliq). Anketa (anketa.html) shu
+  // ro'yxatlarni ko'rsatadi, server (survey.checkAnswer) shu bo'yicha tekshiradi.
+  // DUR_MONTHS — oraliqning PASTKI chegarasi: jami tajriba oshirib
+  // ko'rsatilmasin ("1–3 yil" ishlagan odam filtrda kamida 1 yil).
   const WORK_ROLES = ['ofitsiant', 'xostess', 'oshpaz', 'barmen', 'kassir', 'menejer', 'operator', 'boshqa'];
-  const DUTIES = {
-    ofitsiant: ['menu', 'order', 'serve', 'table', 'bill', 'upsell', 'banket'],
-    xostess:   ['greet', 'seat', 'booking', 'hall', 'complaint', 'calls'],
-    oshpaz:    ['hot', 'cold', 'national', 'europe', 'grill', 'prep', 'pastry', 'stock'],
-    barmen:    ['drinks', 'coffee', 'cocktail', 'serve', 'bill', 'inventory'],
-    kassir:    ['bill', 'pos', 'cashclose', 'delivery', 'calls'],
-    menejer:   ['staff', 'schedule', 'train', 'complaint', 'report', 'stock'],
-    operator:  ['calls', 'delivery', 'booking', 'complaint'],
-    boshqa:    []
-  };
-  // 'YYYY-MM' -> oy raqami; 'now' — joriy oy
-  function monthIdx(s, now) {
-    if (s === 'now') { const d = now || new Date(); return d.getFullYear() * 12 + d.getMonth(); }
-    const m = /^(\d{4})-(\d{2})$/.exec(String(s || ''));
-    return m ? (+m[1]) * 12 + (+m[2] - 1) : NaN;
-  }
-  // Ish joylari bo'yicha jami oylar: muddatlar ustma-ust tushsa bir marta
-  // sanaladi (ikki joyda bir vaqtda ishlagan odam tajribasi ikki barobar emas).
-  // Ikki cheti ham hisobga olinadi: 2023-03 .. 2025-05 = 27 oy.
-  function workMonths(list, now) {
-    const iv = (list || []).map(w => [monthIdx(w.from, now), monthIdx(w.to, now)])
-      .filter(([a, b]) => !isNaN(a) && !isNaN(b) && b >= a).sort((x, y) => x[0] - y[0]);
-    let sum = 0, cur = null;
-    for (const [a, b] of iv) {
-      if (cur && a <= cur[1] + 1) cur[1] = Math.max(cur[1], b);
-      else { if (cur) sum += cur[1] - cur[0] + 1; cur = [a, b]; }
-    }
-    if (cur) sum += cur[1] - cur[0] + 1;
-    return sum;
-  }
-  function durText(lang, months) {
-    if (!(months > 0)) return tr(lang, 'ank.w.lt1m');
-    const y = Math.floor(months / 12), m = months % 12;
-    return [y && tr(lang, 'ank.w.y', { n: y }), m && tr(lang, 'ank.w.m', { n: m })].filter(Boolean).join(' ');
-  }
+  const WORK_DURS = ['lt6', 'm6_12', 'y1_3', 'y3_5', 'y5'];
+  const DUR_MONTHS = { lt6: 0, m6_12: 6, y1_3: 12, y3_5: 36, y5: 60 };
 
   return { LANGS, D, t: tr, ruForm, fromTelegram, errText, vacTitle, resolve, perksText, PERK_KEYS,
-           WORK_ROLES, DUTIES, monthIdx, workMonths, durText };
+           WORK_ROLES, WORK_DURS, DUR_MONTHS };
 });

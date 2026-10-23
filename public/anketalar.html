@@ -290,7 +290,7 @@ const CAT = id => CATALOG.find(c => c.id === id);
 const roleL = k => (ROLES.find(r => r.key === k) || {}).label || k;
 const SEC_L = { job: 'Ish haqida', me: 'Siz haqingizda', extra: 'Qo\'shimcha', end: 'Yakun' };
 const SUB = { text: 'Qisqa matn', longtext: 'Uzun matn', date: 'Sana', contact: 'Telefon · Telegram orqali tasdiqlanadi',
-              photo: 'Rasm', consent: 'Rozilik · doim oxirida', work: 'Ish tajribasi · joy, lavozim, muddat, vazifalar' };
+              photo: 'Rasm', consent: 'Rozilik · doim oxirida', work: 'Ish tajribasi · joy, lavozim, muddat yoki «Tajribam yo\'q»' };
 // Yangi savol/variant kaliti shu yerda beriladi (server qabul qiladigan
 // shaklda) — saqlanmagan savolga ham shart qo'yish mumkin bo'lsin
 const rnd = n => Array.from(crypto.getRandomValues(new Uint8Array(n)), x => 'abcdefghjkmnpqrstuvwxyz23456789'[x % 31]).join('');
@@ -807,11 +807,11 @@ function drawPreview(){
   } else if (q.type === 'work') {
     // anketa.html'dagi ish joyi bloki (qisqartirilgan ko'rinish)
     const ch = a => a.map(x => `<span style="display:inline-block;border:1px solid var(--line);border-radius:99px;padding:3px 8px;margin:0 4px 4px 0;font-size:11px">${x}</span>`).join('');
-    body = `<div style="margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:10px">
+    body = `<div class="ph-o" style="margin-top:12px"><i></i>${RU ? 'Нет опыта' : 'Tajribam yo\'q'}</div>
+      <div style="margin-top:8px;border:1px solid var(--line);border-radius:12px;padding:10px">
       <div class="ph-in" style="margin-top:0">${RU ? 'Место работы' : 'Ish joyi'}</div>
       <div style="margin-top:8px">${ch(RU ? ['Официант', 'Хостес', 'Повар', '…'] : ['Ofitsiant', 'Xostess', 'Oshpaz', '…'])}</div>
-      <div style="display:flex;gap:6px;margin-top:4px"><div class="ph-in" style="flex:1;margin-top:0">${RU ? 'с' : 'dan'}</div><div class="ph-in" style="flex:1;margin-top:0">${RU ? 'по' : 'gacha'}</div></div>
-      <div style="margin-top:8px">${ch(RU ? ['Приём заказов', 'Подача', '…'] : ['Buyurtma', 'Tortish', '…'])}</div>
+      <div style="margin-top:4px">${ch(RU ? ['До 6 мес', '1–3 года', '3–5 лет', '…'] : ['6 oygacha', '1–3 yil', '3–5 yil', '…'])}</div>
     </div><div style="color:var(--gold);font-weight:700;font-size:12.5px;margin-top:8px;text-align:center">+ ${RU ? 'Ещё место работы' : 'Yana ish joyi'}</div>`;
   } else {
     body = `<div class="ph-in" style="${q.type === 'longtext' ? 'height:80px' : ''}"></div>`;

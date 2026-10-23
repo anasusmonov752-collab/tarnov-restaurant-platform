@@ -534,6 +534,14 @@ async function startSurvey(msg, chatId, ank, appBase) {
   // Ish beruvchi akkaunti nomzod bo'la olmaydi (nomzod havolasi bilan bir xil qoida)
   const asClient = await Client.findOne({ tgChatId: chatId });
   if (asClient) {
+    // Agentlik admini (test rejimida emas — akkaunti mijozga ulangan): anketani
+    // sinamoqchi — "ish beruvchi" deb rad etish o'rniga yo'lni ko'rsatamiz
+    if (await testMode.testerAgency(chatId)) {
+      await tg.sendMessage(token, chatId,
+        `🧪 Akkauntingiz hozir «${asClient.name}» mijoziga ulangan — anketa nomzod uchun.\n\n` +
+        `Sinash uchun: /test → 👤 Nomzod (yoki 🔄 Anketani qaytadan), keyin havolani qayta bosing.`);
+      return;
+    }
     await tg.sendMessage(token, chatId, T(langOf(asClient, msg.from), 'bot.asCandidate', { name: asClient.name }));
     return;
   }

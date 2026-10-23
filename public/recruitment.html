@@ -672,8 +672,9 @@ function openCard(id){
   }).catch(() => {});
   const st = SMAP[c.status] || STAGES[0];
   const hist = [
-    { t:`${SRC[c.source]||c.source} dan qo'shildi`, d:c.createdAt },
-    c.aiParsed ? { t:'AI tahlil qilindi · moslik '+(c.fitScore||'—'), d:c.createdAt } : null,
+    { t:`Qo'shildi · ${SRC[c.source]||c.source}`, d:c.createdAt },
+    // Anketa nomzodi shablon bo'yicha tuzilgan (aiParsed:true), AI tahlil qilmagan
+    c.aiParsed && c.source !== 'anketa' ? { t:'AI tahlil qilindi · moslik '+(c.fitScore||'—'), d:c.createdAt } : null,
     c.statusChangedAt && c.status!=='new' ? { t:st.l+' bosqichiga o\'tkazildi', d:c.statusChangedAt } : null
   ].filter(Boolean);
 

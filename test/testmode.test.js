@@ -20,7 +20,7 @@ before(async () => {
   tm = require('../src/services/testMode');
   survey = require('../src/services/survey');
   const ag = await M.Restaurant.create({ name: 'TalentHub', category: 'agency', kind: 'agency',
-    adminEmail: 'th@test.local', adminPassword: 'x', telegram: { adminChatId: U } });
+    adminEmail: 'th@test.local', adminPassword: 'hash-123456', telegram: { adminChatId: U } });
   A = ag.id;
   // Test rejimidan oldin admin akkaunti haqiqiy (eski sinov) mijozga ulangan
   await M.Client.create({ id: 'c-real', agencyId: A, name: 'Sinov 2', status: 'active', tgChatId: U });

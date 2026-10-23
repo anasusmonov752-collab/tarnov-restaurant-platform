@@ -169,6 +169,8 @@ function buildQuery(criteria, restaurantId, skip) {
   // chiqmaydi — mijoz ularni tanlab, keyin "band ekan" deb eshitardi
   // (2026-10-20 auditda topildi). Yumshatish bu shartlarga tegmaydi.
   const q = { restaurantId, status: { $nin: ['rejected', 'hired'] }, jobStatus: { $ne: 'not_looking' } };
+  // Sinov nomzodi (admin test rejimi) faqat sinov mijozi qidiruvida chiqadi
+  if (!criteria.includeTest) q.isTest = { $ne: true };
   const and = [];
 
   if (criteria.role) q.role = criteria.role;

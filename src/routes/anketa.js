@@ -148,6 +148,7 @@ router.post('/:rid/submit', guard, asyncHandler(async (req, res) => {
   // Nomzod kabinetidagi ro'yxat qoidasi bilan bir xil (routes/candidate /vacancies).
   const fresh = new Date(Date.now() - vac.STALE_DAYS * 864e5);
   const vq = { agencyId: r.agencyId, status: 'open', listed: { $ne: false }, confirmedAt: { $gte: fresh } };
+  if (!r.isTest) vq.isTest = { $ne: true };               // sinov vakansiyasi — faqat sinov nomzodiga
   const [jobs, matches] = await Promise.all([
     Vacancy.countDocuments(vq),
     c.role && c.role !== 'boshqa' ? Vacancy.countDocuments(Object.assign({ role: c.role }, vq)) : 0

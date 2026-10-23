@@ -38,7 +38,7 @@ function quietNow(now = new Date()) {
 
 async function openJobs(agencyId) {
   const fresh = new Date(Date.now() - vac.STALE_DAYS * 864e5);
-  return Vacancy.countDocuments({ agencyId, status: 'open', listed: { $ne: false }, confirmedAt: { $gte: fresh } });
+  return Vacancy.countDocuments({ agencyId, status: 'open', listed: { $ne: false }, confirmedAt: { $gte: fresh }, isTest: { $ne: true } });
 }
 
 /** Kimga eslatma kerak — yubormasdan (panel/sinov uchun ham). */

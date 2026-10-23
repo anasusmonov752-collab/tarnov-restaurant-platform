@@ -446,7 +446,7 @@ function card(c){
       <div class="rc-main">
         <span class="rc-pos" data-open="${c.id}">${esc(c.desiredPosition || ROLES[c.role] || 'Nomzod')}</span>
         <div class="rc-meta">
-          ${esc(c.fullName||'Nomsiz')}${c.age && !hasAge(c.fullName) ? `, ${c.age} yosh` : ''}
+          ${esc(c.fullName||'Nomsiz')}${c.age && !hasAge(c.fullName) ? `, ${c.age} yosh` : ''}${c.isTest ? ' <span class="tag" style="background:#FFF4D6;color:#8A5A00">🧪 SINOV</span>' : ''}
           <span class="sep">•</span><span class="dim">${ank ? esc(CHANNEL_L[c.channel] || 'Anketa') : esc(SRC[c.source]||c.source||'')}</span>
           <span class="sep">•</span><span class="dim">${dayAgo(c.createdAt)} qo'shildi</span>
         </div>

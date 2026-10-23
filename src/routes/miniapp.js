@@ -509,6 +509,7 @@ function vacancyCriteria(v, excludeIds = []) {
   // EMPTY asosida: search() keywords/languages massiv bo'lishini kutadi
   return Object.assign({}, candidateSearch.EMPTY, {
     role: v.role,
+    includeTest: !!v.isTest,           // sinov mijozining vakansiyasi — sinov nomzodi ham chiqadi
     minExp: v.minExp || null,
     languages: v.languages || [],
     location: v.location || null,

@@ -23,6 +23,7 @@ const ApplicationSchema = new mongoose.Schema({
   // shortlisted - mijoz tanladi, Shortlist'ga o'tdi
   // rejected    - mijoz rad etdi
   state: { type: String, default: 'new' },
+  isTest: { type: Boolean, default: false },   // sinov nomzodining arizasi — sanoqlarga kirmaydi
 
   // Nomzodning qisqa xati (ixtiyoriy)
   message: { type: String, default: '' },

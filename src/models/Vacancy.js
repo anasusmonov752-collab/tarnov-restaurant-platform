@@ -54,6 +54,8 @@ const VacancySchema = new mongoose.Schema({
   verifiedAt:   { type: Date, default: null },
 
   status: { type: String, default: 'open' },    // open | paused | closed
+  // Sinov mijozining vakansiyasi — haqiqiy nomzodlarga ko'rinmaydi (pastdagi hook)
+  isTest: { type: Boolean, default: false },
 
   // Qayerdan paydo bo'lgan: manual = mijoz/agentlik qo'lda yozgan,
   // search = bot qidiruvidan tanlov qilinganda o'zi yaratilgan
@@ -82,5 +84,14 @@ VacancySchema.index({ agencyId: 1, id: 1 }, { unique: true });
 VacancySchema.index({ agencyId: 1, clientId: 1, createdAt: -1 });
 // Nomzodga ko'rsatiladigan ro'yxat uchun
 VacancySchema.index({ agencyId: 1, status: 1, role: 1, confirmedAt: -1 });
+
+// Vakansiya uch joyda yaratiladi (panel, Mini App formasi, avtomatik) —
+// "sinov mijozining vakansiyasi = sinov" qoidasi shu yerda, bir marta
+VacancySchema.pre('validate', async function () {
+  if (!this.isNew || !this.clientId || this.isTest) return;
+  const Client = require('./Client');
+  const c = await Client.findOne({ agencyId: this.agencyId, id: this.clientId }, 'isTest').lean();
+  if (c && c.isTest) this.isTest = true;
+});
 
 module.exports = mongoose.model('Vacancy', VacancySchema);

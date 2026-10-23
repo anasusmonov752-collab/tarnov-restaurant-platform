@@ -137,8 +137,22 @@ async function setClientState({ agencyId, shortlistId, clientId, candidateId, st
 // viaApplication — mijoz arizadan o'zi ochdi (services/applyReveal.js).
 // Oqim bir xil, faqat xabarlar matni boshqa: agentlik nomzod bilan
 // gaplashmagan, nomzod o'zi ariza bergan.
+// Sinov mijozi (admin test rejimi) faqat sinov nomzodining kontaktini ochadi:
+// aks holda haqiqiy odamga "kontaktingiz ochildi" boradi, ismi va telefoni
+// sinov uchun ochilib ketadi. Holat o'zgarishidan va kredit yechilishidan OLDIN.
+const TEST_REVEAL_ERR = 'Sinov rejimi: haqiqiy nomzodning kontakti ochilmaydi';
+async function guardTestReveal(agencyId, shortlistId, candidateId) {
+  const sl = await Shortlist.findOne({ agencyId, id: shortlistId }, 'clientId').lean();
+  if (!sl) return;
+  const cl = await Client.findOne({ agencyId, id: sl.clientId }, 'isTest').lean();
+  if (!cl || !cl.isTest) return;
+  const cand = await Candidate.findOne({ restaurantId: agencyId, id: candidateId }, 'isTest').lean();
+  if (!cand || !cand.isTest) throw Object.assign(new Error(TEST_REVEAL_ERR), { status: 400 });
+}
+
 async function reveal({ agencyId, shortlistId, candidateId, appBase = '', viaApplication = false }) {
   const now = new Date();
+  await guardTestReveal(agencyId, shortlistId, candidateId);
 
   // Oldingi holatni band qilishdan OLDIN o'qiymiz — kredit yetmay qolsa
   // aynan shu holatga qaytaramiz. Qattiq 'candidate_ok' yozsak, 'selected'

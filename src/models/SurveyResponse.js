@@ -30,6 +30,7 @@ const SurveyResponseSchema = new mongoose.Schema({
 
   step:        { type: String, default: '' },
   status:      { type: String, default: 'started' },   // started | done
+  isTest:      { type: Boolean, default: false },           // admin test rejimida boshlangan
   candidateId: { type: String, default: '' },
 
   startedAt:   { type: Date, default: Date.now },

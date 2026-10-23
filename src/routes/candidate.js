@@ -236,7 +236,8 @@ router.get('/vacancies', guard, asyncHandler(async (req, res) => {
     agencyId: c.restaurantId,
     status: 'open',
     listed: { $ne: false },            // avtomatik (yopiq) vakansiyalar ko'rinmaydi
-    confirmedAt: { $gte: fresh }
+    confirmedAt: { $gte: fresh },
+    ...(c.isTest ? {} : { isTest: { $ne: true } })      // sinov mijozining vakansiyasi — faqat sinov nomzodiga
   }).sort({ confirmedAt: -1 }).limit(60).lean();
 
   if (!rows.length) return res.json([]);
@@ -269,7 +270,8 @@ router.get('/vacancies', guard, asyncHandler(async (req, res) => {
 router.post('/vacancies/:id/apply', guard, asyncHandler(async (req, res) => {
   const c = req.cand;
   const v = await Vacancy.findOne({
-    agencyId: c.restaurantId, id: req.params.id, status: 'open', listed: { $ne: false }
+    agencyId: c.restaurantId, id: req.params.id, status: 'open', listed: { $ne: false },
+    ...(c.isTest ? {} : { isTest: { $ne: true } })
   }).lean();
   // code — kabinet xatoni tushunarli qilib ko'rsatadi va kerakli joyga yo'naltiradi
   if (!v) return res.status(404).json({ error: 'Bu vakansiya yopilgan yoki o\'chirilgan', code: 'closed' });

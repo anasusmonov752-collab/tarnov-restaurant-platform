@@ -1018,6 +1018,7 @@
   // bo'yicha tarjima: topilmasa o'zbekcha qoladi (xato yo'qolmaydi).
   // Yangi xato matni qo'shsangiz — shu yerga ham.
   const ERR_RU = {
+    'Sinov rejimi: haqiqiy nomzodning kontakti ochilmaydi': 'Тестовый режим: контакт реального кандидата не открывается',
     'Juda ko\'p so\'rov': 'Слишком много запросов',
     'Xato': 'Ошибка',
     'Mijoz topilmadi': 'Клиент не найден',

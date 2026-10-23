@@ -55,6 +55,9 @@ const CandidateSchema = new mongoose.Schema({
   // ── Admin boshqaruvi ──
   branch:  { type: String, default: '' },              // filial/bo'lim (Podrazdelenie)
   source:  { type: String, default: 'hh' },            // hh | manual | referral | telegram | other
+  // Sinov nomzodi (admin test rejimi): haqiqiy mijozlar qidiruvida chiqmaydi,
+  // sanoqlarga kirmaydi; panelda "SINOV" belgisi bilan ko'rinadi
+  isTest:  { type: Boolean, default: false },
   status:  { type: String, default: 'new' },           // kanban bosqichi (VALID_STATUS)
   statusChangedAt: { type: Date, default: Date.now },  // shu bosqichga qachon o'tgan ("N kun bu bosqichda")
   rating:  { type: Number, default: 0 },               // 0-5 qo'lda baho

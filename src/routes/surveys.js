@@ -33,7 +33,7 @@ router.get('/', guard, asyncHandler(async (req, res) => {
     // Lavozimsiz va umumiy bo'lmagan — o'chirilgan takror nusxa (ensureDefault), ko'rsatilmaydi
     Survey.find({ agencyId, $or: [{ isDefault: true }, { role: { $ne: '' } }] }).sort({ isDefault: -1, createdAt: 1 }).lean(),
     SurveyResponse.aggregate([
-      { $match: { agencyId } },
+      { $match: { agencyId, isTest: { $ne: true } } },
       { $group: { _id: '$surveyId', started: { $sum: 1 },
                   done: { $sum: { $cond: [{ $eq: ['$status', 'done'] }, 1, 0] } } } }
     ])
@@ -86,7 +86,7 @@ router.get('/link', guard, asyncHandler(async (req, res) => {
 // "Qaysi e'lon ishlayapti" va "anketa qayerda tashlab ketilyapti".
 // vacancyId yoki surveyId bo'lsa — faqat shu.
 router.get('/stats', guard, asyncHandler(async (req, res) => {
-  const match = { agencyId: req.user.restaurantId };
+  const match = { agencyId: req.user.restaurantId, isTest: { $ne: true } };   // sinov anketalari statistikaga kirmaydi
   if (req.query.vacancyId) match.vacancyId = String(req.query.vacancyId);
   if (req.query.surveyId) match.surveyId = String(req.query.surveyId);
   const [byChannel, dropAt] = await Promise.all([

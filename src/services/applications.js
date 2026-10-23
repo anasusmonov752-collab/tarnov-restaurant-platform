@@ -29,6 +29,7 @@ async function submit({ cand: c, vacancy: v, message = '', appBase, via = 'kabin
     vacancyId: v.id,
     candidateId: c.id,
     clientId: v.clientId,
+    isTest: !!c.isTest,                       // sinov nomzodining arizasi
     message: String(message || '').trim().slice(0, 500)
   });
 

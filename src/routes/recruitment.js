@@ -287,7 +287,8 @@ router.get('/analytics', guard, asyncHandler(async (req, res) => {
 // waitingOld — bir kundan ortiq javobsiz turgan: shu raqam qizarmasligi kerak.
 router.get('/sections', guard, asyncHandler(async (req, res) => {
   const restaurantId = req.user.restaurantId;
-  const A = { restaurantId, source: 'anketa' };
+  // Sinov yozuvlari (admin test rejimi) sanoqlarga kirmaydi
+  const A = { restaurantId, source: 'anketa', isTest: { $ne: true } };
   const day = new Date(Date.now() - 864e5), week = new Date(Date.now() - 7 * 864e5);
   const [aTotal, unseen, waiting, waitingOld, aWeek, bTotal, bWeek, resp] = await Promise.all([
     Candidate.countDocuments(A),
@@ -295,10 +296,10 @@ router.get('/sections', guard, asyncHandler(async (req, res) => {
     Candidate.countDocuments(Object.assign({}, A, contactLog.WAITING)),
     Candidate.countDocuments(Object.assign({}, A, contactLog.WAITING, { createdAt: { $lt: day } })),
     Candidate.countDocuments(Object.assign({}, A, { createdAt: { $gte: week } })),
-    Candidate.countDocuments({ restaurantId, source: { $ne: 'anketa' } }),
-    Candidate.countDocuments({ restaurantId, source: { $ne: 'anketa' }, createdAt: { $gte: week } }),
+    Candidate.countDocuments({ restaurantId, source: { $ne: 'anketa' }, isTest: { $ne: true } }),
+    Candidate.countDocuments({ restaurantId, source: { $ne: 'anketa' }, createdAt: { $gte: week }, isTest: { $ne: true } }),
     SurveyResponse.aggregate([
-      { $match: { agencyId: restaurantId } },
+      { $match: { agencyId: restaurantId, isTest: { $ne: true } } },
       { $group: { _id: null, started: { $sum: 1 }, done: { $sum: { $cond: [{ $eq: ['$status', 'done'] }, 1, 0] } } } }
     ])
   ]);

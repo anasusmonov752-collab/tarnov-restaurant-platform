@@ -26,22 +26,25 @@ router.get('/today', guard, asyncHandler(async (req, res) => {
 
   const [shortlists, appsNew, clients, candTotal, candWeek, unread, anketaUnseen, baseWeek, appsUnseen] = await Promise.all([
     Shortlist.find({ agencyId, status: { $ne: 'done' } }, 'id clientId items createdAt updatedAt summary').lean(),
-    Application.countDocuments({ agencyId, state: 'new' }),
-    Client.find({ agencyId }, 'id name credits status').lean(),
-    Candidate.countDocuments({ restaurantId: agencyId }),
-    Candidate.countDocuments({ restaurantId: agencyId, createdAt: { $gte: weekAgo } }),
+    Application.countDocuments({ agencyId, state: 'new', isTest: { $ne: true } }),
+    Client.find({ agencyId }, 'id name credits status isTest').lean(),
+    // Sinov yozuvlari (admin test rejimi) sanoqlarga kirmaydi
+    Candidate.countDocuments({ restaurantId: agencyId, isTest: { $ne: true } }),
+    Candidate.countDocuments({ restaurantId: agencyId, createdAt: { $gte: weekAgo }, isTest: { $ne: true } }),
     ChatThread.aggregate([{ $match: { agencyId, unreadAgency: { $gt: 0 } } },
                           { $group: { _id: null, n: { $sum: '$unreadAgency' } } }]),
     // Yon menyu: "Anketadan" — ko'rilmaganlar, "hh.uz bazasi" — shu hafta qo'shilgan
-    Candidate.countDocuments(Object.assign({ restaurantId: agencyId, source: 'anketa' }, contactLog.UNSEEN)),
-    Candidate.countDocuments({ restaurantId: agencyId, source: { $ne: 'anketa' }, createdAt: { $gte: weekAgo } }),
+    Candidate.countDocuments(Object.assign({ restaurantId: agencyId, source: 'anketa', isTest: { $ne: true } }, contactLog.UNSEEN)),
+    Candidate.countDocuments({ restaurantId: agencyId, source: { $ne: 'anketa' }, createdAt: { $gte: weekAgo }, isTest: { $ne: true } }),
     // "Arizalar" — agentlik hali ochmagan va qaror qilinmagan arizalar
-    Application.countDocuments({ agencyId, agencySeenAt: null, state: { $in: ['new', 'seen'] } })
+    Application.countDocuments({ agencyId, agencySeenAt: null, state: { $in: ['new', 'seen'] }, isTest: { $ne: true } })
   ]);
 
-  // Shu oy ochilgan va ishga olingan — barcha tanlovlardan (yopilganlari ham)
+  // Shu oy ochilgan va ishga olingan — barcha tanlovlardan (yopilganlari ham);
+  // sinov mijozining tanlovlari hisobga olinmaydi
+  const testClientIds = clients.filter(c => c.isTest).map(c => c.id);
   const month = await Shortlist.aggregate([
-    { $match: { agencyId } }, { $unwind: '$items' },
+    { $match: { agencyId, clientId: { $nin: testClientIds } } }, { $unwind: '$items' },
     { $match: { 'items.revealedAt': { $gte: monthStart } } },
     { $group: { _id: null, revealed: { $sum: 1 },
                 hired: { $sum: { $cond: [{ $eq: ['$items.state', 'hired'] }, 1, 0] } } } }
@@ -58,7 +61,7 @@ router.get('/today', guard, asyncHandler(async (req, res) => {
     };
   }).filter(q => q.waiting > 0).sort((a, b) => new Date(a.since) - new Date(b.since));
 
-  const active = clients.filter(c => c.status === 'active');
+  const active = clients.filter(c => c.status === 'active' && !c.isTest);
   res.json({
     appsNew,
     waitingShortlists: queue.length,

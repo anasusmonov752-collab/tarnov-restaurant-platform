@@ -31,6 +31,7 @@ const SurveyResponse = require('../models/SurveyResponse');
 const surveySvc = require('../services/survey');
 const vac = require('../services/vacancy');
 const contactLog = require('../services/contactLog');
+const testMode = require('../services/testMode');
 
 const router = express.Router();
 // Faqat TalentHub agentligi (middleware/agency — o'tish rejimi bilan)
@@ -290,10 +291,18 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
       return;
     }
 
+    // ── /test — admin test rejimi (faqat agentlik admin chati) ──
+    if (/^\/test(@\w+)?$/i.test(text) && await testMode.testerAgency(chatId)) {
+      await sendTestMenu(token, chatId, await testMode.modeOf(chatId));
+      return;
+    }
+
     // ── Admin chati ──
-    // reply bo'lsa -> nomzodga javob;  reply bo'lmasa -> nomzod qidiruvi
+    // reply bo'lsa -> nomzodga javob;  reply bo'lmasa -> nomzod qidiruvi.
+    // Test rejimida (mijoz/nomzod) admin akkaunti o'sha rol bo'lib ishlaydi —
+    // xabari pastdagi mijoz yoki nomzod yo'liga tushadi.
     const adminRest = await Restaurant.findOne({ 'telegram.adminChatId': chatId, active: true });
-    if (adminRest) {
+    if (adminRest && (await testMode.modeOf(chatId)) === 'admin') {
       const replyTo = msg.reply_to_message && msg.reply_to_message.message_id;
       if (!replyTo) {
         await handleSearch(adminRest, chatId, { text, voice });
@@ -433,6 +442,53 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
 // yo'qolgan). Ilgari hammaga "havoladan kiring" chiqardi — nomzod boshi
 // berk ko'chaga kirardi, mijoz esa o'z botida begonadek qolardi
 // (2026-10-20 Anas sinovida topildi).
+// ── Admin test rejimi (services/testMode) ────────────────────
+const TEST_LABEL = { admin: '🛠 Admin', client: '👔 Mijoz', candidate: '👤 Nomzod' };
+async function sendTestMenu(token, chatId, mode) {
+  await tg.sendMessage(token, chatId,
+    `🧪 Test rejimi\n\nHozir: ${TEST_LABEL[mode] || mode}\n\n` +
+    `👔 Mijoz — «🧪 Sinov restoran» kabineti va bot qidiruvi\n` +
+    `👤 Nomzod — sinov nomzodi kabineti (anketadan)\n` +
+    `🛠 Admin — hammasi oldingi holatga qaytadi\n` +
+    `🔄 Anketani qaytadan — bot sizni yangi odam deb ko'radi\n\n` +
+    `Sinov haqiqiy ma'lumotga tegmaydi: haqiqiy nomzod kontakti ochilmaydi, sanoqlarga kirmaydi.`,
+    { reply_markup: { inline_keyboard: [
+      [{ text: '👔 Mijoz', callback_data: 'tm:client' }, { text: '👤 Nomzod', callback_data: 'tm:candidate' }],
+      [{ text: '🛠 Admin', callback_data: 'tm:admin' }, { text: '🔄 Anketani qaytadan', callback_data: 'tm:reset' }]
+    ] } });
+}
+// Pastdagi menyu tugmasi rolga mos: mijozga Kabinet, nomzodga Profilim,
+// adminga — test rejimidan oldingi holat (mijozga ulangan bo'lsa Kabinet)
+async function applyTestMenu(token, chatId, mode, out, appBase) {
+  try {
+    if (mode === 'client') return await setMenu(token, chatId, langOf(out.client, null), appBase);
+    if (mode === 'candidate') return await tg.setChatMenuButton(token, chatId, 'Profilim', `${appBase}/profil.html`);
+    const cl = await Client.findOne({ tgChatId: chatId });
+    if (cl) return await setMenu(token, chatId, langOf(cl, null), appBase);
+    const cand = await Candidate.findOne({ tgChatId: chatId });
+    if (cand) return await tg.setChatMenuButton(token, chatId, 'Profilim', `${appBase}/profil.html`);
+    await tg.resetChatMenuButton(token, chatId);
+  } catch (e) { console.error('[TEST] menyu tugmasi:', e.message); }
+}
+function testModeText(m, out) {
+  const reopen = '\n\nMini App ochiq bo\'lsa — yopib, qayta oching.';
+  if (m === 'client') {
+    return `👔 Mijoz rejimi — «${out.client.name}», ${out.client.credits} kredit.\n\n` +
+      `Botga yozing (masalan: "kechki smenaga ofitsiant kerak") yoki pastdagi Kabinet tugmasi.` +
+      `\nHaqiqiy nomzodlarni ko'rasiz, lekin kontaktini faqat sinov nomzodiniki ochiladi.` + reopen;
+  }
+  if (m === 'candidate') {
+    return out.candidate
+      ? `👤 Nomzod rejimi — sinov nomzodi «${out.candidate.fullName || 'nomsiz'}».\n\nPastdagi Profilim tugmasi.` + reopen
+      : `👤 Nomzod rejimi — sinov nomzodi hali yo'q.\n\n/start bosing — anketa noldan boshlanadi.`;
+  }
+  if (m === 'reset') {
+    return `🔄 Anketa tozalandi (${out.deleted} ta javob o'chdi), rejim — nomzod.\n\n` +
+      `/start bosing — bot sizni birinchi marta kelgan odam deb ko'radi.`;
+  }
+  return '🛠 Admin rejimi — hammasi test rejimidan oldingi holatga qaytdi.';
+}
+
 async function plainStart(msg, chatId, tgLang, appBase) {
   const token = tg.platformToken();
 
@@ -500,11 +556,14 @@ async function startSurvey(msg, chatId, ank, appBase) {
   // Chala qolgan shu anketa bo'lsa — davom ettiriladi (javoblar saqlangan)
   let r = await SurveyResponse.findOne({ agencyId: s.agencyId, tgUserId, surveyId: s.id, vacancyId, status: 'started' })
     .sort({ updatedAt: -1 });
+  // Admin test rejimida (nomzod) to'ldirilgan anketa — sinov: nomzodi isTest
+  const isTest = (await testMode.modeOf(tgUserId)) === 'candidate';
   if (!r) {
     r = await SurveyResponse.create({ id: uuidv4(), agencyId: s.agencyId, surveyId: s.id, vacancyId,
-      channel: ank.channel, tgUserId, chatId, status: 'started' });
-  } else if (ank.channel && !r.channel) {
-    r.channel = ank.channel;
+      channel: ank.channel, tgUserId, chatId, status: 'started', isTest });
+  } else if ((ank.channel && !r.channel) || (isTest && !r.isTest)) {
+    if (ank.channel && !r.channel) r.channel = ank.channel;
+    if (isTest) r.isTest = true;
     await r.save();
   }
 
@@ -525,7 +584,7 @@ async function hookText({ lang, from, agencyId, v, closed }) {
   const first = String((from && from.first_name) || '').trim().slice(0, 30);
   const fresh = new Date(Date.now() - vac.STALE_DAYS * 864e5);
   const byRole = await Vacancy.aggregate([
-    { $match: { agencyId, status: 'open', listed: { $ne: false }, confirmedAt: { $gte: fresh } } },
+    { $match: { agencyId, status: 'open', listed: { $ne: false }, confirmedAt: { $gte: fresh }, isTest: { $ne: true } } },
     { $group: { _id: '$role', n: { $sum: 1 } } }, { $sort: { n: -1 } }
   ]);
   const n = byRole.reduce((s, x) => s + x.n, 0);
@@ -739,6 +798,21 @@ async function handleCallback(cq, appBase) {
 
   // Mijoz hali topilmagan joyda — Telegram tili
   const cqLang = I18N.fromTelegram(cq.from && cq.from.language_code);
+
+  // ── Admin test rejimi: rejim tugmalari (/test) ──
+  if (/^tm:(admin|client|candidate|reset)$/.test(data)) {
+    if (!(await testMode.testerAgency(chatId))) { await done('Faqat agentlik admini uchun', true); return; }
+    const m = data.slice(3);
+    try {
+      const out = m === 'reset' ? await testMode.resetSurvey(chatId, cq.from) : await testMode.setMode(chatId, m, cq.from);
+      await applyTestMenu(token, chatId, m === 'reset' ? 'candidate' : m, out, appBase);
+      await done('Tayyor');
+      await tg.sendMessage(token, chatId, testModeText(m, out));
+    } catch (e) {
+      await done(e.message, true);
+    }
+    return;
+  }
 
   // ── Mijoz: til tanlash ('lw:' xush kelibsiz ostida, 'lg:' /til) ──
   // Tanlov mijozga yoziladi — Mini App va bildirishnomalar ham shu tilda.

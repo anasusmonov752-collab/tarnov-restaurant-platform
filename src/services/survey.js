@@ -661,7 +661,8 @@ async function finalize(r, { appBase } = {}) {
   // email) ochib olardi (2026-10-20 auditda topildi). Qo'lda raqamli
   // anketa — yangi yozuv; takror bo'lsa panelda birlashtiriladi.
   let cand = await Candidate.findOne({ restaurantId: r.agencyId, tgChatId: r.tgUserId });
-  if (!cand && pk && r.phoneVerifiedAt) {
+  // Sinov anketasi (admin test rejimi) telefon bo'yicha haqiqiy profilga ulanmaydi
+  if (!cand && pk && r.phoneVerifiedAt && !r.isTest) {
     cand = await Candidate.findOne({ restaurantId: r.agencyId, phoneKey: pk });
   }
   const created = !cand;
@@ -695,8 +696,10 @@ async function finalize(r, { appBase } = {}) {
   cand.jobStatus = 'active';
   cand.jobStatusAt = new Date();
   cand.aiParsed = true;                // shablon bo'yicha tuzilgan — qayta tahlil kerak emas
+  if (r.isTest) cand.isTest = true;    // sinov nomzodi: qidiruv va sanoqlarga kirmaydi
   cand.updatedAt = new Date();
   await cand.save();
+  if (r.isTest) await require('./testMode').noteCandidate(r.tgUserId, cand.id);
 
   let applied = false;
   if (vacancy && vacancy.status === 'open') {

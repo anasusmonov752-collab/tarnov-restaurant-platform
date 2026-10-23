@@ -128,6 +128,10 @@ async function setChatMenuButton(token, chatId, text, url) {
     menu_button: { type: 'web_app', text, web_app: { url } }
   });
 }
+// Chatning menyu tugmasini Telegram standartiga qaytarish (Mini App'siz)
+function resetChatMenuButton(token, chatId) {
+  return call(token, 'setChatMenuButton', { chat_id: chatId, menu_button: { type: 'default' } });
+}
 
 function setWebhook(token, url, secret) {
   return call(token, 'setWebhook', {
@@ -237,7 +241,7 @@ async function platformUsername() {
 }
 
 module.exports = {
-  getMe, sendMessage, answerCallback, editMessageText, setChatMenuButton, sendChatAction,
+  getMe, sendMessage, answerCallback, editMessageText, setChatMenuButton, resetChatMenuButton, sendChatAction,
   setWebhook, ensureWebhook, deleteWebhook, getWebhookInfo, getFileBase64,
   deepLink, TelegramError, MAX_LEN,
   platformToken, platformSecret, platformUsername, isPlatformReady

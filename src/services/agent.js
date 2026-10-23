@@ -219,7 +219,8 @@ async function handleClient({ client, chatId, input, lang = 'uz' }) {
     maxSalary: r.maxSalary,
     keywords:  Array.isArray(r.keywords) ? r.keywords : [],
     summary:   r.summary || userText,
-    limit:     null
+    limit:     null,
+    includeTest: !!client.isTest      // sinov mijozi (admin test rejimi) sinov nomzodini ham ko'radi
   };
 
   const reply = String(r.reply || '').trim();

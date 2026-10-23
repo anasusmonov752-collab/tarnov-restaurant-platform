@@ -42,6 +42,10 @@ const ClientSchema = new mongoose.Schema({
   // Kontakt krediti. Haqiqiy manba — CreditLedger; bu tezlik uchun nusxa.
   credits: { type: Number, default: 0 },
 
+  // Sinov mijozi (admin test rejimi — services/testMode): haqiqiy nomzod
+  // kontaktini ocha olmaydi, "Bugun" sanoqlari va kreditlar jamiga kirmaydi
+  isTest: { type: Boolean, default: false },
+
   // Interfeys tili: 'uz' | 'ru'. Bo'sh — hali tanlamagan, Telegram
   // language_code bo'yicha taxmin qilinadi (public/js/th-i18n.js).
   // Brauzerda emas, shu yerda: bot xabarlari ham shu tilda bo'lishi kerak.

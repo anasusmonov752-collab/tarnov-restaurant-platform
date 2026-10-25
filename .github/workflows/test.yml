@@ -40,3 +40,6 @@ jobs:
           # Tafsilot (xato matni, kutilgan/haqiqiy qiymat, qator) — loglarni admin huquqisiz ham ko'rish uchun
           grep -A40 -E '^\s*not ok' test.log | grep -E "location:|error:|expected:|actual:|\.test\.js:[0-9]+|Expected|^\s+[+-] " \
             | head -24 | while read -r l; do echo "::warning title=Tafsilot::$l"; done || true
+          # Fayl butunlay yiqilsa (testlar boshlanmasdan): oldidagi stderr qatorlari — sababi shu yerda
+          grep -B40 -E '^not ok' test.log | grep -vE '^(ok|#|TAP)|^\s*(ok|#|---|\.\.\.|duration_ms)' | grep -E '\S' \
+            | tail -9 | while read -r l; do echo "::notice title=Kontekst::$l"; done || true

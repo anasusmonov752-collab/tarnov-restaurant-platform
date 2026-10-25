@@ -561,6 +561,15 @@ pastdan oyna (tutqich, yumaloq ✕). Nomzod profili — gradient karta (Hisob ba
 xil), Ish o'rinlari/Arizalarim/Xabarlar katta sarlavhali. Yangi komponent qo'shsangiz —
 shu blokdagi tokenlar bilan.
 
+**NOMZOD PROFILI KARTASI RANGI — DEPLOY QILINDI** (2026-10-26, `7bd2810`): nomzod kartasi
+rangini o'zi tanlaydi — 8 ta BOSIQ rang (To'q ko'k, Grafit, Zumrad, Dengiz, Bordo, Siyohrang,
+Chang-pushti, Bronza), `services/profileStyle.js`, `PATCH /api/cand/style`,
+`Candidate.profileStyle`. Boshlang'ich rang — Telegram profil rangidan (`tg.getChat` ->
+`profile_accent_color_id`, eng yaqin bosiq rangga), bo'lmasa to'q ko'k. Jinsga qarab avtomatik
+rang YO'Q (Anas taklif qildi, rad etildi: jins noma'lum, kamsitish xavfi). Birinchi variant (16
+yorqin gradient + emoji naqsh + oltin rozetka) Anas: "juda bachkana, professional emas" —
+olib tashlandi. Tasdiq belgisi — oq doira ichida ✓ (`phoneVerified`). Faqat o'z kabinetida.
+
 **ANKETA C VARIANT + TALABA + NOMZOD KABINETI TUZATISHLARI** (2026-10-23,
 `4addf87`..`6689dea`): ish tajribasi ekrani — REZYUME KARTALARI (Anas uchta
 variantdan C'ni tanladi): bo'sh holatda "Ish joyi qo'shish" (pastki tugma) va

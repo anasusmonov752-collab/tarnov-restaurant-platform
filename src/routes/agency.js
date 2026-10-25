@@ -40,7 +40,9 @@ router.get('/today', guard, asyncHandler(async (req, res) => {
     Application.countDocuments({ agencyId, agencySeenAt: null, state: { $in: ['new', 'seen'] }, isTest: { $ne: true } })
   ]);
   // Yon menyu "To'lovlar" — tasdiq kutayotgan tarif so'rovlari
-  const ordersPending = await require('../models/Order').countDocuments({ agencyId, status: 'pending', provider: { $in: ['manual', 'invoice'] } });
+  // Tasdiq kutayotgan: qo'lda/hisob-faktura so'rovi yoki "To'ladim" bosilgan kartali o'tkazma
+  const ordersPending = await require('../models/Order').countDocuments({ agencyId, status: 'pending',
+    $or: [{ provider: { $in: ['manual', 'invoice'] } }, { provider: 'card', claimedAt: { $ne: null } }] });
 
   // Shu oy ochilgan va ishga olingan — barcha tanlovlardan (yopilganlari ham);
   // sinov mijozining tanlovlari hisobga olinmaydi

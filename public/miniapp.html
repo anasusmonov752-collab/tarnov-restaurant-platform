@@ -9,7 +9,7 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>window.thViewerHostBack = true;</script>  <!-- orqaga tugmasi zanjiri onTgBack'da (rasm oynasi) -->
 <script src="/js/th-viewer.js?v=2" defer></script>
-<script src="/js/th-i18n.js?v=16"></script>
+<script src="/js/th-i18n.js?v=17"></script>
 <style>
 /* Ranglar — TalentHub dizayn tizimidan (css/th.css, iOS uslubi).
    Telegram'ning --tg-theme-* RANGLARI olinmaydi (avval shunday edi va
@@ -293,6 +293,47 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .pm-note a{color:var(--blue)}
 .pm-logo{flex:none;background:#33CCCC;color:#fff;font-weight:800;border-radius:8px;padding:5px 8px;font-size:12px}
 .pm-pw{text-align:center;font-size:11.5px;color:var(--muted);margin-top:12px;letter-spacing:.3px}
+.pl-banner-b{width:100%;text-align:left;border:none;font:inherit;font-size:13.5px;cursor:pointer;display:block}
+.pay-card{background:linear-gradient(135deg,#0F172A,#334155)}
+.pay-card svg{width:22px;height:22px}
+/* Kartaga o'tkazma */
+.cp-head{text-align:center;padding:4px 0 14px}
+.cp-sum{font-size:32px;font-weight:800;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+.cp-sum small{font-size:15px;font-weight:600;color:var(--muted);margin-left:5px}
+.cp-sub{font-size:13.5px;color:var(--muted);margin-top:2px}
+.cp-step{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:700;margin:14px 0 8px}
+.cp-step i{font-style:normal;width:22px;height:22px;border-radius:50%;background:var(--blue);color:#fff;font-size:12.5px;display:flex;align-items:center;justify-content:center;flex:none}
+.cp-card{position:relative;border-radius:16px;padding:16px 16px 14px;color:#fff;overflow:hidden;
+  background:radial-gradient(120% 140% at 100% 0%,#3B5BDB 0%,#1E293B 55%,#0B1220 100%);box-shadow:0 10px 24px rgba(15,23,42,.28)}
+.cp-card::after{content:'';position:absolute;right:-40px;top:-60px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.06)}
+.cp-card-top{display:flex;justify-content:space-between;align-items:center}
+.cp-chip{width:34px;height:25px;border-radius:6px;background:linear-gradient(135deg,#F6D365,#C9A227);opacity:.9}
+.cp-bank{font-size:13px;font-weight:600;opacity:.85}
+.cp-num{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:21px;letter-spacing:1.5px;margin:20px 0 14px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.cp-card-bot{display:flex;justify-content:space-between;align-items:center;gap:10px;position:relative;z-index:1}
+.cp-holder{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;opacity:.9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cp-copy{flex:none;border:none;border-radius:99px;padding:7px 13px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;
+  background:rgba(255,255,255,.16);color:#fff;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);transition:background .2s}
+.cp-copy.alt{background:var(--card);color:var(--blue);border:1.5px solid var(--line)}
+.cp-copy.ok{background:var(--ok);color:#fff;border-color:transparent}
+.cp-row{display:flex;justify-content:space-between;align-items:center;background:var(--bg);border-radius:12px;padding:10px 10px 10px 14px;font-size:16px;font-variant-numeric:tabular-nums}
+.cp-hint{font-size:12.5px;color:var(--muted);margin-top:7px;line-height:1.45}
+.cp-fl{background:var(--bg);border-radius:12px;padding:10px 14px;margin-bottom:12px;border:none}
+.cp-safe{font-size:12px;color:var(--muted);line-height:1.5;background:var(--bg);border-radius:12px;padding:10px 12px;margin-top:6px}
+.cp-cancel{display:block;margin:14px auto 2px;color:var(--muted);font-weight:500}
+.cp-warn{background:rgba(220,38,38,.09);border-radius:12px;padding:11px 13px;margin-bottom:6px;font-size:13px;line-height:1.45;display:flex;flex-direction:column;gap:3px}
+.cp-warn b{color:var(--danger);font-size:14px}
+.cp-state{text-align:center;padding:8px 4px 4px}
+.cp-state h3{font-size:19px;margin:12px 0 6px}
+.cp-state p{font-size:14px;color:var(--muted);line-height:1.5;margin:0 0 18px}
+.cp-ic{width:64px;height:64px;margin:6px auto 0;display:flex;align-items:center;justify-content:center}
+.cp-ic svg{width:64px;height:64px;fill:none;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round}
+.cp-state.ok circle{stroke:var(--ok);stroke-dasharray:151;stroke-dashoffset:151;animation:cpDraw .6s ease forwards}
+.cp-state.ok path{stroke:var(--ok);stroke-dasharray:36;stroke-dashoffset:36;animation:cpDraw .35s .5s ease forwards}
+@keyframes cpDraw{to{stroke-dashoffset:0}}
+.cp-spin{width:46px;height:46px;border-radius:50%;border:4px solid var(--line);border-top-color:var(--blue);animation:cpRot 1s linear infinite}
+@keyframes cpRot{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.cp-spin{animation-duration:3s}.cp-state.ok circle,.cp-state.ok path{animation:none;stroke-dashoffset:0}}
 .pay-o{width:100%;display:flex;align-items:center;gap:12px;border:1.5px solid var(--line);background:var(--card);border-radius:14px;
   padding:13px 14px;margin-bottom:9px;font-family:inherit;text-align:left;cursor:pointer;color:var(--ink)}
 .pay-o b{display:block;font-size:15.5px}
@@ -1730,7 +1771,9 @@ async function showPlans(){
   const c = d.current || {}, pm = d.pendingManual;
   $('shB').innerHTML = `
     <div class="pl-note">${esc(t('pl.launch'))}</div>
-    ${pm ? `<div class="pl-banner">${esc(t(pm.provider === 'invoice' ? 'pl.pendingInv' : 'pl.pending', { plan: t('plan.' + pm.planKey), code: pm.code || '' }))}</div>` : ''}
+    ${pm ? (pm.provider === 'card'
+      ? `<button class="pl-banner pl-banner-b" id="bPend">${esc(t(pm.state === 'checking' ? 'pl.pendingCheck' : 'pl.pendingCard', { plan: t('plan.' + pm.planKey) }))} ›</button>`
+      : `<div class="pl-banner">${esc(t(pm.provider === 'invoice' ? 'pl.pendingInv' : 'pl.pending', { plan: t('plan.' + pm.planKey), code: pm.code || '' }))}</div>`) : ''}
     ${c.key ? planNow(c) + guaranteeHtml(d.guarantee) : ''}
     ${c.trialAvailable ? `<div class="pl-card">
       <div class="pl-name">${esc(t('pl.trialT'))}</div>
@@ -1751,6 +1794,7 @@ async function showPlans(){
     } catch(e){ b.disabled = false; b.textContent = e.message; }
   };
   $('shB').querySelectorAll('[data-buy]').forEach(b => b.onclick = () => choosePay(b.dataset.buy));
+  if ($('bPend')) $('bPend').onclick = () => showCardPay(null, pm.id);
   $('bRef2').onclick = () => showReferral();
   $('lOferta').onclick = e => { e.preventDefault(); openExt(location.origin + '/oferta.html?lang=' + LANG); };
   $('shB').querySelectorAll('[data-auto]').forEach(b => b.onclick = async () => {
@@ -1780,6 +1824,8 @@ function choosePay(key){
   openSheet(t('pl.pay'), `
     <div class="pl-now"><div><b>${esc(t('plan.' + key))} — ${fmtSum(p.price)} ${esc(t('pl.sum'))}</b><br>
       <span>${esc(t('pl.days', { n: p.days }))} · ${esc(p.unlimited ? t('pl.unlimited') : t('pl.contacts', { n: p.contacts }))}</span></div></div>
+    ${PLANS.card ? `<button class="pay-o" data-card="1"><span class="pay-ic pay-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2.5"/><path d="M2 10h20M6 15h4"/></svg></span>
+      <div><b>${esc(t('pl.card'))}</b><span>${esc(t('pl.cardD'))}</span></div></button>` : ''}
     ${opts}
     <button class="pay-o" data-pay="manual"><span class="pay-ic" style="background:#64748B">HR</span>
       <div><b>${esc(t('pl.manual'))}</b><span>${esc(t('pl.manualD'))}</span></div></button>
@@ -1787,6 +1833,7 @@ function choosePay(key){
       <div><b>${esc(t('pl.invoice'))}</b><span>${esc(t('pl.invoiceD'))}</span></div></button>
     <div class="err" id="payErr" style="color:var(--danger);font-size:13px;min-height:18px"></div>`);
   $('shB').querySelector('[data-inv]').onclick = () => showInvoice(key);
+  if ($('shB').querySelector('[data-card]')) $('shB').querySelector('[data-card]').onclick = () => showCardPay(key);
   $('shB').querySelectorAll('[data-pay]').forEach(b => b.onclick = async () => {
     $('shB').querySelectorAll('[data-pay]').forEach(x => x.disabled = true);
     $('payErr').textContent = '';
@@ -1914,6 +1961,124 @@ async function showReferral(){
   $('rShare').onclick = () => {
     const u = 'https://t.me/share/url?url=' + encodeURIComponent(r.link) + '&text=' + encodeURIComponent(t('ref.shareText', { n: r.bonus }));
     try { TG && TG.openTelegramLink ? TG.openTelegramLink(u) : window.open(u, '_blank'); } catch(e){ location.href = u; }
+  };
+}
+
+// ── Kartaga o'tkazma (services/cardPay) ──
+// Uch holat bitta oynada: to'lash (karta, summa, "To'ladim") -> tekshirilmoqda
+// (o'zi yangilanadi) -> tasdiqlandi. "Topilmadi" bo'lsa forma ogohlantirish bilan
+// qaytadi. Oyna yopilsa ham jarayon davom etadi: bot xabar beradi.
+let CP_POLL = null;
+const groupCard = n => String(n || '').replace(/(\d{4})(?=\d)/g, '$1 ');
+
+async function copyText(text, btn){
+  let ok = false;
+  try { await navigator.clipboard.writeText(text); ok = true; } catch(e){}
+  if (!ok) {
+    const ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;opacity:0;top:0'; document.body.appendChild(ta); ta.select();
+    try { ok = document.execCommand('copy'); } catch(e){}
+    ta.remove();
+  }
+  try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred(ok ? 'success' : 'error'); } catch(e){}
+  if (btn) {
+    const was = btn.dataset.label || btn.textContent;
+    btn.dataset.label = was; btn.classList.add('ok'); btn.textContent = '✓ ' + t('cp.copied');
+    clearTimeout(btn._t); btn._t = setTimeout(() => { btn.classList.remove('ok'); btn.textContent = was; }, 1600);
+  }
+}
+
+async function openSupport(){
+  closeSheet(); pickTab('tMS');
+  try { CHATS = await api('/api/ma/chats'); drawChats(); } catch(e){ return; }
+  const c = CHATS.find(x => x.pinned);
+  if (c) openChat(c);
+}
+
+// key — tarif (yangi yoki shu tarifga ochiq buyurtma), id — mavjud buyurtma
+async function showCardPay(key, id){
+  sheetEnter('cardpay', () => showCardPay(key, id));
+  openSheet(t('cp.title'), `<div class="msg">${esc(t('common.loading'))}</div>`);
+  clearInterval(CP_POLL);
+  let o;
+  try {
+    o = id ? await api('/api/ma/orders/' + encodeURIComponent(id))
+           : await api('/api/ma/orders', { method:'POST', body: JSON.stringify({ plan: key, provider: 'card' }) });
+  } catch(e){ $('shB').innerHTML = `<div class="msg">${esc(e.message)}</div>`; return; }
+  drawCardPay(o);
+}
+
+function drawCardPay(o){
+  if (!SH_CUR || SH_CUR.key !== 'cardpay') return;            // foydalanuvchi boshqa oynaga o'tib ketgan
+  SH_CUR.render = () => showCardPay(null, o.id);
+  clearInterval(CP_POLL);
+  const head = `<div class="cp-head"><div class="cp-sum">${fmtSum(o.amount)}<small>${esc(t('pl.sum'))}</small></div>
+    <div class="cp-sub">${esc(t('plan.' + o.planKey))} · ${esc(t('cp.order', { code: o.code }))}</div></div>`;
+
+  if (o.status === 'paid') {
+    $('shB').innerHTML = `<div class="cp-state ok"><div class="cp-ic"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-16"/></svg></div>
+      <h3>${esc(t('cp.okT'))}</h3><p>${esc(t('cp.okD', { plan: t('plan.' + o.planKey), n: o.credits == null ? (CREDITS || 0) : o.credits }))}</p>
+      <button class="btn" id="cpDone" style="width:100%">${esc(t('cp.okBtn'))}</button></div>`;
+    try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
+    if (o.credits != null) CREDITS = o.credits;
+    loadMe();
+    $('cpDone').onclick = () => closeSheet();
+    return;
+  }
+  if (o.status === 'canceled') {
+    $('shB').innerHTML = `${head}<div class="cp-state"><h3>${esc(t('cp.closedT'))}</h3><p>${esc(t('cp.closedD'))}</p>
+      <button class="btn" id="cpBack" style="width:100%">${esc(t('cp.back'))}</button></div>`;
+    $('cpBack').onclick = () => showPlans();
+    return;
+  }
+  if (o.status === 'checking') {
+    $('shB').innerHTML = `${head}<div class="cp-state wait"><div class="cp-ic"><span class="cp-spin"></span></div>
+      <h3>${esc(t('cp.checkT'))}</h3><p>${esc(t('cp.checkD'))}</p>
+      <button class="btn ghost" id="cpHelp" style="width:100%">${esc(t('cp.help'))}</button></div>`;
+    $('cpHelp').onclick = () => openSupport();
+    // Tasdiqlanishini kutamiz: 5 s da bir, 10 daqiqagacha (oyna ochiq bo'lsa)
+    let n = 0;
+    CP_POLL = setInterval(async () => {
+      if (++n > 120 || !SH_CUR || SH_CUR.key !== 'cardpay' || !$('sheet').classList.contains('on')) { clearInterval(CP_POLL); return; }
+      try { const x = await api('/api/ma/orders/' + encodeURIComponent(o.id)); if (x.status !== 'checking') drawCardPay(x); } catch(e){}
+    }, 5000);
+    return;
+  }
+
+  // waiting | rejected — to'lov formasi
+  const c = o.card || {};
+  $('shB').innerHTML = `${head}
+    ${o.status === 'rejected' ? `<div class="cp-warn"><b>${esc(t('cp.rejT'))}</b><span>${esc(t('cp.rejD'))}</span></div>` : ''}
+    <div class="cp-step"><i>1</i><span>${esc(t('cp.s1'))}</span></div>
+    <div class="cp-card">
+      <div class="cp-card-top"><span class="cp-chip"></span><span class="cp-bank">${esc(c.bank || '')}</span></div>
+      <div class="cp-num">${esc(groupCard(c.number))}</div>
+      <div class="cp-card-bot"><span class="cp-holder">${esc(c.holder || '')}</span>
+        <button class="cp-copy" id="cpCopyNum">${esc(t('cp.copy'))}</button></div>
+    </div>
+    <div class="cp-step"><i>2</i><span>${esc(t('cp.s2'))}</span></div>
+    <div class="cp-row"><b>${fmtSum(o.amount)} ${esc(t('pl.sum'))}</b><button class="cp-copy alt" id="cpCopySum">${esc(t('cp.copy'))}</button></div>
+    <div class="cp-hint">${esc(t('cp.note', { code: o.code }))}</div>
+    <div class="cp-step"><i>3</i><span>${esc(t('cp.s3'))}</span></div>
+    <div class="fl cp-fl"><label>${esc(t('cp.payer'))}</label><input id="cpPayer" maxlength="60" autocomplete="off" placeholder="${esc(t('cp.payerPh'))}"></div>
+    <button class="btn" id="cpPaid" style="width:100%">${esc(t('cp.paid'))}</button>
+    <div class="err" id="cpErr" style="color:var(--danger);font-size:13px;min-height:18px;margin-top:6px"></div>
+    <div class="cp-safe">🔒 ${esc(t('cp.safe'))}</div>
+    <button class="lnk cp-cancel" id="cpCancel">${esc(t('cp.cancel'))}</button>`;
+  $('cpCopyNum').onclick = e => copyText(c.number || '', e.currentTarget);
+  $('cpCopySum').onclick = e => copyText(String(o.amount), e.currentTarget);
+  $('cpPaid').onclick = async () => {
+    const b = $('cpPaid'); b.disabled = true; $('cpErr').textContent = '';
+    try {
+      const x = await api('/api/ma/orders/' + encodeURIComponent(o.id) + '/claim', { method:'POST', body: JSON.stringify({ payer: $('cpPayer').value }) });
+      haptic('light');
+      drawCardPay(x.card ? x : Object.assign({}, o, x));
+    } catch(e){ $('cpErr').textContent = e.message; b.disabled = false; }
+  };
+  $('cpCancel').onclick = async () => {
+    if (!(await askConfirm(t('cp.cancelQ')))) return;
+    try { await api('/api/ma/orders/' + encodeURIComponent(o.id) + '/cancel', { method:'POST', body:'{}' }); showPlans(); }
+    catch(e){ showMsg(e.message); }
   };
 }
 
@@ -2322,7 +2487,10 @@ $('bBackCab').onclick = backToCab;
   const APPS = new URLSearchParams(location.search).get('apps');
   if (APPS) pickTab('tAP');                     // Arizalar bo'limi
   // Bot "kredit kam qoldi" xabarining tugmasi: ?open=plans
-  if (new URLSearchParams(location.search).get('open') === 'plans') showPlans();
+  // Botdagi to'lov xabari / eslatma: ?open=pay&o=<buyurtma>
+  const QS = new URLSearchParams(location.search);
+  if (QS.get('open') === 'plans') showPlans();
+  else if (QS.get('open') === 'pay' && QS.get('o')) showCardPay(null, QS.get('o'));
 })();
 </script>
 </body>

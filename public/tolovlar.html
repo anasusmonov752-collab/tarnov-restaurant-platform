@@ -60,7 +60,25 @@ button{font-family:inherit}
 .btn:disabled{opacity:.45;cursor:default}
 .empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px;background:var(--card);border-radius:12px;border:1px solid var(--line)}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:300;background:#16233A;color:#fff;padding:11px 18px;border-radius:11px;font-size:13.5px;font-weight:600;display:none}
-@media(max-width:760px){ .mx{grid-template-columns:1fr 1fr} .main{padding:14px} }
+.tag.ck{background:rgba(37,99,235,.12);color:#1D4ED8}
+.od.claim{border-color:var(--gold);box-shadow:inset 3px 0 0 var(--gold)}
+/* Kartaga o'tkazma rekvizitlari */
+.cs{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.cs-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cs-h b{font-size:14.5px}
+.cs-h small{display:block;font-size:12.5px;color:var(--muted);font-weight:400;margin-top:2px;line-height:1.45}
+.cs-view{display:flex;align-items:center;gap:14px;margin-top:12px;flex-wrap:wrap}
+.cs-mini{width:230px;max-width:100%;border-radius:12px;padding:12px 14px;color:#fff;background:radial-gradient(120% 140% at 100% 0%,#3B5BDB 0%,#1E293B 55%,#0B1220 100%)}
+.cs-mini .n{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:15px;letter-spacing:1px;margin:14px 0 6px;white-space:nowrap}
+.cs-mini .h{font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;opacity:.85;display:flex;justify-content:space-between;gap:8px}
+.cs-form{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:10px;margin-top:12px}
+.cs-form label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.cs-form input{border:1px solid var(--line);border-radius:9px;padding:9px 11px;font:inherit;font-size:14px;color:var(--ink);background:var(--card)}
+.cs-form input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+#csNum{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.5px}
+.cs-msg{font-size:12.5px;margin-top:8px;min-height:16px}
+.cs-msg.warn{color:var(--warn)} .cs-msg.err{color:var(--danger)}
+@media(max-width:760px){ .mx{grid-template-columns:1fr 1fr} .main{padding:14px} .cs-form{grid-template-columns:1fr} }
 </style>
 </head>
 <body>
@@ -71,6 +89,7 @@ button{font-family:inherit}
 
 <div class="main"><div class="wrap">
   <div class="mx" id="mx"></div>
+  <div class="cs" id="cs"></div>
   <div class="prov" id="prov"></div>
   <div class="seg" id="seg"></div>
   <div id="list"><div class="empty">Yuklanmoqda…</div></div>
@@ -85,9 +104,60 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&am
 const toastMsg = m => { const t = $('toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(() => t.style.display = 'none', 2400); };
 const sum = n => Number(n || 0).toLocaleString('ru-RU');
 const PLAN = { base: 'Base', pro: 'Pro', max: 'Max', trial: 'Sinov' };
-const PROV = { payme: 'Payme', click: 'Click', uzum: 'Uzum Bank', manual: 'Menejer orqali', invoice: 'Hisob-faktura' };
+const PROV = { payme: 'Payme', click: 'Click', uzum: 'Uzum Bank', card: 'Kartaga o\'tkazma', manual: 'Menejer orqali', invoice: 'Hisob-faktura' };
 const BY = { payme: 'Payme', click: 'Click', uzum: 'Uzum Bank', admin: 'qo\'lda tasdiqlandi' };
-const offline = o => o.provider === 'manual' || o.provider === 'invoice';
+// Siz tasdiqlashingiz kerak bo'lganlar: qo'lda/hisob-faktura so'rovi yoki "To'ladim" bosilgan o'tkazma
+const offline = o => o.provider === 'manual' || o.provider === 'invoice' || (o.provider === 'card' && !!o.claimedAt);
+const hm = d => { const x = new Date(d); return x.toLocaleTimeString('uz', { hour: '2-digit', minute: '2-digit' }); };
+
+// ── To'lov kartasi (kartaga o'tkazma): mijoz shu rekvizitni ko'radi ──
+let CARD = null, CARD_EDIT = false;
+const grp = n => String(n || '').replace(/(\d{4})(?=\d)/g, '$1 ');
+function luhn(n){ let s = 0, a = false; for (let i = n.length - 1; i >= 0; i--) { let d = +n[i]; if (a) { d *= 2; if (d > 9) d -= 9; } s += d; a = !a; } return s % 10 === 0; }
+async function loadCard(){ try { CARD = await api('/api/billing/card'); } catch(e){ CARD = null; } renderCard(); }
+function renderCard(){
+  const box = $('cs');
+  if (CARD && !CARD_EDIT) {
+    box.innerHTML = `<div class="cs-h"><div><b>Kartaga o'tkazma <span class="pill on">yoqilgan</span></b>
+        <small>Mijoz tarifni tanlasa shu karta, aniq summa va buyurtma raqamini ko'radi. "To'ladim" bossa — botga tekshirish xabari keladi.</small></div>
+        <div style="display:flex;gap:6px;flex:none"><button class="btn" id="csEdit">O'zgartirish</button><button class="btn btn-no" id="csDel">O'chirish</button></div></div>
+      <div class="cs-view"><div class="cs-mini"><div class="h"><span>${esc(CARD.bank || '')}</span></div>
+        <div class="n">${esc(grp(CARD.number))}</div><div class="h"><span>${esc(CARD.holder)}</span></div></div>
+        ${CARD.luhn === false ? '<span class="cs-msg warn">⚠️ Karta raqami tekshiruvdan o\'tmadi — bir raqamni xato yozmadingizmi?</span>' : ''}</div>`;
+    $('csEdit').onclick = () => { CARD_EDIT = true; renderCard(); };
+    $('csDel').onclick = async () => {
+      if (!confirm('Kartaga o\'tkazma o\'chirilsinmi? Mijozlar bu usulni ko\'rmay qoladi.')) return;
+      try { await api('/api/billing/card', { method: 'DELETE' }); CARD = null; renderCard(); toastMsg('O\'chirildi'); } catch(e){ toastMsg(e.message); }
+    };
+    return;
+  }
+  box.innerHTML = `<div class="cs-h"><div><b>Kartaga o'tkazma ${CARD ? '' : '<span class="pill off">yoqilmagan</span>'}</b>
+      <small>Payme/Click shartnomasigacha mijozlar shu kartaga to'laydi. Karta raqami faqat buyurtma ochgan mijozga ko'rinadi; o'zgartirilsa botga xabar keladi.</small></div></div>
+    <div class="cs-form">
+      <label>Karta raqami<input id="csNum" inputmode="numeric" autocomplete="off" placeholder="8600 0000 0000 0000" maxlength="23" value="${esc(grp(CARD ? CARD.number : ''))}"></label>
+      <label>Karta egasi<input id="csHolder" autocomplete="off" placeholder="ANAS USMONOV" maxlength="60" value="${esc(CARD ? CARD.holder : '')}"></label>
+      <label>Bank (ixtiyoriy)<input id="csBank" autocomplete="off" placeholder="Kapitalbank" maxlength="40" value="${esc(CARD ? CARD.bank : '')}"></label>
+    </div>
+    <div class="cs-msg" id="csMsg"></div>
+    <div class="acts" style="margin-top:6px"><button class="btn btn-p" id="csSave">Saqlash</button>${CARD ? '<button class="btn" id="csCancel">Bekor</button>' : ''}</div>`;
+  const check = () => {
+    const d = $('csNum').value.replace(/\D/g, '').slice(0, 19);
+    $('csNum').value = grp(d);
+    const m = $('csMsg'); m.className = 'cs-msg';
+    if (d.length >= 16 && !luhn(d)) { m.classList.add('warn'); m.textContent = '⚠️ Raqam tekshiruvdan o\'tmadi — qayta tekshiring (baribir saqlash mumkin).'; }
+    else m.textContent = '';
+  };
+  $('csNum').oninput = check; check();
+  if ($('csCancel')) $('csCancel').onclick = () => { CARD_EDIT = false; renderCard(); };
+  $('csSave').onclick = async () => {
+    const b = $('csSave'); b.disabled = true;
+    try {
+      const r = await api('/api/billing/card', { method: 'PUT', body: JSON.stringify({
+        number: $('csNum').value, holder: $('csHolder').value, bank: $('csBank').value }) });
+      CARD = r; CARD_EDIT = false; renderCard(); toastMsg('Saqlandi — mijozlar endi kartaga to\'lay oladi');
+    } catch(e){ const m = $('csMsg'); m.className = 'cs-msg err'; m.textContent = e.message; b.disabled = false; }
+  };
+}
 const TABS = [['pending', 'Kutilmoqda'], ['paid', 'To\'langan'], ['canceled', 'Bekor'], ['refunded', 'Qaytarilgan'], ['all', 'Hammasi']];
 let DATA = { orders: [], providers: [] }, TAB = 'pending', ASK = '';   // ASK — tasdiqlash kutilayotgan buyurtma (ikki bosqich)
 
@@ -131,25 +201,38 @@ function render(){
   $('seg').querySelectorAll('[data-t]').forEach(b => b.onclick = () => { TAB = b.dataset.t; ASK = ''; render(); });
 
   const rows = os.filter(o => TAB === 'all' || o.status === TAB);
+  // Tekshirish kerak bo'lganlar tepada
+  if (TAB === 'pending') rows.sort((a, b) => offline(b) - offline(a));
   if (!rows.length) { $('list').innerHTML = `<div class="empty">${TAB === 'pending' ? 'Tasdiq kutayotgan buyurtma yo\'q' : 'Buyurtma yo\'q'}</div>`; return; }
   $('list').innerHTML = rows.map(o => {
     const c = o.client || {};
     const st = o.status === 'paid' ? `<span class="tag ok">To'landi · ${esc(BY[o.paidBy] || o.paidBy)}</span>`
       : o.status === 'canceled' ? '<span class="tag no">Bekor qilingan</span>'
       : o.status === 'refunded' ? '<span class="tag no">Qaytarilgan</span>' : '<span class="tag wt">To\'lov kutilmoqda</span>';
-    const inv = o.provider === 'invoice' ? `<div class="sb" style="margin-top:6px">📄 ${esc(o.invoiceCompany)} · STIR ${esc(o.invoiceInn)}</div>` : '';
+    const inv = o.provider === 'invoice' ? `<div class="sb" style="margin-top:6px">📄 ${esc(o.invoiceCompany)} · STIR ${esc(o.invoiceInn)}</div>`
+      : o.provider === 'card' && o.cardTo ? `<div class="sb" style="margin-top:6px">💳 Kartaga: ${esc(o.cardTo)}</div>` : '';
+    const card = o.provider === 'card' && o.status === 'pending';
+    const ck = card ? (o.claimedAt
+        ? `<span class="tag ck">Mijoz: "To'ladim" · ${esc(hm(o.claimedAt))}</span>${o.payer ? `<span class="tag">To'lovchi: ${esc(o.payer)}</span>` : ''}${o.rejects ? `<span class="tag">${o.rejects + 1}-urinish</span>` : ''}`
+        : `<span class="tag">Mijoz hali to'lamadi${o.rejectedAt ? ' · oldingisi topilmagan' : ''}</span>`) : '';
     const now = c.plan && c.plan.key ? `<span class="tag">Hozir: ${esc(PLAN[c.plan.key] || c.plan.key)} · ${c.plan.daysLeft} kun</span>` : '';
-    return `<div class="od ${o.status === 'pending' ? 'pend' : ''}">
+    return `<div class="od ${o.status === 'pending' ? (card && o.claimedAt ? 'claim' : offline(o) ? 'pend' : '') : ''}">
       <div class="od-h">
         <div><div class="nm">${esc(c.name || '—')}</div>
           <div class="sb">${o.code ? '№' + esc(o.code) + ' · ' : ''}${esc(PLAN[o.planKey] || o.planKey)} · ${esc(PROV[o.provider] || o.provider)}${o.auto ? ' · avto' : ''} · ${esc(when(o.createdAt))}</div>${inv}</div>
         <div class="sum"><b>${sum(o.amount)}</b><small>so'm</small></div>
       </div>
-      <div class="tags">${st}${now}<span class="tag">Balans: ${c.credits == null ? '—' : c.credits} kredit</span>${c.isTest ? '<span class="tag ts">🧪 SINOV</span>' : ''}</div>
+      <div class="tags">${st}${ck}${now}<span class="tag">Balans: ${c.credits == null ? '—' : c.credits} kredit</span>${c.isTest ? '<span class="tag ts">🧪 SINOV</span>' : ''}</div>
       ${o.status === 'pending' ? `<div class="acts">
         ${ASK === o.id
           ? `<span style="font-size:13px">Pul olinganini tasdiqlaysizmi? Tarif darhol yoqiladi.</span>
              <button class="btn btn-p" data-yes="${o.id}">Ha, to'landi</button><button class="btn" data-no="1">Yo'q</button>`
+          : card && !o.claimedAt
+            ? `<button class="btn btn-p" data-paid="${o.id}">Pul tushgan — yoqish</button>
+               <button class="btn btn-no" data-cancel="${o.id}">Bekor qilish</button>`
+          : card
+            ? `<button class="btn btn-p" data-paid="${o.id}">✅ Pul tushdi — yoqish</button>
+               <button class="btn btn-no" data-rej="${o.id}">❌ Tushmadi</button>`
           : `<button class="btn btn-p" data-paid="${o.id}">To'landi — tarifni yoqish</button>
              <button class="btn btn-no" data-cancel="${o.id}">Bekor qilish</button>`}
       </div>` : ''}
@@ -163,6 +246,11 @@ function render(){
       toastMsg(r.already ? 'Allaqachon yoqilgan' : 'Tarif yoqildi — balans ' + r.balance); ASK = ''; load(); window.thShell && thShell.refreshCounts(); }
     catch(e){ toastMsg(e.message); b.disabled = false; }
   });
+  $('list').querySelectorAll('[data-rej]').forEach(b => b.onclick = async () => {
+    b.disabled = true;
+    try { await api('/api/billing/orders/' + b.dataset.rej + '/reject', { method: 'POST' }); toastMsg('Mijozga "to\'lov topilmadi" xabari yuborildi'); load(); window.thShell && thShell.refreshCounts(); }
+    catch(e){ toastMsg(e.message); b.disabled = false; }
+  });
   $('list').querySelectorAll('[data-cancel]').forEach(b => b.onclick = async () => {
     b.disabled = true;
     try { await api('/api/billing/orders/' + b.dataset.cancel + '/cancel', { method: 'POST' }); toastMsg('Bekor qilindi'); load(); window.thShell && thShell.refreshCounts(); }
@@ -171,6 +259,7 @@ function render(){
 }
 
 load();
+loadCard();
 </script>
 </body>
 </html>

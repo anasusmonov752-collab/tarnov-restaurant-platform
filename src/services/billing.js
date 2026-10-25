@@ -76,10 +76,11 @@ const planName = (lang, key) => I18N.t(lang, 'plan.' + key);
  * Buyurtma yaratadi. provider: payme | click | uzum | manual | invoice
  * invoice — yuridik shaxs: hisob-faktura va bank o'tkazmasi ({ company, inn })
  */
-async function createOrder({ client, planKey, provider, invoice, auto }) {
+async function createOrder({ client, planKey, provider, invoice, auto, card }) {
   if (!PL.isPlan(planKey)) fail('Tarif topilmadi');
   const offline = ['manual', 'invoice'];
-  const prov = offline.includes(provider) || providers().includes(provider) ? provider : fail('To\'lov usuli mavjud emas');
+  // 'card' faqat cardPay.startOrder orqali (rekvizit borligi o'sha yerda tekshiriladi)
+  const prov = offline.includes(provider) || providers().includes(provider) || (provider === 'card' && card) ? provider : fail('To\'lov usuli mavjud emas');
   const inv = prov === 'invoice' ? {
     company: String((invoice && invoice.company) || '').trim().slice(0, 120),
     inn: String((invoice && invoice.inn) || '').replace(/\D/g, '')
@@ -91,6 +92,7 @@ async function createOrder({ client, planKey, provider, invoice, auto }) {
     try {
       o = await Order.create({ id: uuidv4(), code: String(10000000 + Math.floor(Math.random() * 9e7)),
         agencyId: client.agencyId, clientId: client.id, planKey, amount: plan.price, provider: prov, auto: !!auto,
+        cardTo: prov === 'card' ? card : '',
         invoiceCompany: inv ? inv.company : '', invoiceInn: inv ? inv.inn : '' });
     } catch (e) { if (e.code !== 11000 || i > 4) throw e; }           // raqam band — qayta
   }
@@ -350,6 +352,7 @@ const autoView = c => {
 async function tick({ now = new Date() } = {}) {
   const out = { expired: 0, burned: 0, reminded: 0 };
   out.auto = await autoRenew(now);
+  out.card = await require('./cardPay').tick(now);
   const due = await Client.find({ 'plan.endsAt': { $lte: now }, 'plan.expiredAt': null, 'plan.key': { $nin: ['', null] } }).lean();
   out.extended = 0;
   for (const c of due) {
@@ -396,6 +399,6 @@ async function tick({ now = new Date() } = {}) {
   return out;
 }
 
-module.exports = { providers, checkoutUrl, planView, createOrder, activate, refundOrder, cancelOrder, startTrial, tick, dmy,
+module.exports = { providers, checkoutUrl, adminChatOf, say, langOf, planName, planView, createOrder, activate, refundOrder, cancelOrder, startTrial, tick, dmy,
   guaranteeProgress, guaranteeMet, lowBalance, referralLink, rewardReferral, REFERRAL_BONUS, LOW_AT,
   saveCard, setAutoRenew, autoView, autoRenew };

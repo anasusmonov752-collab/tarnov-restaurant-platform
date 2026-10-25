@@ -9,6 +9,7 @@ const Order = require('../models/Order');
 const Client = require('../models/Client');
 const billing = require('../services/billing');
 const PL = require('../data/plans');
+const cardPay = require('../services/cardPay');
 
 const router = express.Router();
 const guard = require('../middleware/agency').agencyAuth;
@@ -26,6 +27,7 @@ router.get('/orders', guard, asyncHandler(async (req, res) => {
     subscribe: require('../services/paymeSubscribe').enabled(),
     orders: rows.map(o => ({
       id: o.id, code: o.code, auto: !!o.auto, invoiceCompany: o.invoiceCompany, invoiceInn: o.invoiceInn,
+      cardTo: o.cardTo, claimedAt: o.claimedAt, payer: o.payer, rejectedAt: o.rejectedAt, rejects: o.rejects || 0,
       planKey: o.planKey, amount: o.amount, provider: o.provider, status: o.status,
       paidBy: o.paidBy, createdAt: o.createdAt, paidAt: o.paidAt, canceledAt: o.canceledAt,
       client: by[o.clientId] ? { id: o.clientId, name: by[o.clientId].name, credits: by[o.clientId].credits,
@@ -44,6 +46,27 @@ router.post('/orders/:id/paid', guard, asyncHandler(async (req, res) => {
   if (!(await own(req, res))) return;
   try { const r = await billing.activate(req.params.id, { by: 'admin' }); res.json({ ok: true, already: r.already, balance: r.balance }); }
   catch (e) { res.status(e.status || 400).json({ error: e.message }); }
+}));
+
+// Kartaga o'tkazma: mijoz "To'ladim" degan, lekin pul tushmagan
+router.post('/orders/:id/reject', guard, asyncHandler(async (req, res) => {
+  if (!(await own(req, res))) return;
+  try { await cardPay.reject(req.user.restaurantId, req.params.id); res.json({ ok: true }); }
+  catch (e) { res.status(e.status || 400).json({ error: e.message }); }
+}));
+
+// ── To'lov kartasi rekvizitlari (kartaga o'tkazma) ──
+router.get('/card', guard, asyncHandler(async (req, res) => {
+  const c = await cardPay.getCard(req.user.restaurantId);
+  res.json(c ? Object.assign({}, c, { luhn: cardPay.luhnOk(c.number) }) : null);
+}));
+router.put('/card', guard, asyncHandler(async (req, res) => {
+  try { res.json(await cardPay.setCard(req.user.restaurantId, req.body || {}, req.user.email || req.user.name || 'panel')); }
+  catch (e) { res.status(e.status || 400).json({ error: e.message }); }
+}));
+router.delete('/card', guard, asyncHandler(async (req, res) => {
+  await cardPay.removeCard(req.user.restaurantId, req.user.email || req.user.name || 'panel');
+  res.json({ ok: true });
 }));
 
 router.post('/orders/:id/cancel', guard, asyncHandler(async (req, res) => {

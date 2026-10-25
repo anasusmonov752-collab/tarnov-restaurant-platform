@@ -36,6 +36,7 @@ const agent = require('../services/agent');
 const chat = require('../services/chat');
 const ChatThread = require('../models/ChatThread');
 const { publicBase } = require('../utils/publicBase');
+const cardPay = require('../services/cardPay');
 const appLife = require('../services/appLife');
 const I18N = require('../../public/js/th-i18n');
 const billing = require('../services/billing');
@@ -1023,10 +1024,11 @@ router.post('/topup', clientGuard, asyncHandler(async (req, res) => {
 router.get('/plans', clientGuard, asyncHandler(async (req, res) => {
   const Order = require('../models/Order');
   const sub = require('../services/paymeSubscribe');
-  const [pending, guarantee] = await Promise.all([
-    Order.findOne({ agencyId: req.client.agencyId, clientId: req.client.id, status: 'pending', provider: { $in: ['manual', 'invoice'] } },
-      'id code planKey provider createdAt').sort({ createdAt: -1 }).lean(),
-    billing.planView(req.client).key ? billing.guaranteeProgress(req.client) : null
+  const [pending, guarantee, card] = await Promise.all([
+    Order.findOne({ agencyId: req.client.agencyId, clientId: req.client.id, status: 'pending', provider: { $in: ['manual', 'invoice', 'card'] } },
+      'id code planKey provider createdAt claimedAt rejectedAt status').sort({ createdAt: -1 }).lean(),
+    billing.planView(req.client).key ? billing.guaranteeProgress(req.client) : null,
+    cardPay.getCard(req.client.agencyId)
   ]);
   res.json({
     plans: PL.PLAN_KEYS.map(k => PL.PLANS[k]),
@@ -1038,8 +1040,25 @@ router.get('/plans', clientGuard, asyncHandler(async (req, res) => {
     auto: billing.autoView(req.client),
     // Karta formasi Payme'ga to'g'ridan-to'g'ri yuboradi (kassa id ochiq ma'lumot)
     cardForm: sub.enabled() ? { merchantId: process.env.PAYME_MERCHANT_ID, api: sub.apiUrl() } : null,
-    pendingManual: pending ? { id: pending.id, code: pending.code, planKey: pending.planKey, provider: pending.provider, createdAt: pending.createdAt } : null
+    // Kartaga o'tkazma yoqilganmi (rekvizitning o'zi faqat buyurtma ochilganda beriladi)
+    card: !!card,
+    pendingManual: pending ? { id: pending.id, code: pending.code, planKey: pending.planKey, provider: pending.provider,
+      createdAt: pending.createdAt, state: pending.provider === 'card' ? cardPay.status(pending) : '' } : null
   });
+}));
+
+// ── Kartaga o'tkazma: buyurtma holati, "To'ladim", bekor qilish ──
+router.get('/orders/:id', clientGuard, asyncHandler(async (req, res) => {
+  try { res.json(await cardPay.getForClient(req.client, req.params.id)); }
+  catch (e) { res.status(e.status || 400).json({ error: e.message }); }
+}));
+router.post('/orders/:id/claim', clientGuard, asyncHandler(async (req, res) => {
+  try { res.json(await cardPay.claim(req.client, req.params.id, (req.body || {}).payer)); }
+  catch (e) { res.status(e.status || 400).json({ error: e.message }); }
+}));
+router.post('/orders/:id/cancel', clientGuard, asyncHandler(async (req, res) => {
+  try { res.json(await cardPay.cancelByClient(req.client, req.params.id)); }
+  catch (e) { res.status(e.status || 400).json({ error: e.message }); }
 }));
 
 // ── Avto-yangilash: karta tokeni (Payme'dan) / yoqish-o'chirish / olib tashlash ──
@@ -1062,6 +1081,10 @@ router.get('/referral', clientGuard, asyncHandler(async (req, res) => {
 // ── Tarif sotib olish: buyurtma + to'lov havolasi (yoki qo'lda so'rov) ──
 router.post('/orders', clientGuard, asyncHandler(async (req, res) => {
   const b = req.body || {};
+  if (b.provider === 'card') {
+    try { return res.json(await cardPay.startOrder(req.client, String(b.plan || ''), publicBase(req))); }
+    catch (e) { return res.status(e.status || 400).json({ error: e.message }); }
+  }
   try {
     const o = await billing.createOrder({ client: req.client, planKey: String(b.plan || ''), provider: String(b.provider || 'manual'),
       invoice: b.invoice });

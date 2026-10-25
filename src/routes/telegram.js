@@ -860,6 +860,32 @@ async function handleCallback(cq, appBase) {
     return;
   }
 
+  // ── Agentlik: kartaga o'tkazma kelmadi — mijozga xabar, buyurtma ochiq qoladi ──
+  if (data.startsWith('bx:')) {
+    const ag = await Restaurant.findOne({ 'telegram.adminChatId': chatId, active: true }, 'id').lean();
+    if (!ag) { await done('Faqat agentlik admini uchun', true); return; }
+    try {
+      await require('../services/cardPay').reject(ag.id, data.slice(3));
+      await done('Mijozga xabar yuborildi');
+      await tg.editMessageText(token, chatId, msgId, (cq.message.text || '') + '\n\n❌ Pul tushmadi — mijozga xabar berildi').catch(() => {});
+    } catch (e) { await done(e.message, true); }
+    return;
+  }
+
+  // ── Mijoz: "✅ To'ladim" (kartaga o'tkazma xabari, eslatma) ──
+  if (data.startsWith('pc:')) {
+    const cl = await Client.findOne({ tgChatId: chatId }).lean();
+    if (!cl) { await done('Hisob topilmadi', true); return; }
+    const L = langOf(cl, cq.from);
+    try {
+      const v = await require('../services/cardPay').claim(cl, data.slice(3));
+      const key = v.status === 'paid' ? 'bill.cardAlready' : v.status === 'canceled' ? 'bill.cardClosed' : 'bill.cardClaimed';
+      await done(T(L, key), v.status !== 'checking');
+      await tg.editMessageText(token, chatId, msgId, (cq.message.text || '') + '\n\n' + T(L, key)).catch(() => {});
+    } catch (e) { await done(I18N.errText(L, e.message), true); }
+    return;
+  }
+
   // ── Admin test rejimi: anketa havolasidan nomzod rejimiga o'tib, anketani ochish ──
   if (data.startsWith('tma:')) {
     if (!(await testMode.testerAgency(chatId))) { await done('Faqat agentlik admini uchun', true); return; }

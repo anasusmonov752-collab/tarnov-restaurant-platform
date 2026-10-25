@@ -11,12 +11,21 @@ const OrderSchema = new mongoose.Schema({
   clientId:  { type: String, required: true },
   planKey:   { type: String, required: true },
   amount:    { type: Number, required: true },          // so'm
-  provider:  { type: String, default: 'manual' },       // payme | click | uzum | manual | invoice
+  provider:  { type: String, default: 'manual' },       // payme | click | uzum | card | manual | invoice
   status:    { type: String, default: 'pending' },      // pending | paid | canceled | refunded
   // Qisqa buyurtma raqami (8 raqam): Uzum ilovasida qo'lda yozish, bank
   // o'tkazmasida to'lov maqsadi, mijoz bilan gaplashganda
   code:      { type: String, default: '' },
   auto:      { type: Boolean, default: false },         // avto-yangilash (saqlangan karta) yaratgan
+
+  // Kartaga o'tkazma (services/cardPay): mijoz "To'ladim" bosadi -> agentlik tekshiradi
+  cardTo:         { type: String, default: '' },        // qaysi kartaga ("8600 •••• 1234") — rekvizit keyin o'zgarsa ham
+  claimedAt:      { type: Date, default: null },        // mijoz "To'ladim" bosdi
+  payer:          { type: String, default: '' },        // "Aziz / •• 4417" (ixtiyoriy)
+  rejectedAt:     { type: Date, default: null },        // agentlik "Tushmadi"
+  rejects:        { type: Number, default: 0 },
+  cardRemindedAt: { type: Date, default: null },        // mijozga "to'lov kelmadi" eslatmasi
+  adminRemindedAt:{ type: Date, default: null },        // agentlikka "tekshirilmagan" eslatmasi
 
   // Hisob-faktura (yuridik shaxs, bank o'tkazmasi)
   invoiceCompany: { type: String, default: '' },

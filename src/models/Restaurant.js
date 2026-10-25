@@ -431,7 +431,16 @@ const RestaurantSchema = new mongoose.Schema({
   evalCriteria: [EvalCriterionSchema],
   evaluations:  [EvaluationSchema],
   staffNotes:   [StaffNoteSchema],
-  telegram:     { type: TelegramSchema, default: () => ({}) }
+  telegram:     { type: TelegramSchema, default: () => ({}) },
+  // Agentlik: kartaga o'tkazma uchun rekvizitlar (services/cardPay). Mijozga
+  // faqat buyurtma ochilganda ko'rsatiladi; o'zgarsa admin chatiga xabar boradi.
+  payCard: {
+    number:    { type: String, default: '' },     // faqat raqamlar
+    holder:    { type: String, default: '' },
+    bank:      { type: String, default: '' },
+    updatedAt: { type: Date, default: null },
+    updatedBy: { type: String, default: '' }
+  }
 });
 
 module.exports = mongoose.model('Restaurant', RestaurantSchema);

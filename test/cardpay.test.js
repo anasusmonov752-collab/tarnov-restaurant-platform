@@ -28,10 +28,10 @@ const toAdmin = () => sent.filter(s => s.chat === '900');
 const toClient = () => sent.filter(s => s.chat === '700');
 
 test('rekvizitsiz — karta usuli yo\'q; noto\'g\'ri rekvizit rad etiladi', async () => {
-  await assert.rejects(() => cp.startOrder(await cl(), 'pro'), /yoqilmagan/);
+  await assert.rejects(async () => cp.startOrder(await cl(), 'pro'), /yoqilmagan/);
   await assert.rejects(() => cp.setCard(A, { number: '8600 1234', holder: 'Anas' }), /16/);
   await assert.rejects(() => cp.setCard(A, { number: '8600123412341234', holder: 'A' }), /egasi/);
-  await assert.rejects(() => billing.createOrder({ client: await cl(), planKey: 'pro', provider: 'card' }), /usuli/);
+  await assert.rejects(async () => billing.createOrder({ client: await cl(), planKey: 'pro', provider: 'card' }), /usuli/);
 });
 
 test('rekvizit saqlanadi, o\'zgarsa agentlikka xabar', async () => {
@@ -107,8 +107,8 @@ test('mijoz o\'zi bekor qiladi; begona buyurtma ko\'rinmaydi', async () => {
   const c = await cl();
   const o = await cp.startOrder(c, 'max');
   await M.Client.create({ id: 'k2', agencyId: A, name: 'Boshqa', status: 'active', credits: 0 });
-  await assert.rejects(() => cp.getForClient(await M.Client.findOne({ id: 'k2' }).lean(), o.id), /topilmadi/);
-  await assert.rejects(() => cp.claim(await M.Client.findOne({ id: 'k2' }).lean(), o.id), /topilmadi/);
+  await assert.rejects(async () => cp.getForClient(await M.Client.findOne({ id: 'k2' }).lean(), o.id), /topilmadi/);
+  await assert.rejects(async () => cp.claim(await M.Client.findOne({ id: 'k2' }).lean(), o.id), /topilmadi/);
   assert.deepEqual(await cp.cancelByClient(c, o.id), { ok: true });
   assert.equal((await cp.getForClient(c, o.id)).status, 'canceled');
 });

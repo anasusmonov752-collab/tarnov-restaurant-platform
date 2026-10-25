@@ -128,6 +128,41 @@ textarea.in{min-height:110px;resize:vertical;line-height:1.5}
 .msg{text-align:center;color:var(--muted);padding:60px 20px;line-height:1.6}
 .done-ic{width:72px;height:72px;border-radius:50%;background:rgba(46,158,91,.14);color:var(--ok);font-size:36px;
   display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
+
+/* ══ YAGONA DIZAYN v2 (2026-10-25) — mijoz va nomzod kabinetlari bilan bir til ══
+   Chegarasiz variantlar (to'ldirilgan fon), gradientli progress, katta savol,
+   brend gradienti. Blok oxirida — oldingi qoidalar ustidan yozadi. */
+.prog{height:8px;background:var(--th-fill);border-radius:99px}
+.prog i{border-radius:99px;background:linear-gradient(90deg,#2F6BFF,#5AA0FF)}
+.stp{font-weight:700;font-variant-numeric:tabular-nums}
+.card{border-radius:22px;padding:24px 18px;box-shadow:none}
+.secl{font-size:12px;letter-spacing:.5px;color:var(--blue)}
+.q{font-size:23px;font-weight:800;letter-spacing:-.4px;line-height:1.25}
+.opt{border:none;background:var(--th-fill);border-radius:14px;padding:15px 15px;font-weight:500;transition:background .15s,transform .1s}
+.opt:active{transform:scale(.99)}
+.opt i{border-color:var(--th-line-2,#C7C7CC);background:var(--card)}
+.opt.on{background:var(--th-brand-soft);color:var(--blue);font-weight:700;box-shadow:inset 0 0 0 2px var(--blue)}
+.opt.on i{box-shadow:inset 0 0 0 4px var(--card)}
+input.in,textarea.in{border:none;background:var(--th-fill);border-radius:14px}
+input.in:focus,textarea.in:focus{box-shadow:inset 0 0 0 2px var(--blue);background:var(--card)}
+.share{border-radius:16px;box-shadow:0 8px 20px rgba(0,102,224,.28)}
+.ok{border-radius:14px;background:var(--th-ok-soft);color:var(--ok)}
+.cons{border-radius:14px;background:var(--th-fill)}
+.ph{border-radius:20px;background:var(--th-brand-soft)}
+.w-card{border:none;background:var(--th-fill);border-radius:16px}
+.w-pill{background:var(--card)}
+.w-add{border:none;background:var(--th-brand-soft);border-radius:16px;font-weight:700}
+.w-ic{background:var(--th-brand-soft)}
+.sh{border-radius:22px 22px 0 0}
+.sh-q{font-size:21px;font-weight:800;letter-spacing:-.3px}
+.sh-grab{background:var(--th-line-2,#C7C7CC)}
+.bar{background:linear-gradient(180deg,transparent,var(--bg) 32%)}
+.btn{border-radius:16px;box-shadow:0 8px 20px rgba(0,102,224,.22)}
+.btn:disabled{box-shadow:none}
+.btn.ghost{box-shadow:none}
+.logo{border-radius:22px;background:radial-gradient(130% 120% at 100% 0%,#2F6BFF 0%,#16357A 55%,#0B1430 100%);
+  box-shadow:0 12px 28px rgba(11,20,48,.3)}
+.done-ic{background:var(--th-ok-soft);box-shadow:0 0 0 8px rgba(52,199,89,.08)}
 </style>
 </head>
 <body>

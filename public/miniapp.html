@@ -295,7 +295,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .pm-pw{text-align:center;font-size:11.5px;color:var(--muted);margin-top:12px;letter-spacing:.3px}
 .pl-banner-b{width:100%;text-align:left;border:none;font:inherit;font-size:13.5px;cursor:pointer;display:block}
 /* ══ HISOB bo'limi ══ */
-#cabMode.on-hs .chead{display:none}
 .ac-wrap{padding-top:14px}
 .ac-hero{position:relative;overflow:hidden;border-radius:22px;padding:18px 18px 16px;color:#fff;margin-bottom:12px;
   background:radial-gradient(130% 120% at 100% 0%,#2F6BFF 0%,#16357A 42%,#0B1430 100%);
@@ -752,6 +751,124 @@ div.ac-row:active{background:none}
 .cmsg.sys{align-self:center;background:var(--soft-blue);color:var(--ink-2);font-size:12.5px;
   text-align:center;border-radius:12px;max-width:92%}
 .cmsg-t{font-size:10.5px;opacity:.65;margin-top:3px;text-align:right}
+
+/* ══ YAGONA DIZAYN v2 (2026-10-25) ════════════════════════════
+   Hisob bo'limining tili butun ilovada: katta sarlavha, 18px burchakli
+   chegarasiz kartalar, kapsula chiplar, to'ldirilgan (fill) tugmalar,
+   iOS ro'yxatlari. Bu blok oxirida — oldingi qoidalar ustidan yozadi. */
+.lt{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:18px 18px 6px}
+.lt-t{min-width:0}
+.lt small{display:block;font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lt h1{font-size:31px;font-weight:800;letter-spacing:-.7px;line-height:1.1;margin-top:3px}
+.lt-act{flex:none;display:flex;align-items:center;gap:5px;border:none;border-radius:99px;padding:9px 14px 9px 11px;
+  background:var(--blue);color:#fff;font:inherit;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 6px 16px rgba(0,102,224,.28)}
+.lt-act svg{width:17px;height:17px}
+.lt-act:active{transform:scale(.97)}
+#bNewV{display:none}
+.wrap{padding:12px 14px}
+/* Statistika — KPI plitkalari */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:8px 14px 2px}
+.stat{background:var(--card);border-radius:16px;padding:12px 4px 10px}
+.stat b{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.stat span{font-size:11px;margin-top:3px}
+/* Filtr — kapsulalar, faoli ko'k */
+.flt{gap:8px;padding:2px 0 14px}
+.flt button{border:none;border-radius:99px;padding:8px 14px;font-size:13.5px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.flt button.on{background:var(--blue);color:#fff}
+.flt button.on b{opacity:.85}
+/* Guruh sarlavhasi — bo'lim sarlavhasi kabi */
+.grp{margin-bottom:22px}
+.grp-h{padding:4px 4px 10px;align-items:center}
+.grp-h b{font-size:19px;font-weight:800;letter-spacing:-.3px}
+.grp-h span{font-size:12.5px}
+.grp-h .cl{border-radius:99px;padding:2px 8px}
+.vk-closed-h{font-size:14px;padding:12px 4px}
+/* Kartalar: chegarasiz, 18px */
+.cd,.vk,.vc,.sl,.card,.c,.w,.ai{border-radius:18px;box-shadow:none}
+.cd{padding:15px;margin-bottom:10px}
+.cd-ph{width:50px;height:50px;background:var(--th-brand-soft)}
+.cd-nm{font-size:16.5px}
+.cd-sub{font-size:13px}
+.stc,.tag,.st,.t{border-radius:99px;font-weight:700}
+.stc{padding:4px 10px;font-size:11.5px}
+.stc.waiting{background:var(--th-warn-soft);color:var(--warn)}
+.stc.open{background:var(--th-brand-soft);color:var(--blue)}
+.stc.hired{background:var(--th-ok-soft);color:var(--ok)}
+.stc.no,.stc.refunded{background:var(--th-fill);color:var(--muted)}
+.t{padding:3px 9px;font-weight:600;background:var(--th-fill)}
+.cd-acts{gap:8px;margin-top:13px}
+.cd-btn{border:none;background:var(--th-fill);border-radius:12px;padding:11px 6px;font-size:13.5px;font-weight:600}
+.cd-btn.p{background:var(--blue);color:#fff}
+.cd-btn:active,.ab:active,.sbtn:active{transform:scale(.98)}
+.cd-foot{margin-top:11px}
+.cd-link,.lnk{font-weight:700}
+.sp i{border-width:2px}
+.ab,.sbtn,.rzb{border:none;background:var(--th-fill);border-radius:11px;padding:9px 13px;font-size:13px}
+.ab.ok{background:var(--th-ok-soft);color:var(--ok)}
+.ab.no,.sbtn.d{background:var(--th-danger-soft);color:var(--danger)}
+.sbtn.p{background:var(--blue);color:#fff}
+.rzb{color:var(--blue)}
+.cd-box input,.ivbox input{border:none;background:var(--th-fill);border-radius:12px;padding:11px 12px}
+/* Vakansiya kartasi */
+.vk{padding:16px;margin-bottom:12px}
+.vk-ti{font-size:17px;font-weight:800;letter-spacing:-.2px}
+.vk-fn{gap:8px;border:none;padding:0;margin:14px 0 12px}
+.vk-fn div{background:var(--bg);border-radius:13px;padding:10px 2px 8px}
+.vk-fn div+div{border-left:none}
+.vk-fn b{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+.vk-fn span{font-size:11px;line-height:1.2;display:block;margin-top:1px}
+.vk-apps{border:none;border-radius:13px;background:var(--th-ok-soft);padding:11px 13px}
+.vk-apps.calm{background:var(--th-fill)}
+.vk-cta{border-radius:13px;padding:13px;font-size:15px;font-weight:700}
+.vk-yes{background:var(--th-brand-soft)}
+/* Tugmalar */
+.btn{border-radius:14px;font-weight:700}
+.btn.ghost{background:var(--th-fill)}
+.msg{padding:56px 24px;font-size:14.5px}
+/* Pastdan oyna */
+.sheet{background:rgba(8,20,38,.42);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+.sh{border-radius:22px 22px 0 0;background:var(--card)}
+.sh::before{content:'';display:block;width:38px;height:5px;border-radius:3px;background:var(--th-line-2,#C7C7CC);margin:7px auto -2px}
+.sh-h{border-bottom:none;padding:12px 16px 10px;border-radius:22px 22px 0 0}
+.sh-h b{font-size:18px;font-weight:800;letter-spacing:-.2px}
+.sh-x{width:30px;height:30px;border-radius:50%;background:var(--th-fill);font-size:14px;display:flex;align-items:center;justify-content:center}
+.sh-b{padding:4px 16px 22px}
+.vd-sec,.rs-sec,.sec h3,.h3{font-size:13px;font-weight:700;letter-spacing:.3px;color:var(--muted)}
+.menu-it{border-bottom:.5px solid var(--line);padding:15px 4px}
+.fl{border-bottom:.5px solid var(--line)}
+.rs-ct,.cp-row,.cp-fl,.cp-safe{border-radius:14px}
+.rs-chips span,.chip{border-radius:99px}
+/* Aloqa: suhbatlar — guruhlangan ro'yxat */
+#chatList{margin:10px 14px 0;border-radius:18px;overflow:hidden;background:var(--card)}
+.ch-row{border-bottom:none;position:relative;padding:12px 14px}
+.ch-row + .ch-row::before{content:'';position:absolute;top:0;right:0;left:72px;height:.5px;background:var(--line)}
+.ch-row:active{background:var(--th-fill)}
+.ch-av{width:48px;height:48px}
+.ch-name{font-size:15.5px;font-weight:700}
+.ch-badge{border-radius:99px}
+.lng{border-radius:16px;padding:12px 14px}
+.seg{background:var(--th-fill);border-radius:10px}
+.seg button.on{box-shadow:0 3px 8px rgba(0,0,0,.12)}
+#bChat{background:var(--th-fill);color:var(--ink)}
+/* Suhbat oynasi */
+.cv-h{border-bottom:.5px solid var(--line)}
+.cv-f{border-top:.5px solid var(--line)}
+.cv-f input{border:none;background:var(--th-fill);border-radius:99px}
+.cmsg{border-radius:18px}
+.cmsg.them{border:none}
+/* Qidiruv rejimi */
+.top{background:var(--bg);border-bottom:none;padding:14px 16px 8px}
+.top .sum{font-size:20px;font-weight:800;color:var(--ink);letter-spacing:-.3px;line-height:1.25}
+.top .cnt{font-size:13px;margin-top:4px}
+.c{padding:13px;border:2px solid transparent;margin-bottom:10px}
+.c.on{border-color:var(--blue);background:var(--th-brand-soft)}
+.ph{border-radius:14px;background:var(--th-brand-soft)}
+.pos{font-size:16.5px;font-weight:700}
+.tick{width:26px;height:26px;border:2px solid var(--th-line-2,#C7C7CC)}
+.bar{border-top:none;background:var(--card);box-shadow:0 -6px 20px rgba(15,39,71,.08);border-radius:20px 20px 0 0}
+.nav{border-radius:14px;background:var(--th-fill)}
+.d-pos{font-size:24px;font-weight:800;letter-spacing:-.4px}
+:root[data-theme="dark"] .bar{box-shadow:0 -6px 20px rgba(0,0,0,.4)}
 </style>
 </head>
 <body>
@@ -772,9 +889,10 @@ div.ac-row:active{background:none}
 
 <!-- ══ KABINET (menyu tugmasidan ochilganda) ══ -->
 <div id="cabMode" class="hide">
-  <div class="chead">
-    <div class="nm" id="cName">—</div>
-    <div class="cr" id="crTap"><b id="cCred">—</b><span id="cCredNote"></span><i class="crgo" data-t="cab.balanceGo">Balans ›</i></div>
+  <!-- Katta sarlavha (iOS large title): restoran nomi + bo'lim nomi. Balans — Hisob bo'limida -->
+  <div class="lt">
+    <div class="lt-t"><small id="cName">—</small><h1 id="ltTitle" data-t="tab.sl">Tanlovlar</h1></div>
+    <button class="lt-act hide" id="ltAct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span data-t="vac.newShort">Yangi</span></button>
   </div>
 
   <div id="vSL">
@@ -1101,8 +1219,6 @@ async function loadMe(){
     const m = await api('/api/ma/me');
     useLang(m.lang);                     // haqiqiy tanlov — serverda (Client.lang)
     $('cName').textContent = m.name || t('cab.client');
-    $('cCred').textContent = m.credits;
-    $('cCredNote').textContent = t('cab.credits', { n: m.credits }) + (m.plan && m.plan.key ? ' · ' + t('plan.' + m.plan.key) : '');
     CREDITS = m.credits;                 // "Kontaktni ochish" tasdig'ida balans
     const s = m.stats || {};
     $('cStats').innerHTML = `
@@ -1441,7 +1557,7 @@ function onTgBack(){
   if (!$('searchMode').classList.contains('hide') && cur >= 0) renderList();
 }
 try { TG && TG.BackButton && TG.BackButton.onClick(onTgBack); } catch(e){}
-$('crTap').onclick = showCredits;
+$('ltAct').onclick = () => $('bNewV').click();
 
 // Kartada bitta asosiy amal ("Mos nomzodlarni ko'rish") va voronka
 // raqamlari — mijozga "N tanlov" emas, natija kerak. Qolgani ⋯ menyusida.
@@ -2642,8 +2758,10 @@ function pickTab(id){
   if (id === 'tVC') loadVacancies();
   if (id === 'tMS') loadChats();
   if (id === 'tHS') { loadAccount(); window.scrollTo(0, 0); }
-  // Hisobda balans katta kartada — tepadagi qisqa balans takrorlanmasin
-  $('cabMode').classList.toggle('on-hs', id === 'tHS');
+  // Katta sarlavha: bo'lim nomi; Vakansiyada "+ Yangi"
+  const TT = { tSL: 'tab.sl', tAP: 'tab.ap', tVC: 'tab.vc', tMS: 'tab.ms', tHS: 'tab.hs' };
+  $('ltTitle').dataset.t = TT[id]; $('ltTitle').textContent = t(TT[id]);
+  $('ltAct').classList.toggle('hide', id !== 'tVC');
   moveLens();
 }
 TABS.forEach(([tb]) => { $(tb).onclick = () => pickTab(tb); });

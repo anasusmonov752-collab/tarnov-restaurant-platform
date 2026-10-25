@@ -354,6 +354,7 @@
 
       // ── Vakansiyalar ──
       'vac.new': '+ Yangi vakansiya',
+      'vac.newShort': 'Yangi',
       'vac.sheet': 'Vakansiya',
       'vac.empty': 'Vakansiya yo\'q.<br><br>"+ Yangi vakansiya" bilan kim kerakligini yozing — nomzodlar o\'zi ariza bera boshlaydi.',
       'vac.closedList': 'Yopilganlar ({n})',
@@ -1065,6 +1066,7 @@
       'cp.st3': 'Готово',
 
       'vac.new': '+ Новая вакансия',
+      'vac.newShort': 'Новая',
       'vac.sheet': 'Вакансия',
       'vac.empty': 'Вакансий нет.<br><br>Нажмите «+ Новая вакансия» и опишите, кто нужен, — кандидаты начнут откликаться сами.',
       'vac.closedList': 'Закрытые ({n})',

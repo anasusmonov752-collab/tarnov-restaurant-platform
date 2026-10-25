@@ -333,14 +333,102 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   font-family:inherit;font-size:14px;color:var(--ink);cursor:pointer;white-space:nowrap}
 .jf button.on{border-color:var(--blue);background:var(--blue);color:#fff;font-weight:600}
 .msg .lnk{border:0;background:none;color:var(--blue);font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;margin-top:6px}
+
+/* ══ YAGONA DIZAYN v2 (2026-10-25) — mijoz Mini App'idagi "Hisob" tili ══
+   Katta sarlavhalar, gradientli profil kartasi, 18px chegarasiz kartalar,
+   kapsula chiplar, to'ldirilgan tugmalar, iOS ro'yxatlari. Blok oxirida —
+   oldingi qoidalar ustidan yozadi. */
+.lt{padding:18px 18px 4px}
+.lt h1{font-size:31px;font-weight:800;letter-spacing:-.7px;line-height:1.1}
+.wrap{padding:12px 14px}
+/* Profil kartasi — gradient (Hisob balans kartasi bilan bir xil) */
+.hero{position:relative;overflow:hidden;border-radius:22px;padding:24px 18px 20px;color:#fff;margin-bottom:12px;
+  background:radial-gradient(130% 120% at 100% 0%,#2F6BFF 0%,#16357A 42%,#0B1430 100%);box-shadow:0 14px 34px rgba(11,20,48,.26)}
+.hero::before{content:'';position:absolute;right:-70px;top:-90px;width:230px;height:230px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,.16),rgba(255,255,255,0) 70%)}
+.hero > *{position:relative;z-index:1}
+.hero .av{width:88px;height:88px;background:rgba(255,255,255,.14);color:#fff;border:3px solid rgba(255,255,255,.35);
+  box-shadow:0 8px 20px rgba(0,0,0,.25)}
+.hero .nm{font-size:24px;font-weight:800;letter-spacing:-.4px;color:#fff}
+.hero .sb{color:rgba(255,255,255,.72);font-size:14px}
+.pill{background:rgba(255,255,255,.14) !important;color:#fff !important;border:1px solid rgba(255,255,255,.2);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);padding:9px 16px}
+.pill::before{content:'';width:8px;height:8px;border-radius:50%;background:#34C759;box-shadow:0 0 0 3px rgba(52,199,89,.25)}
+.pill.think::before{background:#FFB020;box-shadow:0 0 0 3px rgba(255,176,32,.25)}
+.pill.off::before{background:#A1A1AA;box-shadow:none}
+/* Kartalar va bo'limlar */
+.card,.jb,.co-vc{border-radius:18px;box-shadow:none}
+.card{margin-bottom:12px}
+.pad{padding:15px}
+.prog{height:8px;background:var(--th-fill);border-radius:99px}
+.prog i{border-radius:99px;background:linear-gradient(90deg,#2F6BFF,#5AA0FF)}
+.gap{border:none;border-radius:99px;background:var(--th-brand-soft);font-weight:600}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{border-radius:18px;padding:15px 10px 13px}
+.stat b{font-size:28px;font-weight:800;letter-spacing:-.5px;color:var(--ink)}
+.stat span{font-size:12px}
+.sec-h{padding:15px 15px 4px}
+.sec-h b{font-size:18px;font-weight:800;letter-spacing:-.2px}
+.ed{background:var(--th-fill);border-radius:99px;padding:6px 12px;font-size:13px;font-weight:700}
+.kv{border-bottom:none;position:relative;padding:11px 15px}
+.kv + .kv::before,.w + .w::before{content:'';position:absolute;top:0;left:15px;right:0;height:.5px;background:var(--line)}
+.w{border-bottom:none;position:relative;padding:12px 15px}
+.chip,.vd-chips span,.pk span{border-radius:99px}
+.h3,.vd-sec{font-size:13px;font-weight:700;letter-spacing:.3px}
+/* Ish o'rinlari */
+.js{border-radius:14px;height:44px;background:var(--th-fill)}
+:root[data-theme="dark"] .js{background:var(--card)}
+.jf button{border:none;background:var(--card);font-weight:600;font-size:13.5px;padding:8px 14px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.jf button.on{background:var(--blue);color:#fff}
+.jb{padding:16px;margin-bottom:12px}
+.jb .ti{font-size:17px;font-weight:800;letter-spacing:-.2px}
+.jb .sl{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums}
+.tg2{border-radius:99px;font-weight:700;padding:3px 10px}
+.tg2.fit{background:var(--th-ok-soft)}
+.tg2.fresh{background:var(--th-brand-soft)}
+.tg2.wait{background:var(--th-warn-soft)}
+.tg2.no{background:var(--th-danger-soft)}
+.tg2.ok{background:var(--th-ok-soft)}
+.ab{border-radius:12px;padding:12px;font-weight:700}
+.ab:disabled{background:var(--th-fill)}
+.btn{border-radius:14px;font-weight:700}
+.btn2{border:none;background:var(--th-fill);border-radius:14px;font-weight:700}
+.vd-ti{font-size:22px;font-weight:800;letter-spacing:-.3px}
+.vd-hk,.ap-v{border-radius:14px}
+.ap-er{border-radius:14px}
+.co-vc{border:none;background:var(--bg)}
+.co-av{border-radius:16px}
+/* Pastdan oyna */
+.sheet{background:rgba(8,20,38,.42)}
+.sh{border-radius:22px 22px 0 0}
+.sh::before{content:'';display:block;width:38px;height:5px;border-radius:3px;background:var(--th-line-2,#C7C7CC);margin:7px auto -2px}
+.sh-h{border-bottom:none;padding:12px 16px 10px;border-radius:22px 22px 0 0}
+.sh-h b{font-size:18px;font-weight:800;letter-spacing:-.2px}
+.sh-x{width:30px;height:30px;border-radius:50%;background:var(--th-fill);font-size:14px;display:flex;align-items:center;justify-content:center}
+.f{border-bottom:.5px solid var(--line)}
+.opt{border-bottom:.5px solid var(--line)}
+/* Xabarlar — guruhlangan ro'yxat */
+#chatList{margin:10px 14px 0;border-radius:18px;overflow:hidden;background:var(--card)}
+.ch-row{border-bottom:none;position:relative}
+.ch-row + .ch-row::before{content:'';position:absolute;top:0;right:0;left:72px;height:.5px;background:var(--line)}
+.ch-row:active{background:var(--th-fill)}
+.ch-av{width:48px;height:48px}
+.ch-name{font-size:15.5px;font-weight:700}
+.cv-h{border-bottom:.5px solid var(--line)}
+.cv-f{border-top:.5px solid var(--line)}
+.cv-f input{border:none;background:var(--th-fill);border-radius:99px}
+.cmsg{border-radius:18px}
+.cmsg.them{border:none}
+.msg{padding:56px 24px}
 </style>
 </head>
 <body>
 
 <div id="app"><div class="msg">Yuklanmoqda…</div></div>
 
-<div id="vJ" class="hide"><div class="wrap">
-  <div class="h3">Ish o'rinlari</div>
+<div id="vJ" class="hide">
+  <div class="lt"><h1>Ish o'rinlari</h1></div>
+  <div class="wrap">
   <div id="jobBar" class="hide">
     <div class="js"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input id="jobQ" type="search" placeholder="Qidirish: lavozim, joy, tuman" autocomplete="off"></div>
@@ -349,12 +437,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   <div id="jobList"><div class="msg">Yuklanmoqda…</div></div>
 </div></div>
 
-<div id="vA" class="hide"><div class="wrap">
-  <div class="h3">Arizalarim</div>
+<div id="vA" class="hide">
+  <div class="lt"><h1>Arizalarim</h1></div>
+  <div class="wrap">
   <div id="appList"><div class="msg">Yuklanmoqda…</div></div>
 </div></div>
 
 <div id="vM" class="hide">
+  <div class="lt"><h1>Xabarlar</h1></div>
   <div id="chatList"><div class="ch-empty">Yuklanmoqda…</div></div>
 </div>
 
@@ -498,6 +588,7 @@ function render(p){
   const [pcls, plbl] = PILL[cur] || PILL.active;
 
   $('app').innerHTML = `
+  <div class="lt"><h1>Profilim</h1></div>
   <div class="wrap">
     <div class="hero">
       <div class="av">${p.hasPhoto ? `<img src="/api/cand/photo?t=${encodeURIComponent(PT)}" alt="">` : esc(ini)}</div>

@@ -519,6 +519,22 @@ tekshirildi. Merchant shartnoma bo'lmagani uchun haqiqiy to'lov HALI SINALMAGAN.
 o'rnatadi, scope `/`) JS/CSS'ni "avval kesh" berardi — deploydan keyin ?v=
 o'zgarmagan skript abadiy eski qolardi. Endi JS/CSS tarmoqdan (v6 kesh).
 
+**KARTAGA O'TKAZMA — DEPLOY QILINDI** (2026-10-25, `29fd1f6`, Anas qarori: merchant
+shartnomasigacha yarim avtomat). Qoida YAGONA — `services/cardPay.js`. Rekvizit
+`Restaurant.payCard` (panel To'lovlar -> "Kartaga o'tkazma", Luhn ogohlantirish,
+o'zgarsa admin chatiga xabar). Mijoz: tarif -> "Kartaga o'tkazma" -> karta, aniq
+summa, nusxa tugmalari, buyurtma №, ixtiyoriy "kimning kartasidan" -> "To'ladim"
+(`claimedAt`) -> "Tekshirilmoqda" (5 s da o'zi yangilanadi) -> "Tasdiqlandi". Botga
+ham rekvizit xabari (HTML, <code> — bosib nusxa) va "✅ To'ladim" (`pc:`). Agentlikka
+botda "✅ Pul tushdi — yoqish" (`bo:` -> billing.activate) / "❌ Tushmadi" (`bx:` ->
+reject, mijozga xabar, qayta "To'ladim" mumkin). Bir tarifga ikkinchi buyurtma
+ochilmaydi. `billing.tick`: 3 soat "To'ladim" yo'q -> mijozga eslatma, 72 soat ->
+bekor, "To'ladim" 2 soat tasdiqlanmasa -> agentlikka eslatma. Yon menyu sanog'i
+faqat "To'ladim" bosilganlarni oladi. `test/cardpay.test.js`. Jonli: oynalar soxta
+ma'lumot bilan tekshirildi; HAQIQIY karta hali kiritilmagan (Anas panelda kiritadi).
+CI: yiqilgan test fayli bloki "Yiqilgan fayl tafsiloti" annotatsiyasida (sintaksis
+xatosi ham ko'rinadi).
+
 **ANKETA C VARIANT + TALABA + NOMZOD KABINETI TUZATISHLARI** (2026-10-23,
 `4addf87`..`6689dea`): ish tajribasi ekrani — REZYUME KARTALARI (Anas uchta
 variantdan C'ni tanladi): bo'sh holatda "Ish joyi qo'shish" (pastki tugma) va

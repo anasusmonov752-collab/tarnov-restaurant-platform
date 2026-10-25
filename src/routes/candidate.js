@@ -158,7 +158,7 @@ const TEXT = {
 const LIST = { languages: 12, skills: 30 };
 const JOB_STATUS = ['active', 'considering', 'not_looking'];
 
-// ── Profil kartasi bezagi: rang va fon naqshi ──
+// ── Profil kartasi rangi ──
 router.patch('/style', guard, asyncHandler(async (req, res) => {
   let s;
   try { s = profileStyle.clean(req.body || {}); }

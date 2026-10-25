@@ -108,12 +108,11 @@ const CandidateSchema = new mongoose.Schema({
   // Telefon Telegram "kontaktni ulashish" orqali kelgan — raqam haqiqiy
   // va shu odamniki. Qo'lda yozilgan telefonda null.
   phoneVerifiedAt: { type: Date,   default: null },
-  // Kabinetdagi profil kartasining bezagi (services/profileStyle): rang va
-  // fon naqshi — nomzod o'zi tanlaydi; tgColor — Telegram profil rangidan
+  // Kabinetdagi profil kartasining rangi (services/profileStyle) — nomzod
+  // o'zi tanlaydi; tgColor — Telegram profil rangidan
   // (boshlang'ich). Faqat o'z kabinetida, restoranlarga ko'rinmaydi.
   profileStyle: {
     color:       { type: String, default: '' },
-    pattern:     { type: String, default: '' },
     tgColor:     { type: String, default: '' },
     tgCheckedAt: { type: Date,   default: null }
   },

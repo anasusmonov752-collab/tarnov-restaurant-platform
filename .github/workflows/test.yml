@@ -43,4 +43,5 @@ jobs:
           # Yiqilgan har fayl bloki bitta annotatsiyada (o'tgan subtestlarsiz): pastki qismi — sabab
           awk '/^(ok|not ok) [0-9]+ - /{ if ($1=="not") { print buf; print $0; print "=====" } buf=""; next } { buf = buf "\n" $0 }' test.log \
             | grep -vE '^\s*ok [0-9]+ |duration_ms|^\s*(---|\.\.\.)\s*$|type: .test.' | grep -E '\S' | tail -60 \
-            | awk 'BEGIN{ORS="%0A"} {print}' | sed 's/^/::error title=Yiqilgan fayl tafsiloti::/' ; echo
+            > failblock.txt || true
+          if [ -s failblock.txt ]; then echo "::error title=Yiqilgan fayl tafsiloti::$(awk 'BEGIN{ORS="%0A"} {print}' failblock.txt)"; fi

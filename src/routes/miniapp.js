@@ -1024,16 +1024,25 @@ router.post('/topup', clientGuard, asyncHandler(async (req, res) => {
 router.get('/plans', clientGuard, asyncHandler(async (req, res) => {
   const Order = require('../models/Order');
   const sub = require('../services/paymeSubscribe');
-  const [pending, guarantee, card] = await Promise.all([
+  const [pending, guarantee, card, history] = await Promise.all([
     Order.findOne({ agencyId: req.client.agencyId, clientId: req.client.id, status: 'pending', provider: { $in: ['manual', 'invoice', 'card'] } },
       'id code planKey provider createdAt claimedAt rejectedAt status').sort({ createdAt: -1 }).lean(),
     billing.planView(req.client).key ? billing.guaranteeProgress(req.client) : null,
-    cardPay.getCard(req.client.agencyId)
+    cardPay.getCard(req.client.agencyId),
+    // Hisob bo'limidagi "To'lovlar" tarixi — oxirgi 20 ta
+    Order.find({ agencyId: req.client.agencyId, clientId: req.client.id },
+      'id code planKey provider amount status createdAt paidAt claimedAt rejectedAt auto').sort({ createdAt: -1 }).limit(20).lean()
   ]);
+  const cur = billing.planView(req.client);
+  const p = req.client.plan || {};
   res.json({
     plans: PL.PLAN_KEYS.map(k => PL.PLANS[k]),
     trial: PL.TRIAL,
-    current: billing.planView(req.client),
+    // startedAt — muddat chizig'i (necha foizi o'tgan) uchun
+    current: Object.assign(cur, { startedAt: cur.key ? p.startedAt : null }),
+    history: history.map(o => ({ id: o.id, code: o.code, planKey: o.planKey, provider: o.provider, amount: o.amount,
+      createdAt: o.createdAt, paidAt: o.paidAt, auto: !!o.auto,
+      state: o.status === 'pending' ? (o.provider === 'card' ? cardPay.status(o) : 'waiting') : o.status })),
     credits: req.client.credits,
     providers: billing.providers(),
     guarantee,

@@ -9,7 +9,7 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>window.thViewerHostBack = true;</script>  <!-- orqaga tugmasi zanjiri onTgBack'da (rasm oynasi) -->
 <script src="/js/th-viewer.js?v=2" defer></script>
-<script src="/js/th-i18n.js?v=17"></script>
+<script src="/js/th-i18n.js?v=18"></script>
 <style>
 /* Ranglar — TalentHub dizayn tizimidan (css/th.css, iOS uslubi).
    Telegram'ning --tg-theme-* RANGLARI olinmaydi (avval shunday edi va
@@ -294,6 +294,170 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .pm-logo{flex:none;background:#33CCCC;color:#fff;font-weight:800;border-radius:8px;padding:5px 8px;font-size:12px}
 .pm-pw{text-align:center;font-size:11.5px;color:var(--muted);margin-top:12px;letter-spacing:.3px}
 .pl-banner-b{width:100%;text-align:left;border:none;font:inherit;font-size:13.5px;cursor:pointer;display:block}
+/* ══ HISOB bo'limi ══ */
+#cabMode.on-hs .chead{display:none}
+.ac-wrap{padding-top:14px}
+.ac-hero{position:relative;overflow:hidden;border-radius:22px;padding:18px 18px 16px;color:#fff;margin-bottom:12px;
+  background:radial-gradient(130% 120% at 100% 0%,#2F6BFF 0%,#16357A 42%,#0B1430 100%);
+  box-shadow:0 14px 34px rgba(11,20,48,.28)}
+.ac-hero::before{content:'';position:absolute;right:-70px;top:-90px;width:230px;height:230px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,.16),rgba(255,255,255,0) 70%)}
+.ac-hero::after{content:'';position:absolute;left:-40px;bottom:-80px;width:200px;height:200px;border-radius:50%;
+  background:radial-gradient(circle,rgba(120,170,255,.18),rgba(255,255,255,0) 70%)}
+.ac-hero > *{position:relative;z-index:1}
+.ac-top{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600;color:rgba(255,255,255,.75);letter-spacing:.3px}
+.ac-pill{background:rgba(255,255,255,.16);color:#fff;border-radius:99px;padding:4px 10px;font-size:12px;font-weight:700;letter-spacing:.4px;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.18)}
+.ac-pill.off{background:rgba(255,255,255,.08);color:rgba(255,255,255,.8)}
+.ac-bal{display:flex;align-items:baseline;gap:8px;margin-top:10px}
+.ac-bal b{font-size:52px;font-weight:700;line-height:1;letter-spacing:-1.5px;font-variant-numeric:tabular-nums}
+.ac-bal span{font-size:17px;font-weight:600;color:rgba(255,255,255,.82)}
+.ac-note{font-size:12.5px;color:rgba(255,255,255,.62);margin-top:6px}
+.ac-term{margin-top:16px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:10px 12px}
+.ac-term.none{font-size:13px;color:rgba(255,255,255,.85);line-height:1.45}
+.ac-term-t{display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;color:rgba(255,255,255,.72)}
+.ac-term-t b{font-size:13.5px;color:#fff}
+.ac-bar{height:5px;border-radius:99px;background:rgba(255,255,255,.16);margin-top:8px;overflow:hidden}
+.ac-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#7DD3FC,#FFFFFF)}
+.ac-term.soon .ac-term-t b{color:#FFD27A}
+.ac-term.soon .ac-bar i{background:linear-gradient(90deg,#F59E0B,#FFD27A)}
+.ac-cta{width:100%;margin-top:14px;border:none;border-radius:14px;padding:13px;font:inherit;font-size:15.5px;font-weight:700;
+  background:#fff;color:#0B1430;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.18);transition:transform .15s}
+.ac-cta:active{transform:scale(.98)}
+.ac-alert{width:100%;display:flex;align-items:center;gap:12px;text-align:left;border:none;font:inherit;color:var(--ink);
+  border-radius:16px;padding:12px 14px;margin-bottom:10px;background:var(--card);cursor:pointer}
+div.ac-alert{cursor:default}
+.ac-alert-ic{width:34px;height:34px;border-radius:10px;flex:none;display:flex;align-items:center;justify-content:center}
+.ac-alert-ic svg{width:19px;height:19px}
+.ac-alert.warn .ac-alert-ic{background:var(--th-warn-soft);color:var(--th-warn)}
+.ac-alert.info .ac-alert-ic{background:var(--th-brand-soft);color:var(--blue)}
+.ac-alert.bad .ac-alert-ic{background:var(--th-danger-soft);color:var(--danger)}
+.ac-alert-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.ac-alert-t b{font-size:15px}
+.ac-alert-t small{font-size:13px;color:var(--muted);line-height:1.4}
+.ac-chev{width:18px;height:18px;color:var(--th-tertiary,#C7C7CC);flex:none}
+.ac-chev svg{width:18px;height:18px;display:block}
+.cp-spin.sm{width:18px;height:18px;border-width:2.5px}
+.ac-card{background:var(--card);border-radius:18px;padding:14px;margin-bottom:12px}
+.ac-g{display:flex;align-items:center;gap:14px}
+.ac-ring{position:relative;width:64px;height:64px;flex:none}
+.ac-ring svg{width:64px;height:64px;transform:rotate(-90deg)}
+.ac-ring circle{fill:none;stroke-width:6}
+.ac-ring .bg{stroke:var(--th-fill,#EEE)}
+.ac-ring .fg{stroke:#E8A317;stroke-linecap:round;transition:stroke-dashoffset .8s cubic-bezier(.3,.8,.3,1)}
+.ac-g.done .ac-ring .fg{stroke:var(--ok)}
+.ac-ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;font-variant-numeric:tabular-nums}
+.ac-ring b small{font-size:11.5px;color:var(--muted);font-weight:700;margin-left:1px}
+.ac-g-t{display:flex;flex-direction:column;gap:3px;min-width:0}
+.ac-g-t b{display:flex;align-items:center;gap:6px;font-size:15.5px}
+.ac-g-t b svg{width:17px;height:17px;color:#E8A317}
+.ac-g.done .ac-g-t b svg{color:var(--ok)}
+.ac-g-t span{font-size:14px;line-height:1.4}
+.ac-g-t small{font-size:12.5px;color:var(--muted);line-height:1.4}
+.ac-trial{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(232,163,23,.14),rgba(232,163,23,.05))}
+.ac-trial > div{flex:1;display:flex;flex-direction:column;gap:3px}
+.ac-trial b{font-size:15.5px}
+.ac-trial span{font-size:13px;color:var(--muted);line-height:1.4}
+.ac-trial .btn{flex:none;padding:11px 14px}
+.ac-sec{margin:22px 4px 10px}
+.ac-sec h3{font-size:22px;font-weight:800;letter-spacing:-.3px;margin:0}
+.ac-sec span{display:block;font-size:13px;color:var(--blue);font-weight:600;margin-top:3px}
+.ac-sec.sm{margin:18px 4px 8px}
+.ac-sec.sm h3{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.ac-seg{display:flex;background:var(--th-fill,#E9E9EE);border-radius:12px;padding:3px;gap:2px;margin-bottom:12px}
+.ac-seg button{flex:1;border:0;background:none;border-radius:10px;padding:9px 6px;font:inherit;font-size:14.5px;font-weight:600;color:var(--ink);cursor:pointer;transition:background .2s,box-shadow .2s}
+.ac-seg button i{font-style:normal;color:#E8A317;margin-left:4px;font-size:12px}
+.ac-seg button.on{background:var(--card);box-shadow:0 3px 8px rgba(0,0,0,.12),0 1px 1px rgba(0,0,0,.04)}
+.ac-seg.sm button{font-size:13.5px;padding:7px 6px}
+.ac-plan{background:var(--card);border-radius:20px;padding:18px 16px 16px;border:1.5px solid transparent}
+.ac-plan.pop{border-color:var(--blue)}
+.ac-plan-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ac-plan-h b{font-size:20px;font-weight:800}
+.ac-tag{font-size:11.5px;font-weight:700;color:#fff;background:var(--blue);border-radius:99px;padding:4px 10px}
+.ac-tag.cur{background:var(--th-ok-soft);color:var(--ok)}
+.ac-price{font-size:34px;font-weight:800;letter-spacing:-.8px;margin-top:10px;font-variant-numeric:tabular-nums}
+.ac-price small{font-size:14px;font-weight:600;color:var(--muted);margin-left:6px;letter-spacing:0}
+.ac-per{font-size:13px;color:var(--ok);font-weight:600;margin-top:2px}
+.ac-kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 12px}
+.ac-kpi div{background:var(--bg);border-radius:13px;padding:10px 6px;text-align:center}
+.ac-kpi b{display:block;font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+.ac-kpi span{display:block;font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.25}
+.ac-feat{list-style:none;padding:0;margin:0 0 16px;display:flex;flex-direction:column;gap:9px}
+.ac-feat li{display:flex;gap:9px;font-size:14px;line-height:1.4}
+.ac-feat svg{width:18px;height:18px;flex:none;color:var(--ok);margin-top:1px}
+.ac-buy{width:100%;padding:14px;font-size:16px;font-weight:700}
+.ac-fine{font-size:12px;color:var(--muted);line-height:1.5;margin:10px 6px 0}
+.ac-list{background:var(--card);border-radius:16px;overflow:hidden;margin-top:14px}
+.ac-row{width:100%;display:flex;align-items:center;gap:12px;padding:11px 14px;border:none;background:none;font:inherit;color:var(--ink);text-align:left;cursor:pointer;position:relative}
+div.ac-row{cursor:default}
+.ac-row + .ac-row::before{content:'';position:absolute;top:0;right:0;left:60px;height:.5px;background:var(--line)}
+.ac-row:active{background:var(--th-fill,#F2F2F7)}
+div.ac-row:active{background:none}
+.ac-ic{width:32px;height:32px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;color:#fff}
+.ac-ic svg{width:18px;height:18px}
+.ac-ic em{font-style:normal;font-size:9.5px;font-weight:800;letter-spacing:-.2px}
+.ac-rt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.ac-rt b{font-size:15.5px;font-weight:500}
+.ac-rt small{font-size:12.5px;color:var(--muted);line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ac-rv{font-size:14.5px;color:var(--muted);flex:none}
+.ac-h .ac-rt b{font-weight:600}
+.ac-hr{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none}
+.ac-hr b{font-size:15px;font-variant-numeric:tabular-nums}
+.ac-st{font-size:11.5px;font-weight:700;border-radius:99px;padding:2px 8px}
+.ac-st.ok{background:var(--th-ok-soft);color:var(--ok)}
+.ac-st.info{background:var(--th-brand-soft);color:var(--blue)}
+.ac-st.warn{background:var(--th-warn-soft);color:var(--th-warn)}
+.ac-st.bad{background:var(--th-danger-soft);color:var(--danger)}
+.ac-st.mute{background:var(--th-fill,#EEE);color:var(--muted)}
+.ac-dl{width:42px;flex:none;text-align:center;font-size:16px;font-weight:800;font-variant-numeric:tabular-nums}
+.ac-dl.p{color:var(--ok)} .ac-dl.m{color:var(--danger)}
+.ac-after{font-size:12.5px;color:var(--muted)}
+.ac-empty{padding:22px 14px;text-align:center;color:var(--muted);font-size:14px}
+.ac-skel{height:220px;border-radius:22px;margin-bottom:12px;background:linear-gradient(100deg,var(--th-fill,#EEE) 30%,rgba(255,255,255,.5) 50%,var(--th-fill,#EEE) 70%);background-size:300% 100%;animation:acSk 1.3s linear infinite}
+.ac-skel.s2{height:80px}.ac-skel.s3{height:300px}
+@keyframes acSk{to{background-position:-150% 0}}
+.ac-auto-hero{text-align:center;padding:4px 10px 14px}
+.ac-auto-hero svg{width:40px;height:40px;color:var(--blue)}
+.ac-auto-hero p{font-size:14px;color:var(--muted);line-height:1.5;margin:8px 0 0}
+.ac-sw{position:relative;width:51px;height:31px;flex:none}
+.ac-sw input{opacity:0;width:0;height:0;position:absolute}
+.ac-sw i{position:absolute;inset:0;border-radius:99px;background:var(--th-fill,#E9E9EA);transition:background .2s;cursor:pointer}
+.ac-sw i::after{content:'';position:absolute;left:2px;top:2px;width:27px;height:27px;border-radius:50%;background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.15);transition:transform .25s cubic-bezier(.3,1.3,.5,1)}
+.ac-sw input:checked + i{background:#34C759}
+.ac-sw input:checked + i::after{transform:translateX(20px)}
+/* To'lov oynasi (checkout) */
+.ck-sum{background:var(--bg);border-radius:18px;padding:14px}
+.ck-h{display:flex;align-items:center;gap:12px}
+.ck-h b{display:block;font-size:16.5px}
+.ck-h small{font-size:13px;color:var(--muted)}
+.ck-badge{width:42px;height:42px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px;background:linear-gradient(135deg,#64748B,#334155)}
+.ck-badge.pro{background:linear-gradient(135deg,#2F6BFF,#16357A)}
+.ck-badge.max{background:linear-gradient(135deg,#E8A317,#9A5B0C)}
+.ck-rows{margin-top:12px;display:flex;flex-direction:column}
+.ck-rows div{display:flex;justify-content:space-between;gap:10px;padding:8px 0;font-size:14px;border-top:.5px solid var(--line)}
+.ck-rows span{color:var(--muted)}
+.ck-rows b{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+.ck-total{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line);margin-top:4px;padding-top:12px}
+.ck-total span{font-size:15px;font-weight:600}
+.ck-total b{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+.ck-m{margin-top:0}
+.ck-m .ac-rt small{white-space:normal}
+.ck-tag{font-style:normal;font-size:10.5px;font-weight:700;color:var(--ok);background:var(--th-ok-soft);border-radius:99px;padding:2px 7px;margin-left:4px;vertical-align:2px}
+.ck-radio{width:22px;height:22px;border-radius:50%;border:2px solid var(--th-line-2,#C7C7CC);flex:none;position:relative;transition:border-color .15s}
+.ac-row.on .ck-radio{border-color:var(--blue)}
+.ac-row.on .ck-radio::after{content:'';position:absolute;inset:3px;border-radius:50%;background:var(--blue)}
+.ck-legal{font-size:12px;color:var(--muted);text-align:center;line-height:1.5;margin:12px 8px 6px}
+.ck-legal a{color:var(--blue)}
+.ck-foot{position:sticky;bottom:0;padding:10px 0 4px;background:linear-gradient(to bottom,transparent,var(--card) 35%)}
+.ck-foot .btn{padding:15px;font-size:16px;font-weight:700}
+/* Kartaga o'tkazma bosqichlari */
+.cp-steps{display:flex;align-items:center;gap:6px;margin:0 0 14px}
+.cp-steps span{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--muted);white-space:nowrap}
+.cp-steps span em{font-style:normal;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;background:var(--th-fill,#EEE);color:var(--muted)}
+.cp-steps span.on{color:var(--ink)}
+.cp-steps span.on em{background:var(--blue);color:#fff}
+.cp-steps i{flex:1;height:2px;border-radius:2px;background:var(--th-fill,#EEE);min-width:10px}
+.cp-steps i.on{background:var(--blue)}
 .pay-card{background:linear-gradient(135deg,#0F172A,#334155)}
 .pay-card svg{width:22px;height:22px}
 /* Kartaga o'tkazma */
@@ -302,7 +466,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .cp-sum small{font-size:15px;font-weight:600;color:var(--muted);margin-left:5px}
 .cp-sub{font-size:13.5px;color:var(--muted);margin-top:2px}
 .cp-step{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:700;margin:14px 0 8px}
-.cp-step i{font-style:normal;width:22px;height:22px;border-radius:50%;background:var(--blue);color:#fff;font-size:12.5px;display:flex;align-items:center;justify-content:center;flex:none}
+.cp-step i{font-style:normal;width:26px;height:26px;border-radius:8px;background:var(--th-brand-soft);color:var(--blue);display:flex;align-items:center;justify-content:center;flex:none}
+.cp-step i svg{width:15px;height:15px}
 .cp-card{position:relative;border-radius:16px;padding:16px 16px 14px;color:#fff;overflow:hidden;
   background:radial-gradient(120% 140% at 100% 0%,#3B5BDB 0%,#1E293B 55%,#0B1220 100%);box-shadow:0 10px 24px rgba(15,23,42,.28)}
 .cp-card::after{content:'';position:absolute;right:-40px;top:-60px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.06)}
@@ -629,6 +794,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     <div class="wrap" id="apList"><div class="msg" data-t="common.loading">Yuklanmoqda…</div></div>
   </div>
 
+  <!-- Hisob: balans, kafolat, tariflar, to'lov tarixi (loadAccount) -->
+  <div id="vHS" class="hide">
+    <div class="wrap ac-wrap" id="hsBody"></div>
+  </div>
+
   <div id="vMS" class="hide">
     <div id="chatList"><div class="ch-empty" data-t="common.loading">Yuklanmoqda…</div></div>
     <div class="wrap" style="padding-top:14px">
@@ -666,6 +836,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     <button class="tb"    id="tAP"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg><i class="dot" id="dAP"></i></span><span data-t="tab.ap">Arizalar</span></button>
     <button class="tb"    id="tVC"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg></span><span data-t="tab.vc">Vakansiya</span></button>
     <button class="tb"    id="tMS"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><i class="dot" id="dMS"></i></span><span data-t="tab.ms">Aloqa</span></button>
+    <button class="tb"    id="tHS"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg></span><span data-t="tab.hs">Hisob</span></button>
   </nav>
 </div>
 
@@ -1204,7 +1375,7 @@ function wireCards(root, refresh){
 }
 
 // Kredit harakati sababi -> t('crr.<sabab>'); notanish sabab o'zicha
-const crReason = r => ['purchase', 'bonus', 'reveal', 'refund', 'adjust'].includes(r) ? t('crr.' + r) : r;
+const crReason = r => ['purchase', 'bonus', 'reveal', 'refund', 'adjust', 'expire', 'payrefund'].includes(r) ? t('crr.' + r) : r;
 
 async function loadCredits(){
   try{
@@ -1686,171 +1857,319 @@ function renderApps(){
   wireApps($('apList'), loadApps);
 }
 
-// ── Balans: kredit, joriy tarif, tarif tanlash ──
-// Kamdan-kam ishlatiladi, shuning uchun tab emas, oyna (tepadagi kredit raqami).
-// Tarif = muddat + kontakt limiti; to'lov Payme/Click/Uzum (ulangan bo'lsa),
-// menejer orqali yoki hisob-faktura (billing.createOrder — agentlik botda tasdiqlaydi)
-let PLANS = null;
+// ══ HISOB: balans, kafolat, tariflar, to'lov, tarix ══════════
+// Alohida bo'lim (pastki menyuda "Hisob"). Tepadagi balans ham shu yerga
+// olib keladi. To'lov — pastdan oyna: buyurtma xulosasi -> to'lov usuli ->
+// tegishli oqim (kartaga o'tkazma, Payme/Click/Uzum, hisob-faktura, menejer).
+let PLANS = null, HS_PLAN = '', HS_HIST = 'pay';
 const fmtSum = n => Number(n || 0).toLocaleString('ru-RU');
-const planNow = p => p && p.key
-  ? `<div class="pl-now"><div><b>${esc(t('plan.' + p.key))}</b><br><span>${esc(t('pl.until', { date: new Date(p.endsAt).toLocaleDateString(LOC()), n: p.daysLeft }))}</span></div></div>`
-  : `<div class="pl-now"><div><b>${esc(t('pl.none'))}</b></div></div>`;
-
-// Kafolat holati: "5 tadan 3 ta nomzod berildi" (billing.guaranteeProgress)
-function guaranteeHtml(g){
-  if (!g) return '';
-  const hire = g.needHire > 0;
-  const need = hire ? g.needHire : g.needCandidates, got = hire ? g.hired : g.candidates;
-  if (!need) return '';
-  const pct = Math.min(100, Math.round(got / need * 100));
-  return `<div class="pl-g"><div class="pl-g-t"><span>${esc(t(hire ? 'pl.gProgHire' : 'pl.gProg'))}</span><b>${got} / ${need}</b></div>
-    <div class="pl-g-bar"><i style="width:${pct}%"></i></div>
-    <div class="pl-g-d">${esc(t(got >= need ? 'pl.gDone' : 'pl.gLeft'))}</div></div>`;
-}
-
-async function showCredits(){
-  sheetEnter('credits', showCredits);
-  openSheet(t('cr.sheet'), `
-    <div class="cr-big"><b>${CREDITS == null ? '—' : CREDITS}</b><span>${esc(t('cab.credits', { n: CREDITS || 0 }))}</span></div>
-    <div id="plNow"></div>
-    <button class="btn" id="bPlans" style="width:100%">${esc(t('pl.choose'))}</button>
-    <button class="pay-o ref-o" id="bRef"><span class="pay-ic" style="background:#E8A317">🎁</span>
-      <div><b>${esc(t('ref.title'))}</b><span>${esc(t('ref.short'))}</span></div></button>
-    <div class="vd-sec">${esc(t('cr.hist'))}</div>
-    <div class="card" id="crList"><div class="msg">${esc(t('common.loading'))}</div></div>`);
-  $('bPlans').onclick = () => showPlans();
-  $('bRef').onclick = () => showReferral();
-  api('/api/ma/plans').then(d => {
-    PLANS = d;
-    if (!$('plNow')) return;
-    $('plNow').innerHTML = planNow(d.current) + guaranteeHtml(d.guarantee) +
-      (d.auto && d.auto.on ? `<div class="pl-auto-l">🔄 ${esc(t('pl.autoOn', { card: d.auto.masked }))}</div>` : '');
-    if (d.current && d.current.key && d.current.key !== 'trial') $('bPlans').textContent = t('pl.renew');
-  }).catch(() => {});
-  loadCredits();
-}
-
-function planCard(p){
-  const g = p.guarantee || {};
-  const f = [
-    g.candidates ? `<li class="g">${esc(t('pl.gCand', { n: g.candidates }))}</li>` : '',
-    g.hire ? `<li class="g">${esc(t('pl.gHire'))}</li>` : '',
-    p.personalHr ? `<li>${esc(t('pl.fHr'))}</li>` : '',
-    g.replace ? `<li>${esc(t('pl.fReplace'))}</li>` : '',
-    p.key === 'max' ? `<li>${esc(t('pl.fFirst'))}</li>` : '',
-    `<li>${esc(t('pl.fCarry'))}</li>`
-  ].join('');
-  return `<div class="pl-card ${p.popular ? 'pop' : ''}">
-    <div class="pl-top"><span class="pl-name">${esc(t('plan.' + p.key))}</span>${p.popular ? `<span class="pl-tag">${esc(t('pl.popular'))}</span>` : ''}</div>
-    <div class="pl-price">${fmtSum(p.price)}<small>${esc(t('pl.sum'))}</small></div>
-    <div class="pl-meta">${esc(t('pl.days', { n: p.days }))} · ${esc(p.unlimited ? t('pl.unlimited') : t('pl.contacts', { n: p.contacts }))}</div>
-    <ul class="pl-f">${f}</ul>
-    <button class="btn ${p.popular ? '' : 'ghost'}" data-buy="${p.key}" style="width:100%">${esc(t('pl.buy'))}</button>
-  </div>`;
-}
-
-// Avto-yangilash bloki (Payme Subscribe ulangan bo'lsa)
-function autoHtml(a){
-  if (!a || !a.available) return '';
-  const body = a.masked
-    ? `<div class="pl-auto-r"><span>${esc(t(a.on ? 'pl.autoOn' : 'pl.autoPaused', { card: a.masked }))}</span>
-        <button class="lnk" data-auto="${a.on ? 'off' : 'on'}">${esc(t(a.on ? 'pl.autoOff' : 'pl.autoOnBtn'))}</button></div>
-       ${a.error ? `<div class="pl-auto-e">${esc(t('pl.autoErr', { e: a.error }))}</div>` : ''}
-       <button class="lnk" data-auto="remove" style="margin-top:6px">${esc(t('pl.autoRemove'))}</button>`
-    : `<button class="btn ghost" data-auto="add" style="width:100%;margin-top:10px">${esc(t('pl.autoAdd'))}</button>`;
-  return `<div class="pl-card pl-auto"><div class="pl-name" style="font-size:16px">🔄 ${esc(t('pl.auto'))}</div>
-    <div class="pl-meta" style="color:var(--muted);font-weight:500;margin-top:4px">${esc(t('pl.autoD'))}</div>${body}</div>`;
-}
-
-async function showPlans(){
-  sheetEnter('plans', showPlans);
-  openSheet(t('pl.title'), `<div class="msg">${esc(t('common.loading'))}</div>`);
-  let d;
-  try { d = PLANS = await api('/api/ma/plans'); }
-  catch(e){ $('shB').innerHTML = `<div class="msg">${esc(e.message)}</div>`; return; }
-  const c = d.current || {}, pm = d.pendingManual;
-  $('shB').innerHTML = `
-    <div class="pl-note">${esc(t('pl.launch'))}</div>
-    ${pm ? (pm.provider === 'card'
-      ? `<button class="pl-banner pl-banner-b" id="bPend">${esc(t(pm.state === 'checking' ? 'pl.pendingCheck' : 'pl.pendingCard', { plan: t('plan.' + pm.planKey) }))} ›</button>`
-      : `<div class="pl-banner">${esc(t(pm.provider === 'invoice' ? 'pl.pendingInv' : 'pl.pending', { plan: t('plan.' + pm.planKey), code: pm.code || '' }))}</div>`) : ''}
-    ${c.key ? planNow(c) + guaranteeHtml(d.guarantee) : ''}
-    ${c.trialAvailable ? `<div class="pl-card">
-      <div class="pl-name">${esc(t('pl.trialT'))}</div>
-      <div class="pl-meta" style="margin-top:4px">${esc(t('pl.trialD'))}</div>
-      <button class="btn" id="bTrial" style="width:100%;margin-top:12px">${esc(t('pl.trialBtn'))}</button></div>` : ''}
-    ${d.plans.map(planCard).join('')}
-    ${autoHtml(d.auto)}
-    <button class="pay-o ref-o" id="bRef2"><span class="pay-ic" style="background:#E8A317">🎁</span>
-      <div><b>${esc(t('ref.title'))}</b><span>${esc(t('ref.short'))}</span></div></button>
-    <div class="pl-terms">${esc(t('pl.terms'))} <a href="#" id="lOferta">${esc(t('pl.oferta'))}</a></div>`;
-  if ($('bTrial')) $('bTrial').onclick = async () => {
-    const b = $('bTrial'); b.disabled = true;
-    try {
-      const r = await api('/api/ma/trial', { method:'POST', body:'{}' });
-      CREDITS = r.balance; loadMe();
-      b.textContent = t('pl.trialOk');
-      try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
-    } catch(e){ b.disabled = false; b.textContent = e.message; }
-  };
-  $('shB').querySelectorAll('[data-buy]').forEach(b => b.onclick = () => choosePay(b.dataset.buy));
-  if ($('bPend')) $('bPend').onclick = () => showCardPay(null, pm.id);
-  $('bRef2').onclick = () => showReferral();
-  $('lOferta').onclick = e => { e.preventDefault(); openExt(location.origin + '/oferta.html?lang=' + LANG); };
-  $('shB').querySelectorAll('[data-auto]').forEach(b => b.onclick = async () => {
-    const a = b.dataset.auto;
-    if (a === 'add') return showCard();
-    if (a === 'remove' && !(await askConfirm(t('pl.autoRemoveQ')))) return;
-    b.disabled = true;
-    try {
-      await api('/api/ma/autorenew', { method:'POST', body: JSON.stringify(a === 'remove' ? { remove: true } : { on: a === 'on' }) });
-      showPlans();
-    } catch(e){ b.disabled = false; showMsg(e.message); }
-  });
-}
+const DAY_MS = 864e5;
+const dmyL = d => new Date(d).toLocaleDateString(LOC(), { day: '2-digit', month: '2-digit', year: 'numeric' });
+const AIC = {
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  chev: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>',
+  card: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2.5"/><path d="M2 10h20M6 15h4"/></svg>',
+  refresh: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>',
+  gift: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg>',
+  doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4M10 13H8M16 17H8"/></svg>',
+  help: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></svg>',
+  shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+  bank: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 22h18M6 18v-7M10 18v-7M14 18v-7M18 18v-7M12 2 20 7H4z"/></svg>',
+  user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
+};
+// To'lov usullari: belgisi, rangi
+const PM = {
+  card:    { ic: AIC.card, bg: 'linear-gradient(135deg,#0F172A,#334155)' },
+  payme:   { txt: 'Payme', bg: '#00BAC7' },
+  click:   { txt: 'Click', bg: '#0073FF' },
+  uzum:    { txt: 'Uzum', bg: '#7000FF' },
+  invoice: { ic: AIC.bank, bg: '#0F766E' },
+  manual:  { ic: AIC.user, bg: '#64748B' }
+};
+const pmIcon = k => { const m = PM[k] || PM.manual; return `<span class="ac-ic" style="background:${m.bg}">${m.ic || `<em>${m.txt}</em>`}</span>`; };
 
 function openExt(url){
   try { TG && TG.openLink ? TG.openLink(url) : window.open(url, '_blank'); } catch(e){ location.href = url; }
 }
 
-// To'lov usuli: ulangan tizimlar + doim "menejer orqali" va hisob-faktura
+// Eski chaqiruvlar (tepadagi balans, "kredit yo'q", bot havolasi) — bo'limga
+function showCredits(){ closeSheet(); pickTab('tHS'); }
+function showPlans(){
+  closeSheet(); pickTab('tHS');
+  const go = () => { const el = $('hsPlans'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); else setTimeout(go, 120); };
+  setTimeout(go, 60);
+}
+
+async function loadAccount(){
+  if (!PLANS) $('hsBody').innerHTML = `<div class="ac-skel"></div><div class="ac-skel s2"></div><div class="ac-skel s3"></div>`;
+  try { PLANS = await api('/api/ma/plans'); }
+  catch(e){ $('hsBody').innerHTML = `<div class="msg">${esc(e.message)}</div>`; return; }
+  if (PLANS.credits != null && PLANS.credits !== CREDITS) { CREDITS = PLANS.credits; loadMe(); }
+  renderAccount();
+}
+
+function heroHtml(d){
+  const c = d.current || {}, n = d.credits || 0;
+  let term;
+  if (c.key) {
+    const total = c.startedAt ? Math.max(1, (new Date(c.endsAt) - new Date(c.startedAt)) / DAY_MS) : 30;
+    const pct = Math.max(4, Math.min(100, Math.round(c.daysLeft / total * 100)));
+    const soon = c.daysLeft <= 3;
+    term = `<div class="ac-term ${soon ? 'soon' : ''}"><div class="ac-term-t"><span>${esc(t('ac.until', { date: dmyL(c.endsAt) }))}</span>
+      <b>${esc(t('ac.left', { n: c.daysLeft }))}</b></div><div class="ac-bar"><i style="width:${pct}%"></i></div></div>`;
+  } else {
+    term = `<div class="ac-term none">${esc(t('ac.noPlanD'))}</div>`;
+  }
+  const pill = c.key ? (c.key === 'trial' ? t('ac.trialPill') : t('plan.' + c.key)) : t('ac.noPlan');
+  const cta = c.key && c.key !== 'trial' ? t('ac.renew') : t('ac.choose');
+  return `<div class="ac-hero">
+    <div class="ac-top"><span>${esc(t('ac.balance'))}</span><span class="ac-pill ${c.key ? '' : 'off'}">${esc(pill)}</span></div>
+    <div class="ac-bal"><b>${n}</b><span>${esc(t('ac.unit', { n }))}</span></div>
+    <div class="ac-note">${esc(t('ac.note'))}</div>
+    ${term}
+    <button class="ac-cta" id="hsCta">${esc(cta)}</button>
+  </div>`;
+}
+
+function pendingHtml(d){
+  const pm = d.pendingManual;
+  const ar = d.auto || {};
+  let out = '';
+  if (pm) {
+    const st = pm.provider === 'card' ? pm.state : pm.provider === 'invoice' ? 'inv' : 'manual';
+    const key = { waiting: 'ac.pendCard', checking: 'ac.pendCheck', rejected: 'ac.pendRej', inv: 'ac.pendInv', manual: 'ac.pendManual' }[st] || 'ac.pendCard';
+    const cls = st === 'rejected' ? 'bad' : st === 'checking' ? 'info' : 'warn';
+    const click = pm.provider === 'card';
+    out += `<${click ? 'button' : 'div'} class="ac-alert ${cls}" ${click ? 'id="hsPend"' : ''}>
+      <span class="ac-alert-ic">${st === 'checking' ? '<span class="cp-spin sm"></span>' : AIC.clock}</span>
+      <span class="ac-alert-t"><b>${esc(t(key))}</b><small>${esc(t('ac.pendSub', { plan: t('plan.' + pm.planKey), code: pm.code || '' }))}</small></span>
+      ${click ? `<span class="ac-chev">${AIC.chev}</span>` : ''}</${click ? 'button' : 'div'}>`;
+  }
+  if (ar.on && ar.error) out += `<div class="ac-alert bad"><span class="ac-alert-ic">${AIC.refresh}</span>
+    <span class="ac-alert-t"><b>${esc(t('pl.auto'))}</b><small>${esc(t('pl.autoErr', { e: ar.error }))}</small></span></div>`;
+  return out;
+}
+
+function guaranteeCard(g){
+  if (!g) return '';
+  const hire = g.needHire > 0, need = hire ? g.needHire : g.needCandidates, got = hire ? g.hired : g.candidates;
+  if (!need) return '';
+  const done = got >= need, R = 24, L = 2 * Math.PI * R, p = Math.min(1, got / need);
+  return `<div class="ac-card ac-g ${done ? 'done' : ''}">
+    <div class="ac-ring"><svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="${R}" class="bg"/>
+      <circle cx="30" cy="30" r="${R}" class="fg" stroke-dasharray="${L.toFixed(1)}" stroke-dashoffset="${(L * (1 - p)).toFixed(1)}"/></svg>
+      <b>${got}<small>/${need}</small></b></div>
+    <div class="ac-g-t"><b>${AIC.shield}${esc(t('ac.gT'))}</b>
+      <span>${esc(t(hire ? 'ac.gHire' : 'ac.gCand', { n: got, need }))}</span>
+      <small>${esc(t(done ? 'pl.gDone' : 'pl.gLeft'))}</small></div>
+  </div>`;
+}
+
+function planDetail(p, cur){
+  const g = p.guarantee || {};
+  const isCur = cur && cur.key === p.key;
+  const per = p.unlimited ? t('ac.perMax') : t('ac.per', { sum: fmtSum(Math.round(p.price / p.contacts / 100) * 100) });
+  const feats = [
+    g.candidates ? t('pl.gCand', { n: g.candidates }) : '',
+    g.hire ? t('pl.gHire') : '',
+    p.personalHr ? t('pl.fHr') : '',
+    g.replace ? t('pl.fReplace') : '',
+    p.key === 'max' ? t('pl.fFirst') : '',
+    t('pl.fCarry')
+  ].filter(Boolean);
+  return `<div class="ac-plan ${p.popular ? 'pop' : ''}">
+    <div class="ac-plan-h"><b>${esc(t('plan.' + p.key))}</b>
+      ${isCur ? `<span class="ac-tag cur">${esc(t('ac.cur'))}</span>` : p.popular ? `<span class="ac-tag">${esc(t('pl.popular'))}</span>` : ''}</div>
+    <div class="ac-price">${fmtSum(p.price)}<small>${esc(t('pl.sum'))} / ${esc(t('pl.days', { n: p.days }))}</small></div>
+    <div class="ac-per">${esc(per)}</div>
+    <div class="ac-kpi">
+      <div><b>${p.unlimited ? '∞' : p.contacts}</b><span>${esc(t('ac.kC'))}</span></div>
+      <div><b>${p.days}</b><span>${esc(t('ac.kD'))}</span></div>
+      <div><b>${g.hire || g.candidates || '—'}</b><span>${esc(t(g.hire ? 'ac.kH' : 'ac.kG'))}</span></div>
+    </div>
+    <ul class="ac-feat">${feats.map(f => `<li>${AIC.check}<span>${esc(f)}</span></li>`).join('')}</ul>
+    <button class="btn ac-buy" data-buy="${p.key}">${esc(t(isCur ? 'ac.extend' : 'ac.buy', { plan: t('plan.' + p.key) }))}</button>
+  </div>`;
+}
+
+function rowHtml(a, ic, bg, title, sub, right){
+  return `<button class="ac-row" data-a="${a}"><span class="ac-ic" style="background:${bg}">${ic}</span>
+    <span class="ac-rt"><b>${esc(title)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</span>
+    ${right ? `<span class="ac-rv">${esc(right)}</span>` : ''}<span class="ac-chev">${AIC.chev}</span></button>`;
+}
+
+function renderAccount(){
+  const d = PLANS, c = d.current || {};
+  if (!HS_PLAN || !d.plans.some(p => p.key === HS_PLAN)) HS_PLAN = d.plans.some(p => p.key === c.key) ? c.key : 'pro';
+  const ar = d.auto || {};
+  $('hsBody').innerHTML = `
+    ${heroHtml(d)}
+    ${pendingHtml(d)}
+    ${guaranteeCard(d.guarantee)}
+    ${c.trialAvailable ? `<div class="ac-card ac-trial"><div><b>🎁 ${esc(t('pl.trialT'))}</b><span>${esc(t('pl.trialD'))}</span></div>
+      <button class="btn" id="hsTrial">${esc(t('pl.trialBtn'))}</button></div>` : ''}
+    <div class="ac-sec" id="hsPlans"><h3>${esc(t('ac.plans'))}</h3><span>${esc(t('pl.launch'))}</span></div>
+    <div class="ac-seg">${d.plans.map(p => `<button class="${p.key === HS_PLAN ? 'on' : ''}" data-plan="${p.key}">${esc(t('plan.' + p.key))}${p.popular ? '<i>★</i>' : ''}</button>`).join('')}</div>
+    <div id="hsPlan">${planDetail(d.plans.find(p => p.key === HS_PLAN), c)}</div>
+    <div class="ac-fine">${esc(t('pl.terms'))}</div>
+    <div class="ac-list">
+      ${ar.available ? rowHtml('auto', AIC.refresh, '#0A84FF', t('pl.auto'), ar.masked ? '•••• ' + String(ar.masked).slice(-4) : t('ac.autoD'), t(ar.on ? 'ac.autoOn' : 'ac.autoOff')) : ''}
+      ${rowHtml('ref', AIC.gift, '#E8A317', t('ref.title'), t('ref.short'), '')}
+      ${rowHtml('oferta', AIC.doc, '#8E8E93', t('pl.oferta'), '', '')}
+      ${rowHtml('help', AIC.help, '#34C759', t('cp.help'), '', '')}
+    </div>
+    <div class="ac-sec"><h3>${esc(t('ac.hist'))}</h3></div>
+    <div class="ac-seg sm"><button class="${HS_HIST === 'pay' ? 'on' : ''}" data-h="pay">${esc(t('ac.hPay'))}</button><button class="${HS_HIST === 'cr' ? 'on' : ''}" data-h="cr">${esc(t('ac.hCr'))}</button></div>
+    <div class="ac-list" id="hsHist"></div>`;
+  wireAccount();
+  drawHistory();
+}
+
+function wireAccount(){
+  const d = PLANS;
+  $('hsCta').onclick = () => { const el = $('hsPlans'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+  if ($('hsPend')) $('hsPend').onclick = () => showCardPay(null, d.pendingManual.id);
+  if ($('hsTrial')) $('hsTrial').onclick = async () => {
+    const b = $('hsTrial'); b.disabled = true;
+    try {
+      const r = await api('/api/ma/trial', { method:'POST', body:'{}' });
+      CREDITS = r.balance; loadMe();
+      try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
+      showMsg(t('pl.trialOk')); loadAccount();
+    } catch(e){ b.disabled = false; showMsg(e.message); }
+  };
+  $('hsBody').querySelectorAll('[data-plan]').forEach(b => b.onclick = () => {
+    HS_PLAN = b.dataset.plan; haptic('sel');
+    $('hsBody').querySelectorAll('[data-plan]').forEach(x => x.classList.toggle('on', x === b));
+    $('hsPlan').innerHTML = planDetail(d.plans.find(p => p.key === HS_PLAN), d.current);
+    wireBuy();
+  });
+  wireBuy();
+  $('hsBody').querySelectorAll('[data-h]').forEach(b => b.onclick = () => {
+    HS_HIST = b.dataset.h; haptic('sel');
+    $('hsBody').querySelectorAll('[data-h]').forEach(x => x.classList.toggle('on', x === b));
+    drawHistory();
+  });
+  $('hsBody').querySelectorAll('.ac-list [data-a]').forEach(b => b.onclick = () => {
+    const a = b.dataset.a;
+    if (a === 'auto') showAuto();
+    else if (a === 'ref') showReferral();
+    else if (a === 'oferta') openExt(location.origin + '/oferta.html?lang=' + LANG);
+    else if (a === 'help') openSupport();
+  });
+}
+function wireBuy(){ $('hsBody').querySelectorAll('[data-buy]').forEach(b => b.onclick = () => choosePay(b.dataset.buy)); }
+
+const ST_CLS = { paid: 'ok', checking: 'info', waiting: 'warn', rejected: 'bad', canceled: 'mute', refunded: 'mute' };
+async function drawHistory(){
+  const box = $('hsHist');
+  if (!box) return;
+  if (HS_HIST === 'pay') {
+    const rows = PLANS.history || [];
+    if (!rows.length) { box.innerHTML = `<div class="ac-empty">${esc(t('ac.hNone'))}</div>`; return; }
+    box.innerHTML = rows.map(o => {
+      const open = o.provider === 'card' && ['waiting', 'checking', 'rejected'].includes(o.state);
+      return `<${open ? 'button' : 'div'} class="ac-row ac-h" ${open ? `data-o="${o.id}"` : ''}>${pmIcon(o.provider)}
+        <span class="ac-rt"><b>${esc(t('plan.' + o.planKey))}${o.auto ? ' · ' + esc(t('ac.autoTag')) : ''}</b>
+          <small>${esc(dt(o.paidAt || o.createdAt))} · №${esc(o.code || '')} · ${esc(t('prov.' + o.provider))}</small></span>
+        <span class="ac-hr"><b>${fmtSum(o.amount)}</b><span class="ac-st ${ST_CLS[o.state] || 'mute'}">${esc(t('st.' + o.state))}</span></span></${open ? 'button' : 'div'}>`;
+    }).join('');
+    box.querySelectorAll('[data-o]').forEach(b => b.onclick = () => showCardPay(null, b.dataset.o));
+    return;
+  }
+  box.innerHTML = `<div class="ac-empty">${esc(t('common.loading'))}</div>`;
+  try {
+    const rows = await api('/api/ma/credits');
+    if (HS_HIST !== 'cr' || !$('hsHist')) return;
+    if (!rows.length) { box.innerHTML = `<div class="ac-empty">${esc(t('cr.none'))}</div>`; return; }
+    box.innerHTML = rows.map(r => `<div class="ac-row ac-h"><span class="ac-dl ${r.delta > 0 ? 'p' : 'm'}">${r.delta > 0 ? '+' : ''}${r.delta}</span>
+      <span class="ac-rt"><b>${esc(crReason(r.reason))}</b><small>${esc(dt(r.createdAt))}${r.note ? ' · ' + esc(r.note) : ''}</small></span>
+      <span class="ac-hr"><span class="ac-after">${esc(t('ac.after', { n: r.balanceAfter }))}</span></span></div>`).join('');
+  } catch(e){ box.innerHTML = `<div class="ac-empty">${esc(e.message)}</div>`; }
+}
+
+// Avto-yangilash — alohida oyna (karta, yoqish/o'chirish, olib tashlash)
+function showAuto(){
+  sheetEnter('auto', showAuto);
+  const a = (PLANS && PLANS.auto) || {};
+  openSheet(t('pl.auto'), `
+    <div class="ac-auto-hero">${AIC.refresh}<p>${esc(t('pl.autoD'))}</p></div>
+    ${a.masked ? `<div class="ac-list">
+        <div class="ac-row"><span class="ac-ic" style="background:${PM.card.bg}">${AIC.card}</span>
+          <span class="ac-rt"><b>•••• ${esc(String(a.masked).slice(-4))}</b><small>${esc(t(a.on ? 'ac.autoOn' : 'ac.autoOff'))}</small></span>
+          <label class="ac-sw"><input type="checkbox" id="auSw" ${a.on ? 'checked' : ''}><i></i></label></div>
+      </div>
+      ${a.error ? `<div class="ac-alert bad"><span class="ac-alert-t"><small>${esc(t('pl.autoErr', { e: a.error }))}</small></span></div>` : ''}
+      <button class="btn ghost" id="auAdd" style="width:100%;margin-top:12px">${esc(t('ac.autoChange'))}</button>
+      <button class="lnk cp-cancel" id="auRm">${esc(t('pl.autoRemove'))}</button>`
+    : `<button class="btn" id="auAdd" style="width:100%">${esc(t('pl.autoAdd'))}</button>`}`);
+  $('auAdd').onclick = () => showCard();
+  const call = async body => {
+    try { await api('/api/ma/autorenew', { method:'POST', body: JSON.stringify(body) }); PLANS = await api('/api/ma/plans'); showAuto(); renderAccount(); }
+    catch(e){ showMsg(e.message); }
+  };
+  if ($('auSw')) $('auSw').onchange = e => { haptic('sel'); call({ on: e.target.checked }); };
+  if ($('auRm')) $('auRm').onclick = async () => { if (await askConfirm(t('pl.autoRemoveQ'))) call({ remove: true }); };
+}
+
+// ── To'lov: buyurtma xulosasi + usul ──
 function choosePay(key){
-  const p = (PLANS && PLANS.plans || []).find(x => x.key === key);
+  const d = PLANS, p = d && d.plans.find(x => x.key === key);
   if (!p) return;
   sheetEnter('pay:' + key, () => choosePay(key));
-  const PV = { payme: ['Payme', '#33CCCC', 'Payme'], click: ['Click', '#0073FF', 'Click'], uzum: ['Uzum Bank', '#7000FF', 'Uzum'] };
-  const opts = (PLANS.providers || []).filter(k => PV[k]).map(k => `<button class="pay-o" data-pay="${k}">
-      <span class="pay-ic" style="background:${PV[k][1]}">${PV[k][2]}</span><div><b>${PV[k][0]}</b><span>${esc(t(k === 'uzum' ? 'pl.uzumD' : 'pl.afterPay'))}</span></div></button>`).join('');
-  openSheet(t('pl.pay'), `
-    <div class="pl-now"><div><b>${esc(t('plan.' + key))} — ${fmtSum(p.price)} ${esc(t('pl.sum'))}</b><br>
-      <span>${esc(t('pl.days', { n: p.days }))} · ${esc(p.unlimited ? t('pl.unlimited') : t('pl.contacts', { n: p.contacts }))}</span></div></div>
-    ${PLANS.card ? `<button class="pay-o" data-card="1"><span class="pay-ic pay-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2.5"/><path d="M2 10h20M6 15h4"/></svg></span>
-      <div><b>${esc(t('pl.card'))}</b><span>${esc(t('pl.cardD'))}</span></div></button>` : ''}
-    ${opts}
-    <button class="pay-o" data-pay="manual"><span class="pay-ic" style="background:#64748B">HR</span>
-      <div><b>${esc(t('pl.manual'))}</b><span>${esc(t('pl.manualD'))}</span></div></button>
-    <button class="pay-o" data-inv="1"><span class="pay-ic" style="background:#0F766E">📄</span>
-      <div><b>${esc(t('pl.invoice'))}</b><span>${esc(t('pl.invoiceD'))}</span></div></button>
-    <div class="err" id="payErr" style="color:var(--danger);font-size:13px;min-height:18px"></div>`);
-  $('shB').querySelector('[data-inv]').onclick = () => showInvoice(key);
-  if ($('shB').querySelector('[data-card]')) $('shB').querySelector('[data-card]').onclick = () => showCardPay(key);
-  $('shB').querySelectorAll('[data-pay]').forEach(b => b.onclick = async () => {
-    $('shB').querySelectorAll('[data-pay]').forEach(x => x.disabled = true);
-    $('payErr').textContent = '';
+  const c = d.current || {}, g = p.guarantee || {};
+  // Faol pullik tarif bo'lsa yangi muddat uning oxiridan (billing.activate qoidasi)
+  const from = c.key && c.key !== 'trial' && c.endsAt && new Date(c.endsAt) > new Date() ? new Date(c.endsAt) : new Date();
+  const to = new Date(from.getTime() + p.days * DAY_MS);
+  const add = p.unlimited ? p.contacts : p.contacts;
+  const methods = [];
+  if (d.card) methods.push({ k: 'card', title: t('pl.card'), sub: t('pl.cardD'), tag: t('ck.fast') });
+  for (const k of d.providers || []) if (PM[k]) methods.push({ k, title: k === 'uzum' ? 'Uzum Bank' : PM[k].txt, sub: t(k === 'uzum' ? 'pl.uzumD' : 'pl.afterPay') });
+  methods.push({ k: 'invoice', title: t('pl.invoice'), sub: t('pl.invoiceD') });
+  methods.push({ k: 'manual', title: t('pl.manual'), sub: t('pl.manualD') });
+  let sel = methods[0].k;
+  const legal = esc(t('ck.legal')).replace('{oferta}', `<a href="#" id="ckOf">${esc(t('ck.ofertaLink'))}</a>`);
+  openSheet(t('ck.title'), `
+    <div class="ck-sum">
+      <div class="ck-h"><span class="ck-badge ${key}">${esc(t('plan.' + key)).slice(0, 1)}</span>
+        <div><b>${esc(t('ck.plan', { plan: t('plan.' + key) }))}</b><small>${esc(t('pl.days', { n: p.days }))} · ${esc(p.unlimited ? t('pl.unlimited') : t('pl.contacts', { n: p.contacts }))}</small></div></div>
+      <div class="ck-rows">
+        <div><span>${esc(t('ck.valid'))}</span><b>${esc(dmyL(from))} — ${esc(dmyL(to))}</b></div>
+        <div><span>${esc(t('ck.contacts'))}</span><b>${p.unlimited ? esc(t('pl.unlimited')) : '+' + p.contacts}</b></div>
+        ${!p.unlimited && d.credits > 0 ? `<div><span>${esc(t('ck.balance'))}</span><b>${d.credits} → ${d.credits + add}</b></div>` : ''}
+        ${g.candidates || g.hire ? `<div><span>${esc(t('ck.guar'))}</span><b>${esc(g.hire ? t('ck.gHire') : t('ck.gCand', { n: g.candidates }))}</b></div>` : ''}
+      </div>
+      <div class="ck-total"><span>${esc(t('ck.total'))}</span><b>${fmtSum(p.price)} ${esc(t('pl.sum'))}</b></div>
+    </div>
+    <div class="ac-sec sm"><h3>${esc(t('ck.method'))}</h3></div>
+    <div class="ac-list ck-m">${methods.map(m => `<button class="ac-row" data-m="${m.k}">${pmIcon(m.k)}
+      <span class="ac-rt"><b>${esc(m.title)}${m.tag ? ` <em class="ck-tag">${esc(m.tag)}</em>` : ''}</b><small>${esc(m.sub)}</small></span>
+      <span class="ck-radio"></span></button>`).join('')}</div>
+    <div class="ck-legal">${legal}</div>
+    <div class="err" id="payErr" style="color:var(--danger);font-size:13px;min-height:16px;text-align:center"></div>
+    <div class="ck-foot"><button class="btn" id="ckGo" style="width:100%"></button></div>`);
+  const paint = () => {
+    $('shB').querySelectorAll('[data-m]').forEach(b => b.classList.toggle('on', b.dataset.m === sel));
+    $('ckGo').textContent = sel === 'invoice' ? t('ck.next') : sel === 'manual' ? t('ck.request') : t('ck.pay', { sum: fmtSum(p.price) });
+  };
+  $('shB').querySelectorAll('[data-m]').forEach(b => b.onclick = () => { sel = b.dataset.m; haptic('sel'); paint(); });
+  paint();
+  $('ckOf').onclick = e => { e.preventDefault(); openExt(location.origin + '/oferta.html?lang=' + LANG); };
+  $('ckGo').onclick = async () => {
+    if (sel === 'card') return showCardPay(key);
+    if (sel === 'invoice') return showInvoice(key);
+    const b = $('ckGo'); b.disabled = true; $('payErr').textContent = '';
     try {
-      const r = await api('/api/ma/orders', { method:'POST', body: JSON.stringify({ plan: key, provider: b.dataset.pay }) });
-      if (r.url) {
-        $('shB').insertAdjacentHTML('beforeend', `<div class="msg">${esc(t('pl.opening'))}<br><small>${esc(t('pl.order', { code: r.code }))}</small></div>`);
-        openExt(r.url);
-      } else {
-        $('shB').innerHTML = `<div class="msg" style="line-height:1.55">✅<br>${esc(t('pl.manualSent'))}<br><small>${esc(t('pl.order', { code: r.code }))}</small></div>`;
-        try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
-      }
-    } catch(e){
-      $('payErr').textContent = e.message;
-      $('shB').querySelectorAll('[data-pay]').forEach(x => x.disabled = false);
-    }
-  });
+      const r = await api('/api/ma/orders', { method:'POST', body: JSON.stringify({ plan: key, provider: sel }) });
+      if (r.url) { b.textContent = t('pl.opening'); openExt(r.url); setTimeout(() => { b.disabled = false; paint(); }, 2500); return; }
+      $('shB').innerHTML = `<div class="cp-state ok"><div class="cp-ic"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-16"/></svg></div>
+        <h3>${esc(t('ck.sentT'))}</h3><p>${esc(t('pl.manualSent'))}<br><small>${esc(t('pl.order', { code: r.code }))}</small></p>
+        <button class="btn" id="ckDone" style="width:100%">${esc(t('cp.okBtn'))}</button></div>`;
+      try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
+      $('ckDone').onclick = () => { closeSheet(); loadAccount(); };
+    } catch(e){ $('payErr').textContent = e.message; b.disabled = false; }
+  };
 }
 
 // Yuridik shaxs: kompaniya nomi + STIR -> agentlik hisob-faktura yuboradi
@@ -1926,6 +2245,7 @@ function showCard(){
         if (code.length < 4) throw new Error(t('pl.cardCodeReq'));
         const v = await paymeCall('cards.verify', { token, code });
         await api('/api/ma/card', { method:'POST', body: JSON.stringify({ token: v.card.token }) });
+        try { PLANS = await api('/api/ma/plans'); if (!$('vHS').classList.contains('hide')) renderAccount(); } catch(e){}
         try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
         showMsg(t('pl.cardOk'));
         sheetBack();
@@ -2012,17 +2332,22 @@ function drawCardPay(o){
   if (!SH_CUR || SH_CUR.key !== 'cardpay') return;            // foydalanuvchi boshqa oynaga o'tib ketgan
   SH_CUR.render = () => showCardPay(null, o.id);
   clearInterval(CP_POLL);
-  const head = `<div class="cp-head"><div class="cp-sum">${fmtSum(o.amount)}<small>${esc(t('pl.sum'))}</small></div>
+  // Bosqichlar: To'lov -> Tekshiruv -> Tayyor
+  const stepN = o.status === 'paid' ? 3 : o.status === 'checking' ? 2 : 1;
+  const steps = `<div class="cp-steps">${['cp.st1', 'cp.st2', 'cp.st3'].map((k, i) =>
+    `${i ? '<i class="' + (stepN > i ? 'on' : '') + '"></i>' : ''}<span class="${stepN > i ? 'on' : ''}${stepN === i + 1 ? ' cur' : ''}"><em>${stepN > i + 1 ? '✓' : i + 1}</em>${esc(t(k))}</span>`).join('')}</div>`;
+  const head = `${o.status === 'canceled' ? '' : steps}<div class="cp-head"><div class="cp-sum">${fmtSum(o.amount)}<small>${esc(t('pl.sum'))}</small></div>
     <div class="cp-sub">${esc(t('plan.' + o.planKey))} · ${esc(t('cp.order', { code: o.code }))}</div></div>`;
 
   if (o.status === 'paid') {
-    $('shB').innerHTML = `<div class="cp-state ok"><div class="cp-ic"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-16"/></svg></div>
+    $('shB').innerHTML = `${steps}<div class="cp-state ok"><div class="cp-ic"><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-16"/></svg></div>
       <h3>${esc(t('cp.okT'))}</h3><p>${esc(t('cp.okD', { plan: t('plan.' + o.planKey), n: o.credits == null ? (CREDITS || 0) : o.credits }))}</p>
       <button class="btn" id="cpDone" style="width:100%">${esc(t('cp.okBtn'))}</button></div>`;
     try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
     if (o.credits != null) CREDITS = o.credits;
     loadMe();
-    $('cpDone').onclick = () => closeSheet();
+    if (!$('vHS').classList.contains('hide')) loadAccount();
+    $('cpDone').onclick = () => { closeSheet(); pickTab('tHS'); };
     return;
   }
   if (o.status === 'canceled') {
@@ -2049,17 +2374,17 @@ function drawCardPay(o){
   const c = o.card || {};
   $('shB').innerHTML = `${head}
     ${o.status === 'rejected' ? `<div class="cp-warn"><b>${esc(t('cp.rejT'))}</b><span>${esc(t('cp.rejD'))}</span></div>` : ''}
-    <div class="cp-step"><i>1</i><span>${esc(t('cp.s1'))}</span></div>
+    <div class="cp-step"><i>${AIC.card}</i><span>${esc(t('cp.s1'))}</span></div>
     <div class="cp-card">
       <div class="cp-card-top"><span class="cp-chip"></span><span class="cp-bank">${esc(c.bank || '')}</span></div>
       <div class="cp-num">${esc(groupCard(c.number))}</div>
       <div class="cp-card-bot"><span class="cp-holder">${esc(c.holder || '')}</span>
         <button class="cp-copy" id="cpCopyNum">${esc(t('cp.copy'))}</button></div>
     </div>
-    <div class="cp-step"><i>2</i><span>${esc(t('cp.s2'))}</span></div>
+    <div class="cp-step"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg></i><span>${esc(t('cp.s2'))}</span></div>
     <div class="cp-row"><b>${fmtSum(o.amount)} ${esc(t('pl.sum'))}</b><button class="cp-copy alt" id="cpCopySum">${esc(t('cp.copy'))}</button></div>
     <div class="cp-hint">${esc(t('cp.note', { code: o.code }))}</div>
-    <div class="cp-step"><i>3</i><span>${esc(t('cp.s3'))}</span></div>
+    <div class="cp-step"><i>${AIC.check}</i><span>${esc(t('cp.s3'))}</span></div>
     <div class="fl cp-fl"><label>${esc(t('cp.payer'))}</label><input id="cpPayer" maxlength="60" autocomplete="off" placeholder="${esc(t('cp.payerPh'))}"></div>
     <button class="btn" id="cpPaid" style="width:100%">${esc(t('cp.paid'))}</button>
     <div class="err" id="cpErr" style="color:var(--danger);font-size:13px;min-height:18px;margin-top:6px"></div>
@@ -2305,7 +2630,7 @@ $('cvBack').onclick = () => { $('cv').classList.add('hide'); CUR = null; refresh
 $('cvSend').onclick = sendMsg;
 $('cvIn').onkeydown = e => { if (e.key === 'Enter') sendMsg(); };
 // ── Tablar ──
-const TABS = [['tSL','vSL'], ['tAP','vAP'], ['tVC','vVC'], ['tMS','vMS']];
+const TABS = [['tSL','vSL'], ['tAP','vAP'], ['tVC','vVC'], ['tMS','vMS'], ['tHS','vHS']];
 function pickTab(id){
   TABS.forEach(([t,v]) => {
     $(t).classList.toggle('on', t === id);
@@ -2316,6 +2641,9 @@ function pickTab(id){
   if (id === 'tSL') loadShortlists();
   if (id === 'tVC') loadVacancies();
   if (id === 'tMS') loadChats();
+  if (id === 'tHS') { loadAccount(); window.scrollTo(0, 0); }
+  // Hisobda balans katta kartada — tepadagi qisqa balans takrorlanmasin
+  $('cabMode').classList.toggle('on-hs', id === 'tHS');
   moveLens();
 }
 TABS.forEach(([tb]) => { $(tb).onclick = () => pickTab(tb); });

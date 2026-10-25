@@ -535,6 +535,21 @@ ma'lumot bilan tekshirildi; HAQIQIY karta hali kiritilmagan (Anas panelda kirita
 CI: yiqilgan test fayli bloki "Yiqilgan fayl tafsiloti" annotatsiyasida (sintaksis
 xatosi ham ko'rinadi).
 
+**MINI APP "HISOB" BO'LIMI — DEPLOY QILINDI** (2026-10-25, `d57c2f7`, Anas: "balans,
+tariflar, to'lov juda yuzaki"). Pastki menyuda 5-tab `tHS` (Lucide wallet), `loadAccount`/
+`renderAccount`: balans kartasi (kontakt soni, tarif, muddat chizig'i — 3 kun qolsa sariq),
+kutilayotgan to'lov/avto-yangilash xatosi bannerlari, kafolat halqasi, bepul sinov,
+tariflar (segment Base/Pro/Max + batafsil: narx, kontakt narxi, 3 ko'rsatkich, imkoniyatlar),
+ro'yxat (avto-yangilash, tavsiya, oferta, yordam), Tarix (To'lovlar | Kreditlar). Hisobda
+tepadagi `.chead` yashiriladi (`#cabMode.on-hs`). `showCredits`/`showPlans` endi shu
+bo'limga olib boradi. To'lov — `choosePay`: buyurtma xulosasi (muddat oralig'i — faol
+tarif oxiridan, balans X -> Y, kafolat, jami), to'lov usuli radio ro'yxati, oferta roziligi,
+yopishqoq "To'lash". `/api/ma/plans` endi `history` (oxirgi 20 buyurtma, holati bilan) va
+`current.startedAt` beradi. Ikonkalar `AIC` (`IC` band — bir nom ikki marta e'lon qilinsa
+butun Mini App oq ekran bo'ladi). Lokal ko'rib chiqish: `.preview/` (git'ga kirmaydi:
+`.git/info/exclude`) + `.claude/launch.json` "preview-static" (PowerShell HttpListener,
+public/ ni beradi, `/__p/` — soxta API bilan sahifa).
+
 **ANKETA C VARIANT + TALABA + NOMZOD KABINETI TUZATISHLARI** (2026-10-23,
 `4addf87`..`6689dea`): ish tajribasi ekrani — REZYUME KARTALARI (Anas uchta
 variantdan C'ni tanladi): bo'sh holatda "Ish joyi qo'shish" (pastki tugma) va

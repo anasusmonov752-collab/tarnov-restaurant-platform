@@ -31,6 +31,7 @@ const applications = require('../services/applications');
 const { publicBase } = require('../utils/publicBase');
 const { phoneKey } = require('../utils/candidateKeys');
 const appLife = require('../services/appLife');
+const profileStyle = require('../services/profileStyle');
 
 const router = express.Router();
 
@@ -75,6 +76,8 @@ function profileOf(c) {
       company: w.company, position: w.position, period: w.period
     })),
     hasPhoto: !!c.hasPhoto,
+    phoneVerified: !!c.phoneVerifiedAt,   // ism yonidagi tasdiq belgisi
+    style: profileStyle.view(c),
     source: c.source,                 // anketa nomzodida tajriba yozuvi tizimniki (profil.html autoSummary)
     jobStatus: c.jobStatus,
     sanitaryBook: c.sanitaryBook,
@@ -118,6 +121,7 @@ function completeness(c) {
 
 router.get('/me', guard, asyncHandler(async (req, res) => {
   const c = req.cand;
+  await profileStyle.syncTelegram(c);    // boshlang'ich rang — Telegram profilidan (bir marta)
 
   // Nomzodga ko'rsatiladigan statistika. Faqat HAQIQIY o'lchanadigan
   // narsalar: necha restoran uni tanlovga kiritgan va nechtasiga
@@ -153,6 +157,18 @@ const TEXT = {
 };
 const LIST = { languages: 12, skills: 30 };
 const JOB_STATUS = ['active', 'considering', 'not_looking'];
+
+// ── Profil kartasi bezagi: rang va fon naqshi ──
+router.patch('/style', guard, asyncHandler(async (req, res) => {
+  let s;
+  try { s = profileStyle.clean(req.body || {}); }
+  catch (e) { return res.status(400).json({ error: e.message }); }
+  const c = req.cand;
+  const set = {};
+  for (const [k, v] of Object.entries(s)) { set['profileStyle.' + k] = v; c.set('profileStyle.' + k, v); }
+  if (Object.keys(set).length) await Candidate.updateOne({ _id: c._id }, { $set: set });
+  res.json(profileStyle.view(c));
+}));
 
 router.patch('/me', guard, asyncHandler(async (req, res) => {
   const b = req.body || {};

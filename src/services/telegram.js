@@ -83,6 +83,11 @@ function getMe(token) {
   return call(token, 'getMe');
 }
 
+// Shaxsiy chat ma'lumoti (profil rangi: profile_accent_color_id) — services/profileStyle
+function getChat(token, chatId) {
+  return call(token, 'getChat', { chat_id: chatId });
+}
+
 async function sendMessage(token, chatId, text, opts = {}) {
   return call(token, 'sendMessage', {
     chat_id: chatId,
@@ -241,7 +246,7 @@ async function platformUsername() {
 }
 
 module.exports = {
-  getMe, sendMessage, answerCallback, editMessageText, setChatMenuButton, resetChatMenuButton, sendChatAction,
+  getMe, getChat, sendMessage, answerCallback, editMessageText, setChatMenuButton, resetChatMenuButton, sendChatAction,
   setWebhook, ensureWebhook, deleteWebhook, getWebhookInfo, getFileBase64,
   deepLink, TelegramError, MAX_LEN,
   platformToken, platformSecret, platformUsername, isPlatformReady

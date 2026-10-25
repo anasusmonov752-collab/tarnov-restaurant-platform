@@ -420,6 +420,47 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .cmsg{border-radius:18px}
 .cmsg.them{border:none}
 .msg{padding:56px 24px}
+/* ── Profil kartasi bezagi: rang (c-*), naqsh (.hp), tasdiq belgisi (.vb) ── */
+.hero.c-blue,.sty-c.c-blue{background:radial-gradient(130% 120% at 100% 0%,#2F6BFF 0%,#16357A 45%,#0B1430 100%)}
+.hero.c-green,.sty-c.c-green{background:radial-gradient(130% 120% at 100% 0%,#34C759 0%,#1E7A3C 45%,#0D3A1E 100%)}
+.hero.c-orange,.sty-c.c-orange{background:radial-gradient(130% 120% at 100% 0%,#FF9F43 0%,#B8611A 45%,#5A2E0B 100%)}
+.hero.c-red,.sty-c.c-red{background:radial-gradient(130% 120% at 100% 0%,#FF6B6B 0%,#B03A3A 45%,#4F1414 100%)}
+.hero.c-violet,.sty-c.c-violet{background:radial-gradient(130% 120% at 100% 0%,#A779FF 0%,#5B3AB0 45%,#2A1660 100%)}
+.hero.c-cyan,.sty-c.c-cyan{background:radial-gradient(130% 120% at 100% 0%,#3CC8E0 0%,#1A7C93 45%,#0B3A47 100%)}
+.hero.c-pink,.sty-c.c-pink{background:radial-gradient(130% 120% at 100% 0%,#FF7AB6 0%,#B23C78 45%,#561A39 100%)}
+.hero.c-gray,.sty-c.c-gray{background:radial-gradient(130% 120% at 100% 0%,#A0AEC0 0%,#5B6676 45%,#2A313B 100%)}
+.hero.c-blue2,.sty-c.c-blue2{background:linear-gradient(135deg,#1D4ED8,#38BDF8 60%,#A5F3FC)}
+.hero.c-green2,.sty-c.c-green2{background:linear-gradient(135deg,#15803D,#4ADE80 60%,#D9F99D)}
+.hero.c-orange2,.sty-c.c-orange2{background:linear-gradient(135deg,#C2410C,#F97316 55%,#FACC15)}
+.hero.c-red2,.sty-c.c-red2{background:linear-gradient(135deg,#B91C1C,#F87171 55%,#FDBA74)}
+.hero.c-violet2,.sty-c.c-violet2{background:linear-gradient(135deg,#6D28D9,#A78BFA 55%,#F0ABFC)}
+.hero.c-cyan2,.sty-c.c-cyan2{background:linear-gradient(135deg,#0E7490,#22D3EE 55%,#99F6E4)}
+.hero.c-pink2,.sty-c.c-pink2{background:linear-gradient(135deg,#BE185D,#F472B6 55%,#FECDD3)}
+.hero.c-gray2,.sty-c.c-gray2{background:linear-gradient(135deg,#334155,#64748B 55%,#CBD5E1)}
+/* Gradientning och qismida ham oq matn o'qilsin */
+.hero::after{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.30),rgba(0,0,0,0) 60%);pointer-events:none;z-index:0}
+.hero .nm,.hero .sb{text-shadow:0 1px 8px rgba(0,0,0,.25)}
+.hp{position:absolute;inset:0;z-index:0;pointer-events:none}
+.hp i{position:absolute;transform:translate(-50%,-50%);font-style:normal;opacity:.22;filter:grayscale(1) brightness(2.2);line-height:1}
+.hb{position:absolute;top:12px;right:12px;z-index:2;width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.22);
+  background:rgba(255,255,255,.16);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.hb svg{width:19px;height:19px}
+.hb:active{transform:scale(.94)}
+.vb{width:22px;height:22px;vertical-align:-3px;margin-left:7px;filter:drop-shadow(0 1px 3px rgba(0,0,0,.3))}
+/* Bezash oynasi */
+.hero.mini{padding:20px 16px 18px;margin:4px 0 6px;box-shadow:none}
+.hero.mini .av{width:64px;height:64px;font-size:20px}
+.hero.mini .nm{font-size:19px;margin-top:10px}
+.sty-sec{font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.3px;margin:16px 2px 10px}
+.sty-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:10px}
+.sty-c{aspect-ratio:1;border-radius:50%;border:none;cursor:pointer;position:relative;padding:0}
+.sty-c.on{box-shadow:0 0 0 2.5px var(--card),0 0 0 4.5px var(--ink)}
+.sty-pat{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.sty-pat button{height:48px;border-radius:14px;border:none;background:var(--th-fill);font-size:22px;cursor:pointer;font-family:inherit}
+.sty-pat button span{font-size:13px;font-weight:700;color:var(--muted)}
+.sty-pat button.on{background:var(--th-brand-soft);box-shadow:inset 0 0 0 2px var(--blue)}
+.sty-reset{display:block;margin:14px auto 0;border:0;background:none;color:var(--blue);font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;padding:6px}
 </style>
 </head>
 <body>
@@ -590,9 +631,11 @@ function render(p){
   $('app').innerHTML = `
   <div class="lt"><h1>Profilim</h1></div>
   <div class="wrap">
-    <div class="hero">
+    <div class="hero c-${esc(styleOf(p).color)}">
+      ${patternHtml(styleOf(p).pattern)}
+      <button class="hb" id="bStyle" aria-label="Bezash">${PAL_IC}</button>
       <div class="av">${p.hasPhoto ? `<img src="/api/cand/photo?t=${encodeURIComponent(PT)}" alt="">` : esc(ini)}</div>
-      <div class="nm">${esc(p.fullName) || 'Ismingizni kiriting'}</div>
+      <div class="nm">${esc(p.fullName) || 'Ismingizni kiriting'}${p.phoneVerified ? VB_IC : ''}</div>
       <div class="sb">${esc(sub) || 'Profilni to\'ldiring'}</div>
       <button class="pill ${pcls}" data-e="status">${plbl}</button>
     </div>
@@ -655,6 +698,7 @@ function render(p){
   // '.ed' (bo'lim sarlavhasi), '.gap' (yetishmagan maydon) va holat
   // chipi — hammasi data-e bilan bir xil oynani ochadi
   document.querySelectorAll('[data-e]').forEach(b => b.onclick = () => openSheet(b.dataset.e));
+  if ($('bStyle')) $('bStyle').onclick = () => openStyle();
 
   const more = $('skMore'), less = $('skLess');
   if (more) more.onclick = () => { skillsOpen = true;  haptic(); render(P); };
@@ -736,6 +780,62 @@ function openSheet(key){
     }
   };
 }
+// ══ Profil kartasini bezash (Telegram Premium'dagi kabi) ══════
+// Rang (8 oddiy + 8 gradient) va fon naqshi — server: PATCH /api/cand/style
+// (services/profileStyle). Boshlang'ich rang — Telegram profilingiz rangi.
+// Faqat shu kabinetda ko'rinadi, restoranlarga emas.
+const HUES = ['blue', 'green', 'orange', 'red', 'violet', 'cyan', 'pink', 'gray'];
+const PATTERNS = { '': '', plate: '🍽', coffee: '☕', cake: '🍰', pizza: '🍕', star: '⭐', fire: '🔥', heart: '❤', sparkle: '✨' };
+const styleOf = p => Object.assign({ color: 'blue', pattern: '' }, p && p.style);
+const PAL_IC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.93 0 1.65-.75 1.65-1.69 0-.44-.18-.84-.44-1.13-.29-.29-.44-.65-.44-1.13a1.64 1.64 0 0 1 1.67-1.67h2c3.05 0 5.56-2.5 5.56-5.56C22 6.04 17.5 2 12 2Z"/></svg>';
+// Tasdiq belgisi — telefoni Telegram orqali tasdiqlangan nomzodga
+const VB_IC = '<svg class="vb" viewBox="0 0 24 24" aria-label="Tasdiqlangan"><path fill="#F5B83D" d="M12 1.5l2.4 1.9 3-.4 1.1 2.8 2.8 1.1-.4 3 1.9 2.4-1.9 2.4.4 3-2.8 1.1-1.1 2.8-3-.4L12 22.5l-2.4-1.9-3 .4-1.1-2.8-2.8-1.1.4-3L1.2 12l1.9-2.4-.4-3 2.8-1.1L6.6 3l3 .4z"/><path d="M8 12.3l2.6 2.6L16.2 9.3" fill="none" stroke="#1C1C1E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+// Naqsh: avatar atrofida halqa bo'ylab (Telegram'dagi "fon emodzi" kabi)
+const PAT_POS = [[50,9,22],[26,15,18],[74,15,18],[11,34,16],[89,34,16],[18,58,20],[82,58,20],[8,80,14],[92,80,14],
+  [31,40,13],[69,40,13],[34,74,15],[66,74,15],[50,92,13]];
+function patternHtml(k){
+  const e = PATTERNS[k];
+  if (!e) return '';
+  return '<div class="hp" aria-hidden="true">' + PAT_POS.map(([x, y, s]) =>
+    `<i style="left:${x}%;top:${y}%;font-size:${s}px">${e}</i>`).join('') + '</div>';
+}
+
+function openStyle(){
+  let st = styleOf(P);
+  const ini = (P.fullName || '?').trim().split(/\s+/).slice(0, 2).map(x => x[0]).join('').toUpperCase();
+  $('shT').textContent = 'Profilni bezash';
+  const draw = () => {
+    $('shB').innerHTML = `
+      <div class="hero mini c-${st.color}">${patternHtml(st.pattern)}
+        <div class="av">${P.hasPhoto ? `<img src="/api/cand/photo?t=${encodeURIComponent(PT)}" alt="" data-nozoom>` : esc(ini)}</div>
+        <div class="nm">${esc(P.fullName || 'Ismingiz')}${P.phoneVerified ? VB_IC : ''}</div>
+      </div>
+      <div class="sty-sec">Rang</div>
+      <div class="sty-grid">${HUES.concat(HUES.map(h => h + '2')).map(c =>
+        `<button class="sty-c c-${c} ${st.color === c ? 'on' : ''}" data-c="${c}" aria-label="${c}"></button>`).join('')}</div>
+      <div class="sty-sec">Fon naqshi</div>
+      <div class="sty-pat">${Object.entries(PATTERNS).map(([k, e]) =>
+        `<button class="${st.pattern === k ? 'on' : ''}" data-p="${k}">${e || '<span>Yo\'q</span>'}</button>`).join('')}</div>
+      <div class="hint" style="padding:12px 2px 4px">Bezak faqat sizning kabinetingizda ko'rinadi — restoranlar rezyumeni oddiy ko'rinishda ko'radi.</div>
+      <button class="btn" id="styOk">Uslubni qo'llash</button>
+      ${P.style && P.style.chosen ? '<button class="lnk sty-reset" id="styReset">Telegram rangiga qaytarish</button>' : ''}`;
+    $('shB').querySelectorAll('[data-c]').forEach(b => b.onclick = () => { st.color = b.dataset.c; haptic(); draw(); });
+    $('shB').querySelectorAll('[data-p]').forEach(b => b.onclick = () => { st.pattern = b.dataset.p; haptic(); draw(); });
+    const go = async body => {
+      const b = $('styOk'); b.disabled = true;
+      try {
+        const r = await api('/api/cand/style', { method: 'PATCH', body: JSON.stringify(body) });
+        P.style = r; closeSheet(); render(P);
+        try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
+      } catch(e){ b.disabled = false; b.insertAdjacentHTML('beforebegin', fail(e.message)); }
+    };
+    $('styOk').onclick = () => go({ color: st.color, pattern: st.pattern });
+    if ($('styReset')) $('styReset').onclick = () => go({ color: '' });
+  };
+  draw();
+  $('sheet').classList.add('on');
+}
+
 function closeSheet(){ $('sheet').classList.remove('on'); $('shB').innerHTML = ''; }
 $('shX').onclick = closeSheet;
 $('sheet').onclick = e => { if (e.target === $('sheet')) closeSheet(); };

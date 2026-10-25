@@ -550,6 +550,17 @@ butun Mini App oq ekran bo'ladi). Lokal ko'rib chiqish: `.preview/` (git'ga kirm
 `.git/info/exclude`) + `.claude/launch.json` "preview-static" (PowerShell HttpListener,
 public/ ni beradi, `/__p/` — soxta API bilan sahifa).
 
+**YAGONA DIZAYN v2 — DEPLOY QILINDI** (2026-10-26, `1fe4cf2`, Anas: "Hisob dizayni
+yoqdi, hamma qismi shunday bo'lsin, tepadagi balans kerak emas"). miniapp.html: `.chead`
+(balans qatori) OLIB TASHLANDI — o'rniga katta sarlavha `.lt` (restoran nomi + bo'lim
+nomi `ltTitle`, Vakansiyada "+ Yangi" `ltAct` -> `bNewV`); balans faqat Hisob bo'limida.
+Har uch sahifa (miniapp, profil, anketa) `<style>` oxirida "YAGONA DIZAYN v2" bloki —
+oldingi qoidalar ustidan yozadi: 18px chegarasiz kartalar, kapsula chiplar (`--th-*-soft`),
+to'ldirilgan tugmalar (`--th-fill`), KPI plitkalar, guruhlangan suhbatlar ro'yxati,
+pastdan oyna (tutqich, yumaloq ✕). Nomzod profili — gradient karta (Hisob balansi bilan bir
+xil), Ish o'rinlari/Arizalarim/Xabarlar katta sarlavhali. Yangi komponent qo'shsangiz —
+shu blokdagi tokenlar bilan.
+
 **ANKETA C VARIANT + TALABA + NOMZOD KABINETI TUZATISHLARI** (2026-10-23,
 `4addf87`..`6689dea`): ish tajribasi ekrani — REZYUME KARTALARI (Anas uchta
 variantdan C'ni tanladi): bo'sh holatda "Ish joyi qo'shish" (pastki tugma) va

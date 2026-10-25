@@ -40,6 +40,7 @@ jobs:
           # Tafsilot (xato matni, kutilgan/haqiqiy qiymat, qator) — loglarni admin huquqisiz ham ko'rish uchun
           grep -A40 -E '^\s*not ok' test.log | grep -E "location:|error:|expected:|actual:|\.test\.js:[0-9]+|Expected|^\s+[+-] " \
             | head -24 | while read -r l; do echo "::warning title=Tafsilot::$l"; done || true
-          # Fayl butunlay yiqilsa (testlar boshlanmasdan): oldidagi stderr qatorlari — sababi shu yerda
-          grep -B40 -E '^not ok' test.log | grep -vE '^(ok|#|TAP)|^\s*(ok|#|---|\.\.\.|duration_ms)' | grep -E '\S' \
-            | tail -9 | while read -r l; do echo "::notice title=Kontekst::$l"; done || true
+          # Yiqilgan har fayl bloki bitta annotatsiyada (o'tgan subtestlarsiz): pastki qismi — sabab
+          awk '/^(ok|not ok) [0-9]+ - /{ if ($1=="not") { print buf; print $0; print "=====" } buf=""; next } { buf = buf "\n" $0 }' test.log \
+            | grep -vE '^\s*ok [0-9]+ |duration_ms|^\s*(---|\.\.\.)\s*$|type: .test.' | grep -E '\S' | tail -60 \
+            | awk 'BEGIN{ORS="%0A"} {print}' | sed 's/^/::error title=Yiqilgan fayl tafsiloti::/' ; echo

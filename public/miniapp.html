@@ -869,6 +869,42 @@ div.ac-row:active{background:none}
 .nav{border-radius:14px;background:var(--th-fill)}
 .d-pos{font-size:24px;font-weight:800;letter-spacing:-.4px}
 :root[data-theme="dark"] .bar{box-shadow:0 -6px 20px rgba(0,0,0,.4)}
+/* ── Vakansiya sahifasi (to'liq ekran) — nomzod kabinetidagi bilan bir xil ── */
+.vp{position:fixed;inset:0;z-index:65;background:var(--bg);display:flex;flex-direction:column;
+  transform:translateX(100%);transition:transform .3s cubic-bezier(.3,.8,.3,1);visibility:hidden}
+.vp.on{transform:none;visibility:visible}
+body.vp-lock{overflow:hidden}
+.vp-h{flex:none;display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);transition:background .2s,box-shadow .2s}
+.vp.scrolled .vp-h{background:var(--card);box-shadow:0 .5px 0 var(--line)}
+.vp-ib{width:38px;height:38px;flex:none;border-radius:50%;border:none;background:var(--card);color:var(--ink);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.vp.scrolled .vp-ib{background:var(--th-fill);box-shadow:none}
+.vp-ib svg{width:20px;height:20px}
+.vp-ht{flex:1;min-width:0;text-align:center;font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;transition:opacity .2s}
+.vp.scrolled .vp-ht{opacity:1}
+.vp-b{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 14px 24px}
+.vp-hero{background:var(--card);border-radius:22px;padding:18px 18px 18px;margin-bottom:12px}
+.vp-hero h1{font-size:25px;font-weight:800;letter-spacing:-.5px;line-height:1.2}
+.vp-ven{font-size:14.5px;color:var(--muted);margin-top:6px;line-height:1.4}
+.vp-sal{font-size:22px;font-weight:800;color:var(--ok);margin-top:12px;letter-spacing:-.3px;font-variant-numeric:tabular-nums}
+.vp-sal.no{font-size:15.5px;font-weight:600;color:var(--muted)}
+.vp-facts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.vp-facts div{background:var(--card);border-radius:16px;padding:12px 14px;min-width:0}
+.vp-facts span{display:block;font-size:12px;color:var(--muted);font-weight:600}
+.vp-facts b{display:block;font-size:15px;font-weight:700;margin-top:3px;line-height:1.3;word-break:break-word}
+.vp-sec{background:var(--card);border-radius:18px;padding:15px 16px;margin-bottom:12px}
+.vp-sec h3{font-size:17px;font-weight:800;letter-spacing:-.2px;margin-bottom:8px}
+.vp-tx{font-size:15px;line-height:1.55;white-space:pre-line}
+.vp-f{flex:none;padding:10px 16px calc(12px + env(safe-area-inset-bottom));background:var(--card);box-shadow:0 -6px 20px rgba(15,39,71,.07)}
+.vp-f .btn{width:100%;padding:15px;font-size:16.5px;box-shadow:0 8px 20px rgba(0,102,224,.22)}
+:root[data-theme="dark"] .vp-f{box-shadow:0 -6px 20px rgba(0,0,0,.4)}
+.vx-fn .vk-fn{margin:0 0 12px}
+.vx-fn .vk-apps{margin:0}
+.vx-fn:not(:has(.vk-apps)) .vk-fn{margin-bottom:0}
+.vx-sh{margin:20px 4px 10px}
+.vx-sh h3{font-size:20px;font-weight:800;letter-spacing:-.3px}
+.vx-none{font-size:14px;color:var(--muted);text-align:center}
+.vx-menu{width:100%;margin-top:6px;padding:13px}
 </style>
 </head>
 <body>
@@ -945,6 +981,17 @@ div.ac-row:active{background:none}
       <input id="cvIn" placeholder="Xabar yozing…" data-tp="chat.placeholder" autocomplete="off" maxlength="2000">
       <button class="cv-send" id="cvSend">&#10148;</button>
     </div>
+  </div>
+
+  <!-- Vakansiya — to'liq ekran sahifa (showVacancy) -->
+  <div class="vp" id="vx" aria-hidden="true">
+    <div class="vp-h">
+      <button class="vp-ib" id="vxBack" aria-label="Orqaga" data-ta="common.back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+      <b class="vp-ht" id="vxHT"></b>
+      <button class="vp-ib" id="vxMore" aria-label="⋯"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
+    </div>
+    <div class="vp-b" id="vxBody"></div>
+    <div class="vp-f hide" id="vxFoot"><button class="btn" id="vxMatch" data-t="vac.matches">Mos nomzodlarni ko'rish</button></div>
   </div>
 
   <!-- Ikonkalar: Lucide (clipboard-list, inbox, briefcase, message-circle) -->
@@ -1537,7 +1584,8 @@ function syncBack(){
     if (TG && TG.BackButton && TG.isVersionAtLeast && TG.isVersionAtLeast('6.1')) {
       // Oyna yopilganda tugmani yashiramiz — lekin qidiruvda nomzod ochiq bo'lsa, u uniki
       const inDetail = !$('searchMode').classList.contains('hide') && cur >= 0;
-      if ($('sheet').classList.contains('on') || inDetail) TG.BackButton.show(); else TG.BackButton.hide();
+      const inVac = !$('cabMode').classList.contains('hide') && $('vx').classList.contains('on');
+      if ($('sheet').classList.contains('on') || inDetail || inVac) TG.BackButton.show(); else TG.BackButton.hide();
     }
   } catch(e){}
 }
@@ -1554,7 +1602,8 @@ function onTgBack(){
   // Avval ochiq rasm (th-viewer) yopiladi — ilova yoki oyna emas
   if (window.thViewer && thViewer.consumeBack()) return;
   if ($('sheet').classList.contains('on')) { sheetBack(); return; }
-  if (!$('searchMode').classList.contains('hide') && cur >= 0) renderList();
+  if (!$('searchMode').classList.contains('hide') && cur >= 0) { renderList(); return; }
+  if (!$('cabMode').classList.contains('hide') && $('vx').classList.contains('on')) closeVacancy();
 }
 try { TG && TG.BackButton && TG.BackButton.onClick(onTgBack); } catch(e){}
 $('ltAct').onclick = () => $('bNewV').click();
@@ -1649,47 +1698,84 @@ async function startMatches(id, b){
   try {
     const r = await api(`/api/ma/vacancies/${id}/matches`, { method:'POST', body:'{}' });
     if (!r.key) { showMsg(r.message || t('vac.noMatch')); b.disabled = false; b.textContent = was; return; }
-    haptic(); closeSheet(); openSearch(r.key, true);
+    // Vakansiya sahifasi ochiq qoladi (qidiruvdan qaytganda o'sha joy), lekin
+    // qidiruv ro'yxati aylansin — sahifa qulfi vaqtincha olinadi
+    haptic(); closeSheet(); document.body.classList.remove('vp-lock'); openSearch(r.key, true);
   } catch(e){ showMsg(e.message); b.disabled = false; b.textContent = was; }
 }
 
-// ── Vakansiya sahifasi: voronka, shartlar, nomzodlar, arizalar ──
+// ── Vakansiya sahifasi — to'liq ekran (o'ngdan suriladi) ──
+// Nomzod kabinetidagi vakansiya sahifasi bilan bir uslub (2026-10-26): tepada
+// holat, sarlavha, maosh; voronka va arizalar; nomzodlar; shartlar
+// plitkalarda; pastda doim "Mos nomzodlarni ko'rish"; ⋯ — menyu. Ustidan
+// ochiladigan oynalar (arizalar, rezyume, menyu) — odatdagi pastdan oyna.
+// Telegram "Orqaga": avval oyna, keyin sahifa (onTgBack).
+let VX_ID = null;
 async function showVacancy(id){
-  sheetEnter('vac:' + id, () => showVacancy(id));
-  openSheet(t('vac.sheet'), `<div class="msg">${esc(t('common.loading'))}</div>`);
+  const same = VX_ID === id && $('vx').classList.contains('on');
+  VX_ID = id;
+  if (!same) {
+    $('vxBody').innerHTML = '<div class="ac-skel s2"></div><div class="ac-skel s2"></div><div class="ac-skel s3"></div>';
+    $('vxHT').textContent = '';
+    $('vxFoot').classList.add('hide');
+    $('vx').classList.remove('scrolled');
+    $('vx').classList.add('on');
+    $('vxBody').scrollTop = 0;
+    document.body.classList.add('vp-lock');
+    syncBack();
+  }
   let d;
   try { d = await api(`/api/ma/vacancies/${encodeURIComponent(id)}/detail`); }
-  catch(e){ $('shB').innerHTML = `<div class="msg">${esc(e.message)}</div>`; return; }
+  catch(e){ if (VX_ID === id) $('vxBody').innerHTML = `<div class="msg">${esc(e.message)}</div>`; return; }
+  if (VX_ID !== id) return;
   const v = d.vacancy, f = v.funnel || {};
-  $('shT').textContent = v.title;
+  $('vxHT').textContent = v.title;
 
-  const kv = (k, val) => val ? `<div class="vd-kv"><span class="k">${esc(t(k))}</span><span class="v">${esc(val)}</span></div>` : '';
   const age = v.minAge && v.maxAge ? t('vk.ageRange', { a: v.minAge, b: v.maxAge })
             : v.minAge ? t('vk.ageFrom', { n: v.minAge }) : v.maxAge ? t('vk.ageTo', { n: v.maxAge }) : '';
-  const info = [
-    kv('vk.salary', v.salaryText), kv('vk.schedule', v.schedule), kv('vk.shift', v.shift ? shiftL(v.shift) : ''),
-    kv('vk.cond', v.conditions), kv('vk.region', v.location),
-    kv('vk.start', v.startDate ? dShort(v.startDate) : ''), kv('vk.need', v.headcount > 1 ? t('unit.people', { n: v.headcount }) : ''),
-    kv('vk.exp', v.minExp ? t('vk.expFrom', { n: v.minExp }) : ''), kv('vk.age', age), kv('vk.langs', (v.languages || []).join(', ')),
-    kv('vk.status', v.status === 'closed' ? t('vac.closed') : (v.listed ? t('vac.listed') : t('vac.private')))
-  ].join('');
+  const facts = [
+    ['vk.schedule', v.schedule], ['vk.shift', v.shift ? shiftL(v.shift) : ''], ['vk.region', v.location],
+    ['vk.start', v.startDate ? dShort(v.startDate) : ''], ['vk.need', v.headcount > 1 ? t('unit.people', { n: v.headcount }) : ''],
+    ['vk.exp', v.minExp ? t('vk.expFrom', { n: v.minExp }) : ''], ['vk.age', age], ['vk.langs', (v.languages || []).join(', ')]
+  ].filter(x => x[1]);
+  const st = v.status === 'closed' ? ['mute', t('vac.closed')] : v.status === 'paused' ? ['warn', t('vac.paused')]
+           : v.listed ? ['ok', t('vac.listed')] : ['info', t('vac.private')];
+  const meta = [v.schedule, v.shift ? shiftL(v.shift) : '', v.location].filter(Boolean).join(' · ');
 
-  $('shB').innerHTML = `
-    ${funnelHtml(f)}
-    ${appsBtn(v.id, f)}
-    ${v.status === 'open' ? `<button class="btn vk-cta" id="vdMatch">${esc(t('vac.matches'))}</button>` : ''}
-    <div class="vd-sec">${esc(t('vd.cands', { n: d.items.length }))}</div>
+  $('vxBody').innerHTML = `
+    <div class="vp-hero">
+      <span class="ac-st ${st[0]}">${esc(st[1])}</span>
+      <h1 style="margin-top:10px">${esc(v.title)}</h1>
+      ${meta ? `<div class="vp-ven">${esc(meta)}</div>` : ''}
+      <div class="vp-sal ${v.salaryText ? '' : 'no'}">${esc(v.salaryText || t('vac.noSalary'))}</div>
+    </div>
+    <div class="vp-sec vx-fn">${funnelHtml(f)}${appsBtn(v.id, f)}</div>
+    <div class="vx-sh"><h3>${esc(t('vd.cands', { n: d.items.length }))}</h3></div>
     <div id="vdItems">${d.items.length ? d.items.map(candHtml).join('')
-      : `<div class="cd-wait">${esc(t('vd.none'))}</div>`}</div>
-    <div class="vd-sec">${esc(t('vd.terms'))}</div>
-    ${info}
-    <button class="cd-btn" id="vdMenu" style="width:100%;margin-top:18px">${esc(t('vd.menu'))}</button>`;
+      : `<div class="vp-sec vx-none">${esc(t('vd.none'))}</div>`}</div>
+    ${facts.length || v.conditions ? `<div class="vx-sh"><h3>${esc(t('vd.terms'))}</h3></div>` : ''}
+    ${facts.length ? `<div class="vp-facts">${facts.map(([k, val]) => `<div><span>${esc(t(k))}</span><b>${esc(val)}</b></div>`).join('')}</div>` : ''}
+    ${v.conditions ? `<div class="vp-sec"><h3>${esc(t('vk.cond'))}</h3><p class="vp-tx">${esc(v.conditions)}</p></div>` : ''}
+    <button class="cd-btn vx-menu" id="vdMenu">${esc(t('vd.menu'))}</button>`;
 
   wireCards($('vdItems'), () => showVacancy(id));
-  if ($('vdMatch')) $('vdMatch').onclick = e => startMatches(id, e.currentTarget);
-  $('shB').querySelectorAll('[data-apps]').forEach(b => b.onclick = () => showApps(id));
+  $('vxBody').querySelectorAll('[data-apps]').forEach(b => b.onclick = () => showApps(id));
   $('vdMenu').onclick = () => vacMenu(id, v);
+  $('vxMore').onclick = () => vacMenu(id, v);
+  $('vxFoot').classList.toggle('hide', v.status !== 'open');
+  $('vxMatch').disabled = false;
+  $('vxMatch').textContent = t('vac.matches');
+  $('vxMatch').onclick = e => startMatches(id, e.currentTarget);
 }
+function closeVacancy(){
+  $('vx').classList.remove('on');
+  VX_ID = null;
+  document.body.classList.remove('vp-lock');
+  syncBack();
+  if (!$('vVC').classList.contains('hide')) loadVacancies();      // o'zgarishlar ro'yxatda ko'rinsin
+}
+$('vxBack').onclick = closeVacancy;
+$('vxBody').addEventListener('scroll', () => $('vx').classList.toggle('scrolled', $('vxBody').scrollTop > 90), { passive: true });
 
 // ── ⋯ menyusi: Tahrirlash, E'lon qilish / olish, Yopish / Qayta ochish ──
 function vacMenu(id, vObj){
@@ -2908,6 +2994,7 @@ function backToCab(){
   FROM_CAB = false;
   pickTab('tVC');
   refreshUnread();
+  if ($('vx').classList.contains('on')) { document.body.classList.add('vp-lock'); if (VX_ID) showVacancy(VX_ID); syncBack(); }
 }
 $('bBackCab').onclick = backToCab;
 

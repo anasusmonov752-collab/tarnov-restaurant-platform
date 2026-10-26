@@ -324,7 +324,7 @@ router.get('/:id/photo', guard, asyncHandler(async (req, res) => {
   const m = /^data:(image\/[\w.+-]+);base64,(.*)$/i.exec(c.photo);
   if (!m) return res.status(404).end();
   res.setHeader('Content-Type', m[1]);
-  res.setHeader('Cache-Control', 'private, max-age=86400');
+  res.setHeader('Cache-Control', 'private, no-cache');     // ETag bilan: foto yangilansa darhol ko'rinadi
   res.send(Buffer.from(m[2], 'base64'));
 }));
 
@@ -338,6 +338,37 @@ router.get('/:id/file', guard, asyncHandler(async (req, res) => {
   res.send(buf);
 }));
 
+
+// ── Eski PDF fotolarini qayta ajratish (2026-10-26) ──
+// hh fotosi PDF'da 500x500, eski kod uni 220px gacha qo'pol kichraytirib PNG
+// saqlardi — xira chiqardi. PNG foto = PDF'dan ajratilgan (qo'lda yuklangan
+// rasmlar JPEG — ularga tegilmaydi). Saqlangan PDF'dan qayta ajratamiz.
+// apply:false — faqat sanaydi va 3 tasini sinab ko'radi; apply:true — `after`
+// (oxirgi _id) bilan bo'laklab yozadi: javobdagi `next` bilan qayta chaqiring.
+router.post('/photos/refresh', guard, asyncHandler(async (req, res) => {
+  const b = req.body || {};
+  const rid = req.user.restaurantId;
+  const q = { restaurantId: rid, photo: /^data:image\/png/, fileType: /pdf/i, fileData: { $nin: ['', null] } };
+  const total = await Candidate.countDocuments(q);
+  if (b.after) q._id = { $gt: b.after };
+  const limit = b.apply ? Math.min(Number(b.limit) || 60, 150) : 3;
+  const rows = await Candidate.find(q, '_id id fileData photo').sort({ _id: 1 }).limit(limit).lean();
+  let updated = 0, failed = 0;
+  const samples = [];
+  for (const c of rows) {
+    let p = '';
+    try { p = resumeParser.extractPhoto(Buffer.from(c.fileData, 'base64')); } catch { p = ''; }
+    if (!p || !/^data:image\/jpeg/.test(p)) { failed++; continue; }
+    if (samples.length < 3) samples.push({ id: c.id, oldKb: Math.round(c.photo.length * 0.75 / 1024), newKb: Math.round(p.length * 0.75 / 1024) });
+    if (b.apply) {
+      await Candidate.updateOne({ _id: c._id }, { $set: { photo: p, hasPhoto: true, updatedAt: new Date() } });
+      updated++;
+    }
+  }
+  const last = rows.length ? rows[rows.length - 1]._id : null;
+  res.json({ total, checked: rows.length, updated, failed, samples,
+    next: b.apply && rows.length === limit ? last : null });
+}));
 
 // ── AI bilan qayta tahlil (o'qilmagan nomzodni qayta yuklamasdan) ──
 router.post('/:id/reanalyze', guard, asyncHandler(async (req, res) => {

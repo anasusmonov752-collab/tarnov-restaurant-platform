@@ -237,21 +237,43 @@ function pngChunk(type, data) {
   const crc = Buffer.alloc(4); crc.writeUInt32BE(crc32(body), 0);
   return Buffer.concat([len, body, crc]);
 }
-/** Xom pikselni (RGB/Gray) nearest-neighbor bilan kichraytiradi. */
+/**
+ * Xom pikselni (RGB/Gray) maydon bo'yicha O'RTACHALAB kichraytiradi (box filter).
+ * Ilgari nearest-neighbor edi (har N-piksel olinib qolgani tashlanardi) —
+ * hh fotosi 500px dan 220px ga tushib, "zinapoya" va xira chiqardi (2026-10-26).
+ */
 function downscale(raw, w, h, ch, maxDim) {
   if (Math.max(w, h) <= maxDim) return { raw, w, h };
   const scale = maxDim / Math.max(w, h);
   const nw = Math.max(1, Math.round(w * scale)), nh = Math.max(1, Math.round(h * scale));
   const out = Buffer.alloc(nw * nh * ch);
+  const fx = w / nw, fy = h / nh;
   for (let y = 0; y < nh; y++) {
-    const sy = Math.min(h - 1, Math.floor(y / scale));
+    const y0 = Math.floor(y * fy), y1 = Math.max(y0 + 1, Math.min(h, Math.floor((y + 1) * fy)));
     for (let x = 0; x < nw; x++) {
-      const sx = Math.min(w - 1, Math.floor(x / scale));
-      const si = (sy * w + sx) * ch, di = (y * nw + x) * ch;
-      for (let c = 0; c < ch; c++) out[di + c] = raw[si + c];
+      const x0 = Math.floor(x * fx), x1 = Math.max(x0 + 1, Math.min(w, Math.floor((x + 1) * fx)));
+      const n = (y1 - y0) * (x1 - x0), di = (y * nw + x) * ch;
+      for (let c = 0; c < ch; c++) {
+        let sum = 0;
+        for (let yy = y0; yy < y1; yy++) for (let xx = x0; xx < x1; xx++) sum += raw[(yy * w + xx) * ch + c];
+        out[di + c] = Math.round(sum / n);
+      }
     }
   }
   return { raw: out, w: nw, h: nh };
+}
+
+// Rasm saqlash o'lchami: hh fotosi 500x500 — asl o'lchami saqlanadi
+const PHOTO_MAX = 600;
+/** Xom piksel -> JPEG dataURL (jpeg-js, sof JS). Gray/RGB -> RGBA. */
+function rawToJpeg(raw, w, h, ch, quality = 88) {
+  const jpeg = require('jpeg-js');
+  const rgba = Buffer.alloc(w * h * 4);
+  for (let i = 0, p = 0; i < w * h; i++, p += ch) {
+    const r = raw[p], g = ch >= 3 ? raw[p + 1] : r, b = ch >= 3 ? raw[p + 2] : r;
+    rgba[i * 4] = r; rgba[i * 4 + 1] = g; rgba[i * 4 + 2] = b; rgba[i * 4 + 3] = 255;
+  }
+  return jpeg.encode({ data: rgba, width: w, height: h }, quality).data;
 }
 function rawToPng(raw, w, h, ch) {
   const colorType = ch === 1 ? 0 : ch === 4 ? 6 : 2;
@@ -310,8 +332,14 @@ function extractFlatePhoto(buffer) {
   }
   if (!best) return '';
   try {
-    const d = downscale(best.raw, best.w, best.h, best.ch, 220);
-    const png = rawToPng(d.raw, d.w, d.h, best.ch);
+    const d = downscale(best.raw, best.w, best.h, best.ch, PHOTO_MAX);
+    // JPEG: 500x500 foto ~50-80 KB (PNG'da 400+ KB bo'lardi)
+    try {
+      const jpg = rawToJpeg(d.raw, d.w, d.h, best.ch);
+      if (jpg.length <= 400 * 1024) return 'data:image/jpeg;base64,' + Buffer.from(jpg).toString('base64');
+    } catch (e) { /* jpeg-js yo'q bo'lsa — PNG zaxira */ }
+    const s = downscale(best.raw, best.w, best.h, best.ch, 320);
+    const png = rawToPng(s.raw, s.w, s.h, best.ch);
     if (png.length > 500 * 1024) return '';
     return 'data:image/png;base64,' + png.toString('base64');
   } catch { return ''; }
@@ -328,4 +356,4 @@ function extractPhoto(buffer) {
   } catch { return ''; }
 }
 
-module.exports = { extractText, structure, emptyFields, extractPhoto };
+module.exports = { extractText, structure, emptyFields, extractPhoto, downscale };

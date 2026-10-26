@@ -570,6 +570,16 @@ rang YO'Q (Anas taklif qildi, rad etildi: jins noma'lum, kamsitish xavfi). Birin
 yorqin gradient + emoji naqsh + oltin rozetka) Anas: "juda bachkana, professional emas" —
 olib tashlandi. Tasdiq belgisi — oq doira ichida ✓ (`phoneVerified`). Faqat o'z kabinetida.
 
+**VAKANSIYA — TO'LIQ EKRAN SAHIFA, DEPLOY QILINDI** (2026-10-26, `6a8b114` nomzod,
+`d313d17` mijoz): pastdan oyna o'rniga o'ngdan suriladigan sahifa (`.vp`, z-index 65 —
+suhbat 60 va oyna 70 orasida). Nomzod (`profil.html showJob`): sarlavha, joy, maosh, shartlar
+plitkalarda, Vazifalar/Talablar, "Ariza berish" doim pastda, Ulashish ->
+`t.me/<bot>?start=v_<id>_ref` (`/api/cand/me` endi `bot` beradi), `profil.html#v=<id>`
+havolasi. Mijoz (`miniapp.html showVacancy`, `#vx`): holat, voronka, arizalar, nomzodlar,
+shartlar, ⋯ menyu, pastda "Mos nomzodlarni ko'rish"; qidiruvga o'tilsa sahifa ochiq qoladi
+(`vp-lock` vaqtincha olinadi, `backToCab` qaytaradi). Telegram "Orqaga": oyna -> qidiruv
+kartasi -> vakansiya sahifasi (`onTgBack`, `syncBack`).
+
 **ANKETA C VARIANT + TALABA + NOMZOD KABINETI TUZATISHLARI** (2026-10-23,
 `4addf87`..`6689dea`): ish tajribasi ekrani — REZYUME KARTALARI (Anas uchta
 variantdan C'ni tanladi): bo'sh holatda "Ish joyi qo'shish" (pastki tugma) va

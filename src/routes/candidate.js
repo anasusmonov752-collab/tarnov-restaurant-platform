@@ -144,7 +144,9 @@ router.get('/me', guard, asyncHandler(async (req, res) => {
 
   res.json(Object.assign(profileOf(c), {
     stats: { picked: rows.length, opened },
-    completeness: completeness(c)
+    completeness: completeness(c),
+    // Vakansiyani ulashish havolasi uchun (t.me/<bot>?start=v_<id>_ref)
+    bot: (await require('../services/telegram').platformUsername().catch(() => '')) || 'TalentHubUzBot'
   }));
 }));
 

@@ -443,6 +443,52 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .sty-c.on{box-shadow:0 0 0 2.5px var(--card),0 0 0 4.5px var(--ink)}
 .sty-nm{text-align:center;font-size:14px;font-weight:700;margin-top:12px}
 .sty-reset{display:block;margin:14px auto 0;border:0;background:none;color:var(--blue);font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;padding:6px}
+/* ── Vakansiya sahifasi (to'liq ekran) ── */
+.vp{position:fixed;inset:0;z-index:65;background:var(--bg);display:flex;flex-direction:column;
+  transform:translateX(100%);transition:transform .3s cubic-bezier(.3,.8,.3,1);visibility:hidden}
+.vp.on{transform:none;visibility:visible}
+body.vp-lock{overflow:hidden}
+.vp-h{flex:none;display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);transition:background .2s,box-shadow .2s}
+.vp.scrolled .vp-h{background:var(--card);box-shadow:0 .5px 0 var(--line)}
+.vp-ib{width:38px;height:38px;flex:none;border-radius:50%;border:none;background:var(--card);color:var(--ink);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.vp.scrolled .vp-ib{background:var(--th-fill);box-shadow:none}
+.vp-ib svg{width:20px;height:20px}
+.vp-ht{flex:1;min-width:0;text-align:center;font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  opacity:0;transition:opacity .2s}
+.vp.scrolled .vp-ht{opacity:1}
+.vp-b{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 16px 24px}
+.vp-hero{background:var(--card);border-radius:22px;padding:20px 18px 18px;margin-bottom:12px}
+.vp-badge{width:46px;height:46px;border-radius:14px;background:var(--th-brand-soft);color:var(--blue);display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.vp-badge svg{width:24px;height:24px}
+.vp-hero h1{font-size:25px;font-weight:800;letter-spacing:-.5px;line-height:1.2}
+.vp-ven{font-size:15px;color:var(--ink-2);margin-top:6px;line-height:1.4}
+.vp-pl{display:flex;align-items:center;gap:5px;font-size:14px;color:var(--muted);margin-top:6px}
+.vp-pl svg{width:15px;height:15px;flex:none}
+.vp-sal{font-size:22px;font-weight:800;color:var(--ok);margin-top:14px;letter-spacing:-.3px;font-variant-numeric:tabular-nums}
+.vp-sal small{font-size:14px;font-weight:600;color:var(--muted)}
+.vp-sal.no{font-size:16px;font-weight:600;color:var(--muted)}
+.vp-tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+.vp-hook{background:var(--th-brand-soft);border-radius:18px;padding:14px 16px;font-size:15px;line-height:1.5;margin-bottom:12px;color:var(--ink)}
+.vp-facts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.vp-facts div{background:var(--card);border-radius:16px;padding:12px 14px;min-width:0}
+.vp-facts span{display:block;font-size:12px;color:var(--muted);font-weight:600}
+.vp-facts b{display:block;font-size:15px;font-weight:700;margin-top:3px;line-height:1.3;word-break:break-word}
+.vp-sec{background:var(--card);border-radius:18px;padding:15px 16px;margin-bottom:12px}
+.vp-sec h3{font-size:17px;font-weight:800;letter-spacing:-.2px;margin-bottom:10px}
+.vp-ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:9px}
+.vp-ul li{display:flex;gap:10px;font-size:15px;line-height:1.45}
+.vp-ul li i{width:6px;height:6px;border-radius:50%;background:var(--muted);flex:none;margin-top:8px}
+.vp-ul.ck li svg{width:18px;height:18px;flex:none;color:var(--ok);margin-top:2px}
+.vp-chips{display:flex;flex-wrap:wrap;gap:7px}
+.vp-chips span{font-size:13.5px;font-weight:600;padding:6px 12px;border-radius:99px;background:var(--th-fill)}
+.vp-tx{font-size:15px;line-height:1.55;white-space:pre-line}
+.vp-note{font-size:12.5px;color:var(--muted);line-height:1.5;text-align:center;padding:4px 14px 6px}
+.vp-f{flex:none;padding:10px 16px calc(12px + env(safe-area-inset-bottom));background:var(--card);box-shadow:0 -6px 20px rgba(15,39,71,.07)}
+.vp-f .btn{display:flex;align-items:center;justify-content:center;gap:7px;padding:15px;font-size:16.5px;box-shadow:0 8px 20px rgba(0,102,224,.22)}
+.vp-f .btn svg{width:18px;height:18px}
+.vp-f .btn:disabled{opacity:1;background:var(--th-ok-soft);color:var(--ok);box-shadow:none}
+:root[data-theme="dark"] .vp-f{box-shadow:0 -6px 20px rgba(0,0,0,.4)}
 </style>
 </head>
 <body>
@@ -497,6 +543,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     <input id="cvIn" placeholder="Xabar yozing…" autocomplete="off" maxlength="2000">
     <button class="cv-send" id="cvSend">&#10148;</button>
   </div>
+</div>
+
+<!-- Vakansiya — to'liq ekran sahifa (showJob): o'ngdan suriladi, tablar ustida -->
+<div class="vp" id="vp" aria-hidden="true">
+  <div class="vp-h">
+    <button class="vp-ib" id="vpBack" aria-label="Orqaga"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+    <b class="vp-ht" id="vpHT"></b>
+    <button class="vp-ib" id="vpShare" aria-label="Ulashish"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="m16 6-4-4-4 4"/><path d="M12 2v13"/></svg></button>
+  </div>
+  <div class="vp-b" id="vpBody"></div>
+  <div class="vp-f"><button class="btn" id="vpAp">Ariza berish</button></div>
 </div>
 
 <div class="sheet" id="sheet">
@@ -888,11 +945,94 @@ function vacancyHtml(v){
 function showSheet(title, html){ $('shT').textContent = title; $('shB').innerHTML = html; $('sheet').classList.add('on'); }
 
 let JOBS = [];
-function showJob(v){
-  showSheet('Vakansiya', vacancyHtml(v) +
-    `<button class="btn" id="vdAp" ${v.applied ? 'disabled' : ''}>${v.applied ? 'Ariza berilgan' : 'Ariza berish'}</button>`);
-  $('vdAp').onclick = () => openApply(v);
+
+// ══ Vakansiya — to'liq ekran sahifa ═══════════════════════════
+// Pastdan oyna uzun matn uchun tor edi, "Ariza berish" pastda yashirinib
+// qolardi (Anas, 2026-10-26). Endi: o'ngdan suriladigan sahifa, asosiy
+// ma'lumot tepada, shartlar plitkalarda, "Ariza berish" doim pastda;
+// "Ulashish" — t.me/<bot>?start=v_<id>_ref (do'sti anketa to'ldirsa ariza
+// shu vakansiyaga tushadi, manba "Tanish orqali"). Telegram "Orqaga" —
+// avval ustidagi oyna (ariza), keyin sahifa.
+const VP_IC = {
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>',
+  share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="m16 6-4-4-4 4"/><path d="M12 2v13"/></svg>',
+  pin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.99-5.54 10.19-7.4 11.8a1 1 0 0 1-1.2 0C9.54 20.19 4 14.99 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>',
+  job: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'
+};
+
+function vacPageHtml(v){
+  const age = v.minAge && v.maxAge ? `${v.minAge}–${v.maxAge} yosh`
+            : v.minAge ? `${v.minAge} yoshdan` : v.maxAge ? `${v.maxAge} yoshgacha` : '';
+  const facts = [
+    ['Smena', SHIFT_L[v.shift] || v.shift], ['Jadval', v.schedule], ['To\'lov', v.payoutText],
+    ['Tajriba', v.minExp ? v.minExp + ' yildan' : 'Talab qilinmaydi'], ['Yosh', age],
+    ['Boshlash', v.startDate ? dLong(v.startDate) : ''], ['Kerak', v.headcount > 1 ? v.headcount + ' kishi' : ''],
+    ['Tillar', (v.languages || []).join(', ')]
+  ].filter(f => f[1]);
+  const pk = perksOf(v), trust = trustTag(v);
+  const list = (xs, ic) => `<ul class="vp-ul ${ic ? 'ck' : ''}">${xs.map(x => `<li>${ic ? VP_IC.check : '<i></i>'}<span>${esc(x)}</span></li>`).join('')}</ul>`;
+  return `
+    <div class="vp-hero">
+      <div class="vp-badge">${VP_IC.job}</div>
+      <h1>${esc(v.title)}</h1>
+      ${v.venue ? `<div class="vp-ven">${esc(v.venue)}</div>` : ''}
+      ${placeOf(v) ? `<div class="vp-pl">${VP_IC.pin}<span>${esc(placeOf(v))}</span></div>` : ''}
+      <div class="vp-sal ${v.salaryText ? '' : 'no'}">${salLine(v) || 'Maosh suhbatda aytiladi'}</div>
+      ${trust || v.match ? `<div class="vp-tags">${v.match ? '<span class="tg2 fit">Sizga mos</span>' : ''}${trust}</div>` : ''}
+    </div>
+    ${v.hook ? `<div class="vp-hook">${esc(v.hook)}</div>` : ''}
+    ${facts.length ? `<div class="vp-facts">${facts.map(([k, val]) => `<div><span>${k}</span><b>${esc(val)}</b></div>`).join('')}</div>` : ''}
+    ${(v.duties || []).length ? `<div class="vp-sec"><h3>Vazifalar</h3>${list(v.duties, true)}</div>` : ''}
+    ${(v.requirements || []).length ? `<div class="vp-sec"><h3>Talablar</h3>${list(v.requirements)}</div>` : ''}
+    ${pk.chips.length ? `<div class="vp-sec"><h3>Afzalliklar</h3><div class="vp-chips">${pk.chips.map(p => `<span>${esc(p)}</span>`).join('')}</div></div>` : ''}
+    ${pk.text ? `<div class="vp-sec"><h3>Qo'shimcha</h3><p class="vp-tx">${esc(pk.text)}</p></div>` : ''}
+    <div class="vp-note">Ariza bersangiz, HR siz bilan Telegram yoki telefon orqali bog'lanadi. Ish beruvchi nomi kontakt ochilgach ko'rinadi.</div>`;
 }
+
+function showJob(v){
+  $('vpBody').innerHTML = vacPageHtml(v);
+  $('vpHT').textContent = v.title;
+  $('vp').classList.remove('scrolled');
+  const b = $('vpAp');
+  b.disabled = !!v.applied;
+  b.innerHTML = v.applied ? VP_IC.check + 'Ariza berilgan' : 'Ariza berish';
+  b.onclick = () => openApply(v);
+  $('vpShare').onclick = () => {
+    const link = `https://t.me/${(P && P.bot) || 'TalentHubUzBot'}?start=v_${v.id}_ref`;
+    const text = `${v.title}${v.salaryText ? ' — ' + v.salaryText : ''}. TalentHub orqali ariza bering:`;
+    const u = 'https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent(text);
+    try { TG && TG.openTelegramLink ? TG.openTelegramLink(u) : window.open(u, '_blank'); } catch(e){ location.href = u; }
+  };
+  $('vp').classList.add('on');
+  $('vp').setAttribute('aria-hidden', 'false');
+  $('vpBody').scrollTop = 0;
+  document.body.classList.add('vp-lock');
+  syncBack();
+}
+function closeJob(){
+  $('vp').classList.remove('on');
+  $('vp').setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('vp-lock');
+  syncBack();
+}
+// Telegram "Orqaga": avval oyna (ariza), keyin vakansiya sahifasi
+function syncBack(){
+  try {
+    if (!TG || !TG.BackButton || !(TG.isVersionAtLeast && TG.isVersionAtLeast('6.1'))) return;
+    if ($('sheet').classList.contains('on') || $('vp').classList.contains('on')) TG.BackButton.show(); else TG.BackButton.hide();
+  } catch(e){}
+}
+function onBack(){
+  if ($('sheet').classList.contains('on')) { closeSheet(); return; }
+  if ($('vp').classList.contains('on')) closeJob();
+}
+try { TG && TG.BackButton && TG.BackButton.onClick(onBack); } catch(e){}
+new MutationObserver(syncBack).observe($('sheet'), { attributes: true, attributeFilter: ['class'] });
+$('vpBack').onclick = closeJob;
+$('vpBody').addEventListener('scroll', () => $('vp').classList.toggle('scrolled', $('vpBody').scrollTop > 90), { passive: true });
+// Havola bilan to'g'ridan-to'g'ri vakansiya: profil.html#v=<id> (bot xabarlari uchun)
+let OPEN_VAC = (location.hash.match(/^#v=([0-9a-f-]{36})$/) || [])[1] || null;
 
 // ── ARIZA OYNASI ──
 // Ilgari bitta bosish bilan ketardi, xato bo'lsa alert() — Telegram ichida
@@ -933,6 +1073,7 @@ async function sendApply(v){
     try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
     v.applied = true;
     applied(v);
+    if ($('vp').classList.contains('on')) { $('vpAp').disabled = true; $('vpAp').innerHTML = VP_IC.check + 'Ariza berilgan'; }
     loadJobs();
   } catch(e){
     try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('error'); } catch(_){}
@@ -1033,6 +1174,7 @@ async function loadJobs(){
     $('jobBar').classList.toggle('hide', rows.length < 4);     // 3 ta ish uchun qidiruv ortiqcha
     drawJobFilter();
     drawJobs();
+    if (OPEN_VAC) { const j = JOBS.find(x => x.id === OPEN_VAC); OPEN_VAC = null; if (j) showJob(j); }
   }catch(e){ $('jobList').innerHTML = `<div class="msg">${esc(e.message)}</div>`; }
 }
 
@@ -1288,7 +1430,7 @@ $('cvIn').onkeydown = e => { if (e.key === 'Enter') sendMsg(); };
 if (location.hash === '#chat') setTimeout(() => { if ($('tM')) pickTab('tM'); }, 0);
 // Ariza xabaridagi tugmalar: #apps — Arizalarim, #jobs — Ish o'rinlari (services/appLife)
 if (location.hash === '#apps') setTimeout(() => { if ($('tA')) pickTab('tA'); }, 0);
-if (location.hash === '#jobs') setTimeout(() => { if ($('tJ')) pickTab('tJ'); }, 0);
+if (location.hash === '#jobs' || /^#v=/.test(location.hash)) setTimeout(() => { if ($('tJ')) pickTab('tJ'); }, 0);
 // ── Tablar ──
 const TABS = [['tP','app'], ['tJ','vJ'], ['tA','vA'], ['tM','vM']];
 function pickTab(id){

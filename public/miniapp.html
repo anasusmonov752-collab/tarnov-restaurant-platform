@@ -9,7 +9,7 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>window.thViewerHostBack = true;</script>  <!-- orqaga tugmasi zanjiri onTgBack'da (rasm oynasi) -->
 <script src="/js/th-viewer.js?v=2" defer></script>
-<script src="/js/th-i18n.js?v=19"></script>
+<script src="/js/th-i18n.js?v=20"></script>
 <style>
 /* Ranglar — TalentHub dizayn tizimidan (css/th.css, iOS uslubi).
    Telegram'ning --tg-theme-* RANGLARI olinmaydi (avval shunday edi va
@@ -583,6 +583,10 @@ div.ac-row:active{background:none}
 .fl textarea{resize:vertical;min-height:60px;line-height:1.5}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .hint{font-size:12.5px;color:var(--muted);margin-top:5px;line-height:1.5}
+.pks{display:flex;flex-wrap:wrap;gap:6px;padding-top:2px}
+.pk{border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-size:13.5px;
+  padding:6px 12px;border-radius:99px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.pk.on{background:var(--blue);border-color:transparent;color:#fff}
 
 /* ── Tab paneli: "suyuq shisha" ──
    Namuna — iOS Liquid Glass. Haqiqiy sinish (ortidagini egib ko'rsatish)
@@ -895,6 +899,12 @@ body.vp-lock{overflow:hidden}
 .vp-sec{background:var(--card);border-radius:18px;padding:15px 16px;margin-bottom:12px}
 .vp-sec h3{font-size:17px;font-weight:800;letter-spacing:-.2px;margin-bottom:8px}
 .vp-tx{font-size:15px;line-height:1.55;white-space:pre-line}
+.vp-hook{background:var(--th-brand-soft);border-radius:18px;padding:14px 16px;font-size:15px;line-height:1.5;margin-bottom:12px;color:var(--ink)}
+.vp-ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:9px}
+.vp-ul li{display:flex;gap:10px;font-size:15px;line-height:1.45}
+.vp-ul li i{width:6px;height:6px;border-radius:50%;background:var(--muted);flex:none;margin-top:8px}
+.vp-chips{display:flex;flex-wrap:wrap;gap:7px}
+.vp-chips span{font-size:13.5px;font-weight:600;padding:6px 12px;border-radius:99px;background:var(--th-fill)}
 .vp-f{flex:none;padding:10px 16px calc(12px + env(safe-area-inset-bottom));background:var(--card);box-shadow:0 -6px 20px rgba(15,39,71,.07)}
 .vp-f .btn{width:100%;padding:15px;font-size:16.5px;box-shadow:0 8px 20px rgba(0,102,224,.22)}
 :root[data-theme="dark"] .vp-f{box-shadow:0 -6px 20px rgba(0,0,0,.4)}
@@ -1736,8 +1746,12 @@ async function showVacancy(id){
   const facts = [
     ['vk.schedule', v.schedule], ['vk.shift', v.shift ? shiftL(v.shift) : ''], ['vk.region', v.location],
     ['vk.start', v.startDate ? dShort(v.startDate) : ''], ['vk.need', v.headcount > 1 ? t('unit.people', { n: v.headcount }) : ''],
-    ['vk.exp', v.minExp ? t('vk.expFrom', { n: v.minExp }) : ''], ['vk.age', age], ['vk.langs', (v.languages || []).join(', ')]
+    ['vk.exp', v.minExp ? t('vk.expFrom', { n: v.minExp }) : ''], ['vk.age', age], ['vk.langs', (v.languages || []).join(', ')],
+    ['form.po', v.payoutText]
   ].filter(x => x[1]);
+  const ul = (k, arr) => arr && arr.length
+    ? `<div class="vp-sec"><h3>${esc(t(k))}</h3><ul class="vp-ul">${arr.map(x => `<li><i></i><span>${esc(x)}</span></li>`).join('')}</ul></div>` : '';
+  const desc = [v.venue, v.landmark].filter(Boolean).join(' · ');
   const st = v.status === 'closed' ? ['mute', t('vac.closed')] : v.status === 'paused' ? ['warn', t('vac.paused')]
            : v.listed ? ['ok', t('vac.listed')] : ['info', t('vac.private')];
   const meta = [v.schedule, v.shift ? shiftL(v.shift) : '', v.location].filter(Boolean).join(' · ');
@@ -1746,15 +1760,20 @@ async function showVacancy(id){
     <div class="vp-hero">
       <span class="ac-st ${st[0]}">${esc(st[1])}</span>
       <h1 style="margin-top:10px">${esc(v.title)}</h1>
+      ${desc ? `<div class="vp-ven">${esc(desc)}</div>` : ''}
       ${meta ? `<div class="vp-ven">${esc(meta)}</div>` : ''}
       <div class="vp-sal ${v.salaryText ? '' : 'no'}">${esc(v.salaryText || t('vac.noSalary'))}</div>
     </div>
+    ${v.hook ? `<div class="vp-hook">${esc(v.hook)}</div>` : ''}
     <div class="vp-sec vx-fn">${funnelHtml(f)}${appsBtn(v.id, f)}</div>
     <div class="vx-sh"><h3>${esc(t('vd.cands', { n: d.items.length }))}</h3></div>
     <div id="vdItems">${d.items.length ? d.items.map(candHtml).join('')
       : `<div class="vp-sec vx-none">${esc(t('vd.none'))}</div>`}</div>
-    ${facts.length || v.conditions ? `<div class="vx-sh"><h3>${esc(t('vd.terms'))}</h3></div>` : ''}
+    ${facts.length || v.conditions || (v.perkLabels || []).length || (v.duties || []).length || (v.requirements || []).length
+      ? `<div class="vx-sh"><h3>${esc(t('vd.terms'))}</h3></div>` : ''}
     ${facts.length ? `<div class="vp-facts">${facts.map(([k, val]) => `<div><span>${esc(t(k))}</span><b>${esc(val)}</b></div>`).join('')}</div>` : ''}
+    ${(v.perkLabels || []).length ? `<div class="vp-sec"><h3>${esc(t('form.perks'))}</h3><div class="vp-chips">${v.perkLabels.map(x => `<span>${esc(x)}</span>`).join('')}</div></div>` : ''}
+    ${ul('form.du', v.duties)}${ul('form.rq', v.requirements)}
     ${v.conditions ? `<div class="vp-sec"><h3>${esc(t('vk.cond'))}</h3><p class="vp-tx">${esc(v.conditions)}</p></div>` : ''}
     <button class="cd-btn vx-menu" id="vdMenu">${esc(t('vd.menu'))}</button>`;
 
@@ -1848,12 +1867,36 @@ function vacForm(v){
       <div class="fl"><label>${esc(t('form.sf'))}</label><input id="fSf" inputmode="numeric" value="${d.salaryFrom ?? ''}" placeholder="4000000"></div>
       <div class="fl"><label>${esc(t('form.st'))}</label><input id="fSt" inputmode="numeric" value="${d.salaryTo ?? ''}" placeholder="5000000"></div>
     </div>
+    <div class="two">
+      <div class="fl"><label>${esc(t('form.sp'))}</label>
+        <select id="fSp">${[['month', 'form.spM'], ['day', 'form.spD'], ['shift', 'form.spS']].map(([k, l]) =>
+          `<option value="${k}" ${(d.salaryPeriod || 'month') === k ? 'selected' : ''}>${esc(t(l))}</option>`).join('')}</select></div>
+      <div class="fl"><label>${esc(t('form.po'))}</label>
+        <select id="fPo"><option value="">${esc(t('form.poAny'))}</option>${['daily', 'weekly', 'twice', 'monthly'].map(k =>
+          `<option value="${k}" ${d.payout === k ? 'selected' : ''}>${esc(t('pay.' + k))}</option>`).join('')}</select></div>
+    </div>
     <div class="fl"><label>${esc(t('form.sc'))}</label><input id="fSc" value="${esc(d.schedule)}" placeholder="6/1, 16:00-24:00"></div>
+    <div class="fl"><label>${esc(t('form.perks'))}</label>
+      <div class="pks">${I18N.PERK_KEYS.map(k =>
+        `<button type="button" class="pk ${(d.perks || []).includes(k) ? 'on' : ''}" data-pk="${k}">${esc(t('perk.' + k))}</button>`).join('')}</div></div>
+
+    ${sec('form.desc')}
+    <div class="hint" style="margin-top:6px">${esc(t('form.descHint'))}</div>
+    <div class="fl"><label>${esc(t('form.venue'))}</label><input id="fVn" maxlength="80" value="${esc(d.venue)}" placeholder="${esc(t('form.venuePh'))}"></div>
+    <div class="fl"><label>${esc(t('form.lm'))}</label><input id="fLm" maxlength="80" value="${esc(d.landmark)}" placeholder="${esc(t('form.lmPh'))}"></div>
+    <div class="fl"><label>${esc(t('form.hook'))}</label><input id="fHk" maxlength="160" value="${esc(d.hook)}" placeholder="${esc(t('form.hookPh'))}"></div>
+    <div class="fl"><label>${esc(t('form.du'))}</label>
+      <textarea id="fDu">${esc((d.duties || []).join('\n'))}</textarea>
+      <div class="hint">${esc(t('form.linesHint'))}</div></div>
+    <div class="fl"><label>${esc(t('form.rq'))}</label>
+      <textarea id="fRq">${esc((d.requirements || []).join('\n'))}</textarea>
+      <div class="hint">${esc(t('form.linesHint'))}</div></div>
     <div class="fl"><label>${esc(t('form.co'))}</label>
-      <textarea id="fCo" placeholder="${esc(t('form.coPh'))}">${esc(d.conditions)}</textarea>
+      <textarea id="fCo" placeholder="${esc(t('form.coPh2'))}">${esc(d.conditions)}</textarea>
       <div class="hint">${esc(t('form.coHint'))}</div></div>
 
     <button class="btn" id="fSave" style="width:100%;margin-top:16px">${esc(t('common.save'))}</button>`);
+  document.querySelectorAll('.pk').forEach(b => { b.onclick = () => b.classList.toggle('on'); });
 
   // Sarlavha lavozim va smenadan o'zi yoziladi — mijoz o'zi yozguncha
   let autoT = !d.title || d.title === autoTitle(d.role, d.shift);
@@ -1869,7 +1912,11 @@ function vacForm(v){
     const body = {
       role, title, minExp: $('fEx').value, headcount: $('fHc').value, shift: $('fSh').value,
       salaryFrom: $('fSf').value, salaryTo: $('fSt').value,
-      schedule: $('fSc').value.trim(), conditions: $('fCo').value.trim()
+      schedule: $('fSc').value.trim(), conditions: $('fCo').value.trim(),
+      salaryPeriod: $('fSp').value, payout: $('fPo').value,
+      perks: [...document.querySelectorAll('.pk.on')].map(x => x.dataset.pk),
+      venue: $('fVn').value.trim(), landmark: $('fLm').value.trim(), hook: $('fHk').value.trim(),
+      duties: $('fDu').value, requirements: $('fRq').value
     };
     $('fSave').disabled = true; $('fSave').textContent = t('common.saving');
     try {

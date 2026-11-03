@@ -183,14 +183,14 @@ router.post('/:id/applications/:appId/:action', guard, asyncHandler(async (req, 
   if (!a) return res.status(404).json({ error: 'Ariza topilmadi' });
   if (a.state === 'shortlisted' || a.state === 'rejected') return res.status(400).json({ error: 'Bu ariza bo\'yicha qaror qabul qilingan' });
 
-  const v0 = await Vacancy.findOne({ agencyId, id: a.vacancyId }, 'title').lean();
-  const cand = await Candidate.findOne({ restaurantId: agencyId, id: a.candidateId }, 'id tgChatId tgState').lean();
+  const v0 = await Vacancy.findOne({ agencyId, id: a.vacancyId }, 'title role shift').lean();
+  const cand = await Candidate.findOne({ restaurantId: agencyId, id: a.candidateId }, 'id tgChatId tgState lang tgLang').lean();
   if (!a.agencySeenAt) a.agencySeenAt = new Date();
 
   if (act === 'reject') {
     a.state = 'rejected'; a.reason = 'agency'; a.decidedAt = new Date();
     await a.save();
-    await appLife.notify(cand, 'rejected', { vacTitle: v0 && v0.title, appBase: publicBase(req) });
+    await appLife.notify(cand, 'rejected', { vacancy: v0, vacTitle: v0 && v0.title, appBase: publicBase(req) });
     return res.json({ ok: true, state: a.state });
   }
 
@@ -207,7 +207,7 @@ router.post('/:id/applications/:appId/:action', guard, asyncHandler(async (req, 
   }
   a.state = 'shortlisted'; a.shortlistId = sl.id; a.decidedAt = new Date();
   await a.save();
-  await appLife.notify(cand, 'proposed', { vacTitle: v0 && v0.title, appBase: publicBase(req) });
+  await appLife.notify(cand, 'proposed', { vacancy: v0, vacTitle: v0 && v0.title, appBase: publicBase(req) });
   res.json({ ok: true, state: a.state, shortlistId: sl.id });
 }));
 

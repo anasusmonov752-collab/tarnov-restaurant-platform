@@ -50,6 +50,26 @@ test('bosqichlar: yuborildi -> ko\'rildi -> bog\'landi -> taklif -> suhbat -> na
   assert.equal(s.stage, 'hired'); assert.equal(s.final, true); assert.equal(s.tone, 'ok');
   s = life.stepsFor({ createdAt: t0, state: 'rejected', decidedAt: t0 });
   assert.equal(s.stage, 'closed'); assert.equal(s.tone, 'no');
+
+  // Nomzod tili — ruscha bosqichlar va sana
+  s = life.stepsFor({ createdAt: t0, state: 'shortlisted', decidedAt: t0 },
+    { state: 'interview', interviewAt: new Date('2026-10-24T10:00:00Z') }, 'ru');
+  assert.equal(s.stageLabel, 'Собеседование: 24 октября, 15:00');
+  assert.equal(s.steps[0].label, 'Отклик отправлен');
+});
+
+test('nomzod vakansiya kartasi nomzod tilida (forCandidate lang)', () => {
+  const vac = require('../src/services/vacancy');
+  const v = { id: 'v1', role: 'ofitsiant', shift: 'kechki', title: 'Ofitsiant, kechki smena', location: 'Chilonzor',
+    salaryFrom: 200000, salaryPeriod: 'day', payout: 'daily', perks: ['ovqat'], createdAt: new Date(), confirmedAt: new Date() };
+  const uz = vac.forCandidate(v, null);
+  assert.equal(uz.place, 'Chilonzorda restoran');
+  const ru = vac.forCandidate(v, null, 'ru');
+  assert.equal(ru.title, 'Официант, вечерняя смена');
+  assert.equal(ru.salaryText, 'от 200 000 сум / день');
+  assert.deepEqual(ru.perkLabels, ['Питание']);
+  assert.equal(ru.payoutText, 'Выплата каждый день');
+  assert.equal(vac.forCandidate(Object.assign({}, v, { location: '' }), null, 'ru').place, 'Ресторан в Ташкенте');
 });
 
 test('ariza: aniq xato kodlari, muvaffaqiyat, takror', async () => {

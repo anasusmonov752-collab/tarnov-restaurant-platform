@@ -884,9 +884,9 @@ router.post('/applications/:id/:action', clientGuard, asyncHandler(async (req, r
     a.decidedAt = new Date();
     await a.save();
     // Nomzodga yumshoq xabar (appLife) — "Arizalarim"da ham ko'rinadi
-    const rv = await Vacancy.findOne({ agencyId, id: a.vacancyId }, 'title').lean();
-    const rc = await Candidate.findOne({ restaurantId: agencyId, id: a.candidateId }, 'id tgChatId tgState').lean();
-    await appLife.notify(rc, 'rejected', { vacTitle: rv && rv.title, appBase: publicBase(req) });
+    const rv = await Vacancy.findOne({ agencyId, id: a.vacancyId }, 'title role shift').lean();
+    const rc = await Candidate.findOne({ restaurantId: agencyId, id: a.candidateId }, 'id tgChatId tgState lang tgLang').lean();
+    await appLife.notify(rc, 'rejected', { vacancy: rv, vacTitle: rv && rv.title, appBase: publicBase(req) });
     return res.json({ ok: true, state: a.state });
   }
 
@@ -967,8 +967,8 @@ router.post('/applications/:id/:action', clientGuard, asyncHandler(async (req, r
   // Nomzodga: arizasi ish beruvchiga o'tdi ('open' yo'lida reveal() o'zi
   // restoran nomi bilan xabar beradi — bu yerda faqat 'pick')
   {
-    const pc = await Candidate.findOne({ restaurantId: agencyId, id: a.candidateId }, 'id tgChatId tgState').lean();
-    await appLife.notify(pc, 'proposed', { vacTitle: v && v.title, appBase: publicBase(req) });
+    const pc = await Candidate.findOne({ restaurantId: agencyId, id: a.candidateId }, 'id tgChatId tgState lang tgLang').lean();
+    await appLife.notify(pc, 'proposed', { vacancy: v, vacTitle: v && v.title, appBase: publicBase(req) });
   }
 
   // Sizga to'liq kontakt bilan xabar

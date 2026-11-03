@@ -32,8 +32,28 @@ const { publicBase } = require('../utils/publicBase');
 const { phoneKey } = require('../utils/candidateKeys');
 const appLife = require('../services/appLife');
 const profileStyle = require('../services/profileStyle');
+const I18N = require('../../public/js/th-i18n');
 
 const router = express.Router();
+
+// ── Til ── (miniapp.js bilan bir xil qoida)
+// Avval imzosiz initData'dan — guard yoki limiter rad etsa ham xato
+// o'qiladigan tilda chiqsin; guard keyin nomzodning tanlovi (Candidate.lang)
+// bilan almashtiradi. Servis xatolari o'zbekcha — res.json ichida tarjima.
+router.use((req, res, next) => {
+  let code = '';
+  try {
+    const u = JSON.parse(new URLSearchParams(req.get('X-Telegram-Init-Data') || '').get('user') || 'null');
+    code = (u && u.language_code) || '';
+  } catch (e) { /* til taxmin qilinmaydi — o'zbekcha */ }
+  req.tgCode = code;
+  req.lang = I18N.fromTelegram(code);
+  const json = res.json.bind(res);
+  res.json = body => json(body && typeof body.error === 'string'
+    ? Object.assign({}, body, { error: I18N.errText(req.lang, body.error) })
+    : body);
+  next();
+});
 
 router.use(rateLimit({
   windowMs: 60 * 1000,
@@ -49,7 +69,11 @@ const guard = asyncHandler(async (req, res, next) => {
   // expired — Mini App bir kundan ortiq ochiq turgan (initData 24 soat amal
   // qiladi). Kabinet "ilovani yopib qayta oching" deydi — ilgari xato
   // ko'rinmay, tugma jimgina qaytib qolardi (2026-10-22, ariza berilmadi).
-  if (!v.ok) return res.status(401).json({ error: 'Avtorizatsiya: ' + v.error, code: v.error === 'imzo eskirgan' ? 'expired' : 'auth' });
+  if (!v.ok) {
+    console.warn('[CAND] kirish rad etildi:', v.error);
+    const expired = v.error === 'imzo eskirgan';
+    return res.status(401).json({ error: I18N.t(req.lang, expired ? 'auth.expired' : 'auth.bad'), code: expired ? 'expired' : 'auth' });
+  }
 
   res.set('X-Photo-Token', photoToken.sign(v.user.id));   // rasm havolasi uchun (utils/photoToken)
   const cand = await Candidate.findOne({ tgChatId: String(v.user.id) });
@@ -58,6 +82,13 @@ const guard = asyncHandler(async (req, res, next) => {
     return res.status(403).json({ error: 'Profil faol emas' });
   }
   req.cand = cand;
+  if (I18N.LANGS.includes(cand.lang)) req.lang = cand.lang;
+  // Telegram tili — bot xabarlari uchun; faqat o'zgarganda yoziladi
+  const tgLang = (v.user && v.user.language_code) || '';
+  if (tgLang && tgLang !== cand.tgLang) {
+    cand.tgLang = tgLang;
+    Candidate.updateOne({ _id: cand._id }, { $set: { tgLang } }).catch(() => {});
+  }
   next();
 });
 
@@ -143,6 +174,7 @@ router.get('/me', guard, asyncHandler(async (req, res) => {
   }
 
   res.json(Object.assign(profileOf(c), {
+    lang: req.lang,                       // kabinet tili (tanlangan yoki Telegram'dan)
     stats: { picked: rows.length, opened },
     completeness: completeness(c),
     // Vakansiyani ulashish havolasi uchun (t.me/<bot>?start=v_<id>_ref)
@@ -197,6 +229,8 @@ router.patch('/me', guard, asyncHandler(async (req, res) => {
     c.experienceYears = Number.isFinite(n) && n >= 0 && n <= 60 ? n : 0;
   }
   if (b.role !== undefined && isValidRole(b.role)) c.role = b.role;
+  // Til — kabinetdagi UZ | RU; bot xabarlari ham shu tilda (appLife.notify)
+  if (b.lang !== undefined && (b.lang === '' || I18N.LANGS.includes(b.lang))) c.lang = b.lang;
 
   if (b.jobStatus !== undefined && JOB_STATUS.includes(b.jobStatus)) {
     c.jobStatus = b.jobStatus;
@@ -211,7 +245,8 @@ router.patch('/me', guard, asyncHandler(async (req, res) => {
   }
 
   // Nomzod o'zi tahrirlagan profil - endi "tasdiqlangan" hisoblanadi
-  if (!c.jobStatusAt) c.jobStatusAt = new Date();
+  // (faqat til almashtirish — tahrir emas)
+  if (!c.jobStatusAt && Object.keys(b).some(k => k !== 'lang')) c.jobStatusAt = new Date();
   c.updatedAt = new Date();
   await c.save();
 
@@ -234,8 +269,8 @@ async function openClientIds(c) {
   const pairs = await contactView.openPairs({ agencyId: c.restaurantId, candidateId: c.id });
   return new Set(pairs.map(p => p.clientId));
 }
-function vacFor(v, cl, openSet) {
-  const out = vac.forCandidate(v, cl);
+function vacFor(v, cl, openSet, lang) {
+  const out = vac.forCandidate(v, cl, lang);
   const open = !!(cl && openSet.has(cl.id));
   if (open && cl.name) out.place = [cl.name, v.location || cl.location].filter(Boolean).join(' · ');
   out.companyOpen = open;
@@ -274,7 +309,7 @@ router.get('/vacancies', guard, asyncHandler(async (req, res) => {
     { agencyId: c.restaurantId, candidateId: c.id }, 'vacancyId state').lean();
   const appMap = Object.fromEntries(mine.map(a => [a.vacancyId, a.state]));
 
-  const out = rows.map(v => Object.assign(vacFor(v, byId[v.clientId], openSet), {
+  const out = rows.map(v => Object.assign(vacFor(v, byId[v.clientId], openSet, req.lang), {
     applied: !!appMap[v.id],
     appState: appMap[v.id] || '',
     // "Sizga mos" belgisi: lavozim bir xil va tajriba yetadi
@@ -312,7 +347,7 @@ router.post('/vacancies/:id/apply', guard, asyncHandler(async (req, res) => {
     // Ariza, holat va ikki xabar — yagona yo'l (anketa ham shundan o'tadi)
     const a = await applications.submit({ cand: c, vacancy: v,
       message: (req.body || {}).message, appBase: publicBase(req), via: 'kabinet' });
-    res.json({ ok: true, id: a.id, stageLabel: appLife.STEP_LABEL.sent });
+    res.json({ ok: true, id: a.id, stageLabel: I18N.t(req.lang, 'al.sent') });
   } catch (e) {
     // unique indeks: takroriy ariza
     if (e.code === 11000) return res.status(409).json({ error: 'Bu vakansiyaga allaqachon ariza bergansiz', code: 'duplicate' });
@@ -343,15 +378,15 @@ router.get('/applications', guard, asyncHandler(async (req, res) => {
 
   res.json(rows.map(a => {
     const v = vById[a.vacancyId];
-    const vv = v ? vacFor(v, clById[v.clientId], openSet) : null;
+    const vv = v ? vacFor(v, clById[v.clientId], openSet, req.lang) : null;
     const sl = slById[a.shortlistId];
     const item = sl ? (sl.items || []).find(i => i.candidateId === c.id) : null;
-    const life = appLife.stepsFor(a, item);
+    const life = appLife.stepsFor(a, item, req.lang);
     return {
       id: a.id,
       state: a.state,
       // Kontakt ochilgan bo'lsa — aniq holat; aks holda bosqichlar yo'li
-      stateLabel: vv && vv.companyOpen && !life.final ? 'Kontakt ochildi — ish beruvchi bog\'lanadi' : life.stageLabel,
+      stateLabel: vv && vv.companyOpen && !life.final ? I18N.t(req.lang, 'al.contactOpen') : life.stageLabel,
       tone: life.tone,
       steps: life.steps,
       final: life.final,
@@ -413,7 +448,7 @@ router.get('/chats', guard, asyncHandler(async (req, res) => {
     if (!r.clientId) return r;
     const c = by[r.clientId] || {};
     return Object.assign({}, r, {
-      title: c.name || 'Ish beruvchi',
+      title: c.name || I18N.t(req.lang, 'cb.employer'),
       subtitle: r.lastMsgText || c.location || '',
       open: open.has(r.clientId),
       // Logotip faqat ochiq kontaktda (endpoint ham shuni tekshiradi)
@@ -462,7 +497,7 @@ router.get('/companies/:clientId', guard, asyncHandler(async (req, res) => {
   res.json({
     company: contactView.companyOf(cl),
     // forCandidate ishlatamiz, lekin "place" endi nom bilan: kontakt ochilgan
-    vacancies: vs.map(v => Object.assign(vac.forCandidate(v, cl), {
+    vacancies: vs.map(v => Object.assign(vac.forCandidate(v, cl, req.lang), {
       place: [cl.name, v.location || cl.location].filter(Boolean).join(' · '),
       closed: v.status === 'closed'
     }))

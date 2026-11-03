@@ -173,8 +173,9 @@ function full(v, extra = {}, lang) {
 /**
  * Nomzod uchun — restoran nomi YO'Q.
  * `client` faqat hudud uchun kerak: "Chilonzorda restoran".
+ * `lang` — nomzod tili (kabinet): sarlavha, maosh, to'lov, afzalliklar shu tilda.
  */
-function forCandidate(v, client) {
+function forCandidate(v, client, lang = 'uz') {
   const where = v.location || (client && client.location) || '';
   // Ishonch belgisi faqat haqiqat bo'lsa: agentlik ish beruvchiga qo'ng'iroq
   // qilib tekshirgan (verifiedAt) yoki vakansiyani ish beruvchining o'zi
@@ -183,23 +184,23 @@ function forCandidate(v, client) {
   const since = v.verifiedAt || (trust === 'client' ? v.confirmedAt : v.createdAt) || v.createdAt;
   return {
     id: v.id,
-    title: v.title,
+    title: titleFor(v, lang),
     role: v.role,
     where,
-    place: where ? `${where}da restoran` : 'Toshkentda restoran',
+    place: where ? t(lang, 'cb.placeIn', { w: where }) : t(lang, 'cb.placeTash'),
     venue: v.venue || '',
     landmark: v.landmark || '',
     hook: v.hook || '',
-    salaryText: salaryText(v),
-    payoutText: payoutText(v),
-    perkLabels: perkLabels(v),
+    salaryText: salaryText(v, lang),
+    payoutText: payoutText(v, lang),
+    perkLabels: perkLabels(v, lang),
     duties: v.duties || [],
     requirements: v.requirements || [],
     trust,
     trustDays: Math.floor((Date.now() - new Date(since).getTime()) / 864e5),
     shift: v.shift,
     schedule: v.schedule,
-    conditions: v.conditions,
+    conditions: I18N.perksText(v.conditions, lang),
     minExp: v.minExp,
     minAge: v.minAge, maxAge: v.maxAge,
     headcount: v.headcount || 1,

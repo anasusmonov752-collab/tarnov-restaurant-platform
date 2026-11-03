@@ -101,6 +101,9 @@ const CandidateSchema = new mongoose.Schema({
   // Interfeys tili (nomzod kabineti va bot): 'uz' | 'ru' | '' (hali
   // tanlamagan — Telegram language_code'dan taxmin). Client.lang bilan bir xil.
   lang: { type: String, default: '' },
+  // Telegram language_code — bot xabarlari uchun (u yerda initData yo'q).
+  // Kabinet guard'ida yangilanadi. Qoida: th-i18n.resolve(lang, tgLang).
+  tgLang: { type: String, default: '' },
 
   // ── Anketa (services/survey.js) ──
   gender:          { type: String, default: '' },   // male | female

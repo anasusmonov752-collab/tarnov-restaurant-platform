@@ -642,6 +642,27 @@ Files EMAS). `{dry:true}` — kimga ketishini ko'rsatadi. Logda faqat sonlar.
 Jonli: birinchi ishga tushishda 7/7 yuborildi (6 ochmagan, 1 yarmida),
 qayta tekshiruvda navbat 0. `test/reminders.test.js`.
 
+**MIJOZ VAKANSIYA FORMASI, NOMZOD KABINETI RUSCHA, JONLI CHAT — DEPLOY
+QILINDI** (2026-11-03, `8ce0030`..`368caac`, CI 83/83):
+- Mijoz Mini App vakansiya formasi panel bilan teng: maosh davri, to'lov
+  tartibi, afzalliklar (bosiladigan belgilar `.pk`), joy, mo'ljal, asosiy
+  afzallik, vazifalar, talablar; vakansiya sahifasi ularni ko'rsatadi.
+- Nomzod kabineti (profil.html) uz/ru: matn lug'atda `cb.*` (statik HTML —
+  `data-t`/`data-tph`/`data-tal`, `applyStatic()`), profil oxirida "Til"
+  UZ | RU -> `PATCH /api/cand/me {lang}`. Server (`routes/candidate.js`):
+  miniapp.js kabi til middleware + `errText`, guard `Candidate.lang` va
+  `Candidate.tgLang` (Telegram tili, bot xabarlari uchun). `vac.forCandidate(v,
+  cl, lang)` — sarlavha (avtomatik bo'lsa), maosh, to'lov, afzalliklar, joy;
+  `appLife.stepsFor(a, item, lang)` va `notify` (`al.*`, `resolve(lang, tgLang)`).
+  Qo'lda yozilgan erkin matn (venue, hook, vazifalar) yozilgan tilida qoladi.
+  Hali o'zbekcha: nomzod boti (/start dan tashqari), anketa matnlaridan
+  tashqari tizim xabarlari, AI xulosalari.
+- Chat jonli: Mini App'ga server push qila olmaydi — ochiq suhbat 4 s,
+  ro'yxat 12 s, o'qilmaganlar 30 s (`liveTick`), fonda to'xtaydi;
+  `MSG_SIG` — o'zgarmasa qayta chizilmaydi, yuqoriga aylantirilgan bo'lsa
+  joyida qoladi. Ikkala faylda bir xil — birini o'zgartirsangiz ikkinchisini ham.
+- Telegramda haqiqiy akkaunt bilan HALI SINALMAGAN.
+
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
 O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda

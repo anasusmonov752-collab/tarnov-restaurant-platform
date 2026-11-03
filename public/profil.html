@@ -1327,12 +1327,13 @@ function tmOf(s){
     : d.toLocaleDateString(LOC(), { day:'2-digit', month:'short' });
 }
 
-async function loadChats(){
+// quiet — jonli yangilash (pastda): xato bo'lsa ro'yxat o'chirilmaydi
+async function loadChats(quiet){
   try {
     CHATS = await api('/api/cand/chats');
     drawChats();
   } catch(e){
-    $('chatList').innerHTML = '<div class="ch-empty">' + esc(e.message) + '</div>';
+    if (!quiet) $('chatList').innerHTML = '<div class="ch-empty">' + esc(e.message) + '</div>';
   }
 }
 
@@ -1378,24 +1379,36 @@ async function openChat(c){
   $('cvWho').classList.toggle('tap', !!tap);
   $('cvWho').onclick = tap ? () => showCompany(c.clientId) : null;
   $('cvBody').innerHTML = '<div class="ch-empty">' + esc(t('cb.loading')) + '</div>';
+  MSG_SIG = '';
   $('cv').classList.remove('hide');
   await reloadMsgs();
   c.unread = 0;
   drawChats();
 }
 
-async function reloadMsgs(){
+async function reloadMsgs(quiet){
   if (!CUR) return;
+  const id = CUR.id;
   try {
-    const d = await api('/api/cand/chats/' + encodeURIComponent(CUR.id) + '/messages');
+    const d = await api('/api/cand/chats/' + encodeURIComponent(id) + '/messages');
+    if (!CUR || CUR.id !== id) return;                 // javob kelguncha boshqa suhbat ochildi
     drawMsgs(d.messages || []);
   } catch(e){
-    $('cvBody').innerHTML = '<div class="ch-empty">' + esc(e.message) + '</div>';
+    if (!quiet) $('cvBody').innerHTML = '<div class="ch-empty">' + esc(e.message) + '</div>';
   }
 }
 
+// Oxirgi chizilgan yozishma — o'zgarmagan bo'lsa qayta chizilmaydi (jonli yangilash)
+let MSG_SIG = '';
 function drawMsgs(ms){
   const b = $('cvBody');
+  const last = ms[ms.length - 1];
+  const sig = ms.length + ':' + (last ? (last.id || last.createdAt) : '');
+  if (sig === MSG_SIG) return;
+  const first = !MSG_SIG;
+  // Pastda turgan bo'lsa — yangi xabarga tushadi; yuqorini o'qiyotgan bo'lsa — joyida qoladi
+  const atEnd = first || b.scrollHeight - b.scrollTop - b.clientHeight < 80;
+  MSG_SIG = sig;
   if (!ms.length){
     // Yordam chati bo'sh — salomlashuv (bazaga yozilmaydi), "nima yozaman" savoliga javob
     b.innerHTML = CUR && CUR.pinned
@@ -1409,7 +1422,7 @@ function drawMsgs(ms){
     return '<div class="cmsg ' + (me ? 'me' : 'them') + '">' + esc(m.text)
       + '<div class="cmsg-t">' + tmOf(m.createdAt) + '</div></div>';
   }).join('');
-  b.scrollTop = b.scrollHeight;
+  if (atEnd) b.scrollTop = b.scrollHeight;
 }
 
 async function sendMsg(){
@@ -1421,6 +1434,7 @@ async function sendMsg(){
       { method:'POST', body: JSON.stringify({ text: txt }) });
     inp.value = '';
     await reloadMsgs();
+    $('cvBody').scrollTop = $('cvBody').scrollHeight;     // o'z xabari — doim ko'rinsin
     loadChats();
   } catch(e){
     $('cvBody').insertAdjacentHTML('beforeend',
@@ -1442,6 +1456,24 @@ function refreshUnread(){
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshUnread(); });
 
 $('cvBack').onclick = () => { $('cv').classList.add('hide'); CUR = null; refreshUnread(); };
+
+// ── Jonli chat ── (miniapp.html bilan bir xil qoida)
+// Mini App'ga server o'zi xabar yubora olmaydi (push faqat bot orqali).
+// Suhbat ochiq — har 4 s, "Xabarlar" ro'yxati ochiq — har 12 s, boshqa
+// paytda — o'qilmaganlar soni har 30 s. Ilova fonda bo'lsa so'ralmaydi.
+let LIVE_N = 0;
+function liveTick(){
+  if (document.hidden || !INIT) return;
+  LIVE_N++;
+  if (CUR && !$('cv').classList.contains('hide')) { reloadMsgs(true); return; }
+  if ($('chatList').offsetParent) { if (LIVE_N % 3 === 0) loadChats(true); return; }
+  if (LIVE_N % 8 === 0) refreshUnread();
+}
+setInterval(liveTick, 4000);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden || !CUR || $('cv').classList.contains('hide')) return;
+  reloadMsgs(true);
+});
 $('cvSend').onclick = sendMsg;
 $('cvIn').onkeydown = e => { if (e.key === 'Enter') sendMsg(); };
 

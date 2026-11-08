@@ -9,7 +9,7 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>window.thViewerHostBack = true;</script>  <!-- orqaga tugmasi zanjiri onTgBack'da (rasm oynasi) -->
 <script src="/js/th-viewer.js?v=2" defer></script>
-<script src="/js/th-i18n.js?v=20"></script>
+<script src="/js/th-i18n.js?v=21"></script>
 <style>
 /* Ranglar — TalentHub dizayn tizimidan (css/th.css, iOS uslubi).
    Telegram'ning --tg-theme-* RANGLARI olinmaydi (avval shunday edi va
@@ -587,6 +587,13 @@ div.ac-row:active{background:none}
 .pk{border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-size:13.5px;
   padding:6px 12px;border-radius:99px;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .pk.on{background:var(--blue);border-color:transparent;color:#fff}
+.iv-ans{display:flex;gap:8px;margin-top:8px}
+.iv-ans .sbtn{flex:1}
+.iv-st{display:flex;flex-direction:column;gap:4px;background:var(--th-fill);border-radius:14px;padding:12px 14px}
+.iv-st b{font-size:16px}
+.iv-st span{font-size:14px;color:var(--muted)}
+#ivSeg{margin-bottom:6px}
+#ivSeg button{flex:1}
 
 /* ── Tab paneli: "suyuq shisha" ──
    Namuna — iOS Liquid Glass. Haqiqiy sinish (ortidagini egib ko'rsatish)
@@ -1349,11 +1356,22 @@ function agoTxt(s){
   return h < 1 ? t('ago.lt1') : h < 24 ? t('ago.h', { n: Math.floor(h) }) : t('ago.d', { n: Math.floor(h / 24) });
 }
 
+// Suhbat holati bitta qatorda (services/interviews view)
+function ivLine(iv){
+  if (!iv) return '';
+  const d = iv.at ? dTime(iv.at) : '';
+  const k = iv.status === 'confirmed' && iv.onWay ? 'ivm.onway' : 'ivm.' + iv.status;
+  return t(k, { d }) + (iv.refunded ? t('ivm.refunded') : '');
+}
+const IV_LIVE = ['offered', 'scheduled', 'confirmed'];
+
 function stepsHtml(it){
   const st = it.stage, sl = esc(it.shortlistId), id = esc(it.candidateId);
   const ivDone = st === 'interview' || st === 'hired', hired = st === 'hired';
-  // Keyingi qadam bosiladi: kontaktdan keyin suhbat yoki darhol ishga olish
-  const ivAttr = !ivDone ? `data-iv="${id}" data-sl="${sl}"` : '';
+  const iv = it.iv;
+  // Keyingi qadam bosiladi: kontaktdan keyin suhbat yoki darhol ishga olish.
+  // Faol suhbat bo'lsa ham bosiladi — vaqtni o'zgartirish / bekor qilish.
+  const ivAttr = !hired && (!ivDone || (iv && IV_LIVE.includes(iv.status))) ? `data-iv="${id}" data-sl="${sl}"` : '';
   const hrAttr = !hired ? `data-hire="${id}" data-sl="${sl}"` : '';
   return `<div class="cd-steps">
       <div class="sp done${hired ? ' hiredone' : ''}"><i>&#10003;</i>${esc(t('step.contact'))}</div>
@@ -1363,12 +1381,108 @@ function stepsHtml(it){
       <button class="sp ${hired ? 'done hiredone' : 'next'}" ${hrAttr}><i>${hired ? '&#10003;' : ''}</i>${esc(t('step.hired'))}</button>
     </div>
     <div class="cd-foot">
-      <span>${esc(it.interviewAt ? t('foot.interviewAt', { d: dTime(it.interviewAt) }) : (hired ? t('foot.hired') : t('foot.next')))}</span>
+      <span>${esc(iv && !hired ? ivLine(iv) : it.interviewAt ? t('foot.interviewAt', { d: dTime(it.interviewAt) }) : (hired ? t('foot.hired') : t('foot.next')))}</span>
       ${!hired ? `<button class="cd-nf" data-nf="${id}" data-sl="${sl}">${esc(t('nf.btn'))}</button>` : ''}
-    </div>`;
+    </div>
+    ${iv && iv.canAnswer && !hired ? `<div class="iv-ans">
+      <button class="sbtn p" data-ivo="${esc(iv.id)}" data-came="1">${esc(t('ivm.came'))}</button>
+      <button class="sbtn" data-ivo="${esc(iv.id)}" data-came="">${esc(t('ivm.noShowBtn'))}</button></div>` : ''}`;
 }
 
+// ── Suhbatga chaqirish oynasi ──
+// Nomzod Telegramda bo'lsa — bot vaqtlarni o'zi kelishadi (services/interviews);
+// bo'lmasa — eski usul: mijoz vaqtni qo'lda yozadi.
+async function ivSheet(it, refresh){
+  sheetEnter('iv:' + it.shortlistId + ':' + it.candidateId, () => ivSheet(it, refresh));
+  const title = whoOf(it).title;
+  const iv = it.iv && IV_LIVE.includes(it.iv.status) ? it.iv : null;
+
+  if (!it.tg) {
+    openSheet(t('ivm.title'), `<div class="hint" style="margin:2px 0 10px">${esc(t('ivm.noTg'))}</div>
+      <div class="fl"><label>${esc(t('ivm.when'))}</label><input id="ivAt" type="datetime-local"></div>
+      <button class="btn" id="ivGo" style="width:100%;margin-top:14px">${esc(t('common.save'))}</button>`);
+    $('ivGo').onclick = async () => {
+      const v = $('ivAt').value; if (!v) return;
+      $('ivGo').disabled = true;
+      try { await decide(it.shortlistId, it.candidateId, { state:'interview', interviewAt: new Date(v).toISOString() }); closeSheet(); refresh(); }
+      catch(e){ showMsg(e.message); $('ivGo').disabled = false; }
+    };
+    return;
+  }
+
+  // Faol suhbat: holat + boshqa vaqt / bekor qilish
+  if (iv && !it._resched) {
+    openSheet(t('ivm.manage'), `<div class="iv-st"><b>${esc(title)}</b><span>${esc(ivLine(iv))}</span>
+        ${iv.address ? `<span>${esc(iv.address)}</span>` : ''}</div>
+      <button class="btn" id="ivRe" style="width:100%;margin-top:14px">${esc(t('ivm.resched'))}</button>
+      <button class="btn ghost" id="ivCx" style="width:100%;margin-top:8px">${esc(t('ivm.cancel'))}</button>`);
+    $('ivRe').onclick = () => ivSheet(Object.assign({}, it, { _resched: true }), refresh);
+    $('ivCx').onclick = async () => {
+      if (!confirm(t('ivm.cancelQ'))) return;
+      $('ivCx').disabled = true;
+      try { await api('/api/ma/interviews/' + encodeURIComponent(iv.id) + '/cancel', { method:'POST', body:'{}' }); closeSheet(); refresh(); }
+      catch(e){ showMsg(e.message); $('ivCx').disabled = false; }
+    };
+    return;
+  }
+
+  openSheet(t('ivm.title'), `<div class="msg">${esc(t('common.loading'))}</div>`);
+  let P;
+  try { P = await api('/api/ma/interview-prefs'); }
+  catch(e){ $('shB').innerHTML = `<div class="msg">${esc(e.message)}</div>`; return; }
+  const WD = t('ivx.wd').split(',');
+  let mode = 'pick';
+  $('shB').innerHTML = `
+    <div class="hint" style="margin:2px 0 12px">${esc(t('ivm.intro'))}</div>
+    <div class="seg" id="ivSeg">
+      <button class="on" data-m="pick">${esc(t('ivm.modePick'))}</button>
+      <button data-m="fixed">${esc(t('ivm.modeFixed'))}</button>
+    </div>
+    <div id="ivPick">
+      <div class="fl"><label>${esc(t('ivm.days'))}</label>
+        <div class="pks">${WD.map((w, i) => `<button type="button" class="pk ${P.days.includes(i + 1) ? 'on' : ''}" data-d="${i + 1}">${esc(w)}</button>`).join('')}</div></div>
+      <div class="two">
+        <div class="fl"><label>${esc(t('ivm.from'))}</label><input id="ivFrom" type="time" value="${esc(P.from)}"></div>
+        <div class="fl"><label>${esc(t('ivm.to'))}</label><input id="ivTo" type="time" value="${esc(P.to)}"></div>
+      </div>
+      <div class="hint">${esc(t('ivm.saved'))}</div>
+    </div>
+    <div id="ivFix" class="hide">
+      <div class="fl"><label>${esc(t('ivm.when'))}</label><input id="ivAt" type="datetime-local"></div>
+    </div>
+    <div class="fl"><label>${esc(t('ivm.addr'))}</label><input id="ivAddr" maxlength="200" value="${esc(P.address)}" placeholder="${esc(t('ivm.addrPh'))}"></div>
+    <button class="btn" id="ivGo" style="width:100%;margin-top:16px">${esc(t('ivm.send'))}</button>`;
+  $('shB').querySelectorAll('.pk').forEach(b => { b.onclick = () => b.classList.toggle('on'); });
+  $('ivSeg').querySelectorAll('[data-m]').forEach(b => b.onclick = () => {
+    mode = b.dataset.m;
+    $('ivSeg').querySelectorAll('[data-m]').forEach(x => x.classList.toggle('on', x === b));
+    $('ivPick').classList.toggle('hide', mode !== 'pick');
+    $('ivFix').classList.toggle('hide', mode !== 'fixed');
+  });
+  $('ivGo').onclick = async () => {
+    const days = [...$('shB').querySelectorAll('.pk.on')].map(x => +x.dataset.d);
+    const body = { mode, address: $('ivAddr').value.trim() };
+    if (mode === 'pick') {
+      if (!days.length) return showMsg(t('ivm.daysReq'));
+      body.prefs = { days, from: $('ivFrom').value, to: $('ivTo').value };
+    } else {
+      const v = $('ivAt').value; if (!v) return;
+      body.at = new Date(v).toISOString();
+    }
+    $('ivGo').disabled = true; $('ivGo').textContent = t('common.saving');
+    try {
+      await api(`/api/ma/shortlists/${encodeURIComponent(it.shortlistId)}/items/${encodeURIComponent(it.candidateId)}/interview`,
+        { method:'POST', body: JSON.stringify(body) });
+      try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(_){}
+      closeSheet(); showMsg(t('ivm.sent')); refresh();
+    } catch(e){ showMsg(e.message); $('ivGo').disabled = false; $('ivGo').textContent = t('ivm.send'); }
+  };
+}
+
+// Karta -> element (ivSheet uchun to'liq ma'lumot)
+const ITEM_BY = {};
 function candHtml(it){
+  ITEM_BY[it.shortlistId + ':' + it.candidateId] = it;
   const w = whoOf(it), open = w.open, name = w.title;
   const meta = [factLine({ experienceYears: it.experienceYears, experienceMonths: it.experienceMonths, age: it.age, location: it.location })];
   const sub = [w.sub, ...meta].filter(Boolean).join(' · ');
@@ -1507,21 +1621,19 @@ function wireCards(root, refresh){
   root.querySelectorAll('[data-rz]').forEach(b => b.onclick = () => showResume(b.dataset.rz));
   root.querySelectorAll('[data-chat]').forEach(b => b.onclick = () => openChatWith(b.dataset.chat));
 
-  // Suhbat sanasi
+  // Suhbatga chaqirish — bot vaqtni nomzod bilan o'zi kelishadi (ivSheet)
   root.querySelectorAll('[data-iv]').forEach(b => b.onclick = () => {
-    const box = boxOf(b), id = b.dataset.iv, sl = b.dataset.sl;
-    box.innerHTML = `<div style="font-size:13px;color:var(--muted)">${esc(t('iv.when'))}</div>
-      <input type="datetime-local" style="margin-top:8px">
-      <div class="acts"><button class="sbtn p">${esc(t('common.save'))}</button><button class="sbtn">${esc(t('common.cancel'))}</button></div>`;
-    const [ok, no] = box.querySelectorAll('button');
-    ok.onclick = async () => {
-      const v = box.querySelector('input').value;
-      if (!v) return;
-      ok.disabled = true;
-      try { await decide(sl, id, { state:'interview', interviewAt: new Date(v).toISOString() }); refresh(); }
-      catch(e){ showMsg(e.message); ok.disabled = false; }
-    };
-    no.onclick = () => { box.innerHTML = ''; };
+    const it = ITEM_BY[b.dataset.sl + ':' + b.dataset.iv];
+    if (it) ivSheet(it, refresh);
+  });
+  // Suhbatdan keyin: Keldi / Kelmadi (botdagi tugma bilan bir xil)
+  root.querySelectorAll('[data-ivo]').forEach(b => b.onclick = async () => {
+    b.disabled = true;
+    try {
+      await api('/api/ma/interviews/' + encodeURIComponent(b.dataset.ivo) + '/outcome',
+        { method:'POST', body: JSON.stringify({ came: !!b.dataset.came }) });
+      refresh();
+    } catch(e){ showMsg(e.message); b.disabled = false; }
   });
 
   // Ishga olindi — butun tizimning yakuniy ko'rsatkichi

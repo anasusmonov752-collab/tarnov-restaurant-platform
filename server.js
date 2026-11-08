@@ -193,6 +193,20 @@ async function startServer() {
   // Kichik ma'lumot ko'chirishlari (takror xavfsiz)
   require('./src/services/migrations').run().catch(e => console.error('✦ Ko\'chirish xatosi:', e.message));
 
+  // Suhbat eslatmalari va "keldimi?" (services/interviews). Soatlik GitHub
+  // cron'i kech qoladi (34 daqiqagacha) — "2 soat oldin" eslatmasi uchun
+  // yaramaydi. Server UptimeRobot bilan uyg'oq, shuning uchun ichki taymer.
+  // Har xabar oldidan bayroq atomik qo'yiladi — takror yuborilmaydi.
+  const ivSvc = require('./src/services/interviews');
+  let ivBusy = false;
+  setInterval(async () => {
+    if (ivBusy) return;
+    ivBusy = true;
+    try { await ivSvc.tick(); }
+    catch (e) { console.error('[IV] tick:', e.message); }
+    finally { ivBusy = false; }
+  }, 2 * 60 * 1000);
+
   const tgSvc = require('./src/services/telegram');
   if (process.env.APP_URL) {
     const r = await tgSvc.ensureWebhook(process.env.APP_URL);

@@ -846,6 +846,22 @@ async function handleCallback(cq, appBase) {
   // Mijoz hali topilmagan joyda — Telegram tili
   const cqLang = I18N.fromTelegram(cq.from && cq.from.language_code);
 
+  // ── Suhbat: vaqt tanlash, "boraman", "yo'ldaman", "keldimi?" (services/interviews) ──
+  if (data.startsWith('iv:')) {
+    try {
+      const r = await require('../services/interviews').handleCallback({ data, chatId, appBase });
+      await done(r.text || '', !!r.alert);
+      if (r.edit) {
+        await tg.editMessageText(token, chatId, msgId, r.edit,
+          r.keyboard ? { reply_markup: { inline_keyboard: r.keyboard } } : {}).catch(() => {});
+      }
+    } catch (e) {
+      console.error('[IV] tugma:', e.message);
+      await done(I18N.errText(cqLang, e.message), true);
+    }
+    return;
+  }
+
   // ── Agentlik: tarif to'lovini qo'lda tasdiqlash (billing.createOrder 'manual' xabari) ──
   if (data.startsWith('bo:')) {
     const ag = await Restaurant.findOne({ 'telegram.adminChatId': chatId, active: true }, 'id').lean();

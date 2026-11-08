@@ -25,6 +25,11 @@ router.post('/reminders', asyncHandler(async (req, res) => {
   if (!secretOk(req)) return res.status(401).json({ error: 'Ruxsat yo\'q' });
   const dry = !!(req.body && req.body.dry);
   const r = await reminders.run({ appBase: publicBase(req), dry });
+  // Suhbat eslatmalari — asosan server ichidagi taymer (server.js), bu zaxira
+  if (!dry) {
+    try { r.interviews = await require('../services/interviews').tick(new Date(), { appBase: publicBase(req) }); }
+    catch (e) { r.interviews = { error: e.message }; }
+  }
   // Tariflar: muddati tugaganlar (kreditlar yonadi) va 3 kun qolganlarga eslatma — kunduzi
   if (!dry && !r.quiet) {
     try { r.billing = await require('../services/billing').tick(); }

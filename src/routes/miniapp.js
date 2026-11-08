@@ -41,6 +41,8 @@ const appLife = require('../services/appLife');
 const I18N = require('../../public/js/th-i18n');
 const billing = require('../services/billing');
 const PL = require('../data/plans');
+const interviews = require('../services/interviews');
+const Interview = require('../models/Interview');
 
 const router = express.Router();
 
@@ -451,7 +453,7 @@ async function shortlistView(agencyId, clientId, rows, lang = 'uz') {
   const [cands, vs, threads] = await Promise.all([
     Candidate.find({ restaurantId: agencyId, id: { $in: ids } },
       'id publicCode role desiredPosition age location experienceYears experienceMonths hasPhoto ' +
-      'languages shift jobStatus fullName phone email').lean(),
+      'languages shift jobStatus fullName phone email tgChatId tgState').lean(),
     // role/shift — avtomatik sarlavhani mijoz tilida ko'rsatish uchun (titleFor)
     vids.length ? Vacancy.find({ agencyId, id: { $in: vids } }, 'id title status role shift').lean() : [],
     // "Yozish" tugmasi to'g'ridan-to'g'ri suhbatni ochishi uchun
@@ -460,6 +462,8 @@ async function shortlistView(agencyId, clientId, rows, lang = 'uz') {
   const byId = Object.fromEntries(cands.map(c => [c.id, c]));
   const vById = Object.fromEntries(vs.map(v => [v.id, v]));
   const tBy = Object.fromEntries(threads.map(t => [t.candidateId, t.id]));
+  // Oxirgi suhbat (services/interviews) — kartada holati ko'rinadi
+  const ivBy = await interviews.latestFor(agencyId, clientId, rows.flatMap(r => r.items.map(i => [r.id, i.candidateId])));
 
   return rows.map(r => ({
     id: r.id,
@@ -497,6 +501,9 @@ async function shortlistView(agencyId, clientId, rows, lang = 'uz') {
           : (I18N.D.uz['reason.' + it.reason] ? I18N.t(lang, 'reason.' + it.reason) : pipeline.reasonLabel(it.reason)),
         interviewAt: it.interviewAt,
         canAct: ['revealed', 'interview'].includes(it.state),
+        iv: open ? (ivBy[r.id + ':' + it.candidateId] || null) : null,
+        // Bot orqali avtomatik kelishish mumkinmi (chat id'ning o'zi chiqmaydi)
+        tg: open && interviews.reachable(c),
         revealedAt: it.revealedAt,
         since: r.createdAt,                       // "HR bog'lanmoqda · 3 soat"
         threadId: open ? (tBy[it.candidateId] || '') : '',
@@ -584,6 +591,41 @@ router.get('/photo-sl/:shortlistId/:id', asyncHandler(async (req, res) => {
   res.set('Content-Type', m[1]);
   res.set('Cache-Control', 'private, max-age=3600');
   res.send(Buffer.from(m[2], 'base64'));
+}));
+
+// ══ SUHBATGA CHAQIRISH (services/interviews) ═════════════════
+// Nomzodga botda vaqtlar boradi, eslatmalar va "keldimi?" — avtomatik.
+router.get('/interview-prefs', clientGuard, asyncHandler(async (req, res) => {
+  res.json(interviews.prefsOf(req.client.toObject ? req.client.toObject() : req.client));
+}));
+
+router.post('/shortlists/:id/items/:candidateId/interview', clientGuard, asyncHandler(async (req, res) => {
+  const b = req.body || {};
+  try {
+    const iv = await interviews.offer({
+      agencyId: req.client.agencyId, clientId: req.client.id,
+      shortlistId: req.params.id, candidateId: req.params.candidateId,
+      mode: b.mode === 'fixed' ? 'fixed' : 'pick', at: b.at || null,
+      prefs: b.prefs || null, address: String(b.address || '')
+    });
+    res.json({ ok: true, iv });
+  } catch (e) {
+    res.status(400).json({ error: e.message, code: e.code || '' });
+  }
+}));
+
+router.post('/interviews/:id/cancel', clientGuard, asyncHandler(async (req, res) => {
+  try { res.json({ ok: true, iv: await interviews.cancel({ agencyId: req.client.agencyId, clientId: req.client.id, id: req.params.id }) }); }
+  catch (e) { res.status(400).json({ error: e.message }); }
+}));
+
+// Mini App'dan "Keldi / Kelmadi" (botdagi tugma bilan bir xil qoida)
+router.post('/interviews/:id/outcome', clientGuard, asyncHandler(async (req, res) => {
+  const iv = await Interview.findOne({ agencyId: req.client.agencyId, clientId: req.client.id, id: req.params.id }).lean();
+  if (!iv) return res.status(404).json({ error: 'Faol suhbat topilmadi' });
+  const r = await interviews.clientSays(iv, !!(req.body || {}).came, { appBase: publicBase(req) });
+  if (!r.ok) return res.status(400).json({ error: r.text });
+  res.json({ ok: true, status: r.status || '' });
 }));
 
 // ── Mijoz qarori: suhbat / ishga oldim / mos kelmadi ──

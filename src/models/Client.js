@@ -24,6 +24,14 @@ const ClientSchema = new mongoose.Schema({
   location: { type: String, default: '' },   // tuman: "Chilonzor"
   address:  { type: String, default: '' },   // to'liq manzil / mo'ljal
   about:    { type: String, default: '' },   // "150 o'rinli, yevropa oshxonasi"
+  // Suhbat vaqtlari (services/interviews.js): nomzodga shu oraliqdan bo'sh
+  // vaqtlar taklif qilinadi. days — 1 (Du) .. 7 (Ya), Toshkent vaqti.
+  ivPrefs: {
+    days:    { type: [Number], default: undefined },
+    from:    { type: String, default: '' },     // "11:00"
+    to:      { type: String, default: '' },     // "17:00"
+    address: { type: String, default: '' }      // suhbat manzili (bo'sh bo'lsa — address)
+  },
   // Restoran logotipi — agentlik panelda yuklaydi (brauzer 256px gacha
   // kichraytiradi, ~20-40 KB). Nomzod kontakt ochilgach kompaniya kartasida
   // ko'radi (contactView.companyOf), bosganda kattalashadi (th-viewer).

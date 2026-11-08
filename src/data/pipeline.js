@@ -74,7 +74,10 @@ const REFUND_REASONS = [
   { key: 'wrong_phone',  label: 'Raqam boshqa odamniki' },
   { key: 'already_hired', label: 'Nomzod allaqachon ishga kirgan' },
   { key: 'declined_after', label: 'Ochilgandan keyin bosh tortdi' },
-  { key: 'goodwill',     label: 'Mijozga yon berildi' }
+  { key: 'goodwill',     label: 'Mijozga yon berildi' },
+  // Avtomatik (services/interviews.js): nomzod suhbatga kelmadi, bormasligini
+  // aytdi yoki vaqt tanlamadi — "kelmagan nomzod uchun to'lamaysiz" kafolati
+  { key: 'no_show',      label: 'Suhbatga kelmadi' }
 ];
 const REFUNDABLE_STATES = ['revealed', 'interview', 'not_fit'];
 

@@ -663,6 +663,32 @@ QILINDI** (2026-11-03, `8ce0030`..`368caac`, CI 83/83):
   joyida qoladi. Ikkala faylda bir xil — birini o'zgartirsangiz ikkinchisini ham.
 - Telegramda haqiqiy akkaunt bilan HALI SINALMAGAN.
 
+**SUHBATNI AVTOMATIK KELISHISH — DEPLOY QILINDI** (2026-11-08, `a63f94f`..`1f2b6f4`,
+CI 94/94). Hook: "suhbatga kelmagan nomzod uchun pul to'lamaysiz". Qoida YAGONA —
+`services/interviews.js`, yozuv `Interview` (status offered/scheduled/confirmed/done/
+declined/expired/noshow/conflict/cancelled). Mijoz Mini App kartasida "Suhbat" qadami
+-> `ivSheet`: "Nomzod tanlasin" (kunlar + soat oralig'i -> `Client.ivPrefs`, keyingi
+safar saqlanadi) yoki "Aniq vaqt"; manzil. Nomzodga botda 3 kun × 4 vaqtgacha tugma
+(`makeSlots`: hozirdan 3 soat keyin, shu mijozning band vaqtlari ±30 daq chiqariladi),
+tanlasa tanlov elementi `interview` + `interviewAt` (`markItem`). Eslatma: 24 soat oldin
+(kamida 25 soat oldin belgilangan bo'lsa) va 2 soat oldin "✅ Boraman / ❌ Bora olmayman",
+"🚶 Yo'ldaman" — mijozga xabar; 30 daqiqa qolib tasdiqlamasa mijozga ogohlantirish.
+Suhbatdan 1 soat keyin ikki tomondan "keldimi?" (mijoz javob bermasa 20 soatdan keyin
+bir marta qayta). "Keldi" -> "Ishga olasizmi?" (hired / o'ylayapman / not_fit sabab bilan).
+KREDIT QAYTADI (`shortlist.refund`, yangi sabab `no_show`): nomzod "umuman bormayman",
+24 soatda vaqt tanlamadi, mijoz "kelmadi" yoki nomzod "bormadim". Mijoz "kelmadi" +
+nomzod "bordim" -> `conflict`, kredit qaytmaydi, agentlik admin chatiga ⚠️. Har qaytish
+admin chatiga ↩️ (suiiste'molni ko'rish uchun). Bot tugmalari `iv:<amal>:<id>[:<arg>]`
+(`CB_RE`, amal harf+raqam — `h1`), faqat egasining chatidan. Nomzod Telegramda bo'lmasa
+(hh) — eski qo'lda sana. Rejali qism `tick()`: server ichida HAR 2 DAQIQA (server.js
+`setInterval` — GitHub cron 34 daqiqagacha kechikadi, "2 soat oldin"ga yaramaydi; server
+UptimeRobot bilan uyg'oq) + `/api/cron/reminders` zaxira; har xabar oldidan bayroq atomik.
+Mini App kartada holat qatori (`ivLine`, emoji'siz), "Keldi / Kelmadi" (`POST
+/api/ma/interviews/:id/outcome`), faol suhbatni "Boshqa vaqt" / "Bekor qilish".
+`test/interviews.test.js`. **Telegramda HALI SINALMAGAN** — to'liq sinov uchun IKKI
+akkaunt kerak (mijoz va nomzod bir vaqtda ulangan bo'lishi kerak; /test bitta akkauntda
+faqat bittasini ulaydi).
+
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
 O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda

@@ -267,7 +267,7 @@ const cabBtn = (lang, appBase) => appBase
   ? [[{ text: T(lang, 'ivx.cOpen'), web_app: { url: `${appBase}/miniapp.html` } }]] : [];
 
 // ── Bot tugmalari: iv:<op>:<id>[:<arg>] ──
-const CB_RE = /^iv:([a-z]{1,2}):([A-Za-z0-9]{6,16})(?::([a-z0-9_]{1,20}))?$/;
+const CB_RE = /^iv:([a-z0-9]{1,2}):([A-Za-z0-9]{6,16})(?::([a-z0-9_]{1,20}))?$/;
 
 /**
  * @returns {Promise<{ok:boolean, text:string, alert?:boolean, edit?:string}>}

@@ -689,6 +689,25 @@ Mini App kartada holat qatori (`ivLine`, emoji'siz), "Keldi / Kelmadi" (`POST
 akkaunt kerak (mijoz va nomzod bir vaqtda ulangan bo'lishi kerak; /test bitta akkauntda
 faqat bittasini ulaydi).
 
+**ARIZADAN KEYIN BOTDA TEKSHIRUV + MOSLIK BALI — DEPLOY QILINDI** (2026-11-09,
+`50922de`, CI 102/102). HR har arizachiga qo'ng'iroq qilmasin. `services/prescreen.js`:
+`applications.submit` dan keyin (Telegramdagi nomzodga) botda savollar — shartlar (joy,
+smena, maosh) mosmi (✅ / 💬 maosh / ❌ -> sababi: maosh/joy uzoq/smena/boshqa, keyin
+tugaydi), qachondan chiqadi (anketada `availableFrom` bo'lsa so'ralmaydi — `startPre`,
+raqamlash "1/2"), yo'l qancha (30/60/90/bilmayman), ixtiyoriy 20-30 s OVOZLI TANISHUV
+(nomzod chatidagi ovozli xabar `takeVoice` bilan oxirgi savoldagi arizaga yoziladi,
+48 soat). Javoblar `Application.screen`; tugmalar `ps:<f|w|s|c|v>:<appId>:<qiymat>`,
+faqat egasining chatidan; 3 soatda javob bermasa bitta eslatma (kunduzi, server
+taymeri). MOSLIK BALI `services/matchScore.js` — SAQLANMAYDI, har ko'rsatishda: lavozim
+25, tajriba 20, maosh 15 (`parseMoney` "4-5 mln" -> 4 000 000, faqat oylik vakansiya),
+yo'l/tuman 10, smena 10, qachondan 10, shartlarga roziligi 10; AI yo'q, jins/yosh
+ATAYLAB yo'q. Mijoz Mini App: arizada "86% mos" (yashil ≥75), 4 tagacha sabab
+(yashil/qizil), "Bot savollariga javob kutilmoqda", "Ovozli tanishuv · 0:27" — ovoz
+mijozning TELEGRAM CHATIGA yuboriladi (`POST /api/ma/applications/:id/voice`, sendVoice
+file_id bilan; OGG iOS Mini App'da ishonchsiz). Qaror qilinmagan arizalar ball bo'yicha
+tepada (`appOrder`). Panel `arizalar.html`da ball HALI yo'q. `test/prescreen.test.js`.
+**Telegramda HALI SINALMAGAN.**
+
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
 O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda

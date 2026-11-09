@@ -870,9 +870,9 @@ async function handleCallback(cq, appBase) {
 
   // ── Suhbat (services/interviews) va arizadan keyingi tekshiruv (services/prescreen) ──
   // Ikkalasi bir xil javob shaklini qaytaradi: {text, alert, edit, keyboard}
-  if (data.startsWith('iv:') || data.startsWith('ps:')) {
+  if (data.startsWith('iv:') || data.startsWith('ps:') || data.startsWith('pl:')) {
     try {
-      const svc = require(data.startsWith('iv:') ? '../services/interviews' : '../services/prescreen');
+      const svc = require(data.startsWith('iv:') ? '../services/interviews' : data.startsWith('pl:') ? '../services/placements' : '../services/prescreen');
       const r = await svc.handleCallback({ data, chatId, appBase });
       await done(r.text || '', !!r.alert);
       if (r.edit) {

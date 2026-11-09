@@ -44,6 +44,8 @@ const PL = require('../data/plans');
 const interviews = require('../services/interviews');
 const matchScore = require('../services/matchScore');
 const prescreen = require('../services/prescreen');
+const reliability = require('../services/reliability');
+const placements = require('../services/placements');
 const Interview = require('../models/Interview');
 
 const router = express.Router();
@@ -164,7 +166,9 @@ router.post('/session/:key', clientGuard, asyncHandler(async (req, res) => {
   // Anonim karta + kimlik qoidasi: oldin kontaktini ochgan nomzod qidiruvda
   // yana chiqsa — ism bilan; bir xil yozuv (lavozim, Toshkent, tillar)
   const ids = await identities(ses.agencyId, req.client.id, ordered, req.lang);
+  const relBy = await reliability.forCandidates(ses.agencyId, ordered.map(c => c.id));
   const cards = anonymize.forClientList(ordered).map(card => Object.assign(card, ids[card.id], {
+    rel: relBy[card.id] || null,                  // ishonchlilik tarixi (services/reliability)
     roleLabel: ids[card.id].roleText,
     location: placeLabel(card.location, req.lang),
     languages: langsLabel(card.languages, req.lang)
@@ -464,8 +468,13 @@ async function shortlistView(agencyId, clientId, rows, lang = 'uz') {
   const byId = Object.fromEntries(cands.map(c => [c.id, c]));
   const vById = Object.fromEntries(vs.map(v => [v.id, v]));
   const tBy = Object.fromEntries(threads.map(t => [t.candidateId, t.id]));
-  // Oxirgi suhbat (services/interviews) — kartada holati ko'rinadi
-  const ivBy = await interviews.latestFor(agencyId, clientId, rows.flatMap(r => r.items.map(i => [r.id, i.candidateId])));
+  // Oxirgi suhbat (services/interviews) va ishga olingandan keyingi holat (services/placements)
+  const pairs = rows.flatMap(r => r.items.map(i => [r.id, i.candidateId]));
+  const [ivBy, plBy, relBy] = await Promise.all([
+    interviews.latestFor(agencyId, clientId, pairs),
+    placements.forItems(agencyId, clientId, pairs),
+    reliability.forCandidates(agencyId, ids)
+  ]);
 
   return rows.map(r => ({
     id: r.id,
@@ -504,6 +513,8 @@ async function shortlistView(agencyId, clientId, rows, lang = 'uz') {
         interviewAt: it.interviewAt,
         canAct: ['revealed', 'interview'].includes(it.state),
         iv: open ? (ivBy[r.id + ':' + it.candidateId] || null) : null,
+        pl: plBy[r.id + ':' + it.candidateId] || null,
+        rel: relBy[it.candidateId] || null,
         // Bot orqali avtomatik kelishish mumkinmi (chat id'ning o'zi chiqmaydi)
         tg: open && interviews.reachable(c),
         revealedAt: it.revealedAt,
@@ -884,6 +895,7 @@ async function appsView(agencyId, clientId, apps, lang = 'uz') {
     anonymize.forClientList(cands.filter(Boolean)).map(c => [c.publicCode, c])
   );
   const ids = await identities(agencyId, clientId, cands, lang);
+  const relBy = await reliability.forCandidates(agencyId, cands.map(c => c.id));
 
   return apps.map(a => {
     const c = byId[a.candidateId];
@@ -894,7 +906,7 @@ async function appsView(agencyId, clientId, apps, lang = 'uz') {
     const ac = c ? anon[c.publicCode] || null : null;
     // Bir xil yozuv + kimlik qoidasi (kontakt ochilgan bo'lsa — ism, chat)
     if (ac) {
-      Object.assign(ac, ids[c.id]);
+      Object.assign(ac, ids[c.id], { rel: relBy[c.id] || null });
       ac.location = placeLabel(ac.location, lang); ac.languages = langsLabel(ac.languages, lang); ac.roleLabel = ac.roleText;
     }
     return {
@@ -1259,6 +1271,7 @@ router.get('/candidates/:id', clientGuard, asyncHandler(async (req, res) => {
   const a = anonymize.forClient(c);
   // AI bahosi (fitScore/fitReason) agentlikning ichki fikri — rezyumega kirmaydi
   delete a.fitScore; delete a.fitReason;
+  a.rel = (await reliability.forCandidates(agencyId, [c.id]))[c.id] || null;
   res.json(Object.assign(a, same, { open: false }));
 }));
 

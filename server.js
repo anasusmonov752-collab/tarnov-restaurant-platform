@@ -210,6 +210,9 @@ async function startServer() {
     // Yangi vakansiyalar kanalga, yopilganlari "Yopildi" (services/jobPost)
     try { await require('./src/services/jobPost').tick(); }
     catch (e) { console.error('[JP] tick:', e.message); }
+    // Ishga olinganlar: 1/7/30-kun so'rovlari (services/placements)
+    try { await require('./src/services/placements').tick(); }
+    catch (e) { console.error('[PL] tick:', e.message); }
     finally { ivBusy = false; }
   }, 2 * 60 * 1000);
 

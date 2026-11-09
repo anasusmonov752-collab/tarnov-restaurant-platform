@@ -122,6 +122,8 @@ async function setClientState({ agencyId, shortlistId, clientId, candidateId, st
 
   if (!sl) throw new Error('Bu nomzod uchun hali kontakt ochilmagan yoki qaror qabul qilingan');
   await syncKanban(agencyId, candidateId, state);
+  // Ishga olindi — 1/7/30-kun kuzatuvi va kafolat (services/placements)
+  if (state === 'hired') await require('./placements').create({ agencyId, shortlistId, candidateId, hiredAt: now });
   return sl;
 }
 

@@ -726,6 +726,23 @@ shu lavozim (`guessRole` ruscha ham), ariza bermagan, `jobAlertAt` 20 soatdan es
 Mini App vakansiya sahifasida "Kanalda e'lon qilingan · Ko'rish ›". `test/jobpost.test.js`.
 **Kanal hali ULANMAGAN** — Anas botni kanalga admin qilib, panelda "Kanal"ni saqlashi kerak.
 
+**ISHGA OLINGANDAN KEYIN KUZATUV + KAFOLAT + ISHONCHLILIK — DEPLOY QILINDI** (2026-11-09,
+`cce312f`, CI 116/116). `services/placements.js`, yozuv `Placement` — `shortlist.setClientState`
+'hired' bo'lganda yaratiladi (Mini App, bot "Ha, olaman", panel natijasi — hammasi shu
+nuqtadan). Server taymeri: 1-, 7-, 30-kunda (10:00–20:00) mijozga "ishga chiqdimi / hali
+ishlayaptimi?" (✅/❌), nomzodga "ish qanday?" (👍 / 😐 muammo bor — agentlik admin chatiga
+⚠️ telefon bilan, bir marta / ❌ ketdim). Faqat joriy bosqich so'raladi (eskisi o'tkazib
+yuboriladi); 33 kundan o'tib ketmaganlar — `done`. 30 KUN ICHIDA KETSA — KAFOLAT
+(`markLeft`): vakansiya qayta ochiladi (open, listed, `channelPost` tozalanadi — jobPost
+yangi post qiladi va mos nomzodlarga yozadi), mijozga +1 kredit (`credits.bonus`, "keyingi
+kontakt bepul"), nomzod `jobStatus` yana 'active'; agentlikka 🛡. O'chirish —
+`REPLACE_GUARANTEE=0` env. DIQQAT: bu biznes qoidasi (bepul kredit) — Anas bilan tarif
+shartlariga yozilishi kerak. ISHONCHLILIK `services/reliability.js` (saqlanmaydi):
+suhbatlar done/(done+noshow) — oldindan "bormayman" hisobga olinmaydi; ishda 30+ kun
+qolgan. Mijoz anonim kartalarida (qidiruv, arizalar, tanlov, rezyume) "3/3 suhbatga
+kelgan", "Oldingi ishda 1+ oy". Mini App ishga olingan kartada `plLine` ("Ishlayapti ·
+7-kun", "Ketdi · kafolat: o'rniga qidirilmoqda"). `test/placements.test.js`.
+
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
 O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda

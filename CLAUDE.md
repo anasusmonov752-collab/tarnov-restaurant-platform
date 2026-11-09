@@ -736,8 +736,9 @@ yuboriladi); 33 kundan o'tib ketmaganlar — `done`. 30 KUN ICHIDA KETSA — KAF
 (`markLeft`): vakansiya qayta ochiladi (open, listed, `channelPost` tozalanadi — jobPost
 yangi post qiladi va mos nomzodlarga yozadi), mijozga +1 kredit (`credits.bonus`, "keyingi
 kontakt bepul"), nomzod `jobStatus` yana 'active'; agentlikka 🛡. O'chirish —
-`REPLACE_GUARANTEE=0` env. DIQQAT: bu biznes qoidasi (bepul kredit) — Anas bilan tarif
-shartlariga yozilishi kerak. ISHONCHLILIK `services/reliability.js` (saqlanmaydi):
+`REPLACE_GUARANTEE=0` env. ANAS TASDIQLADI (2026-11-09): +1 kredit qoladi, HAMMA tariflarda;
+oshpaz va menejer — kreditsiz (oferta 5-band), faqat vakansiya qayta ochiladi (`pl.reopened`).
+Hisob bo'limida har tarifda `pl.fReplace`, oferta 5-bandida umumiy band (uz/ru). ISHONCHLILIK `services/reliability.js` (saqlanmaydi):
 suhbatlar done/(done+noshow) — oldindan "bormayman" hisobga olinmaydi; ishda 30+ kun
 qolgan. Mijoz anonim kartalarida (qidiruv, arizalar, tanlov, rezyume) "3/3 suhbatga
 kelgan", "Oldingi ishda 1+ oy". Mini App ishga olingan kartada `plLine` ("Ishlayapti ·

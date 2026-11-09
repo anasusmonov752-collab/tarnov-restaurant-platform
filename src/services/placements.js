@@ -28,6 +28,8 @@ const langOf = x => I18N.resolve(x && x.lang, x && x.tgLang);
 const reachable = c => !!(c && c.tgChatId && !['blocked', 'stopped'].includes(c.tgState));
 const daytime = now => { const h = (now.getUTCHours() + 5) % 24; return h >= 10 && h < 20; };
 const guaranteeOn = () => process.env.REPLACE_GUARANTEE !== '0';
+// Kafolatga kirmaydigan lavozimlar (oferta: "Oshpaz va menejer lavozimlari kafolatga kirmaydi")
+const NO_GUARANTEE_ROLES = ['oshpaz', 'menejer'];
 const kb = rows => ({ reply_markup: { inline_keyboard: rows } });
 const cb = (op, p, step) => `pl:${op}:${p.id}:${step}`;
 const send = (chatId, text, opts) => chatId
@@ -59,7 +61,7 @@ async function create({ agencyId, shortlistId, candidateId, hiredAt = new Date()
 async function partiesOf(p) {
   const [client, cand] = await Promise.all([
     Client.findOne({ agencyId: p.agencyId, id: p.clientId }).lean(),
-    Candidate.findOne({ restaurantId: p.agencyId, id: p.candidateId }, 'id fullName publicCode phone tgChatId tgState lang tgLang').lean()
+    Candidate.findOne({ restaurantId: p.agencyId, id: p.candidateId }, 'id fullName publicCode phone role tgChatId tgState lang tgLang').lean()
   ]);
   return { client: client || {}, cand: cand || {} };
 }
@@ -107,18 +109,24 @@ async function markLeft(p, by, { appBase = process.env.APP_URL || '', now = new 
         'channelPost.postedAt': null, 'channelPost.closedAt': null, 'channelPost.messageId': 0, 'channelPost.url': '' } },
       { new: true }).lean();
   }
-  // +1 kredit — keyingi kontakt bepul
+  // +1 kredit — keyingi kontakt bepul. Oshpaz va menejer kafolatga kirmaydi
+  // (oferta 5-band, data/plans) — ularda faqat vakansiya qayta ochiladi.
+  const role = (v && v.role) || cand.role || '';
+  const covered = !NO_GUARANTEE_ROLES.includes(role);
   let balance = null;
-  try {
-    const r = await require('./credits').bonus({ agencyId: up.agencyId, clientId: up.clientId, amount: 1, note: 'Kafolat: 30 kun ichida almashtirish' });
-    balance = r && r.balance;
-  } catch (e) { console.error('[PL] kafolat krediti:', e.message); }
+  if (covered) {
+    try {
+      const r = await require('./credits').bonus({ agencyId: up.agencyId, clientId: up.clientId, amount: 1, note: 'Kafolat: 30 kun ichida almashtirish' });
+      balance = r && r.balance;
+    } catch (e) { console.error('[PL] kafolat krediti:', e.message); }
+  }
 
   const Lc = langOf(client);
   const base = String(appBase || '').replace(/\/+$/, '');
-  await send(client.tgChatId, T(Lc, 'pl.guarantee', { n: nameOf(cand), v: v ? require('./vacancy').titleFor(v, Lc) : '—' }),
+  await send(client.tgChatId, T(Lc, covered ? 'pl.guarantee' : 'pl.reopened', { n: nameOf(cand), v: v ? require('./vacancy').titleFor(v, Lc) : '—' }),
     base ? kb([[{ text: T(Lc, 'ivx.cOpen'), web_app: { url: `${base}/miniapp.html` } }]]) : {});
-  await adminSay(up.agencyId, `🛡 Kafolat: ${client.name} — ${nameOf(cand)} ${Math.floor((now - new Date(up.hiredAt)) / DAY)} kunda ketdi. Vakansiya qayta ochildi, +1 kredit${balance != null ? ' (balans ' + balance + ')' : ''}.`);
+  await adminSay(up.agencyId, `🛡 Kafolat: ${client.name} — ${nameOf(cand)} ${Math.floor((now - new Date(up.hiredAt)) / DAY)} kunda ketdi. Vakansiya qayta ochildi`
+    + (covered ? `, +1 kredit${balance != null ? ' (balans ' + balance + ')' : ''}.` : ` (${role} — kreditsiz, kafolatga kirmaydi).`));
   return true;
 }
 

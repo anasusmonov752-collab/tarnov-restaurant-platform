@@ -109,6 +109,15 @@ test('30 kundan keyin ketdi yoki kafolat o\'chiq — kredit yo\'q', async () => 
   assert.equal(await bal(), 4);
 });
 
+test('oshpaz — kafolatga kirmaydi: vakansiya qayta ochiladi, kredit yo\'q', async () => {
+  await M.Vacancy.updateOne({ id: 'v1' }, { $set: { role: 'oshpaz' } });
+  const p = await hire();
+  await pl.handleCallback({ data: `pl:cl:${p.id}:7`, chatId: 'c100', now: new Date(T0.getTime() + 5 * DAY) });
+  assert.equal((await M.Vacancy.findOne({ id: 'v1' }).lean()).status, 'open');
+  assert.equal(await bal(), 4);
+  assert.ok(sent.some(x => x.chat === 'c100' && /qayta ochildi/.test(x.text)));
+});
+
 test('boshqa chatdan bosilgan tugma rad etiladi; 33 kundan keyin — done', async () => {
   const p = await hire();
   const r = await pl.handleCallback({ data: `pl:cl:${p.id}:7`, chatId: 'k200' });

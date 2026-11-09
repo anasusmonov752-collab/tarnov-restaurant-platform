@@ -154,7 +154,7 @@ async function sendTemplate(r, chatId, lang) {
 // ── Ko'rsatish: AI tushungani ──
 function reviewText(r, lang, missing) {
   const a = r.answers || {};
-  const opt = (id, key) => { const d = key && survey.template().find(q => q.id === id); const o = d && (d.options || []).find(x => x.key === key); return o ? (o.label[lang] || o.label.uz) : ''; };
+  const opt = (id, key) => { const d = key && survey.template().find(q => q.id === id); const o = d && (d.options || []).find(x => x.key === key); return o ? (o[lang] || o.uz) : ''; };
   const work = a.lastJob === 'none' ? T(lang, 'ank.w.none')
     : Array.isArray(a.lastJob) ? a.lastJob.map(w => `${w.role === 'boshqa' ? w.other : T(lang, 'role.' + w.role)} — ${w.place} (${T(lang, 'ank.w.dur.' + w.dur)})`).join('; ') : '';
   const age = a.birthDate ? survey.ageOf(new Date(a.birthDate + 'T00:00:00+05:00')) : null;
@@ -181,7 +181,7 @@ async function askNext(r, chatId, lang, appBase) {
   const hint = q.hint && (q.hint[lang] || q.hint.uz);
   const body = `❓ ${title}${hint ? '\n' + hint : ''}`;
   if (q.type === 'choice') {
-    const btns = (q.options || []).map((o, oi) => ({ text: o.label[lang] || o.label.uz, callback_data: `vi:a:${r.id}:${qi}:${oi}` }));
+    const btns = (q.options || []).map((o, oi) => ({ text: o[lang] || o.uz, callback_data: `vi:a:${r.id}:${qi}:${oi}` }));
     const rows = [];
     for (let i = 0; i < btns.length; i += 2) rows.push(btns.slice(i, i + 2));
     return send(chatId, body, kb(rows));
@@ -274,7 +274,7 @@ async function answerOne(r, q, { text, voice }, chatId, lang, appBase) {
     else if (q.type === 'date') val = survey.checkAnswer(q, parseDate(value));
     else if (q.type === 'choice') {
       const t = String(value || '').toLowerCase().trim();
-      const o = (q.options || []).find(x => [x.label.uz, x.label.ru].some(l => String(l).toLowerCase() === t || String(l).toLowerCase().startsWith(t)));
+      const o = t.length < 2 ? null : (q.options || []).find(x => [x.uz, x.ru].some(l => String(l).toLowerCase() === t || String(l).toLowerCase().startsWith(t)));
       val = survey.checkAnswer(q, o ? o.key : '');
     }
     else val = survey.checkAnswer(q, value);
@@ -409,7 +409,7 @@ async function handleCallback({ data, chatId, from, appBase = '' }) {
   if (!q || !o) return { ok: false, text: T(lang, 'ivx.kStale'), alert: true };
   await SurveyResponse.updateOne({ _id: r._id }, { $set: { [`answers.${q.id}`]: o.key, updatedAt: new Date() } });
   await askNext(await SurveyResponse.findOne({ _id: r._id }), chatId, lang, appBase);
-  return { ok: true, text: '✓', edit: `✓ ${(q.text && (q.text[lang] || q.text.uz)) || ''}: ${o.label[lang] || o.label.uz}` };
+  return { ok: true, text: '✓', edit: `✓ ${(q.text && (q.text[lang] || q.text.uz)) || ''}: ${o[lang] || o.uz}` };
 }
 
 /** Ovozli xabar -> matn (AI rekruter suhbati uchun; routes/telegram nomzod chati) */

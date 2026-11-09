@@ -708,6 +708,24 @@ file_id bilan; OGG iOS Mini App'da ishonchsiz). Qaror qilinmagan arizalar ball b
 tepada (`appOrder`). Panel `arizalar.html`da ball HALI yo'q. `test/prescreen.test.js`.
 **Telegramda HALI SINALMAGAN.**
 
+**VAKANSIYA KANALGA O'ZI CHIQADI + MOS NOMZODLARGA XABAR — DEPLOY QILINDI** (2026-11-09,
+`31b5afc`, CI 109/109). `services/jobPost.js`. Kanal — `Restaurant.telegram.jobChannel`
+(panel Vakansiyalar -> "Kanal": "@kanal" / t.me havola; saqlashda bot huquqi
+tekshiriladi — `getChatMember`, kanalda "Xabar joylash" huquqli ADMIN bo'lishi shart),
+zaxira `JOB_CHANNEL` env. Server taymeri (`tick`, 2 daqiqa): ochiq + listed + sinov emas
++ hali joylanmagan + `createdAt`/`confirmedAt` >= `jobChannelSince` (kanal ulangan payt —
+eski vakansiyalar o'zi chiqmaydi, panelda "Kanalga joylash") vakansiyani kunduzi
+(09–21), tick'da 3 tagacha HTML post qiladi: sarlavha, joy tavsifi, 📍/💰/🕒/✅, jalb,
+vazifa/talab 3 tadan, RESTORAN NOMISIZ, tugma `t.me/<bot>?start=v_<uuid>_vakuz` (anketa ->
+ariza shu vakansiyaga). `Vacancy.channelPost` {chatId, messageId, url, postedAt, closedAt};
+yopilsa yoki listed=false — postga "❌ YOPILDI", tugma olinadi (kechasi ham). Joylanganda
+`alertCandidates`: Telegramdagi, jobStatus≠not_looking, `jobAlertsOff`≠true, sinov emas,
+shu lavozim (`guessRole` ruscha ham), ariza bermagan, `jobAlertAt` 20 soatdan eski,
+`matchScore` >= 55 — eng moslari 40 tagacha, "💼 Sizga mos ish" + profil.html#v= +
+"🔕 kerak emas" (`ja:off`). Mijozga "kanalga chiqdi, N ta nomzodga yozildi" (havola bilan);
+Mini App vakansiya sahifasida "Kanalda e'lon qilingan · Ko'rish ›". `test/jobpost.test.js`.
+**Kanal hali ULANMAGAN** — Anas botni kanalga admin qilib, panelda "Kanal"ni saqlashi kerak.
+
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
 O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda

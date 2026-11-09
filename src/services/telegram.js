@@ -97,6 +97,12 @@ async function sendMessage(token, chatId, text, opts = {}) {
   });
 }
 
+// Ovozli xabarni file_id bo'yicha qayta yuborish (shu botga kelgan fayl).
+// Arizachining ovozli tanishuvi mijozga — services/prescreen.
+async function sendVoice(token, chatId, fileId, opts = {}) {
+  return call(token, 'sendVoice', { chat_id: chatId, voice: fileId, ...opts });
+}
+
 // Inline tugma bosilganda Telegram javob kutadi. Javob bermasak,
 // tugmada aylanuvchi soat ~30 soniya osilib qoladi.
 async function answerCallback(token, callbackQueryId, text = '', showAlert = false) {
@@ -246,7 +252,7 @@ async function platformUsername() {
 }
 
 module.exports = {
-  getMe, getChat, sendMessage, answerCallback, editMessageText, setChatMenuButton, resetChatMenuButton, sendChatAction,
+  getMe, getChat, sendMessage, sendVoice, answerCallback, editMessageText, setChatMenuButton, resetChatMenuButton, sendChatAction,
   setWebhook, ensureWebhook, deleteWebhook, getWebhookInfo, getFileBase64,
   deepLink, TelegramError, MAX_LEN,
   platformToken, platformSecret, platformUsername, isPlatformReady

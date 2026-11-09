@@ -73,6 +73,10 @@ async function submit({ cand: c, vacancy: v, message = '', appBase, via = 'kabin
     }
   } catch (e) { console.error('[APP] mijozga ariza xabari ketmadi:', e.message); }
 
+  // Nomzodga botda 3 ta qisqa savol (HR qo'ng'irog'i o'rniga) — services/prescreen.
+  // Yiqilsa jim: ariza allaqachon tushgan.
+  await require('./prescreen').start({ app: a, cand: c, vacancy: v });
+
   return a;
 }
 

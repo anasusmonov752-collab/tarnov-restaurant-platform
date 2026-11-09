@@ -379,6 +379,18 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
     await tg.setChatMenuButton(token, chatId, 'Profilim',
       `${publicBase(req)}/profil.html`).catch(() => {});
 
+    // Arizadan keyingi tekshiruvning oxirgi savoli — ovozli tanishuv
+    // (services/prescreen). Qabul qilinsa — boshqa yo'lga ketmaydi.
+    if (voice && !text) {
+      const ps = require('../services/prescreen');
+      if (await ps.takeVoice({ cand, voice })) {
+        const L = I18N.resolve(cand.lang, cand.tgLang);
+        await tg.sendMessage(token, chatId, T(L, 'ps.voiceOk'), { reply_markup: { inline_keyboard: [[
+          { text: T(L, 'al.bApps'), web_app: { url: `${publicBase(req)}/profil.html#apps` } }]] } }).catch(() => {});
+        return;
+      }
+    }
+
     // Nomzod ovozli xabar yuborishi mumkin — uni matnga aylantirmaymiz
     // (bu adminning qidiruvi emas), lekin adminga xabar beramiz.
     const body = text || '[ovozli xabar — Telegramda tinglang]';
@@ -846,10 +858,12 @@ async function handleCallback(cq, appBase) {
   // Mijoz hali topilmagan joyda — Telegram tili
   const cqLang = I18N.fromTelegram(cq.from && cq.from.language_code);
 
-  // ── Suhbat: vaqt tanlash, "boraman", "yo'ldaman", "keldimi?" (services/interviews) ──
-  if (data.startsWith('iv:')) {
+  // ── Suhbat (services/interviews) va arizadan keyingi tekshiruv (services/prescreen) ──
+  // Ikkalasi bir xil javob shaklini qaytaradi: {text, alert, edit, keyboard}
+  if (data.startsWith('iv:') || data.startsWith('ps:')) {
     try {
-      const r = await require('../services/interviews').handleCallback({ data, chatId, appBase });
+      const svc = require(data.startsWith('iv:') ? '../services/interviews' : '../services/prescreen');
+      const r = await svc.handleCallback({ data, chatId, appBase });
       await done(r.text || '', !!r.alert);
       if (r.edit) {
         await tg.editMessageText(token, chatId, msgId, r.edit,

@@ -204,6 +204,9 @@ async function startServer() {
     ivBusy = true;
     try { await ivSvc.tick(); }
     catch (e) { console.error('[IV] tick:', e.message); }
+    // Arizadan keyingi tekshiruvga javob bermaganlarga bitta eslatma
+    try { await require('./src/services/prescreen').tick(); }
+    catch (e) { console.error('[PS] tick:', e.message); }
     finally { ivBusy = false; }
   }, 2 * 60 * 1000);
 

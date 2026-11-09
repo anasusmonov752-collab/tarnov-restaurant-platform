@@ -32,6 +32,22 @@ const ApplicationSchema = new mongoose.Schema({
 
   shortlistId: { type: String, default: '' },      // tanlangach to'ladi
 
+  // Botdagi dastlabki tekshiruv (services/prescreen) — HR qo'ng'irog'i o'rniga.
+  // step: fit -> fitWhy? -> start -> commute -> voice -> done
+  screen: {
+    step:      { type: String, default: '' },
+    fit:       { type: String, default: '' },     // ok | sal | no — shartlar mosmi
+    fitWhy:    { type: String, default: '' },     // sal | far | shift | other
+    start:     { type: String, default: '' },     // now | week | later | busy
+    startPre:  { type: Boolean, default: false }, // anketadagi "qachondan" dan olingan — so'ralmaydi
+    commute:   { type: String, default: '' },     // 30 | 60 | 90 | na (daqiqa)
+    voiceFileId: { type: String, default: '' },   // Telegram file_id (shu bot uchun)
+    voiceDur:  { type: Number, default: 0 },
+    startedAt: { type: Date, default: null },
+    remindedAt: { type: Date, default: null },
+    doneAt:    { type: Date, default: null }
+  },
+
   createdAt: { type: Date, default: Date.now },
   seenAt:    { type: Date, default: null },      // mijoz ko'rdi
   decidedAt: { type: Date, default: null },

@@ -587,6 +587,15 @@ div.ac-row:active{background:none}
 .pk{border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-size:13.5px;
   padding:6px 12px;border-radius:99px;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .pk.on{background:var(--blue);border-color:transparent;color:#fff}
+.ms{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center}
+.ms-sc{font-size:13px;font-weight:800;padding:4px 10px;border-radius:99px}
+.ms-sc.hi{background:var(--th-ok-soft,#e3f6ea);color:var(--ok,#1a7f37)}
+.ms-sc.mid{background:var(--th-brand-soft,#e7efff);color:var(--blue)}
+.ms-sc.lo{background:var(--th-fill);color:var(--muted)}
+.ms-w{font-size:12.5px;padding:4px 9px;border-radius:99px;background:var(--th-fill);color:var(--muted)}
+.ms-w.ok{color:var(--ok,#1a7f37)}
+.ms-w.no{color:var(--danger,#c62828)}
+.ms-v{margin-top:8px;width:100%;justify-content:center}
 .iv-ans{display:flex;gap:8px;margin-top:8px}
 .iv-ans .sbtn{flex:1}
 .iv-st{display:flex;flex-direction:column;gap:4px;background:var(--th-fill);border-radius:14px;padding:12px 14px}
@@ -2104,6 +2113,7 @@ function appCardHtml(it){
       <span class="stc ${chip[0]}">${esc(chip[1])}</span>
     </div>
     ${!w.open && trustTags(c) ? `<div class="tags" style="margin-top:8px">${trustTags(c)}</div>` : ''}
+    ${matchHtml(it)}
     ${it.message ? `<div class="cd-wait" style="color:var(--ink)">"${esc(it.message)}"</div>` : ''}`;
 
   // Kontakt ochilgan — Tanlovlardagi kabi: qo'ng'iroq, chat, rezyume
@@ -2133,8 +2143,37 @@ function appCardHtml(it){
   </div>`;
 }
 
+// ── Moslik bali (server: services/matchScore) va botdagi javoblar ──
+// Qaror qilinmagan arizada: ball, 4 tagacha sabab (mos — yashil, mos emas —
+// qizil), ovozli tanishuv tugmasi. Emoji'siz — bosiq uslub.
+const MIC_IC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/></svg>';
+const scoreTier = n => n >= 75 ? 'hi' : n >= 50 ? 'mid' : 'lo';
+const mmss = s => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+function matchHtml(it){
+  if (it.score == null || it.state === 'shortlisted' || it.state === 'rejected') return '';
+  const why = (it.scoreWhy || []).slice().sort((a, b) => (b.ok === true) - (a.ok === true)).slice(0, 4);
+  const scr = it.screen;
+  return `<div class="ms">
+      <span class="ms-sc ${scoreTier(it.score)}">${esc(t('ms.score', { n: it.score }))}</span>
+      ${why.map(x => `<span class="ms-w ${x.ok === true ? 'ok' : x.ok === false ? 'no' : ''}">${esc(x.t)}</span>`).join('')}
+      ${scr && scr.waiting ? `<span class="ms-w">${esc(t('ms.wait'))}</span>` : ''}
+    </div>
+    ${scr && scr.voice ? `<button class="cd-btn ms-v" data-voice="${esc(it.id)}">${MIC_IC}${esc(t('ms.voice'))}${scr.voiceDur ? ' · ' + mmss(scr.voiceDur) : ''}</button>` : ''}`;
+}
+// Qaror qilinmaganlar ball bo'yicha tepada, qolgani sanasi bo'yicha
+const appOrder = (a, b) => (appWaiting(b) - appWaiting(a))
+  || (appWaiting(a) ? ((b.score ?? -1) - (a.score ?? -1)) : 0)
+  || (new Date(b.createdAt) - new Date(a.createdAt));
+
 function wireApps(root, refresh){
   wireCardTap(root);
+  root.querySelectorAll('[data-voice]').forEach(b => b.onclick = async () => {
+    b.disabled = true;
+    try { await api(`/api/ma/applications/${encodeURIComponent(b.dataset.voice)}/voice`, { method:'POST', body:'{}' });
+      haptic(); showMsg(t('ms.voiceSent')); }
+    catch(e){ showMsg(e.message); }
+    b.disabled = false;
+  });
   root.querySelectorAll('[data-rz]').forEach(b => b.onclick = () => showResume(b.dataset.rz));
   root.querySelectorAll('[data-chat]').forEach(b => b.onclick = () => openChatWith(b.dataset.chat));
   root.querySelectorAll('[data-open]').forEach(b => b.onclick = () => openFromApp(b, refresh));
@@ -2167,7 +2206,7 @@ async function showApps(id){
     $('shB').innerHTML = `<div class="msg">${t(d.vacancy.listed ? 'apps.emptyListed' : 'apps.emptyPrivate')}</div>`;
     return;
   }
-  $('shB').innerHTML = d.items.map(appCardHtml).join('');
+  $('shB').innerHTML = d.items.slice().sort(appOrder).map(appCardHtml).join('');
   wireApps($('shB'), () => showApps(id));
   if (!$('vVC').classList.contains('hide')) loadVacancies();
 }
@@ -2211,7 +2250,7 @@ function renderApps(){
     (groups.length ? groups.map(g => `<div class="grp">
       <div class="grp-h"><b>${esc(g.title)}</b>${g.closed ? `<span class="cl">${esc(t('grp.closed'))}</span>` : ''}
         <span>${esc(t('ap.count', { n: g.items.length }))}</span></div>
-      ${g.items.map(appCardHtml).join('')}
+      ${g.items.slice().sort(appOrder).map(appCardHtml).join('')}
     </div>`).join('') : `<div class="msg">${esc(t('ap.noneWait'))}</div>`);
 
   $('apList').querySelectorAll('[data-af]').forEach(b => b.onclick = () => { APF = b.dataset.af; haptic('sel'); renderApps(); });

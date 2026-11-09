@@ -42,6 +42,8 @@ const I18N = require('../../public/js/th-i18n');
 const billing = require('../services/billing');
 const PL = require('../data/plans');
 const interviews = require('../services/interviews');
+const matchScore = require('../services/matchScore');
+const prescreen = require('../services/prescreen');
 const Interview = require('../models/Interview');
 
 const router = express.Router();
@@ -864,6 +866,10 @@ async function appsView(agencyId, clientId, apps, lang = 'uz') {
   ).lean();
   await assignCodes(agencyId, cands);
   const byId = Object.fromEntries(cands.map(c => [c.id, c]));
+  // Moslik bali uchun vakansiyalar (services/matchScore — har safar hisoblanadi)
+  const vacs = await Vacancy.find({ agencyId, id: { $in: [...new Set(apps.map(a => a.vacancyId))] } },
+    'id role minExp salaryFrom salaryTo salaryPeriod location shift').lean();
+  const vacBy = Object.fromEntries(vacs.map(v => [v.id, v]));
 
   // Ko'rilgan deb belgilaymiz — nomzod "Ko'rildi" holatini ko'radi
   const unseen = apps.filter(a => a.state === 'new').map(a => a.id);
@@ -900,10 +906,42 @@ async function appsView(agencyId, clientId, apps, lang = 'uz') {
       createdAt: a.createdAt,
       instant: el.ok,
       why: el.ok ? '' : whyText(lang, el),
-      candidate: ac
+      candidate: ac,
+      ...matchView(c, vacBy[a.vacancyId], a.screen, lang)
     };
   });
 }
+
+// Ball + sabablar (mijoz tilida) + botdagi javoblar
+function matchView(c, v, scr, lang) {
+  if (!c || !v) return { score: null, scoreWhy: [], screen: prescreen.view(scr) };
+  const r = matchScore.score(c, v, scr || {});
+  return {
+    score: r.score,
+    scoreWhy: r.parts.map(p => ({ ok: p.ok, t: I18N.t(lang, 'ms.' + p.k, p.v)
+      + (p.k === 'fitNo' && scr && scr.fitWhy ? ': ' + I18N.t(lang, 'ms.w.' + scr.fitWhy) : '') })),
+    screen: prescreen.view(scr)
+  };
+}
+
+// ── Arizachining ovozli tanishuvi — mijozning Telegram chatiga ──
+// Mini App ichida OGG (Telegram ovozi) iOS'da har doim o'ynamaydi; Telegram
+// o'zining pleyerida ochadi. Nomzod tekshiruvda rozilik bergan ("ish beruvchi
+// ovozingizni eshitadi").
+router.post('/applications/:id/voice', clientGuard, asyncHandler(async (req, res) => {
+  const a = await Application.findOne({ agencyId: req.client.agencyId, clientId: req.client.id, id: req.params.id }).lean();
+  if (!a) return res.status(404).json({ error: 'Ariza topilmadi' });
+  if (!req.client.tgChatId) return res.status(400).json({ error: 'Telegram ulanmagan' });
+  const [c, v] = await Promise.all([
+    Candidate.findOne({ restaurantId: a.agencyId, id: a.candidateId }, 'publicCode').lean(),
+    Vacancy.findOne({ agencyId: a.agencyId, id: a.vacancyId }, 'title role shift').lean()
+  ]);
+  try {
+    await prescreen.sendVoiceTo({ app: a, chatId: req.client.tgChatId,
+      caption: tl(req, 'ps.voiceCaption', { c: (c && c.publicCode) || '', v: v ? vac.titleFor(v, req.lang) : '' }) });
+    res.json({ ok: true });
+  } catch (e) { res.status(400).json({ error: e.message }); }
+}));
 
 // ── Arizachini tanlash yoki rad etish ──
 router.post('/applications/:id/:action', clientGuard, asyncHandler(async (req, res) => {

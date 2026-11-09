@@ -763,7 +763,8 @@ dan (yoki env `VOICELAB_VOICE_UZ`/`_RU`), 202 bo'lsa navbat kutiladi; prefiks bo
 Kalit ruxsatlari: Преобразование текста в речь — Доступ, Голоса — Читать (boshqasi kerak emas;
 faqat "Писать" bilan 403 insufficient_scope). Kalit Render RestoPro xizmatida `AISHA_API_KEY`.
 Server ishga tushganda `tts.selfCheck` — Render Logs'da `[TTS] tayyor` / `[TTS] ISHLAMAYAPTI`.
-JONLI: o'zbekcha sintez + OGG ishladi. Ruscha ovoz va Telegramdagi ovozli javob HALI SINALMAGAN.
+Ovoz NOMI bo'yicha tanlanadi (`PREFER`: uz Gulnoza/Sardor/Lola, ru Alina/Vera; env
+`VOICELAB_VOICE_UZ`/`_RU` — nom yoki id) — katalogdagi birinchi ovoz aksentli edi (Anas). JONLI: o'zbekcha sintez + OGG ishladi. Ruscha ovoz va Telegramdagi ovozli javob HALI SINALMAGAN.
 
 **O'SISH FUNKSIYALARI — DEPLOY QILINDI** (2026-11-10, `9bcc29e`):
 - MAOSH TAHLILI `services/market.js`: nomzodlar kutgan maosh (`parseMoney`, 1–50 mln) va ochiq

@@ -744,6 +744,49 @@ qolgan. Mijoz anonim kartalarida (qidiruv, arizalar, tanlov, rezyume) "3/3 suhba
 kelgan", "Oldingi ishda 1+ oy". Mini App ishga olingan kartada `plLine` ("Ishlayapti ·
 7-kun", "Ketdi · kafolat: o'rniga qidirilmoqda"). `test/placements.test.js`.
 
+**OVOZLI REZYUME + AI OVOZI — DEPLOY QILINDI** (2026-11-10, `e902f80`, `71f25ca`, CI 122/122):
+botda anketa yonida "🎤 Ovoz bilan" (`vi:go`). Qoida YAGONA — `services/voiceIntake.js`, holat
+anketaning o'zi (`SurveyResponse.mode:'voice'`, `vstep` consent -> wait -> review -> chase):
+rozilik -> 9 savollik shablon (`vi.template`) -> nomzod gapiradi -> Gemini JSON (`VOICE_SCHEMA`)
+-> javoblar anketa maydonlariga `survey.checkAnswer` orqali (noto'g'risi tashlanadi, variantlar
+`{key, uz, ru}`) -> tasdiq -> yetishmaganini (rasm, telefon, variantli savollar) bot bittadan
+so'raydi -> `survey.finalize` (anketa bilan BITTA qoida: dublikat, telefon tasdig'i, ariza).
+Nomzodda `voiceIntro{fileId,dur}`, `prefersVoice`; mijoz rezyumeda "Ovozli rezyume" — Telegram
+chatiga yuboriladi (`POST /api/ma/candidates/:id/voice`, faqat `clientKnows`). AI rekruter: nomzod
+ovozi matnga aylanib agentga boradi; `prefersVoice` bo'lsa javob ovoz bilan (`services/tts.js`,
+Aisha TTS `back.aisha.group`, `AISHA_API_KEY` bo'lmasa o'chiq, `AI_VOICE=0` — o'chirish; WAV ->
+OGG ffmpeg-static). Thanks/agentlik xabari — `services/anketaDone.js` (anketa va ovoz uchun bitta).
+Mijozning ovozli vakansiyasi QURILMAGAN (Anas: hozircha kerak emas). `test/voiceintake.test.js`.
+**Telegramda HALI SINALMAGAN; AISHA_API_KEY Render'da yo'q.**
+
+**O'SISH FUNKSIYALARI — DEPLOY QILINDI** (2026-11-10, `9bcc29e`):
+- MAOSH TAHLILI `services/market.js`: nomzodlar kutgan maosh (`parseMoney`, 1–50 mln) va ochiq
+  oylik takliflar medianasi/p25/p75, 100 mingga yaxlitlanadi, KAMIDA 5 yozuv (bo'lmasa null —
+  bitta odam maoshi ochilmasin), sinov yozuvlari yo'q. `advise`: low ≤ −15%, high ≥ +20%. Mini App
+  vakansiya formasi va sahifasida `marketHint` (`GET /api/ma/market`). Ochiq sahifa `/maosh.html`
+  (`GET /api/public/market`, agentlik — standart anketa egasi, 10 daq kesh) — sotuv uchun;
+  restoran tugmasi `?start=emp_<manba>` -> botda "kutilmoqda" mijoz + admin xabari (`employerStart`).
+- ISH BERUVCHI REYTINGI `services/employerRating.js`: 7/30-kun "ishlayapti" javobidan keyin
+  xodimdan "maosh va shartlar va'da qilinganidek?" (`pl:py|pq|pn`, `Placement.payOk`); "yo'q" —
+  agentlikka 🚩. Belgi (kamida 1 "ha", 0 "yo'q") nomzod kabinetida (`employerOk`) va kanal postida.
+- DO'ST TAKLIFI: nomzod kodi `Candidate.refCode` (`/api/cand/me` yaratadi), havola
+  `?start=f_<kod>` -> anketa `channel:'ref'`, `SurveyResponse.refBy` -> faqat YANGI nomzodga
+  `referredBy`. Do'sti 30 kun ishlasa (`placements.tick` -> `rewardReferrer`, bir marta) — taklif
+  qilganga xabar, agentlikka "N so'm to'lang" (`REFERRAL_REWARD`, standart 50 000; QO'LDA to'lanadi).
+- BIRINCHI KUN PAKETI `services/onboard.js`: `placements.create` da xodimga `Client.onboard`
+  (manzil — bo'sh bo'lsa suhbat/restoran manzili, vaqt, kim kutib oladi, kiyim, hujjatlar) va
+  5 savollik standartlar testi (`data/onboardQuiz.js`, zal/oshxona; `ob:s|a`, javob atomik
+  `quizStep`), natija mijozga. Mini App: Hisob -> "Birinchi ish kuni" (`GET/PUT /api/ma/onboard`).
+- SMENA BOZORI (beta, BEPUL — kredit yechilmaydi) `services/shifts.js`, model `Shift`: Mini App
+  Hisob -> "Smena bozori" -> e'lon (lavozim, sana, vaqt Toshkent, tungi smena ertasiga, 50k+ to'lov,
+  1–10 kishi) -> mos nomzodlarga bot (shu tumandagi oldin, ko'pi 40, nomzodga 6 soatda bitta taklif,
+  hired/not_looking/`shiftOptOut`/sinov yo'q; restoran nomi band qilguncha ko'rinmaydi) -> "✅ Olaman"
+  atomik (`bookedN < slots`) -> mijozga ism+telefon, nomzodga manzil+telefon -> nomzod 2 soatgacha
+  bekor qila oladi -> 2 soat oldin eslatma -> tugagach mijozdan "keldi/kelmadi" (bot yoki Mini App,
+  `mark`), kelmadi — agentlikka 🚩. Natija `reliability` ga qo'shiladi ("N/M suhbat va smenaga kelgan").
+  Nomzod kabinetida smenalar ro'yxati YO'Q — faqat bot.
+`test/growth.test.js`. **Telegramda HALI SINALMAGAN.**
+
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
 O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda

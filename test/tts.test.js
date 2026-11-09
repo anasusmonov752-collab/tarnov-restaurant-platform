@@ -61,3 +61,20 @@ test('eski Aisha kaliti — eski manzil', async () => {
   assert.equal(calls[0].url, 'https://back.aisha.group/api/v1/tts/post/');
   assert.equal(calls[0].opts.headers['X-Api-Key'], 'oldkey');
 });
+
+test('vlk_: ovoz NOMI bo\'yicha — Gulnoza alifboda birinchi bo\'lmasa ham; env nomi ustun', async () => {
+  process.env.AISHA_API_KEY = 'vlk_test';
+  const list = { data: [{ id: 'voice_AB', display_name: 'Abdulhay Otaxo\'jayev' }, { id: 'voice_GU', display_name: 'Gulnoza', kind: 'system' },
+    { id: 'voice_SA', display_name: 'Sardor', kind: 'system' }] };
+  global.fetch = async (url, opts = {}) => {
+    calls.push({ url: String(url), opts });
+    if (String(url).includes('/v1/voices')) return res(200, list);
+    return res(200, new Uint8Array([1]), 'audio/wav');
+  };
+  let tts = require('../src/services/tts');
+  assert.equal(await tts.voiceFor('uz'), 'voice_GU');
+  delete require.cache[require.resolve('../src/services/tts')];
+  process.env.VOICELAB_VOICE_UZ = 'sardor';
+  tts = require('../src/services/tts');
+  assert.equal(await tts.voiceFor('uz'), 'voice_SA');
+});

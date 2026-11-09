@@ -42,17 +42,29 @@ async function vlJson(url, opts = {}) {
   return body ? JSON.parse(body) : {};
 }
 
-/** Til uchun ovoz: env, bo'lmasa katalogdan birinchi tizim ovozi */
+// Ovoz NOMI bo'yicha (katalog alifbo tartibida — "birinchisi" tasodifiy ovoz
+// bo'lib chiqdi, aksent bilan; Anas 2026-11-10). Gulnoza — Aisha'ning asosiy
+// o'zbekcha ovozi. Env VOICELAB_VOICE_UZ/RU: "voice_..." id yoki ovoz nomi.
+const PREFER = { uz: ['Gulnoza', 'Sardor', 'Lola'], ru: ['Alina', 'Vera', 'Maksim'] };
+const voiceNames = {};                   // til -> tanlangan ovoz nomi (logga)
+
+/** Til uchun ovoz id: env (id yoki nom), bo'lmasa PREFER ro'yxati, bo'lmasa tizim ovozi */
 async function voiceFor(lang) {
   const L = lang === 'ru' ? 'ru' : 'uz';
-  const env = process.env['VOICELAB_VOICE_' + L.toUpperCase()];
-  if (env) return env;
+  const env = (process.env['VOICELAB_VOICE_' + L.toUpperCase()] || '').trim();
+  if (/^voice_/.test(env)) return env;
   if (voices[L]) return voices[L];
   const j = await vlJson(`/v1/voices?language=${L}&model_id=lison`);
   const list = (j.data || []).filter(v => v && v.id);
-  const pick = list.find(v => v.kind === 'system') || list[0];
+  const nameOf = v => String(v.display_name || v.name || '').trim();
+  const byName = n => list.find(v => nameOf(v).toLowerCase() === n.toLowerCase())
+    || list.find(v => nameOf(v).toLowerCase().startsWith(n.toLowerCase()));
+  let pick = null;
+  for (const n of (env ? [env] : []).concat(PREFER[L])) { pick = byName(n); if (pick) break; }
+  pick = pick || list.find(v => v.kind === 'system') || list[0];
   if (!pick) throw new Error(`VoiceLab: ${L} uchun ovoz topilmadi`);
   voices[L] = pick.id;
+  voiceNames[L] = nameOf(pick);
   return pick.id;
 }
 
@@ -160,7 +172,10 @@ async function selfCheck() {
   try {
     const wav = await synth('Salom', 'uz');
     const ogg = await toOgg(wav);
-    const info = isVoiceLab() ? `VoiceLab, ovoz uz=${voices.uz || process.env.VOICELAB_VOICE_UZ}` : 'Aisha';
+    if (isVoiceLab()) await voiceFor('ru').catch(e => console.error('[TTS] ruscha ovoz:', e.message));
+    const info = isVoiceLab()
+      ? `VoiceLab, uz=${voiceNames.uz || process.env.VOICELAB_VOICE_UZ} (${voices.uz || ''}), ru=${voiceNames.ru || process.env.VOICELAB_VOICE_RU || '—'}`
+      : 'Aisha';
     console.log(`[TTS] tayyor (${info}): wav ${wav.length} B -> ogg ${ogg.length} B`);
     return { ok: true };
   } catch (e) {

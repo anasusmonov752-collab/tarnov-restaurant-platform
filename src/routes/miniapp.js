@@ -608,6 +608,46 @@ router.get('/photo-sl/:shortlistId/:id', asyncHandler(async (req, res) => {
 
 // ══ SUHBATGA CHAQIRISH (services/interviews) ═════════════════
 // Nomzodga botda vaqtlar boradi, eslatmalar va "keldimi?" — avtomatik.
+// ── Birinchi ish kuni ma'lumoti (services/onboard) — yangi xodimga bot yuboradi ──
+router.get('/onboard', clientGuard, asyncHandler(async (req, res) => {
+  res.json(require('../services/onboard').infoOf(req.client.toObject ? req.client.toObject() : req.client));
+}));
+router.put('/onboard', clientGuard, asyncHandler(async (req, res) => {
+  const o = require('../services/onboard').clean(req.body || {});
+  await Client.updateOne({ agencyId: req.client.agencyId, id: req.client.id }, { $set: { onboard: o } });
+  res.json({ ok: true });
+}));
+
+// ── Smena bozori (services/shifts, beta) — bir martalik smenaga odam ──
+router.get('/shifts', clientGuard, asyncHandler(async (req, res) => {
+  res.json({ shifts: await require('../services/shifts').listFor(req.client, req.lang) });
+}));
+router.post('/shifts', clientGuard, asyncHandler(async (req, res) => {
+  const r = await require('../services/shifts').create(req.client, req.body || {});
+  if (r.error) return res.status(400).json({ error: r.error });
+  res.json({ ok: true, id: r.shift.id, sent: r.sent });
+}));
+router.post('/shifts/:id/cancel', clientGuard, asyncHandler(async (req, res) => {
+  const r = await require('../services/shifts').cancel(req.client, String(req.params.id));
+  if (r.error) return res.status(404).json({ error: r.error });
+  res.json({ ok: true });
+}));
+router.post('/shifts/:id/mark', clientGuard, asyncHandler(async (req, res) => {
+  const b = req.body || {};
+  const r = await require('../services/shifts').mark(req.client, String(req.params.id), String(b.candidateId || ''), !!b.came);
+  if (r.error) return res.status(400).json({ error: r.error });
+  res.json({ ok: true });
+}));
+
+// ── Maosh va bozor tahlili (services/market) — vakansiya formasi va sahifasida ──
+router.get('/market', clientGuard, asyncHandler(async (req, res) => {
+  const st = await require('../services/market').stats(req.client.agencyId,
+    { role: String(req.query.role || ''), location: String(req.query.location || req.client.location || '') });
+  if (!st) return res.json({ ok: false });
+  const offer = parseInt(req.query.offer, 10) || 0;
+  res.json(Object.assign({ ok: true }, st, { advice: require('../services/market').advise(offer, st) }));
+}));
+
 router.get('/interview-prefs', clientGuard, asyncHandler(async (req, res) => {
   res.json(interviews.prefsOf(req.client.toObject ? req.client.toObject() : req.client));
 }));

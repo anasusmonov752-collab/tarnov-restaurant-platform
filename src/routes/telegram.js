@@ -209,6 +209,19 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
         return;
       }
 
+      // Ish beruvchi havolasi (/maosh.html "Xodim kerakmi?"): emp_<manba>
+      if (/^emp(_[a-z]{1,12})?$/.test(payload)) {
+        await employerStart(msg, chatId, tgLang, publicBase(req), payload.slice(4) || 'link');
+        return;
+      }
+
+      // Do'st tavsiyasi (nomzod kabineti "Do'stingni taklif qil"): f_<kod>
+      if (/^f_[A-Z0-9]{5,10}$/.test(payload)) {
+        const refBy = await Candidate.findOne({ refCode: payload.slice(2) }, 'id restaurantId').lean();
+        const def = refBy && await Survey.findOne({ agencyId: refBy.restaurantId, isDefault: true, active: true }, 'code').lean();
+        if (def) { await startSurvey(msg, chatId, { code: def.code, channel: 'ref', refBy: refBy.id }, publicBase(req)); return; }
+      }
+
       // E'lon havolasi — anketa (a_<kod>_<kanal> yoki v_<vakansiya>_<kanal>)
       const ank = surveySvc.parsePayload(payload);
       if (ank) {
@@ -612,7 +625,7 @@ async function startSurvey(msg, chatId, ank, appBase) {
   const isTest = (await testMode.modeOf(tgUserId)) === 'candidate';
   if (!r) {
     r = await SurveyResponse.create({ id: uuidv4(), agencyId: s.agencyId, surveyId: s.id, vacancyId,
-      channel: ank.channel, tgUserId, chatId, status: 'started', isTest });
+      channel: ank.channel, tgUserId, chatId, status: 'started', isTest, refBy: ank.refBy || '' });
   } else if ((ank.channel && !r.channel) || (isTest && !r.isTest)) {
     if (ank.channel && !r.channel) r.channel = ank.channel;
     if (isTest) r.isTest = true;
@@ -633,6 +646,31 @@ async function startSurvey(msg, chatId, ank, appBase) {
 // salom, kimmiz, HOZIR nechta ochiq ish va qaysi lavozimlar (bazadan, to'qima
 // emas), to'rt va'da va bitta tugma. Raqam nomzod kabinetidagi ro'yxat
 // qoidasi bilan bir xil (ochiq, e'lon qilingan, 14 kundan yangi).
+// ── Ish beruvchi havolasi: yangi restoran (kutilmoqda) + agentlikka xabar ──
+// Ochiq sahifadan (/maosh.html) kelgan restoran nomzod anketasiga tushib
+// qolmasin. Hisob avtomatik faollashmaydi — menejer gaplashib tasdiqlaydi.
+async function employerStart(msg, chatId, tgLang, appBase, src) {
+  const token = tg.platformToken();
+  const [asClient, asCand] = await Promise.all([
+    Client.findOne({ tgChatId: chatId }).lean(),
+    Candidate.findOne({ tgChatId: chatId, tgState: 'linked' }, 'id').lean()
+  ]);
+  if (asClient || asCand) return plainStart(msg, chatId, tgLang, appBase);
+  const def = await Survey.findOne({ isDefault: true, active: true }, 'agencyId').lean();
+  if (!def) return plainStart(msg, chatId, tgLang, appBase);
+  const f = msg.from || {};
+  const who = [f.first_name, f.last_name].filter(Boolean).join(' ').trim() || (f.username ? '@' + f.username : 'Telegram');
+  await Client.create({ id: uuidv4(), agencyId: def.agencyId, name: `${who} (yangi)`, contactName: who,
+    status: 'pending', tgChatId: chatId, tgUsername: f.username || '', tgLang: f.language_code || '',
+    note: `Manba: ${src === 'maosh' ? 'maosh sahifasi' : src}` });
+  await tg.sendMessage(token, chatId, T(tgLang, 'bot.empHello'));
+  const ag = await Restaurant.findOne({ id: def.agencyId }, 'telegram').lean();
+  const adm = ag && ag.telegram && ag.telegram.adminChatId;
+  if (adm) await tg.sendMessage(token, adm,
+    `🆕 Yangi restoran botga kirdi (${src === 'maosh' ? 'maosh sahifasidan' : src}): ${who}${f.username ? ' @' + f.username : ''}\n\n` +
+    `Mijozlar ro'yxatida "Kutilmoqda". Bog'lanib, nomini to'ldiring va faollashtiring.`).catch(() => {});
+}
+
 // ── Tavsiya havolasi: yangi restoran (kutilmoqda) + agentlikka xabar ──
 // Hisob avtomatik faollashmaydi (raqobatchi bazani ko'rmasin) — menejer
 // gaplashib tasdiqlaydi. Bonus — birinchi to'lovda (billing.rewardReferral).
@@ -889,9 +927,9 @@ async function handleCallback(cq, appBase) {
 
   // ── Suhbat (services/interviews) va arizadan keyingi tekshiruv (services/prescreen) ──
   // Ikkalasi bir xil javob shaklini qaytaradi: {text, alert, edit, keyboard}
-  if (data.startsWith('iv:') || data.startsWith('ps:') || data.startsWith('pl:') || data.startsWith('vi:')) {
+  if (/^(iv|ps|pl|vi|ob|sh):/.test(data)) {
     try {
-      const SVC = { 'iv:': 'interviews', 'ps:': 'prescreen', 'pl:': 'placements', 'vi:': 'voiceIntake' };
+      const SVC = { 'iv:': 'interviews', 'ps:': 'prescreen', 'pl:': 'placements', 'vi:': 'voiceIntake', 'ob:': 'onboard', 'sh:': 'shifts' };
       const svc = require('../services/' + SVC[data.slice(0, 3)]);
       const r = await svc.handleCallback({ data, chatId, appBase, from: cq.from });
       await done(r.text || '', !!r.alert);

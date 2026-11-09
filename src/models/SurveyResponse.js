@@ -47,6 +47,7 @@ const SurveyResponseSchema = new mongoose.Schema({
   // to'ldiradi, yetishmaganini bot chatda bittadan so'raydi. Oxiri — o'sha
   // survey.finalize (dublikat, ariza, telefon qoidalari bitta).
   // vstep: consent -> wait (ovoz kutilmoqda) -> review (AI tushungani) -> chase (yetishmagan savol)
+  refBy:       { type: String, default: '' },      // do'st tavsiyasi (f_<kod>) — taklif qilgan nomzod id
   mode:        { type: String, default: '' },      // '' | 'voice'
   vstep:       { type: String, default: '' },
   vAsk:        { type: String, default: '' },      // hozir so'ralayotgan savol id

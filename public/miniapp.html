@@ -9,7 +9,7 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>window.thViewerHostBack = true;</script>  <!-- orqaga tugmasi zanjiri onTgBack'da (rasm oynasi) -->
 <script src="/js/th-viewer.js?v=2" defer></script>
-<script src="/js/th-i18n.js?v=26"></script>
+<script src="/js/th-i18n.js?v=27"></script>
 <style>
 /* Ranglar — TalentHub dizayn tizimidan (css/th.css, iOS uslubi).
    Telegram'ning --tg-theme-* RANGLARI olinmaydi (avval shunday edi va
@@ -591,6 +591,11 @@ div.ac-row:active{background:none}
   background:var(--card);border-radius:18px;padding:13px 16px;margin-bottom:12px;cursor:pointer;color:var(--ink)}
 .vp-chn span{font-size:14px;color:var(--muted)}
 .vp-chn b{font-size:14px;color:var(--blue);white-space:nowrap}
+.mk{display:flex;flex-direction:column;gap:3px;border-radius:12px;padding:10px 12px;margin:8px 0 2px;background:var(--th-fill);font-size:13px;color:var(--muted);line-height:1.45}
+.mk b{font-size:13.5px;color:var(--ink)}
+.mk.low{background:var(--th-warn-soft,#fff4e0)} .mk.low b{color:var(--warn,#b26a00)}
+.mk.ok b{color:var(--ok,#1a7f37)}
+.mk.high b{color:var(--blue)}
 .ms{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center}
 .ms-sc{font-size:13px;font-weight:800;padding:4px 10px;border-radius:99px}
 .ms-sc.hi{background:var(--th-ok-soft,#e3f6ea);color:var(--ok,#1a7f37)}
@@ -1898,6 +1903,7 @@ async function showVacancy(id){
       <div class="vp-sal ${v.salaryText ? '' : 'no'}">${esc(v.salaryText || t('vac.noSalary'))}</div>
     </div>
     ${v.hook ? `<div class="vp-hook">${esc(v.hook)}</div>` : ''}
+    <div id="vxMk"></div>
     ${v.channelUrl ? `<button class="vp-chn" data-chn="${esc(v.channelUrl)}"><span>${esc(t('jp.mPosted'))}${v.alertedN ? ' · ' + esc(t('jp.mAlerted', { n: v.alertedN })) : ''}</span><b>${esc(t('jp.mSee'))}</b></button>` : ''}
     <div class="vp-sec vx-fn">${funnelHtml(f)}${appsBtn(v.id, f)}</div>
     <div class="vx-sh"><h3>${esc(t('vd.cands', { n: d.items.length }))}</h3></div>
@@ -1914,6 +1920,7 @@ async function showVacancy(id){
   wireCards($('vdItems'), () => showVacancy(id));
   $('vxBody').querySelectorAll('[data-apps]').forEach(b => b.onclick = () => showApps(id));
   $('vdMenu').onclick = () => vacMenu(id, v);
+  marketHint($('vxMk'), v.role, v.salaryTo || v.salaryFrom || 0, v.salaryPeriod);
   // Kanaldagi e'lon (services/jobPost) — Telegram o'zida ochadi
   $('vxBody').querySelectorAll('[data-chn]').forEach(b => b.onclick = () => {
     const u = b.dataset.chn;
@@ -1970,6 +1977,127 @@ function vacMenu(id, vObj){
 // ikkala joyda. Ilgari forma lavozim so'ramasdi: vakansiya 'boshqa'
 // bo'lib qolardi va bot qidiruvi uni tanimay yoniga dublikat ochardi.
 const ROLES = ['ofitsiant', 'barmen', 'xostess', 'oshpaz', 'kassir', 'menejer', 'operator'];   // yozuvi — t('role.<kalit>')
+// ── Smena bozori (server: services/shifts, beta) ──
+// Ro'yxat -> "Yangi smena" forma. Band qilganlar ism+telefon bilan; smena
+// o'tgach "Keldi / Kelmadi" (bot ham so'raydi — qaysi birini bossa ham bir xil).
+async function showShifts(){
+  sheetEnter('shf', showShifts);
+  openSheet(t('sh.rowT'), `<div class="msg">${esc(t('common.loading'))}</div>`);
+  let r;
+  try { r = await api('/api/ma/shifts'); }
+  catch(e){ $('shB').innerHTML = `<div class="msg">${esc(e.message)}</div>`; return; }
+  const st = s => s.status === 'full' ? t('sh.st.full') : s.status === 'done' || !s.upcoming ? t('sh.st.done') : t('sh.st.open');
+  const row = s => `<div class="card" style="margin:0 0 10px">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline">
+        <b>${esc(t('role.' + s.role))}</b><span class="hint">${esc(st(s))}</span></div>
+      <div style="margin-top:4px">${esc(s.when)} · ${esc(t('sh.pay', { s: fmtSum(s.pay) }))}</div>
+      <div class="hint" style="margin-top:2px">${esc(t('sh.bookedN', { a: s.booked.length, b: s.slots }))} · ${esc(t('sh.sentN', { n: s.sentN }))}</div>
+      ${s.booked.map(b => `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px">
+        <div><div>${esc(b.name)}</div>${b.phone ? `<a class="hint" href="tel:${esc(b.phone)}">${esc(b.phone)}</a>` : ''}</div>
+        ${b.state !== 'booked' ? `<span class="hint">${esc(t('sh.state.' + b.state))}</span>`
+          : s.past ? `<div style="display:flex;gap:6px">
+              <button class="btn" style="padding:7px 12px;font-size:14px" data-mk="1" data-s="${esc(s.id)}" data-c="${esc(b.candidateId)}">${esc(t('sh.came2'))}</button>
+              <button class="btn ghost" style="padding:7px 12px;font-size:14px" data-mk="0" data-s="${esc(s.id)}" data-c="${esc(b.candidateId)}">${esc(t('sh.noshow2'))}</button></div>` : ''}
+      </div>`).join('')}
+      ${s.upcoming && !s.past && s.status !== 'done' ? `<button class="btn ghost" data-cx="${esc(s.id)}" style="margin-top:10px;width:100%">${esc(t('sh.cancel'))}</button>` : ''}
+    </div>`;
+  $('shB').innerHTML = `<div class="hint" style="margin:2px 0 10px">${esc(t('sh.how'))}</div>
+    <button class="btn" id="shNew" style="width:100%;margin-bottom:14px">+ ${esc(t('sh.new'))}</button>
+    ${r.shifts.length ? r.shifts.map(row).join('') : `<div class="msg">${esc(t('sh.empty'))}</div>`}`;
+  $('shNew').onclick = showShiftForm;
+  $('shB').querySelectorAll('[data-mk]').forEach(b => b.onclick = async () => {
+    b.disabled = true;
+    try { await api(`/api/ma/shifts/${b.dataset.s}/mark`, { method: 'POST', body: JSON.stringify({ candidateId: b.dataset.c, came: b.dataset.mk === '1' }) }); showShifts(); }
+    catch(e){ showMsg(e.message); b.disabled = false; }
+  });
+  $('shB').querySelectorAll('[data-cx]').forEach(b => b.onclick = () => {
+    const go = async () => {
+      try { await api(`/api/ma/shifts/${b.dataset.cx}/cancel`, { method: 'POST' }); showShifts(); }
+      catch(e){ showMsg(e.message); }
+    };
+    if (TG && TG.showConfirm) TG.showConfirm(t('sh.cancelQ'), ok => { if (ok) go(); });
+    else if (confirm(t('sh.cancelQ'))) go();
+  });
+}
+function showShiftForm(){
+  sheetEnter('shfN', showShiftForm);
+  const p = n => String(n).padStart(2, '0');
+  const d = new Date(Date.now() + 5 * 3600e3);       // Toshkent
+  const today = `${d.getUTCFullYear()}-${p(d.getUTCMonth() + 1)}-${p(d.getUTCDate())}`;
+  const roleOpts = `<option value="">${esc(t('form.choose'))}</option>` + ROLES.map(k => `<option value="${k}">${esc(t('role.' + k))}</option>`).join('');
+  openSheet(t('sh.new'), `
+    <div class="fl"><label>${esc(t('form.role'))}</label><select id="sRo">${roleOpts}</select></div>
+    <div class="fl"><label>${esc(t('sh.date'))}</label><input id="sDa" type="date" min="${today}" value="${today}"></div>
+    <div style="display:flex;gap:8px">
+      <div class="fl" style="flex:1"><label>${esc(t('sh.from'))}</label><input id="sFr" type="time" value="18:00"></div>
+      <div class="fl" style="flex:1"><label>${esc(t('sh.to'))}</label><input id="sTo" type="time" value="23:00"></div>
+    </div>
+    <div class="fl"><label>${esc(t('sh.payL'))}</label><input id="sPa" inputmode="numeric" placeholder="200 000"></div>
+    <div class="fl"><label>${esc(t('sh.slotsL'))}</label><select id="sSl">${[1,2,3,4,5,6,8,10].map(n => `<option>${n}</option>`).join('')}</select></div>
+    <div class="fl"><label>${esc(t('sh.addr'))}</label><input id="sAd" placeholder="${esc(t('sh.addrPh'))}"></div>
+    <div class="fl"><label>${esc(t('sh.noteL'))}</label><textarea id="sNo" placeholder="${esc(t('sh.notePh'))}"></textarea></div>
+    <button class="btn" id="sGo" style="width:100%;margin-top:14px">${esc(t('sh.post'))}</button>`);
+  $('sPa').oninput = () => { const v = $('sPa').value.replace(/\D/g, ''); $('sPa').value = v ? fmtSum(+v) : ''; };
+  $('sGo').onclick = async () => {
+    $('sGo').disabled = true;
+    try {
+      const r = await api('/api/ma/shifts', { method: 'POST', body: JSON.stringify({ role: $('sRo').value, date: $('sDa').value,
+        from: $('sFr').value, to: $('sTo').value, pay: $('sPa').value, slots: $('sSl').value, address: $('sAd').value, note: $('sNo').value }) });
+      haptic('ok');
+      showMsg(r.sent ? t('sh.sent', { n: r.sent }) : t('sh.sentNone'));
+      sheetBack();
+    } catch(e){ showMsg(e.message); $('sGo').disabled = false; }
+  };
+}
+
+// ── Birinchi ish kuni (server: services/onboard) ──
+// Bir marta kiritiladi; har yangi ishga olingan xodimga bot o'zi yuboradi
+// (manzil, soat, kim kutib oladi, kiyim, hujjatlar) + 5 savollik standartlar testi.
+async function showOnboard(){
+  sheetEnter('onb', showOnboard);
+  openSheet(t('ob.rowT'), `<div class="msg">${esc(t('common.loading'))}</div>`);
+  let o;
+  try { o = await api('/api/ma/onboard'); }
+  catch(e){ $('shB').innerHTML = `<div class="msg">${esc(e.message)}</div>`; return; }
+  const f = (id, k, ph, val) => `<div class="fl"><label>${esc(t(k))}</label><input id="${id}" value="${esc(val)}" placeholder="${esc(t(ph))}"></div>`;
+  $('shB').innerHTML = `<div class="hint" style="margin:2px 0 8px">${esc(t('ob.formHint'))}</div>
+    ${f('obA', 'ob.addr', 'ob.addrPh', o.address)}
+    ${f('obT', 'ob.time', 'ob.timePh', o.time)}
+    ${f('obC', 'ob.contact', 'ob.contactPh', o.contact)}
+    ${f('obD', 'ob.dress', 'ob.dressPh', o.dress)}
+    ${f('obB', 'ob.bring', 'ob.bringPh', o.bring)}
+    <div class="fl"><label>${esc(t('ob.note'))}</label><textarea id="obN" placeholder="${esc(t('ob.notePh'))}">${esc(o.note)}</textarea></div>
+    <button class="btn" id="obSave" style="width:100%;margin-top:14px">${esc(t('common.save'))}</button>`;
+  $('obSave').onclick = async () => {
+    $('obSave').disabled = true;
+    try {
+      await api('/api/ma/onboard', { method: 'PUT', body: JSON.stringify({ address: $('obA').value, time: $('obT').value,
+        contact: $('obC').value, dress: $('obD').value, bring: $('obB').value, note: $('obN').value }) });
+      haptic('ok'); closeSheet(); showMsg(t('ob.saved'));
+    } catch(e){ showMsg(e.message); $('obSave').disabled = false; }
+  };
+}
+
+// ── Maosh va bozor maslahati (server: services/market) ──
+// Faqat oylik maoshda solishtiriladi; 5 tadan kam ma'lumot bo'lsa o'rtacha yo'q.
+async function marketHint(el, role, offer, period){
+  if (!el) return;
+  if (!role || role === 'boshqa') { el.innerHTML = ''; return; }
+  let m;
+  try { m = await api('/api/ma/market?role=' + encodeURIComponent(role) + '&offer=' + (period && period !== 'month' ? 0 : offer)); }
+  catch(e){ el.innerHTML = ''; return; }
+  if (!m.ok) { el.innerHTML = ''; return; }
+  const parts = [];
+  if (m.median) parts.push(t('mk.median', { r: t('role.' + role), s: fmtMln(m.median), a: fmtMln(m.p25), b: fmtMln(m.p75) }));
+  if (m.active) parts.push(t('mk.active', { n: m.active }) + (m.nearby ? ' · ' + t('mk.nearby', { n: m.nearby }) : ''));
+  const adv = m.advice || {};
+  const cls = adv.level === 'low' ? 'low' : adv.level === 'high' ? 'high' : adv.level === 'ok' ? 'ok' : '';
+  el.innerHTML = parts.length || adv.level ? `<div class="mk ${cls}">
+      ${adv.level ? `<b>${esc(t('mk.' + adv.level, { p: Math.abs(adv.pct) }))}</b>` : ''}
+      ${parts.map(p => `<span>${esc(p)}</span>`).join('')}</div>` : '';
+}
+const fmtMln = n => (Math.round(n / 1e5) / 10).toString().replace('.', ',') + ' ' + t('mk.mln');
+
 // Server shabloni bilan bir xil sarlavha — qoida lug'atda (THI18N.vacTitle),
 // vacancyAuto.makeTitle ham shundan. Server avtomatik sarlavhani bazaga
 // o'zbekcha yozadi va o'quvchi tilida qaytaradi.
@@ -2006,6 +2134,7 @@ function vacForm(v){
       <div class="fl"><label>${esc(t('form.sf'))}</label><input id="fSf" inputmode="numeric" value="${d.salaryFrom ?? ''}" placeholder="4000000"></div>
       <div class="fl"><label>${esc(t('form.st'))}</label><input id="fSt" inputmode="numeric" value="${d.salaryTo ?? ''}" placeholder="5000000"></div>
     </div>
+    <div class="mk-hint" id="fMk"></div>
     <div class="two">
       <div class="fl"><label>${esc(t('form.sp'))}</label>
         <select id="fSp">${[['month', 'form.spM'], ['day', 'form.spD'], ['shift', 'form.spS']].map(([k, l]) =>
@@ -2041,8 +2170,14 @@ function vacForm(v){
   let autoT = !d.title || d.title === autoTitle(d.role, d.shift);
   const syncT = () => { if (autoT) $('fTi').value = autoTitle($('fRo').value, $('fSh').value); };
   $('fTi').oninput = () => { autoT = false; };
-  $('fRo').onchange = syncT;
+  // Maosh maslahati (services/market): lavozim yoki maosh o'zgarganda
+  let mkT = null;
+  const mk = () => { clearTimeout(mkT); mkT = setTimeout(() => marketHint($('fMk'), $('fRo').value,
+    parseInt(($('fSt').value || $('fSf').value || '').replace(/\D/g, ''), 10) || 0, $('fSp').value), 350); };
+  $('fRo').onchange = () => { syncT(); mk(); };
   $('fSh').onchange = syncT;
+  $('fSf').oninput = mk; $('fSt').oninput = mk; $('fSp').onchange = mk;
+  mk();
 
   $('fSave').onclick = async () => {
     const role = $('fRo').value;
@@ -2433,6 +2568,8 @@ function renderAccount(){
     <div class="ac-fine">${esc(t('pl.terms'))}</div>
     <div class="ac-list">
       ${ar.available ? rowHtml('auto', AIC.refresh, '#0A84FF', t('pl.auto'), ar.masked ? '•••• ' + String(ar.masked).slice(-4) : t('ac.autoD'), t(ar.on ? 'ac.autoOn' : 'ac.autoOff')) : ''}
+      ${rowHtml('shf', AIC.clock, '#FF9500', t('sh.rowT'), t('sh.rowD'), '')}
+      ${rowHtml('onb', AIC.user, '#5856D6', t('ob.rowT'), t('ob.rowD'), '')}
       ${rowHtml('ref', AIC.gift, '#E8A317', t('ref.title'), t('ref.short'), '')}
       ${rowHtml('oferta', AIC.doc, '#8E8E93', t('pl.oferta'), '', '')}
       ${rowHtml('help', AIC.help, '#34C759', t('cp.help'), '', '')}
@@ -2473,6 +2610,8 @@ function wireAccount(){
     const a = b.dataset.a;
     if (a === 'auto') showAuto();
     else if (a === 'ref') showReferral();
+    else if (a === 'onb') showOnboard();
+    else if (a === 'shf') showShifts();
     else if (a === 'oferta') openExt(location.origin + '/oferta.html?lang=' + LANG);
     else if (a === 'help') openSupport();
   });

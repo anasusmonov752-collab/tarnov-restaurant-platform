@@ -50,8 +50,11 @@ async function create({ agencyId, shortlistId, candidateId, hiredAt = new Date()
     if (await Placement.exists({ agencyId, shortlistId, candidateId })) return null;
     const sl = await Shortlist.findOne({ agencyId, id: shortlistId }, 'clientId vacancyId').lean();
     if (!sl) return null;
-    return await Placement.create({ id: crypto.randomBytes(5).toString('hex'), agencyId, clientId: sl.clientId,
+    const p = await Placement.create({ id: crypto.randomBytes(5).toString('hex'), agencyId, clientId: sl.clientId,
       candidateId, shortlistId, vacancyId: sl.vacancyId || '', hiredAt });
+    // Yangi xodimga birinchi kun paketi va standartlar testi (services/onboard)
+    await require('./onboard').sendPack(p);
+    return p;
   } catch (e) {
     if (e.code !== 11000) console.error('[PL] yaratilmadi:', e.message);
     return null;
@@ -130,13 +133,14 @@ async function markLeft(p, by, { appBase = process.env.APP_URL || '', now = new 
   return true;
 }
 
-const CB_RE = /^pl:(cw|cl|kg|kp|kl):([0-9a-f]{10}):(1|7|30)$/;
+// py/pq/pn — "maosh va shartlar va'da qilinganidek bo'ldimi?" (ish beruvchi reytingi)
+const CB_RE = /^pl:(cw|cl|kg|kp|kl|py|pq|pn):([0-9a-f]{10}):(1|7|30)$/;
 
 /** Bot tugmasi — {ok, text, alert?, edit?} (iv/ps bilan bir xil shakl) */
 async function handleCallback({ data, chatId, appBase = '', now = new Date() }) {
   const m = CB_RE.exec(String(data || ''));
   if (!m) return { ok: false, text: '' };
-  const [, op, id] = m;
+  const [, op, id, step] = m;
   const p = await Placement.findOne({ id }).lean();
   if (!p) return { ok: false, text: 'Topilmadi / Не найдено', alert: true };
   const { client, cand } = await partiesOf(p);
@@ -159,7 +163,18 @@ async function handleCallback({ data, chatId, appBase = '', now = new Date() }) 
   if (p.status === 'left') return { ok: true, text: '✓', edit: T(Lk, 'pl.kLeftOk') };
   if (op === 'kg') {
     await Placement.updateOne({ _id: p._id }, { $set: { candOk: now, updatedAt: now } });
+    // 7/30-kunda — maosh va shartlar haqida bitta savol (ish beruvchi reytingi, services/employerRating)
+    if (step !== '1') return { ok: true, text: '👍', edit: T(Lk, 'pl.kGoodOk') + '\n\n' + T(Lk, 'pl.payQ'), keyboard: [[
+      { text: T(Lk, 'pl.payY'), callback_data: cb('py', p, step) }, { text: T(Lk, 'pl.payQq'), callback_data: cb('pq', p, step) }],
+      [{ text: T(Lk, 'pl.payN'), callback_data: cb('pn', p, step) }]] };
     return { ok: true, text: '👍', edit: T(Lk, 'pl.kGoodOk') };
+  }
+  if (op === 'py' || op === 'pq' || op === 'pn') {
+    const pay = { py: 'yes', pq: 'partial', pn: 'no' }[op];
+    const first = p.payOk !== pay;
+    await Placement.updateOne({ _id: p._id }, { $set: { payOk: pay, payAt: now, updatedAt: now } });
+    if (pay === 'no' && first) await adminSay(p.agencyId, `🚩 ${n} (${cand.phone || '—'}): ${client.name} maosh yoki shartlarni va'da qilinganidek BERMAYAPTI. Mijoz bilan gaplashing.`);
+    return { ok: true, text: '✓', edit: T(Lk, 'pl.payThanks') };
   }
   if (op === 'kp') {
     const first = !p.problemAt;
@@ -175,10 +190,13 @@ async function handleCallback({ data, chatId, appBase = '', now = new Date() }) 
 /** Rejali: 1/7/30-kun so'rovlari; 30 kundan o'tib "ketdi" demaganlar — done */
 async function tick(now = new Date()) {
   const out = { asked: 0, done: 0 };
-  // 33 kundan o'tgan, ketmagan — sinovdan o'tdi
-  const r = await Placement.updateMany({ status: 'active', hiredAt: { $lte: new Date(now.getTime() - 33 * DAY) } },
-    { $set: { status: 'done', updatedAt: now } });
-  out.done = r.modifiedCount || 0;
+  // 33 kundan o'tgan, ketmagan — sinovdan o'tdi; do'st tavsiyasi bo'lsa — mukofot
+  for (const p of await Placement.find({ status: 'active', hiredAt: { $lte: new Date(now.getTime() - 33 * DAY) } }).limit(100).lean()) {
+    const up = await Placement.findOneAndUpdate({ _id: p._id, status: 'active' }, { $set: { status: 'done', updatedAt: now } }, { new: true }).lean();
+    if (!up) continue;
+    out.done++;
+    await rewardReferrer(up, now);
+  }
   if (!daytime(now)) return out;
   for (const step of STEPS) {
     const f = 'd' + step + 'At';
@@ -196,6 +214,24 @@ async function tick(now = new Date()) {
   return out;
 }
 
+// ── "Do'stingni olib kel": do'sti 30 kun ishladi — taklif qilganga mukofot ──
+// Pul to'lovi hozircha qo'lda (agentlik admin chatiga topshiriq) — onlayn
+// to'lov (Payme/Click payout) merchant shartnomasidan keyin.
+const REWARD = () => +(process.env.REFERRAL_REWARD || 50000);
+async function rewardReferrer(p, now = new Date()) {
+  const friend = await Candidate.findOne({ restaurantId: p.agencyId, id: p.candidateId }, 'id fullName referredBy').lean();
+  if (!friend || !friend.referredBy) return false;
+  const claimed = await Placement.findOneAndUpdate({ _id: p._id, refRewardAt: null }, { $set: { refRewardAt: now } }, { new: true }).lean();
+  if (!claimed) return false;
+  const ref = await Candidate.findOneAndUpdate({ restaurantId: p.agencyId, id: friend.referredBy }, { $inc: { refRewards: 1 } },
+    { new: true, projection: 'id fullName phone tgChatId tgState lang tgLang' }).lean();
+  if (!ref) return false;
+  const sum = REWARD().toLocaleString('ru-RU');
+  if (reachable(ref)) await send(ref.tgChatId, T(langOf(ref), 'rf.reward', { n: nameOf(friend), s: sum }));
+  await adminSay(p.agencyId, `🎁 Tavsiya mukofoti: ${nameOf(ref)} (${ref.phone || '—'}) ga ${sum} so'm to'lang — do'sti ${nameOf(friend)} 30 kun ishladi.`);
+  return true;
+}
+
 /** Mini App kartasi uchun: { "<shortlistId>:<candidateId>": {status, days} } */
 async function forItems(agencyId, clientId, pairs, now = new Date()) {
   if (!pairs.length) return {};
@@ -204,4 +240,4 @@ async function forItems(agencyId, clientId, pairs, now = new Date()) {
     { status: p.status, days: Math.max(1, Math.floor(((p.leftAt || now) - new Date(p.hiredAt)) / DAY) + 1), replaced: !!p.replacedAt }]));
 }
 
-module.exports = { create, markLeft, handleCallback, tick, forItems, CB_RE };
+module.exports = { create, markLeft, handleCallback, tick, forItems, rewardReferrer, CB_RE };

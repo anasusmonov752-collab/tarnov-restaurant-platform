@@ -147,6 +147,7 @@ app.use('/api/cand', require('./src/routes/candidate'));
 app.use('/api/anketa', require('./src/routes/anketa'));     // nomzod anketasi (Mini App, initData)
 app.use('/api/surveys', require('./src/routes/surveys'));   // anketa havolasi va natijasi (panel)
 app.use('/api/cron', require('./src/routes/cron'));
+app.use('/api/public', require('./src/routes/publicMarket'));   // ochiq maosh tahlili (/maosh.html)
 app.use('/api/pay', require('./src/routes/payments'));      // Payme/Click serveri chaqiradi
 app.use('/api/billing', require('./src/routes/billing'));  // panel: buyurtmalar, qo'lda tasdiqlash         // rejali vazifalar (GitHub Actions, CRON_SECRET)
 app.use('/api/waiter', require('./src/routes/waiter'));
@@ -213,6 +214,9 @@ async function startServer() {
     // Ishga olinganlar: 1/7/30-kun so'rovlari (services/placements)
     try { await require('./src/services/placements').tick(); }
     catch (e) { console.error('[PL] tick:', e.message); }
+    // Smena bozori: 2 soat oldin eslatma, smenadan keyin "keldimi?" (services/shifts)
+    try { await require('./src/services/shifts').tick(); }
+    catch (e) { console.error('[SH] tick:', e.message); }
     finally { ivBusy = false; }
   }, 2 * 60 * 1000);
 

@@ -173,10 +173,21 @@ router.get('/me', guard, asyncHandler(async (req, res) => {
     }
   }
 
+  // "Do'stingni olib kel": shaxsiy kod (birinchi ochilishda), taklif qilganlar soni
+  if (!c.refCode) {
+    for (let i = 0; i < 5 && !c.refCode; i++) {
+      const code = Array.from({ length: 6 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]).join('');
+      try { await Candidate.updateOne({ _id: c._id, refCode: { $exists: false } }, { $set: { refCode: code } }); c.refCode = code; }
+      catch (e) { if (e.code !== 11000) throw e; }
+    }
+  }
+  const invited = await Candidate.countDocuments({ restaurantId: c.restaurantId, referredBy: c.id });
+
   res.json(Object.assign(profileOf(c), {
     lang: req.lang,                       // kabinet tili (tanlangan yoki Telegram'dan)
     stats: { picked: rows.length, opened },
     completeness: completeness(c),
+    ref: { code: c.refCode || '', invited, rewards: c.refRewards || 0, reward: +(process.env.REFERRAL_REWARD || 50000) },
     // Vakansiyani ulashish havolasi uchun (t.me/<bot>?start=v_<id>_ref)
     bot: (await require('../services/telegram').platformUsername().catch(() => '')) || 'TalentHubUzBot'
   }));
@@ -309,7 +320,10 @@ router.get('/vacancies', guard, asyncHandler(async (req, res) => {
     { agencyId: c.restaurantId, candidateId: c.id }, 'vacancyId state').lean();
   const appMap = Object.fromEntries(mine.map(a => [a.vacancyId, a.state]));
 
+  // Ish beruvchi reytingi (services/employerRating): "Ishchilar tasdiqlagan: maosh va'da qilinganidek"
+  const rating = await require('../services/employerRating').forClients(c.restaurantId, cids);
   const out = rows.map(v => Object.assign(vacFor(v, byId[v.clientId], openSet, req.lang), {
+    employerOk: !!(rating[v.clientId] && rating[v.clientId].ok),
     applied: !!appMap[v.id],
     appState: appMap[v.id] || '',
     // "Sizga mos" belgisi: lavozim bir xil va tajriba yetadi

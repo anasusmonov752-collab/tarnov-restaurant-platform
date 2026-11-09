@@ -26,6 +26,14 @@ const PlacementSchema = new mongoose.Schema({
   leftAt:    { type: Date, default: null },
   leftBy:    { type: String, default: '' },          // client | candidate
   replacedAt: { type: Date, default: null },         // kafolat ishga tushdi (vakansiya qayta ochildi, +1 kredit)
+  payOk:      { type: String, default: '' },          // nomzod: maosh va shartlar va'da qilinganidek — yes | partial | no
+  payAt:      { type: Date, default: null },
+  refRewardAt: { type: Date, default: null },        // do'st tavsiyasi mukofoti berildi
+  // Birinchi hafta paketi (services/onboard): paket yuborildi, standartlar testi
+  packAt:     { type: Date, default: null },
+  quizStep:   { type: Number, default: 0 },
+  quizScore:  { type: Number, default: 0 },
+  quizDoneAt: { type: Date, default: null },
 
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }

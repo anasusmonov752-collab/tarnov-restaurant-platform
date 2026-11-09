@@ -703,6 +703,8 @@ async function finalize(r, { appBase } = {}) {
   cand.lang = r.lang || cand.lang;
   cand.channel = r.channel || cand.channel;
   cand.consentAt = new Date();
+  // Do'st tavsiyasi (f_<kod>): faqat YANGI nomzodga va o'zini o'zi emas
+  if (created && r.refBy && r.refBy !== cand.id && !cand.referredBy) cand.referredBy = r.refBy;
   cand.jobStatus = 'active';
   cand.jobStatusAt = new Date();
   cand.aiParsed = true;                // shablon bo'yicha tuzilgan — qayta tahlil kerak emas

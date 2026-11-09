@@ -26,6 +26,15 @@ const ClientSchema = new mongoose.Schema({
   about:    { type: String, default: '' },   // "150 o'rinli, yevropa oshxonasi"
   // Suhbat vaqtlari (services/interviews.js): nomzodga shu oraliqdan bo'sh
   // vaqtlar taklif qilinadi. days — 1 (Du) .. 7 (Ya), Toshkent vaqti.
+  // Birinchi ish kuni ma'lumoti (services/onboard): ishga olingan xodimga bot yuboradi
+  onboard: {
+    address: { type: String, default: '' },
+    time:    { type: String, default: '' },     // "Dushanba 09:30" yoki "Soat 10:00 da"
+    contact: { type: String, default: '' },     // kim kutib oladi (ism, telefon)
+    dress:   { type: String, default: '' },
+    bring:   { type: String, default: '' },     // hujjatlar: pasport, sanitar kitobcha...
+    note:    { type: String, default: '' }
+  },
   ivPrefs: {
     days:    { type: [Number], default: undefined },
     from:    { type: String, default: '' },     // "11:00"

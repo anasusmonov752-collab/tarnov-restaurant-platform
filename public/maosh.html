@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Restoran maoshlari</title>
+<meta name="description" content="Toshkentda restoran xodimlari qancha maosh kutadi: ofitsiant, oshpaz, xostess, barmen, kassir, menejer. TalentHub bazasi asosida, har 10 daqiqada yangilanadi.">
+<script src="/js/th-i18n.js?v=27"></script>
+<style>
+:root{--bg:#F2F2F7;--card:#fff;--ink:#0b0b0f;--muted:#6b6b76;--line:#e5e5ea;--blue:#0a63d6;--ok:#1a7f37;--fill:#eeeef3}
+@media (prefers-color-scheme: dark){:root{--bg:#000;--card:#1c1c1e;--ink:#f2f2f7;--muted:#9a9aa3;--line:#2c2c2e;--blue:#4b9bff;--ok:#30d158;--fill:#2c2c2e}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:28px 16px 48px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}
+.brand{font-weight:800;letter-spacing:-.2px}
+.lang{display:flex;background:var(--fill);border-radius:9px;padding:2px}
+.lang button{border:0;background:transparent;font:inherit;font-size:13px;font-weight:700;padding:5px 12px;border-radius:7px;color:var(--muted);cursor:pointer}
+.lang button.on{background:var(--card);color:var(--ink)}
+h1{font-size:30px;line-height:1.15;letter-spacing:-.5px;margin:18px 0 8px}
+.sub{color:var(--muted);margin:0 0 22px;max-width:640px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.card{background:var(--card);border-radius:18px;padding:16px 18px}
+.card h3{margin:0 0 10px;font-size:17px}
+.big{font-size:26px;font-weight:800;letter-spacing:-.4px}
+.rng{color:var(--muted);font-size:13.5px;margin-top:2px}
+.row{display:flex;justify-content:space-between;gap:10px;border-top:1px solid var(--line);margin-top:12px;padding-top:10px;font-size:14px}
+.row span{color:var(--muted)}
+.few{color:var(--muted);font-size:14px}
+.cta{background:var(--card);border-radius:20px;padding:22px;margin-top:22px;display:grid;gap:10px}
+.cta h2{margin:0;font-size:21px;letter-spacing:-.3px}
+.cta p{margin:0;color:var(--muted)}
+.btn{display:inline-flex;justify-content:center;align-items:center;border-radius:14px;padding:14px 18px;font-weight:700;text-decoration:none;font-size:16px}
+.btn.p{background:var(--blue);color:#fff}
+.btn.s{background:var(--fill);color:var(--ink)}
+.btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+.note{color:var(--muted);font-size:12.5px;margin-top:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><div class="brand">TalentHub</div>
+    <div class="lang" id="lang"><button data-l="uz">UZ</button><button data-l="ru">RU</button></div></div>
+  <h1 data-t="mp.title">Restoran xodimlari qancha maosh kutadi</h1>
+  <p class="sub" data-t="mp.sub">Toshkent bo'yicha: nomzodlar kutgan oylik va ochiq vakansiyalar taklifi.</p>
+  <div class="grid" id="grid"><div class="card few" data-t="mp.loading">Yuklanmoqda…</div></div>
+  <div class="cta">
+    <h2 data-t="mp.ctaT">Xodim kerakmi?</h2>
+    <p data-t="mp.ctaP">48 soatda 3 ta tekshirilgan nomzod. Suhbatga kelmasa — pul to'lamaysiz. 30 kun ichida ketsa — yangisini topamiz.</p>
+    <div class="btns">
+      <a class="btn p" id="bEmp" href="#" data-t="mp.ctaBtn">Telegramda boshlash</a>
+      <a class="btn s" id="bCand" href="#" data-t="mp.candBtn">Ish qidiryapman</a>
+    </div>
+  </div>
+  <div class="note" data-t="mp.note">O'rtacha qiymat kamida 5 ta nomzod ma'lumoti bo'lganda ko'rsatiladi. Kutilgan maosh — nomzod ko'rsatgan oraliqning pastki chegarasi.</div>
+</div>
+<script>
+const I18N = window.THI18N;
+let LANG = (new URLSearchParams(location.search).get('lang') === 'ru' || /^ru/i.test(navigator.language || '')) ? 'ru' : 'uz';
+try { const s = localStorage.getItem('mp_lang'); if (s === 'uz' || s === 'ru') LANG = s; } catch(e){}
+const t = (k, v) => I18N.t(LANG, k, v);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+const mln = n => (Math.round(n / 1e5) / 10).toString().replace('.', ',') + ' ' + t('mk.mln');
+let DATA = null;
+
+function apply(){
+  document.documentElement.lang = LANG;
+  document.title = t('mp.docTitle');
+  document.querySelectorAll('[data-t]').forEach(el => { el.textContent = t(el.dataset.t); });
+  document.querySelectorAll('#lang button').forEach(b => b.classList.toggle('on', b.dataset.l === LANG));
+  draw();
+}
+function draw(){
+  if (!DATA) return;
+  const bot = DATA.bot || 'TalentHubUzBot';
+  document.getElementById('bEmp').href = 'https://t.me/' + bot + '?start=emp_maosh';
+  document.getElementById('bCand').href = 'https://t.me/' + bot;
+  const g = document.getElementById('grid');
+  if (!DATA.roles.length) { g.innerHTML = `<div class="card few">${esc(t('mp.empty'))}</div>`; return; }
+  g.innerHTML = DATA.roles.map(r => `<div class="card">
+      <h3>${esc(t('role.' + r.role))}</h3>
+      ${r.median ? `<div class="big">${esc(mln(r.median))}</div><div class="rng">${esc(t('mp.range', { a: mln(r.p25), b: mln(r.p75) }))}</div>`
+        : `<div class="few">${esc(t('mp.few'))}</div>`}
+      ${r.offer ? `<div class="row"><span>${esc(t('mp.offer'))}</span><b>${esc(mln(r.offer))}</b></div>` : ''}
+      <div class="row"><span>${esc(t('mp.active'))}</span><b>${r.active}</b></div>
+    </div>`).join('');
+}
+document.querySelectorAll('#lang button').forEach(b => b.onclick = () => {
+  LANG = b.dataset.l; try { localStorage.setItem('mp_lang', LANG); } catch(e){} apply();
+});
+fetch('/api/public/market').then(r => r.json()).then(d => { DATA = d; draw(); })
+  .catch(() => { document.getElementById('grid').innerHTML = `<div class="card few">${esc(t('mp.err'))}</div>`; });
+apply();
+</script>
+</body>
+</html>

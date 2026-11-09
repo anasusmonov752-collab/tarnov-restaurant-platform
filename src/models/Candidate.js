@@ -71,6 +71,12 @@ const CandidateSchema = new mongoose.Schema({
   },
   // Ovoz bilan muloqot qiladi (ovozli xabar yuborgan) — AI ovozli javob (services/tts)
   prefersVoice: { type: Boolean, default: false },
+  // "Do'stingni olib kel" (services/placements): refCode — shaxsiy havola
+  // t.me/<bot>?start=f_<kod>; referredBy — kim taklif qilgan; do'sti 30 kun
+  // ishlasa taklif qilganga mukofot (refRewards — nechta)
+  refCode:    { type: String, default: undefined },
+  referredBy: { type: String, default: '' },
+  refRewards: { type: Number, default: 0 },
   // Qadalgan "TalentHub" suhbatini oxirgi ochgan payt — o'qilmaganlar sanog'i (chat.supportUnread)
   supportSeenAt: { type: Date, default: null },
   status:  { type: String, default: 'new' },           // kanban bosqichi (VALID_STATUS)
@@ -101,6 +107,9 @@ const CandidateSchema = new mongoose.Schema({
   jobStatus:   { type: String, default: 'unknown' },  // active|considering|not_looking|unknown
   jobStatusAt: { type: Date,   default: null },
   shownToClients: { type: [String], default: [] },    // takror ko'rsatmaslik uchun
+  // Smena bozori (services/shifts): "smena takliflari kerak emas" va oxirgi taklif (6 soatda bittadan)
+  shiftOptOut:  { type: Boolean, default: false },
+  shiftOfferAt: { type: Date,    default: null },
 
   // Sanitar kitobcha — oziq-ovqat sohasida MAJBURIY hujjat. hh'da u
   // profil tubida ko'milgan, bizda esa birinchi savollardan biri:
@@ -156,6 +165,7 @@ CandidateSchema.index({ restaurantId: 1, createdAt: -1 });
 // Manba bo'yicha bo'limlar (Anketadan / hh.uz bazasi)
 CandidateSchema.index({ restaurantId: 1, source: 1, createdAt: -1 });
 CandidateSchema.index({ restaurantId: 1, id: 1 }, { unique: true });
+CandidateSchema.index({ refCode: 1 }, { unique: true, sparse: true });   // do'st tavsiyasi havolasi
 // Deep link tokenini yechish (sparse — ko'pchilikda bo'sh)
 CandidateSchema.index({ tgInviteToken: 1 }, { sparse: true });
 // Kiruvchi Telegram xabarini nomzodga bog'lash

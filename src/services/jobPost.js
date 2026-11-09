@@ -61,7 +61,7 @@ async function checkChannel(input) {
 }
 
 /** Post matni (HTML) — o'zbekcha, restoran nomisiz */
-function postText(v, client, { closed = false } = {}) {
+function postText(v, client, { closed = false, employerOk = false } = {}) {
   const c = vac.forCandidate(v, client, 'uz');
   const where = [c.where || 'Toshkent', c.landmark].filter(Boolean).join(' · ');
   const head = [closed ? '❌ <b>YOPILDI</b>' : '', `<b>${html(c.title)}</b>`, c.venue ? html(c.venue) : ''];
@@ -69,7 +69,9 @@ function postText(v, client, { closed = false } = {}) {
     `📍 ${html(where)}`,
     `💰 ${html(c.salaryText || T('uz', 'cb.noSal'))}${c.payoutText ? ' · ' + html(c.payoutText) : ''}`,
     c.schedule || c.shift ? `🕒 ${html([c.schedule, c.shift ? T('uz', 'shift.' + c.shift) : ''].filter(Boolean).join(' · '))}` : '',
-    (c.perkLabels || []).length ? `✅ ${html(c.perkLabels.join(' · '))}` : ''
+    (c.perkLabels || []).length ? `✅ ${html(c.perkLabels.join(' · '))}` : '',
+    // Ish beruvchi reytingi (services/employerRating)
+    employerOk ? T('uz', 'er.badgePost') : ''
   ];
   const list = (title, xs) => (xs || []).length ? `<b>${title}:</b>\n` + xs.slice(0, 3).map(d => '• ' + html(d)).join('\n') : '';
   return [
@@ -105,8 +107,9 @@ async function post(v, { appBase = process.env.APP_URL || '', now = new Date() }
   if (!claimed) return { ok: true, already: true, url: (v.channelPost || {}).url || '' };
 
   const client = await Client.findOne({ agencyId: v.agencyId, id: v.clientId }).lean();
+  const rating = (await require('./employerRating').forClients(v.agencyId, [v.clientId]))[v.clientId];
   try {
-    const msg = await tg.sendMessage(tg.platformToken(), chat, postText(claimed, client), {
+    const msg = await tg.sendMessage(tg.platformToken(), chat, postText(claimed, client, { employerOk: !!(rating && rating.ok) }), {
       parse_mode: 'HTML',
       reply_markup: { inline_keyboard: [[{ text: T('uz', 'jp.btn'), url: await botLink(claimed) }]] }
     });

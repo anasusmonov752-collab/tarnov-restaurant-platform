@@ -6,7 +6,7 @@
 <title>Mening profilim</title>
 <link rel="stylesheet" href="/css/th.css?v=2">  <!-- dizayn tizimi: ranglar, kunduz/tun -->
 <script src="/js/uz-date.js"></script>  <!-- o'zbekcha sana: brauzerda uz formati bo'lmasa -->
-<script src="/js/th-i18n.js?v=26"></script>  <!-- uz/ru lug'at (cb.*), server bilan bitta -->
+<script src="/js/th-i18n.js?v=27"></script>  <!-- uz/ru lug'at (cb.*), server bilan bitta -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="/js/th-viewer.js?v=2" defer></script>  <!-- rasmni to'liq ko'rish -->
 <style>
@@ -751,6 +751,14 @@ function render(p){
       <div class="pad" style="padding-top:9px"><div class="need">${esc(t(p.source === 'anketa' ? 'cb.fromAnk' : 'cb.fromRes'))}. ${esc(t('cb.workHint'))}</div></div>
     </div>` : ''}
 
+    ${p.ref && p.ref.code ? `<div class="card">
+      <div class="sec-h"><b>${esc(t('rf.title'))}</b></div>
+      <div class="pad" style="padding-top:6px">
+        <div style="font-size:14.5px;line-height:1.55">${esc(t('rf.text', { s: Number(p.ref.reward || 0).toLocaleString('ru-RU') }))}</div>
+        ${p.ref.invited ? `<div class="need" style="margin-top:6px">${esc(t('rf.stats', { a: p.ref.invited, b: p.ref.rewards }))}</div>` : ''}
+        <button class="btn" id="bRef" style="margin-top:12px">${esc(t('rf.share'))}</button>
+      </div></div>` : ''}
+
     <div class="card">
       <div class="sec-h"><b>${esc(t('cb.secLang'))}</b>
         <div class="lsw" id="lsw">${I18N.LANGS.map(l => `<button class="${l === LANG ? 'on' : ''}" data-l="${l}">${l.toUpperCase()}</button>`).join('')}</div></div>
@@ -758,6 +766,12 @@ function render(p){
     </div>
   </div>`;
   $('lsw').querySelectorAll('[data-l]').forEach(b => b.onclick = () => setLang(b.dataset.l));
+  // "Do'stingni taklif qil" — t.me/<bot>?start=f_<kod> (do'sti 30 kun ishlasa mukofot, services/placements)
+  if ($('bRef')) $('bRef').onclick = () => {
+    const link = `https://t.me/${p.bot || 'TalentHubUzBot'}?start=f_${p.ref.code}`;
+    const u = 'https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent(t('rf.shareTx'));
+    try { TG && TG.openTelegramLink ? TG.openTelegramLink(u) : window.open(u, '_blank'); } catch(e){ location.href = u; }
+  };
 
   // '.ed' (bo'lim sarlavhasi), '.gap' (yetishmagan maydon) va holat
   // chipi — hammasi data-e bilan bir xil oynani ochadi
@@ -922,11 +936,13 @@ function perksOf(v){
 }
 // Ishonch belgisi faqat haqiqat bo'lsa (server: forCandidate.trust)
 function trustTag(v){
+  // Ishchilar tasdiqlagan ish beruvchi (server: services/employerRating) — eng kuchli ishonch belgisi
+  const er = v.employerOk ? `<span class="tg2 ok">${esc(t('er.badge'))}</span>` : '';
   const d = v.trustDays === 0 ? t('cb.today') : v.trustDays === 1 ? t('cb.yesterday') : t('cb.daysAgo', { n: v.trustDays });
-  if (v.trust === 'verified') return `<span class="tg2 ok">${esc(t('cb.trVer', { d }))}</span>`;
-  if (v.trust === 'client') return `<span class="tg2 fresh">${esc(t('cb.trCl', { d }))}</span>`;
-  if (v.trust === 'posted') return `<span class="tg2 fresh">${esc(t('cb.trPost', { d }))}</span>`;
-  return v.freshDays != null ? `<span class="tg2 fresh">${esc(v.freshDays === 0 ? t('cb.frToday') : t('cb.frDays', { n: v.freshDays }))}</span>` : '';
+  if (v.trust === 'verified') return er + `<span class="tg2 ok">${esc(t('cb.trVer', { d }))}</span>`;
+  if (v.trust === 'client') return er + `<span class="tg2 fresh">${esc(t('cb.trCl', { d }))}</span>`;
+  if (v.trust === 'posted') return er + `<span class="tg2 fresh">${esc(t('cb.trPost', { d }))}</span>`;
+  return er + (v.freshDays != null ? `<span class="tg2 fresh">${esc(v.freshDays === 0 ? t('cb.frToday') : t('cb.frDays', { n: v.freshDays }))}</span>` : '');
 }
 const salLine = v => v.salaryText
   ? esc(v.salaryText).replace(/ (\/ \S+)$/, ' <small>$1</small>')

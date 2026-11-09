@@ -61,6 +61,9 @@ const CandidateSchema = new mongoose.Schema({
   // Sinov nomzodi (admin test rejimi): haqiqiy mijozlar qidiruvida chiqmaydi,
   // sanoqlarga kirmaydi; panelda "SINOV" belgisi bilan ko'rinadi
   isTest:  { type: Boolean, default: false },
+  // "Sizga mos ish" xabarlari (services/jobPost): oxirgisi va o'chirib qo'yganmi
+  jobAlertAt:   { type: Date, default: null },
+  jobAlertsOff: { type: Boolean, default: false },
   // Qadalgan "TalentHub" suhbatini oxirgi ochgan payt — o'qilmaganlar sanog'i (chat.supportUnread)
   supportSeenAt: { type: Date, default: null },
   status:  { type: String, default: 'new' },           // kanban bosqichi (VALID_STATUS)

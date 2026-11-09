@@ -388,7 +388,13 @@ const TelegramSchema = new mongoose.Schema({
   adminChatId:    { type: String, default: '' },  // javoblar shu chatga keladi
   adminLinkToken: { type: String, default: '' },  // adminni bog'lash, bir martalik
   enabled:        { type: Boolean, default: false },
-  connectedAt:    { type: Date, default: null }
+  connectedAt:    { type: Date, default: null },
+  // Vakansiyalar avtomatik chiqadigan kanal (services/jobPost): "@vakansiya_uz"
+  // yoki "-100…". Bot kanalda "xabar joylash" huquqli admin bo'lishi kerak.
+  jobChannel:      { type: String, default: '' },
+  jobChannelTitle: { type: String, default: '' },
+  jobChannelAuto:  { type: Boolean, default: true },   // false — faqat qo'lda "Kanalga joylash"
+  jobChannelSince: { type: Date, default: null }      // shu paytdan keyingi vakansiyalar o'zi chiqadi
 }, { _id: false });
 
 const RestaurantSchema = new mongoose.Schema({

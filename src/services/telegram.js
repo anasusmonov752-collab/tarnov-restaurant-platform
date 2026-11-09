@@ -97,6 +97,11 @@ async function sendMessage(token, chatId, text, opts = {}) {
   });
 }
 
+// Bot kanal/guruhda kim (administrator, can_post_messages) — services/jobPost
+function getChatMember(token, chatId, userId) {
+  return call(token, 'getChatMember', { chat_id: chatId, user_id: userId });
+}
+
 // Ovozli xabarni file_id bo'yicha qayta yuborish (shu botga kelgan fayl).
 // Arizachining ovozli tanishuvi mijozga — services/prescreen.
 async function sendVoice(token, chatId, fileId, opts = {}) {
@@ -252,7 +257,7 @@ async function platformUsername() {
 }
 
 module.exports = {
-  getMe, getChat, sendMessage, sendVoice, answerCallback, editMessageText, setChatMenuButton, resetChatMenuButton, sendChatAction,
+  getMe, getChat, getChatMember, sendMessage, sendVoice, answerCallback, editMessageText, setChatMenuButton, resetChatMenuButton, sendChatAction,
   setWebhook, ensureWebhook, deleteWebhook, getWebhookInfo, getFileBase64,
   deepLink, TelegramError, MAX_LEN,
   platformToken, platformSecret, platformUsername, isPlatformReady

@@ -15,6 +15,8 @@ const Application = require('../models/Application');
 const Candidate = require('../models/Candidate');
 const vac = require('../services/vacancy');
 const appLife = require('../services/appLife');
+const jobPost = require('../services/jobPost');
+const Restaurant = require('../models/Restaurant');
 const { publicBase } = require('../utils/publicBase');
 
 const router = express.Router();
@@ -129,6 +131,45 @@ router.post('/applications/:appId/:mark(seen|contacted)', guard, asyncHandler(as
   // Bog'lanildi — ko'rildi ham (ochmasdan qo'ng'iroq qilingan bo'lishi mumkin)
   if (field === 'contactedAt') await Application.updateOne({ agencyId, id: req.params.appId, agencySeenAt: null }, { $set: { agencySeenAt: new Date() } });
   res.json({ ok: true });
+}));
+
+// ══ KANAL (services/jobPost) — /:id dan OLDIN ═════════════════
+// Vakansiyalar avtomatik chiqadigan Telegram kanal. Bot kanalda "xabar
+// joylash" huquqli admin bo'lishi kerak — saqlashda tekshiriladi.
+router.get('/channel', guard, asyncHandler(async (req, res) => {
+  const ag = await Restaurant.findOne({ id: req.user.restaurantId }, 'telegram').lean();
+  const t = (ag && ag.telegram) || {};
+  const posted = await Vacancy.countDocuments({ agencyId: req.user.restaurantId, 'channelPost.postedAt': { $ne: null } });
+  res.json({ channel: t.jobChannel || '', title: t.jobChannelTitle || '', auto: t.jobChannelAuto !== false,
+    since: t.jobChannelSince || null, posted });
+}));
+
+router.put('/channel', guard, asyncHandler(async (req, res) => {
+  const b = req.body || {};
+  const set = { 'telegram.jobChannelAuto': b.auto !== false };
+  const raw = String(b.channel || '').trim();
+  if (!raw) {
+    Object.assign(set, { 'telegram.jobChannel': '', 'telegram.jobChannelTitle': '', 'telegram.jobChannelSince': null });
+  } else {
+    const r = await jobPost.checkChannel(raw);
+    if (!r.ok) return res.status(400).json({ error: r.error });
+    const ag = await Restaurant.findOne({ id: req.user.restaurantId }, 'telegram').lean();
+    const t = (ag && ag.telegram) || {};
+    Object.assign(set, { 'telegram.jobChannel': r.chatId, 'telegram.jobChannelTitle': r.title,
+      // Kanal yangi ulansa (yoki boshqasiga almashsa) — shu paytdan keyingi vakansiyalar o'zi chiqadi
+      'telegram.jobChannelSince': t.jobChannel === r.chatId && t.jobChannelSince ? t.jobChannelSince : new Date() });
+  }
+  await Restaurant.updateOne({ id: req.user.restaurantId }, { $set: set });
+  res.json({ ok: true });
+}));
+
+// Qo'lda: shu vakansiyani hozir kanalga (eski vakansiyalar uchun ham)
+router.post('/:id/channel-post', guard, asyncHandler(async (req, res) => {
+  const v = await Vacancy.findOne({ agencyId: req.user.restaurantId, id: req.params.id }).lean();
+  if (!v) return res.status(404).json({ error: 'Vakansiya topilmadi' });
+  const r = await jobPost.post(v, { appBase: publicBase(req) });
+  if (!r.ok) return res.status(400).json({ error: r.error });
+  res.json(r);
 }));
 
 // ── Bitta vakansiya ──

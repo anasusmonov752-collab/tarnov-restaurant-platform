@@ -858,6 +858,16 @@ async function handleCallback(cq, appBase) {
   // Mijoz hali topilmagan joyda — Telegram tili
   const cqLang = I18N.fromTelegram(cq.from && cq.from.language_code);
 
+  // ── "Sizga mos ish" xabarlarini o'chirish (services/jobPost) ──
+  if (data === 'ja:off') {
+    await require('../services/jobPost').alertsOff(chatId);
+    const cand = await Candidate.findOne({ tgChatId: chatId }, 'lang tgLang').lean();
+    const L = I18N.resolve(cand && cand.lang, (cand && cand.tgLang) || (cq.from && cq.from.language_code));
+    await done(T(L, 'jp.offOk'));
+    await tg.editMessageText(token, chatId, msgId, (cq.message.text || '') + '\n\n' + T(L, 'jp.offOk')).catch(() => {});
+    return;
+  }
+
   // ── Suhbat (services/interviews) va arizadan keyingi tekshiruv (services/prescreen) ──
   // Ikkalasi bir xil javob shaklini qaytaradi: {text, alert, edit, keyboard}
   if (data.startsWith('iv:') || data.startsWith('ps:')) {

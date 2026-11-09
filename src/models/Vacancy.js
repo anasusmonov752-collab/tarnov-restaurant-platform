@@ -57,6 +57,19 @@ const VacancySchema = new mongoose.Schema({
   // Sinov mijozining vakansiyasi — haqiqiy nomzodlarga ko'rinmaydi (pastdagi hook)
   isTest: { type: Boolean, default: false },
 
+  // Agentlik kanalidagi e'lon (services/jobPost). closedAt — vakansiya
+  // yopilgach postga "Yopildi" yozilgan.
+  channelPost: {
+    chatId:    { type: String, default: '' },
+    messageId: { type: Number, default: 0 },
+    url:       { type: String, default: '' },
+    postedAt:  { type: Date, default: null },
+    closedAt:  { type: Date, default: null }
+  },
+  // Bazadagi mos nomzodlarga "sizga mos ish" xabari (services/jobPost)
+  alertedAt: { type: Date, default: null },
+  alertedN:  { type: Number, default: 0 },
+
   // Qayerdan paydo bo'lgan: manual = mijoz/agentlik qo'lda yozgan,
   // search = bot qidiruvidan tanlov qilinganda o'zi yaratilgan
   // (services/vacancyAuto.js). search'da sarlavha shablondan yasaladi.

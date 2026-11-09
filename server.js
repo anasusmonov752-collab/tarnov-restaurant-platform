@@ -207,6 +207,9 @@ async function startServer() {
     // Arizadan keyingi tekshiruvga javob bermaganlarga bitta eslatma
     try { await require('./src/services/prescreen').tick(); }
     catch (e) { console.error('[PS] tick:', e.message); }
+    // Yangi vakansiyalar kanalga, yopilganlari "Yopildi" (services/jobPost)
+    try { await require('./src/services/jobPost').tick(); }
+    catch (e) { console.error('[JP] tick:', e.message); }
     finally { ivBusy = false; }
   }, 2 * 60 * 1000);
 

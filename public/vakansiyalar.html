@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="/css/th-app.css?v=2">
 <script src="/js/th-shell.js?v=4" defer></script>
 <script src="/js/th-viewer.js?v=2" defer></script>
-<script src="/js/th-i18n.js?v=22"></script>  <!-- afzalliklar ro'yxati serverniki bilan bir xil (PERK_KEYS) -->
+<script src="/js/th-i18n.js?v=23"></script>  <!-- afzalliklar ro'yxati serverniki bilan bir xil (PERK_KEYS) -->
 <style>
 :root{
   --bg:#EEF3FB; --ink:#16233A; --green:#0F2747; --green2:#0A1B33;
@@ -119,6 +119,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold)}
       <option value="paused">To'xtatilgan</option>
       <option value="closed">Yopilgan</option>
     </select>
+    <button class="btn" id="bCh" style="margin-right:8px">Kanal</button>
     <button class="btn" id="bAnk" style="margin-right:8px">Umumiy anketa havolasi</button>
     <button class="btn btn-p" id="bNew">+ Vakansiya</button>
   </div>
@@ -140,6 +141,34 @@ const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<'
 const dt = s => s ? new Date(s).toLocaleDateString('uz-UZ',{day:'2-digit',month:'short'}) : '—';
 
 function openMd(t, h){ $('mdT').textContent = t; $('mdB').innerHTML = h; $('ov').classList.add('on'); }
+
+// ── Vakansiyalar kanali (services/jobPost) ──
+// Bot kanalda "xabar joylash" huquqli admin bo'lishi kerak — server tekshiradi.
+async function channelForm(){
+  openMd('Vakansiyalar kanali', '<div class="empty">Yuklanmoqda...</div>');
+  let c;
+  try { c = await api('/api/vacancies/channel'); }
+  catch(e){ $('mdB').innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
+  $('mdB').innerHTML = `
+    <div style="font-size:13.5px;color:var(--muted);line-height:1.6;margin-bottom:14px">
+      E'lon qilingan vakansiya kanalga <b>o'zi chiqadi</b> (kunduzi, bir vaqtda 3 tagacha) — anketa tugmasi bilan,
+      restoran nomisiz. Bazadagi mos nomzodlarga bot o'zi xabar yozadi. Vakansiya yopilsa — postga «Yopildi».
+      <br><br><b>Avval:</b> kanal sozlamalari → Administratorlar → botni qo'shing, «Xabar joylash» huquqi bilan.</div>
+    <div class="fld"><label>Kanal</label><input type="text" id="chIn" value="${esc(c.channel)}" placeholder="@vakansiya_uz"></div>
+    ${c.title ? `<div style="font-size:13px;color:var(--muted);margin:-6px 0 12px">Ulangan: <b>${esc(c.title)}</b> · ${c.posted} ta e'lon joylangan</div>` : ''}
+    <label style="display:flex;gap:8px;align-items:center;font-size:14px;margin-bottom:16px;text-transform:none;letter-spacing:0">
+      <input type="checkbox" id="chAuto" ${c.auto ? 'checked' : ''} style="width:auto"> Yangi vakansiyalar o'zi chiqsin</label>
+    <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px">Kanal ulangan paytdan oldingi vakansiyalar o'zi chiqmaydi —
+      ularni ro'yxatda «Kanalga joylash» bilan chiqarasiz.</div>
+    <button class="btn btn-p" id="chSave" style="width:100%">Tekshirish va saqlash</button>`;
+  $('chSave').onclick = async () => {
+    $('chSave').disabled = true;
+    try {
+      await api('/api/vacancies/channel', { method:'PUT', body: JSON.stringify({ channel: $('chIn').value.trim(), auto: $('chAuto').checked }) });
+      toast('Saqlandi', 'success'); closeMd(); load();
+    } catch(e){ toast(e.message, 'error'); $('chSave').disabled = false; }
+  };
+}
 function closeMd(){ $('ov').classList.remove('on'); $('mdB').innerHTML = ''; }
 $('mdX').onclick = closeMd;
 $('ov').onclick = e => { if (e.target === $('ov')) closeMd(); };
@@ -188,6 +217,8 @@ async function load(){
         <td style="text-align:right;white-space:nowrap">
           <button class="btn btn-sm" data-app="${v.id}">Arizalar</button>
           <button class="btn btn-sm" data-ank="${v.id}">Anketa</button>
+          ${v.channelUrl ? `<a class="btn btn-sm" href="${esc(v.channelUrl)}" target="_blank" rel="noopener" title="${v.alertedN ? v.alertedN + ' ta mos nomzodga xabar ketgan' : ''}">Kanalda ↗</a>`
+            : !v.channelPosted && v.status === 'open' && v.listed && !v.isTest ? `<button class="btn btn-sm" data-chp="${v.id}">Kanalga joylash</button>` : ''}
           <button class="btn btn-sm" data-cf="${v.id}">Tasdiqlash</button>
           <button class="btn btn-sm" data-vf="${v.id}" title="Ish beruvchiga qo'ng'iroq qilib o'rin ochiqligini tasdiqlatdingizmi?">${v.verifiedAt ? 'Tekshiruvni olish' : 'Tekshirildi'}</button>
           <button class="btn btn-sm" data-ed="${v.id}">Tahrirlash</button>
@@ -200,6 +231,15 @@ async function load(){
     showAnketaLink(v.id, v.title);
   });
   $('list').querySelectorAll('[data-ed]').forEach(b => b.onclick = () => form(ROWS.find(x => x.id === b.dataset.ed)));
+  // Kanalga qo'lda (eski vakansiyalar uchun ham) — services/jobPost
+  $('list').querySelectorAll('[data-chp]').forEach(b => b.onclick = async () => {
+    if (!confirm('Vakansiya kanalga joylansinmi? Bazadagi mos nomzodlarga ham xabar boradi.')) return;
+    b.disabled = true;
+    try {
+      const r = await api(`/api/vacancies/${b.dataset.chp}/channel-post`, { method:'POST' });
+      toast(r.already ? 'Allaqachon joylangan' : `Kanalga chiqdi · ${r.alerted || 0} ta mos nomzodga xabar`, 'success'); load();
+    } catch(e){ toast(e.message, 'error'); b.disabled = false; }
+  });
   $('list').querySelectorAll('[data-cf]').forEach(b => b.onclick = async () => {
     b.disabled = true;
     try { await api(`/api/vacancies/${b.dataset.cf}/confirm`, { method:'POST' }); toast('Tasdiqlandi', 'success'); load(); }
@@ -384,6 +424,7 @@ function form(v){
     } catch(e){ toast(e.message, 'error'); $('fSave').disabled = false; }
   };
 }
+$('bCh').onclick = channelForm;
 $('bNew').onclick = () => {
   if (!CLIENTS.length) return toast('Avval mijoz yarating', 'error');
   form(null);

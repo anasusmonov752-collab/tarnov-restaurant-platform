@@ -9,7 +9,7 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>window.thViewerHostBack = true;</script>  <!-- orqaga tugmasi zanjiri onTgBack'da (rasm oynasi) -->
 <script src="/js/th-viewer.js?v=2" defer></script>
-<script src="/js/th-i18n.js?v=22"></script>
+<script src="/js/th-i18n.js?v=23"></script>
 <style>
 /* Ranglar — TalentHub dizayn tizimidan (css/th.css, iOS uslubi).
    Telegram'ning --tg-theme-* RANGLARI olinmaydi (avval shunday edi va
@@ -587,6 +587,10 @@ div.ac-row:active{background:none}
 .pk{border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-size:13.5px;
   padding:6px 12px;border-radius:99px;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .pk.on{background:var(--blue);border-color:transparent;color:#fff}
+.vp-chn{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;border:0;font:inherit;text-align:left;
+  background:var(--card);border-radius:18px;padding:13px 16px;margin-bottom:12px;cursor:pointer;color:var(--ink)}
+.vp-chn span{font-size:14px;color:var(--muted)}
+.vp-chn b{font-size:14px;color:var(--blue);white-space:nowrap}
 .ms{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center}
 .ms-sc{font-size:13px;font-weight:800;padding:4px 10px;border-radius:99px}
 .ms-sc.hi{background:var(--th-ok-soft,#e3f6ea);color:var(--ok,#1a7f37)}
@@ -1886,6 +1890,7 @@ async function showVacancy(id){
       <div class="vp-sal ${v.salaryText ? '' : 'no'}">${esc(v.salaryText || t('vac.noSalary'))}</div>
     </div>
     ${v.hook ? `<div class="vp-hook">${esc(v.hook)}</div>` : ''}
+    ${v.channelUrl ? `<button class="vp-chn" data-chn="${esc(v.channelUrl)}"><span>${esc(t('jp.mPosted'))}${v.alertedN ? ' · ' + esc(t('jp.mAlerted', { n: v.alertedN })) : ''}</span><b>${esc(t('jp.mSee'))}</b></button>` : ''}
     <div class="vp-sec vx-fn">${funnelHtml(f)}${appsBtn(v.id, f)}</div>
     <div class="vx-sh"><h3>${esc(t('vd.cands', { n: d.items.length }))}</h3></div>
     <div id="vdItems">${d.items.length ? d.items.map(candHtml).join('')
@@ -1901,6 +1906,11 @@ async function showVacancy(id){
   wireCards($('vdItems'), () => showVacancy(id));
   $('vxBody').querySelectorAll('[data-apps]').forEach(b => b.onclick = () => showApps(id));
   $('vdMenu').onclick = () => vacMenu(id, v);
+  // Kanaldagi e'lon (services/jobPost) — Telegram o'zida ochadi
+  $('vxBody').querySelectorAll('[data-chn]').forEach(b => b.onclick = () => {
+    const u = b.dataset.chn;
+    try { TG && TG.openTelegramLink ? TG.openTelegramLink(u) : window.open(u, '_blank'); } catch(e){ location.href = u; }
+  });
   $('vxMore').onclick = () => vacMenu(id, v);
   $('vxFoot').classList.toggle('hide', v.status !== 'open');
   $('vxMatch').disabled = false;

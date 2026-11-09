@@ -166,7 +166,11 @@ function full(v, extra = {}, lang) {
     source: v.source || 'manual', listed: v.listed !== false,
     confirmedAt: v.confirmedAt, stale: isStale(v),
     autoNotify: v.autoNotify,
-    createdAt: v.createdAt, closedAt: v.closedAt
+    createdAt: v.createdAt, closedAt: v.closedAt,
+    // Agentlik kanalidagi e'lon (services/jobPost) — yopilgan bo'lsa havola berilmaydi
+    channelUrl: v.channelPost && v.channelPost.url && !v.channelPost.closedAt ? v.channelPost.url : '',
+    channelPosted: !!(v.channelPost && v.channelPost.postedAt),
+    alertedN: v.alertedN || 0
   }, extra);
 }
 

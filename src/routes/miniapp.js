@@ -1264,7 +1264,9 @@ router.get('/candidates/:id', clientGuard, asyncHandler(async (req, res) => {
   // Bir xil yozuv: lavozim rol bo'yicha, "Toshkent", tillar o'zbekcha —
   // rezyume hh'dan ruscha kelsa ham mijozga aralash til chiqmasin
   const same = { roleText: roleText(c, req.lang), location: placeLabel(c.location, req.lang),
-                 languages: langsLabel(c.languages, req.lang) };
+                 languages: langsLabel(c.languages, req.lang),
+                 // Ovozli rezyume bormi (fayl id'si chiqmaydi — POST .../voice yuboradi)
+                 voice: !!(c.voiceIntro && c.voiceIntro.fileId), voiceDur: (c.voiceIntro && c.voiceIntro.dur) || 0 };
   if (open) return res.json(Object.assign(contactView.resumeOf(c), same, { open: true }));
 
   await assignCodes(agencyId, [c]);
@@ -1273,6 +1275,21 @@ router.get('/candidates/:id', clientGuard, asyncHandler(async (req, res) => {
   delete a.fitScore; delete a.fitReason;
   a.rel = (await reliability.forCandidates(agencyId, [c.id]))[c.id] || null;
   res.json(Object.assign(a, same, { open: false }));
+}));
+
+// Ovozli rezyume — mijozning Telegram chatiga (nomzod ovozli anketada rozilik bergan:
+// "ovozli xabarim ish beruvchilarga ko'rsatiladi"). Rezyume qoidasi bilan bir xil.
+router.post('/candidates/:id/voice', clientGuard, asyncHandler(async (req, res) => {
+  const agencyId = req.client.agencyId, id = req.params.id;
+  const known = await contactView.isOpenPair({ agencyId, clientId: req.client.id, candidateId: id })
+    || await clientKnows(agencyId, req.client.id, id);
+  if (!known) return res.status(404).json({ error: 'Nomzod topilmadi' });
+  const c = await Candidate.findOne({ restaurantId: agencyId, id }, 'publicCode voiceIntro').lean();
+  if (!c || !c.voiceIntro || !c.voiceIntro.fileId) return res.status(400).json({ error: 'Ovozli tanishuv yo\'q' });
+  if (!req.client.tgChatId) return res.status(400).json({ error: 'Telegram ulanmagan' });
+  await tg.sendVoice(tg.platformToken(), req.client.tgChatId, c.voiceIntro.fileId,
+    { caption: tl(req, 'rz.voiceCaption', { c: c.publicCode || '' }) });
+  res.json({ ok: true });
 }));
 
 // ── Nomzod fotosi (chat, rezyume, arizalar uchun) ──

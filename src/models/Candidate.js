@@ -64,6 +64,13 @@ const CandidateSchema = new mongoose.Schema({
   // "Sizga mos ish" xabarlari (services/jobPost): oxirgisi va o'chirib qo'yganmi
   jobAlertAt:   { type: Date, default: null },
   jobAlertsOff: { type: Boolean, default: false },
+  // Ovozli rezyume (services/voiceIntake) — Telegram file_id; mijoz chatiga yuboriladi
+  voiceIntro: {
+    fileId: { type: String, default: '' },
+    dur:    { type: Number, default: 0 }
+  },
+  // Ovoz bilan muloqot qiladi (ovozli xabar yuborgan) — AI ovozli javob (services/tts)
+  prefersVoice: { type: Boolean, default: false },
   // Qadalgan "TalentHub" suhbatini oxirgi ochgan payt — o'qilmaganlar sanog'i (chat.supportUnread)
   supportSeenAt: { type: Date, default: null },
   status:  { type: String, default: 'new' },           // kanban bosqichi (VALID_STATUS)

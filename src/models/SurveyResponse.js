@@ -41,7 +41,18 @@ const SurveyResponseSchema = new mongoose.Schema({
   // qachon; remindStop — botni bloklagan, boshqa yozilmaydi
   reminders:   { type: Number, default: 0 },
   remindedAt:  { type: Date, default: null },
-  remindStop:  { type: Boolean, default: false }
+  remindStop:  { type: Boolean, default: false },
+
+  // Ovozli anketa (services/voiceIntake): nomzod gapiradi, AI javoblarni
+  // to'ldiradi, yetishmaganini bot chatda bittadan so'raydi. Oxiri — o'sha
+  // survey.finalize (dublikat, ariza, telefon qoidalari bitta).
+  // vstep: consent -> wait (ovoz kutilmoqda) -> review (AI tushungani) -> chase (yetishmagan savol)
+  mode:        { type: String, default: '' },      // '' | 'voice'
+  vstep:       { type: String, default: '' },
+  vAsk:        { type: String, default: '' },      // hozir so'ralayotgan savol id
+  vSummary:    { type: String, default: '' },      // AI qisqa tavsifi (rezyumedagi "o'zi haqida")
+  voiceFileId: { type: String, default: '' },      // ovozli rezyume (mijoz eshitadi)
+  voiceDur:    { type: Number, default: 0 }
 });
 
 SurveyResponseSchema.index({ agencyId: 1, id: 1 }, { unique: true });

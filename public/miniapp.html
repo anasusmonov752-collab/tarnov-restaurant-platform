@@ -9,7 +9,7 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>window.thViewerHostBack = true;</script>  <!-- orqaga tugmasi zanjiri onTgBack'da (rasm oynasi) -->
 <script src="/js/th-viewer.js?v=2" defer></script>
-<script src="/js/th-i18n.js?v=25"></script>
+<script src="/js/th-i18n.js?v=26"></script>
 <style>
 /* Ranglar — TalentHub dizayn tizimidan (css/th.css, iOS uslubi).
    Telegram'ning --tg-theme-* RANGLARI olinmaydi (avval shunday edi va
@@ -3037,11 +3037,19 @@ async function showResume(id){
         + (r.phone ? '<a href="tel:' + esc(r.phone) + '">&#128222; ' + esc(r.phone) + '</a>' : '<span>' + esc(t('rz.noPhone')) + '</span>')
         + (r.email ? '<span>&#9993;&#65039; ' + esc(r.email) + '</span>' : '') + '</div>'
       : '<div class="rs-ct" style="color:var(--muted)"><span>&#128274; ' + esc(t('rz.locked')) + '</span></div>')
+    + (r.voice ? '<button class="cd-btn ms-v" id="rzVoice">' + MIC_IC + esc(t('rz.voice')) + (r.voiceDur ? ' · ' + mmss(r.voiceDur) : '') + '</button>' : '')
     + (about ? '<div class="rs-sec">' + aboutH + '</div><div class="rs-tx">' + esc(about) + '</div>' : '')
     + (work ? '<div class="rs-sec">' + esc(t('rz.work')) + '</div>' + work : '')
     + (info ? '<div class="rs-sec">' + esc(t('rz.info')) + '</div>' + info : '')
     + ((r.skills || []).length ? '<div class="rs-sec">' + esc(t('rz.skills')) + '</div><div class="rs-chips">'
       + r.skills.map(s => '<span>' + esc(s) + '</span>').join('') + '</div>' : '');
+  // Ovozli rezyume (services/voiceIntake) — mijozning Telegram chatiga
+  if ($('rzVoice')) $('rzVoice').onclick = async () => {
+    $('rzVoice').disabled = true;
+    try { await api('/api/ma/candidates/' + encodeURIComponent(id) + '/voice', { method: 'POST', body: '{}' }); haptic(); showMsg(t('ms.voiceSent')); }
+    catch(e){ showMsg(e.message); }
+    $('rzVoice').disabled = false;
+  };
 }
 
 // ── Qizil nuqta: o'qilmagan xabarlar ──

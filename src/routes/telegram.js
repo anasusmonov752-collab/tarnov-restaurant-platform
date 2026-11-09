@@ -125,7 +125,14 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
     // ── Kontakt: anketadagi "Raqamni ulashish" (Mini App requestContact) ──
     if (msg.contact) {
       await handleContact(msg, chatId);
+      // Ovozli anketada telefon so'ralayotgan bo'lsa — keyingi savol
+      await require('../services/voiceIntake').afterContact(chatId, msg.from, publicBase(req)).catch(e => console.error('[VI] kontakt:', e.message));
       return;
+    }
+    // Ovozli anketa ochiq bo'lsa — ovoz, matn va rasm shu yerga (services/voiceIntake)
+    if (!text.startsWith('/') && (voice || text || msg.photo)) {
+      const vi = require('../services/voiceIntake');
+      if (await vi.onMessage({ msg, chatId, appBase: publicBase(req) })) return;
     }
     if (!text && !voice) return;
     const token = tg.platformToken();
@@ -391,16 +398,23 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
       }
     }
 
-    // Nomzod ovozli xabar yuborishi mumkin — uni matnga aylantirmaymiz
-    // (bu adminning qidiruvi emas), lekin adminga xabar beramiz.
-    const body = text || '[ovozli xabar — Telegramda tinglang]';
+    // Ovozli xabar — AI rekruter: matnga aylantiriladi va agent javob beradi
+    // (services/voiceIntake.transcribe). Nomzod ovozni afzal ko'radi — javob
+    // ovoz bilan ham (services/tts, AISHA_API_KEY bo'lsa).
+    let said = text;
+    if (!said && voice) {
+      if (!cand.prefersVoice) Candidate.updateOne({ _id: cand._id }, { $set: { prefersVoice: true } }).catch(() => {});
+      cand.prefersVoice = true;
+      said = await require('../services/voiceIntake').transcribe(voice, cand.restaurantId).catch(() => '');
+    }
+    const body = said ? (voice && !text ? '🎤 ' + said : said) : '[ovozli xabar — Telegramda tinglang]';
 
     // ── Agent: profil o'zgarishini o'zi qabul qiladi ──
     // Lekin SIZ nomzod bilan yozishayotgan bo'lsangiz aralashmaydi:
     // oxirgi sutkada javob yozgan bo'lsangiz, bu tirik suhbat va
     // bot o'rtaga tushsa chalkashlik bo'ladi.
     let handled = false;
-    if (text) {
+    if (said) {
       // Bot siz bilan nomzod o'rtasidagi TIRIK suhbatga aralashmasligi
       // kerak. Lekin "tirik" — soatlar masalasi, sutka emas: avval 24
       // soat edi va bot deyarli har doim jim qolardi.
@@ -424,12 +438,15 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
       if (!recentReply) {
         try {
           await tg.sendChatAction(token, chatId).catch(() => {});
-          const out = await agent.handleCandidate({ cand, chatId, text });
+          const out = await agent.handleCandidate({ cand, chatId, text: said });
 
           // Javob HAR DOIM ketadi. Avval `if (out.text)` edi — model bo'sh
           // matn qaytarsa nomzod jim qolardi va "bot o'lgan" deb o'ylardi.
           await tg.sendMessage(token, chatId,
             out.text || 'Qabul qildim, HR javob beradi.');
+          if (cand.prefersVoice && out.text) {
+            await require('../services/tts').speak(chatId, out.text, I18N.resolve(cand.lang, cand.tgLang)).catch(() => {});
+          }
           handled = !out.forward;
 
           if (out.changed.length && rest.telegram && rest.telegram.adminChatId) {
@@ -453,7 +470,7 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
     if (handled) return;
 
     await relay.receiveFromCandidate(rest, cand, body, {
-      kind: text ? 'text' : 'system', tgMessageId: msg.message_id, sentBy: 'telegram'
+      kind: said ? 'text' : 'system', tgMessageId: msg.message_id, sentBy: 'telegram'
     });
 
   } catch (e) {
@@ -603,9 +620,11 @@ async function startSurvey(msg, chatId, ank, appBase) {
   }
 
   const text = await hookText({ lang, from: msg.from, agencyId: s.agencyId, v, closed });
-  await tg.sendMessage(token, chatId, text, { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[
-    { text: T(lang, 'ank.botOpen'), web_app: { url: `${appBase}/anketa.html?r=${r.id}` } }
-  ]] } });
+  // Ikki yo'l: Mini App anketasi yoki ovozli rezyume (services/voiceIntake) — bitta yozuv
+  await tg.sendMessage(token, chatId, text, { parse_mode: 'HTML', reply_markup: { inline_keyboard: [
+    [{ text: T(lang, 'ank.botOpen'), web_app: { url: `${appBase}/anketa.html?r=${r.id}` } }],
+    [require('../services/voiceIntake').entryButton(r, lang)]
+  ] } });
 }
 
 // ── Birinchi xabar: odam botni nega ochishi kerakligini bilsin ──
@@ -870,10 +889,11 @@ async function handleCallback(cq, appBase) {
 
   // ── Suhbat (services/interviews) va arizadan keyingi tekshiruv (services/prescreen) ──
   // Ikkalasi bir xil javob shaklini qaytaradi: {text, alert, edit, keyboard}
-  if (data.startsWith('iv:') || data.startsWith('ps:') || data.startsWith('pl:')) {
+  if (data.startsWith('iv:') || data.startsWith('ps:') || data.startsWith('pl:') || data.startsWith('vi:')) {
     try {
-      const svc = require(data.startsWith('iv:') ? '../services/interviews' : data.startsWith('pl:') ? '../services/placements' : '../services/prescreen');
-      const r = await svc.handleCallback({ data, chatId, appBase });
+      const SVC = { 'iv:': 'interviews', 'ps:': 'prescreen', 'pl:': 'placements', 'vi:': 'voiceIntake' };
+      const svc = require('../services/' + SVC[data.slice(0, 3)]);
+      const r = await svc.handleCallback({ data, chatId, appBase, from: cq.from });
       await done(r.text || '', !!r.alert);
       if (r.edit) {
         await tg.editMessageText(token, chatId, msgId, r.edit,

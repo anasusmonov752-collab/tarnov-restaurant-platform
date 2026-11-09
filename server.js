@@ -193,6 +193,8 @@ async function startServer() {
   // amal qiladi. Bir marta shu sabab inline tugmalar jim turgan edi.
   // Kichik ma'lumot ko'chirishlari (takror xavfsiz)
   require('./src/services/migrations').run().catch(e => console.error('✦ Ko\'chirish xatosi:', e.message));
+  // AI ovozi kaliti ishlayaptimi — natija logda "[TTS]" (services/tts)
+  require('./src/services/tts').selfCheck().catch(() => {});
 
   // Suhbat eslatmalari va "keldimi?" (services/interviews). Soatlik GitHub
   // cron'i kech qoladi (34 daqiqagacha) — "2 soat oldin" eslatmasi uchun

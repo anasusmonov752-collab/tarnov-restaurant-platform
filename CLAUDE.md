@@ -757,7 +757,13 @@ ovozi matnga aylanib agentga boradi; `prefersVoice` bo'lsa javob ovoz bilan (`se
 Aisha TTS `back.aisha.group`, `AISHA_API_KEY` bo'lmasa o'chiq, `AI_VOICE=0` — o'chirish; WAV ->
 OGG ffmpeg-static). Thanks/agentlik xabari — `services/anketaDone.js` (anketa va ovoz uchun bitta).
 Mijozning ovozli vakansiyasi QURILMAGAN (Anas: hozircha kerak emas). `test/voiceintake.test.js`.
-**Telegramda HALI SINALMAGAN; AISHA_API_KEY Render'da yo'q.**
+KALIT (2026-11-10, `3beed7b`): Aisha kalitini endi VoiceLab beradi (voicelab.uz -> Разработчик ->
+Ключи API, `vlk_...`) — BOSHQA API: `api.voicelab.uz/v1/tts`, Bearer, JSON, `voice_id` `/v1/voices`
+dan (yoki env `VOICELAB_VOICE_UZ`/`_RU`), 202 bo'lsa navbat kutiladi; prefiks bo'yicha tanlanadi.
+Kalit ruxsatlari: Преобразование текста в речь — Доступ, Голоса — Читать (boshqasi kerak emas;
+faqat "Писать" bilan 403 insufficient_scope). Kalit Render RestoPro xizmatida `AISHA_API_KEY`.
+Server ishga tushganda `tts.selfCheck` — Render Logs'da `[TTS] tayyor` / `[TTS] ISHLAMAYAPTI`.
+JONLI: o'zbekcha sintez + OGG ishladi. Ruscha ovoz va Telegramdagi ovozli javob HALI SINALMAGAN.
 
 **O'SISH FUNKSIYALARI — DEPLOY QILINDI** (2026-11-10, `9bcc29e`):
 - MAOSH TAHLILI `services/market.js`: nomzodlar kutgan maosh (`parseMoney`, 1–50 mln) va ochiq

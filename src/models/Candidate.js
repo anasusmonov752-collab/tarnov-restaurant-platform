@@ -19,12 +19,25 @@ const WorkSchema = new mongoose.Schema({
   description: { type: String, default: '' }   // shu ish joyidagi majburiyatlar (rezyumeda yozilgani)
 }, { _id: false });
 
+// Tahrirlanadigan xom qator (anketa javobi): joy, lavozim kaliti, muddat
+// oralig'i. periodText/desc — rezyumedan kelgan asl muddat va vazifalar:
+// nomzod boshqa maydonni o'zgartirganda ular yo'qolmasin.
+const WorkRawSchema = new mongoose.Schema({
+  place:      { type: String, default: '' },
+  role:       { type: String, default: '' },
+  other:      { type: String, default: '' },
+  dur:        { type: String, default: '' },
+  periodText: { type: String, default: '' },
+  desc:       { type: String, default: '' }
+}, { _id: false });
+
 const CandidateSchema = new mongoose.Schema({
   id:           { type: String, required: true },     // uuid
   restaurantId: { type: String, required: true },
 
   photo:             { type: String, default: '' },   // ixtiyoriy avatar (base64 dataURL) — list'da qaytarilmaydi
   hasPhoto:          { type: Boolean, default: false },// foto bor-yo'qligi (yengil list uchun)
+  photoAt:           { type: Date, default: null },   // oxirgi o'zgargan vaqt (rasm havolasida ?v= — kesh yangilansin)
 
   // ── AI ajratib olgan maydonlar ──
   fullName:          { type: String, default: '' },
@@ -38,6 +51,11 @@ const CandidateSchema = new mongoose.Schema({
   experienceMonths:  { type: Number, default: 0 },
   experienceSummary: { type: String, default: '' },
   workHistory:       { type: [WorkSchema], default: [] }, // ish tarixi (kompaniya/lavozim/muddat)
+  // Anketa/kabinet javobining XOM ko'rinishi — tahrir oynasi shundan
+  // to'ldiriladi (workHistory ko'rsatish uchun matnga aylantirilgan).
+  // services/survey.js: cleanWork -> workSet -> workToHistory.
+  workRaw:           { type: [WorkRawSchema], default: [] },
+  workNone:          { type: Boolean, default: false },  // "tajribam yo'q" deb BELGILAGAN (bo'sh ro'yxatdan farqli)
   shift:             { type: String, default: '' },   // kunduzgi | kechki | ikkalasi
   fitScore:          { type: Number, default: 0 },    // AI moslik bahosi 0-5
   fitReason:         { type: String, default: '' },   // moslik sababi (qisqa, UZ)

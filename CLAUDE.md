@@ -794,6 +794,37 @@ Ovoz NOMI bo'yicha tanlanadi (`PREFER`: uz Gulnoza/Sardor/Lola, ru Alina/Vera; e
   Nomzod kabinetida smenalar ro'yxati YO'Q — faqat bot.
 `test/growth.test.js`. **Telegramda HALI SINALMAGAN.**
 
+**NOMZOD KABINETIDA ISH TAJRIBASI VA FOTO TAHRIRI** (2026-11-13, CI 143/143):
+anketani eski shaklda to'ldirganlar va hh nomzodlarida ish tarixini kabinetdan
+to'ldirib bo'lmasdi — filtr uchun ma'lumot yo'q edi. Profilim → "Ish tarixi" →
+Tahrirlash: anketadagi rezyume kartalari oynasi (joy → lavozim → muddat, uch
+qadam BITTA pastki oynada almashadi; Telegram "orqaga" avval qadamni qaytaradi,
+keyin oynani yopadi), "Hali tajribam yo'q", qatorni o'chirish. QOIDA YAGONA —
+`services/survey.js`: `cleanWork` (tekshirish) → `workSet` (maydonlar) →
+`workToHistory`; anketa savoli ham shu yo'ldan o'tadi. Tajriba yillari
+ro'yxatdan qayta hisoblanadi, lekin KAMAYMAYDI (rezyumedagi qiymat saqlanadi),
+oylar — oraliqlarning pastki chegarasi. Nomzod O'ZI yozgan "o'zim haqimda"
+matni ustidan yozilmaydi (`isAutoSummary`); bu qoida endi faqat serverda —
+javobdagi `aboutAuto` (kabinetdagi nusxa `source==='anketa'` ga bog'liq edi,
+hh nomzodida xato ishlardi). Rezyumedan kelgan vazifalar matni va asl muddat
+("2019-2021") tahrirda yo'qolmaydi (`workRaw.desc/periodText`; muddat o'zgarsa
+standart yozuv). hh qatorlari oynaga `historyToWork` bilan tiklanadi (lavozim —
+`guessRole`, muddat — `durFromPeriod`: "2019-2021", "2 yil", "8 месяцев");
+tanib bo'lmasa kartada "Muddatni tanlang" va Saqlash o'chiq turadi. Xom javob
+(`Candidate.workRaw`, `workNone`) faqat JORIY ish tarixini bergan bo'lsa
+ishlatiladi — agentlik paneldan tarixni o'zgartirsa oyna yangisidan tiklanadi
+(`survey.workRows`). Rezyumeda 3 tadan ko'p ish joyi bo'lsa tahrirda
+yo'qolmaydi (`cleanWork {max}`). Foto: kartadagi kamera tugmasi → tanlash /
+o'chirish (brauzerda 800px, JPEG 80%; server `cleanPhoto` — anketa savoli bilan
+bitta qoida); `Candidate.photoAt` rasm havolasida `?v=` bo'lib ketadi, aks holda
+soatlik kesh eski rasmni ko'rsatardi. To'ldirilganlik ko'rsatkichiga ish tajribasi
+(14) va foto (9) qo'shildi. Anketada "Tajribam yo'q" endi eski ish tarixini ham
+tozalaydi (ilgari kartada "Tajribasiz" yozuvi ostida ish joylari qolardi).
+Lug'atda yetishmagan `ank.w.none` qo'shildi (panelda "ank.w.none" matni chiqardi).
+`test/candprofile.test.js`. Lokal brauzerda (Chromium, soxta API) oqimlar
+tekshirildi: qo'shish, tahrir, o'chirish, "tajribam yo'q", muddatsiz hh qatori,
+uz/ru, kunduz/tun, orqaga zanjiri. **Telegramda nomzod sifatida HALI SINALMAGAN.**
+
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
 O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda

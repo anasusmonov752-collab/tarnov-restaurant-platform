@@ -32,6 +32,7 @@ const { publicBase } = require('../utils/publicBase');
 const { phoneKey } = require('../utils/candidateKeys');
 const appLife = require('../services/appLife');
 const profileStyle = require('../services/profileStyle');
+const survey = require('../services/survey');
 const I18N = require('../../public/js/th-i18n');
 
 const router = express.Router();
@@ -106,10 +107,19 @@ function profileOf(c) {
     workHistory: (c.workHistory || []).map(w => ({
       company: w.company, position: w.position, period: w.period
     })),
+    // Tahrir oynasi uchun xom qatorlar (anketadagi savol bilan bir xil shakl)
+    work: survey.workRows(c),
+    workNone: !!c.workNone,
+    maxJobs: Math.max(survey.MAX_JOBS, (c.workHistory || []).length),
     hasPhoto: !!c.hasPhoto,
+    photoAt: c.photoAt ? +new Date(c.photoAt) : 0,
     phoneVerified: !!c.phoneVerifiedAt,   // ism yonidagi tasdiq belgisi
     style: profileStyle.view(c),
-    source: c.source,                 // anketa nomzodida tajriba yozuvi tizimniki (profil.html autoSummary)
+    source: c.source,
+    // "O'zingiz haqingizda" matnini TIZIM yozganmi (anketa yoki ish tarixi
+    // yangilanganda) — qoida bitta joyda: services/survey.isAutoSummary.
+    // Shunday bo'lsa kabinet uni "o'zi yozgan matn" sifatida ko'rsatmaydi.
+    aboutAuto: survey.isAutoSummary(c),
     jobStatus: c.jobStatus,
     sanitaryBook: c.sanitaryBook,
     sanitaryBookUntil: c.sanitaryBookUntil,
@@ -124,13 +134,17 @@ function profileOf(c) {
 const WEIGHTS = [
   ['fullName',          12],
   ['phone',             18],
-  ['desiredPosition',   12],
-  ['location',          10],
-  ['age',                6],
-  ['shift',              8],
-  ['salaryExpectation',  8],
-  ['experienceSummary', 10],
-  ['languages',          8]
+  ['desiredPosition',   10],
+  ['location',           8],
+  ['age',                5],
+  ['shift',              7],
+  ['salaryExpectation',  7],
+  // Ish tajribasi va foto — restoran aynan shularga qaraydi (2026-11-13):
+  // "rezyumeda deyarli hech narsa yo'q, filtr qilib bo'lmaydi"
+  ['work',              14],
+  ['photo',              9],
+  ['experienceSummary',  6],
+  ['languages',          6]
   // Sanitar kitobcha hozircha hisobga olinmaydi — O'zbekistonda
   // amalda har doim ham talab qilinmayapti. Maydon modelda qoldi,
   // kerak bo'lsa shu ro'yxatga qaytariladi.
@@ -144,6 +158,9 @@ function completeness(c) {
     let filled;
     if (k === 'languages') filled = (c.languages || []).length > 0;
     else if (k === 'sanitaryBook') filled = !!c.sanitaryBook;
+    // "Tajribam yo'q" ham javob: to'ldirilgan hisoblanadi
+    else if (k === 'work') filled = !!c.workNone || (c.workHistory || []).length > 0;
+    else if (k === 'photo') filled = !!c.hasPhoto;
     else filled = !!c[k];
     if (filled) got += w; else missing.push(k);
   }
@@ -262,6 +279,52 @@ router.patch('/me', guard, asyncHandler(async (req, res) => {
   await c.save();
 
   res.json({ ok: true, profile: profileOf(c) });
+}));
+
+// ── Ish tajribasi (rezyume kartalari) ──
+// Anketadagi savol bilan BITTA qoida — services/survey.js:
+// cleanWork (tekshirish) -> workSet (maydonlar). Tajriba yillari va oylari
+// ro'yxatdan qayta hisoblanadi; nomzod o'zi yozgan "o'zim haqimda" matni
+// saqlanadi (workSet → isAutoSummary).
+router.put('/work', guard, asyncHandler(async (req, res) => {
+  const c = req.cand;
+  const raw = (req.body || {}).jobs;
+  let jobs;
+  try {
+    // max: rezyumeda 3 tadan ko'p ish joyi bo'lsa tahrirda yo'qolmasin
+    jobs = survey.cleanWork(raw === '' ? [] : raw, { max: (c.workHistory || []).length });
+  } catch (e) {
+    return res.status(400).json({ error: I18N.t(req.lang, 'ank.err.work'), code: e.code || 'work' });
+  }
+  const set = survey.workSet(c, jobs === '' ? [] : jobs);
+  set.updatedAt = new Date();
+  if (!c.jobStatusAt) set.jobStatusAt = new Date();
+  await Candidate.updateOne({ _id: c._id }, { $set: set });
+  c.set(set);
+  res.json({ ok: true, profile: profileOf(c) });
+}));
+
+// ── Foto ──
+// Brauzer 800px gacha kichraytirib JPEG yuboradi; qoida anketa savoli
+// bilan bir xil (survey.cleanPhoto). photoAt — rasm havolasidagi ?v=:
+// GET /photo javobi bir soat keshlanadi, aks holda eski rasm turib qolardi.
+router.put('/photo', guard, asyncHandler(async (req, res) => {
+  const c = req.cand;
+  let photo;
+  try { photo = survey.cleanPhoto((req.body || {}).photo); }
+  catch (e) { return res.status(400).json({ error: I18N.t(req.lang, 'ank.err.photo'), code: 'photo' }); }
+  const at = new Date();
+  await Candidate.updateOne({ _id: c._id }, { $set: { photo, hasPhoto: true, photoAt: at, updatedAt: at } });
+  c.set({ photo, hasPhoto: true, photoAt: at });
+  res.json({ ok: true, hasPhoto: true, photoAt: +at });
+}));
+
+router.delete('/photo', guard, asyncHandler(async (req, res) => {
+  const c = req.cand;
+  const at = new Date();
+  await Candidate.updateOne({ _id: c._id }, { $set: { photo: '', hasPhoto: false, photoAt: at, updatedAt: at } });
+  c.set({ photo: '', hasPhoto: false, photoAt: at });
+  res.json({ ok: true, hasPhoto: false, photoAt: +at });
 }));
 
 // ══ ISH O'RINLARI ════════════════════════════════════════════

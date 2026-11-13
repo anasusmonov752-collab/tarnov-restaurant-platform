@@ -18,7 +18,7 @@ const Vacancy = require('../models/Vacancy');
 const applications = require('./applications');
 const applyReveal = require('./applyReveal');
 const { phoneKey } = require('../utils/candidateKeys');
-const { ROLES, isValidRole } = require('../data/roles');
+const { ROLES, isValidRole, guessRole } = require('../data/roles');
 const I18N = require('../../public/js/th-i18n');
 
 // ── E'lon manbalari (havoladagi kanal) ──
@@ -511,13 +511,12 @@ function checkAnswer(q, value) {
       if (!applyReveal.validPhone(value)) err('phone');
       return normPhone(value);
     case 'photo':
-      if (!/^data:image\/(jpeg|png|webp);base64,/.test(String(value)) || String(value).length > 1500000) err('photo');
-      return value;
+      return cleanPhoto(value);
     case 'consent':
       if (value !== true) err('consent');
       return true;
     case 'work':
-      return checkWork(q, value, err);
+      return cleanWork(value, { required: q.required });
     default:
       err('type');
   }
@@ -526,12 +525,21 @@ function checkAnswer(q, value) {
 // Ish tajribasi: 'none' (tajribasi yo'q) yoki 1–3 ish joyi { place, role, dur }.
 // Ataylab sodda (Anas, 2026-10-23): ko'k yoqa nomzodi oy/yil va vazifalarni
 // to'ldirmaydi — joy, lavozim va muddat oralig'i ish beruvchiga yetarli.
+//
+// QOIDA YAGONA: anketa (checkAnswer 'work') ham, nomzod kabineti
+// (PUT /api/cand/work) ham shu funksiyalardan o'tadi — tekshirish
+// (cleanWork), maydonlarga yozish (workFields) va tahrir uchun qaytarish
+// (historyToWork) bitta joyda.
 const MAX_JOBS = 3;
-function checkWork(q, value, err) {
+function workErr(code) { const e = new Error(code); e.code = code; throw e; }
+function cleanWork(value, opts = {}) {
+  // Kabinetda rezyumeda 3 tadan ko'p ish joyi bo'lishi mumkin — tahrir
+  // qilganda ular jimgina yo'qolmasin (opts.max = bordi-yu nechta bo'lsa)
+  const max = Math.max(MAX_JOBS, +opts.max || 0);
   if (value === 'none') return 'none';
   const list = Array.isArray(value) ? value : [];
-  if (!list.length) { if (q.required) err('required'); return ''; }
-  if (list.length > MAX_JOBS) err('work');
+  if (!list.length) { if (opts.required) workErr('required'); return ''; }
+  if (list.length > max) workErr('work');
   return list.map(raw => {
     const w = raw || {};
     const place = String(w.place || '').trim().replace(/\s+/g, ' ');
@@ -540,19 +548,139 @@ function checkWork(q, value, err) {
     // "Boshqa" lavozim — nomini nomzod yozadi
     const other = role === 'boshqa' ? String(w.other || '').trim().replace(/\s+/g, ' ').slice(0, 60) : '';
     if (place.length < 2 || place.length > 80 || !I18N.WORK_ROLES.includes(role) || !I18N.WORK_DURS.includes(dur)
-        || (role === 'boshqa' && other.length < 2)) err('work');
-    return { place, role, other, dur };
+        || (role === 'boshqa' && other.length < 2)) workErr('work');
+    const out = { place, role, other, dur };
+    // Rezyumedan kelgan qatorda vazifalar matni va asl muddat ("2019–2021")
+    // bor — nomzod boshqa maydonni tahrirlaganda ular yo'qolmasin
+    const desc = String(w.desc || '').trim().slice(0, 600);
+    const periodText = String(w.periodText || '').trim().replace(/\s+/g, ' ').slice(0, 60);
+    if (desc) out.desc = desc;
+    if (periodText) out.periodText = periodText;
+    return out;
   });
 }
 // Ish joylari -> Candidate.workHistory (panel, Mini App rezyumesi, kanban
-// shu maydonni ko'rsatadi; hh rezyumesidagi kabi o'zbekcha matn)
+// shu maydonni ko'rsatadi; hh rezyumesidagi kabi o'zbekcha matn).
+// Asl muddat matni faqat tanlangan oraliqqa MOS bo'lsa qoladi: nomzod
+// muddatni o'zgartirsa standart yozuv ("1–3 yil") yoziladi.
 function workToHistory(list) {
   return list.map(w => ({
     company: w.place,
     position: w.role === 'boshqa' ? w.other : I18N.t('uz', 'role.' + w.role),
-    period: I18N.t('uz', 'ank.w.dur.' + w.dur),
-    description: ''
+    period: w.periodText && durFromPeriod(w.periodText) === w.dur ? w.periodText : I18N.t('uz', 'ank.w.dur.' + w.dur),
+    description: w.desc || ''
   }));
+}
+
+// ── Muddat matni <-> oraliq kaliti ───────────────────────────
+// Rezyumedan kelgan ish tarixi ("2019-2021", "2 yil", "8 месяцев")
+// kabinetda tahrirlanishi uchun eng yaqin oraliqqa keltiriladi.
+const DUR_LABELS = (() => {
+  const m = {};
+  for (const k of I18N.WORK_DURS) for (const l of I18N.LANGS) m[I18N.t(l, 'ank.w.dur.' + k).toLowerCase()] = k;
+  return m;
+})();
+function durOfMonths(months) {
+  let key = I18N.WORK_DURS[0];
+  for (const k of I18N.WORK_DURS) if (months >= (I18N.DUR_MONTHS[k] || 0)) key = k;
+  return key;
+}
+function monthsOfPeriod(text) {
+  const s = String(text || '').toLowerCase().replace(/[–—]/g, '-');
+  const years = s.match(/\b(?:19|20)\d{2}\b/g);
+  if (years && years.length >= 2) return Math.max(1, (+years[years.length - 1] - +years[0]) * 12);
+  if (years && years.length === 1 && /(hozir|present|наст|сейчас)/.test(s))
+    return Math.max(1, (new Date().getFullYear() - +years[0]) * 12);
+  const y = s.match(/(\d+(?:[.,]\d+)?)\s*(?:yil|год|года|лет|year)/);
+  if (y) return Math.round(parseFloat(y[1].replace(',', '.')) * 12);
+  const mo = s.match(/(\d+)\s*(?:oy|мес|month)/);
+  if (mo) return +mo[1];
+  return null;
+}
+function durFromPeriod(text) {
+  const s = String(text || '').trim().toLowerCase();
+  if (!s) return '';
+  if (DUR_LABELS[s]) return DUR_LABELS[s];
+  const m = monthsOfPeriod(s);
+  return m == null ? '' : durOfMonths(m);
+}
+// Candidate.workHistory -> tahrir qatorlari (kabinet oynasi shuni ko'rsatadi).
+// Muddatni tanib bo'lmasa dur bo'sh qoladi — nomzod o'zi tanlaydi
+// (server bo'sh muddatni qabul qilmaydi).
+function historyToWork(list) {
+  return (list || []).filter(w => w && (w.company || w.position)).map(w => {
+    const g = guessRole(w.position || '');
+    const role = I18N.WORK_ROLES.includes(g) ? g : 'boshqa';
+    const out = { place: String(w.company || w.position || '').trim().slice(0, 80), role, other: '', dur: durFromPeriod(w.period) };
+    if (role === 'boshqa') out.other = String(w.position || '').trim().slice(0, 60);
+    if (w.period) out.periodText = String(w.period).trim().slice(0, 60);
+    if (w.description) out.desc = String(w.description).trim().slice(0, 600);
+    return out;
+  });
+}
+
+// Nomzod kabinetidagi tahrir oynasi uchun qatorlar: avval xom javob
+// (anketa yoki oldingi tahrir), bo'lmasa rezyume ish tarixidan tiklanadi.
+// Xom javob faqat JORIY tarixni bergan bo'lsa ishonchli: agentlik paneldan
+// tarixni o'zgartirgan yoki rezyume qayta tahlil qilingan bo'lsa u eskirgan.
+function workRows(c) {
+  if (!c || c.workNone) return [];
+  const plain = w => ({ place: w.place || '', role: w.role || '', other: w.other || '', dur: w.dur || '',
+    periodText: w.periodText || '', desc: w.desc || '' });
+  const raw = (c.workRaw || []).filter(w => w && w.place).map(plain);
+  const hist = (c.workHistory || []).filter(w => w.company || w.position);
+  const same = raw.length === hist.length && workToHistory(raw).every((h, i) =>
+    h.company === hist[i].company && h.position === hist[i].position && h.period === hist[i].period);
+  return same && raw.length ? raw : historyToWork(hist);
+}
+
+// ── Ish joylari -> nomzod maydonlari ──
+// baseYears: mavjud experienceYears — ro'yxat tajribani KAMAYTIRMAYDI
+// (oraliqning pastki chegarasi olinadi: "3–5 yil" = 3 yil).
+function workFields(jobs, baseYears = 0) {
+  if (jobs === 'none') return { workHistory: [], experienceYears: 0, experienceMonths: 0, experienceSummary: 'Tajribasiz' };
+  const list = Array.isArray(jobs) ? jobs : [];
+  const floorM = list.reduce((s, w) => s + (I18N.DUR_MONTHS[w.dur] || 0), 0);
+  const workHistory = workToHistory(list);
+  const h = workHistory[0];
+  return {
+    workHistory,
+    experienceYears: Math.max(+baseYears || 0, Math.floor(floorM / 12)),
+    // "6 oygacha" = 1 oy: tajriba bor, lekin yil emas
+    experienceMonths: list.reduce((s, w) => s + Math.max(1, I18N.DUR_MONTHS[w.dur] || 0), 0),
+    experienceSummary: h
+      ? `${h.position} — ${h.company}, ${h.period}` + (workHistory.length > 1 ? `; yana ${workHistory.length - 1} ta ish joyi` : '')
+      : ''
+  };
+}
+// experienceSummary ikki vazifani bajaradi: anketa TIZIM yozuvini qo'yadi
+// (birinchi ish joyi yoki tanlangan javob), nomzod esa kabinetda "o'zim
+// haqimda" matnini yozadi. Tahrirda nomzodning matni ustidan yozilmasin.
+function isAutoSummary(c) {
+  const s = String((c && c.experienceSummary) || '');
+  if (!s) return true;
+  if (/^(Tajribasiz|Tajribam yo'q|1 yilgacha|1–2 yil|3–5 yil|5 yildan ortiq)$/.test(s)) return true;
+  return ((c && c.workHistory) || []).some(w => w.company && s.startsWith(`${w.position} — ${w.company}`));
+}
+// Kabinet tahriri -> Candidate $set (route shu obyektni yozadi)
+function workSet(c, jobs) {
+  const f = workFields(jobs, (c && c.experienceYears) || 0);
+  const set = {
+    workHistory: f.workHistory,
+    experienceYears: f.experienceYears,
+    experienceMonths: f.experienceMonths,
+    workRaw: jobs === 'none' ? [] : jobs,
+    workNone: jobs === 'none'
+  };
+  if (isAutoSummary(c)) set.experienceSummary = f.experienceSummary;
+  return set;
+}
+// Rasm javobi (anketa savoli ham, kabinetdagi foto ham) — bitta qoida
+const PHOTO_MAX = 1500000;
+function cleanPhoto(value) {
+  const s = String(value || '');
+  if (!/^data:image\/(jpeg|png|webp);base64,/.test(s) || s.length > PHOTO_MAX) workErr('photo');
+  return s;
 }
 function workText(list) {
   if (list === 'none') return I18N.t('uz', 'ank.w.none');
@@ -601,20 +729,14 @@ function toFields(answers, survey, presetRole) {
   if (a.gender) f.gender = a.gender;
   if (a.location) f.location = a.location === 'viloyat' ? opt('location', 'viloyat') : 'Toshkent, ' + opt('location', a.location);
   if (a.experience) f.experienceYears = EXP_YEARS[a.experience] || 0;
-  if (a.lastJob === 'none') {
-    f.experienceYears = 0;
-    f.experienceMonths = 0;
-    f.experienceSummary = 'Tajribasiz';
-  } else if (Array.isArray(a.lastJob) && a.lastJob.length) {
-    // Jami yil — muddatlar oralig'ining pastki chegarasi yig'indisi
-    // (oshirib ko'rsatilmasin); eski tajriba savoli ham bo'lsa — kattasi
-    const months = a.lastJob.reduce((s, w) => s + (I18N.DUR_MONTHS[w.dur] || 0), 0);
-    f.experienceYears = Math.max(f.experienceYears || 0, Math.floor(months / 12));
-    f.experienceMonths = a.lastJob.reduce((s, w) => s + Math.max(1, I18N.DUR_MONTHS[w.dur] || 0), 0);
-    f.workHistory = workToHistory(a.lastJob);
-    const h = f.workHistory[0];
-    f.experienceSummary = `${h.position} — ${h.company}, ${h.period}` +
-      (f.workHistory.length > 1 ? `; yana ${f.workHistory.length - 1} ta ish joyi` : '');
+  // Ish joylari — kabinet tahriri bilan BITTA qoida (workFields): jami yil
+  // oraliqlarning pastki chegarasidan, eski tajriba savoli bo'lsa kattasi.
+  // 'none' tanlansa ish tarixi ham tozalanadi (aks holda kartada "Tajribasiz"
+  // yozuvi ostida ish joylari qolib ketardi).
+  if (a.lastJob === 'none' || (Array.isArray(a.lastJob) && a.lastJob.length)) {
+    Object.assign(f, workFields(a.lastJob, f.experienceYears || 0));
+    f.workRaw = a.lastJob === 'none' ? [] : a.lastJob;
+    f.workNone = a.lastJob === 'none';
   } else if (typeof a.lastJob === 'string' && a.lastJob) f.experienceSummary = a.lastJob;   // eski matnli savol
   // Ish joyi yozilmagan — tanlangan javob ("1 yilgacha" 0 yil, lekin tajribasiz emas)
   else if (a.experience) f.experienceSummary = opt('experience', a.experience);
@@ -688,6 +810,9 @@ async function finalize(r, { appBase } = {}) {
     if (k === 'rawText' && cand.rawText && !created) continue;   // rezyume matni saqlansin
     cand[k] = v;
   }
+  // "Tajribam yo'q": eski ish tarixi qolib ketmasin — bo'sh ro'yxat
+  // yuqoridagi tsiklda ataylab o'tkazib yuboriladi (tillarni o'chirmasin)
+  if (f.workNone) { cand.workHistory = []; cand.workRaw = []; }
   if (phone) cand.phone = normPhone(phone);
   if (r.phoneVerifiedAt) cand.phoneVerifiedAt = r.phoneVerifiedAt;
   if (r.photo) { cand.photo = r.photo; cand.hasPhoto = true; }
@@ -732,5 +857,6 @@ module.exports = {
   CHANNELS, DISTRICTS, CATALOG, CUSTOM_TYPES, START_DAYS, catalogInfo, cleanQuestions, surveyForVacancy,
   isShown, skipped, shownQuestions, forRole, withMeta, rolePreset, upgradeQuestions, PRESET_ROLES,
   template, makeCode, ensureDefault,
-  payloadFor, parsePayload, visibleQuestions, checkAnswer, toFields, finalize, normPhone, ageOf, workToHistory
+  payloadFor, parsePayload, visibleQuestions, checkAnswer, toFields, finalize, normPhone, ageOf, workToHistory,
+  MAX_JOBS, cleanWork, workFields, workSet, workRows, historyToWork, durFromPeriod, isAutoSummary, cleanPhoto
 };

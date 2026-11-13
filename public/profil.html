@@ -6,7 +6,7 @@
 <title>Mening profilim</title>
 <link rel="stylesheet" href="/css/th.css?v=2">  <!-- dizayn tizimi: ranglar, kunduz/tun -->
 <script src="/js/uz-date.js"></script>  <!-- o'zbekcha sana: brauzerda uz formati bo'lmasa -->
-<script src="/js/th-i18n.js?v=27"></script>  <!-- uz/ru lug'at (cb.*), server bilan bitta -->
+<script src="/js/th-i18n.js?v=28"></script>  <!-- uz/ru lug'at (cb.*), server bilan bitta -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="/js/th-viewer.js?v=2" defer></script>  <!-- rasmni to'liq ko'rish -->
 <style>
@@ -444,6 +444,43 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .sty-c.on{box-shadow:0 0 0 2.5px var(--card),0 0 0 4.5px var(--ink)}
 .sty-nm{text-align:center;font-size:14px;font-weight:700;margin-top:12px}
 .sty-reset{display:block;margin:14px auto 0;border:0;background:none;color:var(--blue);font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;padding:6px}
+/* ── Ish tajribasi va foto tahriri ── */
+/* Kartalar anketadagi bilan bir xil (C variant, 2026-10-23): nomzod
+   anketada ko'rgan ko'rinish kabinetda ham o'zgarmasin. */
+.hb.cam{right:52px}
+.wk-hint{font-size:12.5px;color:var(--muted);padding:4px 2px 10px}
+.wkc{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:none;cursor:pointer;
+  background:var(--th-fill);border-radius:14px;padding:12px;margin-bottom:9px;font:inherit;color:var(--ink)}
+.wkc:active{opacity:.75}
+.wkc .wav{width:40px;height:40px;flex:none;border-radius:12px;display:flex;align-items:center;
+  justify-content:center;font-size:16px;font-weight:700;color:#fff;background:var(--blue)}
+.wkc .wtx{flex:1;min-width:0}
+.wkc .wtx b{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wkc .wtx small{display:block;font-size:12.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wkc .wpl{flex:none;font-size:12px;font-weight:600;color:var(--blue);background:var(--sel);border-radius:8px;padding:5px 9px}
+.wkc .wpl.need{color:var(--warn);background:rgba(180,128,46,.14)}
+.wk-add{width:100%;border:1px dashed var(--line);border-radius:14px;background:transparent;color:var(--blue);
+  font:inherit;font-weight:600;font-size:14.5px;padding:13px;cursor:pointer}
+.wk-empty{text-align:center;padding:14px 6px 2px}
+.wk-empty .ic{width:54px;height:54px;margin:0 auto 12px;border-radius:50%;background:var(--th-fill);
+  display:flex;align-items:center;justify-content:center;font-size:24px}
+.wk-empty .ic.ok{background:rgba(46,158,91,.14);color:var(--ok)}
+.wk-empty p{font-size:15px;line-height:1.5;margin-bottom:12px}
+.sh-b .lnk{display:block;margin:12px auto 0;border:0;background:none;color:var(--blue);
+  font:inherit;font-size:14.5px;font-weight:600;cursor:pointer;padding:6px}
+.wst-top{display:flex;align-items:center;gap:6px;margin:2px 0 6px}
+.wst-bk{border:0;background:none;color:var(--blue);font:inherit;font-size:17px;cursor:pointer;padding:4px 8px}
+.wst-stp{flex:1;display:flex;gap:5px;justify-content:center}
+.wst-stp i{width:22px;height:4px;border-radius:2px;background:var(--line)}
+.wst-stp i.on{background:var(--blue)}
+.wst-q{font-size:19px;font-weight:700;letter-spacing:-.3px;margin:4px 0 2px}
+.wst-h{font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.45}
+.wst-in{width:100%;border:none;border-radius:12px;background:var(--th-fill);font-family:inherit;
+  font-size:17px;color:var(--ink);padding:14px}
+.wst-in:focus{outline:2px solid var(--blue);outline-offset:-2px}
+.ph-box{width:132px;height:132px;margin:8px auto 14px;border-radius:50%;overflow:hidden;background:var(--th-fill);
+  display:flex;align-items:center;justify-content:center;font-size:40px;color:var(--muted)}
+.ph-box img{width:100%;height:100%;object-fit:cover}
 /* ── Vakansiya sahifasi (to'liq ekran) ── */
 .vp{position:fixed;inset:0;z-index:65;background:var(--bg);display:flex;flex-direction:column;
   transform:translateX(100%);transition:transform .3s cubic-bezier(.3,.8,.3,1);visibility:hidden}
@@ -630,7 +667,8 @@ const STATUS = ['active', 'considering', 'not_looking'];          // matn — t(
 const SECTION_OF = {
   fullName:'main', phone:'main', age:'main', location:'main',
   desiredPosition:'job', shift:'job', salaryExpectation:'job',
-  languages:'skill', experienceSummary:'about'
+  languages:'skill', experienceSummary:'about',
+  work:'work', photo:'photo'
 };
 // Ko'nikmalar rezyumedan kelganda 15-20 tagacha chiqadi va butun
 // ekranni egallaydi. Dastlab 6 tasi ko'rinadi, qolgani bir bosishda.
@@ -662,15 +700,11 @@ function expText(p){
   if (ank && /^(Tajribasiz|Tajribam yo'q)$/.test(p.experienceSummary || '')) return t('cb.noExp');
   return '';
 }
-// Anketa experienceSummary'ga TIZIM yozuvini qo'yadi (birinchi ish joyi yoki
-// tanlangan javob) — bu "O'zingiz haqingizda" emas, u ish tarixida ko'rinadi.
-// Bunday matnni o'zi yozgandek ko'rsatmaymiz; nomzod o'zi yozsa — ko'rinadi.
-function autoSummary(p){
-  const s = p.experienceSummary || '';
-  if (p.source !== 'anketa' || !s) return false;
-  if (/^(Tajribasiz|Tajribam yo'q|1 yilgacha|1–2 yil|3–5 yil|5 yildan ortiq)$/.test(s)) return true;
-  return (p.workHistory || []).some(w => w.company && s.startsWith(`${w.position} — ${w.company}`));
-}
+// experienceSummary ikki vazifani bajaradi: TIZIM yozuvi (anketa javobi yoki
+// ish tarixi yangilangandagi birinchi ish joyi) va nomzodning "o'zim haqimda"
+// matni. Qaysi ekanini SERVER aytadi (survey.isAutoSummary) — qoida bitta
+// joyda; tizim yozuvi "O'zingiz haqingizda" bo'limida ko'rsatilmaydi.
+const autoSummary = p => !!(p && p.aboutAuto);
 
 function render(p){
   P = p;
@@ -696,7 +730,8 @@ function render(p){
   <div class="wrap">
     <div class="hero c-${esc(styleOf(p).color)}">
       <button class="hb" id="bStyle" aria-label="${esc(t('cb.styleT'))}">${PAL_IC}</button>
-      <div class="av">${p.hasPhoto ? `<img src="/api/cand/photo?t=${encodeURIComponent(PT)}" alt="">` : esc(ini)}</div>
+      <button class="hb cam" id="bPhoto" aria-label="${esc(t('cb.photoT'))}">${CAM_IC}</button>
+      <div class="av">${p.hasPhoto ? `<img src="${photoUrl(p)}" alt="">` : esc(ini)}</div>
       <div class="nm">${esc(p.fullName) || esc(t('cb.noName'))}${p.phoneVerified ? VB_IC() : ''}</div>
       <div class="sb">${esc(sub) || esc(t('cb.fill'))}</div>
       <button class="pill ${pcls}" data-e="status">${plbl}</button>
@@ -745,11 +780,11 @@ function render(p){
       </div>
     </div>
 
-    ${work ? `<div class="card">
-      <div class="sec-h"><b>${esc(t('cb.secWork'))}</b></div>
-      ${work}
-      <div class="pad" style="padding-top:9px"><div class="need">${esc(t(p.source === 'anketa' ? 'cb.fromAnk' : 'cb.fromRes'))}. ${esc(t('cb.workHint'))}</div></div>
-    </div>` : ''}
+    <div class="card">
+      <div class="sec-h"><b>${esc(t('cb.secWork'))}</b><button class="ed" data-e="work">${esc(t('cb.edit'))}</button></div>
+      ${work || `<div class="pad" style="padding-top:9px"><div class="need">${esc(t(p.workNone ? 'cb.workNoneT' : 'ank.w.emptyT'))}</div></div>`}
+      <div class="pad" style="padding-top:9px"><div class="need">${work ? esc(t(p.source === 'anketa' ? 'cb.fromAnk' : 'cb.fromRes')) + '. ' : ''}${esc(t('cb.workHint'))}</div></div>
+    </div>
 
     ${p.ref && p.ref.code ? `<div class="card">
       <div class="sec-h"><b>${esc(t('rf.title'))}</b></div>
@@ -777,6 +812,7 @@ function render(p){
   // chipi — hammasi data-e bilan bir xil oynani ochadi
   document.querySelectorAll('[data-e]').forEach(b => b.onclick = () => openSheet(b.dataset.e));
   if ($('bStyle')) $('bStyle').onclick = () => openStyle();
+  if ($('bPhoto')) $('bPhoto').onclick = () => openSheet('photo');
 
   const more = $('skMore'), less = $('skLess');
   if (more) more.onclick = () => { skillsOpen = true;  haptic(); render(P); };
@@ -818,6 +854,8 @@ const FORMS = {
 const TEXT_IDS = ['fullName','phone','desiredPosition','location','shift','salaryExpectation','education','experienceSummary','age','experienceYears'];
 
 function openSheet(key){
+  if (key === 'work')  return openWork();
+  if (key === 'photo') return openPhoto();
   // Holat — forma emas, uchta tanlov. Bosilgan zahoti saqlanadi va
   // oyna yopiladi: "Saqlash" tugmasini qo'shish ortiqcha qadam bo'lardi.
   if (key === 'status') {
@@ -865,6 +903,10 @@ function openSheet(key){
 // Faqat shu kabinetda ko'rinadi, restoranlarga emas.
 const CARD_COLORS = ['blue', 'graphite', 'emerald', 'teal', 'burgundy', 'plum', 'rose', 'bronze'];   // nomi — t('cb.col.<k>')
 const styleOf = p => Object.assign({ color: 'blue' }, p && p.style);
+const CAM_IC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z"/><circle cx="12" cy="13" r="3"/></svg>';
+// Rasm manzili: ?v=<photoAt> — javob bir soat keshlanadi, foto almashsa
+// manzil ham o'zgarishi kerak (aks holda eski rasm turib qolardi)
+const photoUrl = x => `/api/cand/photo?t=${encodeURIComponent(PT)}&v=${(x && x.photoAt) || 0}`;
 const PAL_IC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
 // Tasdiq belgisi — telefoni Telegram orqali tasdiqlangan nomzodga (oq doira, ✓)
 const VB_IC = () => '<svg class="vb" viewBox="0 0 20 20" aria-label="' + esc(t('cb.verified')) + '"><circle cx="10" cy="10" r="9" fill="#fff"/><path d="M6.2 10.2l2.5 2.5 5.1-5.2" fill="none" stroke="#16357A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -877,7 +919,7 @@ function openStyle(){
   const draw = () => {
     $('shB').innerHTML = `
       <div class="hero mini c-${cur}">
-        <div class="av">${P.hasPhoto ? `<img src="/api/cand/photo?t=${encodeURIComponent(PT)}" alt="" data-nozoom>` : esc(ini)}</div>
+        <div class="av">${P.hasPhoto ? `<img src="${photoUrl(P)}" alt="" data-nozoom>` : esc(ini)}</div>
         <div class="nm">${esc(P.fullName || t('cb.yourName'))}${P.phoneVerified ? VB_IC() : ''}</div>
       </div>
       <div class="sty-grid">${CARD_COLORS.map(k =>
@@ -901,7 +943,207 @@ function openStyle(){
   $('sheet').classList.add('on');
 }
 
-function closeSheet(){ $('sheet').classList.remove('on'); $('shB').innerHTML = ''; }
+// ══ ISH TAJRIBASI (rezyume kartalari) ════════════════════════
+// Anketadagi oyna bilan BIR XIL ketma-ketlik: joy -> lavozim -> muddat
+// (public/anketa.html drawWork/openEditor). Farqi — bu yerda ro'yxat va
+// qadamlar bitta pastki oynada almashadi, oyna ustiga oyna chiqmaydi.
+// Server qoidasi: services/survey.js cleanWork -> workSet (tajriba yillari
+// va oylari ro'yxatdan qayta hisoblanadi).
+const ROLE_EMOJI = { ofitsiant:'🍽', xostess:'💁', oshpaz:'👨‍🍳', barmen:'🍸',
+  kassir:'🧾', menejer:'📋', operator:'📞', boshqa:'✏️' };
+const newJob = () => ({ place:'', role:'', other:'', dur:'' });
+const jobRole = w => w.role === 'boshqa' ? ((w.other || '').trim() || t('ank.w.otherRow')) : t('role.' + w.role);
+const durOk = w => I18N.WORK_DURS.includes(w.dur);
+// Server (cleanWork) shu shartlarni qayta tekshiradi — 400 kutib o'tirmaymiz
+const jobBad = w => (w.place || '').trim().length < 2 || !I18N.WORK_ROLES.includes(w.role) || !durOk(w)
+  || (w.role === 'boshqa' && (w.other || '').trim().length < 2);
+let WJ = null;          // tahrirdagi ro'yxat: 'none' yoki qatorlar massivi
+
+function openWork(){
+  WJ = P.workNone ? 'none' : (P.work || []).map(w => Object.assign(newJob(), w));
+  $('shT').textContent = t('cb.secWork');
+  $('sheet').classList.add('on');
+  drawWorkList();
+}
+
+function drawWorkList(){
+  shBack = null;                       // ro'yxatda "orqaga" — oynani yopadi
+  const max = Math.max(3, P.maxJobs || 3);
+  let html;
+  if (WJ === 'none') {
+    html = `<div class="wk-empty"><div class="ic ok">&#10003;</div>
+      <p>${esc(t('cb.workNoneT'))}</p>
+      <button class="wk-add" id="wAdd">+ ${esc(t('ank.w.addFirst'))}</button></div>`;
+  } else if (!WJ.length) {
+    html = `<div class="wk-empty"><div class="ic">&#128188;</div>
+      <p>${esc(t('ank.w.emptyT'))}</p>
+      <button class="wk-add" id="wAdd">+ ${esc(t('ank.w.addFirst'))}</button>
+      <button class="lnk" id="wNone">${esc(t('ank.w.noneLink'))}</button></div>`;
+  } else {
+    html = `<div class="wk-hint">${esc(t('cb.workHint'))}</div>` +
+      WJ.map((w, i) => `<button class="wkc" data-wi="${i}">
+        <span class="wav">${esc(((w.place || '').trim()[0] || '?').toUpperCase())}</span>
+        <span class="wtx"><b>${esc(jobRole(w))}</b><small>${esc(w.place || '')}</small></span>
+        <span class="wpl ${durOk(w) ? '' : 'need'}">${esc(durOk(w) ? t('ank.w.dur.' + w.dur) : t('cb.workNeed'))}</span>
+      </button>`).join('') +
+      (WJ.length < max ? `<button class="wk-add" id="wAdd">+ ${esc(t('ank.w.add'))}</button>` : '') +
+      (WJ.some(jobBad) ? `<div class="hint" style="color:var(--warn)">${esc(t('cb.workFix'))}</div>` : '') +
+      `<button class="lnk" id="wNone">${esc(t('ank.w.noneLink'))}</button>`;
+  }
+  $('shB').innerHTML = html + `<button class="btn" id="wSave">${esc(t('common.save'))}</button>`;
+
+  if ($('wAdd'))  $('wAdd').onclick  = () => { if (WJ === 'none') WJ = []; drawWorkStep(-1); };
+  if ($('wNone')) $('wNone').onclick = () => { WJ = 'none'; haptic(); drawWorkList(); };
+  if ($('wUndo')) $('wUndo').onclick = () => { WJ = []; drawWorkStep(-1); };
+  $('shB').querySelectorAll('[data-wi]').forEach(b => b.onclick = () => drawWorkStep(+b.dataset.wi));
+
+  const sv = $('wSave');
+  sv.disabled = WJ !== 'none' && WJ.some(jobBad);
+  sv.onclick = async () => {
+    sv.disabled = true; sv.textContent = t('common.saving');
+    try {
+      await api('/api/cand/work', { method:'PUT', body: JSON.stringify({ jobs: WJ === 'none' ? 'none' : WJ }) });
+      render(await api('/api/cand/me'));
+      try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
+      closeSheet();
+    } catch(e){
+      // alert() Telegram ichida chiqmaydi — xato oynaning o'zida
+      sv.disabled = false; sv.textContent = t('common.retry');
+      const old = $('shB').querySelector('.ap-er'); if (old) old.remove();
+      sv.insertAdjacentHTML('beforebegin', fail(e.status === 401 ? t('auth.expired') : e.message));
+    }
+  };
+}
+
+// Bitta ish joyi: joy nomi -> lavozim -> (boshqa bo'lsa nomi) -> muddat.
+// "Orqaga" avval qadamlarni ortga qaytaradi, birinchisida ro'yxatga.
+function drawWorkStep(i){
+  const ed = { i, w: i >= 0 ? Object.assign(newJob(), WJ[i]) : newJob(), step: 'place' };
+  const order = ['place', 'role', 'other', 'dur'];
+  const back = () => {
+    if (ed.step === 'place') return drawWorkList();
+    ed.step = ed.step === 'dur' && ed.w.role !== 'boshqa' ? 'role' : order[order.indexOf(ed.step) - 1];
+    draw();
+  };
+  shBack = back;
+  const commit = () => {
+    if (ed.i >= 0) WJ[ed.i] = ed.w; else WJ.push(ed.w);
+    haptic(); drawWorkList();
+  };
+
+  function draw(){
+    const w = ed.w, st = ed.step;
+    const seg = st === 'place' ? 1 : st === 'dur' ? 3 : 2;
+    const head = `<div class="wst-top"><button class="wst-bk" id="wBk" aria-label="${esc(t('ank.w.back'))}">&#10094;</button>
+      <span class="wst-stp">${[1,2,3].map(n => `<i class="${n <= seg ? 'on' : ''}"></i>`).join('')}</span>
+      <span style="width:33px"></span></div>`;
+    let body;
+    if (st === 'place' || st === 'other') {
+      const isP = st === 'place';
+      body = `<div class="wst-q">${esc(t(isP ? 'ank.w.qPlace' : 'ank.w.qOther'))}</div>
+        <div class="wst-h">${esc(isP ? t('ank.w.placeHint') : (w.place || ''))}</div>
+        <input class="wst-in" id="wIn" maxlength="${isP ? 80 : 60}" value="${esc(isP ? (w.place || '') : (w.other || ''))}"
+          placeholder="${esc(t(isP ? 'ank.w.placePh' : 'ank.w.otherPh'))}">
+        <button class="btn" id="wGo">${esc(t('ank.w.cont'))}</button>
+        ${isP && ed.i >= 0 ? `<button class="lnk" id="wDel" style="color:var(--danger)">${esc(t('ank.w.delete'))}</button>` : ''}`;
+    } else {
+      const isR = st === 'role';
+      const opts = isR ? I18N.WORK_ROLES.map(r => [r, (ROLE_EMOJI[r] || '') + ' ' + (r === 'boshqa' ? t('ank.w.otherRow') : t('role.' + r))])
+                       : I18N.WORK_DURS.map(d => [d, t('ank.w.dur.' + d)]);
+      const cur = isR ? w.role : w.dur;
+      body = `<div class="wst-q">${esc(t(isR ? 'ank.w.qRole' : 'ank.w.dur'))}</div>
+        <div class="wst-h">${esc(isR ? (w.place || '') : t('ank.w.durHint'))}</div>
+        ${opts.map(([k, l]) => `<button class="opt ${k === cur ? 'on' : ''}" data-k="${esc(k)}">
+          <span>${esc(l)}</span>${k === cur ? '<b>&#10003;</b>' : ''}</button>`).join('')}`;
+    }
+    $('shB').innerHTML = head + body;
+    $('wBk').onclick = back;
+
+    if (st === 'place' || st === 'other') {
+      const inp = $('wIn'), go = $('wGo');
+      const ok = () => inp.value.trim().length >= 2;
+      go.disabled = !ok();
+      inp.oninput = () => { go.disabled = !ok(); };
+      const next = () => {
+        if (!ok()) return;
+        if (st === 'place') { w.place = inp.value.trim(); ed.step = 'role'; }
+        else { w.other = inp.value.trim(); ed.step = 'dur'; }
+        draw();
+      };
+      go.onclick = next;
+      inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); next(); } };
+      setTimeout(() => inp.focus(), 120);
+      if ($('wDel')) $('wDel').onclick = () => { WJ.splice(ed.i, 1); haptic(); drawWorkList(); };
+    } else {
+      $('shB').querySelectorAll('[data-k]').forEach(b => b.onclick = () => {
+        haptic();
+        if (st === 'role') {
+          if (b.dataset.k !== 'boshqa') w.other = '';
+          w.role = b.dataset.k;
+          ed.step = w.role === 'boshqa' ? 'other' : 'dur';
+          // Muddat allaqachon tanlangan bo'lsa (rezyumedan) — ikkinchi marta so'ramaymiz
+          if (ed.step === 'dur' && durOk(w)) return commit();
+          draw();
+        } else { w.dur = b.dataset.k; commit(); }
+      });
+    }
+  }
+  draw();
+}
+
+// ══ FOTO ═════════════════════════════════════════════════════
+// Brauzerda 800px gacha kichraytirib JPEG yuboriladi (loyiha qoidasi,
+// anketa bilan bir xil); server: survey.cleanPhoto.
+function openPhoto(){
+  shBack = null;
+  $('shT').textContent = t('cb.photoT');
+  $('sheet').classList.add('on');
+  drawPhoto();
+}
+function drawPhoto(busy){
+  $('shB').innerHTML = `
+    <div class="ph-box">${P.hasPhoto ? `<img src="${photoUrl(P)}" alt="" data-nozoom>` : '&#128100;'}</div>
+    <div class="hint" style="text-align:center;margin-bottom:4px">${esc(P.hasPhoto ? t('cb.photoHint') : t('cb.photoNone') + '. ' + t('cb.photoHint'))}</div>
+    <input type="file" id="phFile" accept="image/*" class="hide">
+    <button class="btn" id="phPick"${busy ? ' disabled' : ''}>${esc(busy ? t('cb.photoWait') : t(P.hasPhoto ? 'ank.photoChange' : 'ank.photoBtn'))}</button>
+    ${P.hasPhoto ? `<button class="btn2" id="phDel"${busy ? ' disabled' : ''}>${esc(t('cb.photoDel'))}</button>` : ''}`;
+  $('phPick').onclick = () => $('phFile').click();
+  $('phFile').onchange = () => pickPhoto();
+  if ($('phDel')) $('phDel').onclick = async () => {
+    drawPhoto(true);
+    try { await api('/api/cand/photo', { method:'DELETE' }); render(await api('/api/cand/me')); drawPhoto(); }
+    catch(e){ drawPhoto(); $('shB').insertAdjacentHTML('beforeend', fail(e.status === 401 ? t('auth.expired') : e.message)); }
+  };
+}
+function pickPhoto(){
+  const f = $('phFile').files[0];
+  if (!f) return;
+  const img = new Image();
+  img.onload = async () => {
+    const k = Math.min(1, 800 / Math.max(img.width, img.height));
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    const data = c.toDataURL('image/jpeg', 0.8);
+    URL.revokeObjectURL(img.src);
+    drawPhoto(true);
+    try {
+      await api('/api/cand/photo', { method:'PUT', body: JSON.stringify({ photo: data }) });
+      render(await api('/api/cand/me'));
+      try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
+      drawPhoto();
+    } catch(e){
+      drawPhoto();
+      $('shB').insertAdjacentHTML('beforeend', fail(e.status === 401 ? t('auth.expired') : e.message));
+    }
+  };
+  img.onerror = () => $('shB').insertAdjacentHTML('beforeend', fail(t('ank.err.photo')));
+  img.src = URL.createObjectURL(f);
+}
+
+// Oyna ichida qadam bo'lsa — "orqaga" avval shu qadamni qaytaradi
+let shBack = null;
+function closeSheet(){ shBack = null; $('sheet').classList.remove('on'); $('shB').innerHTML = ''; }
 $('shX').onclick = closeSheet;
 $('sheet').onclick = e => { if (e.target === $('sheet')) closeSheet(); };
 
@@ -1064,7 +1306,7 @@ function syncBack(){
   } catch(e){}
 }
 function onBack(){
-  if ($('sheet').classList.contains('on')) { closeSheet(); return; }
+  if ($('sheet').classList.contains('on')) { if (shBack) shBack(); else closeSheet(); return; }
   if ($('vp').classList.contains('on')) closeJob();
 }
 try { TG && TG.BackButton && TG.BackButton.onClick(onBack); } catch(e){}

@@ -794,7 +794,8 @@ Ovoz NOMI bo'yicha tanlanadi (`PREFER`: uz Gulnoza/Sardor/Lola, ru Alina/Vera; e
   Nomzod kabinetida smenalar ro'yxati YO'Q — faqat bot.
 `test/growth.test.js`. **Telegramda HALI SINALMAGAN.**
 
-**NOMZOD KABINETIDA ISH TAJRIBASI VA FOTO TAHRIRI** (2026-11-13, CI 143/143):
+**NOMZOD KABINETIDA ISH TAJRIBASI VA FOTO TAHRIRI — DEPLOY QILINDI** (2026-11-13,
+`ff898b5`, CI 143/143):
 anketani eski shaklda to'ldirganlar va hh nomzodlarida ish tarixini kabinetdan
 to'ldirib bo'lmasdi — filtr uchun ma'lumot yo'q edi. Profilim → "Ish tarixi" →
 Tahrirlash: anketadagi rezyume kartalari oynasi (joy → lavozim → muddat, uch
@@ -821,9 +822,11 @@ soatlik kesh eski rasmni ko'rsatardi. To'ldirilganlik ko'rsatkichiga ish tajriba
 (14) va foto (9) qo'shildi. Anketada "Tajribam yo'q" endi eski ish tarixini ham
 tozalaydi (ilgari kartada "Tajribasiz" yozuvi ostida ish joylari qolardi).
 Lug'atda yetishmagan `ank.w.none` qo'shildi (panelda "ank.w.none" matni chiqardi).
-`test/candprofile.test.js`. Lokal brauzerda (Chromium, soxta API) oqimlar
-tekshirildi: qo'shish, tahrir, o'chirish, "tajribam yo'q", muddatsiz hh qatori,
-uz/ru, kunduz/tun, orqaga zanjiri. **Telegramda nomzod sifatida HALI SINALMAGAN.**
+`test/candprofile.test.js`. Brauzerda (Chromium, soxta API bilan — avval lokal,
+keyin JONLI sahifada) oqimlar tekshirildi: qo'shish, tahrir, o'chirish, "tajribam
+yo'q", muddatsiz hh qatori (Saqlash o'chiq turadi), uz/ru, kunduz/tun, orqaga
+zanjiri. Jonli: /ping ff898b5, lug'at kalitlari, uchala yangi endpoint initData'siz
+401. **Telegramda nomzod sifatida HALI SINALMAGAN.**
 
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.

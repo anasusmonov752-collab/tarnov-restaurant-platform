@@ -248,12 +248,12 @@ async function handleCallback({ data, chatId, appBase, from }) {
     const lang = I18N.resolve(cand && cand.lang, (cand && cand.tgLang) || (from && from.language_code));
     if (act === 'cb') {
       const r = await candidatePick({ agencyId: survey.agencyId, lang });
-      return { edit: r.text, keyboard: r.keyboard };
+      return { edit: r.text, keyboard: r.keyboard, html: true };
     }
     if (!isValidRole(arg)) return { text: '' };
     const isTest = (await require('./testMode').modeOf(tgUserId)) === 'candidate';
     const r = await candidateRole({ agencyId: survey.agencyId, role: arg, lang, tgUserId, chatId, appBase, isTest });
-    return { edit: r.text, keyboard: r.keyboard };
+    return { edit: r.text, keyboard: r.keyboard, html: true };
   }
 
   // ── Restoran tomoni ──
@@ -263,12 +263,12 @@ async function handleCallback({ data, chatId, appBase, from }) {
 
   if (act === 'eb') {
     const r = await employerIntro({ agencyId: client.agencyId, lang });
-    return { edit: r.text, keyboard: r.keyboard };
+    return { edit: r.text, keyboard: r.keyboard, html: true };
   }
   if (act === 'e') {
     if (!isValidRole(arg)) return { text: '' };
     const r = await employerRole({ agencyId: client.agencyId, role: arg, lang });
-    return { edit: r.text, keyboard: r.keyboard };
+    return { edit: r.text, keyboard: r.keyboard, html: true };
   }
   if (act === 'v') return { text: T(lang, 'ft.eVoiceTip'), alert: true };
 

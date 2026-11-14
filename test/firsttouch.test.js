@@ -86,6 +86,19 @@ test('restoran: bepul sinov so\'rovi agentlikka ketadi, ikkinchi marta takrorlan
   assert.equal(sent.filter(m => m.chat === 'adm').length, 1);      // ikkinchi xabar yo'q
 });
 
+test('tugma javobi HTML bilan beriladi (<b> matn bo\'lib chiqmasin)', async () => {
+  // 2026-11-14 jonli topildi: tahrirlangan xabarda parse_mode yo'q edi va
+  // mijoz "<b>\u041e\u0444\u0438\u0446\u0438\u0430\u043d\u0442</b>" matnini ko'rdi
+  await M.Client.create({ id: 'cl9', agencyId: A, name: 'Bon', status: 'pending', tgChatId: 'c900' });
+  for (const d of ['ft:e:ofitsiant', 'ft:eb']) {
+    const r = await ft.handleCallback({ data: d, chatId: 'c900', appBase: 'https://x', from: { id: 9 } });
+    assert.equal(r.html, true, d);
+    assert.ok(r.edit.includes('<b>'), d);
+  }
+  const c = await ft.handleCallback({ data: 'ft:c:ofitsiant', chatId: 'c901', appBase: 'https://x', from: { id: 91 } });
+  assert.equal(c.html, true);
+});
+
 test('restoran: namoyish qidiruvi cheklangan', async () => {
   const cl = await M.Client.create({ id: 'cl2', agencyId: A, name: 'Bon', status: 'pending', tgChatId: 'c200' });
   assert.equal(ft.demoLeft(cl), ft.DEMO_LIMIT);

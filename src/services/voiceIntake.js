@@ -365,7 +365,13 @@ async function handleCallback({ data, chatId, from, appBase = '' }) {
   if (!m) return { ok: false, text: '' };
   const [, op, rid, qi, oi] = m;
   const fromId = String((from && from.id) || chatId);
-  const r = await SurveyResponse.findOne({ id: rid, tgUserId: fromId });
+  let r = await SurveyResponse.findOne({ id: rid, tgUserId: fromId });
+  // Tugma eski xabarda qolgan bo'lishi mumkin (anketa qaytadan boshlangan,
+  // yozuv o'chgan). Tugma jim qolmasin — shu odamning ochiq anketasi bilan
+  // davom etamiz (2026-11-14: "ovoz tugmasini bosdim, ishlamadi").
+  if (!r && op === 'go') {
+    r = await SurveyResponse.findOne({ tgUserId: fromId, status: 'started' }).sort({ updatedAt: -1 });
+  }
   if (!r) return { ok: false, text: 'Topilmadi / Не найдено', alert: true };
   if (r.status === 'done') return { ok: true, text: '✓' };
   const lang = langOf(r, from);

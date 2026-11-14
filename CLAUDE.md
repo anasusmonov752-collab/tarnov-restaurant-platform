@@ -886,7 +886,13 @@ o'zgarib boradi, chat to'lib ketmaydi).
 - OVOZ ikkala tomonda ham ko'rinadi: nomzodga tugma + "gapiring, AI anketani
   o'zi to'ldiradi", restoranga birinchi xabarda misol bilan taklif va
   "🎤 Ovozda aytaman" tugmasi.
-Yangi lug'at kalitlari `ft.*` (uz/ru). `test/firsttouch.test.js` (8 ta):
+JONLI TOPILGAN VA TUZATILGAN (o'sha kuni, Anas Telegramda bosdi):
+  1) Tahrirlangan xabarda `parse_mode` yo'q edi — mijoz "<b>Официант</b>"
+     matnini ko'rdi. Endi servis `html: true` qaytaradi, dispatcher HTML qo'yadi.
+  2) Ovoz tugmasi bosilganda hech narsa bo'lmadi (deploy paytiga to'g'ri kelgan
+     bo'lishi mumkin) — `voiceIntake` endi yozuv topilmasa jim qolmaydi: shu
+     odamning oxirgi ochiq anketasi bilan davom etadi.
+Yangi lug'at kalitlari `ft.*` (uz/ru). `test/firsttouch.test.js` (9 ta):
 anonim kartada ism/telefon yo'qligi, sinov va "ish qidirmayapti" yozuvlari
 hisoblanmasligi, yopiq/sinov vakansiyalari chiqmasligi, takroriy
 `SurveyResponse` ochilmasligi, sinov so'rovi bir marta ketishi.

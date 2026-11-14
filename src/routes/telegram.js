@@ -966,8 +966,11 @@ async function handleCallback(cq, appBase) {
       const r = await svc.handleCallback({ data, chatId, appBase, from: cq.from });
       await done(r.text || '', !!r.alert);
       if (r.edit) {
-        await tg.editMessageText(token, chatId, msgId, r.edit,
-          r.keyboard ? { reply_markup: { inline_keyboard: r.keyboard } } : {}).catch(() => {});
+        // r.html — matnda <b> bor (services/firstTouch). parse_mode bo'lmasa
+        // teglar MATN bo'lib chiqadi (2026-11-14 jonli topildi).
+        const opt = r.keyboard ? { reply_markup: { inline_keyboard: r.keyboard } } : {};
+        if (r.html) opt.parse_mode = 'HTML';
+        await tg.editMessageText(token, chatId, msgId, r.edit, opt).catch(() => {});
       }
     } catch (e) {
       console.error('[IV] tugma:', e.message);

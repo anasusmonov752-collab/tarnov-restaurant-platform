@@ -179,7 +179,12 @@ async function askNext(r, chatId, lang, appBase) {
   await SurveyResponse.updateOne({ _id: r._id }, { $set: { vstep: 'chase', vAsk: q.id, updatedAt: new Date() } });
   const title = (q.text && (q.text[lang] || q.text.uz)) || q.id;
   const hint = q.hint && (q.hint[lang] || q.hint.uz);
-  const body = `❓ ${title}${hint ? '\n' + hint : ''}`;
+  // "Yana 2 ta savol" — oxiri ko'rinmasa odam yarmida tashlab ketadi.
+  // Ko'p qolgan bo'lsa (ovozdan deyarli hech narsa tushunilmagan) SON
+  // KO'RSATILMAYDI: "yana 12 ta savol" ovozni tanlagan odamni qochiradi.
+  const rest = missing.length - 1;
+  const left = rest >= 1 && rest <= 4 ? '\n\n' + T(lang, 'vi.left', { n: rest }) : '';
+  const body = `❓ ${title}${hint ? '\n' + hint : ''}${left}`;
   if (q.type === 'choice') {
     const btns = (q.options || []).map((o, oi) => ({ text: o[lang] || o.uz, callback_data: `vi:a:${r.id}:${qi}:${oi}` }));
     const rows = [];
@@ -188,7 +193,7 @@ async function askNext(r, chatId, lang, appBase) {
   }
   if (q.type === 'work') return send(chatId, body + '\n\n' + T(lang, 'vi.workHow'), kb([[{ text: T(lang, 'ank.w.noneLink'), callback_data: `vi:none:${r.id}` }]]));
   if (q.type === 'contact') return send(chatId, body, { reply_markup: { keyboard: [[{ text: T(lang, 'vi.shareBtn'), request_contact: true }]], resize_keyboard: true, one_time_keyboard: true } });
-  if (q.type === 'photo') return send(chatId, body + '\n\n' + T(lang, 'vi.photoHow'));
+  if (q.type === 'photo') return send(chatId, body + '\n\n' + T(lang, 'vi.photoHow') + '\n' + T(lang, 'vi.photoLater'));
   if (q.type === 'date') return send(chatId, body + '\n\n' + T(lang, 'vi.dateHow'));
   if (q.type === 'consent') return send(chatId, T(lang, 'vi.consent'), kb([[{ text: T(lang, 'vi.consentOk'), callback_data: `vi:ok:${r.id}` }]]));
   return send(chatId, body + '\n\n' + T(lang, 'vi.textHow'));

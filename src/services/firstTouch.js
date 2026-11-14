@@ -104,7 +104,9 @@ async function candidateRole({ agencyId, role, lang, tgUserId, chatId, appBase, 
     ...rows.map(v => jobLine(v, lang, role)),
     '',
     n > rows.length ? T(lang, 'ft.cMore', { n: n - rows.length }) : '',
-    T(lang, 'ft.cAsk'),
+    // Ochiq ish yo'q bo'lsa "ariza berish uchun" deyish noto'g'ri — ariza
+    // beradigan vakansiya yo'q; anketa KELAJAKDAGI ish uchun qoldiriladi
+    T(lang, n ? 'ft.cAsk' : 'ft.cAskNoJobs'),
     '',
     T(lang, 'ft.cVoiceHint')
   ].filter(x => x !== null).join('\n').replace(/\n{3,}/g, '\n\n');

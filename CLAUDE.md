@@ -898,6 +898,38 @@ hisoblanmasligi, yopiq/sinov vakansiyalari chiqmasligi, takroriy
 `SurveyResponse` ochilmasligi, sinov so'rovi bir marta ketishi.
 **Telegramda HALI BOSILMAGAN** — Anas uchta akkaunt bilan sinaydi.
 
+**BOT MATN VA TUGMALARI — HR AUDITI** (2026-11-14, Anas: ovoz tanlagandan keyin
+ekranda yagona tugma «Заполнить анкету» chiqdi — "bu ko'pchilikni chalg'itib
+qo'yadi"). Xatolar sinfi BITTA: ekranda nomzod tanlagan yo'lga QARAMA-QARSHI
+harakat turibdi yoki chiqish yo'li yo'q. Tuzatildi:
+1. **Ovoz ekranidagi raqib tugma.** «📝 Anketa bilan to'ldirish» asosiy
+   harakatdek ko'rinardi — endi «Ovozim chiqmayapti — yozib to'ldiraman»
+   (zaxira ekani matndan ko'rinadi). Kirish tugmasi ham taklifkorroq:
+   «🎤 Gapirib beraman · 1 daqiqa».
+2. **9 savol bitta ovozli xabarda.** Ko'k yoqa nomzod 9 bandni eslay olmaydi,
+   devor-matn qo'rqitadi. Endi 5 ta asosiy band + «Hammasini eslay olmasangiz —
+   qolganini keyin o'zim so'rayman» (chase bosqichi allaqachon bor edi, lekin
+   aytilmasdi). Namuna 2 jumla. AI ovozi (templateSay) ham shu 5 band.
+3. **«Mikrofon tugmasini bosib turing 👇»** — 👇 inline tugmani ko'rsatardi
+   (aynan chalg'ituvchi). Endi: «🎙 Mikrofon tugmasi — pastda, o'ng tomonda».
+4. **Vaqt nomuvofiqligi**: tugmada «1 daqiqa», shablonda «1–2 daqiqa» — bir xil.
+5. **/start da uchta raqib harakat** (7 lavozim tugmasi + Anketa + Ovoz).
+   Endi birinchi ekran BITTA savol: faqat lavozimlar + bitta zaxira
+   («Lavozimim ro'yxatda yo'q — anketa»). Anketa va ovoz — lavozim
+   tanlangandan keyingi ekranda, kontekst aniq bo'lganda.
+6. **Ketma-ket savollarda oxiri ko'rinmasdi** — endi «Yana N ta savol»,
+   LEKIN faqat 4 tagacha qolganda: «yana 12 ta savol» ovozni tanlagan odamni
+   qochiradi (jonli sinovda aynan shu chiqdi).
+7. **Rasm bosqichi boshi berk edi** (tugma ham, izoh ham yo'q): rasmi
+   bo'lmagan odam shu yerda tashlab ketardi. Endi «Hozir rasm topolmasangiz —
+   keyinroq shu yerga yuborsangiz ham bo'ladi, javoblaringiz saqlanadi».
+8. **Ochiq ish yo'q bo'lsa ham «Ariza berish uchun anketa»** deyilardi — ariza
+   beradigan vakansiya yo'q. Endi alohida matn: anketa kelajakdagi ish uchun.
+9. **Va'da/natija nomuvofiqligi (mijoz tomoni)**: «🎁 3 ta kontakt bepul»
+   tugmasi aslida faqat SO'ROV yuborardi — endi «🎁 3 ta bepul kontakt so'rash».
+Tekshirish: ovozli oqim boshidan oxirigacha lokal bazada "bosib" ko'rildi
+(har bir bot xabari o'qib chiqildi), CI 152/152.
+
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
 O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda

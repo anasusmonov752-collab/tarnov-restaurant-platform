@@ -651,10 +651,14 @@ async function startSurvey(msg, chatId, ank, appBase) {
   // yozuv. Vakansiya havolasisiz kelgan bo'lsa — avval LAVOZIM tugmalari: odam
   // o'ziga mos ishni KO'RSIN, keyin anketa so'ralsin (services/firstTouch).
   const ft = require('../services/firstTouch');
-  const rows = [];
-  if (!v) rows.push(...ft.roleRows(lang, 'ft:c:'));
-  rows.push([{ text: T(lang, 'ank.botOpen'), web_app: { url: `${appBase}/anketa.html?r=${r.id}` } }]);
-  rows.push([require('../services/voiceIntake').entryButton(r, lang)]);
+  const anketa = { text: T(lang, 'ank.botOpen'), web_app: { url: `${appBase}/anketa.html?r=${r.id}` } };
+  const rows = v
+    // Vakansiya havolasi: lavozim allaqachon ma'lum — ikki yo'l darhol
+    ? [[anketa], [require('../services/voiceIntake').entryButton(r, lang)]]
+    // Havolasiz: FAQAT lavozim tugmalari (+ bitta zaxira). Anketa va ovoz
+    // keyingi ekranda — u yerda qaysi ish uchun ekani ko'rinib turadi.
+    : [...ft.roleRows(lang, 'ft:c:'),
+       [Object.assign({}, anketa, { text: T(lang, 'ft.cOther') })]];
   await tg.sendMessage(token, chatId, text, { parse_mode: 'HTML', reply_markup: { inline_keyboard: rows } });
 }
 
@@ -737,7 +741,10 @@ async function hookText({ lang, from, agencyId, v, closed }) {
     v ? T(lang, 'ank.hookVac', { v: escHtml(vac.titleFor(v, lang)) }) : closed ? T(lang, 'ank.hookClosed') : '',
     n || v || closed ? '' : null,
     T(lang, 'ank.hookPoints'), '',
-    T(lang, 'ank.hookCta')
+    // Havolasiz kelganga lavozim tugmalari beriladi (startSurvey) — oxirgi
+    // qator shu savol bo'lsin, "tugmani bosing" emas. Ochiq ish bo'lmasa
+    // "ochiq ishlarni ko'rsataman" deb va'da bermaymiz.
+    T(lang, v ? 'ank.hookCta' : n ? 'ft.cPickLine' : 'ft.cPick0')
   ].filter(x => x !== null).join('\n').replace(/\n{3,}/g, '\n\n');
 }
 

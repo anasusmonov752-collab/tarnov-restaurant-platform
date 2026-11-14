@@ -61,6 +61,17 @@
   --th-fs-title1:  28px;
   --th-fs-large:   34px;     /* Large Title */
   --th-fw-r: 400; --th-fw-m: 500; --th-fw-sb: 600; --th-fw-b: 700;
+  /* Sarlavha qalinligi va zichligi — PLATFORMAGA QARAB (2026-11-14, Anas:
+     "Android'da shriftlar xunuk va bachkana"). iOS/macOS'da SF Pro'ning
+     HAQIQIY 800 qalinligi bor; Android (Roboto / Samsung One UI) va Windows
+     (Segoe UI) da u yo'q — brauzer 700'ni sun'iy qalinlashtiradi (faux bold),
+     manfiy letter-spacing bilan harflar yopishib ketadi. Sahifalar sarlavhada
+     shu ikki tokenni ishlatsin:
+       font-weight: var(--th-fw-h);
+       letter-spacing: calc(-.4px * var(--th-lsk));
+     Qiymatni applyTheme() qo'yadigan html[data-os] tanlaydi (pastda). */
+  --th-fw-h: 800;            /* sarlavha qalinligi */
+  --th-lsk: 1;               /* manfiy letter-spacing koeffitsienti */
 
   /* Burchaklar — iOS 26 (konsentrik, yumaloqroq) */
   --th-r-sm: 10px;           /* maydon, kichik tugma */
@@ -81,6 +92,15 @@
 
   --th-tap: 44px;            /* iOS HIG: eng kichik bosiladigan o'lcham */
   color-scheme: light;
+}
+
+/* Apple bo'lmagan qurilma (Android, Windows) — yuqoridagi izohga qarang.
+   Shrift aniq ko'rsatiladi: Samsung One UI shrifti qalin holatda ayniqsa
+   yomon chiqadi, Roboto esa amalda hamma Android'da bor. */
+html[data-os="droid"]{
+  --th-font: Roboto, "Noto Sans", system-ui, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --th-fw-h: 700;
+  --th-lsk: .35;
 }
 
 /* Tungi mavzu — iOS dark */

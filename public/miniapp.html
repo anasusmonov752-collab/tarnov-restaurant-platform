@@ -25,7 +25,7 @@
 }
 :root[data-theme="dark"]{ --soft-blue:rgba(10,132,255,.18); }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+body{font-family:var(--th-font);
   background:var(--bg);color:var(--ink);font-size:15px;
   padding-bottom:calc(96px + env(safe-area-inset-bottom));   /* suzuvchi panel ostida qolmasin */
   -webkit-text-size-adjust:100%}
@@ -262,7 +262,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .pl-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .pl-name{font-size:18px;font-weight:700}
 .pl-tag{font-size:11.5px;font-weight:700;color:#fff;background:var(--blue);border-radius:99px;padding:3px 9px}
-.pl-price{font-size:26px;font-weight:800;margin-top:6px;letter-spacing:-.3px}
+.pl-price{font-size:26px;font-weight:var(--th-fw-h);margin-top:6px;letter-spacing:calc(-.3px * var(--th-lsk))}
 .pl-price small{font-size:14px;font-weight:600;color:var(--muted);margin-left:4px}
 .pl-meta{font-size:14px;font-weight:600;color:var(--blue);margin-top:2px}
 .pl-f{list-style:none;margin:10px 0 12px;padding:0;display:flex;flex-direction:column;gap:6px;font-size:13.5px;line-height:1.4}
@@ -291,7 +291,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .ref-steps{font-size:13.5px;line-height:1.5;padding-left:20px;color:var(--ink);margin:10px 0 0}
 .pm-note{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;color:var(--muted);line-height:1.45;margin-top:10px}
 .pm-note a{color:var(--blue)}
-.pm-logo{flex:none;background:#33CCCC;color:#fff;font-weight:800;border-radius:8px;padding:5px 8px;font-size:12px}
+.pm-logo{flex:none;background:#33CCCC;color:#fff;font-weight:var(--th-fw-h);border-radius:8px;padding:5px 8px;font-size:12px}
 .pm-pw{text-align:center;font-size:11.5px;color:var(--muted);margin-top:12px;letter-spacing:.3px}
 .pl-banner-b{width:100%;text-align:left;border:none;font:inherit;font-size:13.5px;cursor:pointer;display:block}
 /* ══ HISOB bo'limi ══ */
@@ -309,7 +309,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.18)}
 .ac-pill.off{background:rgba(255,255,255,.08);color:rgba(255,255,255,.8)}
 .ac-bal{display:flex;align-items:baseline;gap:8px;margin-top:10px}
-.ac-bal b{font-size:52px;font-weight:700;line-height:1;letter-spacing:-1.5px;font-variant-numeric:tabular-nums}
+.ac-bal b{font-size:52px;font-weight:700;line-height:1;letter-spacing:calc(-1.5px * var(--th-lsk));font-variant-numeric:tabular-nums}
 .ac-bal span{font-size:17px;font-weight:600;color:rgba(255,255,255,.82)}
 .ac-note{font-size:12.5px;color:rgba(255,255,255,.62);margin-top:6px}
 .ac-term{margin-top:16px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:10px 12px}
@@ -345,7 +345,7 @@ div.ac-alert{cursor:default}
 .ac-ring .bg{stroke:var(--th-fill,#EEE)}
 .ac-ring .fg{stroke:#E8A317;stroke-linecap:round;transition:stroke-dashoffset .8s cubic-bezier(.3,.8,.3,1)}
 .ac-g.done .ac-ring .fg{stroke:var(--ok)}
-.ac-ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;font-variant-numeric:tabular-nums}
+.ac-ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:var(--th-fw-h);font-variant-numeric:tabular-nums}
 .ac-ring b small{font-size:11.5px;color:var(--muted);font-weight:700;margin-left:1px}
 .ac-g-t{display:flex;flex-direction:column;gap:3px;min-width:0}
 .ac-g-t b{display:flex;align-items:center;gap:6px;font-size:15.5px}
@@ -359,7 +359,7 @@ div.ac-alert{cursor:default}
 .ac-trial span{font-size:13px;color:var(--muted);line-height:1.4}
 .ac-trial .btn{flex:none;padding:11px 14px}
 .ac-sec{margin:22px 4px 10px}
-.ac-sec h3{font-size:22px;font-weight:800;letter-spacing:-.3px;margin:0}
+.ac-sec h3{font-size:22px;font-weight:var(--th-fw-h);letter-spacing:calc(-.3px * var(--th-lsk));margin:0}
 .ac-sec span{display:block;font-size:13px;color:var(--blue);font-weight:600;margin-top:3px}
 .ac-sec.sm{margin:18px 4px 8px}
 .ac-sec.sm h3{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
@@ -371,15 +371,15 @@ div.ac-alert{cursor:default}
 .ac-plan{background:var(--card);border-radius:20px;padding:18px 16px 16px;border:1.5px solid transparent}
 .ac-plan.pop{border-color:var(--blue)}
 .ac-plan-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.ac-plan-h b{font-size:20px;font-weight:800}
+.ac-plan-h b{font-size:20px;font-weight:var(--th-fw-h)}
 .ac-tag{font-size:11.5px;font-weight:700;color:#fff;background:var(--blue);border-radius:99px;padding:4px 10px}
 .ac-tag.cur{background:var(--th-ok-soft);color:var(--ok)}
-.ac-price{font-size:34px;font-weight:800;letter-spacing:-.8px;margin-top:10px;font-variant-numeric:tabular-nums}
+.ac-price{font-size:34px;font-weight:var(--th-fw-h);letter-spacing:calc(-.8px * var(--th-lsk));margin-top:10px;font-variant-numeric:tabular-nums}
 .ac-price small{font-size:14px;font-weight:600;color:var(--muted);margin-left:6px;letter-spacing:0}
 .ac-per{font-size:13px;color:var(--ok);font-weight:600;margin-top:2px}
 .ac-kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 12px}
 .ac-kpi div{background:var(--bg);border-radius:13px;padding:10px 6px;text-align:center}
-.ac-kpi b{display:block;font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+.ac-kpi b{display:block;font-size:20px;font-weight:var(--th-fw-h);font-variant-numeric:tabular-nums}
 .ac-kpi span{display:block;font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.25}
 .ac-feat{list-style:none;padding:0;margin:0 0 16px;display:flex;flex-direction:column;gap:9px}
 .ac-feat li{display:flex;gap:9px;font-size:14px;line-height:1.4}
@@ -394,7 +394,7 @@ div.ac-row{cursor:default}
 div.ac-row:active{background:none}
 .ac-ic{width:32px;height:32px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;color:#fff}
 .ac-ic svg{width:18px;height:18px}
-.ac-ic em{font-style:normal;font-size:9.5px;font-weight:800;letter-spacing:-.2px}
+.ac-ic em{font-style:normal;font-size:9.5px;font-weight:var(--th-fw-h);letter-spacing:calc(-.2px * var(--th-lsk))}
 .ac-rt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .ac-rt b{font-size:15.5px;font-weight:500}
 .ac-rt small{font-size:12.5px;color:var(--muted);line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -408,7 +408,7 @@ div.ac-row:active{background:none}
 .ac-st.warn{background:var(--th-warn-soft);color:var(--th-warn)}
 .ac-st.bad{background:var(--th-danger-soft);color:var(--danger)}
 .ac-st.mute{background:var(--th-fill,#EEE);color:var(--muted)}
-.ac-dl{width:42px;flex:none;text-align:center;font-size:16px;font-weight:800;font-variant-numeric:tabular-nums}
+.ac-dl{width:42px;flex:none;text-align:center;font-size:16px;font-weight:var(--th-fw-h);font-variant-numeric:tabular-nums}
 .ac-dl.p{color:var(--ok)} .ac-dl.m{color:var(--danger)}
 .ac-after{font-size:12.5px;color:var(--muted)}
 .ac-empty{padding:22px 14px;text-align:center;color:var(--muted);font-size:14px}
@@ -429,7 +429,7 @@ div.ac-row:active{background:none}
 .ck-h{display:flex;align-items:center;gap:12px}
 .ck-h b{display:block;font-size:16.5px}
 .ck-h small{font-size:13px;color:var(--muted)}
-.ck-badge{width:42px;height:42px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px;background:linear-gradient(135deg,#64748B,#334155)}
+.ck-badge{width:42px;height:42px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:var(--th-fw-h);font-size:18px;background:linear-gradient(135deg,#64748B,#334155)}
 .ck-badge.pro{background:linear-gradient(135deg,#2F6BFF,#16357A)}
 .ck-badge.max{background:linear-gradient(135deg,#E8A317,#9A5B0C)}
 .ck-rows{margin-top:12px;display:flex;flex-direction:column}
@@ -438,7 +438,7 @@ div.ac-row:active{background:none}
 .ck-rows b{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
 .ck-total{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--line);margin-top:4px;padding-top:12px}
 .ck-total span{font-size:15px;font-weight:600}
-.ck-total b{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+.ck-total b{font-size:22px;font-weight:var(--th-fw-h);font-variant-numeric:tabular-nums}
 .ck-m{margin-top:0}
 .ck-m .ac-rt small{white-space:normal}
 .ck-tag{font-style:normal;font-size:10.5px;font-weight:700;color:var(--ok);background:var(--th-ok-soft);border-radius:99px;padding:2px 7px;margin-left:4px;vertical-align:2px}
@@ -452,7 +452,7 @@ div.ac-row:active{background:none}
 /* Kartaga o'tkazma bosqichlari */
 .cp-steps{display:flex;align-items:center;gap:6px;margin:0 0 14px}
 .cp-steps span{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--muted);white-space:nowrap}
-.cp-steps span em{font-style:normal;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;background:var(--th-fill,#EEE);color:var(--muted)}
+.cp-steps span em{font-style:normal;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:var(--th-fw-h);background:var(--th-fill,#EEE);color:var(--muted)}
 .cp-steps span.on{color:var(--ink)}
 .cp-steps span.on em{background:var(--blue);color:#fff}
 .cp-steps i{flex:1;height:2px;border-radius:2px;background:var(--th-fill,#EEE);min-width:10px}
@@ -461,7 +461,7 @@ div.ac-row:active{background:none}
 .pay-card svg{width:22px;height:22px}
 /* Kartaga o'tkazma */
 .cp-head{text-align:center;padding:4px 0 14px}
-.cp-sum{font-size:32px;font-weight:800;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+.cp-sum{font-size:32px;font-weight:var(--th-fw-h);letter-spacing:calc(-.5px * var(--th-lsk));font-variant-numeric:tabular-nums}
 .cp-sum small{font-size:15px;font-weight:600;color:var(--muted);margin-left:5px}
 .cp-sub{font-size:13.5px;color:var(--muted);margin-top:2px}
 .cp-step{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:700;margin:14px 0 8px}
@@ -502,7 +502,7 @@ div.ac-row:active{background:none}
   padding:13px 14px;margin-bottom:9px;font-family:inherit;text-align:left;cursor:pointer;color:var(--ink)}
 .pay-o b{display:block;font-size:15.5px}
 .pay-o span{font-size:12.5px;color:var(--muted)}
-.pay-ic{width:40px;height:40px;border-radius:11px;flex:none;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff}
+.pay-ic{width:40px;height:40px;border-radius:11px;flex:none;display:flex;align-items:center;justify-content:center;font-weight:var(--th-fw-h);font-size:13px;color:#fff}
 .cr-big span{font-size:13px;color:var(--muted)}
 #crTap{cursor:pointer}
 .crgo{font-style:normal;font-size:12.5px;font-weight:600;color:var(--blue);margin-left:auto;white-space:nowrap}
@@ -597,7 +597,7 @@ div.ac-row:active{background:none}
 .mk.ok b{color:var(--ok,#1a7f37)}
 .mk.high b{color:var(--blue)}
 .ms{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center}
-.ms-sc{font-size:13px;font-weight:800;padding:4px 10px;border-radius:99px}
+.ms-sc{font-size:13px;font-weight:var(--th-fw-h);padding:4px 10px;border-radius:99px}
 .ms-sc.hi{background:var(--th-ok-soft,#e3f6ea);color:var(--ok,#1a7f37)}
 .ms-sc.mid{background:var(--th-brand-soft,#e7efff);color:var(--blue)}
 .ms-sc.lo{background:var(--th-fill);color:var(--muted)}
@@ -788,7 +788,7 @@ div.ac-row:active{background:none}
 .lt{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:18px 18px 6px}
 .lt-t{min-width:0}
 .lt small{display:block;font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lt h1{font-size:31px;font-weight:800;letter-spacing:-.7px;line-height:1.1;margin-top:3px}
+.lt h1{font-size:31px;font-weight:var(--th-fw-h);letter-spacing:calc(-.7px * var(--th-lsk));line-height:1.1;margin-top:3px}
 .lt-act{flex:none;display:flex;align-items:center;gap:5px;border:none;border-radius:99px;padding:9px 14px 9px 11px;
   background:var(--blue);color:#fff;font:inherit;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 6px 16px rgba(0,102,224,.28)}
 .lt-act svg{width:17px;height:17px}
@@ -798,7 +798,7 @@ div.ac-row:active{background:none}
 /* Statistika — KPI plitkalari */
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:8px 14px 2px}
 .stat{background:var(--card);border-radius:16px;padding:12px 4px 10px}
-.stat b{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.stat b{font-size:22px;font-weight:var(--th-fw-h);font-variant-numeric:tabular-nums;letter-spacing:calc(-.3px * var(--th-lsk))}
 .stat span{font-size:11px;margin-top:3px}
 /* Filtr — kapsulalar, faoli ko'k */
 .flt{gap:8px;padding:2px 0 14px}
@@ -808,7 +808,7 @@ div.ac-row:active{background:none}
 /* Guruh sarlavhasi — bo'lim sarlavhasi kabi */
 .grp{margin-bottom:22px}
 .grp-h{padding:4px 4px 10px;align-items:center}
-.grp-h b{font-size:19px;font-weight:800;letter-spacing:-.3px}
+.grp-h b{font-size:19px;font-weight:var(--th-fw-h);letter-spacing:calc(-.3px * var(--th-lsk))}
 .grp-h span{font-size:12.5px}
 .grp-h .cl{border-radius:99px;padding:2px 8px}
 .vk-closed-h{font-size:14px;padding:12px 4px}
@@ -840,11 +840,11 @@ div.ac-row:active{background:none}
 .cd-box input,.ivbox input{border:none;background:var(--th-fill);border-radius:12px;padding:11px 12px}
 /* Vakansiya kartasi */
 .vk{padding:16px;margin-bottom:12px}
-.vk-ti{font-size:17px;font-weight:800;letter-spacing:-.2px}
+.vk-ti{font-size:17px;font-weight:var(--th-fw-h);letter-spacing:calc(-.2px * var(--th-lsk))}
 .vk-fn{gap:8px;border:none;padding:0;margin:14px 0 12px}
 .vk-fn div{background:var(--bg);border-radius:13px;padding:10px 2px 8px}
 .vk-fn div+div{border-left:none}
-.vk-fn b{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+.vk-fn b{font-size:20px;font-weight:var(--th-fw-h);font-variant-numeric:tabular-nums}
 .vk-fn span{font-size:11px;line-height:1.2;display:block;margin-top:1px}
 .vk-apps{border:none;border-radius:13px;background:var(--th-ok-soft);padding:11px 13px}
 .vk-apps.calm{background:var(--th-fill)}
@@ -859,7 +859,7 @@ div.ac-row:active{background:none}
 .sh{border-radius:22px 22px 0 0;background:var(--card)}
 .sh::before{content:'';display:block;width:38px;height:5px;border-radius:3px;background:var(--th-line-2,#C7C7CC);margin:7px auto -2px}
 .sh-h{border-bottom:none;padding:12px 16px 10px;border-radius:22px 22px 0 0}
-.sh-h b{font-size:18px;font-weight:800;letter-spacing:-.2px}
+.sh-h b{font-size:18px;font-weight:var(--th-fw-h);letter-spacing:calc(-.2px * var(--th-lsk))}
 .sh-x{width:30px;height:30px;border-radius:50%;background:var(--th-fill);font-size:14px;display:flex;align-items:center;justify-content:center}
 .sh-b{padding:4px 16px 22px}
 .vd-sec,.rs-sec,.sec h3,.h3{font-size:13px;font-weight:700;letter-spacing:.3px;color:var(--muted)}
@@ -887,7 +887,7 @@ div.ac-row:active{background:none}
 .cmsg.them{border:none}
 /* Qidiruv rejimi */
 .top{background:var(--bg);border-bottom:none;padding:14px 16px 8px}
-.top .sum{font-size:20px;font-weight:800;color:var(--ink);letter-spacing:-.3px;line-height:1.25}
+.top .sum{font-size:20px;font-weight:var(--th-fw-h);color:var(--ink);letter-spacing:calc(-.3px * var(--th-lsk));line-height:1.25}
 .top .cnt{font-size:13px;margin-top:4px}
 .c{padding:13px;border:2px solid transparent;margin-bottom:10px}
 .c.on{border-color:var(--blue);background:var(--th-brand-soft)}
@@ -896,7 +896,7 @@ div.ac-row:active{background:none}
 .tick{width:26px;height:26px;border:2px solid var(--th-line-2,#C7C7CC)}
 .bar{border-top:none;background:var(--card);box-shadow:0 -6px 20px rgba(15,39,71,.08);border-radius:20px 20px 0 0}
 .nav{border-radius:14px;background:var(--th-fill)}
-.d-pos{font-size:24px;font-weight:800;letter-spacing:-.4px}
+.d-pos{font-size:24px;font-weight:var(--th-fw-h);letter-spacing:calc(-.4px * var(--th-lsk))}
 :root[data-theme="dark"] .bar{box-shadow:0 -6px 20px rgba(0,0,0,.4)}
 /* ── Vakansiya sahifasi (to'liq ekran) — nomzod kabinetidagi bilan bir xil ── */
 .vp{position:fixed;inset:0;z-index:65;background:var(--bg);display:flex;flex-direction:column;
@@ -913,16 +913,16 @@ body.vp-lock{overflow:hidden}
 .vp.scrolled .vp-ht{opacity:1}
 .vp-b{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 14px 24px}
 .vp-hero{background:var(--card);border-radius:22px;padding:18px 18px 18px;margin-bottom:12px}
-.vp-hero h1{font-size:25px;font-weight:800;letter-spacing:-.5px;line-height:1.2}
+.vp-hero h1{font-size:25px;font-weight:var(--th-fw-h);letter-spacing:calc(-.5px * var(--th-lsk));line-height:1.2}
 .vp-ven{font-size:14.5px;color:var(--muted);margin-top:6px;line-height:1.4}
-.vp-sal{font-size:22px;font-weight:800;color:var(--ok);margin-top:12px;letter-spacing:-.3px;font-variant-numeric:tabular-nums}
+.vp-sal{font-size:22px;font-weight:var(--th-fw-h);color:var(--ok);margin-top:12px;letter-spacing:calc(-.3px * var(--th-lsk));font-variant-numeric:tabular-nums}
 .vp-sal.no{font-size:15.5px;font-weight:600;color:var(--muted)}
 .vp-facts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
 .vp-facts div{background:var(--card);border-radius:16px;padding:12px 14px;min-width:0}
 .vp-facts span{display:block;font-size:12px;color:var(--muted);font-weight:600}
 .vp-facts b{display:block;font-size:15px;font-weight:700;margin-top:3px;line-height:1.3;word-break:break-word}
 .vp-sec{background:var(--card);border-radius:18px;padding:15px 16px;margin-bottom:12px}
-.vp-sec h3{font-size:17px;font-weight:800;letter-spacing:-.2px;margin-bottom:8px}
+.vp-sec h3{font-size:17px;font-weight:var(--th-fw-h);letter-spacing:calc(-.2px * var(--th-lsk));margin-bottom:8px}
 .vp-tx{font-size:15px;line-height:1.55;white-space:pre-line}
 .vp-hook{background:var(--th-brand-soft);border-radius:18px;padding:14px 16px;font-size:15px;line-height:1.5;margin-bottom:12px;color:var(--ink)}
 .vp-ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:9px}
@@ -937,7 +937,7 @@ body.vp-lock{overflow:hidden}
 .vx-fn .vk-apps{margin:0}
 .vx-fn:not(:has(.vk-apps)) .vk-fn{margin-bottom:0}
 .vx-sh{margin:20px 4px 10px}
-.vx-sh h3{font-size:20px;font-weight:800;letter-spacing:-.3px}
+.vx-sh h3{font-size:20px;font-weight:var(--th-fw-h);letter-spacing:calc(-.3px * var(--th-lsk))}
 .vx-none{font-size:14px;color:var(--muted);text-align:center}
 .vx-menu{width:100%;margin-top:6px;padding:13px}
 </style>
@@ -1052,6 +1052,15 @@ const TG = window.Telegram && window.Telegram.WebApp;
 // Kunduz/tun — Telegram sozlamasidan. Sarlavha, fon va pastki panel
 // ranglari ham ilovaga moslanadi: ilgari tungi Telegram'da qora
 // sarlavha ostida oq sahifa chiqardi (2026-10-20 audit).
+// Shrift platformasi: Apple'da SF Pro (haqiqiy 800 qalinlik bor), qolganida
+// Roboto va 700 — aks holda brauzer sun'iy qalinlashtiradi va sarlavhalar
+// xunuk chiqadi (th.css: --th-fw-h, --th-lsk)
+function applyOs(){
+  const ua = navigator.userAgent || '';
+  const apple = /iPhone|iPad|iPod|Macintosh|Mac OS X/.test(ua) || /iPhone|iPad|iPod|Mac/.test(navigator.platform || '');
+  document.documentElement.dataset.os = apple ? 'ios' : 'droid';
+}
+applyOs();
 function applyTheme(){
   const dark = !!(TG && TG.colorScheme === 'dark');
   document.documentElement.dataset.theme = dark ? 'dark' : 'light';

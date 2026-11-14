@@ -828,6 +828,22 @@ yo'q", muddatsiz hh qatori (Saqlash o'chiq turadi), uz/ru, kunduz/tun, orqaga
 zanjiri. Jonli: /ping ff898b5, lug'at kalitlari, uchala yangi endpoint initData'siz
 401. **Telegramda nomzod sifatida HALI SINALMAGAN.**
 
+**ANDROID SHRIFTI — DEPLOY QILINDI** (2026-11-14, Anas: "Android'da shriftlar
+xunuk va bachkana"). Sabab: sarlavhalarda `font-weight:800`. iOS'da SF Pro'ning
+haqiqiy 800 qalinligi bor, Android'da (Roboto, Samsung One UI) va Windows'da
+(Segoe UI) yo'q — brauzer 700'ni SUN'IY qalinlashtiradi (faux bold), ustiga
+manfiy `letter-spacing` qo'shilib harflar yopishadi. Yechim — th.css'da ikki
+token: `--th-fw-h` (800 / Apple'da, 700 boshqasida) va `--th-lsk` (manfiy
+zichlik koeffitsienti: 1 / .35). Uchala Mini App sahifasidagi 40 ta
+`font-weight:800` va 30 ta manfiy `letter-spacing` shu tokenlarga o'tkazildi;
+`body` shrifti ham `var(--th-font)` (Android'da Roboto aniq ko'rsatiladi —
+Samsung shrifti qalin holatda yomon chiqadi). Platformani `applyOs()` aniqlaydi
+(`html[data-os="ios"|"droid"]`, applyTheme yonida, birinchi chizishdan oldin).
+Ochiq `maosh.html` th.css'siz — u yerda shunchaki 700. Yangi sarlavha
+qo'shsangiz: `font-weight:var(--th-fw-h)`, `letter-spacing:calc(-.4px * var(--th-lsk))`.
+Brauzerda ikki UA bilan tekshirildi: Android 700 / -0.245px / Roboto, iOS 800 /
+-0.7px / SF — tartib buzilmadi. **Anas Android'da ko'rib tasdiqlaydi.**
+
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
 O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda

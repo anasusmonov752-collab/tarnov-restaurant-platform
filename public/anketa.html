@@ -18,7 +18,7 @@
 }
 :root[data-theme="dark"]{ --soft-blue:rgba(10,132,255,.18); --sel:rgba(10,132,255,.16); }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);
+body{font-family:var(--th-font);background:var(--bg);
   color:var(--ink);font-size:15px;-webkit-text-size-adjust:100%;min-height:100vh}
 .hide{display:none !important}
 
@@ -137,7 +137,7 @@ textarea.in{min-height:110px;resize:vertical;line-height:1.5}
 .stp{font-weight:700;font-variant-numeric:tabular-nums}
 .card{border-radius:22px;padding:24px 18px;box-shadow:none}
 .secl{font-size:12px;letter-spacing:.5px;color:var(--blue)}
-.q{font-size:23px;font-weight:800;letter-spacing:-.4px;line-height:1.25}
+.q{font-size:23px;font-weight:var(--th-fw-h);letter-spacing:calc(-.4px * var(--th-lsk));line-height:1.25}
 .opt{border:none;background:var(--th-fill);border-radius:14px;padding:15px 15px;font-weight:500;transition:background .15s,transform .1s}
 .opt:active{transform:scale(.99)}
 .opt i{border-color:var(--th-line-2,#C7C7CC);background:var(--card)}
@@ -154,7 +154,7 @@ input.in:focus,textarea.in:focus{box-shadow:inset 0 0 0 2px var(--blue);backgrou
 .w-add{border:none;background:var(--th-brand-soft);border-radius:16px;font-weight:700}
 .w-ic{background:var(--th-brand-soft)}
 .sh{border-radius:22px 22px 0 0}
-.sh-q{font-size:21px;font-weight:800;letter-spacing:-.3px}
+.sh-q{font-size:21px;font-weight:var(--th-fw-h);letter-spacing:calc(-.3px * var(--th-lsk))}
 .sh-grab{background:var(--th-line-2,#C7C7CC)}
 .bar{background:linear-gradient(180deg,transparent,var(--bg) 32%)}
 .btn{border-radius:16px;box-shadow:0 8px 20px rgba(0,102,224,.22)}
@@ -184,6 +184,15 @@ input.in:focus,textarea.in:focus{box-shadow:inset 0 0 0 2px var(--blue);backgrou
 const TG = window.Telegram && window.Telegram.WebApp;
 // Kunduz/tun — Telegram sozlamasidan; sarlavha va fon rangi ham moslanadi
 // (miniapp.html bilan bir xil qoida — 2026-10-22 iOS dizayni)
+// Shrift platformasi: Apple'da SF Pro (haqiqiy 800 qalinlik bor), qolganida
+// Roboto va 700 — aks holda brauzer sun'iy qalinlashtiradi va sarlavhalar
+// xunuk chiqadi (th.css: --th-fw-h, --th-lsk)
+function applyOs(){
+  const ua = navigator.userAgent || '';
+  const apple = /iPhone|iPad|iPod|Macintosh|Mac OS X/.test(ua) || /iPhone|iPad|iPod|Mac/.test(navigator.platform || '');
+  document.documentElement.dataset.os = apple ? 'ios' : 'droid';
+}
+applyOs();
 function applyTheme(){
   const dark = !!(TG && TG.colorScheme === 'dark');
   document.documentElement.dataset.theme = dark ? 'dark' : 'light';

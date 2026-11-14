@@ -20,7 +20,7 @@
 }
 :root[data-theme="dark"]{ --soft-blue:rgba(10,132,255,.18); --sel:rgba(10,132,255,.16); }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+body{font-family:var(--th-font);
   background:var(--bg);color:var(--ink);font-size:15px;-webkit-text-size-adjust:100%;
   padding-bottom:calc(96px + env(safe-area-inset-bottom))}   /* suzuvchi panel ostida qolmasin */
 
@@ -340,7 +340,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
    kapsula chiplar, to'ldirilgan tugmalar, iOS ro'yxatlari. Blok oxirida —
    oldingi qoidalar ustidan yozadi. */
 .lt{padding:18px 18px 4px}
-.lt h1{font-size:31px;font-weight:800;letter-spacing:-.7px;line-height:1.1}
+.lt h1{font-size:31px;font-weight:var(--th-fw-h);letter-spacing:calc(-.7px * var(--th-lsk));line-height:1.1}
 .wrap{padding:12px 14px}
 /* Profil kartasi — gradient (Hisob balans kartasi bilan bir xil) */
 .hero{position:relative;overflow:hidden;border-radius:22px;padding:24px 18px 20px;color:#fff;margin-bottom:12px;
@@ -350,7 +350,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .hero > *{position:relative;z-index:1}
 .hero .av{width:88px;height:88px;background:rgba(255,255,255,.14);color:#fff;border:3px solid rgba(255,255,255,.35);
   box-shadow:0 8px 20px rgba(0,0,0,.25)}
-.hero .nm{font-size:24px;font-weight:800;letter-spacing:-.4px;color:#fff}
+.hero .nm{font-size:24px;font-weight:var(--th-fw-h);letter-spacing:calc(-.4px * var(--th-lsk));color:#fff}
 .hero .sb{color:rgba(255,255,255,.72);font-size:14px}
 .pill{background:rgba(255,255,255,.14) !important;color:#fff !important;border:1px solid rgba(255,255,255,.2);
   -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);padding:9px 16px}
@@ -366,10 +366,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .gap{border:none;border-radius:99px;background:var(--th-brand-soft);font-weight:600}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .stat{border-radius:18px;padding:15px 10px 13px}
-.stat b{font-size:28px;font-weight:800;letter-spacing:-.5px;color:var(--ink)}
+.stat b{font-size:28px;font-weight:var(--th-fw-h);letter-spacing:calc(-.5px * var(--th-lsk));color:var(--ink)}
 .stat span{font-size:12px}
 .sec-h{padding:15px 15px 4px}
-.sec-h b{font-size:18px;font-weight:800;letter-spacing:-.2px}
+.sec-h b{font-size:18px;font-weight:var(--th-fw-h);letter-spacing:calc(-.2px * var(--th-lsk))}
 .ed{background:var(--th-fill);border-radius:99px;padding:6px 12px;font-size:13px;font-weight:700}
 .kv{border-bottom:none;position:relative;padding:11px 15px}
 .kv + .kv::before,.w + .w::before{content:'';position:absolute;top:0;left:15px;right:0;height:.5px;background:var(--line)}
@@ -382,8 +382,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .jf button{border:none;background:var(--card);font-weight:600;font-size:13.5px;padding:8px 14px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
 .jf button.on{background:var(--blue);color:#fff}
 .jb{padding:16px;margin-bottom:12px}
-.jb .ti{font-size:17px;font-weight:800;letter-spacing:-.2px}
-.jb .sl{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums}
+.jb .ti{font-size:17px;font-weight:var(--th-fw-h);letter-spacing:calc(-.2px * var(--th-lsk))}
+.jb .sl{font-size:16px;font-weight:var(--th-fw-h);font-variant-numeric:tabular-nums}
 .tg2{border-radius:99px;font-weight:700;padding:3px 10px}
 .tg2.fit{background:var(--th-ok-soft)}
 .tg2.fresh{background:var(--th-brand-soft)}
@@ -394,7 +394,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .ab:disabled{background:var(--th-fill)}
 .btn{border-radius:14px;font-weight:700}
 .btn2{border:none;background:var(--th-fill);border-radius:14px;font-weight:700}
-.vd-ti{font-size:22px;font-weight:800;letter-spacing:-.3px}
+.vd-ti{font-size:22px;font-weight:var(--th-fw-h);letter-spacing:calc(-.3px * var(--th-lsk))}
 .vd-hk,.ap-v{border-radius:14px}
 .ap-er{border-radius:14px}
 .co-vc{border:none;background:var(--bg)}
@@ -404,7 +404,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .sh{border-radius:22px 22px 0 0}
 .sh::before{content:'';display:block;width:38px;height:5px;border-radius:3px;background:var(--th-line-2,#C7C7CC);margin:7px auto -2px}
 .sh-h{border-bottom:none;padding:12px 16px 10px;border-radius:22px 22px 0 0}
-.sh-h b{font-size:18px;font-weight:800;letter-spacing:-.2px}
+.sh-h b{font-size:18px;font-weight:var(--th-fw-h);letter-spacing:calc(-.2px * var(--th-lsk))}
 .sh-x{width:30px;height:30px;border-radius:50%;background:var(--th-fill);font-size:14px;display:flex;align-items:center;justify-content:center}
 .f{border-bottom:.5px solid var(--line)}
 .opt{border-bottom:.5px solid var(--line)}
@@ -473,7 +473,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 .wst-stp{flex:1;display:flex;gap:5px;justify-content:center}
 .wst-stp i{width:22px;height:4px;border-radius:2px;background:var(--line)}
 .wst-stp i.on{background:var(--blue)}
-.wst-q{font-size:19px;font-weight:700;letter-spacing:-.3px;margin:4px 0 2px}
+.wst-q{font-size:19px;font-weight:700;letter-spacing:calc(-.3px * var(--th-lsk));margin:4px 0 2px}
 .wst-h{font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.45}
 .wst-in{width:100%;border:none;border-radius:12px;background:var(--th-fill);font-family:inherit;
   font-size:17px;color:var(--ink);padding:14px}
@@ -499,11 +499,11 @@ body.vp-lock{overflow:hidden}
 .vp-hero{background:var(--card);border-radius:22px;padding:20px 18px 18px;margin-bottom:12px}
 .vp-badge{width:46px;height:46px;border-radius:14px;background:var(--th-brand-soft);color:var(--blue);display:flex;align-items:center;justify-content:center;margin-bottom:14px}
 .vp-badge svg{width:24px;height:24px}
-.vp-hero h1{font-size:25px;font-weight:800;letter-spacing:-.5px;line-height:1.2}
+.vp-hero h1{font-size:25px;font-weight:var(--th-fw-h);letter-spacing:calc(-.5px * var(--th-lsk));line-height:1.2}
 .vp-ven{font-size:15px;color:var(--ink-2);margin-top:6px;line-height:1.4}
 .vp-pl{display:flex;align-items:center;gap:5px;font-size:14px;color:var(--muted);margin-top:6px}
 .vp-pl svg{width:15px;height:15px;flex:none}
-.vp-sal{font-size:22px;font-weight:800;color:var(--ok);margin-top:14px;letter-spacing:-.3px;font-variant-numeric:tabular-nums}
+.vp-sal{font-size:22px;font-weight:var(--th-fw-h);color:var(--ok);margin-top:14px;letter-spacing:calc(-.3px * var(--th-lsk));font-variant-numeric:tabular-nums}
 .vp-sal small{font-size:14px;font-weight:600;color:var(--muted)}
 .vp-sal.no{font-size:16px;font-weight:600;color:var(--muted)}
 .vp-tags{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
@@ -513,7 +513,7 @@ body.vp-lock{overflow:hidden}
 .vp-facts span{display:block;font-size:12px;color:var(--muted);font-weight:600}
 .vp-facts b{display:block;font-size:15px;font-weight:700;margin-top:3px;line-height:1.3;word-break:break-word}
 .vp-sec{background:var(--card);border-radius:18px;padding:15px 16px;margin-bottom:12px}
-.vp-sec h3{font-size:17px;font-weight:800;letter-spacing:-.2px;margin-bottom:10px}
+.vp-sec h3{font-size:17px;font-weight:var(--th-fw-h);letter-spacing:calc(-.2px * var(--th-lsk));margin-bottom:10px}
 .vp-ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:9px}
 .vp-ul li{display:flex;gap:10px;font-size:15px;line-height:1.45}
 .vp-ul li i{width:6px;height:6px;border-radius:50%;background:var(--muted);flex:none;margin-top:8px}
@@ -609,6 +609,15 @@ body.vp-lock{overflow:hidden}
 const TG = window.Telegram && window.Telegram.WebApp;
 // Kunduz/tun — Telegram sozlamasidan; sarlavha va fon rangi ham moslanadi
 // (miniapp.html bilan bir xil qoida — 2026-10-22 iOS dizayni)
+// Shrift platformasi: Apple'da SF Pro (haqiqiy 800 qalinlik bor), qolganida
+// Roboto va 700 — aks holda brauzer sun'iy qalinlashtiradi va sarlavhalar
+// xunuk chiqadi (th.css: --th-fw-h, --th-lsk)
+function applyOs(){
+  const ua = navigator.userAgent || '';
+  const apple = /iPhone|iPad|iPod|Macintosh|Mac OS X/.test(ua) || /iPhone|iPad|iPod|Mac/.test(navigator.platform || '');
+  document.documentElement.dataset.os = apple ? 'ios' : 'droid';
+}
+applyOs();
 function applyTheme(){
   const dark = !!(TG && TG.colorScheme === 'dark');
   document.documentElement.dataset.theme = dark ? 'dark' : 'light';

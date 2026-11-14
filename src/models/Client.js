@@ -104,7 +104,14 @@ const ClientSchema = new mongoose.Schema({
   tgLang: { type: String, default: '' },
 
   createdAt:  { type: Date, default: Date.now },
-  lastSeenAt: { type: Date, default: null }
+  lastSeenAt: { type: Date, default: null },
+
+  // ── Botga birinchi kirish (services/firstTouch) ──
+  // Tasdiqlanmagan restoran AI qidiruvini NAMOYISH tarzida ko'ra oladi
+  // (anonim natija, kontakt ochib bo'lmaydi) — nechta marta ko'rgani.
+  demoSearches: { type: Number, default: 0 },
+  trialAskedAt: { type: Date, default: null },   // "Bepul sinov" tugmasi bosilgan vaqt
+  trialAskedRole: { type: String, default: '' }
 });
 
 ClientSchema.index({ agencyId: 1, createdAt: -1 });

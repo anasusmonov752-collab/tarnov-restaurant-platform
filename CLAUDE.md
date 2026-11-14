@@ -855,6 +855,43 @@ Jonli tekshirish: Android UA — Inter yuklandi, qalinlik 800; iPhone UA — bit
 woff2 so'ralmadi. iOS'ni ham Inter'ga o'tkazish kerak bo'lsa: `--th-font` ni
 `:root` da almashtirish kifoya. **Anas Android'da ko'rib tasdiqlaydi.**
 
+**BOTGA BIRINCHI KIRISH — IKKALA TOMON (hook)** (2026-11-14, CI 151/151).
+Anas: "botga birinchi kirganda funksiyalarimiz bilan ushlab qolish kerak".
+Muammo: ikkala tomonda ham birinchi xabar SO'RARDI (nomzoddan 2 daqiqalik
+anketa, restorandan "ovozda kim kerakligini ayting"), odam esa hali hech narsa
+ko'rmagan; restoranning hisobi "kutilmoqda" bo'lib, yozgani AI qidiruviga ham
+tushmasdi — menejer qo'ng'iroq qilgunicha bot jim turardi.
+Qoida YAGONA — `services/firstTouch.js` (tugmalar `ft:`, boshqa servislar
+bilan bir xil `handleCallback` shakli; bitta xabar `editMessageText` bilan
+o'zgarib boradi, chat to'lib ketmaydi).
+- NOMZOD: `/start` da (vakansiya havolasisiz) avval LAVOZIM tugmalari ->
+  tanlagan lavozimidagi ochiq ishlar (joy + maosh, restoran nomisiz) -> shundan
+  keyin "Anketani boshlash · 2 daqiqa". Anketa shu lavozimniki bo'lsa o'sha
+  ochiladi (lavozim savoli so'ralmaydi), javoblar bitta `SurveyResponse` da
+  qoladi. Vakansiya havolasi bilan kelgan — avvalgidek to'g'ridan-to'g'ri.
+- RESTORAN: `employerStart` endi quruq salom emas — va'dalar + BAZADAGI
+  haqiqiy raqamlar ("8 ta nomzod: ofitsiant 3 · xostess 2") + "Kim kerak?"
+  tugmalari -> lavozim bosilsa: nechta nomzod, bozor maoshi (`market.stats`,
+  5 tadan kam yozuvda ko'rsatilmaydi) va 3 ta ANONIM karta (kod/lavozim,
+  tajriba, hudud, maosh, ishonch belgilari). Ism/telefon/foto yo'q.
+- NAMOYISH QIDIRUVI: tasdiqlanmagan ("kutilmoqda") restoran yozsa yoki OVOZ
+  yuborsa — endi jim qolmaydi, AI qidiruvi ishlaydi, lekin natija anonim va
+  kontakt ochadigan tugmalar berilmaydi (ular `status:'active'` talab qiladi).
+  Soni cheklangan: `Client.demoSearches` <= 3 (`firstTouch.DEMO_LIMIT`) —
+  raqobatchi restoran niqobida bazani ko'chirib olmasin.
+- BEPUL SINOV tugmasi agentlikka so'rov yuboradi (`Client.trialAskedAt`,
+  admin chatiga xabar, ikkinchi bosishda takrorlanmaydi). Kreditni Anas
+  beradi — AVTOMATIK EMAS (qaror: begona bazani ko'rmasin). Avtomatga
+  o'tkazish kerak bo'lsa: `handleCallback` dagi `ft:t` shoxi.
+- OVOZ ikkala tomonda ham ko'rinadi: nomzodga tugma + "gapiring, AI anketani
+  o'zi to'ldiradi", restoranga birinchi xabarda misol bilan taklif va
+  "🎤 Ovozda aytaman" tugmasi.
+Yangi lug'at kalitlari `ft.*` (uz/ru). `test/firsttouch.test.js` (8 ta):
+anonim kartada ism/telefon yo'qligi, sinov va "ish qidirmayapti" yozuvlari
+hisoblanmasligi, yopiq/sinov vakansiyalari chiqmasligi, takroriy
+`SurveyResponse` ochilmasligi, sinov so'rovi bir marta ketishi.
+**Telegramda HALI BOSILMAGAN** — Anas uchta akkaunt bilan sinaydi.
+
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
 O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda

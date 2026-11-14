@@ -357,14 +357,28 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
     if (client) {
       const lang = langOf(client, msg.from);
       if (client.status !== 'active') {
-        await tg.sendMessage(token, chatId,
-          T(lang, client.status === 'blocked' ? 'bot.blocked' : client.referredBy ? 'bot.refPending' : 'bot.pending'));
         // Tasdiqlanmagan mijoz yozgani agentlikka — restoran nomini, ehtiyojni ko'radi
-        if (client.status === 'pending' && text) {
+        if (client.status === 'pending' && (text || voice)) {
           const ag = await Restaurant.findOne({ id: client.agencyId }, 'telegram').lean();
           const adm = ag && ag.telegram && ag.telegram.adminChatId;
-          if (adm) await tg.sendMessage(token, adm, `📩 Tasdiqlanmagan mijoz «${client.name}»${client.tgUsername ? ' @' + client.tgUsername : ''}:\n\n${text.slice(0, 1500)}\n\nPanel → Mijozlar: ma'lumotini to'ldirib, faollashtiring.`).catch(() => {});
+          if (adm) await tg.sendMessage(token, adm, `📩 Tasdiqlanmagan mijoz «${client.name}»${client.tgUsername ? ' @' + client.tgUsername : ''}:\n\n${voice ? '🎤 ovozli xabar' : String(text).slice(0, 1500)}\n\nPanel → Mijozlar: ma'lumotini to'ldirib, faollashtiring.`).catch(() => {});
+
+          // Jim qolmaymiz: AI qidiruvi NAMOYISH tarzida ishlaydi — natija
+          // anonim (ism/telefon yo'q), kontakt ochadigan tugmalar esa faol
+          // hisob talab qiladi. Soni cheklangan — raqobatchi restoran
+          // niqobida bazani ko'chirib olmasin (services/firstTouch).
+          const ft = require('../services/firstTouch');
+          if (ft.demoLeft(client) > 0) {
+            await ft.noteDemo(client);
+            await handleClientSearch(client, chatId, { text, voice }, publicBase(req), lang,
+              { demo: ft.demoLeft(client) - 1 });
+            return;
+          }
+          await tg.sendMessage(token, chatId, T(lang, 'ft.eDemoOut'), ft.demoKeyboard(lang));
+          return;
         }
+        await tg.sendMessage(token, chatId,
+          T(lang, client.status === 'blocked' ? 'bot.blocked' : client.referredBy ? 'bot.refPending' : 'bot.pending'));
         return;
       }
       client.lastSeenAt = new Date();
@@ -633,11 +647,15 @@ async function startSurvey(msg, chatId, ank, appBase) {
   }
 
   const text = await hookText({ lang, from: msg.from, agencyId: s.agencyId, v, closed });
-  // Ikki yo'l: Mini App anketasi yoki ovozli rezyume (services/voiceIntake) — bitta yozuv
-  await tg.sendMessage(token, chatId, text, { parse_mode: 'HTML', reply_markup: { inline_keyboard: [
-    [{ text: T(lang, 'ank.botOpen'), web_app: { url: `${appBase}/anketa.html?r=${r.id}` } }],
-    [require('../services/voiceIntake').entryButton(r, lang)]
-  ] } });
+  // Ikki yo'l: Mini App anketasi yoki ovozli rezyume (services/voiceIntake) — bitta
+  // yozuv. Vakansiya havolasisiz kelgan bo'lsa — avval LAVOZIM tugmalari: odam
+  // o'ziga mos ishni KO'RSIN, keyin anketa so'ralsin (services/firstTouch).
+  const ft = require('../services/firstTouch');
+  const rows = [];
+  if (!v) rows.push(...ft.roleRows(lang, 'ft:c:'));
+  rows.push([{ text: T(lang, 'ank.botOpen'), web_app: { url: `${appBase}/anketa.html?r=${r.id}` } }]);
+  rows.push([require('../services/voiceIntake').entryButton(r, lang)]);
+  await tg.sendMessage(token, chatId, text, { parse_mode: 'HTML', reply_markup: { inline_keyboard: rows } });
 }
 
 // ── Birinchi xabar: odam botni nega ochishi kerakligini bilsin ──
@@ -663,7 +681,12 @@ async function employerStart(msg, chatId, tgLang, appBase, src) {
   await Client.create({ id: uuidv4(), agencyId: def.agencyId, name: `${who} (yangi)`, contactName: who,
     status: 'pending', tgChatId: chatId, tgUsername: f.username || '', tgLang: f.language_code || '',
     note: `Manba: ${src === 'maosh' ? 'maosh sahifasi' : src}` });
-  await tg.sendMessage(token, chatId, T(tgLang, 'bot.empHello'));
+  // Avvalgi matn "menejer bog'lanadi" bilan tugardi — boshi berk ko'cha edi.
+  // Endi: va'dalar + BAZADAGI haqiqiy raqamlar + lavozim tugmalari
+  // (services/firstTouch).
+  const intro = await require('../services/firstTouch').employerIntro({ agencyId: def.agencyId, lang: tgLang });
+  await tg.sendMessage(token, chatId, intro.text,
+    { parse_mode: 'HTML', reply_markup: { inline_keyboard: intro.keyboard } });
   const ag = await Restaurant.findOne({ id: def.agencyId }, 'telegram').lean();
   const adm = ag && ag.telegram && ag.telegram.adminChatId;
   if (adm) await tg.sendMessage(token, adm,
@@ -813,8 +836,11 @@ async function saveSearch(client, criteria, rows) {
   return key;
 }
 
-async function handleClientSearch(client, chatId, { text, voice }, appBase, lang) {
+async function handleClientSearch(client, chatId, { text, voice }, appBase, lang, opts = {}) {
   const token = tg.platformToken();
+  // demo: tasdiqlanmagan restoranga namoyish — natija ko'rinadi, lekin
+  // kontakt ochadigan tugmalar berilmaydi (services/firstTouch)
+  const demo = opts.demo != null;
 
   if (text && text.startsWith('/')) {
     await tg.sendMessage(token, chatId, T(lang, 'bot.help', { n: client.credits }));
@@ -840,6 +866,11 @@ async function handleClientSearch(client, chatId, { text, voice }, appBase, lang
     const out = await agent.handleClient({ client, chatId, input, lang });
     const L = out.lang || lang;
 
+    if (demo) {
+      const ft = require('../services/firstTouch');
+      await tg.sendMessage(token, chatId, out.text + '\n\n' + T(L, 'ft.eDemo', { n: opts.demo }), ft.demoKeyboard(L));
+      return;
+    }
     await tg.sendMessage(token, chatId, out.text, searchKeyboard(out, appBase, L));
     // Til shu xabardan aniqlangan bo'lsa — menyu tugmasi ham o'sha tilda
     if (L !== lang) await setMenu(token, chatId, L, appBase).catch(() => {});
@@ -927,9 +958,10 @@ async function handleCallback(cq, appBase) {
 
   // ── Suhbat (services/interviews) va arizadan keyingi tekshiruv (services/prescreen) ──
   // Ikkalasi bir xil javob shaklini qaytaradi: {text, alert, edit, keyboard}
-  if (/^(iv|ps|pl|vi|ob|sh):/.test(data)) {
+  if (/^(iv|ps|pl|vi|ob|sh|ft):/.test(data)) {
     try {
-      const SVC = { 'iv:': 'interviews', 'ps:': 'prescreen', 'pl:': 'placements', 'vi:': 'voiceIntake', 'ob:': 'onboard', 'sh:': 'shifts' };
+      const SVC = { 'iv:': 'interviews', 'ps:': 'prescreen', 'pl:': 'placements', 'vi:': 'voiceIntake', 'ob:': 'onboard',
+        'sh:': 'shifts', 'ft:': 'firstTouch' };
       const svc = require('../services/' + SVC[data.slice(0, 3)]);
       const r = await svc.handleCallback({ data, chatId, appBase, from: cq.from });
       await done(r.text || '', !!r.alert);

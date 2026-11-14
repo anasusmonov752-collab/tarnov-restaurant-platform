@@ -842,7 +842,18 @@ Samsung shrifti qalin holatda yomon chiqadi). Platformani `applyOs()` aniqlaydi
 Ochiq `maosh.html` th.css'siz — u yerda shunchaki 700. Yangi sarlavha
 qo'shsangiz: `font-weight:var(--th-fw-h)`, `letter-spacing:calc(-.4px * var(--th-lsk))`.
 Brauzerda ikki UA bilan tekshirildi: Android 700 / -0.245px / Roboto, iOS 800 /
--0.7px / SF — tartib buzilmadi. **Anas Android'da ko'rib tasdiqlaydi.**
+-0.7px / SF — tartib buzilmadi.
+**2-qadam (o'sha kuni): INTER — O'Z SERVERIMIZDAN.** Anas iOS va Android ekranini
+yonma-yon qo'yib "baribir farq qilmoqda" dedi — tizim shriftlari (SF Pro / Roboto /
+Segoe) hech qachon bir xil ko'rinmaydi. Inter qo'shildi (SF Pro'ga eng yaqin UI
+shrifti, HAQIQIY 800 qalinlik bor, RestoOne ham Inter'da): `public/fonts/inter-*.woff2`
+(lotin 48 KB, kirill 19 KB, +ext'lar; brauzer faqat keragini oladi), `@font-face`
+th.css'da, `server.js` woff2'ni bir yil keshlaydi. FAQAT `html[data-os="droid"]` da —
+iOS'da Inter umuman yuklanmaydi, SF Pro qoladi; Android/Windows'da `--th-fw-h: 800`,
+`--th-lsk: .9`. Google Fonts'ga bog'lanmaydi (qo'shimcha DNS/TLS va kechikish).
+Jonli tekshirish: Android UA — Inter yuklandi, qalinlik 800; iPhone UA — bitta ham
+woff2 so'ralmadi. iOS'ni ham Inter'ga o'tkazish kerak bo'lsa: `--th-font` ni
+`:root` da almashtirish kifoya. **Anas Android'da ko'rib tasdiqlaydi.**
 
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.

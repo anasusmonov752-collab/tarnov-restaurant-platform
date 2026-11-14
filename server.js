@@ -58,6 +58,9 @@ app.use(express.static(path.join(__dirname, 'public'), {
       // 304, fayl qayta yuklanmaydi). Ilgari max-age=3600 edi: deploy'dan keyin
       // bir soatgacha eski menyu/stil ko'rinardi (2026-10-22 jonli topildi).
       res.setHeader('Cache-Control', 'public, no-cache');
+    } else if (filePath.endsWith('.woff2')) {
+      // Shrift fayli o'zgarmaydi (o'zgarsa nomi bilan birga) — bir yil keshda
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     }
   }
 }));

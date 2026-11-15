@@ -58,11 +58,11 @@ function smsInfo(text) {
 // Standart matn — REKRUTER OVOZI (Anas, 2026-11-15): SMS shaxsiy raqamdan ketadi,
 // "men" deb yozish rost; tizim xabaridek emas, odamdan odamga. Tartib:
 //   salom + ism -> kimman (TalentHub rekruteri) -> nega yozyapman (hh.uz rezyumesi)
-//   -> taklif (kim kerak, qancha) -> nima qilish (Telegramda anketasiz — ROST:
-//   havola shaxsiy, bot rezyumeni taniydi, ish tugmasi = ariza).
-// Uzunligi 2 ta SMS (GSM-7, 306 belgigacha) — telefonda bitta xabar bo'lib
-// ko'rinadi. 3+ bo'lsa matnda kirill/"—"/"’" bor — sahifa qizil ko'rsatadi.
-const DEFAULT_TPL = "Salom, {ism}! Men TalentHub agentligi rekruteriman. hh.uz'dagi rezyumengizni ko'rib, sizga ish taklif qilmoqchi edim: Toshkent restoranlarida {lavozim} uchun ish bor. Qiziq bo'lsa, Telegramda anketasiz ariza qoldiring: {havola}";
+//   -> qaysi ish -> "platformamiz orqali batafsil ma'lumot oling".
+// Maosh, to'lov muddati va "ariza" SMS'da YO'Q (Anas qarori): SMS qiziqish
+// uyg'otadi, javobni botning birinchi ekrani beradi (firstTouch.candidateInvite —
+// maosh, filiallar, bitta tugma). 2 ta SMS (GSM-7) — me'yor; 3+ — sahifa qizil.
+const DEFAULT_TPL = "Salom, {ism}! Men TalentHub agentligi rekruteriman. hh.uz'dagi rezyumengizni ko'rib, sizga {lavozim} lavozimida ish taklif qilmoqchi edim. Qiziq bo'lsa, platformamiz orqali batafsil ma'lumot oling: {havola}";
 
 // Shaxsiy havola tokeni: 10 belgi [A-Za-z0-9]. Pastki chiziq yo'q — boshqa
 // /start turlari (a_, v_, ref_, emp_, f_) bilan aralashmaydi. Havola

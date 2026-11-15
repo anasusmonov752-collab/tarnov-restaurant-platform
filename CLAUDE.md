@@ -1141,11 +1141,11 @@ esa hamma narsani qaytadan yozishi kerak edi.
 - SMS matni — REKRUTER OVOZI (Anas namunasi: "Salom, Nilufar! Men talenthub
   agentligi rekruteriman, rezyumengizni ko'rgan edim va ish taklif qilmoqchi edim"):
   "Salom, {ism}! Men TalentHub agentligi rekruteriman. hh.uz'dagi rezyumengizni
-  ko'rib, sizga ish taklif qilmoqchi edim: Tarnov restoraniga xostess kerak, kuniga
-  225 000 so'm, maosh har 10 kunda. Qiziq bo'lsa, Telegramda anketasiz ariza
-  qoldiring: {havola}". SMS shaxsiy raqamdan — "men" rost. 2 ta SMS (283–299
-  belgi, GSM-7 chegarasi 306) — telefonda bitta xabar; sahifa faqat 3+ ni qizil
-  qiladi. Rad etilgan variantlar: "Hurmatli…, hh.uz'dagi rezyumengiz bo'yicha:
+  ko'rib, sizga ish taklif qilmoqchi edim: Tarnov restoraniga xostess kerak. Qiziq
+  bo'lsa, platformamiz orqali batafsil ma'lumot oling: {havola}". Maosh, to'lov
+  muddati va "ariza" so'zi SMS'da YO'Q (Anas qarori) — javobni botning birinchi
+  ekrani beradi. SMS shaxsiy raqamdan — "men" rost. 2 ta SMS (~255 belgi, GSM-7
+  chegarasi 306) — telefonda bitta xabar; sahifa faqat 3+ ni qizil qiladi. Rad etilgan variantlar: "Hurmatli…, hh.uz'dagi rezyumengiz bo'yicha:
   … TalentHub: havola" (siqilgan, "tushunarsiz") va 1 SMS'ga sig'dirilgan
   qisqa variant ("juda galati") — 1 SMS chegarasi uchun ohangni qurbon qilmang.
 - JONLI SINOVDA TOPILDI: hh ismlari ko'pincha KIRILLCHA — bitta kirill harfi SMS'ni

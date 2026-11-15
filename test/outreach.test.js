@@ -68,8 +68,9 @@ test('standart matn: GSM-7, ko\'pi bilan 2 SMS, rekruter ovozi', async () => {
   assert.deepEqual(i.bad, [], 'GSM-7 ga kirmaydigan belgi bo\'lmasin');
   assert.ok(/TalentHub agentligi rekruteriman/.test(text) && /hh\.uz/.test(text), text);
   assert.ok(text.includes('Dilshod') && text.includes('ofitsiant') && text.includes('t.me/'));
-  // Rost va'da: anketasiz (havola shaxsiy, bot rezyumeni taniydi)
-  assert.ok(text.includes('anketasiz') && text.includes('t.me/'), text);
+  // Maosh, to'lov va "ariza" yo'q — SMS qiziqtiradi, batafsilini bot beradi
+  assert.ok(text.includes('batafsil') && text.includes('t.me/'), text);
+  assert.ok(!/ariza|so'm/i.test(text), text);
 
   // Bitta tire yoki qo'shtirnoq SMS'ni uchga bo'ladi — ogohlantirish shart
   const bad = outreach.smsInfo('Assalomu alaykum — TalentHub');

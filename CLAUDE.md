@@ -1064,6 +1064,29 @@ KALIT REPODA YO'Q va bo'lmasin (repo ochiq) — Render env'ga
   Nomzodlar (2171) TARNOVNIKI — roziliksiz TalentHub'ga olinmaydi; faqat vakansiyalar.
 - Cloud sessiya tarmog'iga `app.verifix.com` (va verifix.uz/com) qo'shilgan.
 
+**TARNOV — BIRINCHI HAQIQIY MIJOZ, 5 VAKANSIYA JONLI** (2026-11-15, `3f73b3a`).
+Anas qarori: Verifix'dagi ~100 vakansiya filial bo'yicha EMAS, LAVOZIM bo'yicha —
+bitta lavozim = bitta vakansiya (aks holda bir xil karta 15 marta, 22.10 dagi
+"soxtaga o'xshaydi" muammosi). Joy bo'sh emas: `location` = filiallar ro'yxati
+"Sebzor, Drujba, Chorsu, Keles, Istirohat" ("Drujba" — "Do'stlik" EMAS, shu nom
+bilan mashhur), `venue` = "5 ta filial — uyingizga yaqinini tanlaysiz".
+Ma'lumot Anas yuborgan rasmiy shartlardan (Verifix'dagi umumiy matn emas):
+Ofitsiant (savdodan 6%, 2-oydan 7%; o'qish haftasida 60 000/kun; 1-kun kuzatish
+to'lanmaydi — jalb qatorida OCHIQ yozilgan, aks holda nomzod 7,5 mln deb kelib
+aldangandek bo'ladi), Xostess 225 000/kun, Ranner 215 000/kun (tajribasiz),
+Salatchi 220 000 dan/kun (forma), Buyurtma yig'uvchi 225 000/kun. Hammasi
+3 mahal ovqat (yig'uvchidan tashqari), har 10 kunda maosh, 5 kunda 30% avans.
+Ranner va Buyurtma yig'uvchi — `ofitsiant` rolida (bizda alohida rol yo'q;
+sarlavhada aniq nomi). Yig'uvchining to'lov davri yozilmagan — bo'sh qoldirildi.
+Yangi to'lov davri `tenday` ("Har 10 kunda", `vac.PAYOUTS`, panel va Mini App
+formalari, uz/ru) — ilgari yo'q edi va `clean()` uni jimgina o'chirardi.
+Prod: Tarnov mijozi (faol, `showName`, 35 kredit), 5 vakansiya `verifiedAt` bilan,
+22.10 importidan qolgan 34 eskirgan vakansiya (19 "kutilmoqda" restoran + 1 SINOV)
+YOPILDI. "Bugun": nomzod 0 → **5** ta ish ko'radi, tasdiqlanmagan 0. Saqlangan
+maydonlar jonli o'qib, haqiqiy `forCandidate` bilan tekshirildi.
+Bu vakansiyalar kanal ulanishidan OLDIN yaratilgan — kanal ulansa o'zi chiqmaydi
+(`jobChannelSince`), panelda har biriga "Kanalga joylash" bosish kerak.
+
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
 O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda

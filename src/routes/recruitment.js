@@ -113,15 +113,16 @@ async function buildAndSave({ restaurantId, rawText, fileName, fileType, fileBuf
 // o'z telefonidan ketadi (services/outreach — nega shunday, o'sha yerda).
 router.get('/outreach', guard, asyncHandler(async (req, res) => {
   const agencyId = req.user.restaurantId;
+  const ag = await Restaurant.findOne({ id: agencyId }, 'telegram').lean();
+  const username = ((ag && ag.telegram) || {}).botUsername || process.env.TELEGRAM_BOT_USERNAME || 'TalentHubUzBot';
+  // Har qatorda SHAXSIY havola (row.link) — bot odamni hh rezyumesi bo'yicha taniydi
   const out = await outreach.list(agencyId, {
     role: req.query.role || '',
     limit: Number(req.query.limit) || 30,
-    skip: Number(req.query.skip) || 0
+    skip: Number(req.query.skip) || 0,
+    bot: username
   });
-  const sv = await require('../services/survey').ensureDefault(agencyId);
-  const ag = await Restaurant.findOne({ id: agencyId }, 'telegram').lean();
-  const username = ((ag && ag.telegram) || {}).botUsername || process.env.TELEGRAM_BOT_USERNAME || 'TalentHubUzBot';
-  out.link = `t.me/${username}?start=a_${sv.code}_sms`;
+  out.link = `t.me/${username}?start=XXXXXXXXXX`;   // faqat ko'rinish uchun (uzunligi bir xil)
   out.tpl = outreach.DEFAULT_TPL;
   res.json(out);
 }));

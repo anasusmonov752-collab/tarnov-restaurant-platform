@@ -67,8 +67,8 @@ test('standart matn BITTA SMS: GSM-7, 160 belgigacha', async () => {
   assert.equal(i.parts, 1, text);
   assert.deepEqual(i.bad, [], 'GSM-7 ga kirmaydigan belgi bo\'lmasin');
   assert.ok(text.includes('Dilshod') && text.includes('ofitsiant') && text.includes('t.me/'));
-  // Professional va huquqiy qolip: kim yozyapti, raqam qayerdan, undovsiz
-  assert.ok(text.includes('TalentHub') && text.includes('hh.uz'), text);
+  // Aniq va rost: nima qilish kerak (anketasiz — havola shaxsiy), undovsiz
+  assert.ok(text.includes('anketasiz') && text.includes('t.me/'), text);
   assert.ok(!/!/.test(text), 'undov belgisi reklamaga o\'xshatadi');
 
   // Bitta tire yoki qo'shtirnoq SMS'ni uchga bo'ladi — ogohlantirish shart
@@ -112,4 +112,80 @@ test('restoran nomi: faqat mijoz ochiq ko\'rsatishga rozi bo\'lsa', async () => 
   const shown = { id: 'c2', name: 'Tarnov', status: 'active', showName: true };
   assert.equal(vac.forCandidate(v, hidden, 'uz').employer, '');
   assert.equal(vac.forCandidate(v, shown, 'uz').employer, 'Tarnov');
+});
+
+
+test('har qatorda SHAXSIY havola: token bir marta yaratiladi va saqlanadi', async () => {
+  await cand('t1'); await cand('t2', { role: 'xostess' });
+  const a = await outreach.list(A, { bot: 'TestBot' });
+  const links = a.rows.map(r => r.link);
+  assert.ok(links.every(l => /^t\.me\/TestBot\?start=[A-Za-z0-9]{10}$/.test(l)), links.join(' '));
+  assert.notEqual(links[0], links[1]);
+  const b = await outreach.list(A, { bot: 'TestBot' });
+  assert.deepEqual(b.rows.map(r => r.link).sort(), links.sort());          // qayta ochilganda o'sha havola
+  const db = await Candidate.findOne({ id: 't1' }).lean();
+  assert.equal(db.tgInviteChannel, 'sms');
+  // Token boshqa /start turlari bilan aralashmaydi
+  assert.equal(require('../src/services/survey').parsePayload(db.tgInviteToken), null);
+});
+
+// ── hh nomzodi havolani bosdi: rezyume bor, bitta tugma bilan ariza ──
+test('shaxsiy havola ekrani: anketa yo\'q, lavozimidagi ish, tugma = ariza', async () => {
+  const M = { Vacancy: require('../src/models/Vacancy'), Application: require('../src/models/Application'),
+              Restaurant: require('../src/models/Restaurant') };
+  await Promise.all([M.Vacancy.deleteMany({}), M.Application.deleteMany({}), Client.deleteMany({}), M.Restaurant.deleteMany({})]);
+  await M.Restaurant.create({ id: A, name: 'TH', kind: 'agency', active: true, adminEmail: 'o@t.uz', adminPassword: 'secret1' });
+  await Client.create({ id: 'ct', agencyId: A, name: 'Tarnov', showName: true, status: 'active' });
+  await M.Vacancy.create({ id: 'vx', agencyId: A, clientId: 'ct', title: 'Xostess', role: 'xostess', status: 'open',
+    listed: true, confirmedAt: new Date(), salaryFrom: 225000, salaryTo: 225000, salaryPeriod: 'day', location: 'Chorsu' });
+  await M.Vacancy.create({ id: 'vo', agencyId: A, clientId: 'ct', title: 'Ofitsiant', role: 'ofitsiant', status: 'open',
+    listed: true, confirmedAt: new Date() });
+  const c = await cand('h1', { role: 'xostess', fullName: 'Yusupova Nilufar', tgChatId: '501', tgState: 'linked' });
+  const tg = require('../src/services/telegram'); tg.platformToken = () => 'x'; tg.sendMessage = async () => ({ message_id: 1 });
+  const ft = require('../src/services/firstTouch');
+
+  const scr = await ft.candidateInvite({ cand: c, lang: 'uz', appBase: 'https://x' });
+  assert.match(scr.text, /Assalomu alaykum, Nilufar!/);
+  assert.match(scr.text, /rezyumengiz bizda bor/);
+  assert.match(scr.text, /Xostess · Tarnov · 225 000/);
+  assert.ok(!/Ofitsiant/.test(scr.text), 'faqat o\'z lavozimi');
+  assert.equal(scr.keyboard[0][0].callback_data, 'ft:ap:vx');
+  assert.ok(scr.keyboard.flat().some(b => b.callback_data === 'ft:no'));     // chiqish yo'li
+  assert.ok(scr.keyboard.flat().some(b => b.callback_data === 'ft:il:ru'));  // til
+
+  const r1 = await ft.handleCallback({ data: 'ft:ap:vx', chatId: '501', appBase: 'https://x', from: { id: 501 } });
+  assert.match(r1.edit, /Arizangiz yuborildi: <b>Xostess · Tarnov<\/b>/);
+  assert.equal(await M.Application.countDocuments({ candidateId: 'h1', vacancyId: 'vx' }), 1);
+  const r2 = await ft.handleCallback({ data: 'ft:ap:vx', chatId: '501', appBase: 'https://x', from: { id: 501 } });
+  assert.equal(r2.alert, true); assert.match(r2.text, /allaqachon/);
+  assert.equal(await M.Application.countDocuments({ candidateId: 'h1' }), 1);
+
+  // Ruschaga — o'sha ekran ruscha
+  const ru = await ft.handleCallback({ data: 'ft:il:ru', chatId: '501', appBase: 'https://x', from: { id: 501 } });
+  assert.match(ru.edit, /Ваше резюме с hh\.uz у нас есть/);
+  assert.match(ru.keyboard[0][0].text, /Отправлено/);                        // allaqachon yuborilgani ko'rinadi
+
+  // Yopilgan ish va telefoni buzuq nomzod
+  await M.Vacancy.updateOne({ id: 'vo' }, { $set: { status: 'closed' } });
+  const cl = await ft.handleCallback({ data: 'ft:ap:vo', chatId: '501', appBase: 'https://x', from: { id: 501 } });
+  assert.equal(cl.alert, true);
+  await Candidate.updateOne({ id: 'h1' }, { $set: { phone: '123' } });
+  await M.Vacancy.create({ id: 'v3', agencyId: A, clientId: 'ct', title: 'Xostess 2', role: 'xostess', status: 'open', listed: true, confirmedAt: new Date() });
+  const np = await ft.handleCallback({ data: 'ft:ap:v3', chatId: '501', appBase: 'https://x', from: { id: 501 } });
+  assert.equal(np.alert, true);
+
+  // Ish qidirmayapman
+  await ft.handleCallback({ data: 'ft:no', chatId: '501', appBase: 'https://x', from: { id: 501 } });
+  assert.equal((await Candidate.findOne({ id: 'h1' }).lean()).jobStatus, 'not_looking');
+});
+
+test('kirill ism SMS\'ni bo\'lib yubormaydi — lotinga o\'giriladi', () => {
+  // 2026-11-15: "Нилуфар" bilan SMS 3 ta bo'lib ketardi (UCS-2, 70 belgi)
+  assert.equal(outreach.firstName('Юсупова Нилуфар Бахтиёровна'), 'Nilufar');
+  assert.equal(outreach.firstName('Ахмедова Ўғилой'), "O'g'iloy");
+  const tpl = "Assalomu alaykum, {ism}. Tarnov restoraniga xostess kerak, kuniga 225 000 so'm. Telegramda anketasiz ariza bering: {havola}";
+  const t = outreach.render(tpl, { fullName: 'Каримов Шохруххон', role: 'xostess' }, 't.me/TalentHubUzBot?start=abcdefghij');
+  const i = outreach.smsInfo(t);
+  assert.deepEqual(i.bad, [], t);
+  assert.equal(i.parts, 1, t);
 });

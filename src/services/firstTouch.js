@@ -169,6 +169,74 @@ const langSwitchBtn = (lang, rid) => lang === 'ru'
   ? { text: '\ud83c\uddfa\ud83c\uddff O\'zbekcha', callback_data: 'ft:lang:uz:' + rid }
   : { text: '\ud83c\uddf7\ud83c\uddfa \u0420\u0443\u0441\u0441\u043a\u0438\u0439', callback_data: 'ft:lang:ru:' + rid };
 
+// ══ hh NOMZODI: SHAXSIY HAVOLA (SMS) ═══════════════════════════
+// hh.uz rezyumesi bizda bor — uni anketaga yuborish noto'g'ri (o'zi bilgan
+// narsani qayta yozadi va yarmida tashlab ketadi). Shaxsiy havola bosilganda
+// bot odamni taniydi va LAVOZIMIDAGI ishlarni bitta tugma bilan beradi:
+// tugma = ariza (kabinet bilan bir xil tekshiruv, keyin prescreen o'zi).
+const Application = require('../models/Application');
+
+async function candidateInvite({ cand, lang, appBase }) {
+  const role = isValidRole(cand.role) && cand.role !== 'boshqa' ? cand.role : '';
+  let { n, rows } = await openJobs(cand.restaurantId, role, 3);
+  let mine = !!role;
+  if (!n) { ({ n, rows } = await openJobs(cand.restaurantId, '', 3)); mine = false; }
+  if (!cand.isTest) rows = rows.filter(v => !v.isTest);
+
+  const [applied, clients] = await Promise.all([
+    Application.find({ candidateId: cand.id, vacancyId: { $in: rows.map(v => v.id) } }, 'vacancyId').lean(),
+    Client.find({ agencyId: cand.restaurantId, id: { $in: rows.map(v => v.clientId) } }, 'id name showName').lean()
+  ]);
+  const sent = new Set(applied.map(a => a.vacancyId));
+  const emp = Object.fromEntries(clients.filter(c => c.showName).map(c => [c.id, c.name]));
+  const first = String(cand.fullName || '').trim().split(/\s+/);
+  const name = first.length >= 2 ? first[1] : (first[0] || '');
+
+  const head = role ? `${EMOJI[role] || ''} <b>${esc(T(lang, 'role.' + role))}</b>`.trim() : '';
+  const lines = rows.map(v => {
+    const bits = [vac.titleFor(v, lang), emp[v.clientId], vac.salaryText(v, lang)].filter(Boolean).map(esc);
+    return '• ' + bits.join(' · ') + (v.location ? `\n  📍 ${esc(v.location)}` : '');
+  });
+  const text = [
+    T(lang, 'ft.iHi', { name: esc(name) }), '',
+    !n ? T(lang, 'ft.iNoJobs') : mine ? T(lang, 'ft.cJobs', { head, n }) : T(lang, 'ft.iJobsAny'),
+    ...lines,
+    n ? '' : null,
+    n ? T(lang, 'ft.iPick') : null
+  ].filter(x => x !== null).join('\n').replace(/\n{3,}/g, '\n\n');
+
+  const keyboard = rows.map(v => {
+    const t = [vac.titleFor(v, lang), emp[v.clientId]].filter(Boolean).join(' · ');
+    return [sent.has(v.id)
+      ? { text: T(lang, 'ft.iApplied', { v: t }), callback_data: 'ft:ap:' + v.id }
+      : { text: '✅ ' + t, callback_data: 'ft:ap:' + v.id }];
+  });
+  if (appBase) keyboard.push([{ text: T(lang, 'ft.iProfile'), web_app: { url: `${appBase}/profil.html` } }]);
+  keyboard.push([{ text: T(lang, 'ft.iNo'), callback_data: 'ft:no' }]);
+  keyboard.push([lang === 'ru'
+    ? { text: '🇺🇿 O\'zbekcha', callback_data: 'ft:il:uz' }
+    : { text: '🇷🇺 Русский', callback_data: 'ft:il:ru' }]);
+  return { text, keyboard };
+}
+
+/** Botdagi bir tugmali ariza — kabinet (routes/candidate apply) bilan bir xil shartlar */
+async function inviteApply({ cand, vacancyId, lang, appBase }) {
+  const v = await Vacancy.findOne({ agencyId: cand.restaurantId, id: vacancyId, status: 'open', listed: { $ne: false },
+    ...(cand.isTest ? {} : { isTest: { $ne: true } }) }).lean();
+  if (!v) return { alert: T(lang, 'ft.iClosed') };
+  const validPhone = require('./applyReveal').validPhone;
+  if (!String(cand.fullName || '').trim() || !cand.phone || !validPhone(cand.phone)) return { alert: T(lang, 'ft.iNoPhone') };
+  try {
+    await require('./applications').submit({ cand, vacancy: v, appBase, via: 'bot' });
+  } catch (e) {
+    if (e.code === 11000) return { alert: T(lang, 'ft.iAlready') };
+    throw e;
+  }
+  const cl = await Client.findOne({ agencyId: cand.restaurantId, id: v.clientId }, 'name showName').lean();
+  const title = [vac.titleFor(v, lang), cl && cl.showName ? cl.name : ''].filter(Boolean).join(' · ');
+  return { ok: true, edit: T(lang, 'ft.iSent', { v: esc(title) }) };
+}
+
 // ══ ISH BERUVCHI ═════════════════════════════════════════════
 
 /** Bazadagi nomzodlar — lavozim bo'yicha (sinov yozuvlari hisoblanmaydi) */
@@ -310,6 +378,30 @@ async function handleCallback({ data, chatId, appBase, from }) {
     return { edit: r.text, keyboard: r.keyboard, html: true };
   }
 
+  // ── hh nomzodi: shaxsiy havoladan keyingi ekran (candidateInvite) ──
+  if (act === 'ap' || act === 'il' || act === 'no') {
+    const Candidate = require('../models/Candidate');
+    const cand = await Candidate.findOne({ tgChatId: chatId });
+    if (!cand) return { text: '' };
+    let lang = I18N.resolve(cand.lang, cand.tgLang || (from && from.language_code));
+    if (act === 'il' && I18N.LANGS.includes(arg)) {
+      lang = arg;
+      await Candidate.updateOne({ _id: cand._id }, { $set: { lang } });
+      const r = await candidateInvite({ cand, lang, appBase });
+      return { text: T(lang, 'bot.langToast'), edit: r.text, keyboard: r.keyboard, html: true };
+    }
+    if (act === 'no') {
+      await Candidate.updateOne({ _id: cand._id }, { $set: { jobStatus: 'not_looking', jobStatusAt: new Date() } });
+      const ag = await Restaurant.findOne({ id: cand.restaurantId }, 'telegram').lean();
+      const adm = ag && ag.telegram && ag.telegram.adminChatId;
+      if (adm) tg.sendMessage(tg.platformToken(), adm, `${cand.fullName || 'Nomzod'} — SMS havolasidan: hozir ish qidirmayapti`).catch(() => {});
+      return { text: '✓', edit: T(lang, 'ft.iNoDone'), html: true };
+    }
+    const r = await inviteApply({ cand, vacancyId: arg, lang, appBase });
+    if (r.alert) return { text: r.alert, alert: true };
+    return { text: '✓', edit: r.edit, html: true };
+  }
+
   // ── Restoran tomoni ──
   const client = await Client.findOne({ tgChatId: chatId });
   if (!client) return { text: '' };
@@ -351,7 +443,7 @@ async function handleCallback({ data, chatId, appBase, from }) {
 
 module.exports = {
   ROLES, roleRows, openJobs,
-  candidatePick, candidateRole, openByRole, langSwitchBtn,
+  candidatePick, candidateRole, openByRole, langSwitchBtn, candidateInvite, inviteApply,
   employerIntro, employerRole, baseCounts,
   DEMO_LIMIT, demoLeft, noteDemo, demoKeyboard,
   handleCallback

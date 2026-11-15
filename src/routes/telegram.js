@@ -233,7 +233,17 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
       // Nomzod — token global unikal (22 belgi tasodifiy)
       const cand = await Candidate.findOne({ tgInviteToken: payload });
       if (!cand) {
-        await tg.sendMessage(token, chatId, 'Havola eskirgan yoki ishlatilgan. HR bilan bog\'laning.');
+        // Token bir martalik. SMS havolasini IKKINCHI marta bosgan o'sha odam —
+        // o'z ekranini ko'radi; begona odam — oddiy birinchi ekran. Ilgari bu
+        // yerda "Havola eskirgan" deb boshi berk edi.
+        const me = await Candidate.findOne({ tgChatId: chatId, tgState: 'linked' });
+        if (me) {
+          const lang = I18N.resolve(me.lang, me.tgLang || tgLang);
+          const scr = await require('../services/firstTouch').candidateInvite({ cand: me, lang, appBase: publicBase(req) });
+          await tg.sendMessage(token, chatId, scr.text, { parse_mode: 'HTML', reply_markup: { inline_keyboard: scr.keyboard } });
+        } else {
+          await plainStart(msg, chatId, tgLang, publicBase(req));
+        }
         return;
       }
       const rest = await Restaurant.findOne({ id: cand.restaurantId });
@@ -280,19 +290,15 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
         `${publicBase(req)}/profil.html`).catch(e =>
           console.error('[TG] nomzod menyu tugmasi qo\'yilmadi:', e.message));
 
-      // Bo'sh forma emas, TAYYOR profil ko'rsatiladi: rezyumesi bizda
-      // allaqachon tahlil qilingan. Bitta tugma bosib tasdiqlaydi —
-      // noldan to'ldirishga qaraganda ancha ko'p odam oxiriga yetadi.
-      await tg.sendMessage(token, chatId,
-        `Assalomu alaykum, ${relay.displayName(cand)}!\n\n` +
-        `${rest.name} HR bo'limiga xush kelibsiz.\n\n` +
-        profileCard(cand) +
-        `\n\nHammasi to'g'rimi?`,
-        { reply_markup: { inline_keyboard: [
-          [{ text: '✅ Ha, to\'g\'ri', callback_data: 'cp' }],
-          [{ text: '✏️ Tuzataman', web_app: { url: `${publicBase(req)}/profil.html` } }],
-          [{ text: '🚫 Hozir ish qidirmayapman', callback_data: 'cn' }]
-        ]}});
+      // Tayyor rezyume — anketa EMAS: hh rezyumesi bizda bor. Lavozimidagi
+      // ochiq ishlar va bitta tugma bilan ariza (services/firstTouch).
+      cand.tgLang = (msg.from && msg.from.language_code) || cand.tgLang || '';
+      await Candidate.updateOne({ _id: cand._id }, { $set: { tgLang: cand.tgLang } });
+      const ilang = I18N.resolve(cand.lang, cand.tgLang || tgLang);
+      const scr = await require('../services/firstTouch').candidateInvite({ cand, lang: ilang, appBase: publicBase(req) });
+      await tg.sendMessage(token, chatId, scr.text, { parse_mode: 'HTML', reply_markup: { inline_keyboard: scr.keyboard } });
+      track('start', { agencyId: cand.restaurantId, tgUserId: chatId, candidateId: cand.id,
+        channel: cand.tgInviteChannel || 'sms', name: cand.fullName, isTest: cand.isTest });
 
       await relay.logMsg({
         restaurantId: rest.id, candidateId: cand.id,

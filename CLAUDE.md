@@ -1119,6 +1119,35 @@ Xato tushunilgan va qaytarilgan: "20 ta xostess, 15 ta ofitsiant" — bu SMS son
 edi, vakansiyadagi kerakli odam soni EMAS (bir necha daqiqa "20 ta o'rin"
 deb turdi, qaytarildi).
 
+**hh NOMZODIGA SHAXSIY HAVOLA — ANKETASIZ, BIR TUGMALI ARIZA** (2026-11-15, Anas:
+"SMS juda tushunarsiz; hh'dan kelgan nomzod anketa to'ldirmaydi-ku, profili allaqachon
+bor"). Ikkala gapning ildizi BITTA edi: SMS havolasi UMUMIY anketaga olib borardi —
+matn anketani tushuntirishga majbur bo'lib siqilib ketgan, rezyumesi bizda bor odam
+esa hamma narsani qaytadan yozishi kerak edi.
+- Har qatorda SHAXSIY havola: `t.me/<bot>?start=<token>` (10 belgi [A-Za-z0-9],
+  pastki chiziqsiz — a_/v_/ref_/emp_/f_ bilan aralashmaydi; umumiy havola bilan bir
+  xil uzunlik). `outreach.ensureTokens` navbat ochilganda yaratadi, `markSent`
+  `tgInviteSentAt` yozadi. Eski 22 belgili taklif tokenlari ham ishlayveradi.
+- Bosilganda (telegram.js eski taklif tarmog'i — profil kartasi "Hammasi to'g'rimi?"
+  O'RNIGA) `firstTouch.candidateInvite`: "hh.uz'dagi rezyumengiz bizda bor — anketa
+  shart emas" + o'z LAVOZIMIDAGI ochiq ishlar (bo'lmasa — boshqalari) restoran nomi
+  bilan (`showName`) + har ish = tugma `ft:ap:<vakansiya>` -> `inviteApply`: kabinet
+  bilan BIR XIL shartlar (ochiq, ism, telefon `validPhone`, takror 11000) ->
+  `applications.submit` (prescreen o'zi boshlanadi). Chiqish yo'li: "Rezyumemni
+  ko'rish" (profil.html), "Hozir ish qidirmayapman" (`ft:no`), til (`ft:il:<lang>`).
+  Yuborilgan ish tugmada "✓ Yuborilgan". Analitika: `start` (kanal sms) va `apply`.
+- Boshi berk joy yopildi: token bir martalik — havolani IKKINCHI bosgan o'sha odam
+  o'z ekranini ko'radi, begona odam oddiy birinchi ekranni (ilgari "Havola eskirgan").
+- SMS matni oddiy gaplar: "Assalomu alaykum, {ism}. Tarnov restoraniga xostess
+  kerak, kuniga 225 000 so'm. Telegramda anketasiz ariza bering: {havola}" —
+  "anketasiz" endi ROST. Raqam qayerdan olingani botning birinchi qatorida.
+- JONLI SINOVDA TOPILDI: hh ismlari ko'pincha KIRILLCHA — bitta kirill harfi SMS'ni
+  UCS-2 ga o'tkazib 3 taga bo'lardi. `outreach.latin` (o'zbek kirill -> lotin,
+  "Е" so'z boshida "Ye", ў/қ/ғ/ҳ) — SMS'da ism lotinda, botda asl yozuvi.
+  Ruscha `ft.cJobs` ko'plik shakllari yo'q edi ("2 открытых вакансий") — massiv.
+`test/outreach.test.js` (9). Webhook darajasida bosib o'qildi: SMS -> havola (rus
+Telegram) -> ekran -> tugma -> tasdiq + prescreen -> qayta bosish -> begona odam.
+
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
 O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda

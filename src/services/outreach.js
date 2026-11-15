@@ -55,14 +55,14 @@ function smsInfo(text) {
   return { chars: len, ucs2, bad, parts: len === 0 ? 0 : (len <= one ? 1 : Math.ceil(len / many)) };
 }
 
-// Standart matn — ASCII (GSM-7), bitta SMS. Uch qism, oddiy gaplar:
-//   salom + ism  ->  taklif (kim kerak, qancha)  ->  nima qilish kerak.
-// "anketasiz" — rost: havola SHAXSIY, bot odamni hh rezyumesi bo'yicha taniydi
-// va ishni bitta tugma bilan beradi (firstTouch.candidateInvite). Raqam
-// qayerdan olingani botning birinchi qatorida aytiladi — SMS siqilib
-// tushunarsiz bo'lmasin (2026-11-15, Anas: "nomzod tushunmaydi").
-// Undov, emoji, "ajoyib imkoniyat" — yo'q: reklamaga o'xshatadi.
-const DEFAULT_TPL = "Assalomu alaykum, {ism}. Toshkent restoranlarida {lavozim} uchun ish bor. Telegramda anketasiz ariza bering: {havola}";
+// Standart matn — REKRUTER OVOZI (Anas, 2026-11-15): SMS shaxsiy raqamdan ketadi,
+// "men" deb yozish rost; tizim xabaridek emas, odamdan odamga. Tartib:
+//   salom + ism -> kimman (TalentHub rekruteri) -> nega yozyapman (hh.uz rezyumesi)
+//   -> taklif (kim kerak, qancha) -> nima qilish (Telegramda anketasiz — ROST:
+//   havola shaxsiy, bot rezyumeni taniydi, ish tugmasi = ariza).
+// Uzunligi 2 ta SMS (GSM-7, 306 belgigacha) — telefonda bitta xabar bo'lib
+// ko'rinadi. 3+ bo'lsa matnda kirill/"—"/"’" bor — sahifa qizil ko'rsatadi.
+const DEFAULT_TPL = "Salom, {ism}! Men TalentHub agentligi rekruteriman. hh.uz'dagi rezyumengizni ko'rib, sizga ish taklif qilmoqchi edim: Toshkent restoranlarida {lavozim} uchun ish bor. Qiziq bo'lsa, Telegramda anketasiz ariza qoldiring: {havola}";
 
 // Shaxsiy havola tokeni: 10 belgi [A-Za-z0-9]. Pastki chiziq yo'q — boshqa
 // /start turlari (a_, v_, ref_, emp_, f_) bilan aralashmaydi. Havola

@@ -60,16 +60,16 @@ test('telefon formatdan qat\'i nazar +998 ga keltiriladi, ism ikkinchi so\'z', a
   assert.equal(by.p2.first, 'Aziza');                           // bitta so'z bo'lsa o'zi
 });
 
-test('standart matn BITTA SMS: GSM-7, 160 belgigacha', async () => {
+test('standart matn: GSM-7, ko\'pi bilan 2 SMS, rekruter ovozi', async () => {
   const c = { fullName: 'Karimov Dilshod', role: 'ofitsiant' };
   const text = outreach.render(outreach.DEFAULT_TPL, c, 't.me/TalentHubUzBot?start=a_HMXT37_sms');
   const i = outreach.smsInfo(text);
-  assert.equal(i.parts, 1, text);
+  assert.ok(i.parts <= 2, text);
   assert.deepEqual(i.bad, [], 'GSM-7 ga kirmaydigan belgi bo\'lmasin');
+  assert.ok(/TalentHub agentligi rekruteriman/.test(text) && /hh\.uz/.test(text), text);
   assert.ok(text.includes('Dilshod') && text.includes('ofitsiant') && text.includes('t.me/'));
-  // Aniq va rost: nima qilish kerak (anketasiz — havola shaxsiy), undovsiz
+  // Rost va'da: anketasiz (havola shaxsiy, bot rezyumeni taniydi)
   assert.ok(text.includes('anketasiz') && text.includes('t.me/'), text);
-  assert.ok(!/!/.test(text), 'undov belgisi reklamaga o\'xshatadi');
 
   // Bitta tire yoki qo'shtirnoq SMS'ni uchga bo'ladi — ogohlantirish shart
   const bad = outreach.smsInfo('Assalomu alaykum — TalentHub');

@@ -149,7 +149,8 @@ function drawTpl(){
   const worst = S.rows.reduce((m, c) => Math.max(m, smsInfo(fill(tplText(), c)).parts), i.parts);
   $('cnt').textContent = i.chars;
   $('parts').textContent = worst;
-  $('parts').style.color = worst > 1 ? 'var(--th-danger)' : '';
+  // 2 ta SMS — me'yor (rekruter matni); 3+ — matnda kirill/"—" bor, narx uch baravar
+  $('parts').style.color = worst > 2 ? 'var(--th-danger)' : '';
   $('badWrap').hidden = !i.bad.length;
   $('bad').textContent = i.bad.join(' ');
   $('prev').textContent = text;

@@ -1138,9 +1138,16 @@ esa hamma narsani qaytadan yozishi kerak edi.
   Yuborilgan ish tugmada "✓ Yuborilgan". Analitika: `start` (kanal sms) va `apply`.
 - Boshi berk joy yopildi: token bir martalik — havolani IKKINCHI bosgan o'sha odam
   o'z ekranini ko'radi, begona odam oddiy birinchi ekranni (ilgari "Havola eskirgan").
-- SMS matni oddiy gaplar: "Assalomu alaykum, {ism}. Tarnov restoraniga xostess
-  kerak, kuniga 225 000 so'm. Telegramda anketasiz ariza bering: {havola}" —
-  "anketasiz" endi ROST. Raqam qayerdan olingani botning birinchi qatorida.
+- SMS matni — REKRUTER OVOZI (Anas namunasi: "Salom, Nilufar! Men talenthub
+  agentligi rekruteriman, rezyumengizni ko'rgan edim va ish taklif qilmoqchi edim"):
+  "Salom, {ism}! Men TalentHub agentligi rekruteriman. hh.uz'dagi rezyumengizni
+  ko'rib, sizga ish taklif qilmoqchi edim: Tarnov restoraniga xostess kerak, kuniga
+  225 000 so'm, maosh har 10 kunda. Qiziq bo'lsa, Telegramda anketasiz ariza
+  qoldiring: {havola}". SMS shaxsiy raqamdan — "men" rost. 2 ta SMS (283–299
+  belgi, GSM-7 chegarasi 306) — telefonda bitta xabar; sahifa faqat 3+ ni qizil
+  qiladi. Rad etilgan variantlar: "Hurmatli…, hh.uz'dagi rezyumengiz bo'yicha:
+  … TalentHub: havola" (siqilgan, "tushunarsiz") va 1 SMS'ga sig'dirilgan
+  qisqa variant ("juda galati") — 1 SMS chegarasi uchun ohangni qurbon qilmang.
 - JONLI SINOVDA TOPILDI: hh ismlari ko'pincha KIRILLCHA — bitta kirill harfi SMS'ni
   UCS-2 ga o'tkazib 3 taga bo'lardi. `outreach.latin` (o'zbek kirill -> lotin,
   "Е" so'z boshida "Ye", ў/қ/ғ/ҳ) — SMS'da ism lotinda, botda asl yozuvi.

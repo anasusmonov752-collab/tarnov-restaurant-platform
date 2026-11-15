@@ -23,6 +23,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    literal `n` ga aylanib, butun Mini App oq ekran bo'lib qoldi.
    Katta HTML/JS uchun shell emas, `Write` ishlating.
 
+7. **HR nigohi — har ekran uchun** (Anas talabi, 2026-11-15). Nomzod ham,
+   restoran ham ko'k yoqa auditoriya: har ekranda BITTA savol va BITTA asosiy
+   harakat. Yangi ekran yoki matn qo'shsangiz, shu ro'yxatdan o'tkazing:
+   - Odam TANLAGAN yo'lga qarama-qarshi tugma turibdimi? (ovozni tanlaganga
+     "Anketa to'ldirish" asosiy tugmadek ko'rinmasin)
+   - Chiqish yo'li bormi? Har bosqichda: "keyinroq", "orqaga", zaxira variant.
+   - Tugma VA'DA bersa, bosilganda AYNAN shu bo'ladimi? ("3 kontakt bepul"
+     bosilganda kontakt berilmasa — matn yolg'on).
+   - Matn 5 banddan uzunmi yoki ekranni to'ldiradimi? Qisqartiring.
+   - Oxiri ko'rinadimi? ("yana 2 ta savol"; katta son qo'rqitadi — ko'rsatmang).
+   - Raqamlar BAZADANmi? To'qima raqam ishonchni butunlay yo'q qiladi.
+   - Til: Telegram interfeysi tili faqat taxmin — almashtirish yo'li bo'lsin.
+   Matnni yozgandan keyin oqimni lokal bazada "bosib" chiqing va HAR BIR bot
+   xabarini ko'z bilan o'qing (2026-11-14: shunda 2 ta nuqson topildi).
+
 ## Qolgan ishlar (2026-10-18 holatiga)
 
 **MINIAPP-2 — bloklovchilar tuzatildi va JONLI TEKSHIRILDI (2026-10-18).**
@@ -929,6 +944,24 @@ harakat turibdi yoki chiqish yo'li yo'q. Tuzatildi:
    tugmasi aslida faqat SO'ROV yuborardi — endi «🎁 3 ta bepul kontakt so'rash».
 Tekshirish: ovozli oqim boshidan oxirigacha lokal bazada "bosib" ko'rildi
 (har bir bot xabari o'qib chiqildi), CI 152/152.
+
+**BOTDA TIL — BIR BOSISHDA** (2026-11-15, Anas: "Telegramim rus interfeysida,
+botda faqat rus tili chiqyapti"). Muammo: nomzodning tili FAQAT Telegram
+interfeysidan olinardi (`I18N.fromTelegram`), botda almashtirish yo'li yo'q edi —
+O'zbekistonda ko'p telefon ruscha sozlangan holda sotiladi, egasi esa o'zbekcha
+gapiradi. Anketa (Mini App) tilni so'rardi, bot esa yo'q — ya'ni odam ruscha
+tugmalarni bosib, formada "Tilni tanlang" degan savolga tushardi.
+Yechim — ALOHIDA TIL EKRANI EMAS (u hammaga ortiqcha qadam qo'shadi va "avval
+ber, keyin so'ra" qoidasini buzadi), balki birinchi ekranning pastida BITTA
+tugma: faqat IKKINCHI til, o'z tilida yozilgan («🇺🇿 O'zbekcha» / «🇷🇺 Русский»).
+Bosilganda o'sha xabarning o'zi tanlangan tilda qayta chiziladi (`firstScreen`
+alohida funksiyaga ajratildi), tanlov `SurveyResponse.lang` ga yoziladi —
+ANKETA endi tilni qayta so'ramaydi (`anketa.html`: `if (S.lang)`), nomzod
+bo'lsa `Candidate.lang` ham yangilanadi. Til ustunligi: botda tanlangan >
+profil > Telegram interfeysi (`firstTouch.handleCallback`; aks holda lavozim
+bosilganda ruschaga qaytib ketardi — jonli sinovda topildi). Nomzod uchun
+`/til` buyrug'i ham qo'shildi (ilgari faqat mijozda edi; `lg:` tugmalari endi
+nomzodni ham taniydi). `test/firsttouch.test.js` (10 ta), CI 153/153.
 
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.

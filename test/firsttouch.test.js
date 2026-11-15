@@ -140,6 +140,19 @@ test('nomzod: lavozim tanlansa — shu lavozimdagi ochiq ishlar va anketa tugmas
   assert.equal(await M.SurveyResponse.countDocuments({ agencyId: A, tgUserId: '777' }), 1);
 });
 
+test('botda tanlangan til keyingi ekranlarda saqlanadi', async () => {
+  // Telegram interfeysi RUSCHA, lekin odam botda o'zbekchani tanlagan
+  // (2026-11-15: ilgari lavozim bosilganda yana ruschaga qaytardi)
+  await vacancy('vl');
+  const sv = await require('../src/services/survey').ensureDefault(A);
+  await M.SurveyResponse.create({ id: '55555555-5555-4555-8555-555555555555', agencyId: A, surveyId: sv.id,
+    tgUserId: '70', chatId: '70', status: 'started', lang: 'uz' });
+  const r = await ft.handleCallback({ data: 'ft:c:ofitsiant', chatId: '70', appBase: 'https://x',
+    from: { id: 70, language_code: 'ru' } });
+  assert.match(r.edit, /ochiq ish/);                 // o'zbekcha
+  assert.ok(!/вакансий|анкет/i.test(r.edit), r.edit);
+});
+
 test('nomzod: lavozim anketasi bo\'lsa o\'sha ochiladi (forma qisqaradi)', async () => {
   const sv = require('../src/services/survey');
   const preset = sv.rolePreset('xostess');

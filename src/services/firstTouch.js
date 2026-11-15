@@ -94,7 +94,7 @@ async function candidateRole({ agencyId, role, lang, tgUserId, chatId, appBase, 
     .sort({ updatedAt: -1 });
   if (!r) {
     r = await SurveyResponse.create({ id: uuidv4(), agencyId, surveyId: survey.id, vacancyId: '',
-      channel: 'bot', tgUserId, chatId, status: 'started', isTest: !!isTest });
+      channel: 'bot', tgUserId, chatId, status: 'started', isTest: !!isTest, lang });
   }
 
   const head = `${EMOJI[role] || ''} <b>${esc(T(lang, 'role.' + role))}</b>`.trim();
@@ -247,7 +247,13 @@ async function handleCallback({ data, chatId, appBase, from }) {
     const survey = await Survey.findOne({ isDefault: true, active: true }, 'agencyId').lean();
     if (!survey) return { text: '' };
     const cand = await require('../models/Candidate').findOne({ tgChatId: chatId }, 'lang tgLang').lean();
-    const lang = I18N.resolve(cand && cand.lang, (cand && cand.tgLang) || (from && from.language_code));
+    // Til ustunligi: botda TANLANGAN (anketa yozuvida) > nomzod profili >
+    // Telegram interfeysi. Aks holda til tugmasi bosilgani keyingi ekranda
+    // yo'qolib ketardi (2026-11-15).
+    const open = await SurveyResponse.findOne({ tgUserId, status: 'started' }, 'lang')
+      .sort({ updatedAt: -1 }).lean();
+    const lang = I18N.resolve((open && open.lang) || (cand && cand.lang),
+      (cand && cand.tgLang) || (from && from.language_code));
     if (act === 'cb') {
       const r = await candidatePick({ agencyId: survey.agencyId, lang });
       return { edit: r.text, keyboard: r.keyboard, html: true };

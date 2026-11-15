@@ -413,6 +413,13 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
     await tg.setChatMenuButton(token, chatId, 'Profilim',
       `${publicBase(req)}/profil.html`).catch(() => {});
 
+    // /til — nomzod ham tilni almashtira oladi (mijozdagi bilan bir xil tugmalar)
+    if (/^\/(til|lang|язык)(@\w+)?$/i.test(text || '')) {
+      const L = I18N.resolve(cand.lang, cand.tgLang);
+      await tg.sendMessage(token, chatId, T(L, 'bot.langAsk'), langKb('lg:'));
+      return;
+    }
+
     // Arizadan keyingi tekshiruvning oxirgi savoli — ovozli tanishuv
     // (services/prescreen). Qabul qilinsa — boshqa yo'lga ketmaydi.
     if (voice && !text) {
@@ -646,7 +653,21 @@ async function startSurvey(msg, chatId, ank, appBase) {
     await r.save();
   }
 
-  const text = await hookText({ lang, from: msg.from, agencyId: s.agencyId, v, closed });
+  const scr = await firstScreen({ lang, from: msg.from, agencyId: s.agencyId, v, closed, r, appBase });
+  await tg.sendMessage(token, chatId, scr.text, { parse_mode: 'HTML', reply_markup: { inline_keyboard: scr.rows } });
+}
+
+// ── Nomzodning birinchi ekrani (matn + tugmalar) ──
+// Alohida funksiya: til almashtirilganda AYNAN shu ekran qayta chiziladi.
+// Til tugmasi — BITTA, faqat ikkinchi til (o'z tilida yozilgan, tanimagan
+// ham topadi). Telegram interfeysi tili yolg'on taxmin beradi: O'zbekistonda
+// ko'p telefon ruscha sozlangan holda sotiladi, egasi esa o'zbekcha gapiradi.
+const langSwitchBtn = (lang, rid) => lang === 'ru'
+  ? { text: '🇺🇿 O\'zbekcha', callback_data: 'ft:lang:uz:' + rid }
+  : { text: '🇷🇺 Русский',   callback_data: 'ft:lang:ru:' + rid };
+
+async function firstScreen({ lang, from, agencyId, v, closed, r, appBase }) {
+  const text = await hookText({ lang, from, agencyId, v, closed });
   // Ikki yo'l: Mini App anketasi yoki ovozli rezyume (services/voiceIntake) — bitta
   // yozuv. Vakansiya havolasisiz kelgan bo'lsa — avval LAVOZIM tugmalari: odam
   // o'ziga mos ishni KO'RSIN, keyin anketa so'ralsin (services/firstTouch).
@@ -659,7 +680,8 @@ async function startSurvey(msg, chatId, ank, appBase) {
     // keyingi ekranda — u yerda qaysi ish uchun ekani ko'rinib turadi.
     : [...ft.roleRows(lang, 'ft:c:'),
        [Object.assign({}, anketa, { text: T(lang, 'ft.cOther') })]];
-  await tg.sendMessage(token, chatId, text, { parse_mode: 'HTML', reply_markup: { inline_keyboard: rows } });
+  rows.push([langSwitchBtn(lang, r.id)]);
+  return { text, rows };
 }
 
 // ── Birinchi xabar: odam botni nega ochishi kerakligini bilsin ──
@@ -963,6 +985,31 @@ async function handleCallback(cq, appBase) {
     return;
   }
 
+  // ── Nomzod: birinchi ekrandagi til tugmasi ──
+  // Telegram interfeysi tili faqat TAXMIN: O'zbekistonda ko'p telefon ruscha
+  // sozlangan, egasi o'zbekcha gapiradi. Bir bosishda to'g'rilanadi va tanlov
+  // ANKETAGA ham o'tadi (SurveyResponse.lang) — forma qayta so'ramaydi.
+  if (/^ft:lang:(uz|ru):/.test(data)) {
+    const [, , lang, rid] = data.split(':');
+    const fromId = String((cq.from && cq.from.id) || chatId);
+    const r = await SurveyResponse.findOne({ id: rid, tgUserId: fromId });
+    if (!r) return done('', false);
+    r.lang = lang;
+    await r.save();
+    // Allaqachon nomzod bo'lsa — bot xabarlari va kabinet ham shu tilda
+    await Candidate.updateOne({ tgChatId: chatId }, { $set: { lang } }).catch(() => {});
+    await done(T(lang, 'bot.langToast'));
+    let v = null, closed = false;
+    if (r.vacancyId) {
+      v = await Vacancy.findOne({ id: r.vacancyId }).lean();
+      if (!v || v.status !== 'open') { closed = !!v; v = null; }
+    }
+    const scr = await firstScreen({ lang, from: cq.from, agencyId: r.agencyId, v, closed, r, appBase });
+    await tg.editMessageText(token, chatId, msgId, scr.text,
+      { parse_mode: 'HTML', reply_markup: { inline_keyboard: scr.rows } }).catch(() => {});
+    return;
+  }
+
   // ── Suhbat (services/interviews) va arizadan keyingi tekshiruv (services/prescreen) ──
   // Ikkalasi bir xil javob shaklini qaytaradi: {text, alert, edit, keyboard}
   if (/^(iv|ps|pl|vi|ob|sh|ft):/.test(data)) {
@@ -1059,7 +1106,19 @@ async function handleCallback(cq, appBase) {
   // Tanlov mijozga yoziladi — Mini App va bildirishnomalar ham shu tilda.
   if (/^l[wg]:(uz|ru)$/.test(data)) {
     const client = await Client.findOne({ tgChatId: chatId });
-    if (!client) return done(I18N.errText(cqLang, 'Mijoz topilmadi'), true);
+    if (!client) {
+      // Nomzodning /til buyrug'i — tanlov nomzodga va ochiq anketasiga yoziladi
+      const cand = await Candidate.findOne({ tgChatId: chatId });
+      if (!cand) return done(I18N.errText(cqLang, 'Mijoz topilmadi'), true);
+      const lang = data.slice(3);
+      await Candidate.updateOne({ _id: cand._id }, { $set: { lang } });
+      await SurveyResponse.updateMany({ tgUserId: chatId, status: 'started' }, { $set: { lang } }).catch(() => {});
+      await done(T(lang, 'bot.langToast'));
+      if (msgId) await tg.editMessageText(token, chatId, msgId, T(lang, 'bot.langSet')).catch(() => {});
+      await tg.setChatMenuButton(token, chatId, T(lang, 'ank.botProfile').replace(/^\S+\s*/, ''),
+        `${appBase}/profil.html`).catch(() => {});
+      return;
+    }
     const lang = data.slice(3);
     await Client.updateOne({ agencyId: client.agencyId, id: client.id }, { $set: { lang } });
     client.lang = lang;

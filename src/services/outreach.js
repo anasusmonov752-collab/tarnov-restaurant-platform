@@ -55,11 +55,16 @@ function smsInfo(text) {
   return { chars: len, ucs2, bad, parts: len === 0 ? 0 : (len <= one ? 1 : Math.ceil(len / many)) };
 }
 
-// Standart matn — ASCII (GSM-7), bitta SMS ichiga sig'adi.
-// Nega shunday: kim yozyapti (TalentHub), nima taklif (ish), narxi (bepul),
-// qancha vaqt (2 daqiqa), bitta havola. Boshqa hech narsa.
-const DEFAULT_TPL = 'Assalomu alaykum, {ism}! TalentHub - Toshkent restoranlarida ish bor. '
-  + '{lavozim}: anketa 2 daqiqa, bepul. {havola}';
+// Standart matn — ASCII (GSM-7), bitta SMS ichiga sig'adi. Qolip (har lavozim
+// matni ham shunday yoziladi — panelda tahrirlanadi):
+//   "Hurmatli {ism}," — rasmiy murojaat ("Assalomu alaykum" dan 8 belgi qisqa)
+//   "hh.uz'dagi rezyumengiz bo'yicha" — raqam QAYERDAN olingani. Bu ommaviy
+//       reklama emas, odamning o'zi ochiq joylagan rezyumesiga shaxsiy taklif
+//       (reklama qonuni abonent roziligisiz telefon reklamasini taqiqlaydi)
+//   taklif — ish beruvchi va maosh, to'qilmagan
+//   "TalentHub: {havola}" — imzo, xatdagidek oxirida
+// Undov, emoji, "ajoyib imkoniyat" — YO'Q: reklamaga o'xshatadi va ishonchni oladi.
+const DEFAULT_TPL = "Hurmatli {ism}, hh.uz'dagi rezyumengiz bo'yicha: Toshkent restoranlarida {lavozim} uchun ish bor. TalentHub: {havola}";
 
 /** Faqat birinchi so'z: "Karimova Aziza Baxtiyorovna" -> "Aziza" ham emas, "Karimova" */
 function firstName(full) {
@@ -76,7 +81,7 @@ function render(tpl, c, link) {
   const name = firstName(c.fullName);
   return String(tpl || DEFAULT_TPL)
     .replace(/\{ism\}/g, name)
-    .replace(/\{lavozim\}/g, isValidRole(c.role) ? roleLabel(c.role) : 'Restoran ishi')
+    .replace(/\{lavozim\}/g, (isValidRole(c.role) ? roleLabel(c.role) : 'restoran').toLowerCase())
     .replace(/\{havola\}/g, link || '')
     .replace(/\s{2,}/g, ' ')
     .trim();

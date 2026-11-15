@@ -135,7 +135,7 @@ function tplText(){ return $('tpl').value; }
 function fill(tpl, c){
   return String(tpl)
     .replace(/\{ism\}/g, c.first || '')
-    .replace(/\{lavozim\}/g, c.roleLabel || 'Restoran ishi')
+    .replace(/\{lavozim\}/g, (c.roleLabel || 'restoran').toLowerCase())   // gap o'rtasida — kichik harf
     .replace(/\{havola\}/g, S.link)
     .replace(/\s{2,}/g, ' ').trim();
 }

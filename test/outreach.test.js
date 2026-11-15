@@ -66,7 +66,10 @@ test('standart matn BITTA SMS: GSM-7, 160 belgigacha', async () => {
   const i = outreach.smsInfo(text);
   assert.equal(i.parts, 1, text);
   assert.deepEqual(i.bad, [], 'GSM-7 ga kirmaydigan belgi bo\'lmasin');
-  assert.ok(text.includes('Dilshod') && text.includes('Ofitsiant') && text.includes('t.me/'));
+  assert.ok(text.includes('Dilshod') && text.includes('ofitsiant') && text.includes('t.me/'));
+  // Professional va huquqiy qolip: kim yozyapti, raqam qayerdan, undovsiz
+  assert.ok(text.includes('TalentHub') && text.includes('hh.uz'), text);
+  assert.ok(!/!/.test(text), 'undov belgisi reklamaga o\'xshatadi');
 
   // Bitta tire yoki qo'shtirnoq SMS'ni uchga bo'ladi — ogohlantirish shart
   const bad = outreach.smsInfo('Assalomu alaykum — TalentHub');

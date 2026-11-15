@@ -214,3 +214,13 @@ test('anketa: barcha savollar majburiy (jinsdan tashqari — u anketalarda yo\'q
   assert.deepEqual(opt(survey.cleanQuestions(survey.template())).filter(id => id !== 'gender'), []);
   for (const role of survey.PRESET_ROLES) assert.deepEqual(opt(survey.rolePreset(role).questions).filter(id => id !== 'gender'), [], role);
 });
+
+test('to\'lov davri: "har 10 kunda" saqlanadi va ikki tilda yoziladi', () => {
+  // Tarnov: maosh har 10 kunda — avval ro'yxatda yo'q edi va clean() uni
+  // jimgina bo'sh qatorga aylantirardi (2026-11-15)
+  const vac = require('../src/services/vacancy');
+  assert.equal(vac.clean({ payout: 'tenday' }).payout, 'tenday');
+  assert.equal(vac.payoutText({ payout: 'tenday' }, 'uz'), 'Har 10 kunda to\'lanadi');
+  assert.equal(vac.payoutText({ payout: 'tenday' }, 'ru'), 'Выплата каждые 10 дней');
+  assert.equal(vac.clean({ payout: 'har10' }).payout, '');                 // noma'lum — bo'sh
+});

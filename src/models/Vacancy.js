@@ -44,7 +44,7 @@ const VacancySchema = new mongoose.Schema({
   venue:        { type: String, default: '' },   // joy tavsifi NOMSIZ: "Uyg'ur oshxonasi restorani, 3 filial"
   landmark:     { type: String, default: '' },   // mo'ljal: "Bodomzor metrosi yonida"
   salaryPeriod: { type: String, default: 'month' }, // month | day | shift — salaryFrom/To nimaga
-  payout:       { type: String, default: '' },   // daily | weekly | twice | monthly — qachon to'lanadi
+  payout:       { type: String, default: '' },   // daily | weekly | tenday | twice | monthly — qachon to'lanadi
   perks:        { type: [String], default: [] }, // th-i18n PERK_KEYS
   duties:       { type: [String], default: [] }, // vazifalar — qisqa bandlar
   requirements: { type: [String], default: [] }, // talablar — qisqa bandlar (minExp/yosh/tildan tashqari)

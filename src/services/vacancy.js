@@ -20,7 +20,8 @@ const SHIFTS = ['kunduzgi', 'kechki', 'ikkalasi'];
 // Maosh nimaga (salaryFrom/To): restoranlarda kunlik va smenalik to'lov
 // odatiy — oylikka aylantirib yozsak, ish beruvchi aytmagan raqam chiqardi.
 const PERIODS = ['month', 'day', 'shift'];
-const PAYOUTS = ['daily', 'weekly', 'twice', 'monthly'];
+// tenday — "har 10 kunda" (Tarnov: oyiga 3 marta; ko'k yoqa uchun tez-tez to'lov kuchli jalb)
+const PAYOUTS = ['daily', 'weekly', 'tenday', 'twice', 'monthly'];
 // Ro'yxat maydonlari: bitta band — bitta qator, ko'pi bilan 6 ta
 const lines = x => (Array.isArray(x) ? x : String(x || '').split('\n'))
   .map(s => String(s).replace(/^[\s•\-–—*]+/, '').trim().slice(0, 140)).filter(Boolean).slice(0, 6);

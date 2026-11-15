@@ -2149,7 +2149,7 @@ function vacForm(v){
         <select id="fSp">${[['month', 'form.spM'], ['day', 'form.spD'], ['shift', 'form.spS']].map(([k, l]) =>
           `<option value="${k}" ${(d.salaryPeriod || 'month') === k ? 'selected' : ''}>${esc(t(l))}</option>`).join('')}</select></div>
       <div class="fl"><label>${esc(t('form.po'))}</label>
-        <select id="fPo"><option value="">${esc(t('form.poAny'))}</option>${['daily', 'weekly', 'twice', 'monthly'].map(k =>
+        <select id="fPo"><option value="">${esc(t('form.poAny'))}</option>${['daily', 'weekly', 'tenday', 'twice', 'monthly'].map(k =>
           `<option value="${k}" ${d.payout === k ? 'selected' : ''}>${esc(t('pay.' + k))}</option>`).join('')}</select></div>
     </div>
     <div class="fl"><label>${esc(t('form.sc'))}</label><input id="fSc" value="${esc(d.schedule)}" placeholder="6/1, 16:00-24:00"></div>

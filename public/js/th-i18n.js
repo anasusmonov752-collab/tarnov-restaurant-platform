@@ -667,7 +667,7 @@
       'perk.tajribasiz': 'Tajribasiz ham', 'perk.talaba': 'Talabalarga qulay grafik',
       // Maosh davri va to'lov tartibi (vacancy.salaryPeriod / payout)
       'sal.per.day': '/ kun', 'sal.per.shift': '/ smena',
-      'pay.daily': 'Har kuni to\'lanadi', 'pay.weekly': 'Har hafta to\'lanadi',
+      'pay.daily': 'Har kuni to\'lanadi', 'pay.weekly': 'Har hafta to\'lanadi', 'pay.tenday': 'Har 10 kunda to\'lanadi',
       'pay.twice': 'Oyiga 2 marta to\'lanadi', 'pay.monthly': 'Oyiga 1 marta to\'lanadi',
 
       // ── BOT: mijoz bilan yozishma (routes/telegram.js) ──
@@ -1817,7 +1817,7 @@
       'perk.bonus': 'Бонусы', 'perk.choy': 'Чаевые', 'perk.turar': 'Жильё', 'perk.oqitish': 'Обучение',
       'perk.tajribasiz': 'Без опыта', 'perk.talaba': 'Удобно студентам',
       'sal.per.day': '/ день', 'sal.per.shift': '/ смена',
-      'pay.daily': 'Выплата каждый день', 'pay.weekly': 'Выплата каждую неделю',
+      'pay.daily': 'Выплата каждый день', 'pay.weekly': 'Выплата каждую неделю', 'pay.tenday': 'Выплата каждые 10 дней',
       'pay.twice': 'Выплата 2 раза в месяц', 'pay.monthly': 'Выплата раз в месяц',
 
       'bot.hello': 'Здравствуйте! Это HR-бот TalentHub.\n\nЧтобы подключиться, перейдите по ссылке, которую вам отправили.',

@@ -19,6 +19,7 @@ const survey = require('../services/survey');
 const { publicBase } = require('../utils/publicBase');
 const I18N = require('../../public/js/th-i18n');
 
+const { track } = require('../services/track');
 const router = express.Router();
 
 router.use(rateLimit({
@@ -54,6 +55,9 @@ router.get('/:rid', guard, asyncHandler(async (req, res) => {
   const r = req.resp;
   const { s, v, presetRole } = await contextOf(r);
   if (!s) return fail(res, 404, 'notFound');
+  // Nomzod yo'li: anketani ochdi (30 daqiqada bir marta — track.QUIET)
+  if (r.status !== 'done') track('open', { agencyId: r.agencyId, tgUserId: r.tgUserId, rid: r.id,
+    channel: r.channel, name: req.tgUser && req.tgUser.first_name, isTest: r.isTest });
   const answers = Object.assign({}, r.answers || {});
   res.json({
     status: r.status,

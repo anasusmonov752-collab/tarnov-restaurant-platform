@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TalentHub — Analitika</title>
+<link rel="icon" href="/img/talenthub-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/th.css?v=2">
+<link rel="stylesheet" href="/css/th-app.css?v=2">
+<script src="/js/th-shell.js?v=6" defer></script>
+<style>
+  /* Analitika — bitta savol: odamlar qayerda tushib qolyapti?
+     Tartib shu savolga xizmat qiladi: voronka -> anketaning qaysi savoli ->
+     manba -> lavozim -> vakansiya -> kim nima qildi. */
+  .wrap{ flex:1; overflow-y:auto; }
+  .inner{ max-width:1080px; padding:24px 32px 64px; }
+  .seg{ display:inline-flex; padding:2px; border-radius:10px; background:var(--th-fill); }
+  .seg button{ border:0; background:transparent; padding:7px 14px; border-radius:8px; font:inherit; font-size:14px;
+               color:var(--th-ink); cursor:pointer; }
+  .seg button.on{ background:var(--th-surface); box-shadow:0 1px 3px rgba(0,0,0,.12); font-weight:600; }
+  .note{ color:var(--th-muted); font-size:13px; margin:10px 0 18px; }
+  .card{ padding:18px 20px; margin-bottom:16px; }
+  .card h3{ margin:0 0 4px; font-size:16px; }
+  .card .sub{ color:var(--th-muted); font-size:13px; margin-bottom:14px; }
+
+  /* Voronka */
+  .fun{ display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px; }
+  .st{ position:relative; padding:14px; border-radius:14px; background:var(--th-fill); }
+  .st .l{ font-size:13px; color:var(--th-muted); }
+  .st .v{ font:700 28px/1.1 var(--th-font); margin-top:6px; }
+  .st .p{ font-size:13px; margin-top:4px; color:var(--th-muted); }
+  .st.worst{ outline:2px solid var(--th-danger); }
+  .st.worst .p{ color:var(--th-danger); font-weight:600; }
+  .verdict{ margin-top:14px; padding:12px 14px; border-radius:12px; border-left:3px solid var(--th-danger);
+            background:var(--th-fill); font-size:14px; line-height:1.5; }
+
+  /* Ustunlar */
+  .bar{ display:grid; grid-template-columns:minmax(120px, 34%) 1fr 44px; gap:10px; align-items:center; margin:8px 0; font-size:14px; }
+  .bar .t{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .bar .track{ height:10px; border-radius:6px; background:var(--th-fill); overflow:hidden; }
+  .bar .fill{ height:100%; border-radius:6px; background:var(--th-brand); }
+  .bar .n{ text-align:right; font-weight:600; }
+
+  table.t{ width:100%; border-collapse:collapse; font-size:14px; }
+  table.t th{ text-align:left; color:var(--th-muted); font-weight:500; font-size:12px; padding:6px 8px; border-bottom:1px solid var(--th-line); }
+  table.t td{ padding:9px 8px; border-bottom:1px solid var(--th-line); }
+  table.t td.num, table.t th.num{ text-align:right; }
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; }
+  .chip{ padding:6px 12px; border-radius:999px; background:var(--th-fill); font-size:14px; }
+  .chip b{ margin-left:4px; }
+
+  .vac{ border-bottom:1px solid var(--th-line); padding:10px 0; }
+  .vac:last-child{ border-bottom:0; }
+  .vac .row{ display:flex; gap:10px; align-items:center; cursor:pointer; }
+  .vac .ttl{ flex:1; min-width:0; }
+  .vac .ttl b{ display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .vac .ttl span{ color:var(--th-muted); font-size:13px; }
+  .vac .m{ text-align:right; font-size:13px; color:var(--th-muted); white-space:nowrap; }
+  .vac .m b{ color:var(--th-ink); font-size:15px; }
+  .who{ display:none; margin:8px 0 2px; padding-left:2px; }
+  .vac.open .who{ display:block; }
+  .who div{ font-size:13px; padding:3px 0; color:var(--th-muted); }
+  .who div b{ color:var(--th-ink); font-weight:500; }
+
+  .feed div.it{ display:flex; gap:10px; padding:9px 0; border-bottom:1px solid var(--th-line); cursor:pointer; font-size:14px; }
+  .feed div.it:last-child{ border-bottom:0; }
+  .feed .tm{ color:var(--th-muted); font-size:12px; white-space:nowrap; width:76px; flex:0 0 auto; padding-top:2px; }
+  .feed .tx{ flex:1; min-width:0; }
+  .feed .tx b{ font-weight:600; }
+  .feed .tx span{ color:var(--th-muted); }
+  .tag{ display:inline-block; font-size:11px; padding:1px 7px; border-radius:6px; background:var(--th-fill); color:var(--th-muted); margin-left:4px; }
+
+  .empty{ color:var(--th-muted); font-size:14px; padding:6px 0; }
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+
+  /* Bitta odamning yo'li */
+  .md{ position:fixed; inset:0; background:rgba(0,0,0,.35); display:none; align-items:flex-end; justify-content:center; z-index:200; }
+  .md.on{ display:flex; }
+  .md .box{ background:var(--th-surface); width:100%; max-width:520px; max-height:80vh; overflow:auto;
+            border-radius:18px 18px 0 0; padding:18px 20px 28px; }
+  .md h3{ margin:0 0 2px; }
+  .tl{ margin-top:14px; border-left:2px solid var(--th-line); padding-left:14px; }
+  .tl div{ position:relative; padding:6px 0; font-size:14px; }
+  .tl div::before{ content:''; position:absolute; left:-20px; top:12px; width:10px; height:10px; border-radius:50%; background:var(--th-brand); }
+  .tl small{ color:var(--th-muted); display:block; }
+  @media (max-width:760px){
+    .inner{ padding:16px 14px 64px; }
+    .fun{ grid-template-columns:repeat(2, minmax(0,1fr)); }
+    .grid2{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div><div class="tb-title">Analitika</div><div class="tb-sub">Nomzod yo'li: botga kirishdan arizagacha</div></div>
+</div>
+<div class="wrap"><div class="inner">
+  <div class="seg" id="seg">
+    <button data-d="1">Bugun</button><button data-d="7" class="on">7 kun</button>
+    <button data-d="30">30 kun</button><button data-d="90">90 kun</button>
+  </div>
+  <div class="note">Ma'lumot 15-noyabrdan yig'ilmoqda. Sinov rejimidagi harakatlar sanalmaydi.</div>
+
+  <div class="th-card card">
+    <h3>Voronka</h3>
+    <div class="sub">Davr ichida botga kirganlar keyin qaysi bosqichga yetdi</div>
+    <div class="fun" id="fun"></div>
+    <div id="verdict"></div>
+  </div>
+
+  <div class="grid2">
+    <div class="th-card card">
+      <h3>Anketada qayerda to'xtadi</h3>
+      <div class="sub">Tugatmaganlar oxirgi javob bergan savol</div>
+      <div id="drop"></div>
+    </div>
+    <div class="th-card card">
+      <h3>Qaysi lavozimni qidirishadi</h3>
+      <div class="sub">Botdagi lavozim tugmalari (bitta odam — bir marta)</div>
+      <div class="chips" id="roles"></div>
+    </div>
+  </div>
+
+  <div class="th-card card">
+    <h3>Manba bo'yicha</h3>
+    <div class="sub">Qaysi e'lon odam olib kelyapti va u odam oxirigacha boryaptimi</div>
+    <div id="ch"></div>
+  </div>
+
+  <div class="th-card card">
+    <h3>Vakansiyalar</h3>
+    <div class="sub">Kim ko'rdi, kim ariza berdi — qatorni bosing</div>
+    <div id="vac"></div>
+  </div>
+
+  <div class="th-card card">
+    <h3>So'nggi harakatlar</h3>
+    <div class="sub">Odamni bossangiz — uning butun yo'li</div>
+    <div class="feed" id="feed"></div>
+  </div>
+</div></div>
+
+<div class="md" id="md"><div class="box" id="mdBox"></div></div>
+
+<script src="/js/utils.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pct = (a, b) => b ? Math.round(a * 100 / b) : 0;
+
+function ago(d){
+  const s = (Date.now() - new Date(d).getTime()) / 1000;
+  if (s < 60) return 'hozir';
+  if (s < 3600) return Math.floor(s / 60) + ' daq oldin';
+  if (s < 86400) return Math.floor(s / 3600) + ' soat oldin';
+  const x = new Date(d), hh = String(x.getHours()).padStart(2, '0'), mm = String(x.getMinutes()).padStart(2, '0');
+  if (s < 2 * 86400) return 'kecha ' + hh + ':' + mm;
+  return String(x.getDate()).padStart(2, '0') + '.' + String(x.getMonth() + 1).padStart(2, '0') + ' ' + hh + ':' + mm;
+}
+
+const STAGES = [['start', 'Botga kirdi'], ['open', 'Anketani ochdi'], ['done', 'Anketani tugatdi'], ['apply', 'Ariza berdi']];
+
+function drawFunnel(f){
+  // Eng katta yo'qotish — qaysi o'tishda eng ko'p odam tushib qoldi
+  let worst = -1, lost = 0;
+  for (let i = 1; i < STAGES.length; i++) {
+    const d = f[STAGES[i - 1][0]] - f[STAGES[i][0]];
+    if (d > lost) { lost = d; worst = i; }
+  }
+  $('fun').innerHTML = STAGES.map(([k, l], i) => `
+    <div class="st ${i === worst ? 'worst' : ''}">
+      <div class="l">${l}</div><div class="v">${f[k]}</div>
+      <div class="p">${i === 0 ? '&nbsp;' : pct(f[k], f[STAGES[i - 1][0]]) + '% oldingi bosqichdan'}</div>
+    </div>`).join('');
+  if (!f.start) { $('verdict').innerHTML = '<div class="empty" style="margin-top:12px">Bu davrda hali hech kim botga kirmagan.</div>'; return; }
+  const from = STAGES[worst - 1], to = STAGES[worst];
+  const why = {
+    open: "odam botga kirdi, lekin anketani ochmadi — birinchi ekran yoki lavozim ro'yxati ushlab qolmayapti",
+    done: 'anketani ochdi, lekin tugatmadi — qaysi savolda to\'xtaganini pastda ko\'ring',
+    apply: "anketani tugatdi, lekin ariza bermadi — mos ish ko'rinmayapti yoki ishlar ro'yxati kam"
+  };
+  $('verdict').innerHTML = worst > 0 && lost > 0
+    ? `<div class="verdict"><b>Eng ko'p yo'qotish: «${from[1]}» → «${to[1]}».</b> ${f[from[0]]} kishidan ${lost} tasi o'tmadi — ${why[to[0]]}.</div>` : '';
+}
+
+function bars(list, el){
+  if (!list.length) { el.innerHTML = '<div class="empty">Hali ma\'lumot yo\'q.</div>'; return; }
+  const max = Math.max(...list.map(x => x.n));
+  el.innerHTML = list.map(x => `<div class="bar"><div class="t" title="${esc(x.label)}">${esc(x.label)}</div>
+    <div class="track"><div class="fill" style="width:${Math.max(4, x.n * 100 / max)}%"></div></div><div class="n">${x.n}</div></div>`).join('');
+}
+
+function drawChannels(rows){
+  if (!rows.length) { $('ch').innerHTML = '<div class="empty">Hali ma\'lumot yo\'q.</div>'; return; }
+  $('ch').innerHTML = `<table class="t"><tr><th>Manba</th><th class="num">Kirdi</th><th class="num">Ochdi</th>
+    <th class="num">Tugatdi</th><th class="num">Ariza</th><th class="num">Tugatish</th></tr>${rows.map(c => `
+    <tr><td>${esc(c.label)}</td><td class="num">${c.start}</td><td class="num">${c.open}</td><td class="num">${c.done}</td>
+    <td class="num">${c.apply}</td><td class="num"><b>${pct(c.done, c.start)}%</b></td></tr>`).join('')}</table>`;
+}
+
+function drawVacancies(rows){
+  if (!rows.length) { $('vac').innerHTML = '<div class="empty">Bu davrda vakansiyani hech kim ochmagan.</div>'; return; }
+  $('vac').innerHTML = rows.map((v, i) => `
+    <div class="vac" data-i="${i}">
+      <div class="row">
+        <div class="ttl"><b>${esc(v.title)}${v.closed ? ' <span class="tag">yopiq</span>' : ''}</b><span>${esc(v.client)}</span></div>
+        <div class="m"><b>${v.views}</b> ko'rdi · <b>${v.applies}</b> ariza · ${pct(v.applies, v.views)}%</div>
+      </div>
+      <div class="who">${v.recent.map(r => `<div><b>${esc(r.name || 'Ismsiz')}</b> · ${ago(r.at)}${r.candidateId ? ' <span class="tag">nomzod</span>' : ''}</div>`).join('')}</div>
+    </div>`).join('');
+}
+
+function drawFeed(rows){
+  if (!rows.length) { $('feed').innerHTML = '<div class="empty">Hali harakat yo\'q.</div>'; return; }
+  $('feed').innerHTML = rows.map(e => `
+    <div class="it" data-u="${esc(e.tgUserId)}">
+      <div class="tm">${ago(e.at)}</div>
+      <div class="tx"><b>${esc(e.name || 'Ismsiz')}</b> — ${esc(e.label)}${e.ref ? ': <span>' + esc(e.ref) + '</span>' : ''}${e.channel && e.kind === 'start' ? ' <span class="tag">' + esc(e.channel) + '</span>' : ''}</div>
+    </div>`).join('');
+}
+
+async function openUser(tg){
+  $('mdBox').innerHTML = '<div class="empty">Yuklanmoqda…</div>'; $('md').classList.add('on');
+  try {
+    const d = await api('/api/agency/analytics/user/' + encodeURIComponent(tg));
+    $('mdBox').innerHTML = `<h3>${esc((d.candidate && d.candidate.fullName) || d.name || 'Ismsiz')}</h3>
+      <div class="sub" style="color:var(--th-muted);font-size:13px">${d.candidate ? 'Nomzod · ' + esc(d.candidate.phone || '') : 'Hali anketa tugatmagan'}</div>
+      <div class="tl">${d.events.map(e => `<div>${esc(e.label)}${e.ref ? ': <b>' + esc(e.ref) + '</b>' : ''}<small>${ago(e.at)}</small></div>`).join('')}</div>`;
+  } catch (e) { $('mdBox').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+}
+
+let DAYS = 7;
+async function load(){
+  let d;
+  try { d = await api('/api/agency/analytics?days=' + DAYS); }
+  catch (e) {
+    $('fun').innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+    if (/Avtorizatsiya|Token/.test(e.message)) location.href = '/';
+    return;
+  }
+  drawFunnel(d.funnel);
+  bars(d.dropAt, $('drop'));
+  if (d.roles.length) $('roles').innerHTML = d.roles.map(r => `<span class="chip">${esc(r.label)}<b>${r.n}</b></span>`).join('');
+  else $('roles').innerHTML = '<div class="empty">Hali hech kim lavozim tanlamagan.</div>';
+  drawChannels(d.channels);
+  drawVacancies(d.vacancies);
+  drawFeed(d.recent);
+}
+
+$('seg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  DAYS = +b.dataset.d;
+  [...$('seg').children].forEach(x => x.classList.toggle('on', x === b));
+  load();
+});
+$('vac').addEventListener('click', e => { const v = e.target.closest('.vac'); if (v) v.classList.toggle('open'); });
+$('feed').addEventListener('click', e => { const it = e.target.closest('.it'); if (it) openUser(it.dataset.u); });
+$('md').addEventListener('click', e => { if (e.target === $('md')) $('md').classList.remove('on'); });
+load();
+</script>
+</body>
+</html>

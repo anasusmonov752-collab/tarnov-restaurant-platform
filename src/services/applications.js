@@ -32,6 +32,10 @@ async function submit({ cand: c, vacancy: v, message = '', appBase, via = 'kabin
     isTest: !!c.isTest,                       // sinov nomzodining arizasi
     message: String(message || '').trim().slice(0, 500)
   });
+  // Nomzod yo'li: ariza berdi. Telegramsiz (panel) nomzod ham vakansiya
+  // sanog'iga kirsin — kalit nomzod id'si bo'yicha
+  require('./track').track('apply', { agencyId: c.restaurantId, tgUserId: c.tgChatId || ('cand:' + c.id),
+    ref: v.id, candidateId: c.id, name: c.fullName, channel: c.channel, isTest: !!c.isTest });
 
   // Ariza bergan odam ish qidiryapti — holatini shunga keltiramiz
   if (c.jobStatus !== 'active') {

@@ -93,4 +93,82 @@ router.get('/today', guard, asyncHandler(async (req, res) => {
   });
 }));
 
+// ── ANALITIKA: nomzod yo'li (services/track) ─────────────────
+// Bitta savolga javob: odamlar qayerda tushib qolyapti?
+//   voronka (kohorta) · manba bo'yicha · anketaning qaysi savolida to'xtadi ·
+//   qaysi lavozimni qidirishadi · vakansiyani kim/qachon ko'rdi · so'nggi harakatlar
+router.get('/analytics', guard, asyncHandler(async (req, res) => {
+  const agencyId = req.user.restaurantId;
+  const days = [1, 7, 30, 90].includes(+req.query.days) ? +req.query.days : 7;
+  const track = require('../services/track');
+  const survey = require('../services/survey');
+  const SurveyResponse = require('../models/SurveyResponse');
+  const Survey = require('../models/Survey');
+  const { roleLabel, isValidRole } = require('../data/roles');
+  const since = track.periodStart(days);
+
+  const [funnel, roles, vacs, recent, drops, surveys] = await Promise.all([
+    track.funnel(agencyId, days),
+    track.roles(agencyId, days),
+    track.vacancies(agencyId, days),
+    track.recent(agencyId, 40),
+    // Tugatilmagan anketalar oxirgi qaysi savolga javob bergan
+    SurveyResponse.aggregate([
+      { $match: { agencyId, status: 'started', isTest: { $ne: true }, startedAt: { $gte: since } } },
+      { $group: { _id: '$step', n: { $sum: 1 } } }, { $sort: { n: -1 } }
+    ]),
+    Survey.find({ agencyId }, 'questions').lean()
+  ]);
+
+  // Savol nomi: standart savol — katalogdagi qisqa nom; o'z savoli — matni
+  const qName = {};
+  for (const sv of surveys) for (const q of sv.questions || []) {
+    qName[q.id] = (survey.CATALOG[q.id] && survey.CATALOG[q.id].field) || (q.text && q.text.uz) || q.id;
+  }
+  const vIds = [...new Set(vacs.map(v => v.vacancyId).concat(
+    recent.filter(e => (e.kind === 'view' || e.kind === 'apply') && e.ref).map(e => e.ref)))];
+  const vRows = vIds.length ? await Vacancy.find({ agencyId, id: { $in: vIds } }, 'id title clientId status').lean() : [];
+  const cRows = await Client.find({ agencyId, id: { $in: [...new Set(vRows.map(v => v.clientId))] } }, 'id name').lean();
+  const cName = Object.fromEntries(cRows.map(c => [c.id, c.name]));
+  const vById = Object.fromEntries(vRows.map(v => [v.id, v]));
+  const chLabel = ch => survey.CHANNELS[ch] || (ch ? ch : 'Belgisiz');
+  const refLabel = e => e.kind === 'role' ? (isValidRole(e.ref) ? roleLabel(e.ref) : e.ref)
+    : (e.kind === 'view' || e.kind === 'apply') ? ((vById[e.ref] || {}).title || 'Vakansiya')
+    : e.kind === 'lang' ? (e.ref === 'ru' ? 'Ruscha' : "O'zbekcha") : '';
+
+  res.json({
+    days,
+    funnel: funnel.total,
+    channels: funnel.channels.map(c => Object.assign({ label: chLabel(c.channel) }, c)),
+    dropAt: drops.map(d => ({ step: d._id || '', label: d._id ? (qName[d._id] || d._id) : 'Birinchi savolgacha', n: d.n })),
+    roles: roles.map(r => ({ role: r.role, label: isValidRole(r.role) ? roleLabel(r.role) : r.role, n: r.n })),
+    vacancies: vacs.map(v => Object.assign({}, v, {
+      title: (vById[v.vacancyId] || {}).title || '(o\'chirilgan)',
+      client: cName[(vById[v.vacancyId] || {}).clientId] || '',
+      closed: (vById[v.vacancyId] || {}).status === 'closed'
+    })),
+    recent: recent.map(e => ({ tgUserId: e.tgUserId, name: e.name, kind: e.kind, label: track.KINDS[e.kind],
+      ref: refLabel(e), channel: e.channel ? chLabel(e.channel) : '', candidateId: e.candidateId, at: e.at }))
+  });
+}));
+
+// Bitta odamning yo'li — "So'nggi harakatlar" dan bosilganda
+router.get('/analytics/user/:tg', guard, asyncHandler(async (req, res) => {
+  const agencyId = req.user.restaurantId;
+  const track = require('../services/track');
+  const { roleLabel, isValidRole } = require('../data/roles');
+  const evs = await track.timeline(agencyId, req.params.tg);
+  const vIds = [...new Set(evs.filter(e => e.ref && (e.kind === 'view' || e.kind === 'apply' || e.kind === 'start')).map(e => e.ref))];
+  const vRows = vIds.length ? await Vacancy.find({ agencyId, id: { $in: vIds } }, 'id title').lean() : [];
+  const vT = Object.fromEntries(vRows.map(v => [v.id, v.title]));
+  const candId = (evs.find(e => e.candidateId) || {}).candidateId || '';
+  const cand = candId ? await Candidate.findOne({ restaurantId: agencyId, id: candId }, 'id fullName phone role status').lean() : null;
+  res.json({
+    name: (evs.find(e => e.name) || {}).name || '',
+    candidate: cand,
+    events: evs.map(e => ({ kind: e.kind, label: track.KINDS[e.kind], at: e.at, channel: e.channel,
+      ref: e.kind === 'role' ? (isValidRole(e.ref) ? roleLabel(e.ref) : e.ref) : (vT[e.ref] || '') }))
+  });
+}));
+
 module.exports = router;

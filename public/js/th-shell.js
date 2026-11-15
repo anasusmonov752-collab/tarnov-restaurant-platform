@@ -18,6 +18,7 @@
     out: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/>',
     menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
     send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
+    chart: '<path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',
     inbox: '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>'
   };
   const svg = n => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
@@ -35,6 +36,7 @@
       { href: '/vakansiyalar.html', l: 'Vakansiyalar', ic: 'briefcase',
         n: 'staleJobs', nTitle: 'tasdiqlanmagan \u2014 nomzodga ko\'rinmaydi', hot: true },
       { href: '/taklif.html', l: 'Taklif navbati', ic: 'send' },
+      { href: '/analitika.html', l: 'Analitika', ic: 'chart' },
       { href: '/suhbatlar.html', l: 'Suhbatlar', ic: 'chat', n: 'unreadChats', nTitle: 'o\'qilmagan xabarlar' }
     ] },
     { g: 'Sozlash', items: [{ href: '/anketalar.html', l: 'Anketalar', ic: 'form' }] }

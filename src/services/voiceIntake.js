@@ -383,6 +383,8 @@ async function handleCallback({ data, chatId, from, appBase = '' }) {
 
   if (op === 'go') {
     await SurveyResponse.updateOne({ _id: r._id }, { $set: { mode: 'voice', vstep: 'consent', lang: r.lang || lang, updatedAt: new Date() } });
+    require('./track').track('voice', { agencyId: r.agencyId, tgUserId: fromId, rid: r.id, channel: r.channel,
+      name: from && from.first_name, isTest: r.isTest });
     await send(chatId, T(lang, 'vi.consent'), kb([[{ text: T(lang, 'vi.consentOk'), callback_data: `vi:ok:${rid}` }]]));
     return { ok: true, text: '🎤' };
   }

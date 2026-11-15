@@ -838,6 +838,9 @@ async function finalize(r, { appBase } = {}) {
   cand.updatedAt = new Date();
   await cand.save();
   if (r.isTest) await require('./testMode').noteCandidate(r.tgUserId, cand.id);
+  // Nomzod yo'li: anketani tugatdi (anketa ham, ovoz ham shu nuqtadan o'tadi)
+  require('./track').track('done', { agencyId: r.agencyId, tgUserId: r.tgUserId, rid: r.id,
+    candidateId: cand.id, channel: r.channel, name: cand.fullName, isTest: r.isTest });
 
   let applied = false;
   if (vacancy && vacancy.status === 'open') {

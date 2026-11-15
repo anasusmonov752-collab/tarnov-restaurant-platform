@@ -32,6 +32,7 @@ const surveySvc = require('../services/survey');
 const vac = require('../services/vacancy');
 const contactLog = require('../services/contactLog');
 const testMode = require('../services/testMode');
+const { track } = require('../services/track');
 
 const router = express.Router();
 // Faqat TalentHub agentligi (middleware/agency — o'tish rejimi bilan)
@@ -653,6 +654,13 @@ async function startSurvey(msg, chatId, ank, appBase) {
     await r.save();
   }
 
+  // Nomzod yo'li (services/track): kirdi; vakansiya havolasi bilan kelgan bo'lsa
+  // — o'sha vakansiyani ham ko'rdi (bot kartasi e'lonning o'zi)
+  const who = { agencyId: s.agencyId, tgUserId, rid: r.id, channel: r.channel || ank.channel || 'bot',
+                name: msg.from && msg.from.first_name, isTest: r.isTest };
+  track('start', Object.assign({ ref: vacancyId }, who));
+  if (v) track('view', Object.assign({ ref: v.id }, who));
+
   const scr = await firstScreen({ lang, from: msg.from, agencyId: s.agencyId, v, closed, r, appBase });
   await tg.sendMessage(token, chatId, scr.text, { parse_mode: 'HTML', reply_markup: { inline_keyboard: scr.rows } });
 }
@@ -917,6 +925,8 @@ async function handleCallback(cq, appBase) {
     if (!r) return done('', false);
     r.lang = lang;
     await r.save();
+    track('lang', { agencyId: r.agencyId, tgUserId: fromId, ref: lang, rid: r.id, isTest: r.isTest,
+                    name: cq.from && cq.from.first_name });
     // Allaqachon nomzod bo'lsa — bot xabarlari va kabinet ham shu tilda
     await Candidate.updateOne({ tgChatId: chatId }, { $set: { lang } }).catch(() => {});
     await done(T(lang, 'bot.langToast'));

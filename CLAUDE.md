@@ -1087,6 +1087,38 @@ maydonlar jonli o'qib, haqiqiy `forCandidate` bilan tekshirildi.
 Bu vakansiyalar kanal ulanishidan OLDIN yaratilgan — kanal ulansa o'zi chiqmaydi
 (`jobChannelSince`), panelda har biriga "Kanalga joylash" bosish kerak.
 
+**NOMZOD YO'LI ANALITIKASI — DEPLOY QILINDI** (2026-11-15). Anas: "nomzod botga
+kirib anketani to'ldirmay chiqib ketishi mumkin; vakansiyani kim, qachon ko'rdi —
+har qadamni analitika qilishimiz kerak". Qoida YAGONA — `services/track.js`, jurnal
+`Event` (faqat qo'shiladi; 180 kunda TTL bilan o'chadi). `track(kind, {...})` —
+kutilmaydi, xato yutiladi (asosiy oqim HECH QACHON to'xtamaydi). Hodisalar va
+yoziladigan JOYI (yangisini qo'shsangiz — shu ro'yxatga):
+`start` (telegram.js startSurvey; kanal bilan, vakansiya havolasida `ref`) ·
+`lang` (ft:lang tugmasi) · `role` (firstTouch.candidateRole) · `voice`
+(voiceIntake 'go') · `open` (anketa GET /:rid) · `done` (survey.finalize — anketa
+ham, ovoz ham) · `view` (vakansiya havolasi bilan /start + nomzod kabineti
+`POST /api/cand/vacancies/:id/view`, profil.html showJob chaqiradi) · `apply`
+(applications.submit; Telegramsiz nomzodda kalit `cand:<id>`). `view`/`open`
+30 daqiqada bir marta (`QUIET`). Sinov rejimi (`isTest`) sanalmaydi.
+Anketa ICHIDA qaysi savolda to'xtagani — `SurveyResponse.step` dan (takrorlanmaydi).
+VORONKA KOHORTA bo'yicha: davrda `start` qilganlar keyin qaysi bosqichga yetgan
+(davrdagi barcha "tugatdi" ni sanash foizni 100% dan oshirardi). Bosqichlar:
+kirdi -> ochdi (open|voice) -> tugatdi -> ariza.
+Panel `/analitika.html` (yon menyu "Analitika"; `GET /api/agency/analytics?days=1|7|30|90`,
+`GET /api/agency/analytics/user/:tg`): voronka + "eng ko'p yo'qotish" xulosasi
+(qaysi o'tishda va nima uchun bo'lishi mumkin), anketada qayerda to'xtadi (savol
+nomi — `CATALOG.field`), qaysi lavozimni qidirishadi, manba bo'yicha (SMS / IG /
+kanal / bot — tugatish %), vakansiyalar (ko'rdi · ariza · % · oxirgi ko'rganlar),
+so'nggi harakatlar -> bosilsa odamning butun yo'li. Ma'lumot 15-noyabrdan
+yig'iladi (oldingisi yo'q). `test/analytics.test.js` (6), CI 168/168. Webhook
+darajasida bosib tekshirildi: start/lang/role, vakansiya havolasida start+view.
+Shu ishda: `--th-bg-2` tokeni th.css'da YO'Q — taklif.html'da fonlar shaffof edi
+(`--th-surface`/`--th-fill` ga almashtirildi). Taklif navbatida SMS matni har
+lavozimga alohida saqlanadi va SMS soni eng uzun ism bo'yicha hisoblanadi.
+Xato tushunilgan va qaytarilgan: "20 ta xostess, 15 ta ofitsiant" — bu SMS soni
+edi, vakansiyadagi kerakli odam soni EMAS (bir necha daqiqa "20 ta o'rin"
+deb turdi, qaytarildi).
+
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
 O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda

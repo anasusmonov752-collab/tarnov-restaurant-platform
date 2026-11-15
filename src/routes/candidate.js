@@ -352,6 +352,15 @@ function vacFor(v, cl, openSet, lang) {
   return out;
 }
 
+// Vakansiya sahifasi ochildi — analitika uchun (services/track; 30 daqiqada bir marta)
+router.post('/vacancies/:id/view', guard, asyncHandler(async (req, res) => {
+  const c = req.cand;
+  const v = await Vacancy.exists({ agencyId: c.restaurantId, id: String(req.params.id) });
+  if (v) require('../services/track').track('view', { agencyId: c.restaurantId, tgUserId: c.tgChatId,
+    ref: String(req.params.id), candidateId: c.id, name: c.fullName, channel: c.channel, isTest: !!c.isTest });
+  res.json({ ok: true });
+}));
+
 router.get('/vacancies', guard, asyncHandler(async (req, res) => {
   const c = req.cand;
 

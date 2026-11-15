@@ -84,7 +84,7 @@ function jobLine(v, lang, role) {
  * Anketa shu lavozimniki bo'lsa (konstruktorda yaratilgan) — lavozim
  * savoli umuman so'ralmaydi, forma qisqaradi.
  */
-async function candidateRole({ agencyId, role, lang, tgUserId, chatId, appBase, isTest }) {
+async function candidateRole({ agencyId, role, lang, tgUserId, chatId, appBase, isTest, name }) {
   const { n, rows } = await openJobs(agencyId, role);
   // Shu lavozim anketasi bo'lsa o'sha, bo'lmasa umumiy (surveyForVacancy qoidasi)
   const survey = await Survey.findOne({ agencyId, role, active: true, isDefault: false }).lean()
@@ -96,6 +96,9 @@ async function candidateRole({ agencyId, role, lang, tgUserId, chatId, appBase, 
     r = await SurveyResponse.create({ id: uuidv4(), agencyId, surveyId: survey.id, vacancyId: '',
       channel: 'bot', tgUserId, chatId, status: 'started', isTest: !!isTest, lang });
   }
+  // Nomzod yo'li: qaysi lavozimni qidiryapti (services/track)
+  require('./track').track('role', { agencyId, tgUserId, ref: role, rid: r.id, channel: r.channel,
+    name, isTest: r.isTest || !!isTest });
 
   const head = `${EMOJI[role] || ''} <b>${esc(T(lang, 'role.' + role))}</b>`.trim();
   const text = [
@@ -302,7 +305,8 @@ async function handleCallback({ data, chatId, appBase, from }) {
     }
     if (!isValidRole(arg)) return { text: '' };
     const isTest = (await require('./testMode').modeOf(tgUserId)) === 'candidate';
-    const r = await candidateRole({ agencyId: survey.agencyId, role: arg, lang, tgUserId, chatId, appBase, isTest });
+    const r = await candidateRole({ agencyId: survey.agencyId, role: arg, lang, tgUserId, chatId, appBase, isTest,
+      name: from && from.first_name });
     return { edit: r.text, keyboard: r.keyboard, html: true };
   }
 

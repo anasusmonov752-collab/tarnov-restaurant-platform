@@ -1285,6 +1285,8 @@ function vacPageHtml(v){
 }
 
 function showJob(v){
+  // Analitika: kim, qachon ko'rdi (javob kutilmaydi, xato sahifani buzmaydi)
+  if (v && v.id) api(`/api/cand/vacancies/${encodeURIComponent(v.id)}/view`, { method: 'POST', body: '{}' }).catch(() => {});
   $('vpBody').innerHTML = vacPageHtml(v);
   $('vpHT').textContent = v.title;
   $('vp').classList.remove('scrolled');

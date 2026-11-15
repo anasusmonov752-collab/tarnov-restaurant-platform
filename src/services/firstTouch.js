@@ -119,14 +119,52 @@ async function candidateRole({ agencyId, role, lang, tgUserId, chatId, appBase, 
   return { text, keyboard };
 }
 
-/** Nomzodning birinchi ekrani: lavozim tanlash (ishni ko'rmasdan forma so'ralmaydi) */
-async function candidatePick({ agencyId, lang }) {
-  const { n } = await openJobs(agencyId, '', 0);
+/** Lavozimlar bo'yicha ochiq ishlar: "ofitsiant 13 · oshpaz 12" (bazadan) */
+async function openByRole(agencyId, lang) {
+  const fresh = new Date(Date.now() - vac.STALE_DAYS * 864e5);
+  const rows = await Vacancy.aggregate([
+    { $match: { agencyId, status: 'open', listed: { $ne: false }, confirmedAt: { $gte: fresh }, isTest: { $ne: true } } },
+    { $group: { _id: '$role', n: { $sum: 1 } } }, { $sort: { n: -1 } }
+  ]);
   return {
-    text: T(lang, 'ft.cPick', { n }),
-    keyboard: roleRows(lang, 'ft:c:')
+    n: rows.reduce((s, x) => s + x.n, 0),
+    top: rows.filter(x => isValidRole(x._id) && x._id !== 'boshqa').slice(0, 5)
+      .map(x => `${T(lang, 'role.' + x._id).toLowerCase()} ${x.n}`).join(' \u00b7 ')
   };
 }
+
+/**
+ * Nomzodning birinchi ekrani — /start ham, "Orqaga" ham AYNAN shu.
+ *
+ * Matn nomzod uchun yozilgan (docs/auditoriya.md): u ish va maosh qidiryapti,
+ * agentlik qanday ishlashi uni qiziqtirmaydi. Shuning uchun bu yerda
+ * "xodim tanlash xizmati", "restoranlar bizga murojaat qiladi", "tavsiya
+ * qilamiz" yo'q — faqat HOZIR nechta ish borligi va bitta savol.
+ * Ish bo'lmasa raqam to'qilmaydi: o'rniga uchta foyda (bepul, rezyume
+ * yozmaysiz, HR o'zi qo'ng'iroq qiladi).
+ */
+async function candidatePick({ agencyId, lang, name, rid, appBase, closed }) {
+  const { n, top } = await openByRole(agencyId, lang);
+  const text = [
+    T(lang, 'ank.hookHi', { name: name ? ', ' + esc(name) : '' }), '',
+    closed ? T(lang, 'ank.hookClosed') : '',
+    closed ? '' : null,
+    n ? T(lang, 'ft.cPick', { n, top: esc(top) }) : T(lang, 'ft.cPick0')
+  ].filter(x => x !== null).join('\n').replace(/\n{3,}/g, '\n\n');
+
+  const keyboard = roleRows(lang, 'ft:c:');
+  // Chiqish yo'li: lavozimi ro'yxatda bo'lmagan odam ham o'tib keta olsin
+  if (rid && appBase) keyboard.push([{ text: T(lang, 'ft.cOther'), web_app: { url: `${appBase}/anketa.html?r=${rid}` } }]);
+  if (rid) keyboard.push([langSwitchBtn(lang, rid)]);
+  return { text, keyboard };
+}
+
+// Til tugmasi — BITTA, faqat ikkinchi til (o'z tilida yozilgan, tanimagan
+// ham topadi). Telegram interfeysi tili yolg'on taxmin beradi: O'zbekistonda
+// ko'p telefon ruscha sozlangan holda sotiladi, egasi esa o'zbekcha gapiradi.
+const langSwitchBtn = (lang, rid) => lang === 'ru'
+  ? { text: '\ud83c\uddfa\ud83c\uddff O\'zbekcha', callback_data: 'ft:lang:uz:' + rid }
+  : { text: '\ud83c\uddf7\ud83c\uddfa \u0420\u0443\u0441\u0441\u043a\u0438\u0439', callback_data: 'ft:lang:ru:' + rid };
 
 // ══ ISH BERUVCHI ═════════════════════════════════════════════
 
@@ -250,12 +288,16 @@ async function handleCallback({ data, chatId, appBase, from }) {
     // Til ustunligi: botda TANLANGAN (anketa yozuvida) > nomzod profili >
     // Telegram interfeysi. Aks holda til tugmasi bosilgani keyingi ekranda
     // yo'qolib ketardi (2026-11-15).
-    const open = await SurveyResponse.findOne({ tgUserId, status: 'started' }, 'lang')
+    const open = await SurveyResponse.findOne({ tgUserId, status: 'started' }, 'id lang')
       .sort({ updatedAt: -1 }).lean();
     const lang = I18N.resolve((open && open.lang) || (cand && cand.lang),
       (cand && cand.tgLang) || (from && from.language_code));
     if (act === 'cb') {
-      const r = await candidatePick({ agencyId: survey.agencyId, lang });
+      // Orqaga qaytgan ekran /start dagi bilan AYNAN bir xil bo'lishi kerak —
+      // til tugmasi va zaxira yo'l ham qoladi (ilgari ular yo'qolardi)
+      const r = await candidatePick({ agencyId: survey.agencyId, lang,
+        name: String((from && from.first_name) || '').trim().slice(0, 30),
+        rid: open && open.id, appBase });
       return { edit: r.text, keyboard: r.keyboard, html: true };
     }
     if (!isValidRole(arg)) return { text: '' };
@@ -305,7 +347,7 @@ async function handleCallback({ data, chatId, appBase, from }) {
 
 module.exports = {
   ROLES, roleRows, openJobs,
-  candidatePick, candidateRole,
+  candidatePick, candidateRole, openByRole, langSwitchBtn,
   employerIntro, employerRole, baseCounts,
   DEMO_LIMIT, demoLeft, noteDemo, demoKeyboard,
   handleCallback

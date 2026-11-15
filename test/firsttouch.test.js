@@ -140,6 +140,20 @@ test('nomzod: lavozim tanlansa — shu lavozimdagi ochiq ishlar va anketa tugmas
   assert.equal(await M.SurveyResponse.countDocuments({ agencyId: A, tgUserId: '777' }), 1);
 });
 
+test('"Orqaga" /start ekranini AYNAN qaytaradi (til tugmasi va zaxira yo\'l yo\'qolmaydi)', async () => {
+  await vacancy('vb');
+  const sv = await require('../src/services/survey').ensureDefault(A);
+  await M.SurveyResponse.create({ id: '66666666-6666-4666-8666-666666666666', agencyId: A, surveyId: sv.id,
+    tgUserId: '80', chatId: '80', status: 'started' });
+  const r = await ft.handleCallback({ data: 'ft:cb', chatId: '80', appBase: 'https://x', from: { id: 80, first_name: 'Dilshod' } });
+  assert.match(r.edit, /Assalomu alaykum, Dilshod!/);
+  assert.match(r.edit, /ta ochiq ish/);
+  const keys = r.keyboard.flat().map(b => b.callback_data || (b.web_app ? 'app' : ''));
+  assert.ok(keys.includes('ft:c:ofitsiant'));
+  assert.ok(keys.includes('app'), 'zaxira yo\'l (anketa) qolishi kerak');
+  assert.ok(keys.includes('ft:lang:ru:66666666-6666-4666-8666-666666666666'), 'til tugmasi qolishi kerak');
+});
+
 test('botda tanlangan til keyingi ekranlarda saqlanadi', async () => {
   // Telegram interfeysi RUSCHA, lekin odam botda o'zbekchani tanlagan
   // (2026-11-15: ilgari lavozim bosilganda yana ruschaga qaytardi)

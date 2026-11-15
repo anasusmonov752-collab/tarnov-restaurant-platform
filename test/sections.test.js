@@ -4,7 +4,7 @@ const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-let rs, Candidate, routes = {};
+let rs, Candidate, Vacancy, routes = {};
 const A = 'agS';
 
 before(async () => {
@@ -12,7 +12,8 @@ before(async () => {
   rs = await MongoMemoryReplSet.create({ replSet: { count: 1, storageEngine: 'wiredTiger' } });
   await mongoose.connect(rs.getUri());
   Candidate = require('../src/models/Candidate');
-  await Candidate.syncIndexes();
+  Vacancy = require('../src/models/Vacancy');
+  await Promise.all([Candidate.syncIndexes(), Vacancy.syncIndexes()]);
   const handler = (router, method, path) => {
     const layer = router.stack.find(l => l.route && l.route.path === path && l.route.methods[method]);
     const hs = layer.route.stack.map(s => s.handle);
@@ -65,6 +66,24 @@ test('manba bo\'yicha ro\'yxat va bo\'lim sanoqlari', async () => {
   const t = (await call(routes.today, {})).j;
   assert.equal(t.anketaUnseen, 2);
   assert.equal(t.baseWeek, 2);
+});
+
+test('"Bugun": nomzod ko\'radigan ishlar va tasdiqlanmagan vakansiyalar', async () => {
+  // Tasdiqlanmagan (confirmedAt eski) vakansiya nomzodga ko'rinmaydi — bu
+  // sanoq bo'lmasa agentlik nomzod BO'SH ekran ko'rayotganini bilmaydi
+  const vv = (id, x) => Object.assign({ id, agencyId: A, clientId: 'c', title: 'Ofitsiant',
+    role: 'ofitsiant', status: 'open', listed: true, confirmedAt: new Date() }, x);
+  await Vacancy.create([
+    vv('j1'), vv('j2'),
+    vv('j3', { confirmedAt: new Date(Date.now() - 20 * 864e5) }),      // eskirgan
+    vv('j4', { confirmedAt: new Date(Date.now() - 20 * 864e5), status: 'closed' }),  // yopiq — sanalmaydi
+    vv('j5', { listed: false }),                                       // e'lon qilinmagan
+    vv('j6', { isTest: true })                                         // sinov
+  ]);
+  const t = (await call(routes.today, {})).j;
+  assert.equal(t.openJobs, 2);
+  assert.equal(t.staleJobs, 1);
+  await Vacancy.deleteMany({});
 });
 
 test('ko\'rildi: faqat birinchi marta yoziladi, javobsizlikni o\'zgartirmaydi', async () => {

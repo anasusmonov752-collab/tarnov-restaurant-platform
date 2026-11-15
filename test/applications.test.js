@@ -126,8 +126,8 @@ test('panel: kirish qutisi, ko\'rildi/bog\'landim va taklif — nomzod bosqichi 
   assert.equal(mine[0].stateLabel, 'Ish beruvchiga taklif qilindi');
 });
 
-test('/start birinchi xabari: ism, haqiqiy ochiq ishlar soni va lavozimlar, uz/ru, HTML xavfsiz', async () => {
-  const { hookText } = require('../src/routes/telegram');
+test('/start birinchi ekrani: nomzod matni (agentlik tavsifisiz), haqiqiy ishlar, uz/ru, HTML xavfsiz', async () => {
+  const { firstScreen } = require('../src/routes/telegram');
   await M.Vacancy.create([
     { id: 'h1', agencyId: 'agH', clientId: 'c', title: 'Ofitsiant', role: 'ofitsiant', status: 'open' },
     { id: 'h2', agencyId: 'agH', clientId: 'c', title: 'Ofitsiant 2', role: 'ofitsiant', status: 'open' },
@@ -135,15 +135,32 @@ test('/start birinchi xabari: ism, haqiqiy ochiq ishlar soni va lavozimlar, uz/r
     { id: 'h4', agencyId: 'agH', clientId: 'c', title: 'Yopiq', role: 'kassir', status: 'closed' },
     { id: 'h5', agencyId: 'agH', clientId: 'c', title: 'Yashirin', role: 'xostess', status: 'open', listed: false }
   ]);
-  const uz = await hookText({ lang: 'uz', from: { first_name: 'Ali<b>' }, agencyId: 'agH' });
-  assert.match(uz, /Assalomu alaykum, Ali&lt;b&gt;!/);
-  assert.match(uz, /<b>3 ta ochiq ish<\/b>: ofitsiant, oshpaz\./);      // yopiq va yashirin sanalmaydi
-  assert.ok(!/\n{3,}/.test(uz));
-  assert.match(uz, /xodim tanlash xizmati\.\nRestoranlar bizga/);       // kimmiz + qanday ishlaymiz
-  const ru = await hookText({ lang: 'ru', from: {}, agencyId: 'agH', v: { title: 'Ofitsiant', role: 'ofitsiant' } });
-  assert.match(ru, /^👋 Здравствуйте!/);
-  assert.match(ru, /открыто <b>3 вакансии<\/b>/);
-  assert.match(ru, /по вакансии <b>«/);
-  const empty = await hookText({ lang: 'uz', from: {}, agencyId: 'yoq' });
-  assert.ok(!/ochiq ish/.test(empty));                                   // ish yo'q — raqam aytilmaydi
+  const scr = o => firstScreen(Object.assign({ r: { id: 'r1' }, appBase: 'https://x' }, o));
+
+  const uz = await scr({ lang: 'uz', from: { first_name: 'Ali<b>' }, agencyId: 'agH' });
+  assert.match(uz.text, /Assalomu alaykum, Ali&lt;b&gt;!/);
+  assert.match(uz.text, /<b>3 ta ochiq ish<\/b>/);                     // yopiq va yashirin sanalmaydi
+  assert.match(uz.text, /ofitsiant 2 \u00b7 oshpaz 1/);
+  assert.ok(!/\n{3,}/.test(uz.text));
+  // Nomzodga agentlik tavsifi YOZILMAYDI (docs/auditoriya.md)
+  assert.ok(!/xodim tanlash|tavsiya qilamiz|Restoranlar bizga/.test(uz.text), uz.text);
+  const keys = uz.rows.flat().map(b => b.callback_data || (b.web_app ? 'app' : ''));
+  assert.ok(keys.includes('ft:c:ofitsiant'));                          // lavozim tugmalari
+  assert.ok(keys.includes('app'));                                     // zaxira yo'l (anketa)
+  assert.ok(keys.includes('ft:lang:ru:r1'));                           // til almashtirish
+
+  // Vakansiya havolasi: e'lonning O'ZI va "ariza darhol yuboriladi"
+  const ru = await scr({ lang: 'ru', from: {}, agencyId: 'agH',
+    v: { id: 'h1', title: 'Ofitsiant', role: 'ofitsiant', location: 'Chilonzor', salaryFrom: 4e6, salaryTo: 5e6 } });
+  assert.match(ru.text, /^\ud83d\udc4b \u0417\u0434\u0440\u0430\u0432\u0441\u0442\u0432\u0443\u0439\u0442\u0435!/);
+  assert.match(ru.text, /Chilonzor/);
+  assert.match(ru.text, /\u041e\u0442\u043a\u043b\u0438\u043a \u0443\u0439\u0434\u0451\u0442/);   // "Otklik uydyot na etu vakansiyu srazu"
+  assert.ok(!/\u0432\u0430\u043a\u0430\u043d\u0441\u0438\u0439:/.test(ru.text));                     // ro'yxat emas
+  assert.equal(ru.rows.length, 3);
+
+  // Ish yo'q: raqam TO'QILMAYDI, foyda va o'sha savol
+  const empty = await scr({ lang: 'uz', from: {}, agencyId: 'yoq' });
+  assert.ok(!/ta ochiq ish/.test(empty.text));
+  assert.match(empty.text, /Bepul/);
+  assert.match(empty.text, /Qaysi ish kerak\?/);
 });

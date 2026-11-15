@@ -658,116 +658,37 @@ async function startSurvey(msg, chatId, ank, appBase) {
 }
 
 // ── Nomzodning birinchi ekrani (matn + tugmalar) ──
-// Alohida funksiya: til almashtirilganda AYNAN shu ekran qayta chiziladi.
-// Til tugmasi — BITTA, faqat ikkinchi til (o'z tilida yozilgan, tanimagan
-// ham topadi). Telegram interfeysi tili yolg'on taxmin beradi: O'zbekistonda
-// ko'p telefon ruscha sozlangan holda sotiladi, egasi esa o'zbekcha gapiradi.
-const langSwitchBtn = (lang, rid) => lang === 'ru'
-  ? { text: '🇺🇿 O\'zbekcha', callback_data: 'ft:lang:uz:' + rid }
-  : { text: '🇷🇺 Русский',   callback_data: 'ft:lang:ru:' + rid };
+// Matn kimga yozilgani: docs/auditoriya.md. Nomzod ish va maosh qidiryapti —
+// agentlik tavsifi («xodim tanlash xizmati… biz tavsiya qilamiz») MIJOZ matni,
+// u bu yerda yo'q. Ikki yo'l:
+//   vakansiya havolasi  -> e'lonning o'zi (maosh, tuman) + darhol ariza
+//   havolasiz           -> services/firstTouch.candidatePick (YAGONA joy;
+//                          "Orqaga" ham aynan shu ekranni chizadi)
+const escHtml = s => String(s == null ? '' : s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 
 async function firstScreen({ lang, from, agencyId, v, closed, r, appBase }) {
-  const text = await hookText({ lang, from, agencyId, v, closed });
-  // Ikki yo'l: Mini App anketasi yoki ovozli rezyume (services/voiceIntake) — bitta
-  // yozuv. Vakansiya havolasisiz kelgan bo'lsa — avval LAVOZIM tugmalari: odam
-  // o'ziga mos ishni KO'RSIN, keyin anketa so'ralsin (services/firstTouch).
   const ft = require('../services/firstTouch');
-  const anketa = { text: T(lang, 'ank.botOpen'), web_app: { url: `${appBase}/anketa.html?r=${r.id}` } };
-  const rows = v
-    // Vakansiya havolasi: lavozim allaqachon ma'lum — ikki yo'l darhol
-    ? [[anketa], [require('../services/voiceIntake').entryButton(r, lang)]]
-    // Havolasiz: FAQAT lavozim tugmalari (+ bitta zaxira). Anketa va ovoz
-    // keyingi ekranda — u yerda qaysi ish uchun ekani ko'rinib turadi.
-    : [...ft.roleRows(lang, 'ft:c:'),
-       [Object.assign({}, anketa, { text: T(lang, 'ft.cOther') })]];
-  rows.push([langSwitchBtn(lang, r.id)]);
-  return { text, rows };
-}
-
-// ── Birinchi xabar: odam botni nega ochishi kerakligini bilsin ──
-// Ilgari "Ishga ariza berish uchun anketani to'ldiring" bitta qatori edi —
-// nima beradi, qancha vaqt, keyin nima bo'ladi — aytilmasdi. Endi: ism bilan
-// salom, kimmiz, HOZIR nechta ochiq ish va qaysi lavozimlar (bazadan, to'qima
-// emas), to'rt va'da va bitta tugma. Raqam nomzod kabinetidagi ro'yxat
-// qoidasi bilan bir xil (ochiq, e'lon qilingan, 14 kundan yangi).
-// ── Ish beruvchi havolasi: yangi restoran (kutilmoqda) + agentlikka xabar ──
-// Ochiq sahifadan (/maosh.html) kelgan restoran nomzod anketasiga tushib
-// qolmasin. Hisob avtomatik faollashmaydi — menejer gaplashib tasdiqlaydi.
-async function employerStart(msg, chatId, tgLang, appBase, src) {
-  const token = tg.platformToken();
-  const [asClient, asCand] = await Promise.all([
-    Client.findOne({ tgChatId: chatId }).lean(),
-    Candidate.findOne({ tgChatId: chatId, tgState: 'linked' }, 'id').lean()
-  ]);
-  if (asClient || asCand) return plainStart(msg, chatId, tgLang, appBase);
-  const def = await Survey.findOne({ isDefault: true, active: true }, 'agencyId').lean();
-  if (!def) return plainStart(msg, chatId, tgLang, appBase);
-  const f = msg.from || {};
-  const who = [f.first_name, f.last_name].filter(Boolean).join(' ').trim() || (f.username ? '@' + f.username : 'Telegram');
-  await Client.create({ id: uuidv4(), agencyId: def.agencyId, name: `${who} (yangi)`, contactName: who,
-    status: 'pending', tgChatId: chatId, tgUsername: f.username || '', tgLang: f.language_code || '',
-    note: `Manba: ${src === 'maosh' ? 'maosh sahifasi' : src}` });
-  // Avvalgi matn "menejer bog'lanadi" bilan tugardi — boshi berk ko'cha edi.
-  // Endi: va'dalar + BAZADAGI haqiqiy raqamlar + lavozim tugmalari
-  // (services/firstTouch).
-  const intro = await require('../services/firstTouch').employerIntro({ agencyId: def.agencyId, lang: tgLang });
-  await tg.sendMessage(token, chatId, intro.text,
-    { parse_mode: 'HTML', reply_markup: { inline_keyboard: intro.keyboard } });
-  const ag = await Restaurant.findOne({ id: def.agencyId }, 'telegram').lean();
-  const adm = ag && ag.telegram && ag.telegram.adminChatId;
-  if (adm) await tg.sendMessage(token, adm,
-    `🆕 Yangi restoran botga kirdi (${src === 'maosh' ? 'maosh sahifasidan' : src}): ${who}${f.username ? ' @' + f.username : ''}\n\n` +
-    `Mijozlar ro'yxatida "Kutilmoqda". Bog'lanib, nomini to'ldiring va faollashtiring.`).catch(() => {});
-}
-
-// ── Tavsiya havolasi: yangi restoran (kutilmoqda) + agentlikka xabar ──
-// Hisob avtomatik faollashmaydi (raqobatchi bazani ko'rmasin) — menejer
-// gaplashib tasdiqlaydi. Bonus — birinchi to'lovda (billing.rewardReferral).
-async function referralStart(msg, chatId, code, tgLang, appBase) {
-  const token = tg.platformToken();
-  const ref = await Client.findOne({ referralCode: code }).lean();
-  const [asClient, asCand] = await Promise.all([
-    Client.findOne({ tgChatId: chatId }).lean(),
-    Candidate.findOne({ tgChatId: chatId }, 'id').lean()
-  ]);
-  if (!ref || asClient || asCand || ref.tgChatId === chatId) return plainStart(msg, chatId, tgLang, appBase);
-  const f = msg.from || {};
-  const who = [f.first_name, f.last_name].filter(Boolean).join(' ').trim() || (f.username ? '@' + f.username : 'Telegram');
-  await Client.create({ id: uuidv4(), agencyId: ref.agencyId, name: `${who} (tavsiya)`, contactName: who,
-    status: 'pending', tgChatId: chatId, tgUsername: f.username || '', tgLang: f.language_code || '',
-    referredBy: ref.id, note: `Tavsiya: ${ref.name}` });
-  await tg.sendMessage(token, chatId, T(tgLang, 'bot.refHello', { n: require('../services/billing').REFERRAL_BONUS }));
-  const ag = await Restaurant.findOne({ id: ref.agencyId }, 'telegram').lean();
-  const adm = ag && ag.telegram && ag.telegram.adminChatId;
-  if (adm) await tg.sendMessage(token, adm,
-    `🎁 Tavsiya orqali yangi restoran: ${who}${f.username ? ' @' + f.username : ''}\nTaklif qilgan: ${ref.name}\n\n` +
-    `Mijozlar ro'yxatida "Kutilmoqda" holatida. Bog'lanib, nomini to'ldiring va faollashtiring — birinchi to'lovda ikkalasiga bonus avtomatik.`).catch(() => {});
-}
-
-const escHtml = s => String(s == null ? '' : s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
-async function hookText({ lang, from, agencyId, v, closed }) {
   const first = String((from && from.first_name) || '').trim().slice(0, 30);
-  const fresh = new Date(Date.now() - vac.STALE_DAYS * 864e5);
-  const byRole = await Vacancy.aggregate([
-    { $match: { agencyId, status: 'open', listed: { $ne: false }, confirmedAt: { $gte: fresh }, isTest: { $ne: true } } },
-    { $group: { _id: '$role', n: { $sum: 1 } } }, { $sort: { n: -1 } }
-  ]);
-  const n = byRole.reduce((s, x) => s + x.n, 0);
-  const roles = byRole.filter(x => x._id && x._id !== 'boshqa').slice(0, 5)
-    .map(x => T(lang, 'role.' + x._id)).filter(l => l && !/^role\./.test(l)).map(l => l.toLowerCase()).join(', ');
-  return [
-    T(lang, 'ank.hookHi', { name: first ? ', ' + escHtml(first) : '' }), '',
-    T(lang, 'ank.hookLead'),
-    T(lang, 'ank.hookAbout'), '',
-    n ? T(lang, 'ank.hookJobs', { n, roles: escHtml(roles) }) : '',
-    v ? T(lang, 'ank.hookVac', { v: escHtml(vac.titleFor(v, lang)) }) : closed ? T(lang, 'ank.hookClosed') : '',
-    n || v || closed ? '' : null,
-    T(lang, 'ank.hookPoints'), '',
-    // Havolasiz kelganga lavozim tugmalari beriladi (startSurvey) — oxirgi
-    // qator shu savol bo'lsin, "tugmani bosing" emas. Ochiq ish bo'lmasa
-    // "ochiq ishlarni ko'rsataman" deb va'da bermaymiz.
-    T(lang, v ? 'ank.hookCta' : n ? 'ft.cPickLine' : 'ft.cPick0')
-  ].filter(x => x !== null).join('\n').replace(/\n{3,}/g, '\n\n');
+
+  if (v) {
+    const meta = [v.location, vac.salaryText(v, lang)].filter(Boolean).join(' · ');
+    const text = [
+      T(lang, 'ank.hookHi', { name: first ? ', ' + escHtml(first) : '' }), '',
+      T(lang, 'ank.hookVac', { v: escHtml(vac.titleFor(v, lang)), meta: meta ? '\n' + escHtml(meta) : '' }), '',
+      // Havola bilan kelganda anketa tugagach ariza AVTOMATIK yuboriladi —
+      // shuning uchun tugma ham, matn ham aynan shuni va'da qiladi
+      T(lang, 'ft.cAskVac'), '',
+      T(lang, 'ft.cVoiceHint')
+    ].join('\n').replace(/\n{3,}/g, '\n\n');
+    return { text, rows: [
+      [{ text: T(lang, 'ft.cApply'), web_app: { url: `${appBase}/anketa.html?r=${r.id}` } }],
+      [require('../services/voiceIntake').entryButton(r, lang)],
+      [ft.langSwitchBtn(lang, r.id)]
+    ] };
+  }
+
+  const pick = await ft.candidatePick({ agencyId, lang, name: first, rid: r.id, appBase, closed });
+  return { text: pick.text, rows: pick.keyboard };
 }
 
 // ── Kontakt xabari ───────────────────────────────────────────
@@ -1347,4 +1268,4 @@ router.post('/unlink-admin', guard, asyncHandler(async (req, res) => {
 }));
 
 module.exports = router;
-module.exports.hookText = hookText;   // test uchun (test/applications.test.js)
+module.exports.firstScreen = firstScreen;   // test uchun (test/applications.test.js)

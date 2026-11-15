@@ -23,9 +23,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    literal `n` ga aylanib, butun Mini App oq ekran bo'lib qoldi.
    Katta HTML/JS uchun shell emas, `Write` ishlating.
 
-7. **HR nigohi — har ekran uchun** (Anas talabi, 2026-11-15). Nomzod ham,
-   restoran ham ko'k yoqa auditoriya: har ekranda BITTA savol va BITTA asosiy
-   harakat. Yangi ekran yoki matn qo'shsangiz, shu ro'yxatdan o'tkazing:
+7. **HR nigohi — har ekran uchun** (Anas talabi, 2026-11-15). Matn yozishdan
+   oldin **`docs/auditoriya.md`** ni o'qing: nomzod va mijoz BOSHQA odam,
+   bitta ekran — bitta odam. Nomzodga agentlik tavsifi ("xodim tanlash
+   xizmati", "biz tavsiya qilamiz") — MIJOZ matni, yozilmaydi. Har ekranda
+   BITTA savol va BITTA asosiy harakat. Tekshiruv ro'yxati:
    - Odam TANLAGAN yo'lga qarama-qarshi tugma turibdimi? (ovozni tanlaganga
      "Anketa to'ldirish" asosiy tugmadek ko'rinmasin)
    - Chiqish yo'li bormi? Har bosqichda: "keyinroq", "orqaga", zaxira variant.
@@ -962,6 +964,48 @@ profil > Telegram interfeysi (`firstTouch.handleCallback`; aks holda lavozim
 bosilganda ruschaga qaytib ketardi — jonli sinovda topildi). Nomzod uchun
 `/til` buyrug'i ham qo'shildi (ilgari faqat mijozda edi; `lg:` tugmalari endi
 nomzodni ham taniydi). `test/firsttouch.test.js` (10 ta), CI 153/153.
+
+**NOMZOD MATNI MIJOZ MATNIDAN AJRATILDI** (2026-11-15, `49fa9da`.., Anas
+ekranni ko'rsatib: "bu tekst nomzod uchun emas, ko'proq mijoz uchun mos
+tushadi"). Rost edi: nomzodning `/start` ekrani agentlikning o'zi haqida
+yozilgan edi — "TalentHub — xodim tanlash xizmati… restoranlar bizga
+so'raydi… biz mos nomzodni tanlab tavsiya qilamiz" + 4 ta ✅. Bu investorga
+yoki restoranga aytiladigan gap; ish qidirayotgan odamga emas.
+**Miya — `docs/auditoriya.md`** (yangi, CLAUDE.md 7-qoidadan havola): nomzod
+kim, nimadan qo'rqadi, nima so'raydi (qancha → qayerda → qachondan → men
+nima qilaman), unga AYTILMAYDIGAN so'zlar jadvali (nomzod, xizmat, platforma,
+tavsiya qilamiz, vakansiya), birinchi ekran formulasi; mijoz uchun shu
+narsalarning teskarisi. Matn endi shu hujjatdan yoziladi.
+Nomzod ekranlari qayta yozildi (uz/ru): birinchi ekran — salom + HOZIR nechta
+ochiq ish va lavozimlar bo'yicha taqsimot (`ft.cPick`, bazadan) + "Maoshi va
+tumani bilan ko'rsataman — qaysi ish kerak?"; agentlik haqida bitta so'z yo'q.
+Ish bo'lmasa raqam to'qilmaydi — uch foyda (`ft.cPick0`: bepul · rezyume
+yozmaysiz · HR o'zi qo'ng'iroq qiladi). Lavozim ekrani: ishlar ro'yxati +
+"Avval bir necha savolga javob bering — 2 daqiqa, rezyume shart emas, bepul.
+Tugagach shu ishlarga ariza berasiz" (`ft.cAsk`). Vakansiya havolasi bilan
+kelganga: e'lonning O'ZI (lavozim, tuman, maosh) va "arizangiz shu ishga
+DARHOL yuboriladi" (`ft.cAskVac`, tugma `ft.cApply` — "Ariza berish", chunki
+bu yo'lda ariza rostdan yuboriladi). O'chirildi: `ank.hookLead`, `hookAbout`,
+`hookPoints`, `hookCta`, `hookJobs`, `ft.cPickLine`.
+QOIDA YAGONA: birinchi ekranni endi faqat `firstTouch.candidatePick` chizadi
+— `/start` ham, "⬅️ Orqaga" ham AYNAN shu (ilgari ikki joyda edi va Orqaga'da
+til tugmasi ham, "Lavozimim ro'yxatda yo'q" zaxira yo'li ham yo'qolardi).
+`langSwitchBtn` ham shu yerga ko'chdi. `telegram.js hookText` o'rnida
+`firstScreen` (test shuni chaqiradi).
+**ILDIZ SABAB — MATN EMAS, MA'LUMOT:** Anas yuborgan ekranda ish soni umuman
+yo'q edi, chunki jonli bazada ochiq ish **0** ta. 22.10 da import qilingan 33
+vakansiyaning `confirmedAt` 14 kundan oshgan (`vac.STALE_DAYS`) — 5-noyabrdan
+beri ular nomzodga KO'RINMAYDI: botdagi son ham, nomzod kabinetidagi ro'yxat
+ham, anketadan keyingi "sizga mos N ta ish" ham nol. Hech qanday matn bo'sh
+ro'yxatni qoplay olmaydi. Endi bu ko'rinadi: `/api/agency/today` → `openJobs`,
+`staleJobs`; "Bugun" sahifasida qizil/sariq qator ("Nomzod hozir N ta ish
+ko'ryapti"), yon menyuda Vakansiyalar yonida tasdiqlanmaganlar soni.
+**Anas qiladigan ish:** panel → Vakansiyalar → eskirganlarni tasdiqlash yoki
+yopish. Tasdiqlanmaguncha nomzod tomoni bo'sh turadi.
+`test/applications.test.js` (birinchi ekran: agentlik tavsifi yo'qligi,
+tugmalar, ish yo'q holati), `test/firsttouch.test.js` (Orqaga = /start),
+`test/sections.test.js` (openJobs/staleJobs). CI 155/155. Oqim lokal bazada
+webhook darajasida bosib chiqildi (7 ekran, uz/ru, har xabar o'qildi).
 
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.

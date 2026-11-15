@@ -53,6 +53,11 @@
     <a class="th-card kpi" href="/mijozlar.html"><div class="l">Mijozlar krediti</div><div class="v" id="kCred" style="color:var(--th-amber)">—</div><div class="d" id="kCredD">&nbsp;</div></a>
   </div>
 
+  <!-- Nomzod botda va kabinetda AYNAN shuncha ish ko'radi. Nol bo'lsa hech
+       qanday matn uni ushlab turmaydi — avval vakansiyalarni tasdiqlash kerak. -->
+  <a class="th-card" id="jobsWarn" href="/vakansiyalar.html"
+     style="display:none; margin-top:14px; padding:14px 16px; text-decoration:none; color:inherit"></a>
+
   <div class="sh"><div class="th-section">Sizni kutayotgan tanlovlar</div><a href="/mijozlar.html">Hammasi</a></div>
   <div class="th-group" id="queue"><div class="empty">Yuklanmoqda…</div></div>
 
@@ -91,6 +96,16 @@ $('today').textContent = `${KUN[nowD.getDay()]}, ${nowD.getDate()}-${OY[nowD.get
     $('queue').innerHTML = `<div class="err">${esc(e.message)}</div>`;
     if (/Avtorizatsiya|Token/.test(e.message)) location.href = '/';
     return;
+  }
+  if (d.staleJobs || !d.openJobs) {
+    const w = $('jobsWarn');
+    w.style.borderLeft = '3px solid var(--th-' + (d.openJobs ? 'amber' : 'danger') + ')';
+    w.innerHTML = `<b style="font-size:15px">Nomzod hozir ${d.openJobs} ta ish ko'ryapti</b>`
+      + `<div style="color:var(--th-muted); margin-top:4px; font-size:14px">`
+      + (d.staleJobs ? `${d.staleJobs} ta ochiq vakansiya 2 haftadan beri tasdiqlanmagan — botda ham, nomzod kabinetida ham ko'rinmaydi. Tasdiqlang yoki yoping ›`
+                     : `Ochiq va tasdiqlangan vakansiya yo'q — nomzodga ko'rsatadigan ish yo'q ›`)
+      + `</div>`;
+    w.style.display = 'block';
   }
   $('kApps').textContent = d.appsNew;
   $('kAppsD').textContent = d.appsNew ? 'vakansiyalarga kelgan' : 'hammasi ko\'rilgan';

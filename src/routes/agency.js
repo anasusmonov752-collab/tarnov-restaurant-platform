@@ -11,6 +11,7 @@ const Application = require('../models/Application');
 const Client = require('../models/Client');
 const Candidate = require('../models/Candidate');
 const ChatThread = require('../models/ChatThread');
+const Vacancy = require('../models/Vacancy');
 const contactLog = require('../services/contactLog');
 
 const router = express.Router();
@@ -39,6 +40,17 @@ router.get('/today', guard, asyncHandler(async (req, res) => {
     // "Arizalar" — agentlik hali ochmagan va qaror qilinmagan arizalar
     Application.countDocuments({ agencyId, agencySeenAt: null, state: { $in: ['new', 'seen'] }, isTest: { $ne: true } })
   ]);
+  // Nomzodga KO'RINADIGAN ochiq ishlar. Tasdiqlanmagani (confirmedAt 14 kundan
+  // eski — vac.STALE_DAYS) botda ham, nomzod kabinetida ham ko'rinmaydi: hammasi
+  // eskirsa nomzod BO'SH ekran ko'radi. Shuning uchun bu yerda va yon menyuda.
+  const vacSvc = require('../services/vacancy');
+  const fresh = new Date(Date.now() - vacSvc.STALE_DAYS * 864e5);
+  const openQ = { agencyId, status: 'open', listed: { $ne: false }, isTest: { $ne: true } };
+  const [openJobs, staleJobs] = await Promise.all([
+    Vacancy.countDocuments(Object.assign({ confirmedAt: { $gte: fresh } }, openQ)),
+    Vacancy.countDocuments(Object.assign({ confirmedAt: { $lt: fresh } }, openQ))
+  ]);
+
   // Yon menyu "To'lovlar" — tasdiq kutayotgan tarif so'rovlari
   // Tasdiq kutayotgan: qo'lda/hisob-faktura so'rovi yoki "To'ladim" bosilgan kartali o'tkazma
   const ordersPending = await require('../models/Order').countDocuments({ agencyId, status: 'pending',
@@ -75,6 +87,7 @@ router.get('/today', guard, asyncHandler(async (req, res) => {
     clientCredits: active.reduce((s, c) => s + (c.credits || 0), 0),
     activeClients: active.length,
     candidates: candTotal, candidatesWeek: candWeek, anketaUnseen, baseWeek, appsUnseen, ordersPending,
+    openJobs, staleJobs,
     unreadChats: (unread[0] || {}).n || 0,
     queue: queue.slice(0, 20)
   });

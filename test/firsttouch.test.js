@@ -192,5 +192,5 @@ test('ikkala tomon ham ruscha ishlaydi', async () => {
   assert.match(e.text, /Кто нужен/);
   const c = await ft.candidateRole({ agencyId: A, role: 'ofitsiant', lang: 'ru',
     tgUserId: '555', chatId: '555', appBase: 'https://x' });
-  assert.match(c.text, /вакансий/);
+  assert.match(c.text, /1 открытая вакансия/);                       // ruscha ko'plik: 1 — вакансия, 5 — вакансий
 });

@@ -268,6 +268,8 @@ function showEdit(id){
     <div class="fld"><label>Tuman</label><input type="text" id="eLo" value="${esc(c.location)}" placeholder="Chilonzor"></div>
     <div class="fld"><label>Manzil / mo'ljal</label><input type="text" id="eAd" value="${esc(c.address)}" placeholder="Bunyodkor 12, Mega Planet ro'parasi"></div>
     <div class="fld"><label>Restoran haqida</label><input type="text" id="eAb" value="${esc(c.about)}" placeholder="150 o'rinli, yevropa oshxonasi"></div>
+    <div class="fld"><label><input type="checkbox" id="eSn" ${c.showName ? 'checked' : ''}> Restoran nomi nomzodga ochiq ko'rinsin</label>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">Standart: yopiq — nomzod nomni faqat kontakt ochilgach ko'radi. Tanilgan brend uchun ochsangiz ariza ko'proq keladi.</div></div>
     <button class="btn btn-p" id="eSave" style="width:100%">Saqlash</button>`);
 
   // Logotip darhol saqlanadi (Saqlash tugmasini kutmaydi)
@@ -295,7 +297,7 @@ function showEdit(id){
       await api('/api/clients/' + id, { method:'PATCH', body: JSON.stringify({
         name: $('eNm').value.trim(), contactName: $('eCn').value.trim(),
         phone: $('ePh').value.trim(), location: $('eLo').value.trim(),
-        address: $('eAd').value.trim(), about: $('eAb').value.trim()
+        address: $('eAd').value.trim(), about: $('eAb').value.trim(), showName: $('eSn').checked
       })});
       toast('Saqlandi', 'success');
       closeMd(); loadClients();

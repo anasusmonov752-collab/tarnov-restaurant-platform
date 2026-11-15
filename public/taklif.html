@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TalentHub — Taklif navbati</title>
+<link rel="icon" href="/img/talenthub-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/th.css?v=2">
+<link rel="stylesheet" href="/css/th-app.css?v=2">
+<script src="/js/th-shell.js?v=5" defer></script>
+<style>
+  /* Taklif navbati — bu sahifa TELEFONDA ishlatiladi: SMS shu telefondan
+     ketadi. Shuning uchun kompyuter emas, telefon ko'rinishi asosiy. */
+  .wrap{ flex:1; overflow-y:auto; }
+  .inner{ max-width:720px; padding:20px 20px 72px; }
+
+  .lead{ color:var(--th-muted); font-size:var(--th-fs-foot); line-height:1.5; margin:-6px 0 16px; }
+  .warn{ border-left:3px solid var(--th-amber); padding:12px 14px; margin-bottom:16px; font-size:14px; line-height:1.5; }
+
+  .box{ padding:14px 16px; margin-bottom:14px; }
+  .box h3{ font-size:var(--th-fs-foot); color:var(--th-muted); font-weight:600; margin:0 0 8px; }
+  textarea{ width:100%; min-height:116px; resize:vertical; font:inherit; font-size:15px; line-height:1.5;
+            padding:10px 12px; border-radius:12px; border:1px solid var(--th-line);
+            background:var(--th-bg-2); color:var(--th-text); }
+  .meta{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:8px;
+         font-size:var(--th-fs-foot); color:var(--th-muted); }
+  .meta b{ color:var(--th-text); }
+  .meta .bad{ color:var(--th-danger); }
+  .prev{ margin-top:10px; padding:10px 12px; border-radius:12px; background:var(--th-bg-2);
+         font-size:14px; line-height:1.5; white-space:pre-wrap; word-break:break-word; }
+
+  .chips{ display:flex; gap:8px; overflow-x:auto; padding:2px 0 10px; -webkit-overflow-scrolling:touch; }
+  .chip{ flex:0 0 auto; padding:7px 14px; border-radius:999px; border:1px solid var(--th-line);
+         background:var(--th-bg-2); color:var(--th-text); font-size:14px; cursor:pointer; white-space:nowrap; }
+  .chip.on{ background:var(--th-brand); color:#fff; border-color:transparent; }
+
+  .row{ display:flex; align-items:center; gap:12px; padding:12px 14px; margin-bottom:8px; }
+  .row .who{ min-width:0; flex:1; }
+  .row .nm{ font-weight:600; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .row .sb{ color:var(--th-muted); font-size:13px; margin-top:2px; line-height:1.4; }
+  .go{ flex:0 0 auto; display:inline-flex; align-items:center; gap:6px; text-decoration:none;
+       padding:10px 16px; border-radius:999px; background:var(--th-brand); color:#fff;
+       font-size:15px; font-weight:600; border:0; cursor:pointer; }
+  .wa{ flex:0 0 auto; width:38px; height:38px; border-radius:999px; border:1px solid var(--th-line);
+       background:var(--th-bg-2); color:var(--th-muted); font-size:16px; text-decoration:none;
+       display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; }
+  .row.done{ opacity:.55; }
+  .row.done .go{ background:transparent; color:var(--th-muted); border:1px solid var(--th-line); }
+
+  .empty{ padding:26px 14px; text-align:center; color:var(--th-muted); }
+  .more{ display:block; width:100%; margin-top:10px; padding:12px; border-radius:14px;
+         border:1px solid var(--th-line); background:var(--th-bg-2); color:var(--th-text);
+         font:inherit; font-size:15px; cursor:pointer; }
+  @media (max-width:560px){ .inner{ padding:16px 14px 72px; } }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div><div class="tb-title">Taklif navbati</div><div class="tb-sub" id="sub">—</div></div>
+</div>
+<div class="wrap"><div class="inner">
+
+  <div class="lead">
+    hh.uz bazasidagi nomzodlar Telegramda emas — bot ularga birinchi bo'lib yoza olmaydi.
+    Bu yerda tayyor SMS beriladi: tugmani bossangiz telefoningizda xabar matn bilan ochiladi,
+    siz faqat «yuborish» ni bosasiz. Tizim o'zi hech kimga SMS yubormaydi.
+  </div>
+
+  <div class="th-card warn">
+    <b>Kuniga 30–50 tadan oshirmang.</b> Operator ommaviy yuborishni bloklashi mumkin —
+    shaxsiy raqamingiz qora ro'yxatga tushadi. Eng mos lavozimdan boshlang.
+  </div>
+
+  <div class="th-card box">
+    <h3>Xabar matni</h3>
+    <textarea id="tpl" spellcheck="false"></textarea>
+    <div class="meta">
+      <span><b id="cnt">0</b> belgi</span>
+      <span>·</span>
+      <span><b id="parts">1</b> SMS</span>
+      <span id="badWrap" class="bad" hidden>· <b id="bad"></b> — bu belgilar SMS'ni 3 ga bo'ladi</span>
+      <span style="margin-left:auto">{ism} · {lavozim} · {havola}</span>
+    </div>
+    <div class="prev" id="prev"></div>
+  </div>
+
+  <div class="chips" id="chips"></div>
+  <div id="list"><div class="empty">Yuklanmoqda…</div></div>
+  <button class="more" id="more" hidden>Yana 30 ta</button>
+
+</div></div>
+
+<script src="/js/utils.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// SMS bitta bo'lib ketishi uchun matn GSM-7 jadvalida bo'lishi kerak.
+// Bitta "—" yoki "’" butun xabarni UCS-2 ga o'tkazadi: 160 o'rniga 70 belgi.
+// Qoida serverdagi services/outreach.smsInfo bilan bir xil.
+const GSM7 = '@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ !"#¤%&\'()*+,-./0123456789:;<=>?'
+  + '¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà';
+const GSM7_EXT = '^{}\\[~]|€';
+function smsInfo(text){
+  const bad = []; let units = 0;
+  for (const ch of String(text || '')) {
+    if (GSM7.includes(ch)) units += 1;
+    else if (GSM7_EXT.includes(ch)) units += 2;
+    else { units += 1; if (!bad.includes(ch)) bad.push(ch); }
+  }
+  const ucs2 = bad.length > 0;
+  const len = ucs2 ? Array.from(String(text || '')).length : units;
+  const one = ucs2 ? 70 : 160, many = ucs2 ? 67 : 153;
+  return { chars: len, bad, parts: len === 0 ? 0 : (len <= one ? 1 : Math.ceil(len / many)) };
+}
+
+// iOS va Android sms: havolasini boshqacha o'qiydi — ?body= va &body=.
+// Ikkalasida ham ishlaydigan shakl: raqamdan keyin "&" (iOS), boshqasida "?".
+const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const smsHref = (phone, text) => 'sms:' + phone + (IOS ? '&' : '?') + 'body=' + encodeURIComponent(text);
+const waHref  = (phone, text) => 'https://wa.me/' + phone.replace(/\D/g,'') + '?text=' + encodeURIComponent(text);
+
+let S = { role: '', skip: 0, rows: [], total: 0, link: '', sent: new Set() };
+
+const TPL_KEY = 'th_sms_tpl';
+function tplText(){ return $('tpl').value; }
+function fill(tpl, c){
+  return String(tpl)
+    .replace(/\{ism\}/g, c.first || '')
+    .replace(/\{lavozim\}/g, c.roleLabel || 'Restoran ishi')
+    .replace(/\{havola\}/g, S.link)
+    .replace(/\s{2,}/g, ' ').trim();
+}
+
+function drawTpl(){
+  const sample = S.rows[0] || { first: 'Dilshod', roleLabel: 'Ofitsiant' };
+  const text = fill(tplText(), sample);
+  const i = smsInfo(text);
+  $('cnt').textContent = i.chars;
+  $('parts').textContent = i.parts;
+  $('badWrap').hidden = !i.bad.length;
+  $('bad').textContent = i.bad.join(' ');
+  $('prev').textContent = text;
+  try { localStorage.setItem(TPL_KEY, tplText()); } catch (e) {}
+  drawList();
+}
+
+function drawList(){
+  if (!S.rows.length) {
+    $('list').innerHTML = '<div class="th-card empty">Bu lavozimda navbat bo\'sh — hammasiga yozilgan.</div>';
+    return;
+  }
+  $('list').innerHTML = S.rows.map(c => {
+    const text = fill(tplText(), c);
+    const done = S.sent.has(c.id);
+    const bits = [c.roleLabel, c.location, c.exp ? c.exp + ' yil' : '', c.days + ' kun oldin'].filter(Boolean);
+    return `<div class="th-card row ${done ? 'done' : ''}" data-id="${esc(c.id)}">
+      <div class="who">
+        <div class="nm">${esc(c.name || c.phone)}</div>
+        <div class="sb">${esc(bits.join(' · '))}</div>
+      </div>
+      ${done
+        ? `<button class="go" data-undo="1">✓ yuborildi</button>`
+        : `<a class="wa" href="${esc(waHref(c.phone, text))}" target="_blank" rel="noopener" title="WhatsApp">WA</a>
+           <a class="go" href="${esc(smsHref(c.phone, text))}">SMS</a>`}
+    </div>`;
+  }).join('');
+}
+
+// Tugma bosilgandan keyin yuborilgan deb belgilanadi: sahifa "yubordimi"
+// ni bila olmaydi, shuning uchun darhol belgilanadi va qaytarish beriladi.
+$('list').addEventListener('click', async ev => {
+  const row = ev.target.closest('.row'); if (!row) return;
+  const id = row.dataset.id;
+  const undo = !!ev.target.closest('[data-undo]');
+  if (!undo && !ev.target.closest('.go')) return;
+  try {
+    await api('/api/recruitment/' + encodeURIComponent(id) + '/sms', { method: 'POST', body: JSON.stringify({ undo }) });
+    if (undo) S.sent.delete(id); else S.sent.add(id);
+    drawList();
+    $('sub').textContent = `${S.total - S.sent.size} ta navbatda`;
+  } catch (e) { toast(e.message, 'error'); }
+});
+
+async function load(reset){
+  if (reset) { S.skip = 0; S.rows = []; S.sent = new Set(); }
+  let d;
+  try { d = await api(`/api/recruitment/outreach?role=${encodeURIComponent(S.role)}&skip=${S.skip}&limit=30`); }
+  catch (e) {
+    $('list').innerHTML = `<div class="th-card empty">${esc(e.message)}</div>`;
+    if (/Avtorizatsiya|Token/.test(e.message)) location.href = '/';
+    return;
+  }
+  S.link = d.link; S.total = d.total;
+  S.rows = S.rows.concat(d.rows);
+  $('sub').textContent = `${d.total} ta navbatda · bugun ${d.sentToday} ta yuborildi`;
+  $('more').hidden = S.rows.length >= d.total;
+
+  if (!$('tpl').value) {
+    let saved = null; try { saved = localStorage.getItem(TPL_KEY); } catch (e) {}
+    $('tpl').value = saved || d.tpl;
+  }
+  $('chips').innerHTML = [{ role: '', label: 'Hammasi', n: d.total }].concat(d.byRole)
+    .map(x => `<button class="chip ${x.role === S.role ? 'on' : ''}" data-role="${esc(x.role)}">${esc(x.label)} ${x.n}</button>`).join('');
+  drawTpl();
+}
+
+$('chips').addEventListener('click', ev => {
+  const b = ev.target.closest('.chip'); if (!b) return;
+  S.role = b.dataset.role; load(true);
+});
+$('more').addEventListener('click', () => { S.skip = S.rows.length; load(false); });
+$('tpl').addEventListener('input', drawTpl);
+load(true);
+</script>
+</body>
+</html>

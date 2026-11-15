@@ -23,6 +23,7 @@ const { isValidRole, guessRole } = require('../data/roles');
 const { mergeParsed } = require('../utils/mergeParsed');
 const { phoneKey, emailKey, textHash } = require('../utils/candidateKeys');
 const contactLog = require('../services/contactLog');
+const outreach = require('../services/outreach');
 const SurveyResponse = require('../models/SurveyResponse');
 
 const router = express.Router();
@@ -107,6 +108,30 @@ async function buildAndSave({ restaurantId, rawText, fileName, fileType, fileBuf
 }
 
 // ── Rezyume fayllarini yuklash (bir yoki bir nechta PDF/txt) ──
+// ── TAKLIF NAVBATI (hh bazasiga SMS) ─────────────────────────
+// Yuborishni SERVER qilmaydi: navbat va tayyor matn beriladi, SMS odamning
+// o'z telefonidan ketadi (services/outreach — nega shunday, o'sha yerda).
+router.get('/outreach', guard, asyncHandler(async (req, res) => {
+  const agencyId = req.user.restaurantId;
+  const out = await outreach.list(agencyId, {
+    role: req.query.role || '',
+    limit: Number(req.query.limit) || 30,
+    skip: Number(req.query.skip) || 0
+  });
+  const sv = await require('../services/survey').ensureDefault(agencyId);
+  const ag = await Restaurant.findOne({ id: agencyId }, 'telegram').lean();
+  const username = ((ag && ag.telegram) || {}).botUsername || process.env.TELEGRAM_BOT_USERNAME || 'TalentHubUzBot';
+  out.link = `t.me/${username}?start=a_${sv.code}_sms`;
+  out.tpl = outreach.DEFAULT_TPL;
+  res.json(out);
+}));
+
+router.post('/:id/sms', guard, asyncHandler(async (req, res) => {
+  const ok = await outreach.markSent(req.user.restaurantId, req.params.id, !!req.body.undo);
+  if (!ok) return res.status(404).json({ error: 'Nomzod topilmadi' });
+  res.json({ ok: true });
+}));
+
 router.post('/upload', guard, upload.array('files', 30), asyncHandler(async (req, res) => {
   const files = req.files || [];
   if (!files.length) return res.status(400).json({ error: 'Fayl yuklanmadi' });

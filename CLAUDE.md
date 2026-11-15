@@ -1007,6 +1007,37 @@ tugmalar, ish yo'q holati), `test/firsttouch.test.js` (Orqaga = /start),
 `test/sections.test.js` (openJobs/staleJobs). CI 155/155. Oqim lokal bazada
 webhook darajasida bosib chiqildi (7 ekran, uz/ru, har xabar o'qildi).
 
+**TAKLIF NAVBATI (hh bazasiga SMS) + RESTORAN NOMI OCHIQ** (2026-11-15,
+Anas: "742 nomzodning telefoniga tayyor havola qilib ber, matnni o'zim
+shaxsiy nomerimdan yuboraman").
+- `services/outreach.js` — qoida YAGONA. Navbatga tushadi: manba anketa
+  EMAS, Telegramga ulanmagan, `smsSentAt` bo'sh, telefoni haqiqiy
+  (`phoneKey`), `not_looking` emas, bosqichi hired/rejected emas, sinov
+  emas. Eng yangi rezyume oldin. Panel `/taklif.html` (yon menyu "Taklif
+  navbati") — TELEFON uchun: lavozim chiplari, tahrirlanadigan matn
+  ({ism} · {lavozim} · {havola}), tirik ko'rinish, har qatorda bitta katta
+  "SMS" tugmasi. Tugma — `sms:` havolasi: iOS'da `&body=`, boshqasida
+  `?body=` (ikkisi har xil o'qiydi). WhatsApp — kichik zaxira tugma.
+  SERVER HECH KIMGA SMS YUBORMAYDI (Eskiz shartnomasi yo'q, operator
+  ommaviy yuborishni bloklaydi) — sahifada kuniga 30–50 ogohlantirishi.
+- SMS BITTA bo'lishi uchun matn GSM-7 da: bitta "—" yoki "’" butun
+  xabarni UCS-2 ga o'tkazadi (160 o'rniga 70 belgi, 1 SMS o'rniga 3).
+  `smsInfo()` serverda ham, sahifada ham bir xil — yomon belgini
+  qizil qilib ko'rsatadi. Standart matn 145 belgi, 1 SMS, ASCII.
+- Havola `t.me/<bot>?start=a_<kod>_sms` — yangi manba kaliti `sms`
+  (`survey.CHANNELS`), shu bo'yicha konversiyani o'lchaymiz.
+- Bosilgan zahoti "yuborildi" (`Candidate.smsSentAt` + `firstContactAt`)
+  — sahifa yuborilganini bila olmaydi; "Qaytarish" bor va u faqat SHU
+  amal qo'ygan `firstContactAt` ni oladi (oldingi qo'ng'iroq qolaveradi).
+- **RESTORAN NOMI**: `Client.showName` (standart — yopiq). Yoqilsa
+  `vac.forCandidate.employer` to'ladi: nomzod kabinetida karta va
+  vakansiya sahifasida, kanal postida nom ko'rinadi. Panel: Mijozlar →
+  Tahrirlash → belgi. Anas qarori 2026-11-15: **Tarnov uchun ochiq**
+  (o'z brendimiz; begona restoranda yopiq qoladi — aks holda nomzod
+  to'g'ridan-to'g'ri o'ziga boradi).
+`test/outreach.test.js` (6 ta), CI 161/161. Sahifa brauzerda telefon va
+kompyuter ko'rinishida tekshirildi (soxta API, iOS va Android UA).
+
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
 O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda

@@ -34,6 +34,7 @@
       { href: '/tolovlar.html', l: 'To\'lovlar', ic: 'card', n: 'ordersPending', nTitle: 'tasdiq kutayotgan tarif so\'rovlari', hot: true },
       { href: '/vakansiyalar.html', l: 'Vakansiyalar', ic: 'briefcase',
         n: 'staleJobs', nTitle: 'tasdiqlanmagan \u2014 nomzodga ko\'rinmaydi', hot: true },
+      { href: '/taklif.html', l: 'Taklif navbati', ic: 'send' },
       { href: '/suhbatlar.html', l: 'Suhbatlar', ic: 'chat', n: 'unreadChats', nTitle: 'o\'qilmagan xabarlar' }
     ] },
     { g: 'Sozlash', items: [{ href: '/anketalar.html', l: 'Anketalar', ic: 'form' }] }

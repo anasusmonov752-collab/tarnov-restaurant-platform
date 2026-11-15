@@ -174,6 +174,9 @@ const CandidateSchema = new mongoose.Schema({
   // Qoidasi bitta joyda — services/contactLog.js.
   seenAt:          { type: Date,   default: null },
   firstContactAt:  { type: Date,   default: null },
+  // Shaxsiy raqamdan taklif SMS ketgan payt (services/outreach) — navbat
+  // shu bo'yicha filtrlanadi, bir odamga ikki marta yozilmasin
+  smsSentAt:       { type: Date,   default: null },
 
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }

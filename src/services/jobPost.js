@@ -64,7 +64,8 @@ async function checkChannel(input) {
 function postText(v, client, { closed = false, employerOk = false } = {}) {
   const c = vac.forCandidate(v, client, 'uz');
   const where = [c.where || 'Toshkent', c.landmark].filter(Boolean).join(' · ');
-  const head = [closed ? '❌ <b>YOPILDI</b>' : '', `<b>${html(c.title)}</b>`, c.venue ? html(c.venue) : ''];
+  const head = [closed ? '❌ <b>YOPILDI</b>' : '', `<b>${html(c.title)}</b>`,
+    [c.employer, c.venue].filter(Boolean).map(html).join(' · ')];
   const facts = [
     `📍 ${html(where)}`,
     `💰 ${html(c.salaryText || T('uz', 'cb.noSal'))}${c.payoutText ? ' · ' + html(c.payoutText) : ''}`,
@@ -170,7 +171,7 @@ async function alertCandidates(v, { appBase = process.env.APP_URL || '', now = n
     .sort((a, b) => b.s - a.s)
     .slice(0, ALERT_MAX);
 
-  const client = await Client.findOne({ agencyId: v.agencyId, id: v.clientId }, 'id location status').lean();
+  const client = await Client.findOne({ agencyId: v.agencyId, id: v.clientId }, 'id name location status showName').lean();
   let n = 0;
   for (const { c } of ranked) {
     // Atomik: shu oraliqda boshqa vakansiya xabari ketgan bo'lsa — o'tkazamiz

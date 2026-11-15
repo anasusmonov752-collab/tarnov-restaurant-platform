@@ -30,6 +30,7 @@ const CHANNELS = {
   fb:    'Facebook',
   olx:   'OLX',
   hh:    'hh.uz',
+  sms:   'SMS taklifi',             // shaxsiy raqamdan hh bazasiga (services/outreach)
   qr:    'QR kod',
   ref:   'Tanish orqali',
   site:  'Sayt',

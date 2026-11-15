@@ -192,6 +192,9 @@ function forCandidate(v, client, lang = 'uz') {
     role: v.role,
     where,
     place: where ? t(lang, 'cb.placeIn', { w: where }) : t(lang, 'cb.placeTash'),
+    // Ish beruvchi nomi — faqat mijoz ochiq ko'rsatishga rozi bo'lsa
+    // (Client.showName). Standart: bo'sh — nom kontakt ochilgach ko'rinadi.
+    employer: (client && client.showName && client.name) ? String(client.name) : '',
     venue: v.venue || '',
     landmark: v.landmark || '',
     hook: v.hook || '',

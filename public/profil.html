@@ -1178,6 +1178,9 @@ async function save(patch){
 const vShift = k => k === 'ikkalasi' ? t('cb.vsh.ikkalasi') : shiftLbl(k);
 // Joy satri: tuman va mo'ljal ("Yunusobod · Bodomzor metrosi yonida")
 const placeOf = v => [v.where || (v.landmark ? '' : t('cb.tashkent')), v.landmark].filter(Boolean).join(' · ') || v.place || '';
+// Ish beruvchi nomi faqat mijoz ochiq ko'rsatishga rozi bo'lsa keladi
+// (Client.showName -> vac.forCandidate.employer). Aks holda bo'sh.
+const venueOf = v => [v.employer, v.venue].filter(Boolean).join(' · ');
 // Afzalliklar: yangi shablonda kalitlar (perkLabels); eski vakansiyada
 // "Ovqat · Forma" matni. Erkin matn belgi emas — "Qo'shimcha" bo'lib chiqadi.
 function perksOf(v){
@@ -1222,7 +1225,7 @@ function vacancyHtml(v){
   const pk = perksOf(v);
   const trust = trustTag(v);
   return `<div class="vd-ti">${esc(v.title)}</div>
-    ${v.venue ? `<div class="vd-pl" style="color:var(--ink)">${esc(v.venue)}</div>` : ''}
+    ${venueOf(v) ? `<div class="vd-pl" style="color:var(--ink)">${esc(venueOf(v))}</div>` : ''}
     <div class="vd-pl">${esc(placeOf(v))}</div>
     <div class="vd-sl">${salLine(v) || esc(t('cb.noSal'))}</div>
     ${v.hook ? `<div class="vd-hk">${esc(v.hook)}</div>` : ''}
@@ -1267,7 +1270,7 @@ function vacPageHtml(v){
     <div class="vp-hero">
       <div class="vp-badge">${VP_IC.job}</div>
       <h1>${esc(v.title)}</h1>
-      ${v.venue ? `<div class="vp-ven">${esc(v.venue)}</div>` : ''}
+      ${venueOf(v) ? `<div class="vp-ven">${esc(venueOf(v))}</div>` : ''}
       ${placeOf(v) ? `<div class="vp-pl">${VP_IC.pin}<span>${esc(placeOf(v))}</span></div>` : ''}
       <div class="vp-sal ${v.salaryText ? '' : 'no'}">${salLine(v) || esc(t('cb.noSal'))}</div>
       ${trust || v.match ? `<div class="vp-tags">${v.match ? matchTag() : ''}${trust}</div>` : ''}
@@ -1489,7 +1492,7 @@ function drawJobs(){
       const sub = [v.payoutText, v.schedule].filter(Boolean).join(' · ');
       return `<div class="jb tap" data-vi="${i}">
         <div class="ti">${esc(v.title)}</div>
-        ${v.venue ? `<div class="vn">${esc(v.venue)}</div>` : ''}
+        ${venueOf(v) ? `<div class="vn">${esc(venueOf(v))}</div>` : ''}
         <div class="pl">${esc(placeOf(v))}</div>
         <div class="sl ${v.salaryText ? '' : 'no'}">${salLine(v) || esc(t('cb.noSal'))}</div>
         ${sub ? `<div class="ln" style="margin-top:3px">${esc(sub)}</div>` : ''}

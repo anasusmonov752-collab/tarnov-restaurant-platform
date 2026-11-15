@@ -25,7 +25,7 @@ function publicClient(c) {
   return {
     id: c.id, name: c.name, contactName: c.contactName, phone: c.phone,
     location: c.location, address: c.address, about: c.about,
-    note: c.note, status: c.status, credits: c.credits,
+    note: c.note, status: c.status, credits: c.credits, showName: !!c.showName,
     linked: !!c.tgChatId, tgUsername: c.tgUsername,
     hasLogo: !!c.logo, logoAt: c.logoAt,    // logotipning o'zi alohida endpoint'da (GET /:id/logo)
     createdAt: c.createdAt, lastSeenAt: c.lastSeenAt
@@ -88,6 +88,7 @@ router.patch('/:id', guard, asyncHandler(async (req, res) => {
   if (b.address !== undefined)     c.address = String(b.address).slice(0, 200);
   if (b.about !== undefined)       c.about = String(b.about).slice(0, 300);
   if (b.note !== undefined)        c.note = String(b.note).slice(0, 500);
+  if (b.showName !== undefined)    c.showName = !!b.showName;
   if (b.status !== undefined && VALID_STATUS.includes(b.status)) c.status = b.status;
   if (b.logo !== undefined) {
     const v = String(b.logo || '');

@@ -24,6 +24,12 @@ const ClientSchema = new mongoose.Schema({
   location: { type: String, default: '' },   // tuman: "Chilonzor"
   address:  { type: String, default: '' },   // to'liq manzil / mo'ljal
   about:    { type: String, default: '' },   // "150 o'rinli, yevropa oshxonasi"
+  // Nomzodga restoran NOMI kontaktdan oldin ko'rinadimi. Standart: YO'Q —
+  // begona restoran nomini oldindan bersak, nomzod to'g'ridan-to'g'ri o'ziga
+  // boradi va agentlik ishi bekor ketadi. Lekin o'z restoranimiz yoki
+  // tanilgan brend uchun nomni yashirish ariza sonini kamaytiradi — shunda
+  // yoqiladi (Anas qarori, 2026-11-15: Tarnov ochiq).
+  showName: { type: Boolean, default: false },
   // Suhbat vaqtlari (services/interviews.js): nomzodga shu oraliqdan bo'sh
   // vaqtlar taklif qilinadi. days — 1 (Du) .. 7 (Ya), Toshkent vaqti.
   // Birinchi ish kuni ma'lumoti (services/onboard): ishga olingan xodimga bot yuboradi

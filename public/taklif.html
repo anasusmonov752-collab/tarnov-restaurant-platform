@@ -123,7 +123,14 @@ const waHref  = (phone, text) => 'https://wa.me/' + phone.replace(/\D/g,'') + '?
 
 let S = { role: '', skip: 0, rows: [], total: 0, link: '', sent: new Set() };
 
-const TPL_KEY = 'th_sms_tpl';
+// Matn har lavozim uchun ALOHIDA saqlanadi: xostess matnini yozib, keyin
+// "Ofitsiant" chipiga o'tilsa, ofitsiantlarga "xostess kerak" ketmasin.
+const tplKey = () => 'th_sms_tpl:' + (S.role || 'all');
+let DEF_TPL = '';
+function loadTpl(){
+  let saved = null; try { saved = localStorage.getItem(tplKey()); } catch (e) {}
+  $('tpl').value = saved || DEF_TPL;
+}
 function tplText(){ return $('tpl').value; }
 function fill(tpl, c){
   return String(tpl)
@@ -137,12 +144,16 @@ function drawTpl(){
   const sample = S.rows[0] || { first: 'Dilshod', roleLabel: 'Ofitsiant' };
   const text = fill(tplText(), sample);
   const i = smsInfo(text);
+  // Ism har xil uzunlikda — SMS soni ENG UZUN ism bo'yicha ko'rsatiladi,
+  // aks holda "Muhammadali" ga jimgina 2 ta SMS ketardi
+  const worst = S.rows.reduce((m, c) => Math.max(m, smsInfo(fill(tplText(), c)).parts), i.parts);
   $('cnt').textContent = i.chars;
-  $('parts').textContent = i.parts;
+  $('parts').textContent = worst;
+  $('parts').style.color = worst > 1 ? 'var(--th-danger)' : '';
   $('badWrap').hidden = !i.bad.length;
   $('bad').textContent = i.bad.join(' ');
   $('prev').textContent = text;
-  try { localStorage.setItem(TPL_KEY, tplText()); } catch (e) {}
+  try { localStorage.setItem(tplKey(), tplText()); } catch (e) {}
   drawList();
 }
 
@@ -197,10 +208,8 @@ async function load(reset){
   $('sub').textContent = `${d.total} ta navbatda · bugun ${d.sentToday} ta yuborildi`;
   $('more').hidden = S.rows.length >= d.total;
 
-  if (!$('tpl').value) {
-    let saved = null; try { saved = localStorage.getItem(TPL_KEY); } catch (e) {}
-    $('tpl').value = saved || d.tpl;
-  }
+  DEF_TPL = d.tpl;
+  if (reset) loadTpl();
   $('chips').innerHTML = [{ role: '', label: 'Hammasi', n: d.total }].concat(d.byRole)
     .map(x => `<button class="chip ${x.role === S.role ? 'on' : ''}" data-role="${esc(x.role)}">${esc(x.label)} ${x.n}</button>`).join('');
   drawTpl();

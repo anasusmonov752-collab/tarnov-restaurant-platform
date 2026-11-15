@@ -1038,6 +1038,32 @@ shaxsiy nomerimdan yuboraman").
 `test/outreach.test.js` (6 ta), CI 161/161. Sahifa brauzerda telefon va
 kompyuter ko'rinishida tekshirildi (soxta API, iOS va Android UA).
 
+**VERIFIX API — ULANDI, REKRUTING FORMALARIGA RUXSAT KUTILMOQDA** (2026-11-15).
+Tarnovning Verifix hisobi (OOO "MARVELOUS", company_code `tarnov`, filial
+`154049` "Tarnov", loyiha `vhr`). OAuth2 mijozi "Анас CLAUDE" (Client
+credentials, Read/Write) — Verifix → Настройки → Клиенты OAuth2 сервера.
+KALIT REPODA YO'Q va bo'lmasin (repo ochiq) — Render env'ga
+`VERIFIX_CLIENT_ID`/`VERIFIX_CLIENT_SECRET` bo'lib kiradi.
+- Host `app.verifix.com` (NE `verifix.uz` — u reklama sayti; NE
+  `id.verifix.com` — u boshqa OAuth server, bizning kalitga `invalid_client`).
+- Token: `POST https://app.verifix.com/security/oauth/token`, body **JSON**
+  `{"grant_type":"client_credentials","client_id":..,"client_secret":..}`.
+  Form-urlencoded va Basic auth — `400 Bad request` (sinab ko'rildi).
+  Javob: bearer, 64 belgi, `expires_in` 10800 (3 soat).
+- Ma'lumot: Biruni freymvork — `POST https://app.verifix.com/b/<forma>:<amal>`,
+  sarlavhalar `Authorization: Bearer ..`, `project_code: vhr`,
+  `filial_id: 154049`, `Content-Type: application/json`. `:model` — forma
+  meta + birinchi ma'lumot (`/vhr/href/employee/employee_list:model` 200).
+  `b/biruni/m:session` — kim ekanimiz va filiallar.
+- Rekruting formalari: `/vhr/hrec/vacancy_list` (Вакансии),
+  `/vhr/hrec/candidate/candidate_list` (Кандидаты),
+  `/vhr/hrec/application_list` (Заявки на вакансии) — hammasi
+  **403 "Нет доступа к форме"**: OAuth mijozining foydalanuvchisiga
+  ("CLIENT: Анас CLAUDE", user_id 572215) rekruting ruxsati berilmagan.
+  Anas Verifix'da shu foydalanuvchiga "Вакансии" ga (o'qish) ruxsat berishi kerak.
+  Nomzodlar (2171) TARNOVNIKI — roziliksiz TalentHub'ga olinmaydi; faqat vakansiyalar.
+- Cloud sessiya tarmog'iga `app.verifix.com` (va verifix.uz/com) qo'shilgan.
+
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
 O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda

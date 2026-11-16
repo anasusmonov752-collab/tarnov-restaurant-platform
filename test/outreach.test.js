@@ -198,13 +198,17 @@ test('shaxsiy havola ekrani: anketa yo\'q, lavozimidagi ish, tugma = ariza', asy
   const tg = require('../src/services/telegram'); tg.platformToken = () => 'x'; tg.sendMessage = async () => ({ message_id: 1 });
   const ft = require('../src/services/firstTouch');
 
+  // 2026-11-16 (Anas): lavozimlar ro'yxati yo'q — ochiq ishlar soni va maosh oralig'i (bazadan)
+  await M.Vacancy.create({ id: 'vm', agencyId: A, clientId: 'ct', title: 'Menejer', role: 'menejer', status: 'open',
+    listed: true, confirmedAt: new Date(), salaryFrom: 7500000, salaryTo: 13000000, salaryPeriod: 'month' });
   const scr = await ft.candidateInvite({ cand: c, lang: 'uz', appBase: 'https://x' });
   assert.match(scr.text, /Assalomu alaykum, Nilufar!/);
-  assert.match(scr.text, /<b>TalentHub<\/b> — Toshkentdagi restoranlar uchun ishga joylash agentligi/);
-  assert.ok(!/bizda bor|to'ldirish shart emas/.test(scr.text), scr.text);
-  assert.match(scr.text, /1\. <b>Xostess<\/b> · Tarnov\n💰 225 000/);
-  assert.ok(!/Ofitsiant/.test(scr.text), 'faqat o\'z lavozimi');
-  assert.equal(scr.keyboard[0][0].callback_data, 'ft:ap:vx');
+  assert.match(scr.text, /hozir <b>3 ta ochiq ish<\/b> — maoshi <b>kuniga 225 000 so'mdan oyiga 13 mln so'mgacha<\/b>/);
+  assert.match(scr.text, /<b>TalentHub<\/b> — ishga joylash agentligi/);
+  assert.ok(!/bizda bor|to'ldirish shart emas|💰|1\. /.test(scr.text), scr.text);   // ro'yxat va emoji yo'q
+  assert.ok(!/Xostess|Ofitsiant|Menejer/.test(scr.text), 'lavozimlar yo\'q');
+  assert.equal(scr.keyboard[0][0].web_app.url, 'https://x/profil.html#jobs');       // bitta asosiy harakat
+  await M.Vacancy.deleteOne({ id: 'vm' });
   assert.ok(scr.keyboard.flat().some(b => b.callback_data === 'ft:no'));     // chiqish yo'li
   assert.ok(scr.keyboard.flat().some(b => b.callback_data === 'ft:il:ru'));  // til
 
@@ -217,8 +221,9 @@ test('shaxsiy havola ekrani: anketa yo\'q, lavozimidagi ish, tugma = ariza', asy
 
   // Ruschaga — o'sha ekran ruscha
   const ru = await ft.handleCallback({ data: 'ft:il:ru', chatId: '501', appBase: 'https://x', from: { id: 501 } });
-  assert.match(ru.edit, /агентство по трудоустройству для ресторанов Ташкента/);
-  assert.match(ru.keyboard[0][0].text, /Отправлено/);                        // allaqachon yuborilgani ko'rinadi
+  assert.match(ru.edit, /кадровое агентство/);
+  assert.match(ru.edit, /<b>2 открытые вакансии<\/b> — зарплата <b>от 225 000 сум в день<\/b>/);
+  assert.match(ru.keyboard[0][0].text, /Смотреть вакансии/);
 
   // Yopilgan ish va telefoni buzuq nomzod
   await M.Vacancy.updateOne({ id: 'vo' }, { $set: { status: 'closed' } });

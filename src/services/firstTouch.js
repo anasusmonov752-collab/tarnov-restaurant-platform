@@ -213,43 +213,41 @@ const langSwitchBtn = (lang, rid) => lang === 'ru'
 // tugma = ariza (kabinet bilan bir xil tekshiruv, keyin prescreen o'zi).
 const Application = require('../models/Application');
 
+// Maosh oralig'i — BAZADAN (to'qima raqam yo'q): kunlik ishlarning eng pasti va
+// oylik ishlarning eng yuqorisi. Kunlikni oyga aylantirmaymiz (grafik har xil).
+function payRange(rows, lang) {
+  const sp = x => String(Math.round(x)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  const mln = x => String(Math.round(x / 1e5) / 10).replace('.', ',');
+  const day = rows.filter(v => v.salaryPeriod === 'day' || v.salaryPeriod === 'shift').map(v => v.salaryFrom || v.salaryTo).filter(Boolean);
+  const mon = rows.filter(v => !v.salaryPeriod || v.salaryPeriod === 'month');
+  const monMax = Math.max(0, ...mon.map(v => v.salaryTo || v.salaryFrom || 0));
+  const monMin = Math.min(Infinity, ...mon.map(v => v.salaryFrom || v.salaryTo || Infinity));
+  if (day.length && monMax) return T(lang, 'ft.payDM', { d: sp(Math.min(...day)), m: mln(monMax) });
+  if (monMax && monMin < monMax) return T(lang, 'ft.payMM', { a: mln(monMin), b: mln(monMax) });
+  if (monMax) return T(lang, 'ft.payM', { m: mln(monMax) });
+  if (day.length) return T(lang, 'ft.payD', { d: sp(Math.min(...day)) });
+  return '';
+}
+
 async function candidateInvite({ cand, lang, appBase }) {
-  const role = isValidRole(cand.role) && cand.role !== 'boshqa' ? cand.role : '';
-  let { n, rows } = await openJobs(cand.restaurantId, role, 3);
-  let mine = !!role;
-  if (!n) { ({ n, rows } = await openJobs(cand.restaurantId, '', 3)); mine = false; }
+  // Anas, 2026-11-16: "lavozimlar kerak emas bu joyda, oylik oralig'ini yozish kerak, kreativroq;
+  // xabar bachkana" — ro'yxat, raqamlangan bloklar va har qatorda 💰 olib tashlandi. Bitta asosiy
+  // harakat: ishlarni kabinetda ko'rish (u yerda ariza tugmasi bor). "Rezyumengiz tayyor" — yo'q.
+  let { n, rows } = await openJobs(cand.restaurantId, '', 50);
   if (!cand.isTest) rows = rows.filter(v => !v.isTest);
-
-  const [applied, emp] = await Promise.all([
-    Application.find({ candidateId: cand.id, vacancyId: { $in: rows.map(v => v.id) } }, 'vacancyId').lean(),
-    employerNames(cand.restaurantId, rows)
-  ]);
-  const sent = new Set(applied.map(a => a.vacancyId));
-  // SMS bilan bir xil qoida (yashirin ism -> salomsiz ism, KATTA harf -> oddiy), asl yozuvda
   const name = require('./outreach').nameWord(cand.fullName);
-
-  const head = role ? `${EMOJI[role] || ''} <b>${esc(T(lang, 'role.' + role))}</b>`.trim() : '';
-  const jb = jobBlocks(rows, lang, { role: mine ? role : '', emp });
-  rows = jb.rows;                                    // tugmalar ro'yxat tartibida
-  // Salom -> kimmiz (SMS'dan kelgan odam bizni tanimaydi) -> ishlar -> nima bo'ladi.
-  // "Rezyumengiz tayyor, to'ldirish shart emas" ATAYLAB yo'q (Anas, 2026-11-16).
+  const pay = payRange(rows, lang);
   const text = [
     T(lang, 'ft.iHi', { name: esc(name) }).replace(/,\s*!/, '!'), '',
-    T(lang, 'ft.iAbout'), '',
-    !n ? T(lang, 'ft.iNoJobs') : mine ? T(lang, jb.mixed ? 'ft.cJobsMix' : 'ft.cJobs', { head, n }) : T(lang, 'ft.iJobsAny'),
-    rows.length ? '' : null,
-    rows.length ? jb.text : null,
+    n ? T(lang, 'ft.iLead', { n, pay: pay ? T(lang, 'ft.iPay', { x: pay }) : '' }) : T(lang, 'ft.iNoJobs'), '',
+    T(lang, 'ft.iAbout'),
     n ? '' : null,
     n ? T(lang, 'ft.iPick') : null
-  ].filter(x => x !== null).join('\n').replace(/\n{3,}/g, '\n\n');
+  ].filter(x => x !== null).join('\n');
 
-  const keyboard = rows.map(v => {
-    const t = [splitTitle(vac.titleFor(v, lang))[0], emp[v.clientId]].filter(Boolean).join(' · ');
-    return [sent.has(v.id)
-      ? { text: T(lang, 'ft.iApplied', { v: t }), callback_data: 'ft:ap:' + v.id }
-      : { text: '✅ ' + t, callback_data: 'ft:ap:' + v.id }];
-  });
-  if (appBase) keyboard.push([{ text: T(lang, 'ft.iProfile'), web_app: { url: `${appBase}/profil.html` } }]);
+  const keyboard = [];
+  if (appBase && n) keyboard.push([{ text: T(lang, 'ft.iSee'), web_app: { url: `${appBase}/profil.html#jobs` } }]);
+  else if (appBase) keyboard.push([{ text: T(lang, 'ft.iProfile'), web_app: { url: `${appBase}/profil.html` } }]);
   keyboard.push([{ text: T(lang, 'ft.iNo'), callback_data: 'ft:no' }]);
   keyboard.push([lang === 'ru'
     ? { text: '🇺🇿 O\'zbekcha', callback_data: 'ft:il:uz' }

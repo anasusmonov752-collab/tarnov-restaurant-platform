@@ -50,6 +50,7 @@
   .wa{ flex:0 0 auto; width:38px; height:38px; border-radius:999px; border:1px solid var(--th-line);
        background:var(--th-surface); color:var(--th-muted); font-size:16px; text-decoration:none;
        display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; }
+  .wa.tg{ background:#229ED9; color:#fff; border-color:transparent; }
   .row.done{ opacity:.55; }
   .row.done .go{ background:transparent; color:var(--th-muted); border:1px solid var(--th-line); }
 
@@ -127,6 +128,11 @@ const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
             (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const smsHref = (phone, text) => 'sms:' + phone + (IOS ? '&' : '?') + 'body=' + encodeURIComponent(text);
 const waHref  = (phone, text) => 'https://wa.me/' + phone.replace(/\D/g,'') + '?text=' + encodeURIComponent(text);
+// Telegram chati raqam bo'yicha (t.me/+998...). Matn oldindan qo'yib bo'lmaydi —
+// bosilganda nusxalanadi, chatga joylash kifoya. Raqami Telegramda yo'q yoki
+// "raqam bo'yicha topish" yopiq bo'lsa Telegram o'zi aytadi.
+const tgHref  = phone => 'https://t.me/+' + phone.replace(/\D/g,'');
+const TG_SVG  = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>';
 
 let S = { role: '', skip: 0, rows: [], total: 0, link: '', sent: new Set() };
 
@@ -197,7 +203,8 @@ function drawList(){
       </div>
       ${done
         ? `<button class="go" data-undo="1">✓ yuborildi</button>`
-        : `<a class="wa" href="${esc(waHref(c.phone, text))}" target="_blank" rel="noopener" title="WhatsApp">WA</a>
+        : `<a class="wa tg" href="${esc(tgHref(c.phone))}" target="_blank" rel="noopener" title="Telegram — matn nusxalanadi, chatga joylang">${TG_SVG}</a>
+           <a class="wa" href="${esc(waHref(c.phone, text))}" target="_blank" rel="noopener" title="WhatsApp">WA</a>
            <a class="go" href="${esc(smsHref(c.phone, text))}">SMS</a>`}
     </div>`;
   }).join('');
@@ -209,7 +216,13 @@ $('list').addEventListener('click', async ev => {
   const row = ev.target.closest('.row'); if (!row) return;
   const id = row.dataset.id;
   const undo = !!ev.target.closest('[data-undo]');
-  if (!undo && !ev.target.closest('.go')) return;
+  const tgBtn = ev.target.closest('.tg');
+  if (!undo && !tgBtn && !ev.target.closest('.go')) return;
+  if (tgBtn) {                                 // Telegram'ga matn oldindan qo'yilmaydi — nusxalanadi
+    const c = S.rows.find(r => r.id === id);
+    const text = c ? fill(tplText(), c) : '';
+    try { navigator.clipboard.writeText(text); toast('Matn nusxalandi — Telegram chatiga joylang'); } catch (_) {}
+  }
   try {
     await api('/api/recruitment/' + encodeURIComponent(id) + '/sms', { method: 'POST', body: JSON.stringify({ undo }) });
     if (undo) S.sent.delete(id); else S.sent.add(id);

@@ -82,7 +82,7 @@ router.get('/applications/inbox', guard, asyncHandler(async (req, res) => {
   const apps = await Application.find({ agencyId }).sort({ createdAt: -1 }).limit(300).lean();
   const [cands, vs, sls] = await Promise.all([
     Candidate.find({ restaurantId: agencyId, id: { $in: [...new Set(apps.map(a => a.candidateId))] } },
-      'id publicCode fullName phone role desiredPosition experienceYears age location source channel phoneVerifiedAt hasPhoto tgState updatedAt').lean(),
+      'id publicCode fullName phone role desiredPosition experienceYears age location source channel phoneVerifiedAt hasPhoto tgState tgUsername updatedAt').lean(),
     Vacancy.find({ agencyId, id: { $in: [...new Set(apps.map(a => a.vacancyId))] } }, 'id title clientId venue role').lean(),
     Shortlist.find({ agencyId, id: { $in: apps.map(a => a.shortlistId).filter(Boolean) } }, 'id items').lean()
   ]);

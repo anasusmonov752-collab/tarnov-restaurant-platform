@@ -18,6 +18,15 @@
   const ANK_SKIP = /^(Ism va familiyangiz|Telefon raqamingiz|Rasmingiz|Rozilik|Qayerda ishlagansiz)/i;
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   let ov, box, curId = null, prevFocus = null;
+  // Nomzodning Telegram chati: username bo'lsa — t.me/<username>, aks holda
+  // raqam bo'yicha t.me/+998... (raqami Telegramda bo'lmasa Telegram o'zi aytadi)
+  const TG_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>';
+  function tgHref(c) {
+    if (c.tgUsername) return 'https://t.me/' + String(c.tgUsername).replace(/^@/, '');
+    let d = String(c.phone || '').replace(/\D/g, '');
+    if (d.length === 9) d = '998' + d;
+    return d.length >= 11 ? 'https://t.me/+' + d : '';
+  }
 
   function build() {
     const st = document.createElement('style');
@@ -47,6 +56,7 @@
       .thr-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;border-radius:999px;border:0;font:inherit;font-size:15px;
         font-weight:600;text-decoration:none;cursor:pointer;background:var(--th-fill);color:var(--th-link)}
       .thr-btn.p{background:var(--th-brand);color:#fff}
+      .thr-btn.tg{background:#229ED9;color:#fff}
       .thr-sec{margin-top:18px}
       .thr-h{font-size:13px;color:var(--th-muted);text-transform:uppercase;letter-spacing:.3px;margin:0 4px 6px}
       .thr-card{background:var(--th-surface,#fff);border-radius:14px;padding:4px 14px}
@@ -128,6 +138,7 @@
       </div>
       <div class="thr-acts">
         ${tel ? `<a class="thr-btn p" href="tel:${esc(tel)}">Qo'ng'iroq</a>` : ''}
+        ${tgHref(c) ? `<a class="thr-btn tg" href="${esc(tgHref(c))}" target="_blank" rel="noopener">${TG_SVG} Telegram</a>` : ''}
         ${c.hasFile ? `<a class="thr-btn" href="/api/recruitment/${encodeURIComponent(c.id)}/file" target="_blank" rel="noopener">Asl rezyume (PDF)</a>` : ''}
         <a class="thr-btn" href="/recruitment.html?${ank ? 'src=anketa&' : ''}q=${encodeURIComponent(c.publicCode || c.fullName || '')}">Bazada ochish</a>
       </div>
@@ -178,5 +189,5 @@
     open(el.getAttribute('data-resume'));
   });
 
-  window.thResume = { open, close };
+  window.thResume = { open, close, tgHref, TG_SVG };
 })();

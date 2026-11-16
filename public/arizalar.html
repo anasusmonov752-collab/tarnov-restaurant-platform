@@ -57,6 +57,7 @@ button{font-family:inherit}
 .btn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 12px;border-radius:9px;cursor:pointer;font-size:13px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center}
 .btn:hover{background:var(--soft)}
 .btn-p{background:var(--gold);border-color:var(--gold);color:#fff}
+.btn-tg{background:#229ED9;border-color:#229ED9;color:#fff;padding:7px 10px}
 .btn-p:hover{background:#1D4ED8}
 .btn-no{color:var(--danger)}
 .btn:disabled{opacity:.45;cursor:default}
@@ -132,6 +133,9 @@ function card(x){
   const sub = [role, c.experienceYears ? c.experienceYears + ' yil tajriba' : 'Tajribasiz', c.location].filter(Boolean).join(' · ');
   const decided = x.state === 'shortlisted' || x.state === 'rejected';
   const tel = c.phone ? String(c.phone).replace(/[^\d+]/g, '') : '';
+  // Telegram chati: username bo'lsa — u, aks holda raqam bo'yicha (t.me/+998...)
+  let tgd = tel.replace(/\D/g, ''); if (tgd.length === 9) tgd = '998' + tgd;
+  const tgUrl = c.tgUsername ? 'https://t.me/' + String(c.tgUsername).replace(/^@/, '') : (tgd.length >= 11 ? 'https://t.me/+' + tgd : '');
   return `<article class="ap ${x.unseen ? 'unseen' : ''}" data-id="${x.id}">
     <div class="ap-h">
       <div class="av">${c.hasPhoto ? `<img src="/api/recruitment/${encodeURIComponent(c.id)}/photo?v=${encodeURIComponent(c.updatedAt || '')}" alt="">` : esc(initials(c.fullName))}</div>
@@ -152,6 +156,7 @@ function card(x){
     </div>
     <div class="acts">
       ${tel ? `<a class="btn ${x.contactedAt ? '' : 'btn-p'}" href="tel:${esc(tel)}" data-call="${x.id}">${x.contactedAt ? 'Qayta qo\'ng\'iroq' : 'Qo\'ng\'iroq qilish'}</a>` : ''}
+      ${tgUrl ? `<a class="btn btn-tg" href="${esc(tgUrl)}" target="_blank" rel="noopener" title="Telegram chatini ochish" aria-label="Telegram"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg></a>` : ''}
       ${!x.contactedAt && !decided ? `<button class="btn" data-ct="${x.id}">Bog'landim</button>` : ''}
       ${!decided ? `<button class="btn" data-sl="${x.id}" title="Mijozning shu vakansiyadagi tanloviga qo'shiladi, nomzodga xabar boradi">Ish beruvchiga taklif</button>` : ''}
       ${!decided ? (ASK === x.id

@@ -459,7 +459,15 @@ async function storyForm(){
   const cur = () => byCl[S.cl].rows;
   function vacList(){
     const rs = cur();
-    if (!S.sel) S.sel = new Set(rs.filter(v => v.salaryFrom || v.salaryTo).slice(0, 4).map(v => v.id));
+    // Standart: eng ko'p to'lanadigani oldin, har xil roldan (keyin qo'lda almashtiriladi)
+    if (!S.sel) {
+      const val = v => (v.salaryPeriod === 'month' ? 1 : 26) * (v.salaryTo || v.salaryFrom || 0);
+      const paid = rs.filter(v => v.salaryFrom || v.salaryTo).sort((a, b) => val(b) - val(a));
+      const pick = [], seen = new Set();
+      paid.forEach(v => { if (pick.length < 4 && !seen.has(v.role)) { pick.push(v.id); seen.add(v.role); } });
+      paid.forEach(v => { if (pick.length < 4 && !pick.includes(v.id)) pick.push(v.id); });
+      S.sel = new Set(pick);
+    }
     $('sVac').innerHTML = rs.map(v => `<label style="display:flex;gap:8px;align-items:center;font-size:13.5px;font-weight:500">
       <input type="checkbox" data-v="${esc(v.id)}" ${S.sel.has(v.id) ? 'checked' : ''} ${v.salaryFrom || v.salaryTo ? '' : 'disabled'} style="width:auto">
       ${esc(v.title)}${v.salaryFrom || v.salaryTo ? '' : ' <span style="color:var(--muted)">(maosh yo\'q)</span>'}</label>`).join('');

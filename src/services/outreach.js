@@ -22,7 +22,16 @@ const contactLog = require('./contactLog');
  *   ish qidirmayotgan, ishga olingan, rad etilgan
  *   telefoni yo'q yoki buzuq (phoneKey bo'sh)
  *   allaqachon SMS ketgan (smsSentAt)
+ *   Toshkentdan tashqarida yashaydi (Anas, 2026-11-16: Chirchiq, Farg'ona,
+ *     Olmaliq... — ishlar Toshkentda). Hudud bo'sh bo'lsa QOLADI (hh qidiruvi
+ *     Toshkent bo'yicha edi). hh hududga metro bekatini yozadi ("Тинчлик") —
+ *     shuning uchun tumanlar va bekatlar ham Toshkent. Keles — Tarnov filiali.
  */
+const TASHKENT_RE = new RegExp('^\\s*$|ташкент|тошкент|tashkent|toshkent|keles|келес|'
+  + 'чиланзар|chilonzor|юнусобод|юнусабад|yunusobod|мирзо|mirzo|яккасарай|yakkasaroy|сергели|sergeli|'
+  + 'алмазар|олмазор|olmazor|учтепа|uchtepa|бектемир|bektemir|мирабад|миробод|mirobod|яшнабад|yashnobod|'
+  + 'шайхантахур|shayxontohur|янгихаёт|yangihayot|тинчлик|tinchlik|чорсу|chorsu|себзор|sebzor|'
+  + 'бунёдкор|bunyodkor|новза|novza|беруни|beruniy|буюк ипак|ipak yo|хамза|hamza|олой|oloy', 'i');
 const QUEUE = {
   isTest: { $ne: true },
   source: { $ne: 'anketa' },
@@ -30,7 +39,10 @@ const QUEUE = {
   phoneKey: { $ne: '' },
   jobStatus: { $ne: 'not_looking' },
   status: { $nin: ['hired', 'rejected'] },
-  $or: [{ tgChatId: '' }, { tgChatId: null }]
+  $and: [
+    { $or: [{ tgChatId: '' }, { tgChatId: null }] },
+    { $or: [{ location: null }, { location: TASHKENT_RE }] }
+  ]
 };
 
 // SMS bitta bo'lib ketishi uchun matn GSM-7 jadvalida bo'lishi kerak.
@@ -250,4 +262,4 @@ async function markSent(agencyId, id, undo = false) {
   return true;
 }
 
-module.exports = { QUEUE, DEFAULT_TPL, list, markSent, render, smsInfo, firstName, nameWord, tidy, e164, newToken, ensureTokens, latin, openRoles, inviteClaim };
+module.exports = { QUEUE, DEFAULT_TPL, list, markSent, render, smsInfo, firstName, nameWord, tidy, e164, newToken, ensureTokens, latin, openRoles, inviteClaim, TASHKENT_RE };

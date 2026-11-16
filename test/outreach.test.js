@@ -62,6 +62,15 @@ test('navbatga faqat yozsa bo\'ladiganlar tushadi', async () => {
   assert.equal((await outreach.list(A, { role: 'menejer' })).total, 0);
 });
 
+test('Toshkentdan tashqaridagilar navbatga tushmaydi (hudud bo\'sh — qoladi)', async () => {
+  const L = { t1: 'Ташкент', t2: 'Toshkent', t3: 'Тинчлик', t4: 'Tinchlik, Toshkent', t5: 'Келес', t6: '',
+    o1: 'Чирчик', o2: 'Фергана', o3: 'Алмалык', o4: 'Гулистан', o5: 'Газалкент', o6: 'Янгиюль', o7: 'Samarqand' };
+  for (const [id, location] of Object.entries(L)) await cand(id, { location });
+  const ids = (await outreach.list(A, { limit: 50 })).rows.map(r => r.id).sort();
+  assert.deepEqual(ids, ['t1', 't2', 't3', 't4', 't5', 't6']);
+  assert.equal((await outreach.list(A)).byRole.reduce((s, r) => s + r.n, 0), 6);
+});
+
 test('rasm: bor bo\'lsa panel havolasi (base64 emas), yo\'q bo\'lsa bo\'sh', async () => {
   await cand('p1', { hasPhoto: true, photo: 'data:image/jpeg;base64,AAAA', photoAt: new Date(5000) });
   await cand('p2');

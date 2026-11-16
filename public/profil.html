@@ -531,6 +531,23 @@ body.vp-lock{overflow:hidden}
 .lsw{display:flex;background:var(--th-fill);border-radius:9px;padding:2px;gap:2px}
 .lsw button{border:0;background:transparent;font:inherit;font-size:13px;font-weight:700;padding:5px 13px;border-radius:7px;color:var(--muted);cursor:pointer}
 .lsw button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+/* ══ VAKANSIYA TEPASI — STORY USLUBI (2026-11-16, sinov: yoqmasa shu blokni olib tashlang) ══
+   Nomzod "boraymi" qarorini shu yerda qiladi: maosh katta, oltin urg'u. O'z foni bor —
+   Telegram kunduz/tun mavzusidan qat'i nazar bir xil ko'rinadi. Pastki qism o'zgarmagan. */
+.vp-hero{position:relative;overflow:hidden;color:#fff;padding:22px 20px 20px;border-radius:24px;
+  background:linear-gradient(160deg,#10275A 0%,#0A1A3D 55%,#06102A 100%)}
+.vp-hero::before{content:'';position:absolute;width:220px;height:220px;border-radius:50%;right:-80px;top:-90px;
+  background:radial-gradient(circle at 40% 60%,#FFD36B,#FFC53D 45%,#E9A21C);box-shadow:0 0 70px 14px rgba(255,197,61,.25)}
+.vp-hero > *{position:relative}
+.vp-hero .vp-badge{background:rgba(255,255,255,.12);color:#fff}
+.vp-hero h1{color:#fff;font-size:28px;max-width:82%}
+.vp-hero .vp-ven{color:#C9D7F2;max-width:80%}
+.vp-hero .vp-pl{color:#8FA6CF}
+.vp-hero .vp-sal{color:#fff;font-size:34px;margin-top:18px;letter-spacing:calc(-1px * var(--th-lsk))}
+.vp-hero .vp-sal small{color:#8FA6CF;font-size:15px}
+.vp-hero .vp-sal.no{color:#C9D7F2;font-size:17px}
+.vp-hero .tg2{background:rgba(255,255,255,.13);color:#fff}
+.vp-hero .tg2.gold{background:#FFC53D;color:#1A1300}
 </style>
 </head>
 <body>
@@ -1265,6 +1282,8 @@ function vacPageHtml(v){
     ['cb.fLangs', (v.languages || []).join(', ')]
   ].filter(f => f[1]);
   const pk = perksOf(v), trust = trustTag(v);
+  // "Tajribasiz ham" — oltin belgi tepada (story bilan bir xil urg'u)
+  const noExp = (v.perkLabels || []).includes(t('perk.tajribasiz'));
   const list = (xs, ic) => `<ul class="vp-ul ${ic ? 'ck' : ''}">${xs.map(x => `<li>${ic ? VP_IC.check : '<i></i>'}<span>${esc(x)}</span></li>`).join('')}</ul>`;
   return `
     <div class="vp-hero">
@@ -1273,7 +1292,7 @@ function vacPageHtml(v){
       ${venueOf(v) ? `<div class="vp-ven">${esc(venueOf(v))}</div>` : ''}
       ${placeOf(v) ? `<div class="vp-pl">${VP_IC.pin}<span>${esc(placeOf(v))}</span></div>` : ''}
       <div class="vp-sal ${v.salaryText ? '' : 'no'}">${salLine(v) || esc(t('cb.noSal'))}</div>
-      ${trust || v.match ? `<div class="vp-tags">${v.match ? matchTag() : ''}${trust}</div>` : ''}
+      ${trust || v.match || noExp ? `<div class="vp-tags">${noExp ? `<span class="tg2 gold">${esc(t('perk.tajribasiz'))}</span>` : ''}${v.match ? matchTag() : ''}${trust}</div>` : ''}
     </div>
     ${v.hook ? `<div class="vp-hook">${esc(v.hook)}</div>` : ''}
     ${facts.length ? `<div class="vp-facts">${facts.map(([k, val]) => `<div><span>${esc(t(k))}</span><b>${esc(val)}</b></div>`).join('')}</div>` : ''}

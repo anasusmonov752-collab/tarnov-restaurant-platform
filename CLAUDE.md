@@ -1159,15 +1159,20 @@ Telegram) -> ekran -> tugma -> tasdiq + prescreen -> qayta bosish -> begona odam
 hech narsa to'ldirish shart emas — bunaqa gaplar umuman kerak emas; havolada TalentHub
 haqida qisqacha ma'lumot bo'lsin"). SMS (`outreach.DEFAULT_TPL`): "Assalomu alaykum,
 {ism}! TalentHub agentligidan yozyapman. Raqamingizni hh.uz'dagi rezyumengizdan oldik.
-Tarnov restoraniga {lavozim} kerak, sizni shu ishga taklif qilmoqchimiz. Ish shartlari va
-filiallar shu havolada: {havola}" — 2 SMS, GSM-7. Havola ekrani (`firstTouch.candidateInvite`):
+Toshkent restoranlariga {lavozim}lar kerak, hozir Tarnov restoranida ham bo'sh o'rinlar bor.
+Ochiq ishlar va shartlarni shu havolada ko'ring: {havola}" — 2 SMS, GSM-7. SHAXSIY VA'DA
+YO'Q (Anas: nomzod ko'p — maqsad platformaga olib kirish; 510 kishiga "sizni taklif
+qilamiz" desak, javob ololmaganlar uchun TalentHub yolg'onchi bo'lardi). Butunlay umumiy
+"platformaga qo'shiling" ham rad etildi — spamga o'xshaydi; aniq restoran — isbot.
+Ism: `outreach.nameWord` — "ФИО скрыто соискателем" -> ismsiz salom, "САИДА" -> "Saida"
+(SMS va bot ekrani bir qoida). Havola ekrani (`firstTouch.candidateInvite`):
 salom -> `ft.iAbout` (TalentHub kimligi: restoranlar bilan to'g'ridan-to'g'ri, vakansiyani
 o'zimiz tekshiramiz, nomzodga bepul — VA'DA, yangi restoranda ham bajarilsin) -> o'z
 lavozimidagi ishlar (maosh + to'lov davri) -> `ft.iPick`. "Rezyume bizda bor / anketa shart
 emas" matnda YO'Q. NAVBAT FAQAT OCHIQ VAKANSIYASI BOR LAVOZIM (`outreach.openRoles`):
 menejer/kassir/barmenga SMS ketsa havolada ranner chiqardi; vakansiya ochilsa o'zi
-qo'shiladi. `{lavozim}` = haqiqiy vakansiya nomi (oshpaz roli -> "salatchi"; lavozim nomi
-bilan boshlanadigan vakansiya bo'lsa — lavozim nomi). Sahifa matni `th_sms_tpl2:` kalitida
+qo'shiladi. `{lavozim}` = haqiqiy vakansiya nomi (oshpaz roli -> "salatchi", qavsdagi izoh olinadi; lavozim nomi
+bilan boshlanadigan vakansiya bo'lsa — lavozim nomi). Sahifa matni `th_sms_tpl3:` kalitida, FAQAT odam tahrirlaganda saqlanadi
 (telefonda saqlangan eski matn yangisini yopmasin). Shu ishda: `/api/telegram/status`
 2e51ec9 dan beri 500 berardi (`outreach.available()` yo'q edi) — tuzatildi.
 

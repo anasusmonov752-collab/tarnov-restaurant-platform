@@ -127,7 +127,10 @@ let S = { role: '', skip: 0, rows: [], total: 0, link: '', sent: new Set() };
 // "Ofitsiant" chipiga o'tilsa, ofitsiantlarga "xostess kerak" ketmasin.
 // v2 (2026-11-16): standart matn yangilandi — telefonda saqlangan eski matn
 // yangisini yopmasin (eski kalit endi o'qilmaydi).
-const tplKey = () => 'th_sms_tpl2:' + (S.role || 'all');
+// v3: drawTpl har chizishda saqlardi — standart matn birinchi ochilishdayoq
+// telefonga "muzlab" qolardi va keyingi yangilangan standart ko'rinmasdi.
+// Endi faqat odam O'ZI tahrirlaganda saqlanadi (input hodisasi).
+const tplKey = () => 'th_sms_tpl3:' + (S.role || 'all');
 let DEF_TPL = '';
 function loadTpl(){
   let saved = null; try { saved = localStorage.getItem(tplKey()); } catch (e) {}
@@ -158,7 +161,7 @@ function drawTpl(){
   $('badWrap').hidden = !i.bad.length;
   $('bad').textContent = i.bad.join(' ');
   $('prev').textContent = text;
-  try { localStorage.setItem(tplKey(), tplText()); } catch (e) {}
+
   drawList();
 }
 
@@ -225,7 +228,10 @@ $('chips').addEventListener('click', ev => {
   S.role = b.dataset.role; load(true);
 });
 $('more').addEventListener('click', () => { S.skip = S.rows.length; load(false); });
-$('tpl').addEventListener('input', drawTpl);
+$('tpl').addEventListener('input', () => {
+  try { localStorage.setItem(tplKey(), tplText()); } catch (e) {}
+  drawTpl();
+});
 load(true);
 </script>
 </body>

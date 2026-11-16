@@ -65,8 +65,10 @@ function smsInfo(text) {
 // maosh, filiallar, bitta tugma). 2 ta SMS (GSM-7) — me'yor; 3+ — sahifa qizil.
 // 2026-11-16 (Anas): "rezyumengiz tayyor, to'ldirish shart emas" kabi gaplar KERAK
 // EMAS; raqam qayerdan olingani aytiladi (shaxsiy raqamdan yozilgan SMS spamga
-// o'xshamasin). Restoran nomi matnda — hozircha yagona mijoz Tarnov (showName).
-const DEFAULT_TPL = "Assalomu alaykum, {ism}! TalentHub agentligidan yozyapman. Raqamingizni hh.uz'dagi rezyumengizdan oldik. Tarnov restoraniga {lavozim} kerak, sizni shu ishga taklif qilmoqchimiz. Ish shartlari va filiallar shu havolada: {havola}";
+// o'xshamasin). SHAXSIY VA'DA YO'Q ("sizni shu ishga taklif qilamiz" — 510 kishiga,
+// Tarnovga esa bir necha odam kerak): maqsad platformaga olib kirish, aniq ish
+// (Tarnov) — misol va isbot. Yangi restoran qo'shilsa faqat nomi almashadi.
+const DEFAULT_TPL = "Assalomu alaykum, {ism}! TalentHub agentligidan yozyapman. Raqamingizni hh.uz'dagi rezyumengizdan oldik. Toshkent restoranlariga {lavozim}lar kerak, hozir Tarnov restoranida ham bo'sh o'rinlar bor. Ochiq ishlar va shartlarni shu havolada ko'ring: {havola}";
 
 // Shaxsiy havola tokeni: 10 belgi [A-Za-z0-9]. Pastki chiziq yo'q — boshqa
 // /start turlari (a_, v_, ref_, emp_, f_) bilan aralashmaydi. Havola
@@ -143,7 +145,8 @@ async function openRoles(agencyId) {
   for (const v of vs) {
     if (!isValidRole(v.role)) continue;
     const label = roleLabel(v.role).toLowerCase();
-    const title = latin(String(v.title || '').trim()).toLowerCase();
+    // "Salatchi (sovuq oshxona)" -> "salatchi": SMS'da "{lavozim}lar" — qavs/izoh sig'maydi
+    const title = latin(String(v.title || '').replace(/\s*[(,].*$/, '').trim()).toLowerCase();
     if (!out[v.role] || title.startsWith(label)) out[v.role] = title.startsWith(label) || !title ? label : title;
   }
   return out;                                  // { xostess: 'xostess', oshpaz: 'salatchi', ... }

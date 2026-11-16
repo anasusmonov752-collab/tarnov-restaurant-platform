@@ -23,7 +23,7 @@ after(async () => { await mongoose.disconnect(); if (rs) await rs.stop(); });
 // Navbatga faqat OCHIQ VAKANSIYASI bor lavozim tushadi (Tarnov kabi: ofitsiant +
 // ranner, salatchi (oshpaz roli), xostess). Ranner ATAYLAB birinchi yaratiladi —
 // ofitsiantlarga baribir "ofitsiant" deyilishi kerak.
-const VAC = [['vr', 'Ranner', 'ofitsiant'], ['vf', 'Ofitsiant', 'ofitsiant'], ['vs', 'Salatchi', 'oshpaz'], ['vh', 'Xostess', 'xostess']];
+const VAC = [['vr', 'Ranner (ovqat tashuvchi)', 'ofitsiant'], ['vf', 'Ofitsiant', 'ofitsiant'], ['vs', 'Salatchi (sovuq oshxona)', 'oshpaz'], ['vh', 'Xostess', 'xostess']];
 beforeEach(async () => {
   await Candidate.deleteMany({});
   await Vacancy.deleteMany({});
@@ -69,7 +69,7 @@ test('{lavozim} — haqiqiy vakansiya nomi: oshpazga "salatchi", ofitsiantga "of
   assert.equal(by.l2.lavozim, 'salatchi');
   assert.equal(by.l3.lavozim, 'xostess');
   const sms = outreach.render(outreach.DEFAULT_TPL, { fullName: 'Karimov Dilshod', role: 'oshpaz' }, 't.me/x', by.l2.lavozim);
-  assert.match(sms, /Tarnov restoraniga salatchi kerak/);
+  assert.match(sms, /Toshkent restoranlariga salatchilar kerak, hozir Tarnov restoranida ham/);
   // Vakansiya yopilsa — lavozim navbatdan chiqadi
   await Vacancy.updateMany({ role: 'oshpaz' }, { $set: { status: 'closed' } });
   assert.ok(!(await outreach.list(A)).rows.some(r => r.id === 'l2'));
@@ -95,8 +95,9 @@ test('standart matn: GSM-7, ko\'pi bilan 2 SMS, rekruter ovozi', async () => {
   // Kim yozyapti va raqam qayerdan — shaxsiy raqamdan kelgan SMS spamga o'xshamasin
   assert.ok(/TalentHub agentligidan/.test(text) && /Raqamingizni hh\.uz/.test(text), text);
   assert.ok(text.includes('Dilshod') && text.includes('ofitsiant') && text.includes('t.me/'));
-  // Maosh, to'lov, "ariza" va "rezyume tayyor, to'ldirish shart emas" yo'q (Anas)
-  assert.ok(!/ariza|so'm|tayyor|to'ldirish/i.test(text), text);
+  // Maosh, to'lov, "ariza", "rezyume tayyor" va SHAXSIY VA'DA yo'q (Anas, 2026-11-16)
+  assert.ok(!/ariza|so'm|tayyor|to'ldirish|taklif qilmoqchi/i.test(text), text);
+  assert.ok(/ofitsiantlar kerak/.test(text), text);
 
   // Bitta tire yoki qo'shtirnoq SMS'ni uchga bo'ladi — ogohlantirish shart
   const bad = outreach.smsInfo('Assalomu alaykum — TalentHub');

@@ -257,7 +257,7 @@ async function platformUsername() {
 }
 
 module.exports = {
-  getMe, getChat, getChatMember, sendMessage, sendVoice, answerCallback, editMessageText, setChatMenuButton, resetChatMenuButton, sendChatAction,
+  call, getMe, getChat, getChatMember, sendMessage, sendVoice, answerCallback, editMessageText, setChatMenuButton, resetChatMenuButton, sendChatAction,
   setWebhook, ensureWebhook, deleteWebhook, getWebhookInfo, getFileBase64,
   deepLink, TelegramError, MAX_LEN,
   platformToken, platformSecret, platformUsername, isPlatformReady

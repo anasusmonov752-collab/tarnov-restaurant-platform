@@ -234,6 +234,10 @@ async function startServer() {
   } else {
     console.log('✦ Telegram webhook: APP_URL yo\'q, tekshirilmadi');
   }
+  // Bot profili (nom, tavsif, buyruqlar) — faqat farq qilganini yozadi
+  require('./src/services/botProfile').apply()
+    .then(r => console.log('✦ Bot profili:', r.skipped ? 'token yo\'q' : (r.changed.join(', ') || 'joyida')))
+    .catch(e => console.error('✦ Bot profili xatosi:', e.message));
 }
 
 startServer();

@@ -62,6 +62,15 @@ test('navbatga faqat yozsa bo\'ladiganlar tushadi', async () => {
   assert.equal((await outreach.list(A, { role: 'menejer' })).total, 0);
 });
 
+test('rasm: bor bo\'lsa panel havolasi (base64 emas), yo\'q bo\'lsa bo\'sh', async () => {
+  await cand('p1', { hasPhoto: true, photo: 'data:image/jpeg;base64,AAAA', photoAt: new Date(5000) });
+  await cand('p2');
+  const by = Object.fromEntries((await outreach.list(A)).rows.map(r => [r.id, r]));
+  assert.equal(by.p1.photo, '/api/recruitment/p1/photo?v=5000');
+  assert.equal(by.p2.photo, '');
+  assert.ok(!JSON.stringify(by).includes('base64'));
+});
+
 test('{lavozim} — haqiqiy vakansiya nomi: oshpazga "salatchi", ofitsiantga "ofitsiant"', async () => {
   await cand('l1'); await cand('l2', { role: 'oshpaz' }); await cand('l3', { role: 'xostess' });
   const by = Object.fromEntries((await outreach.list(A)).rows.map(r => [r.id, r]));

@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="/css/th.css?v=2">
 <link rel="stylesheet" href="/css/th-app.css?v=2">
 <script src="/js/th-shell.js?v=5" defer></script>
+<script src="/js/th-viewer.js?v=2" defer></script>
 <style>
   /* Taklif navbati — bu sahifa TELEFONDA ishlatiladi: SMS shu telefondan
      ketadi. Shuning uchun kompyuter emas, telefon ko'rinishi asosiy. */
@@ -36,6 +37,9 @@
 
   .row{ display:flex; align-items:center; gap:12px; padding:12px 14px; margin-bottom:8px; }
   .row .who{ min-width:0; flex:1; }
+  .av{ flex:0 0 auto; width:52px; height:52px; border-radius:50%; overflow:hidden; background:var(--th-fill);
+       color:var(--th-muted); display:flex; align-items:center; justify-content:center; font-weight:600; font-size:17px; }
+  .av img{ width:100%; height:100%; object-fit:cover; cursor:zoom-in; display:block; }
   .row .nm{ font-weight:600; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .row .sb{ color:var(--th-muted); font-size:13px; margin-top:2px; line-height:1.4; }
   .go{ flex:0 0 auto; display:inline-flex; align-items:center; gap:6px; text-decoration:none;
@@ -182,7 +186,9 @@ function drawList(){
     const text = fill(tplText(), c);
     const done = S.sent.has(c.id);
     const bits = [c.roleLabel, c.location, c.exp ? c.exp + ' yil' : '', c.days + ' kun oldin'].filter(Boolean);
+    const ini = (c.name || '').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
     return `<div class="th-card row ${done ? 'done' : ''}" data-id="${esc(c.id)}">
+      <div class="av">${c.photo ? `<img src="${esc(c.photo)}" alt="" loading="lazy" data-zoom>` : esc(ini)}</div>
       <div class="who">
         <div class="nm">${esc(c.name || c.phone)}</div>
         <div class="sb">${esc(bits.join(' · '))}</div>

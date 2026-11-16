@@ -173,7 +173,7 @@ async function list(agencyId, { role = '', limit = 30, skip = 0, bot = 'TalentHu
   const base = Object.assign({ restaurantId: agencyId }, QUEUE, { role: { $in: roles } });
   const q = Object.assign({}, base, isValidRole(role) ? { role: roles.includes(role) ? role : '__yoq__' } : {});
   const [rows, total, sentToday, byRole] = await Promise.all([
-    Candidate.find(q, 'id fullName phone phoneKey role location experienceYears createdAt tgInviteToken')
+    Candidate.find(q, 'id fullName phone phoneKey role location experienceYears createdAt tgInviteToken hasPhoto photoAt updatedAt')
       .sort({ createdAt: -1 }).skip(skip).limit(Math.min(100, limit)).lean(),
     Candidate.countDocuments(q),
     Candidate.countDocuments({ restaurantId: agencyId,
@@ -198,7 +198,9 @@ async function list(agencyId, { role = '', limit = 30, skip = 0, bot = 'TalentHu
       location: c.location || '',
       exp: c.experienceYears || 0,
       days: Math.floor((Date.now() - new Date(c.createdAt).getTime()) / 864e5),
-      link: `t.me/${bot}?start=${c.tgInviteToken}`
+      link: `t.me/${bot}?start=${c.tgInviteToken}`,
+      // Rasm — panel guard'i bilan (base64 javobga kirmaydi); ?v= — yangilansa kesh eskirmasin
+      photo: c.hasPhoto ? `/api/recruitment/${c.id}/photo?v=${new Date(c.photoAt || c.updatedAt || 0).getTime()}` : ''
     }))
   };
 }

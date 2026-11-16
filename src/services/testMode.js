@@ -24,7 +24,7 @@ const Candidate = require('../models/Candidate');
 const SurveyResponse = require('../models/SurveyResponse');
 const credits = require('./credits');
 
-const MODES = ['admin', 'client', 'candidate'];
+const MODES = ['admin', 'client', 'candidate', 'hh'];
 const TEST_CREDITS = 5;
 
 /** Bu akkaunt test rejimidan foydalana oladimi — agentlik admin chati. */
@@ -99,6 +99,20 @@ async function setMode(tgUserId, mode, tgUser) {
       await cand.save();
       out.candidate = cand;
     }
+  } else if (mode === 'hh') {
+    // hh nomzodi: SMS olgan odam kabi — havolani bosguncha botda yo'q.
+    // Har kirishda noldan: arizalari o'chadi, yangi shaxsiy havola (o'zgarishlarni
+    // har safar boshidan ko'rish uchun — Anas, 2026-11-16)
+    const cand = st.hhCandidateId && await Candidate.findOne({ restaurantId: ag.id, id: st.hhCandidateId, isTest: true });
+    if (cand) {
+      const Application = require('../models/Application');
+      const outreach = require('./outreach');
+      await Application.deleteMany({ candidateId: cand.id, isTest: true });
+      Object.assign(cand, unlinkCand, { tgInviteToken: outreach.newToken(), tgInviteChannel: 'sms', smsSentAt: null,
+        jobStatus: 'active', status: 'new', updatedAt: new Date() });
+      await cand.save();
+      out.hh = cand;
+    }
   } else {
     // Admin: test rejimidan oldingi holat
     const sv = st.saved || {};
@@ -135,4 +149,22 @@ async function noteCandidate(tgUserId, candidateId) {
   await TestMode.updateOne({ tgUserId: String(tgUserId) }, { $set: { candidateId, updatedAt: new Date() } });
 }
 
-module.exports = { MODES, testerAgency, state, modeOf, setMode, resetSurvey, noteCandidate, TEST_CREDITS };
+/**
+ * Paneldan: shu rezyume test rejimidagi "hh nomzod" bo'ladi. Yozuv isTest
+ * bo'ladi — SMS navbatiga, haqiqiy mijozlar qidiruviga va sanoqlarga kirmaydi.
+ */
+async function setHhCandidate(agencyId, candidateId) {
+  const ag = await Restaurant.findOne({ id: agencyId }, 'telegram').lean();
+  const uid = ag && ag.telegram && ag.telegram.adminChatId;
+  if (!uid) throw Object.assign(new Error('Agentlik admin chati ulanmagan (bot /start)'), { status: 400 });
+  const c = await Candidate.findOne({ restaurantId: agencyId, id: candidateId });
+  if (!c) throw Object.assign(new Error('Nomzod topilmadi'), { status: 404 });
+  if (c.source === 'anketa') throw Object.assign(new Error('Faqat hh/yuklangan rezyume'), { status: 400 });
+  c.isTest = true;
+  await c.save();
+  await TestMode.updateOne({ tgUserId: String(uid) },
+    { $set: { hhCandidateId: c.id, updatedAt: new Date() }, $setOnInsert: { agencyId, mode: 'admin' } }, { upsert: true });
+  return c;
+}
+
+module.exports = { MODES, testerAgency, state, modeOf, setMode, resetSurvey, noteCandidate, setHhCandidate, TEST_CREDITS };

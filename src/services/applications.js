@@ -50,7 +50,7 @@ async function submit({ cand: c, vacancy: v, message = '', appBase, via = 'kabin
     const chat = agency && agency.telegram && agency.telegram.adminChatId;
     if (chat) {
       await tg.sendMessage(tg.platformToken(), chat,
-        `📨 Yangi ariza${via === 'anketa' ? ' (anketa)' : ''}\n\n${c.fullName || 'Nomsiz'} — ${v.title}\n` +
+        `${c.isTest ? '🧪 SINOV · ' : ''}📨 Yangi ariza${via === 'anketa' ? ' (anketa)' : ''}\n\n${c.fullName || 'Nomsiz'} — ${v.title}\n` +
         `${c.desiredPosition || ''}${c.experienceYears ? ' · ' + c.experienceYears + ' yil' : ''}\n` +
         `${c.phone || ''}`);
     }
@@ -61,8 +61,9 @@ async function submit({ cand: c, vacancy: v, message = '', appBase, via = 'kabin
   // faqat ochilganda. "Ko'rish" to'g'ridan-to'g'ri shu vakansiya arizalarini
   // ochadi (?apps= — hash emas: Telegram launch parametrlarini hash'ga qo'yadi).
   try {
-    const cl = await Client.findOne({ agencyId: c.restaurantId, id: v.clientId }, 'tgChatId status lang tgLang').lean();
-    if (cl && cl.tgChatId && cl.status === 'active' && appBase) {
+    const cl = await Client.findOne({ agencyId: c.restaurantId, id: v.clientId }, 'tgChatId status lang tgLang isTest').lean();
+    // Sinov nomzodining arizasi haqiqiy mijozga bormaydi (test rejimi, hh nomzod)
+    if (cl && cl.tgChatId && cl.status === 'active' && appBase && (!c.isTest || cl.isTest)) {
       // Mijoz tilida (Mini App bilan bir xil yozuv)
       const lang = I18N.resolve(cl.lang, cl.tgLang);
       const T = (k, x) => I18N.t(lang, k, x);

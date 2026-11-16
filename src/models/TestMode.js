@@ -11,6 +11,7 @@ const TestModeSchema = new mongoose.Schema({
   mode:        { type: String, default: 'admin' },     // admin | client | candidate
   clientId:    { type: String, default: '' },          // sinov mijozi (isTest)
   candidateId: { type: String, default: '' },          // sinov nomzodi (isTest), anketadan
+  hhCandidateId: { type: String, default: '' },        // sinov hh nomzodi (isTest) — SMS havolasi oqimi uchun, paneldan tanlanadi
   // Test rejimidan oldin shu akkauntga ulangan yozuvlar — admin rejimida qaytariladi
   saved: {
     clients:    { type: [String], default: [] },

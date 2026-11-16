@@ -549,17 +549,19 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
 // berk ko'chaga kirardi, mijoz esa o'z botida begonadek qolardi
 // (2026-10-20 Anas sinovida topildi).
 // ── Admin test rejimi (services/testMode) ────────────────────
-const TEST_LABEL = { admin: '🛠 Admin', client: '👔 Mijoz', candidate: '👤 Nomzod' };
+const TEST_LABEL = { admin: '🛠 Admin', client: '👔 Mijoz', candidate: '👤 Nomzod', hh: '📄 hh nomzod' };
 async function sendTestMenu(token, chatId, mode) {
   await tg.sendMessage(token, chatId,
     `🧪 Test rejimi\n\nHozir: ${TEST_LABEL[mode] || mode}\n\n` +
     `👔 Mijoz — «🧪 Sinov restoran» kabineti va bot qidiruvi\n` +
     `👤 Nomzod — sinov nomzodi kabineti (anketadan)\n` +
+    `📄 hh nomzod — SMS olgan hh nomzodi kabi: SMS matni va shaxsiy havola (har bosishda noldan)\n` +
     `🛠 Admin — hammasi oldingi holatga qaytadi\n` +
     `🔄 Anketani qaytadan — bot sizni yangi odam deb ko'radi\n\n` +
     `Sinov haqiqiy ma'lumotga tegmaydi: haqiqiy nomzod kontakti ochilmaydi, sanoqlarga kirmaydi.`,
     { reply_markup: { inline_keyboard: [
       [{ text: '👔 Mijoz', callback_data: 'tm:client' }, { text: '👤 Nomzod', callback_data: 'tm:candidate' }],
+      [{ text: '📄 hh nomzod', callback_data: 'tm:hh' }],
       [{ text: '🛠 Admin', callback_data: 'tm:admin' }, { text: '🔄 Anketani qaytadan', callback_data: 'tm:reset' }]
     ] } });
 }
@@ -587,6 +589,15 @@ function testModeText(m, out) {
     return out.candidate
       ? `👤 Nomzod rejimi — sinov nomzodi «${out.candidate.fullName || 'nomsiz'}».\n\nPastdagi Profilim tugmasi.` + reopen
       : `👤 Nomzod rejimi — sinov nomzodi hali yo'q.\n\n/start bosing — anketa noldan boshlanadi.`;
+  }
+  if (m === 'hh') {
+    return out.hh
+      ? `📄 hh nomzod rejimi — «${out.hh.fullName || 'nomsiz'}» (sinov rezyumesi).\n\n` +
+        `Arizalari o'chirildi, yangi shaxsiy havola yaratildi. Pastda — nomzod oladigan SMS ` +
+        `aynan shu ko'rinishda. Havolani bosing: hh nomzodi ko'radigan ekran ochiladi.`
+      : `📄 hh nomzod rejimi — sinov rezyumesi hali tanlanmagan.\n\n` +
+        `Panel → hh.uz bazasi → rezyumeni yuklang (yoki mavjudini oching) → ⤢ to'liq karta → «🧪 Test rejimida sinash». ` +
+        `Keyin /test → 📄 hh nomzod.`;
   }
   if (m === 'reset') {
     return `🔄 Anketa tozalandi (${out.deleted} ta javob o'chdi), rejim — nomzod.\n\n` +
@@ -1049,7 +1060,7 @@ async function handleCallback(cq, appBase) {
   }
 
   // ── Admin test rejimi: rejim tugmalari (/test) ──
-  if (/^tm:(admin|client|candidate|reset)$/.test(data)) {
+  if (/^tm:(admin|client|candidate|reset|hh)$/.test(data)) {
     if (!(await testMode.testerAgency(chatId))) { await done('Faqat agentlik admini uchun', true); return; }
     const m = data.slice(3);
     try {
@@ -1057,6 +1068,11 @@ async function handleCallback(cq, appBase) {
       await applyTestMenu(token, chatId, m === 'reset' ? 'candidate' : m, out, appBase);
       await done('Tayyor');
       await tg.sendMessage(token, chatId, testModeText(m, out));
+      // hh nomzod: Taklif navbatidagi SMS matni — shaxsiy havola bilan, aynan nomzod oladigandek
+      if (m === 'hh' && out.hh) {
+        const uname = await tg.platformUsername();
+        await tg.sendMessage(token, chatId, outreach.render(outreach.DEFAULT_TPL, out.hh, `t.me/${uname}?start=${out.hh.tgInviteToken}`));
+      }
     } catch (e) {
       await done(e.message, true);
     }

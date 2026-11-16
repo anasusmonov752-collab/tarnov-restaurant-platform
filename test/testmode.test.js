@@ -119,3 +119,39 @@ test('ajratish: sinov vakansiyasi va sinov nomzodi haqiqiylarga ko\'rinmaydi', a
   assert.ok(!ids(await cs.search(crit, A)).includes(testCandId));                     // haqiqiy mijoz
   assert.ok(ids(await cs.search(Object.assign({ includeTest: true }, crit), A)).includes(testCandId));  // sinov mijozi
 });
+
+// 2026-11-16 (Anas): test rejimida hh nomzodi oqimi — SMS havolasi, shaxsiy ekran, bir tugmali ariza
+test('hh nomzod: paneldan tanlanadi, har kirishda noldan, havola admin chatiga bog\'lanadi', async () => {
+  const Application = require('../src/models/Application');
+  const outreach = require('../src/services/outreach');
+  await M.Candidate.create({ id: 'hh-me', restaurantId: A, fullName: 'Usmonov Anas', source: 'hh', role: 'menejer',
+    phone: '+998 91 692 09 99', phoneKey: '916920999' });
+  await M.Candidate.create({ id: 'ank-1', restaurantId: A, fullName: 'Anketa Odam', source: 'anketa', phone: '+998 93 000 00 01' });
+  await assert.rejects(() => tm.setHhCandidate(A, 'ank-1'), e => e.status === 400);   // anketa rezyumesi emas
+
+  const c = await tm.setHhCandidate(A, 'hh-me');
+  assert.equal(c.isTest, true);                                    // SMS navbatiga, mijozlarga chiqmaydi
+  assert.equal((await tm.state(U)).hhCandidateId, 'hh-me');
+
+  // Oldingi sinovdan qolganlar: ariza, ulanish, SMS belgisi
+  await Application.create({ id: 'ap-hh', agencyId: A, vacancyId: 'v1', candidateId: 'hh-me', clientId: 'x', isTest: true });
+  await M.Candidate.updateOne({ id: 'hh-me' }, { $set: { tgChatId: U, tgState: 'linked', smsSentAt: new Date() } });
+
+  const out = await tm.setMode(U, 'hh');
+  assert.equal(out.hh.id, 'hh-me');
+  assert.match(out.hh.tgInviteToken, /^[A-Za-z0-9]{10}$/);
+  const db = await M.Candidate.findOne({ id: 'hh-me' }).lean();
+  assert.equal(db.tgChatId, '');                                   // havolani bosguncha botda yo'q
+  assert.equal(db.smsSentAt, null);
+  assert.equal(await Application.countDocuments({ candidateId: 'hh-me' }), 0);
+  assert.deepEqual((await linked()).clients, []);
+
+  assert.equal((await outreach.inviteClaim(out.hh, U, U)).mode, 'bind');                 // sinov havolasi — bog'lanadi
+  const real = await M.Candidate.findOne({ id: 'k-real' }).lean();
+  assert.equal((await outreach.inviteClaim(real, U, U)).mode, 'admin');                 // haqiqiysi — faqat ko'rinish
+
+  const sms = outreach.render(outreach.DEFAULT_TPL, out.hh, 't.me/Bot?start=' + out.hh.tgInviteToken);
+  assert.match(sms, /Assalomu alaykum, Anas!/);
+  assert.match(sms, new RegExp(out.hh.tgInviteToken));
+  await tm.setMode(U, 'admin');
+});

@@ -49,6 +49,8 @@ const placements = require('../services/placements');
 const Interview = require('../models/Interview');
 
 const router = express.Router();
+// Sinov nomzodining arizasi (test rejimi, hh nomzod) haqiqiy mijozga ko'rinmaydi
+const noTestApps = client => (client && client.isTest ? {} : { isTest: { $ne: true } });
 
 // ── Til ──
 // req.lang — javobdagi matnlar (holat, rol, maosh, xato) shu tilda.
@@ -879,7 +881,7 @@ router.get('/vacancies/:id/applications', clientGuard, asyncHandler(async (req, 
   const v = await Vacancy.findOne({ agencyId, clientId: req.client.id, id: req.params.id }).lean();
   if (!v) return res.status(404).json({ error: 'Vakansiya topilmadi' });
 
-  const apps = await Application.find({ agencyId, vacancyId: v.id })
+  const apps = await Application.find(Object.assign({ agencyId, vacancyId: v.id }, noTestApps(req.client)))
     .sort({ createdAt: -1 }).limit(100).lean();
   res.json({ vacancy: vac.full(v, {}, req.lang), items: await appsView(agencyId, req.client.id, apps, req.lang) });
 }));
@@ -889,7 +891,7 @@ router.get('/vacancies/:id/applications', clientGuard, asyncHandler(async (req, 
 // Vakansiya bo'yicha guruhlash frontend'da; bu yerda vakansiya nomi beriladi.
 router.get('/applications', clientGuard, asyncHandler(async (req, res) => {
   const agencyId = req.client.agencyId;
-  const apps = await Application.find({ agencyId, clientId: req.client.id })
+  const apps = await Application.find(Object.assign({ agencyId, clientId: req.client.id }, noTestApps(req.client)))
     .sort({ createdAt: -1 }).limit(200).lean();
   const vids = [...new Set(apps.map(a => a.vacancyId))];
   const vs = vids.length ? await Vacancy.find({ agencyId, id: { $in: vids } }, 'id title status role shift').lean() : [];
@@ -1364,7 +1366,7 @@ router.get('/unread', clientGuard, asyncHandler(async (req, res) => {
     ]),
     // Ko'rilmagan arizalar — "Vakansiya" tabidagi nuqta. Arizalar ro'yxati
     // ochilganda ular 'seen' bo'ladi (GET .../applications).
-    Application.countDocuments({ agencyId: req.client.agencyId, clientId: req.client.id, state: 'new' })
+    Application.countDocuments(Object.assign({ agencyId: req.client.agencyId, clientId: req.client.id, state: 'new' }, noTestApps(req.client)))
   ]);
   res.json({ chats: (r[0] && r[0].n) || 0, apps });
 }));

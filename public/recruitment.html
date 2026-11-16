@@ -765,6 +765,12 @@ function openCard(id){
         ${ank && !c.fileName ? '' : `<div class="md-box" style="margin-top:14px">
           <h4>Fayl</h4>
           <div style="font-size:13px;color:var(--muted)">${esc(c.fileName||'—')}</div>
+          ${c.fileName ? `<a class="btn btn-sm" style="margin-top:8px" href="/api/recruitment/${c.id}/file" target="_blank" rel="noopener">Asl rezyume (PDF)</a>` : ''}
+        </div>`}
+        ${ank ? '' : `<div class="md-box" style="margin-top:14px">
+          <h4>Test rejimi</h4>
+          <div style="font-size:13px;color:var(--muted);line-height:1.5">Botda /test → «📄 hh nomzod»: SMS olgan hh nomzodi ko'radigan oqimni shu rezyume bilan sinaysiz. Yozuv «SINOV» bo'ladi — SMS navbatiga va mijozlarga chiqmaydi.</div>
+          <button class="btn btn-sm" style="margin-top:8px" id="bTestHh">🧪 Test rejimida sinash</button>
         </div>`}
       </div>
     </div>`;
@@ -772,6 +778,15 @@ function openCard(id){
   document.getElementById('ov').classList.add('on');
   document.getElementById('mdX').onclick = closeMd;
   document.querySelectorAll('[data-mv2]').forEach(el=>el.onclick=async()=>{ await move([c.id], el.dataset.mv2); closeMd(); });
+  const bt = document.getElementById('bTestHh');
+  if (bt) bt.onclick = async () => {
+    bt.disabled = true;
+    try {
+      await api(`/api/recruitment/${c.id}/test-hh`, { method:'POST', body:'{}' });
+      c.isTest = true;
+      bt.textContent = '✓ Tayyor — botda /test → 📄 hh nomzod';
+    } catch (e) { toast(e.message); bt.disabled = false; }
+  };
 }
 // Anketa javoblari — nomzodning rawText'idan ("Savol: javob" qatorlari,
 // survey.toFields yozadi). Savol matni o'sha paytdagi anketadan — keyin

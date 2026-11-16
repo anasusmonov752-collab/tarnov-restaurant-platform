@@ -693,6 +693,16 @@ router.post('/:id/tg/invite', guard, asyncHandler(async (req, res) => {
   }
 }));
 
+// Test rejimi: shu rezyume botdagi /test → "📄 hh nomzod" bo'ladi (services/testMode)
+router.post('/:id/test-hh', guard, asyncHandler(async (req, res) => {
+  try {
+    const c = await require('../services/testMode').setHhCandidate(req.user.restaurantId, req.params.id);
+    res.json({ ok: true, isTest: c.isTest });
+  } catch (e) {
+    res.status(e.status || 500).json({ error: e.message });
+  }
+}));
+
 // Telegramdan uzish — rezyume QOLADI, faqat akkaunt ulanishi o'chadi.
 // Xato odam ulanib qolganda (masalan, taklif havolasini boshqa odam
 // bosgan) yoki sinov akkauntini bo'shatish uchun: shundan keyin bot bu

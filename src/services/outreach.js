@@ -106,7 +106,10 @@ function newToken() {
  */
 async function inviteClaim(cand, chatId, adminChatId) {
   const { phoneKey } = require('../utils/candidateKeys');
-  if (adminChatId && String(adminChatId) === String(chatId)) return { mode: 'admin' };
+  const isAdmin = adminChatId && String(adminChatId) === String(chatId);
+  // Test rejimi "hh nomzod": admin o'z sinov rezyumesining havolasini bosadi — bog'lanadi
+  if (isAdmin && cand.isTest) return { mode: 'bind' };
+  if (isAdmin) return { mode: 'admin' };
   const me = await Candidate.findOne({ tgChatId: String(chatId), tgState: 'linked', id: { $ne: cand.id } });
   const a = me && phoneKey(me.phone), b = phoneKey(cand.phone);
   if (me && (!a || !b || a !== b)) return { mode: 'other', me };

@@ -213,20 +213,22 @@ const langSwitchBtn = (lang, rid) => lang === 'ru'
 // tugma = ariza (kabinet bilan bir xil tekshiruv, keyin prescreen o'zi).
 const Application = require('../models/Application');
 
-// Maosh oralig'i — BAZADAN (to'qima raqam yo'q): kunlik ishlarning eng pasti va
-// oylik ishlarning eng yuqorisi. Kunlikni oyga aylantirmaymiz (grafik har xil).
+// Maosh oralig'i OYLIK — BAZADAN: "oyiga 6–13 mln so'm" (Anas qarori, 2026-11-16:
+// "6 mln deb yoz, 215 ming kerak emas"). Kunlik stavka oyga 26 ish kuni, smena 15 smena
+// deb aylantiriladi; pastki chegara butun millionga yaxlitlanadi, yuqorisi — aniq.
+const MONTH_K = { day: 26, shift: 15 };
 function payRange(rows, lang) {
-  const sp = x => String(Math.round(x)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   const mln = x => String(Math.round(x / 1e5) / 10).replace('.', ',');
-  const day = rows.filter(v => v.salaryPeriod === 'day' || v.salaryPeriod === 'shift').map(v => v.salaryFrom || v.salaryTo).filter(Boolean);
-  const mon = rows.filter(v => !v.salaryPeriod || v.salaryPeriod === 'month');
-  const monMax = Math.max(0, ...mon.map(v => v.salaryTo || v.salaryFrom || 0));
-  const monMin = Math.min(Infinity, ...mon.map(v => v.salaryFrom || v.salaryTo || Infinity));
-  if (day.length && monMax) return T(lang, 'ft.payDM', { d: sp(Math.min(...day)), m: mln(monMax) });
-  if (monMax && monMin < monMax) return T(lang, 'ft.payMM', { a: mln(monMin), b: mln(monMax) });
-  if (monMax) return T(lang, 'ft.payM', { m: mln(monMax) });
-  if (day.length) return T(lang, 'ft.payD', { d: sp(Math.min(...day)) });
-  return '';
+  const lo = [], hi = [];
+  rows.forEach(v => {
+    const k = MONTH_K[v.salaryPeriod] || 1;
+    const a = v.salaryFrom || v.salaryTo, b = v.salaryTo || v.salaryFrom;
+    if (a) lo.push(a * k);
+    if (b) hi.push(b * k);
+  });
+  if (!lo.length) return '';
+  const min = Math.max(1, Math.round(Math.min(...lo) / 1e6)), max = Math.max(...hi);
+  return max / 1e6 > min ? T(lang, 'ft.payMM', { a: min, b: mln(max) }) : T(lang, 'ft.payM', { m: mln(max) });
 }
 
 async function candidateInvite({ cand, lang, appBase }) {

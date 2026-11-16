@@ -203,7 +203,7 @@ test('shaxsiy havola ekrani: anketa yo\'q, lavozimidagi ish, tugma = ariza', asy
     listed: true, confirmedAt: new Date(), salaryFrom: 7500000, salaryTo: 13000000, salaryPeriod: 'month' });
   const scr = await ft.candidateInvite({ cand: c, lang: 'uz', appBase: 'https://x' });
   assert.match(scr.text, /Assalomu alaykum, Nilufar!/);
-  assert.match(scr.text, /hozir <b>3 ta ochiq ish<\/b> — maoshi <b>kuniga 225 000 so'mdan oyiga 13 mln so'mgacha<\/b>/);
+  assert.match(scr.text, /hozir <b>3 ta ochiq ish<\/b> — maoshi <b>oyiga 6–13 mln so'm<\/b>/);   // kunlik 225 000 × 26 ≈ 5,85 -> 6
   assert.match(scr.text, /<b>TalentHub<\/b> — ishga joylash agentligi/);
   assert.ok(!/bizda bor|to'ldirish shart emas|💰|1\. /.test(scr.text), scr.text);   // ro'yxat va emoji yo'q
   assert.ok(!/Xostess|Ofitsiant|Menejer/.test(scr.text), 'lavozimlar yo\'q');
@@ -222,7 +222,7 @@ test('shaxsiy havola ekrani: anketa yo\'q, lavozimidagi ish, tugma = ariza', asy
   // Ruschaga — o'sha ekran ruscha
   const ru = await ft.handleCallback({ data: 'ft:il:ru', chatId: '501', appBase: 'https://x', from: { id: 501 } });
   assert.match(ru.edit, /кадровое агентство/);
-  assert.match(ru.edit, /<b>2 открытые вакансии<\/b> — зарплата <b>от 225 000 сум в день<\/b>/);
+  assert.match(ru.edit, /<b>2 открытые вакансии<\/b> — зарплата <b>до 5,9 млн сум в месяц<\/b>/);
   assert.match(ru.keyboard[0][0].text, /Смотреть вакансии/);
 
   // Yopilgan ish va telefoni buzuq nomzod

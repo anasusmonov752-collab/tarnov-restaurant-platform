@@ -102,13 +102,28 @@ function latin(s) {
   }).join('');
 }
 
-/** Faqat birinchi so'z: "Karimova Aziza Baxtiyorovna" -> "Aziza" ham emas, "Karimova" */
-function firstName(full) {
-  const parts = String(full || '').trim().split(/\s+/).filter(Boolean);
-  if (!parts.length) return '';
-  // hh rezyumelarida tartib "Familiya Ism Otasining ismi" — ism ikkinchi so'z
-  return latin(parts.length >= 2 ? parts[1] : parts[0]).slice(0, 20);
+/**
+ * Murojaat uchun ism (asl yozuvda): hh tartibi "Familiya Ism Otasining ismi" —
+ * ism ikkinchi so'z. Ismini yashirgan nomzod ("ФИО скрыто соискателем") — bo'sh:
+ * aks holda SMS "Assalomu alaykum, skrito!" bo'lardi (jonli navbatda topildi,
+ * 2026-11-16). KATTA harfli ism ("САИДА") — "Саида".
+ */
+function nameWord(full) {
+  const s = String(full || '').trim();
+  if (!s || /скрыт|hidden|^фио\b/i.test(s)) return '';
+  const parts = s.split(/\s+/).filter(Boolean);
+  let w = parts.length >= 2 ? parts[1] : parts[0];
+  if (w.length > 1 && w === w.toUpperCase()) w = w[0] + w.slice(1).toLowerCase();
+  return w;
 }
+
+/** SMS uchun ism — lotinda (kirill harf SMS'ni uchga bo'ladi) */
+function firstName(full) {
+  return latin(nameWord(full)).slice(0, 20);
+}
+
+/** Ism bo'sh bo'lsa "Assalomu alaykum, !" qolmasin */
+const tidy = s => String(s).replace(/,\s*([!.?])/g, '$1').replace(/\s{2,}/g, ' ').trim();
 
 /** +998901234567 — phoneKey (oxirgi 9 raqam) dan, formatdan qat'i nazar */
 const e164 = c => (c.phoneKey ? '+998' + c.phoneKey : '');
@@ -136,12 +151,11 @@ async function openRoles(agencyId) {
 
 function render(tpl, c, link, lavozim) {
   const name = firstName(c.fullName);
-  return String(tpl || DEFAULT_TPL)
+  const text = String(tpl || DEFAULT_TPL)
     .replace(/\{ism\}/g, name)
     .replace(/\{lavozim\}/g, lavozim || (isValidRole(c.role) ? roleLabel(c.role) : 'restoran').toLowerCase())
-    .replace(/\{havola\}/g, link || '')
-    .replace(/\s{2,}/g, ' ')
-    .trim();
+    .replace(/\{havola\}/g, link || '');
+  return tidy(text);
 }
 
 /** Navbat: eng yangi rezyumelar oldin (eski rezyume egasi allaqachon ishga kirgan) */
@@ -207,4 +221,4 @@ async function markSent(agencyId, id, undo = false) {
   return true;
 }
 
-module.exports = { QUEUE, DEFAULT_TPL, list, markSent, render, smsInfo, firstName, e164, newToken, ensureTokens, latin, openRoles };
+module.exports = { QUEUE, DEFAULT_TPL, list, markSent, render, smsInfo, firstName, nameWord, tidy, e164, newToken, ensureTokens, latin, openRoles };

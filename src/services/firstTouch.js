@@ -189,8 +189,8 @@ async function candidateInvite({ cand, lang, appBase }) {
   ]);
   const sent = new Set(applied.map(a => a.vacancyId));
   const emp = Object.fromEntries(clients.filter(c => c.showName).map(c => [c.id, c.name]));
-  const first = String(cand.fullName || '').trim().split(/\s+/);
-  const name = first.length >= 2 ? first[1] : (first[0] || '');
+  // SMS bilan bir xil qoida (yashirin ism -> salomsiz ism, KATTA harf -> oddiy), asl yozuvda
+  const name = require('./outreach').nameWord(cand.fullName);
 
   const head = role ? `${EMOJI[role] || ''} <b>${esc(T(lang, 'role.' + role))}</b>`.trim() : '';
   const lines = rows.map(v => {
@@ -200,7 +200,7 @@ async function candidateInvite({ cand, lang, appBase }) {
   // Salom -> kimmiz (SMS'dan kelgan odam bizni tanimaydi) -> ishlar -> nima bo'ladi.
   // "Rezyumengiz tayyor, to'ldirish shart emas" ATAYLAB yo'q (Anas, 2026-11-16).
   const text = [
-    T(lang, 'ft.iHi', { name: esc(name) }), '',
+    T(lang, 'ft.iHi', { name: esc(name) }).replace(/,\s*!/, '!'), '',
     T(lang, 'ft.iAbout'), '',
     !n ? T(lang, 'ft.iNoJobs') : mine ? T(lang, 'ft.cJobs', { head, n }) : T(lang, 'ft.iJobsAny'),
     ...lines,

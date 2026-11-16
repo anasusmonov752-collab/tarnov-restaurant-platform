@@ -211,6 +211,12 @@ test('kirill ism SMS\'ni bo\'lib yubormaydi — lotinga o\'giriladi', () => {
   // 2026-11-15: "Нилуфар" bilan SMS 3 ta bo'lib ketardi (UCS-2, 70 belgi)
   assert.equal(outreach.firstName('Юсупова Нилуфар Бахтиёровна'), 'Nilufar');
   assert.equal(outreach.firstName('Ахмедова Ўғилой'), "O'g'iloy");
+  // Jonli navbatda topilgan (2026-11-16): yashirin ism va KATTA harf
+  assert.equal(outreach.firstName('ФИО скрыто соискателем'), '');
+  assert.equal(outreach.firstName('Кудратова САИДА'), 'Saida');
+  assert.equal(outreach.nameWord('Кудратова САИДА'), 'Саида');
+  const hid = outreach.render(outreach.DEFAULT_TPL, { fullName: 'ФИО скрыто соискателем', role: 'xostess' }, 't.me/x');
+  assert.ok(hid.startsWith('Assalomu alaykum! TalentHub'), hid);
   const tpl = "Assalomu alaykum, {ism}. Tarnov restoraniga xostess kerak, kuniga 225 000 so'm. Telegramda anketasiz ariza bering: {havola}";
   const t = outreach.render(tpl, { fullName: 'Каримов Шохруххон', role: 'xostess' }, 't.me/TalentHubUzBot?start=abcdefghij');
   const i = outreach.smsInfo(t);

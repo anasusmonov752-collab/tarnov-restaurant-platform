@@ -140,6 +140,7 @@ function fill(tpl, c){
     // Haqiqiy vakansiya nomi (oshpazlarga "salatchi"), gap o'rtasida — kichik harf
     .replace(/\{lavozim\}/g, c.lavozim || (c.roleLabel || 'restoran').toLowerCase())
     .replace(/\{havola\}/g, c.link || S.link)   // shaxsiy havola — har odamga o'ziniki
+    .replace(/,\s*([!.?])/g, '$1')              // ismi yashirin: "Assalomu alaykum, !" qolmasin (outreach.tidy)
     .replace(/\s{2,}/g, ' ').trim();
 }
 

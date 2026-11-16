@@ -65,6 +65,7 @@ button,input,select{font-family:inherit}
 .btn-p:hover{background:var(--gold-d);border-color:var(--gold-d)}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .btn-sm{padding:7px 12px;font-size:12.5px}
+.btn-tg{background:#229ED9;border-color:#229ED9;color:#fff;padding:7px 10px;display:inline-flex;align-items:center}
 .srch{flex:1;min-width:180px;max-width:300px}
 .srch input{width:100%;padding:8px 12px;border-radius:9px;border:1px solid var(--line);background:#fff;font-size:13px;color:var(--ink)}
 .srch input:focus{outline:none;border-color:var(--gold)}
@@ -410,6 +411,15 @@ function visible(){
   return ALL.filter(c=>(c.status||'new')===FS && (!FR || (c.role||'boshqa')===FR));
 }
 
+// Nomzodning Telegram chati: username bo'lsa — t.me/<username>, aks holda raqam
+// bo'yicha t.me/+998... (raqami Telegramda bo'lmasa Telegram o'zi aytadi).
+// Bot orqali yozish (data-tg, "Yozish") — boshqa narsa: u faqat ulangan nomzodga.
+const TG_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>';
+function tgUrl(c){
+  if (c.tgUsername) return 'https://t.me/' + String(c.tgUsername).replace(/^@/, '');
+  let d = String(c.phone || '').replace(/\D/g, ''); if (d.length === 9) d = '998' + d;
+  return d.length >= 11 ? 'https://t.me/+' + d : '';
+}
 function card(c){
   const st = SMAP[c.status] || STAGES[0];
   const tg = tgInfo(c);
@@ -464,6 +474,7 @@ function card(c){
     <div class="rc-foot">
       <div class="cb ${SEL.has(c.id)?'on':''}" data-sel="${c.id}"></div>
       ${ank && c.phone ? `<a class="btn btn-sm" href="tel:${esc(String(c.phone).replace(/[^\d+]/g,''))}" data-call="${c.id}">Qo'ng'iroq</a>` : ''}
+      ${tgUrl(c) ? `<a class="btn btn-sm btn-tg" href="${esc(tgUrl(c))}" target="_blank" rel="noopener" title="Telegram chatini ochish" aria-label="Telegram">${TG_SVG}</a>` : ''}
       <button class="btn btn-sm btn-p" data-mv="interview|${c.id}">Suhbatga chaqirish</button>
       <button class="btn btn-sm" data-mv="reserve|${c.id}">Zaxiraga</button>
       <button class="btn btn-sm" data-mv="rejected|${c.id}">Rad etish</button>
@@ -686,6 +697,7 @@ function openCard(id){
 
   document.getElementById('md').innerHTML = `
     <div class="md-top">
+      ${tgUrl(c) ? `<a class="btn btn-tg" href="${esc(tgUrl(c))}" target="_blank" rel="noopener" title="Telegram chatini ochish">${TG_SVG}&nbsp;Telegram</a>` : ''}
       <button class="btn btn-p" data-mv2="interview">Suhbatga chaqirish</button>
       <button class="btn" data-mv2="reserve">Zaxiraga</button>
       <button class="btn" data-mv2="rejected">Rad etish</button>

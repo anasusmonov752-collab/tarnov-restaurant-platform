@@ -205,6 +205,8 @@ button,input,select,textarea{font-family:inherit}
 .hh-btn{border-radius:10px;padding:9px 15px;font-size:13.5px;font-weight:700;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--ink);transition:.15s;white-space:nowrap}
 .hh-btn:hover{background:#F1F5FB;border-color:var(--gold)}
 .hh-btn.primary{background:#2563EB;color:#fff;border-color:#2563EB}
+.hh-btn.tg{background:#229ED9;color:#fff;border-color:#229ED9;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.kc-tg{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:13px;background:#229ED9;color:#fff;margin-left:auto}
 .hh-btn.primary:hover{filter:brightness(1.06)}
 .hh-btn.danger{color:var(--danger);border-color:rgba(194,91,76,.3)}
 .hh-btn.danger:hover{background:rgba(194,91,76,.1)}
@@ -604,8 +606,16 @@ function cardHtml(c){
     <div class="kc-foot">
       <span class="kc-days ${warn}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> ${daysTxt}</span>
       <span>${shortDate(c.createdAt)}</span>
+      ${tgUrl(c) ? `<a class="kc-tg" href="${esc(tgUrl(c))}" target="_blank" rel="noopener" title="Telegram chatini ochish" onclick="event.stopPropagation()" draggable="false">${TG_SVG}</a>` : ''}
     </div>
   </div>`;
+}
+// Nomzodning Telegram chati: username bo'lsa — u, aks holda raqam bo'yicha (t.me/+998...)
+const TG_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>';
+function tgUrl(c){
+  if (c.tgUsername) return 'https://t.me/' + String(c.tgUsername).replace(/^@/, '');
+  let d = String(c.phone || '').replace(/\D/g, ''); if (d.length === 9) d = '998' + d;
+  return d.length >= 11 ? 'https://t.me/+' + d : '';
 }
 
 // ── Drag & drop ──
@@ -746,6 +756,7 @@ function renderModal(){
 
   document.getElementById('modal').innerHTML = `
     <div class="hh-top">
+      ${tgUrl(c) ? `<a class="hh-btn tg" href="${esc(tgUrl(c))}" target="_blank" rel="noopener" title="Telegram chatini ochish">${TG_SVG} Telegram</a>` : ''}
       <button class="hh-btn primary" onclick="quickStage('${c.id}','interview')">Suhbatga chaqirish</button>
       <button class="hh-btn" onclick="quickStage('${c.id}','reserve')">Zaxiraga</button>
       <button class="hh-btn danger" onclick="quickStage('${c.id}','rejected')">Rad etish</button>

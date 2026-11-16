@@ -206,7 +206,7 @@ function drawVacancies(rows){
         <div class="ttl"><b>${esc(v.title)}${v.closed ? ' <span class="tag">yopiq</span>' : ''}</b><span>${esc(v.client)}</span></div>
         <div class="m"><b>${v.views}</b> ko'rdi · <b>${v.applies}</b> ariza · ${pct(v.applies, v.views)}%</div>
       </div>
-      <div class="who">${v.recent.map(r => `<div><b>${esc(r.name || 'Ismsiz')}</b> · ${ago(r.at)}${r.candidateId ? ' <span class="tag">nomzod</span>' : ''}</div>`).join('')}</div>
+      <div class="who">${v.recent.map(r => `<div><b ${r.candidateId ? `data-resume="${esc(r.candidateId)}" title="Rezyumeni ochish"` : ''}>${esc(r.name || 'Ismsiz')}</b> · ${ago(r.at)}${r.candidateId ? ' <span class="tag">nomzod</span>' : ''}</div>`).join('')}</div>
     </div>`).join('');
 }
 
@@ -225,6 +225,7 @@ async function openUser(tg){
     const d = await api('/api/agency/analytics/user/' + encodeURIComponent(tg));
     $('mdBox').innerHTML = `<h3>${esc((d.candidate && d.candidate.fullName) || d.name || 'Ismsiz')}</h3>
       <div class="sub" style="color:var(--th-muted);font-size:13px">${d.candidate ? 'Nomzod · ' + esc(d.candidate.phone || '') : 'Hali anketa tugatmagan'}</div>
+      ${d.candidate ? `<button class="th-btn" data-resume="${esc(d.candidate.id)}" style="margin-top:10px">Rezyumeni ochish</button>` : ''}
       <div class="tl">${d.events.map(e => `<div>${esc(e.label)}${e.ref ? ': <b>' + esc(e.ref) + '</b>' : ''}<small>${ago(e.at)}</small></div>`).join('')}</div>`;
   } catch (e) { $('mdBox').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 }

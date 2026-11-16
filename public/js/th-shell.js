@@ -134,6 +134,13 @@
   }
   window.thShell = { refreshCounts };
 
+  // Rezyume oynasi (th-resume) va rasm oynasi (th-viewer) — HAMMA panel
+  // sahifasida: nomzod ismi qayerda bo'lsa ham data-resume bilan ochiladi
+  [['thResume', '/js/th-resume.js?v=1'], ['thViewer', '/js/th-viewer.js?v=2']].forEach(([g, src]) => {
+    if (window[g] || document.querySelector(`script[src^="${src.split('?')[0]}"]`)) return;
+    const s = document.createElement('script'); s.src = src; s.defer = true; document.head.appendChild(s);
+  });
+
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount);
   else mount();
 })();

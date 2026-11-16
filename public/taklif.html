@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="/css/th-app.css?v=2">
 <script src="/js/th-shell.js?v=5" defer></script>
 <script src="/js/th-viewer.js?v=2" defer></script>
+
 <style>
   /* Taklif navbati — bu sahifa TELEFONDA ishlatiladi: SMS shu telefondan
      ketadi. Shuning uchun kompyuter emas, telefon ko'rinishi asosiy. */
@@ -191,7 +192,7 @@ function drawList(){
     return `<div class="th-card row ${done ? 'done' : ''}" data-id="${esc(c.id)}">
       <div class="av">${c.photo ? `<img src="${esc(c.photo)}" alt="" data-zoom>` : esc(ini)}</div>
       <div class="who">
-        <div class="nm">${esc(c.name || c.phone)}</div>
+        <div class="nm" data-resume="${esc(c.id)}" title="Rezyumeni ochish">${esc(c.name || c.phone)}</div>
         <div class="sb">${esc(bits.join(' · '))}</div>
       </div>
       ${done

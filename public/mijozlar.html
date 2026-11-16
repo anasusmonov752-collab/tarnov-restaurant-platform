@@ -509,7 +509,7 @@ async function openShort(id){
 
     return `<div class="ci" data-it="${esc(c.id)}">
       <div class="ci-top">
-        <div class="ci-nm">${esc(c.fullName) || 'Nomsiz'}
+        <div class="ci-nm" data-resume="${esc(c.id)}" title="Rezyumeni ochish">${esc(c.fullName) || 'Nomsiz'}
           <span style="font-weight:600;color:var(--muted);font-size:12.5px">${esc(c.publicCode) || ''}</span>
         </div>
         <span class="pill ${st.cls}">${st.lbl}</span>

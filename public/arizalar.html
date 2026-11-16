@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="/css/th-app.css?v=2">
 <script src="/js/th-shell.js?v=4" defer></script>
 <script src="/js/th-viewer.js?v=2" defer></script>
+
 <style>
 /* Hamma vakansiyalar bo'yicha arizalar — bitta quti (routes/vacancies /applications/inbox) */
 :root{ --bg:#EEF3FB; --ink:#16233A; --gold:#2563EB; --card:#FFFFFF; --line:#E1E8F2; --muted:#64748B; --danger:#C25B4C; --ok:#2E9E5B; --warn:#B4802E; --soft:#F3F7FD; }
@@ -39,6 +40,7 @@ button{font-family:inherit}
 .av{width:44px;height:44px;border-radius:50%;flex:none;background:var(--soft);color:var(--gold);font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .av img{width:100%;height:100%;object-fit:cover}
 .nm{font-size:15.5px;font-weight:600}
+.nm[data-resume]:hover{color:var(--gold);text-decoration:underline}
 .sb{font-size:13px;color:var(--muted);margin-top:2px;line-height:1.45}
 .vc{font-size:13.5px;margin-top:6px}
 .vc b{font-weight:600}
@@ -130,12 +132,11 @@ function card(x){
   const sub = [role, c.experienceYears ? c.experienceYears + ' yil tajriba' : 'Tajribasiz', c.location].filter(Boolean).join(' · ');
   const decided = x.state === 'shortlisted' || x.state === 'rejected';
   const tel = c.phone ? String(c.phone).replace(/[^\d+]/g, '') : '';
-  const base = `/recruitment.html?${c.source === 'anketa' ? 'src=anketa&' : ''}q=${encodeURIComponent(c.publicCode || c.fullName || '')}`;
   return `<article class="ap ${x.unseen ? 'unseen' : ''}" data-id="${x.id}">
     <div class="ap-h">
       <div class="av">${c.hasPhoto ? `<img src="/api/recruitment/${encodeURIComponent(c.id)}/photo?v=${encodeURIComponent(c.updatedAt || '')}" alt="">` : esc(initials(c.fullName))}</div>
       <div style="min-width:0;flex:1">
-        <div class="nm">${esc(c.fullName || 'Nomsiz')}${c.age ? `, ${c.age} yosh` : ''}</div>
+        <div class="nm" data-resume="${esc(c.id)}" title="Rezyumeni ochish">${esc(c.fullName || 'Nomsiz')}${c.age ? `, ${c.age} yosh` : ''}</div>
         <div class="sb">${esc(sub)}</div>
         <div class="vc">→ <b>${esc(x.vacancy.title)}</b>${x.client.name ? ` · ${esc(x.client.name)}` : ''}${x.client.status === 'pending' ? ' <span class="tag" title="Hali mijoz emas — qo\'ng\'iroqda «3 nomzod bepul» taklifi">potensial mijoz</span>' : ''}</div>
       </div>
@@ -157,7 +158,7 @@ function card(x){
         ? `<button class="btn btn-no" data-rj="${x.id}">Ha, rad etish</button><button class="btn" data-rjx="1">Bekor</button>`
         : `<button class="btn btn-no" data-ask="${x.id}">Rad etish</button>`) : ''}
       <span class="sp"></span>
-      <a class="btn" href="${base}" data-open="${x.id}">Bazada ochish</a>
+      <button class="btn" data-resume="${esc(c.id)}">Rezyume</button>
     </div>
   </article>`;
 }

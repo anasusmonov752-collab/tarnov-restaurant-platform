@@ -82,9 +82,18 @@ test('to\'liq oqim: rozilik -> shablon -> ovoz -> tasdiq -> yetishmaganlar -> ta
   assert.equal(doc.voiceFileId, 'V1');
   const review = sent.find(x => /Mana nimani tushundim/.test(x.text));
   assert.ok(review && /Aziza Karimova/.test(review.text));
-  assert.ok(btns(review).some(b => b.callback_data === `vi:y:${r0.id}`));
-
+  // Yetishmagani bor — tasdiq tugmasi Mini App'ni ochadi (chatda bittalab emas; Anas, 2026-11-16)
+  const fillBtn = btns(review)[0];
+  assert.ok(fillBtn.web_app && fillBtn.web_app.url === `https://x/anketa.html?r=${r0.id}&fill=1`, JSON.stringify(fillBtn));
+  assert.match(review.text, /bitta oynada to'ldirasiz/);
+  // Eski xabardagi "vi:y" tugmasi ham Mini App'ga yuboradi
+  sent = [];
   await vi.handleCallback({ data: `vi:y:${r0.id}`, chatId: '777', from, appBase: 'https://x' });
+  assert.ok(btns(sent[0]).some(b => b.web_app && /fill=1/.test(b.web_app.url)));
+  assert.equal((await cur()).vAsk || '', '');
+
+  // Mini App ochilmasa (appBase yo'q) — zaxira: chatda bittalab
+  await vi.handleCallback({ data: `vi:y:${r0.id}`, chatId: '777', from });
   // Yetishmaganlarni bittadan: variant — birinchisi, rasm, telefon, matn
   for (let i = 0; i < 25; i++) {
     doc = await cur();

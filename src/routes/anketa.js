@@ -145,8 +145,13 @@ router.post('/:rid/submit', guard, asyncHandler(async (req, res) => {
   const appBase = publicBase(req);
   const out = await survey.finalize(r, { appBase });
   const lang = I18N.LANGS.includes(r.lang) ? r.lang : I18N.fromTelegram(req.tgUser.language_code);
+  // Ovozli rezyumedan kelgan (yetishmaganini Mini App'da to'ldirdi — anketa.html?fill=1):
+  // ovoz yozuvi, tavsif va "ovozni afzal ko'radi" ham yoziladi (bot yo'li bilan bir xil)
+  const voice = r.mode === 'voice';
+  if (voice) await require('../services/voiceIntake').applyVoice(r, out);
   // Rahmat (tugmali), agentlikka xabar, ochiq ishlar soni — ovozli anketa bilan bitta joy
-  const { jobs, matches, next } = await require('../services/anketaDone').afterFinalize(r, out, { appBase, lang });
+  const { jobs, matches, next } = await require('../services/anketaDone').afterFinalize(r, out,
+    { appBase, lang, via: voice ? 'voice' : undefined });
 
   res.json({ ok: true, created: out.created, applied: out.applied,
     vacancyTitle: out.vacancy ? vac.titleFor(out.vacancy, lang) : '',

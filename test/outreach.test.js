@@ -184,7 +184,7 @@ test('shaxsiy havola ekrani: anketa yo\'q, lavozimidagi ish, tugma = ariza', asy
   assert.match(scr.text, /Assalomu alaykum, Nilufar!/);
   assert.match(scr.text, /<b>TalentHub<\/b> — Toshkentdagi restoranlar uchun ishga joylash agentligi/);
   assert.ok(!/bizda bor|to'ldirish shart emas/.test(scr.text), scr.text);
-  assert.match(scr.text, /Xostess · Tarnov · 225 000/);
+  assert.match(scr.text, /1\. <b>Xostess<\/b> · Tarnov\n💰 225 000/);
   assert.ok(!/Ofitsiant/.test(scr.text), 'faqat o\'z lavozimi');
   assert.equal(scr.keyboard[0][0].callback_data, 'ft:ap:vx');
   assert.ok(scr.keyboard.flat().some(b => b.callback_data === 'ft:no'));     // chiqish yo'li

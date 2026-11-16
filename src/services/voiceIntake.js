@@ -199,17 +199,27 @@ async function askNext(r, chatId, lang, appBase) {
   return send(chatId, body + '\n\n' + T(lang, 'vi.textHow'));
 }
 
+// ── Yetishmaganlari — Mini App'da bitta oynada (anketa.html?fill=1) ──
+// Ilgari bot chatda bittalab so'rardi (ism, telefon, rasm...). Anas (2026-11-16):
+// "Mini App'ni nimaga yaratdik? Nomzod qolganini o'sha yerda to'g'rilasin".
+// Javoblar shu SurveyResponse'da — anketa faqat bo'sh majburiy savollarni beradi,
+// yuborilganda routes/anketa submit ovoz maydonlarini ham yozadi (applyVoice).
+const fillUrl = (appBase, r) => `${appBase}/anketa.html?r=${r.id}&fill=1`;
+
+/** Ovozli rezyume (mijoz eshitadi), o'zi haqida tavsif — finalize'dan keyin (bot ham, anketa ham) */
+async function applyVoice(fresh, out) {
+  const set = { prefersVoice: true };
+  if (fresh.voiceFileId) set.voiceIntro = { fileId: fresh.voiceFileId, dur: fresh.voiceDur || 0 };
+  if (fresh.vSummary && (out.created || !out.candidate.summary)) set.summary = fresh.vSummary;
+  await Candidate.updateOne({ _id: out.candidate._id }, { $set: set });
+}
+
 // ── Tugadi: anketaning o'zi ──
 async function finish(r, chatId, lang, appBase) {
   const fresh = await SurveyResponse.findOne({ _id: r._id });
   if (!fresh || fresh.status === 'done') return null;
   const out = await survey.finalize(fresh, { appBase });
-  // Ovozli rezyume (mijoz eshitadi) va o'zi haqida tavsif
-  const set = {};
-  if (fresh.voiceFileId) set.voiceIntro = { fileId: fresh.voiceFileId, dur: fresh.voiceDur || 0 };
-  if (fresh.vSummary && (out.created || !out.candidate.summary)) set.summary = fresh.vSummary;
-  set.prefersVoice = true;
-  await Candidate.updateOne({ _id: out.candidate._id }, { $set: set });
+  await applyVoice(fresh, out);
   await send(chatId, T(lang, 'vi.done'), { reply_markup: { remove_keyboard: true } });
   await require('./anketaDone').afterFinalize(fresh, out, { appBase, lang, via: 'voice' });
   return out;
@@ -245,8 +255,12 @@ async function processVoice(r, voice, chatId, lang, appBase, text = '') {
   const up = await SurveyResponse.findOneAndUpdate({ _id: r._id }, { $set: set }, { new: true });
   const L = up.lang || lang;
   const missing = await missingOf(up);
+  // Yetishmagan bo'lsa — tasdiq tugmasi to'g'ridan-to'g'ri Mini App'ni ochadi
+  const okBtn = missing.length && appBase
+    ? { text: T(L, 'vi.fillBtn'), web_app: { url: fillUrl(appBase, up) } }
+    : { text: T(L, 'vi.ok'), callback_data: `vi:y:${r.id}` };
   return send(chatId, reviewText(up, L, missing), kb([
-    [{ text: T(L, 'vi.ok'), callback_data: `vi:y:${r.id}` }],
+    [okBtn],
     [{ text: T(L, 'vi.redo'), callback_data: `vi:re:${r.id}` }]]));
 }
 
@@ -400,6 +414,13 @@ async function handleCallback({ data, chatId, from, appBase = '' }) {
     return { ok: true, text: '🎤' };
   }
   if (op === 'y') {
+    // Eski xabardagi tugma: yetishmagan bo'lsa — Mini App (chatda bittalab emas)
+    const missing = await missingOf(r);
+    if (missing.length && appBase) {
+      await send(chatId, T(lang, 'vi.fillNote', { n: missing.length }),
+        kb([[{ text: T(lang, 'vi.fillBtn'), web_app: { url: fillUrl(appBase, r) } }]]));
+      return { ok: true, text: '✓' };
+    }
     await askNext(r, chatId, lang, appBase);
     return { ok: true, text: '✓' };
   }
@@ -437,4 +458,4 @@ async function transcribe(voice, agencyId) {
   return String(text || '').trim().slice(0, 2000);
 }
 
-module.exports = { transcribe, entryButton, onMessage, afterContact, handleCallback, answersFrom, salaryBucket, parseDate, missingOf, VOICE_SCHEMA, CB_RE };
+module.exports = { transcribe, entryButton, onMessage, afterContact, handleCallback, answersFrom, salaryBucket, parseDate, missingOf, applyVoice, fillUrl, VOICE_SCHEMA, CB_RE };

@@ -69,14 +69,50 @@ async function openJobs(agencyId, role, limit = 3) {
   return { n, rows };
 }
 
-/** "Chilonzor · 4–5 mln" — restoran NOMISIZ (kontaktgacha ko'rinmaydi) */
-// Sarlavha lavozimning o'zi bo'lsa takrorlanmaydi: ro'yxat allaqachon
-// tanlangan lavozim ostida turibdi
-function jobLine(v, lang, role) {
-  const title = vac.titleFor(v, lang);
-  const same = role && title && title.toLowerCase() === T(lang, 'role.' + role).toLowerCase();
-  const parts = [same ? '' : title, v.location || T(lang, 'cb.tashkent'), vac.salaryText(v, lang)];
-  return '• ' + parts.filter(Boolean).map(esc).join(' · ');
+// "Buyurtma yig'uvchi (saboy, dostavka)" -> ["Buyurtma yig'uvchi", "saboy, dostavka"]
+function splitTitle(t) {
+  const m = /^(.*?)\s*\((.+)\)\s*$/.exec(String(t || ''));
+  return m ? [m[1], m[2]] : [String(t || ''), ''];
+}
+
+/**
+ * Botdagi ish ro'yxati — HAR ISH ALOHIDA BLOK (Anas, 2026-11-16: "nom, filiallar,
+ * to'lov ketma-ket bir qatorda — tushunish juda qiyin"; "Ofitsiant" sarlavhasi
+ * lavozimga teng bo'lgani uchun yashirilib, qator filiallardan boshlanardi):
+ *   1. <b>Buyurtma yig'uvchi</b> · Tarnov
+ *   <i>saboy, dostavka</i>
+ *   💰 225 000 so'm / kun · Har 10 kunda to'lanadi
+ * Filiallar hammasida bir xil bo'lsa — ro'yxat ostida BIR MARTA. Lavozimning
+ * o'zi ("Ofitsiant") birinchi. emp — ko'rsatishga rozi restoran nomlari (showName).
+ * @returns {{ text, rows, mixed }} rows — ko'rsatilgan tartibda (tugmalar uchun),
+ *   mixed — lavozim nomi bilan boshlanmaydigan ish bor ("Ofitsiant va yaqin ishlar")
+ */
+function jobBlocks(rows, lang, { role = '', emp = {} } = {}) {
+  const label = role ? T(lang, 'role.' + role).toLowerCase() : '';
+  const own = v => !!label && splitTitle(vac.titleFor(v, lang))[0].toLowerCase().startsWith(label);
+  const sorted = rows.slice().sort((a, b) => own(b) - own(a));
+  const locs = [...new Set(sorted.map(v => String(v.location || '').trim()))];
+  const oneLoc = locs.length === 1 ? locs[0] : '';
+  const blocks = sorted.map((v, i) => {
+    const [main, note] = splitTitle(vac.titleFor(v, lang));
+    const money = [vac.salaryText(v, lang), vac.payoutText(v, lang)].filter(Boolean).join(' · ');
+    return [
+      `${i + 1}. <b>${esc(main)}</b>${emp[v.clientId] ? ' · ' + esc(emp[v.clientId]) : ''}`,
+      note ? `<i>${esc(note)}</i>` : '',
+      money ? '💰 ' + esc(money) : '',
+      !oneLoc && v.location ? '📍 ' + esc(v.location) : ''
+    ].filter(Boolean).join('\n');
+  });
+  if (oneLoc) blocks.push('📍 ' + esc(oneLoc));
+  return { text: blocks.join('\n\n'), rows: sorted, mixed: !!label && sorted.some(v => !own(v)) };
+}
+
+/** Ko'rsatishga rozi restoranlar nomi: { clientId: 'Tarnov' } (Client.showName) */
+async function employerNames(agencyId, rows) {
+  const ids = [...new Set(rows.map(v => v.clientId))];
+  if (!ids.length) return {};
+  const cl = await Client.find({ agencyId, id: { $in: ids }, showName: true }, 'id name').lean();
+  return Object.fromEntries(cl.map(c => [c.id, c.name]));
 }
 
 /**
@@ -101,10 +137,11 @@ async function candidateRole({ agencyId, role, lang, tgUserId, chatId, appBase, 
     name, isTest: r.isTest || !!isTest });
 
   const head = `${EMOJI[role] || ''} <b>${esc(T(lang, 'role.' + role))}</b>`.trim();
+  const jb = jobBlocks(rows, lang, { role, emp: await employerNames(agencyId, rows) });
   const text = [
-    n ? T(lang, 'ft.cJobs', { head, n }) : T(lang, 'ft.cNoJobs', { head }),
+    n ? T(lang, jb.mixed ? 'ft.cJobsMix' : 'ft.cJobs', { head, n }) : T(lang, 'ft.cNoJobs', { head }),
     rows.length ? '' : null,
-    ...rows.map(v => jobLine(v, lang, role)),
+    rows.length ? jb.text : null,
     '',
     n > rows.length ? T(lang, 'ft.cMore', { n: n - rows.length }) : '',
     // Ochiq ish yo'q bo'lsa "ariza berish uchun" deyish noto'g'ri — ariza
@@ -183,33 +220,31 @@ async function candidateInvite({ cand, lang, appBase }) {
   if (!n) { ({ n, rows } = await openJobs(cand.restaurantId, '', 3)); mine = false; }
   if (!cand.isTest) rows = rows.filter(v => !v.isTest);
 
-  const [applied, clients] = await Promise.all([
+  const [applied, emp] = await Promise.all([
     Application.find({ candidateId: cand.id, vacancyId: { $in: rows.map(v => v.id) } }, 'vacancyId').lean(),
-    Client.find({ agencyId: cand.restaurantId, id: { $in: rows.map(v => v.clientId) } }, 'id name showName').lean()
+    employerNames(cand.restaurantId, rows)
   ]);
   const sent = new Set(applied.map(a => a.vacancyId));
-  const emp = Object.fromEntries(clients.filter(c => c.showName).map(c => [c.id, c.name]));
   // SMS bilan bir xil qoida (yashirin ism -> salomsiz ism, KATTA harf -> oddiy), asl yozuvda
   const name = require('./outreach').nameWord(cand.fullName);
 
   const head = role ? `${EMOJI[role] || ''} <b>${esc(T(lang, 'role.' + role))}</b>`.trim() : '';
-  const lines = rows.map(v => {
-    const bits = [vac.titleFor(v, lang), emp[v.clientId], vac.salaryText(v, lang), vac.payoutText(v, lang)].filter(Boolean).map(esc);
-    return '• ' + bits.join(' · ') + (v.location ? `\n  📍 ${esc(v.location)}` : '');
-  });
+  const jb = jobBlocks(rows, lang, { role: mine ? role : '', emp });
+  rows = jb.rows;                                    // tugmalar ro'yxat tartibida
   // Salom -> kimmiz (SMS'dan kelgan odam bizni tanimaydi) -> ishlar -> nima bo'ladi.
   // "Rezyumengiz tayyor, to'ldirish shart emas" ATAYLAB yo'q (Anas, 2026-11-16).
   const text = [
     T(lang, 'ft.iHi', { name: esc(name) }).replace(/,\s*!/, '!'), '',
     T(lang, 'ft.iAbout'), '',
-    !n ? T(lang, 'ft.iNoJobs') : mine ? T(lang, 'ft.cJobs', { head, n }) : T(lang, 'ft.iJobsAny'),
-    ...lines,
+    !n ? T(lang, 'ft.iNoJobs') : mine ? T(lang, jb.mixed ? 'ft.cJobsMix' : 'ft.cJobs', { head, n }) : T(lang, 'ft.iJobsAny'),
+    rows.length ? '' : null,
+    rows.length ? jb.text : null,
     n ? '' : null,
     n ? T(lang, 'ft.iPick') : null
   ].filter(x => x !== null).join('\n').replace(/\n{3,}/g, '\n\n');
 
   const keyboard = rows.map(v => {
-    const t = [vac.titleFor(v, lang), emp[v.clientId]].filter(Boolean).join(' · ');
+    const t = [splitTitle(vac.titleFor(v, lang))[0], emp[v.clientId]].filter(Boolean).join(' · ');
     return [sent.has(v.id)
       ? { text: T(lang, 'ft.iApplied', { v: t }), callback_data: 'ft:ap:' + v.id }
       : { text: '✅ ' + t, callback_data: 'ft:ap:' + v.id }];

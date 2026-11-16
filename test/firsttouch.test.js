@@ -140,6 +140,21 @@ test('nomzod: lavozim tanlansa — shu lavozimdagi ochiq ishlar va anketa tugmas
   assert.equal(await M.SurveyResponse.countDocuments({ agencyId: A, tgUserId: '777' }), 1);
 });
 
+test('ish ro\'yxati: har ish alohida blok, lavozimning o\'zi birinchi, filiallar bir marta (Anas, 2026-11-16)', async () => {
+  await M.Client.create({ id: 'cl1', agencyId: A, name: 'Tarnov', status: 'active', showName: true });
+  const loc = 'Sebzor, Drujba, Chorsu';
+  await vacancy('va', { title: "Buyurtma yig'uvchi (saboy, dostavka)", location: loc, salaryFrom: 225000, salaryTo: 225000, salaryPeriod: 'day', payout: 'tenday' });
+  await vacancy('vb', { title: 'Ranner (ovqat tashuvchi)', location: loc, salaryFrom: 215000, salaryTo: 215000, salaryPeriod: 'day' });
+  await vacancy('vc', { title: 'Ofitsiant', location: loc, salaryFrom: 7.5e6, salaryTo: 13e6 });
+  const r = await ft.candidateRole({ agencyId: A, role: 'ofitsiant', lang: 'uz', tgUserId: '71', chatId: '71', appBase: 'https://x' });
+  // Ofitsiantning o'zi bitta — "Ofitsiant — 3 ta ochiq ish" emas
+  assert.match(r.text, /Ofitsiant<\/b> va shunga yaqin ishlar — hozir <b>3 ta<\/b>/);
+  assert.match(r.text, /1\. <b>Ofitsiant<\/b> · Tarnov\n💰 7 500 000/);       // lavozimning o'zi birinchi, nomi bor
+  assert.match(r.text, /<b>Buyurtma yig'uvchi<\/b> · Tarnov\n<i>saboy, dostavka<\/i>\n💰 225 000 so'm \/ kun · Har 10 kunda/);
+  assert.equal((r.text.match(/📍/g) || []).length, 1, 'filiallar bir marta');
+  assert.ok(r.text.includes('📍 ' + loc));
+});
+
 test('"Orqaga" /start ekranini AYNAN qaytaradi (til tugmasi va zaxira yo\'l yo\'qolmaydi)', async () => {
   await vacancy('vb');
   const sv = await require('../src/services/survey').ensureDefault(A);

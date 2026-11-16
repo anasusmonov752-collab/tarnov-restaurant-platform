@@ -14,9 +14,11 @@ const tg = require('./telegram');
 const PROFILE = {
   uz: {
     name: 'TalentHub — restoranlarda ish',
-    short: "Toshkent restoranlarida ish. Maosh va tuman oldindan ko'rinadi. Siz uchun bepul. TalentHub rasmiy boti.",
+    // Qisqa tavsif — FAQAT agentlik kimligi va asosiy vazifasi (Anas, 2026-11-16:
+    // "rasmiy" yo'q, faqat restoranlar emas, maosh yo'q)
+    short: 'TalentHub — ishga joylash agentligi. Ish beruvchilarga xodim, ish izlovchilarga mos ish topib beramiz.',
     desc: [
-      'TalentHub — Toshkent restoranlari uchun ishga joylash agentligining rasmiy boti.',
+      'TalentHub — ishga joylash agentligi.',
       '',
       "💼 Ofitsiant, xostess, oshpaz, kassir, barmen va boshqa ishlar",
       "💰 Maosh va tuman oldindan ko'rinadi",
@@ -31,9 +33,9 @@ const PROFILE = {
   },
   ru: {
     name: 'TalentHub — работа в ресторанах',
-    short: 'Работа в ресторанах Ташкента. Зарплата и район видны сразу. Для вас бесплатно. Официальный бот TalentHub.',
+    short: 'TalentHub — кадровое агентство. Подбираем сотрудников для работодателей и работу для соискателей.',
     desc: [
-      'TalentHub — официальный бот агентства по трудоустройству для ресторанов Ташкента.',
+      'TalentHub — кадровое агентство.',
       '',
       '💼 Официант, хостес, повар, кассир, бармен и другая работа',
       '💰 Зарплата и район видны сразу',

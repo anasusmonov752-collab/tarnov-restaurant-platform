@@ -71,6 +71,7 @@ body.th-app, body.th-app button, body.th-app input, body.th-app select, body.th-
 .th-app .btn:hover{ opacity:.88; }
 .th-app .btn:active{ transform:scale(.97); }
 .th-app .btn-p, .th-app .btn.primary, .th-app .btn-primary{ background:var(--th-brand) !important; color:#fff !important; }
+.th-app .btn-tg{ background:#229ED9 !important; color:#fff !important; }   /* nomzodning Telegram chati */
 .th-app .btn-ok{ background:var(--th-ok-soft) !important; color:var(--th-ok) !important; }
 .th-app .btn-no, .th-app .btn-danger{ background:var(--th-danger-soft) !important; color:var(--th-danger) !important; }
 .th-app .btn-sm{ min-height:30px; padding:0 12px !important; font-size:var(--th-fs-foot) !important; }

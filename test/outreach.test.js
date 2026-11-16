@@ -5,7 +5,7 @@ const { test, before, after, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
 const mongoose = require('mongoose');
 
-let rs, Candidate, Client, outreach, vac;
+let rs, Candidate, Client, Vacancy, outreach, vac;
 const A = 'agO';
 
 before(async () => {
@@ -14,12 +14,23 @@ before(async () => {
   await mongoose.connect(rs.getUri());
   Candidate = require('../src/models/Candidate');
   Client = require('../src/models/Client');
+  Vacancy = require('../src/models/Vacancy');
   await Promise.all([Candidate.syncIndexes(), Client.syncIndexes()]);
   outreach = require('../src/services/outreach');
   vac = require('../src/services/vacancy');
 });
 after(async () => { await mongoose.disconnect(); if (rs) await rs.stop(); });
-beforeEach(async () => { await Candidate.deleteMany({}); });
+// Navbatga faqat OCHIQ VAKANSIYASI bor lavozim tushadi (Tarnov kabi: ofitsiant +
+// ranner, salatchi (oshpaz roli), xostess). Ranner ATAYLAB birinchi yaratiladi —
+// ofitsiantlarga baribir "ofitsiant" deyilishi kerak.
+const VAC = [['vr', 'Ranner', 'ofitsiant'], ['vf', 'Ofitsiant', 'ofitsiant'], ['vs', 'Salatchi', 'oshpaz'], ['vh', 'Xostess', 'xostess']];
+beforeEach(async () => {
+  await Candidate.deleteMany({});
+  await Vacancy.deleteMany({});
+  let t = Date.now() - 1e6;
+  for (const [id, title, role] of VAC)
+    await Vacancy.create({ id, agencyId: A, clientId: 'ct', title, role, status: 'open', listed: true, createdAt: new Date(t += 1000) });
+});
 
 const cand = (id, x = {}) => Candidate.create(Object.assign({
   id, restaurantId: A, fullName: 'Karimov Dilshod Anvarovich', phone: '+998 90 123 45 67',
@@ -39,6 +50,7 @@ test('navbatga faqat yozsa bo\'ladiganlar tushadi', async () => {
   await cand('x8', { smsSentAt: new Date() });                  // allaqachon yozilgan
   await cand('x9', { isTest: true });
   await cand('x10', { restaurantId: 'boshqa' });                // boshqa agentlik
+  await cand('x11', { role: 'menejer' });                       // menejerga vakansiya yo'q — SMS ketmasin
 
   const out = await outreach.list(A);
   assert.deepEqual(out.rows.map(r => r.id).sort(), ['ok1', 'ok2']);
@@ -47,6 +59,20 @@ test('navbatga faqat yozsa bo\'ladiganlar tushadi', async () => {
 
   const one = await outreach.list(A, { role: 'oshpaz' });
   assert.deepEqual(one.rows.map(r => r.id), ['ok2']);
+  assert.equal((await outreach.list(A, { role: 'menejer' })).total, 0);
+});
+
+test('{lavozim} — haqiqiy vakansiya nomi: oshpazga "salatchi", ofitsiantga "ofitsiant"', async () => {
+  await cand('l1'); await cand('l2', { role: 'oshpaz' }); await cand('l3', { role: 'xostess' });
+  const by = Object.fromEntries((await outreach.list(A)).rows.map(r => [r.id, r]));
+  assert.equal(by.l1.lavozim, 'ofitsiant');                     // Ranner birinchi bo'lsa ham
+  assert.equal(by.l2.lavozim, 'salatchi');
+  assert.equal(by.l3.lavozim, 'xostess');
+  const sms = outreach.render(outreach.DEFAULT_TPL, { fullName: 'Karimov Dilshod', role: 'oshpaz' }, 't.me/x', by.l2.lavozim);
+  assert.match(sms, /Tarnov restoraniga salatchi kerak/);
+  // Vakansiya yopilsa — lavozim navbatdan chiqadi
+  await Vacancy.updateMany({ role: 'oshpaz' }, { $set: { status: 'closed' } });
+  assert.ok(!(await outreach.list(A)).rows.some(r => r.id === 'l2'));
 });
 
 test('telefon formatdan qat\'i nazar +998 ga keltiriladi, ism ikkinchi so\'z', async () => {
@@ -66,11 +92,11 @@ test('standart matn: GSM-7, ko\'pi bilan 2 SMS, rekruter ovozi', async () => {
   const i = outreach.smsInfo(text);
   assert.ok(i.parts <= 2, text);
   assert.deepEqual(i.bad, [], 'GSM-7 ga kirmaydigan belgi bo\'lmasin');
-  assert.ok(/TalentHub agentligi rekruteriman/.test(text) && /hh\.uz/.test(text), text);
+  // Kim yozyapti va raqam qayerdan — shaxsiy raqamdan kelgan SMS spamga o'xshamasin
+  assert.ok(/TalentHub agentligidan/.test(text) && /Raqamingizni hh\.uz/.test(text), text);
   assert.ok(text.includes('Dilshod') && text.includes('ofitsiant') && text.includes('t.me/'));
-  // Maosh, to'lov va "ariza" yo'q — SMS qiziqtiradi, batafsilini bot beradi
-  assert.ok(text.includes('batafsil') && text.includes('t.me/'), text);
-  assert.ok(!/ariza|so'm/i.test(text), text);
+  // Maosh, to'lov, "ariza" va "rezyume tayyor, to'ldirish shart emas" yo'q (Anas)
+  assert.ok(!/ariza|so'm|tayyor|to'ldirish/i.test(text), text);
 
   // Bitta tire yoki qo'shtirnoq SMS'ni uchga bo'ladi — ogohlantirish shart
   const bad = outreach.smsInfo('Assalomu alaykum — TalentHub');
@@ -147,7 +173,8 @@ test('shaxsiy havola ekrani: anketa yo\'q, lavozimidagi ish, tugma = ariza', asy
 
   const scr = await ft.candidateInvite({ cand: c, lang: 'uz', appBase: 'https://x' });
   assert.match(scr.text, /Assalomu alaykum, Nilufar!/);
-  assert.match(scr.text, /rezyumengiz bizda bor/);
+  assert.match(scr.text, /<b>TalentHub<\/b> — Toshkentdagi restoranlar uchun ishga joylash agentligi/);
+  assert.ok(!/bizda bor|to'ldirish shart emas/.test(scr.text), scr.text);
   assert.match(scr.text, /Xostess · Tarnov · 225 000/);
   assert.ok(!/Ofitsiant/.test(scr.text), 'faqat o\'z lavozimi');
   assert.equal(scr.keyboard[0][0].callback_data, 'ft:ap:vx');
@@ -163,7 +190,7 @@ test('shaxsiy havola ekrani: anketa yo\'q, lavozimidagi ish, tugma = ariza', asy
 
   // Ruschaga — o'sha ekran ruscha
   const ru = await ft.handleCallback({ data: 'ft:il:ru', chatId: '501', appBase: 'https://x', from: { id: 501 } });
-  assert.match(ru.edit, /Ваше резюме с hh\.uz у нас есть/);
+  assert.match(ru.edit, /агентство по трудоустройству для ресторанов Ташкента/);
   assert.match(ru.keyboard[0][0].text, /Отправлено/);                        // allaqachon yuborilgani ko'rinadi
 
   // Yopilgan ish va telefoni buzuq nomzod

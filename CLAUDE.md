@@ -1155,6 +1155,22 @@ esa hamma narsani qaytadan yozishi kerak edi.
 `test/outreach.test.js` (9). Webhook darajasida bosib o'qildi: SMS -> havola (rus
 Telegram) -> ekran -> tugma -> tasdiq + prescreen -> qayta bosish -> begona odam.
 
+**hh SMS VA HAVOLA EKRANI — 3-VERSIYA** (2026-11-16, Anas: "rezyumengiz tayyor,
+hech narsa to'ldirish shart emas — bunaqa gaplar umuman kerak emas; havolada TalentHub
+haqida qisqacha ma'lumot bo'lsin"). SMS (`outreach.DEFAULT_TPL`): "Assalomu alaykum,
+{ism}! TalentHub agentligidan yozyapman. Raqamingizni hh.uz'dagi rezyumengizdan oldik.
+Tarnov restoraniga {lavozim} kerak, sizni shu ishga taklif qilmoqchimiz. Ish shartlari va
+filiallar shu havolada: {havola}" — 2 SMS, GSM-7. Havola ekrani (`firstTouch.candidateInvite`):
+salom -> `ft.iAbout` (TalentHub kimligi: restoranlar bilan to'g'ridan-to'g'ri, vakansiyani
+o'zimiz tekshiramiz, nomzodga bepul — VA'DA, yangi restoranda ham bajarilsin) -> o'z
+lavozimidagi ishlar (maosh + to'lov davri) -> `ft.iPick`. "Rezyume bizda bor / anketa shart
+emas" matnda YO'Q. NAVBAT FAQAT OCHIQ VAKANSIYASI BOR LAVOZIM (`outreach.openRoles`):
+menejer/kassir/barmenga SMS ketsa havolada ranner chiqardi; vakansiya ochilsa o'zi
+qo'shiladi. `{lavozim}` = haqiqiy vakansiya nomi (oshpaz roli -> "salatchi"; lavozim nomi
+bilan boshlanadigan vakansiya bo'lsa — lavozim nomi). Sahifa matni `th_sms_tpl2:` kalitida
+(telefonda saqlangan eski matn yangisini yopmasin). Shu ishda: `/api/telegram/status`
+2e51ec9 dan beri 500 berardi (`outreach.available()` yo'q edi) — tuzatildi.
+
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
 O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda

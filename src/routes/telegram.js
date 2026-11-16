@@ -1217,8 +1217,11 @@ router.get('/status', guard, asyncHandler(async (req, res) => {
     botUsername: '',
     adminLinked: !!t.adminChatId,
     connectedAt: t.connectedAt || null,
-    channels: outreach.available(),
-    smsBalance: await outreach.balance()
+    // SMS server orqali yuborilmaydi (services/outreach — faqat qo'lda, o'z
+    // raqamidan). available()/balance() 2e51ec9 da olib tashlangan — bu yerda
+    // qolib, sahifa 500 berardi.
+    channels: [],
+    smsBalance: null
   };
 
   if (tg.isPlatformReady()) {

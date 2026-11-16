@@ -11,6 +11,7 @@
 // yuborilgandan keyin nima bo'ladi (markSent -> contactLog).
 
 const Candidate = require('../models/Candidate');
+const Vacancy = require('../models/Vacancy');
 const { roleLabel, isValidRole } = require('../data/roles');
 const contactLog = require('./contactLog');
 
@@ -62,7 +63,10 @@ function smsInfo(text) {
 // Maosh, to'lov muddati va "ariza" SMS'da YO'Q (Anas qarori): SMS qiziqish
 // uyg'otadi, javobni botning birinchi ekrani beradi (firstTouch.candidateInvite —
 // maosh, filiallar, bitta tugma). 2 ta SMS (GSM-7) — me'yor; 3+ — sahifa qizil.
-const DEFAULT_TPL = "Salom, {ism}! Men TalentHub agentligi rekruteriman. hh.uz'dagi rezyumengizni ko'rib, sizga {lavozim} lavozimida ish taklif qilmoqchi edim. Qiziq bo'lsa, platformamiz orqali batafsil ma'lumot oling: {havola}";
+// 2026-11-16 (Anas): "rezyumengiz tayyor, to'ldirish shart emas" kabi gaplar KERAK
+// EMAS; raqam qayerdan olingani aytiladi (shaxsiy raqamdan yozilgan SMS spamga
+// o'xshamasin). Restoran nomi matnda — hozircha yagona mijoz Tarnov (showName).
+const DEFAULT_TPL = "Assalomu alaykum, {ism}! TalentHub agentligidan yozyapman. Raqamingizni hh.uz'dagi rezyumengizdan oldik. Tarnov restoraniga {lavozim} kerak, sizni shu ishga taklif qilmoqchimiz. Ish shartlari va filiallar shu havolada: {havola}";
 
 // Shaxsiy havola tokeni: 10 belgi [A-Za-z0-9]. Pastki chiziq yo'q — boshqa
 // /start turlari (a_, v_, ref_, emp_, f_) bilan aralashmaydi. Havola
@@ -109,11 +113,32 @@ function firstName(full) {
 /** +998901234567 — phoneKey (oxirgi 9 raqam) dan, formatdan qat'i nazar */
 const e164 = c => (c.phoneKey ? '+998' + c.phoneKey : '');
 
-function render(tpl, c, link) {
+/**
+ * Ochiq vakansiyasi bor lavozimlar va SMS'dagi {lavozim} so'zi.
+ * Navbatga FAQAT shu lavozimdagilar tushadi: vakansiyasi yo'q menejerga SMS
+ * ketsa, havolada unga "boshqa ishlar" (ranner) chiqadi — nomzod ham, ishonch ham
+ * yo'qoladi (Anas, 2026-11-16). {lavozim} — haqiqiy vakansiya nomi: oshpazlar
+ * uchun vakansiya "Salatchi" bo'lsa SMS'da "salatchi" (aks holda aldangandek).
+ * Lavozim nomi bilan boshlanadigan vakansiya bo'lsa — lavozim nomi.
+ */
+async function openRoles(agencyId) {
+  const vs = await Vacancy.find({ agencyId, status: 'open', listed: { $ne: false }, isTest: { $ne: true } },
+    'role title createdAt').sort({ createdAt: 1 }).lean();
+  const out = {};
+  for (const v of vs) {
+    if (!isValidRole(v.role)) continue;
+    const label = roleLabel(v.role).toLowerCase();
+    const title = latin(String(v.title || '').trim()).toLowerCase();
+    if (!out[v.role] || title.startsWith(label)) out[v.role] = title.startsWith(label) || !title ? label : title;
+  }
+  return out;                                  // { xostess: 'xostess', oshpaz: 'salatchi', ... }
+}
+
+function render(tpl, c, link, lavozim) {
   const name = firstName(c.fullName);
   return String(tpl || DEFAULT_TPL)
     .replace(/\{ism\}/g, name)
-    .replace(/\{lavozim\}/g, (isValidRole(c.role) ? roleLabel(c.role) : 'restoran').toLowerCase())
+    .replace(/\{lavozim\}/g, lavozim || (isValidRole(c.role) ? roleLabel(c.role) : 'restoran').toLowerCase())
     .replace(/\{havola\}/g, link || '')
     .replace(/\s{2,}/g, ' ')
     .trim();
@@ -121,8 +146,10 @@ function render(tpl, c, link) {
 
 /** Navbat: eng yangi rezyumelar oldin (eski rezyume egasi allaqachon ishga kirgan) */
 async function list(agencyId, { role = '', limit = 30, skip = 0, bot = 'TalentHubUzBot' } = {}) {
-  const q = Object.assign({ restaurantId: agencyId }, QUEUE);
-  if (isValidRole(role)) q.role = role;
+  const words = await openRoles(agencyId);
+  const roles = Object.keys(words);
+  const base = Object.assign({ restaurantId: agencyId }, QUEUE, { role: { $in: roles } });
+  const q = Object.assign({}, base, isValidRole(role) ? { role: roles.includes(role) ? role : '__yoq__' } : {});
   const [rows, total, sentToday, byRole] = await Promise.all([
     Candidate.find(q, 'id fullName phone phoneKey role location experienceYears createdAt tgInviteToken')
       .sort({ createdAt: -1 }).skip(skip).limit(Math.min(100, limit)).lean(),
@@ -130,7 +157,7 @@ async function list(agencyId, { role = '', limit = 30, skip = 0, bot = 'TalentHu
     Candidate.countDocuments({ restaurantId: agencyId,
       smsSentAt: { $gte: new Date(Date.now() - 864e5) } }),
     Candidate.aggregate([
-      { $match: Object.assign({ restaurantId: agencyId }, QUEUE) },
+      { $match: base },
       { $group: { _id: '$role', n: { $sum: 1 } } }, { $sort: { n: -1 } }
     ])
   ]);
@@ -145,6 +172,7 @@ async function list(agencyId, { role = '', limit = 30, skip = 0, bot = 'TalentHu
       phone: e164(c),
       role: c.role,
       roleLabel: isValidRole(c.role) ? roleLabel(c.role) : '',
+      lavozim: words[c.role] || '',            // SMS'dagi so'z — haqiqiy vakansiya nomi
       location: c.location || '',
       exp: c.experienceYears || 0,
       days: Math.floor((Date.now() - new Date(c.createdAt).getTime()) / 864e5),
@@ -179,4 +207,4 @@ async function markSent(agencyId, id, undo = false) {
   return true;
 }
 
-module.exports = { QUEUE, DEFAULT_TPL, list, markSent, render, smsInfo, firstName, e164, newToken, ensureTokens, latin };
+module.exports = { QUEUE, DEFAULT_TPL, list, markSent, render, smsInfo, firstName, e164, newToken, ensureTokens, latin, openRoles };

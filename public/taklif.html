@@ -125,7 +125,9 @@ let S = { role: '', skip: 0, rows: [], total: 0, link: '', sent: new Set() };
 
 // Matn har lavozim uchun ALOHIDA saqlanadi: xostess matnini yozib, keyin
 // "Ofitsiant" chipiga o'tilsa, ofitsiantlarga "xostess kerak" ketmasin.
-const tplKey = () => 'th_sms_tpl:' + (S.role || 'all');
+// v2 (2026-11-16): standart matn yangilandi — telefonda saqlangan eski matn
+// yangisini yopmasin (eski kalit endi o'qilmaydi).
+const tplKey = () => 'th_sms_tpl2:' + (S.role || 'all');
 let DEF_TPL = '';
 function loadTpl(){
   let saved = null; try { saved = localStorage.getItem(tplKey()); } catch (e) {}
@@ -135,7 +137,8 @@ function tplText(){ return $('tpl').value; }
 function fill(tpl, c){
   return String(tpl)
     .replace(/\{ism\}/g, c.first || '')
-    .replace(/\{lavozim\}/g, (c.roleLabel || 'restoran').toLowerCase())   // gap o'rtasida — kichik harf
+    // Haqiqiy vakansiya nomi (oshpazlarga "salatchi"), gap o'rtasida — kichik harf
+    .replace(/\{lavozim\}/g, c.lavozim || (c.roleLabel || 'restoran').toLowerCase())
     .replace(/\{havola\}/g, c.link || S.link)   // shaxsiy havola — har odamga o'ziniki
     .replace(/\s{2,}/g, ' ').trim();
 }
@@ -160,7 +163,7 @@ function drawTpl(){
 
 function drawList(){
   if (!S.rows.length) {
-    $('list').innerHTML = '<div class="th-card empty">Bu lavozimda navbat bo\'sh — hammasiga yozilgan.</div>';
+    $('list').innerHTML = '<div class="th-card empty">Navbat bo\'sh. Navbatda faqat ochiq vakansiyasi bor lavozimdagi nomzodlar turadi — boshqa lavozimga vakansiya ochilsa, ular o\'zi qo\'shiladi.</div>';
     return;
   }
   $('list').innerHTML = S.rows.map(c => {

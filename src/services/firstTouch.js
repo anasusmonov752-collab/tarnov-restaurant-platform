@@ -194,11 +194,14 @@ async function candidateInvite({ cand, lang, appBase }) {
 
   const head = role ? `${EMOJI[role] || ''} <b>${esc(T(lang, 'role.' + role))}</b>`.trim() : '';
   const lines = rows.map(v => {
-    const bits = [vac.titleFor(v, lang), emp[v.clientId], vac.salaryText(v, lang)].filter(Boolean).map(esc);
+    const bits = [vac.titleFor(v, lang), emp[v.clientId], vac.salaryText(v, lang), vac.payoutText(v, lang)].filter(Boolean).map(esc);
     return '• ' + bits.join(' · ') + (v.location ? `\n  📍 ${esc(v.location)}` : '');
   });
+  // Salom -> kimmiz (SMS'dan kelgan odam bizni tanimaydi) -> ishlar -> nima bo'ladi.
+  // "Rezyumengiz tayyor, to'ldirish shart emas" ATAYLAB yo'q (Anas, 2026-11-16).
   const text = [
     T(lang, 'ft.iHi', { name: esc(name) }), '',
+    T(lang, 'ft.iAbout'), '',
     !n ? T(lang, 'ft.iNoJobs') : mine ? T(lang, 'ft.cJobs', { head, n }) : T(lang, 'ft.iJobsAny'),
     ...lines,
     n ? '' : null,

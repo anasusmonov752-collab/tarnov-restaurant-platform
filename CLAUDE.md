@@ -1194,6 +1194,26 @@ bilan boshlanadigan vakansiya bo'lsa — lavozim nomi). Sahifa matni `th_sms_tpl
   3 ta"; ilgari "Ofitsiant — 3 ta", ofitsiant esa bitta edi). Restoran nomi — `showName`.
   Telegramda HALI bosib ko'rilmagan.
 
+**SMS BIRINCHI KUNI + PANEL VA BOT** (2026-11-16): 68 SMS, real 6 kirish, 3 ariza (Parizod,
+Nigora, Xusenov). Anas o'z SMS havolalarini tekshirib bosganda Telegrami hh nomzodlariga
+ulanib qoldi -> `outreach.inviteClaim`: admin chati — faqat ko'rinish, boshqa telefonli
+nomzodga ulangan chat — o'z ekrani, token kuymaydi (3 nomzodning havolasi kuygan).
+Paneldagi "Havola yaratish" (`botRelay.invite`) buzuq edi (outreach.send yo'q) — endi faqat
+havola, SMS tokeni bo'lsa o'shani qaytaradi. Taklif navbati: rasm (bosilsa kattalashadi),
+Toshkentdan tashqari chiqmaydi (`outreach.TASHKENT_RE`, hudud bo'sh/metro/Keles qoladi).
+REZYUME ISTALGAN OYNADA — `public/js/th-resume.js` (th-shell hamma panel sahifasiga ulaydi):
+elementga `data-resume="<id>"` kifoya. TELEGRAM TUGMASI (username bo'lsa t.me/<u>, aks holda
+t.me/+998...) — Arizalar, Nomzodlar bazasi, kanban, rezyume oynasi, Taklif navbati (matn
+nusxalanadi). BOT PROFILI — `services/botProfile.js` server ishga tushganda (nom "TalentHub",
+qisqa tavsif FAQAT agentlik kimligi — Anas: "rasmiy" yo'q, restoran/maosh yo'q); avatar
+`docs/talenthub-bot-avatar.png` (BotFather /setuserpic — Bot API o'rnatmaydi).
+TEST REJIMI "📄 hh nomzod" (`tm:hh`): `TestMode.hhCandidateId` — har bosishda arizalari
+o'chadi, yangi token, botga SMS matni; havola admin chatiga bog'lanadi (sinov yozuvi). Rezyume
+tanlash: panel to'liq karta "🧪 Test rejimida sinash" yoki yuklashda `testHh=1` (takror
+tekshiruvisiz). Anasning o'z rezyumesi yuklandi (HR-menejer, isTest). Sinov arizasi haqiqiy
+mijozga bormaydi va Mini App'da ko'rinmaydi (`noTestApps`). Kunduzi deploy — bepul Render
+"waking up" sahifasini ko'rsatadi: mayda o'zgarishlarni kechqurun chiqaring.
+
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
 O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda

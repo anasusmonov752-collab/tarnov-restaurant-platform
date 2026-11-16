@@ -1178,6 +1178,22 @@ bilan boshlanadigan vakansiya bo'lsa — lavozim nomi). Sahifa matni `th_sms_tpl
 (telefonda saqlangan eski matn yangisini yopmasin). Shu ishda: `/api/telegram/status`
 2e51ec9 dan beri 500 berardi (`outreach.available()` yo'q edi) — tuzatildi.
 
+**OVOZDAN KEYIN MINI APP + BOT ISH RO'YXATI** (2026-11-16, `1939019`, Anas skrinshotlari):
+- Ovozli rezyumedan keyin yetishmaganlar (ism, telefon, rasm...) bot chatda BITTALAB
+  so'ralmaydi: tasdiq tugmasi `vi.fillBtn` — web_app `anketa.html?r=<id>&fill=1`
+  (`voiceIntake.fillUrl`). Fill rejimi: faqat bo'sh majburiy savollar (`answeredQ` =
+  server submit qoidasi) + javob o'zgarib yangi chiqqani; kirish ekrani `ank.fill*`.
+  Yuborilganda `routes/anketa` submit `r.mode==='voice'` bo'lsa `voiceIntake.applyVoice`
+  (ovoz yozuvi, tavsif, prefersVoice) va agentlikka "🎤". Chatda bittalab — faqat
+  zaxira (appBase yo'q). Anketa endi oxirgi KO'RINADIGAN savoldan keyin yuboradi
+  (ilgari faqat `Q.length-1` — yashirin oxirgi savolda jim qolardi).
+- Bot ish ro'yxati (`firstTouch.jobBlocks` — lavozim ekrani va SMS havola ekrani bitta):
+  har ish blok: "1. <b>Nom</b> · Restoran" / <i>qavsdagi izoh</i> / "💰 maosh · to'lov
+  davri"; filiallar hammasida bir xil bo'lsa ostida BIR MARTA; lavozimning o'zi birinchi;
+  boshqa nomli ish bo'lsa sarlavha `ft.cJobsMix` ("Ofitsiant va shunga yaqin ishlar —
+  3 ta"; ilgari "Ofitsiant — 3 ta", ofitsiant esa bitta edi). Restoran nomi — `showName`.
+  Telegramda HALI bosib ko'rilmagan.
+
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
 O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda

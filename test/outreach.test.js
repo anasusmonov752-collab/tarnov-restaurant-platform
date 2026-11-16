@@ -225,6 +225,26 @@ test('shaxsiy havola ekrani: anketa yo\'q, lavozimidagi ish, tugma = ariza', asy
   assert.equal((await Candidate.findOne({ id: 'h1' }).lean()).jobStatus, 'not_looking');
 });
 
+// 2026-11-16 jonli: Anas SMS'dagi havolani o'zi bosdi — Telegrami hh nomzodiga ulanib,
+// o'z profili uzildi, nomzod havolasi kuydi
+test('shaxsiy havolani boshqa odam bossa — bog\'lanmaydi', async () => {
+  const hh = await cand('n1', { role: 'xostess', phone: '+998 90 111 22 33', tgInviteToken: 'AbCdEfGhIj' });
+  await cand('me', { source: 'anketa', phone: '+998 91 692 09 99', tgChatId: '700', tgState: 'linked' });
+  await cand('dup', { source: 'anketa', phone: '+998901112233', tgChatId: '800', tgState: 'linked' });
+  assert.equal((await outreach.inviteClaim(hh, '999', '999')).mode, 'admin');         // agentlik admini
+  const o = await outreach.inviteClaim(hh, '700', '999');
+  assert.equal(o.mode, 'other'); assert.equal(o.me.id, 'me');                          // boshqa telefon
+  assert.equal((await outreach.inviteClaim(hh, '800', '999')).mode, 'bind');          // o'sha odamning 2-yozuvi
+  assert.equal((await outreach.inviteClaim(hh, '555', '999')).mode, 'bind');          // yangi akkaunt
+
+  // Paneldagi "Havola yaratish" SMS'dagi tokenni almashtirmaydi (yangisi SMS havolasini o'ldirardi)
+  const tg = require('../src/services/telegram');
+  tg.isPlatformReady = () => true; tg.platformUsername = async () => 'TestBot';
+  const r = await require('../src/services/botRelay').invite({ id: A, name: 'TH' }, hh);
+  assert.equal(r.link, 'https://t.me/TestBot?start=AbCdEfGhIj');
+  assert.equal(r.manual, true);
+});
+
 test('kirill ism SMS\'ni bo\'lib yubormaydi — lotinga o\'giriladi', () => {
   // 2026-11-15: "Нилуфар" bilan SMS 3 ta bo'lib ketardi (UCS-2, 70 belgi)
   assert.equal(outreach.firstName('Юсупова Нилуфар Бахтиёровна'), 'Nilufar');

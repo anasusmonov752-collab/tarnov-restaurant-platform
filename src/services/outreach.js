@@ -82,6 +82,25 @@ function newToken() {
   const b = require('crypto').randomBytes(10);
   return Array.from(b, x => ALNUM[x % ALNUM.length]).join('');
 }
+/**
+ * Shaxsiy havolani KIM bosdi? (2026-11-16 jonli: Anas yuborgan SMS'idagi havolani
+ * o'zi tekshirib bosdi — uning Telegrami hh nomzodiga ulanib, o'z profili uzildi,
+ * nomzodning havolasi kuydi.) Bog'lamaslik kerak:
+ *   admin — agentlik admin chati: ko'rinish beriladi, token saqlanadi;
+ *   other — chat BOSHQA telefonli nomzodga ulangan: bu boshqa odam (havola
+ *           uzatilgan yoki SMS yuboruvchi bosgan) — o'z ekrani, token saqlanadi.
+ * Telefoni bir xil bo'lsa — o'sha odamning ikkinchi yozuvi, bog'lanadi.
+ * @returns {{ mode: 'bind'|'admin'|'other', me? }}
+ */
+async function inviteClaim(cand, chatId, adminChatId) {
+  const { phoneKey } = require('../utils/candidateKeys');
+  if (adminChatId && String(adminChatId) === String(chatId)) return { mode: 'admin' };
+  const me = await Candidate.findOne({ tgChatId: String(chatId), tgState: 'linked', id: { $ne: cand.id } });
+  const a = me && phoneKey(me.phone), b = phoneKey(cand.phone);
+  if (me && (!a || !b || a !== b)) return { mode: 'other', me };
+  return { mode: 'bind' };
+}
+
 /** Navbatdagi nomzodlarga token (yo'q bo'lsa) — SMS'da shaxsiy havola bo'lishi uchun */
 async function ensureTokens(agencyId, rows) {
   for (const c of rows) {
@@ -231,4 +250,4 @@ async function markSent(agencyId, id, undo = false) {
   return true;
 }
 
-module.exports = { QUEUE, DEFAULT_TPL, list, markSent, render, smsInfo, firstName, nameWord, tidy, e164, newToken, ensureTokens, latin, openRoles };
+module.exports = { QUEUE, DEFAULT_TPL, list, markSent, render, smsInfo, firstName, nameWord, tidy, e164, newToken, ensureTokens, latin, openRoles, inviteClaim };

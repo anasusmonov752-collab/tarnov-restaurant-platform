@@ -49,26 +49,19 @@ async function logMsg(fields) {
 async function invite(restaurant, candidate, { channel } = {}) {
   if (!tg.isPlatformReady()) throw new Error('Bot sozlanmagan (TELEGRAM_BOT_TOKEN yo\'q)');
 
-  // 24 soatda bir martadan ko'p taklif yubormaymiz (spam himoyasi)
-  if (candidate.tgInviteSentAt && Date.now() - candidate.tgInviteSentAt < 24 * 3600e3) {
-    throw new Error('Bu nomzodga oxirgi 24 soatda taklif yuborilgan');
-  }
   if (candidate.tgState === 'linked') throw new Error('Nomzod allaqachon ulangan');
 
-  const token = makeToken();
-  const link = tg.deepLink(await tg.platformUsername(), token);
-  const ch = channel || outreach.defaultChannel();
-
-  // SMS matni moderatsiyadan o'tgan shabloga mos bo'lishi kerak
-  const text = `${restaurant.name} HR: rezyumengiz ko'rib chiqildi. `
-             + `Suhbat uchun Telegram orqali bog'lanamiz: ${link}`;
-
-  let result = { ok: true, channel: ch, manual: true };
-  if (ch !== 'manual') {
-    if (!candidate.phone) throw new Error('Nomzodda telefon raqami yo\'q');
-    result = await outreach.send({ channel: ch, to: candidate.phone, text });
-    if (!result.ok) throw new Error(result.error || 'Yuborib bo\'lmadi');
+  // Server SMS yubormaydi (Eskiz yo'q — services/outreach): havola faqat qaytariladi.
+  // Taklif navbatidan SMS'da havola ketgan bo'lsa — O'SHA token qaytadi: yangisi
+  // yuborilgan SMS'dagi havolani o'ldirardi.
+  const uname = await tg.platformUsername();
+  if (candidate.tgInviteToken) {
+    return { link: tg.deepLink(uname, candidate.tgInviteToken), channel: 'manual', manual: true, reused: true };
   }
+  const token = outreach.newToken();
+  const link = tg.deepLink(uname, token);
+  const ch = 'manual';
+  const result = { ok: true, channel: ch, manual: true };
 
   candidate.tgInviteToken   = token;
   candidate.tgInviteSentAt  = new Date();

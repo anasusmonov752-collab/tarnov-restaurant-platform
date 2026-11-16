@@ -266,6 +266,30 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
         return;
       }
 
+      // Havolani BOSHQA odam bosdi (admin tekshiryapti yoki havola uzatilgan) —
+      // bog'lanmaydi va token kuymaydi: nomzodning o'z havolasi ishlayveradi.
+      const claim = await outreach.inviteClaim(cand, chatId, rest.telegram && rest.telegram.adminChatId);
+      if (claim.mode !== 'bind') {
+        const ft = require('../services/firstTouch');
+        if (claim.mode === 'admin') {
+          const scr = await ft.candidateInvite({ cand, lang: I18N.resolve(cand.lang, tgLang), appBase: publicBase(req) });
+          await tg.sendMessage(token, chatId,
+            `👀 <b>Ko'rinish</b> — bu havola ${escHtml(relay.displayName(cand))} uchun. ` +
+            `Siz admin, akkauntingiz ulanmadi; havola nomzodning o'zi uchun ishlayveradi.\n\n` +
+            `———\n\n${scr.text}`, { parse_mode: 'HTML' });
+        } else {
+          const me = claim.me;
+          const scr = await ft.candidateInvite({ cand: me, lang: I18N.resolve(me.lang, me.tgLang || tgLang), appBase: publicBase(req) });
+          await tg.sendMessage(token, chatId, scr.text, { parse_mode: 'HTML', reply_markup: { inline_keyboard: scr.keyboard } });
+          if (rest.telegram && rest.telegram.adminChatId) {
+            await tg.sendMessage(token, rest.telegram.adminChatId,
+              `${relay.displayName(cand)} uchun SMS havolasini boshqa odam bosdi ` +
+              `(${relay.displayName(me)}). Ulanmadi — havola nomzodning o'zi uchun saqlandi.`).catch(() => {});
+          }
+        }
+        return;
+      }
+
       // Shu chatga boshqa nomzod bog'langan bo'lsa — uzamiz. Aks holda
       // bitta chatId ikki yozuvda qoladi va findOne({tgChatId}) qaysi
       // birini topsa o'shani ko'rsatadi: odam boshqa odamning profilini

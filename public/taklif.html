@@ -40,7 +40,8 @@
   .av{ flex:0 0 auto; width:52px; height:52px; border-radius:50%; overflow:hidden; background:var(--th-fill);
        color:var(--th-muted); display:flex; align-items:center; justify-content:center; font-weight:600; font-size:17px; }
   .av img{ width:100%; height:100%; object-fit:cover; cursor:zoom-in; display:block; }
-  .row .nm{ font-weight:600; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .row .nm{ font-weight:600; font-size:15px; line-height:1.3; overflow:hidden; word-break:break-word;
+            display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
   .row .sb{ color:var(--th-muted); font-size:13px; margin-top:2px; line-height:1.4; }
   .go{ flex:0 0 auto; display:inline-flex; align-items:center; gap:6px; text-decoration:none;
        padding:10px 16px; border-radius:999px; background:var(--th-brand); color:#fff;
@@ -188,7 +189,7 @@ function drawList(){
     const bits = [c.roleLabel, c.location, c.exp ? c.exp + ' yil' : '', c.days + ' kun oldin'].filter(Boolean);
     const ini = (c.name || '').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
     return `<div class="th-card row ${done ? 'done' : ''}" data-id="${esc(c.id)}">
-      <div class="av">${c.photo ? `<img src="${esc(c.photo)}" alt="" loading="lazy" data-zoom>` : esc(ini)}</div>
+      <div class="av">${c.photo ? `<img src="${esc(c.photo)}" alt="" data-zoom>` : esc(ini)}</div>
       <div class="who">
         <div class="nm">${esc(c.name || c.phone)}</div>
         <div class="sb">${esc(bits.join(' · '))}</div>

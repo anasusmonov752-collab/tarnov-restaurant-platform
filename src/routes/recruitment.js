@@ -60,11 +60,13 @@ function sanitizeWork(arr) {
 }
 
 // Bitta xom matndan (yoki fayldan) Candidate hujjati yasaydi va saqlaydi.
-async function buildAndSave({ restaurantId, rawText, fileName, fileType, fileBuffer, source, branch }) {
+async function buildAndSave({ restaurantId, rawText, fileName, fileType, fileBuffer, source, branch, test = false }) {
+  // test — test rejimi uchun sinov rezyumesi (/test → hh nomzod): takror tekshiruvi
+  // YO'Q (admin o'z rezyumesini yuklaydi — telefoni anketa profili bilan bir xil), isTest.
   // Dublikat tekshiruvi — bir nomzod ikki marta kirmasin (utils/candidateKeys).
   // 1) Matn izi AI'DAN OLDIN: bitta PDF qayta yuklansa kvota sarflanmaydi,
   //    hh anonim rezyumelari (ism/telefonsiz) ham shu bilan tutiladi.
-  const tHash = textHash(rawText);
+  const tHash = test ? '' : textHash(rawText);
   if (tHash) {
     const same = await Candidate.findOne({ restaurantId, textHash: tHash }, 'fullName').lean();
     if (same) return { duplicate: true, name: same.fullName || fileName };
@@ -79,7 +81,7 @@ async function buildAndSave({ restaurantId, rawText, fileName, fileType, fileBuf
   const or = [];
   if (pk) or.push({ phoneKey: pk });
   if (ek) or.push({ email: new RegExp('^' + escapeRegex(ek) + '$', 'i') });
-  if (or.length) {
+  if (or.length && !test) {
     const exists = await Candidate.findOne({ restaurantId, $or: or }, '_id').lean();
     if (exists) return { duplicate: true, name: fields.fullName || fileName };
   }
@@ -102,6 +104,7 @@ async function buildAndSave({ restaurantId, rawText, fileName, fileType, fileBuf
     source: VALID_SOURCE.includes(source) ? source : 'hh',
     status: 'new',
     statusChangedAt: new Date(),
+    isTest: !!test,
     aiParsed
   });
   return { created: true, id: doc.id, name: doc.fullName || fileName, aiParsed };
@@ -138,6 +141,10 @@ router.post('/upload', guard, upload.array('files', 30), asyncHandler(async (req
   if (!files.length) return res.status(400).json({ error: 'Fayl yuklanmadi' });
   const source = (req.body && req.body.source) || 'hh';
   const branch = (req.body && req.body.branch) || '';
+  // testHh=1 — test rejimi uchun sinov rezyumesi: bitta fayl, takror tekshiruvisiz,
+  // yaratilgach /test → "📄 hh nomzod" shu bo'ladi (services/testMode)
+  const test = req.body && req.body.testHh === '1';
+  if (test && files.length !== 1) return res.status(400).json({ error: 'Test uchun bitta fayl' });
 
   const results = { created: 0, duplicates: 0, failed: 0, items: [] };
   for (const file of files) {
@@ -155,8 +162,10 @@ router.post('/upload', guard, upload.array('files', 30), asyncHandler(async (req
         fileType: file.mimetype,
         fileBuffer: file.buffer,
         source,
-        branch
+        branch,
+        test
       });
+      if (test && r.created) await require('../services/testMode').setHhCandidate(req.user.restaurantId, r.id);
       if (r.duplicate) { results.duplicates++; results.items.push({ file: file.originalname, ok: true, duplicate: true, name: r.name }); }
       else { results.created++; results.items.push({ file: file.originalname, ok: true, id: r.id, name: r.name, aiParsed: r.aiParsed }); }
     } catch (err) {

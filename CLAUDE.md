@@ -1157,13 +1157,15 @@ Telegram) -> ekran -> tugma -> tasdiq + prescreen -> qayta bosish -> begona odam
 
 **hh SMS VA HAVOLA EKRANI — 3-VERSIYA** (2026-11-16, Anas: "rezyumengiz tayyor,
 hech narsa to'ldirish shart emas — bunaqa gaplar umuman kerak emas; havolada TalentHub
-haqida qisqacha ma'lumot bo'lsin"). SMS (`outreach.DEFAULT_TPL`): "Assalomu alaykum,
-{ism}! TalentHub agentligidan yozyapman. Raqamingizni hh.uz'dagi rezyumengizdan oldik.
-Toshkent restoranlariga {lavozim}lar kerak, hozir Tarnov restoranida ham bo'sh o'rinlar bor.
-Ochiq ishlar va shartlarni shu havolada ko'ring: {havola}" — 2 SMS, GSM-7. SHAXSIY VA'DA
-YO'Q (Anas: nomzod ko'p — maqsad platformaga olib kirish; 510 kishiga "sizni taklif
-qilamiz" desak, javob ololmaganlar uchun TalentHub yolg'onchi bo'lardi). Butunlay umumiy
-"platformaga qo'shiling" ham rad etildi — spamga o'xshaydi; aniq restoran — isbot.
+haqida qisqacha ma'lumot bo'lsin"). SMS (`outreach.DEFAULT_TPL`) — YAKUNIY, ANAS O'ZI
+TANLAGAN (4-versiya): UMUMIY (lavozim, restoran, "Toshkent" yo'q — maqsad platformaga olib
+kirish; 510 kishiga shaxsiy va'da bermaslik), IKKI TILDA: o'zbekcha, havola ALOHIDA
+qatorda (bosish qulay), bo'sh qator, ruscha KIRILLDA ("по ссылке выше"). Ruscha kirill —
+butun xabar UCS-2, ~5 SMS (lotindagi ruscha 2 SMS edi, Anas kirillni tanladi). Sahifa
+kirill bo'lsa harflarni "yomon belgi" demaydi, 6+ SMS qizil. `tidy`/`fill` qator
+tashlashni SAQLAYDI (faqat probel qisqaradi). Oldingi variantlar (rad etilgan): "Tarnov
+restoraniga {lavozim} kerak, sizni taklif qilmoqchimiz" (va'da), "Toshkent restoranlariga
+{lavozim}lar kerak" ("Toshkent" kerak emas), hook'li (bepul/24 soat/10 kunda).
 Ism: `outreach.nameWord` — "ФИО скрыто соискателем" -> ismsiz salom, "САИДА" -> "Saida"
 (SMS va bot ekrani bir qoida). Havola ekrani (`firstTouch.candidateInvite`):
 salom -> `ft.iAbout` (TalentHub kimligi: restoranlar bilan to'g'ridan-to'g'ri, vakansiyani
@@ -1172,7 +1174,7 @@ lavozimidagi ishlar (maosh + to'lov davri) -> `ft.iPick`. "Rezyume bizda bor / a
 emas" matnda YO'Q. NAVBAT FAQAT OCHIQ VAKANSIYASI BOR LAVOZIM (`outreach.openRoles`):
 menejer/kassir/barmenga SMS ketsa havolada ranner chiqardi; vakansiya ochilsa o'zi
 qo'shiladi. `{lavozim}` = haqiqiy vakansiya nomi (oshpaz roli -> "salatchi", qavsdagi izoh olinadi; lavozim nomi
-bilan boshlanadigan vakansiya bo'lsa — lavozim nomi). Sahifa matni `th_sms_tpl3:` kalitida, FAQAT odam tahrirlaganda saqlanadi
+bilan boshlanadigan vakansiya bo'lsa — lavozim nomi). Sahifa matni `th_sms_tpl4:` kalitida, FAQAT odam tahrirlaganda saqlanadi
 (telefonda saqlangan eski matn yangisini yopmasin). Shu ishda: `/api/telegram/status`
 2e51ec9 dan beri 500 berardi (`outreach.available()` yo'q edi) — tuzatildi.
 

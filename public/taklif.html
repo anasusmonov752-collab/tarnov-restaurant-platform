@@ -19,7 +19,7 @@
 
   .box{ padding:14px 16px; margin-bottom:14px; }
   .box h3{ font-size:var(--th-fs-foot); color:var(--th-muted); font-weight:600; margin:0 0 8px; }
-  textarea{ width:100%; min-height:116px; resize:vertical; font:inherit; font-size:15px; line-height:1.5;
+  textarea{ width:100%; min-height:200px; resize:vertical; font:inherit; font-size:15px; line-height:1.5;
             padding:10px 12px; border-radius:12px; border:1px solid var(--th-line);
             background:var(--th-surface); color:var(--th-text); }
   .meta{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:8px;
@@ -79,6 +79,7 @@
       <span>·</span>
       <span><b id="parts">1</b> SMS</span>
       <span id="badWrap" class="bad" hidden>· <b id="bad"></b> — bu belgilar SMS'ni 3 ga bo'ladi</span>
+      <span id="cyrWrap" hidden>· kirill matn — har SMS 70 belgi</span>
       <span style="margin-left:auto">{ism} · {lavozim} · {havola}</span>
     </div>
     <div class="prev" id="prev"></div>
@@ -130,7 +131,8 @@ let S = { role: '', skip: 0, rows: [], total: 0, link: '', sent: new Set() };
 // v3: drawTpl har chizishda saqlardi — standart matn birinchi ochilishdayoq
 // telefonga "muzlab" qolardi va keyingi yangilangan standart ko'rinmasdi.
 // Endi faqat odam O'ZI tahrirlaganda saqlanadi (input hodisasi).
-const tplKey = () => 'th_sms_tpl3:' + (S.role || 'all');
+// v4 (2026-11-16): ikki tilli matn (o'zbekcha + ruscha, havola alohida qatorda).
+const tplKey = () => 'th_sms_tpl4:' + (S.role || 'all');
 let DEF_TPL = '';
 function loadTpl(){
   let saved = null; try { saved = localStorage.getItem(tplKey()); } catch (e) {}
@@ -143,8 +145,10 @@ function fill(tpl, c){
     // Haqiqiy vakansiya nomi (oshpazlarga "salatchi"), gap o'rtasida — kichik harf
     .replace(/\{lavozim\}/g, c.lavozim || (c.roleLabel || 'restoran').toLowerCase())
     .replace(/\{havola\}/g, c.link || S.link)   // shaxsiy havola — har odamga o'ziniki
-    .replace(/,\s*([!.?])/g, '$1')              // ismi yashirin: "Assalomu alaykum, !" qolmasin (outreach.tidy)
-    .replace(/\s{2,}/g, ' ').trim();
+    .replace(/,[ \t]*([!.?])/g, '$1')           // ismi yashirin: "Assalomu alaykum, !" qolmasin (outreach.tidy)
+    // Qator tashlash SAQLANADI (o'zbekcha va ruscha orasida bo'sh qator, havola
+    // alohida qatorda — bosish qulay). Faqat ortiqcha probellar qisqaradi.
+    .replace(/[ \t]{2,}/g, ' ').replace(/[ \t]+\n/g, '\n').trim();
 }
 
 function drawTpl(){
@@ -156,9 +160,13 @@ function drawTpl(){
   const worst = S.rows.reduce((m, c) => Math.max(m, smsInfo(fill(tplText(), c)).parts), i.parts);
   $('cnt').textContent = i.chars;
   $('parts').textContent = worst;
-  // 2 ta SMS — me'yor (rekruter matni); 3+ — matnda kirill/"—" bor, narx uch baravar
-  $('parts').style.color = worst > 2 ? 'var(--th-danger)' : '';
-  $('badWrap').hidden = !i.bad.length;
+  // Ruscha qism KIRILLDA — Anas tanlovi (2026-11-16): xabar ataylab UCS-2, ~5 SMS.
+  // Shunda kirill harflarini "yomon belgi" deb sanash ma'nosiz — o'rniga eslatma.
+  // Lotin matnda: 2 ta SMS me'yor, 3+ qizil ("—" yoki "’" tushib qolgan).
+  const cyr = /[Ѐ-ӿ]/.test(text);
+  $('parts').style.color = worst > (cyr ? 6 : 2) ? 'var(--th-danger)' : '';
+  $('cyrWrap').hidden = !cyr;
+  $('badWrap').hidden = cyr || !i.bad.length;
   $('bad').textContent = i.bad.join(' ');
   $('prev').textContent = text;
 

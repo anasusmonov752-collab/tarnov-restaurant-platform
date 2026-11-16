@@ -68,7 +68,11 @@ function smsInfo(text) {
 // o'xshamasin). SHAXSIY VA'DA YO'Q ("sizni shu ishga taklif qilamiz" — 510 kishiga,
 // Tarnovga esa bir necha odam kerak): maqsad platformaga olib kirish, aniq ish
 // (Tarnov) — misol va isbot. Yangi restoran qo'shilsa faqat nomi almashadi.
-const DEFAULT_TPL = "Assalomu alaykum, {ism}! TalentHub agentligidan yozyapman. Raqamingizni hh.uz'dagi rezyumengizdan oldik. Toshkent restoranlariga {lavozim}lar kerak, hozir Tarnov restoranida ham bo'sh o'rinlar bor. Ochiq ishlar va shartlarni shu havolada ko'ring: {havola}";
+// 4-VERSIYA (Anas tanlovi, 2026-11-16): UMUMIY taklif — lavozim, restoran va
+// "Toshkent" yo'q, maqsad platformaga olib kirish. IKKI TILDA: o'zbekcha, bo'sh
+// qator, ruscha (KIRILLDA — Anas tanlovi; xabar UCS-2, ~5 SMS — lotindagi ruscha
+// 2 SMS edi, rad etildi). Havola ALOHIDA qatorda — telefonda bosish qulay.
+const DEFAULT_TPL = "Assalomu alaykum, {ism}! TalentHub agentligidan yozyapman, raqamingiz hh.uz'dagi rezyumengizdan. Restoranlardagi ochiq ishlarni platformamizda ko'ring:\n{havola}\n\nЗдравствуйте! Агентство TalentHub, номер из вашего резюме на hh.uz. Вакансии в ресторанах — по ссылке выше.";
 
 // Shaxsiy havola tokeni: 10 belgi [A-Za-z0-9]. Pastki chiziq yo'q — boshqa
 // /start turlari (a_, v_, ref_, emp_, f_) bilan aralashmaydi. Havola
@@ -125,7 +129,8 @@ function firstName(full) {
 }
 
 /** Ism bo'sh bo'lsa "Assalomu alaykum, !" qolmasin */
-const tidy = s => String(s).replace(/,\s*([!.?])/g, '$1').replace(/\s{2,}/g, ' ').trim();
+// Qator tashlash saqlanadi (ikki til orasida bo'sh qator, havola alohida qatorda)
+const tidy = s => String(s).replace(/,[ \t]*([!.?])/g, '$1').replace(/[ \t]{2,}/g, ' ').replace(/[ \t]+\n/g, '\n').trim();
 
 /** +998901234567 — phoneKey (oxirgi 9 raqam) dan, formatdan qat'i nazar */
 const e164 = c => (c.phoneKey ? '+998' + c.phoneKey : '');

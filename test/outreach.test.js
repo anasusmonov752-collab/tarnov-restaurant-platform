@@ -68,8 +68,9 @@ test('{lavozim} — haqiqiy vakansiya nomi: oshpazga "salatchi", ofitsiantga "of
   assert.equal(by.l1.lavozim, 'ofitsiant');                     // Ranner birinchi bo'lsa ham
   assert.equal(by.l2.lavozim, 'salatchi');
   assert.equal(by.l3.lavozim, 'xostess');
-  const sms = outreach.render(outreach.DEFAULT_TPL, { fullName: 'Karimov Dilshod', role: 'oshpaz' }, 't.me/x', by.l2.lavozim);
-  assert.match(sms, /Toshkent restoranlariga salatchilar kerak, hozir Tarnov restoranida ham/);
+  // Standart matnda {lavozim} endi yo'q, lekin o'z matnida ishlatsa — haqiqiy nom
+  const sms = outreach.render('Tarnovga {lavozim}lar kerak: {havola}', { fullName: 'Karimov Dilshod', role: 'oshpaz' }, 't.me/x', by.l2.lavozim);
+  assert.equal(sms, 'Tarnovga salatchilar kerak: t.me/x');
   // Vakansiya yopilsa — lavozim navbatdan chiqadi
   await Vacancy.updateMany({ role: 'oshpaz' }, { $set: { status: 'closed' } });
   assert.ok(!(await outreach.list(A)).rows.some(r => r.id === 'l2'));
@@ -86,18 +87,25 @@ test('telefon formatdan qat\'i nazar +998 ga keltiriladi, ism ikkinchi so\'z', a
   assert.equal(by.p2.first, 'Aziza');                           // bitta so'z bo'lsa o'zi
 });
 
-test('standart matn: GSM-7, ko\'pi bilan 2 SMS, rekruter ovozi', async () => {
+test('standart matn: ikki tilda, havola alohida qatorda, umumiy taklif', async () => {
   const c = { fullName: 'Karimov Dilshod', role: 'ofitsiant' };
-  const text = outreach.render(outreach.DEFAULT_TPL, c, 't.me/TalentHubUzBot?start=a_HMXT37_sms');
-  const i = outreach.smsInfo(text);
-  assert.ok(i.parts <= 2, text);
-  assert.deepEqual(i.bad, [], 'GSM-7 ga kirmaydigan belgi bo\'lmasin');
-  // Kim yozyapti va raqam qayerdan — shaxsiy raqamdan kelgan SMS spamga o'xshamasin
-  assert.ok(/TalentHub agentligidan/.test(text) && /Raqamingizni hh\.uz/.test(text), text);
-  assert.ok(text.includes('Dilshod') && text.includes('ofitsiant') && text.includes('t.me/'));
-  // Maosh, to'lov, "ariza", "rezyume tayyor" va SHAXSIY VA'DA yo'q (Anas, 2026-11-16)
-  assert.ok(!/ariza|so'm|tayyor|to'ldirish|taklif qilmoqchi/i.test(text), text);
-  assert.ok(/ofitsiantlar kerak/.test(text), text);
+  const link = 't.me/TalentHubUzBot?start=Ab12Cd34Ef';
+  const text = outreach.render(outreach.DEFAULT_TPL, c, link);
+  const [uz, ru] = text.split('\n\n');                           // o'rtada bo'sh qator
+  assert.ok(uz && ru, text);
+  assert.ok(uz.startsWith('Assalomu alaykum, Dilshod! TalentHub agentligidan yozyapman'), uz);
+  assert.ok(uz.split('\n').includes(link), 'havola o\'z qatorida — bosish qulay');
+  assert.ok(ru.startsWith('Здравствуйте! Агентство TalentHub') && /по ссылке выше/.test(ru), ru);
+  // Kim yozyapti va raqam qayerdan; UMUMIY — lavozim, restoran, Toshkent, va'da yo'q (Anas, 2026-11-16)
+  assert.ok(/raqamingiz hh\.uz/.test(text) && /номер из вашего резюме на hh\.uz/.test(text), text);
+  assert.ok(!/ofitsiant|Tarnov|Toshkent|ariza|so'm|tayyor|taklif qilmoqchi/i.test(text), text);
+  // Ruscha kirillda — ataylab UCS-2; eng uzun ism bilan ham 5 SMS dan oshmasin
+  const long = outreach.render(outreach.DEFAULT_TPL, { fullName: 'Karimov Muhammadabdulloh' }, link);
+  const i = outreach.smsInfo(long);
+  assert.ok(i.ucs2 && i.parts <= 5, `${i.parts} SMS`);
+  // Ismi yashirin — ismsiz salom, qatorlar buzilmaydi
+  const hid = outreach.render(outreach.DEFAULT_TPL, { fullName: 'ФИО скрыто соискателем' }, link);
+  assert.ok(hid.startsWith('Assalomu alaykum! TalentHub') && hid.includes('\n\nЗдравствуйте!'), hid);
 
   // Bitta tire yoki qo'shtirnoq SMS'ni uchga bo'ladi — ogohlantirish shart
   const bad = outreach.smsInfo('Assalomu alaykum — TalentHub');

@@ -13,7 +13,7 @@ const tg = require('./telegram');
 
 const PROFILE = {
   uz: {
-    name: 'TalentHub — restoranlarda ish',
+    name: 'TalentHub',
     // Qisqa tavsif — FAQAT agentlik kimligi va asosiy vazifasi (Anas, 2026-11-16:
     // "rasmiy" yo'q, faqat restoranlar emas, maosh yo'q)
     short: 'TalentHub — ishga joylash agentligi. Ish beruvchilarga xodim, ish izlovchilarga mos ish topib beramiz.',
@@ -32,7 +32,7 @@ const PROFILE = {
     cmds: [{ command: 'start', description: "Ishlarni ko'rish" }, { command: 'til', description: 'Tilni almashtirish · Язык' }]
   },
   ru: {
-    name: 'TalentHub — работа в ресторанах',
+    name: 'TalentHub',
     short: 'TalentHub — кадровое агентство. Подбираем сотрудников для работодателей и работу для соискателей.',
     desc: [
       'TalentHub — кадровое агентство.',

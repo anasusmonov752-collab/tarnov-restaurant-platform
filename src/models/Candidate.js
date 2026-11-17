@@ -76,6 +76,9 @@ const CandidateSchema = new mongoose.Schema({
   // ── Admin boshqaruvi ──
   branch:  { type: String, default: '' },              // filial/bo'lim (Podrazdelenie)
   source:  { type: String, default: 'hh' },            // hh | manual | referral | telegram | other
+  // hh.uz API orqali qo'shilgan (services/hh.importResume) — takror qo'shilmasin, rezyumega havola
+  hhResumeId: { type: String, default: '' },
+  hhUrl:      { type: String, default: '' },
   // Sinov nomzodi (admin test rejimi): haqiqiy mijozlar qidiruvida chiqmaydi,
   // sanoqlarga kirmaydi; panelda "SINOV" belgisi bilan ko'rinadi
   isTest:  { type: Boolean, default: false },

@@ -27,6 +27,11 @@ before(async () => {
     }
     const auth = (o.headers || {}).Authorization;
     if (u.includes('/me')) return json(200, { first_name: 'Anas', last_name: 'U', employer: { name: 'Tarnov' } });
+    if (u.startsWith('https://img.hhcdn')) return { ok: true, status: 200, headers: { get: () => 'image/jpeg' }, arrayBuffer: async () => new Uint8Array([255, 216, 255]).buffer };
+    if (/\/resumes\/[a-f0-9]+/.test(u)) return json(200, { id: u.match(/\/resumes\/([a-f0-9]+)/)[1], title: 'Шеф-повар национальной узбекской кухни',
+      first_name: null, last_name: null, age: 59, area: { name: 'Ташкент' }, salary: { amount: 1200, currency: 'USD' },
+      total_experience: { months: 266 }, skill_set: ['Санпин', 'Плов'], skills: '<p>Узбекская кухня</p>', photo: { medium: 'https://img.hhcdn.ru/p.jpg' },
+      alternate_url: 'https://hh.uz/resume/x', experience: [{ company: 'Самарканд', position: 'Шеф-повар', start: '2022-01-01', end: null, description: 'Плов, самса' }] });
     if (u.includes('/resumes?')) {
       if (auth === 'Bearer AT1' && calls.filter(c => c.url.includes('/resumes?')).length === 1) {
         return json(403, { errors: [{ type: 'oauth', value: 'token_expired' }] });
@@ -68,4 +73,21 @@ test('qidiruv: muddati o\'tgan token bir marta yangilanadi, natija ixcham', asyn
   assert.equal((await hh.tokens(A)).accessToken, 'AT2');          // refresh ishladi
   const q = calls.filter(c => c.url.includes('/resumes?')).pop().url;
   assert.match(q, /area=2759/); assert.match(q, /host=hh\.uz/); assert.ok(!/evil/.test(q));
+});
+
+test('bazaga qo\'shish: kontaktsiz nomzod, rasm bilan, takror qo\'shilmaydi', async () => {
+  const Candidate = require('../src/models/Candidate');
+  const id = 'c4bd1eca0010669c6200a7f90d4f7a56336449';
+  const a = await hh.importResume(A, id, { tag: 'shef-milliy' });
+  assert.equal(a.created, true);
+  const c = await Candidate.findOne({ id: a.id }).lean();
+  assert.equal(c.fullName, 'Шеф-повар национальной узбекской кухни');   // ism yashirin — sarlavha
+  assert.equal(c.role, 'oshpaz');
+  assert.equal(c.experienceYears, 22); assert.equal(c.salaryExpectation, '1200 USD');
+  assert.equal(c.phone, ''); assert.equal(c.hhResumeId, id); assert.ok(c.hasPhoto);
+  assert.equal(c.workHistory[0].period, '01.2022 – hozir');
+  assert.deepEqual(c.tags, ['shef-milliy']);
+  const b = await hh.importResume(A, id);
+  assert.equal(b.duplicate, true);
+  assert.equal(await Candidate.countDocuments({ hhResumeId: id }), 1);
 });

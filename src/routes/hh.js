@@ -51,6 +51,19 @@ router.get('/resumes/:id', guard, asyncHandler(async (req, res) => {
   catch (e) { res.status(e.status && e.status < 500 ? e.status : 502).json({ error: e.message, code: e.code }); }
 }));
 
+// Tanlangan rezyumelarni nomzodlar bazasiga qo'shish (kontaktsiz). body: { ids:[...], tag }
+router.post('/import', guard, asyncHandler(async (req, res) => {
+  const ids = [...new Set((req.body && req.body.ids) || [])].filter(x => /^[a-f0-9]{20,64}$/i.test(String(x))).slice(0, 50);
+  const tag = String((req.body && req.body.tag) || '').slice(0, 60);
+  const out = [];
+  for (const id of ids) {
+    try { out.push(Object.assign({ hh: id }, await hh.importResume(req.user.restaurantId, id, { tag }))); }
+    catch (e) { out.push({ hh: id, error: e.message }); }
+  }
+  res.json({ created: out.filter(x => x.created).length, duplicates: out.filter(x => x.duplicate).length,
+    failed: out.filter(x => x.error).length, items: out });
+}));
+
 // Lug'atlar (tajriba oraliqlari, hududlar...) — qidiruv formasi uchun
 router.get('/dictionaries', guard, asyncHandler(async (req, res) => {
   try { res.json(await hh.request(req.user.restaurantId, '/dictionaries')); }

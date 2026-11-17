@@ -140,4 +140,63 @@ async function resume(agencyId, id) {
   return request(agencyId, '/resumes/' + id, { host: process.env.HH_HOST || 'hh.uz' });
 }
 
-module.exports = { configured, authorizeUrl, readState, connect, request, refresh, searchResumes, resume, tokens, HhError, SEARCH_KEYS, cfg };
+// ── hh rezyumesini nomzodlar bazasiga qo'shish (kontaktsiz — kvota yemaydi) ──
+// Ism/telefon hh'da kontakt ochilmaguncha yo'q: fullName = rezyume sarlavhasi,
+// telefon bo'sh (SMS navbatiga tushmaydi). Takror: hhResumeId bo'yicha.
+const MONTHS_RU = m => { const y = Math.floor(m / 12), r = m % 12; return [y ? y + ' yil' : '', r ? r + ' oy' : ''].filter(Boolean).join(' '); };
+const ym = d => (d ? String(d).slice(0, 7).split('-').reverse().join('.') : '');
+async function photoData(url) {
+  if (!url) return '';
+  try {
+    const r = await fetch(url);
+    if (!r.ok) return '';
+    const buf = Buffer.from(await r.arrayBuffer());
+    if (buf.length > 400 * 1024) return '';
+    return `data:${r.headers.get('content-type') || 'image/jpeg'};base64,${buf.toString('base64')}`;
+  } catch (_) { return ''; }
+}
+function toCandidate(j) {
+  const { guessRole } = require('../data/roles');
+  const months = (j.total_experience && j.total_experience.months) || 0;
+  const work = (j.experience || []).slice(0, 8).map(e => ({
+    company: String(e.company || '').slice(0, 120), position: String(e.position || '').slice(0, 120),
+    period: [ym(e.start), e.end ? ym(e.end) : 'hozir'].filter(Boolean).join(' – '),
+    description: String(e.description || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 1200)
+  }));
+  const name = [j.last_name, j.first_name, j.middle_name].filter(Boolean).join(' ');
+  const about = String(j.skills || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  return {
+    fullName: name || String(j.title || 'hh nomzod').slice(0, 120),
+    desiredPosition: String(j.title || '').slice(0, 160),
+    // Sarlavhadan, bo'lmasa ish joylaridagi lavozimlardan ("Технолог" -> oldingi "Шеф-повар")
+    role: guessRole(j.title) || work.map(w => guessRole(w.position)).find(Boolean) || 'boshqa',
+    age: j.age || null,
+    location: (j.area && j.area.name) || '',
+    salaryExpectation: j.salary && j.salary.amount ? `${j.salary.amount} ${j.salary.currency === 'UZS' ? "so'm" : j.salary.currency}` : '',
+    experienceYears: Math.floor(months / 12), experienceMonths: months,
+    experienceSummary: months ? MONTHS_RU(months) : '',
+    workHistory: work,
+    skills: (j.skill_set || []).slice(0, 20),
+    languages: (j.language || []).map(l => [l.name, l.level && l.level.name].filter(Boolean).join(' — ')),
+    education: (j.education && j.education.level && j.education.level.name) || '',
+    summary: about.slice(0, 600),
+    rawText: [j.title, about, (j.skill_set || []).join(', '), ...work.map(w => `${w.position} — ${w.company} (${w.period}). ${w.description}`)].join('\n').slice(0, 20000),
+    hhResumeId: j.id, hhUrl: j.alternate_url || '',
+    source: 'hh', status: 'new', aiParsed: true
+  };
+}
+async function importResume(agencyId, id, { tag = '' } = {}) {
+  const Candidate = require('../models/Candidate');
+  const { v4: uuidv4 } = require('uuid');
+  const ex = await Candidate.findOne({ restaurantId: agencyId, hhResumeId: id }, 'id fullName').lean();
+  if (ex) return { id: ex.id, duplicate: true, name: ex.fullName };
+  const j = await resume(agencyId, id);
+  const data = toCandidate(j);
+  const photo = await photoData(j.photo && (j.photo.medium || j.photo.small));
+  const doc = await Candidate.create(Object.assign({ id: uuidv4(), restaurantId: agencyId, tags: tag ? [tag] : [],
+    photo, hasPhoto: !!photo, photoAt: photo ? new Date() : null }, data));
+  return { id: doc.id, created: true, name: doc.fullName };
+}
+
+module.exports = { configured, authorizeUrl, readState, connect, request, refresh, searchResumes, resume, tokens, HhError, SEARCH_KEYS, cfg,
+  importResume, toCandidate };

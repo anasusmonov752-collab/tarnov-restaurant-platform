@@ -44,6 +44,9 @@ const VacancySchema = new mongoose.Schema({
   venue:        { type: String, default: '' },   // joy tavsifi NOMSIZ: "Uyg'ur oshxonasi restorani, 3 filial"
   landmark:     { type: String, default: '' },   // mo'ljal: "Bodomzor metrosi yonida"
   salaryPeriod: { type: String, default: 'month' }, // month | day | shift — salaryFrom/To nimaga
+  // uzs | usd — top lavozimlarda maosh dollarda aytiladi ("1000 $ dan", 2026-11-17).
+  // usd vakansiya so'mli hisoblarga (bozor maoshi, moslik bali, maosh oralig'i) KIRMAYDI.
+  salaryCurrency: { type: String, default: 'uzs' },
   payout:       { type: String, default: '' },   // daily | weekly | tenday | twice | monthly — qachon to'lanadi
   perks:        { type: [String], default: [] }, // th-i18n PERK_KEYS
   duties:       { type: [String], default: [] }, // vazifalar — qisqa bandlar

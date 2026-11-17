@@ -10,11 +10,11 @@
   const W = 1080, H = 1920, PAD = 88;
   const PLANE = 'M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z';
   const TXT = {
-    uz: { city: 'Toshkent', month: "so'm / oy", day: "so'm / kun", shift: "so'm / smena", badge: 'Tajribasiz', mln: 'mln',
+    uz: { city: 'Toshkent', usd: '$ / oy', month: "so'm / oy", day: "so'm / kun", shift: "so'm / smena", badge: 'Tajribasiz', mln: 'mln',
       cta: 'Ariza — 2 daqiqa, rezyume shart emas', branches: n => `${n} ta filial`,
       payout: { daily: 'maosh har kuni', weekly: 'maosh har hafta', tenday: 'maosh har 10 kunda', twice: 'maosh oyiga 2 marta', monthly: 'maosh oyiga 1 marta' },
       lines: name => name ? [name, '*jamoasiga*', "qo'shiling"] : ['Restoranga', '*xodimlar*', 'kerak'] },
-    ru: { city: 'Ташкент', month: 'сум / мес', day: 'сум / день', shift: 'сум / смена', badge: 'Без опыта', mln: 'млн',
+    ru: { city: 'Ташкент', usd: '$ / мес', month: 'сум / мес', day: 'сум / день', shift: 'сум / смена', badge: 'Без опыта', mln: 'млн',
       cta: 'Отклик — 2 минуты, без резюме', branches: n => `${n} ${n % 10 === 1 && n % 100 !== 11 ? 'филиал' : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) ? 'филиала' : 'филиалов'}`,
       payout: { daily: 'зарплата каждый день', weekly: 'зарплата каждую неделю', tenday: 'зарплата каждые 10 дней', twice: 'зарплата 2 раза в месяц', monthly: 'зарплата раз в месяц' },
       lines: name => name ? ['Команда', `*${name}*`, 'ждёт вас'] : ['В ресторан', '*нужны*', 'сотрудники'] }
@@ -40,13 +40,17 @@
   function fromVacancies(rows, { lang = 'uz', name = '' } = {}) {
     const T = TXT[lang] || TXT.uz;
     const list = rows.filter(v => v.salaryFrom || v.salaryTo).slice(0, 4);
-    const tiles = list.map(v => ({
-      role: mainTitle(v.title),
-      pay: money(v.salaryFrom, v.salaryTo, lang),
-      unit: T[v.salaryPeriod === 'day' ? 'day' : v.salaryPeriod === 'shift' ? 'shift' : 'month'],
-      badge: (v.perks || []).includes('tajribasiz') ? T.badge : '',
-      _v: (v.salaryPeriod === 'month' ? 1 : 26) * (v.salaryTo || v.salaryFrom || 0)
-    }));
+    const tiles = list.map(v => {
+      const usd = v.salaryCurrency === 'usd';         // "1 000+ · $ / oy" (top lavozimlar)
+      return {
+        role: mainTitle(v.title),
+        pay: usd ? sp(v.salaryFrom || v.salaryTo) + (v.salaryTo && v.salaryTo !== v.salaryFrom ? '–' + sp(v.salaryTo) : (v.salaryFrom && !v.salaryTo ? '+' : '')) : money(v.salaryFrom, v.salaryTo, lang),
+        unit: usd ? T.usd : T[v.salaryPeriod === 'day' ? 'day' : v.salaryPeriod === 'shift' ? 'shift' : 'month'],
+        badge: (v.perks || []).includes('tajribasiz') ? T.badge : '',
+        // Faqat tartib uchun (ko'rsatilmaydi): dollar taxminan so'mga
+        _v: (usd ? 12000 : 1) * (v.salaryPeriod === 'month' || !v.salaryPeriod ? 1 : 26) * (v.salaryTo || v.salaryFrom || 0)
+      };
+    });
     // Eng ko'p to'lanadigani birinchi va ko'k (ko'z birinchi shunga tushadi)
     tiles.sort((a, b) => b._v - a._v);
     if (tiles[0]) tiles[0].hot = true;

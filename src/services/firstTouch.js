@@ -221,6 +221,7 @@ function payRange(rows, lang) {
   const mln = x => String(Math.round(x / 1e5) / 10).replace('.', ',');
   const lo = [], hi = [];
   rows.forEach(v => {
+    if (v.salaryCurrency === 'usd') return;            // dollardagi maosh so'mli oraliqqa kirmaydi
     const k = MONTH_K[v.salaryPeriod] || 1;
     const a = v.salaryFrom || v.salaryTo, b = v.salaryTo || v.salaryFrom;
     if (a) lo.push(a * k);

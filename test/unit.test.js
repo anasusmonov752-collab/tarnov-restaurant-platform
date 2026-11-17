@@ -155,6 +155,11 @@ test('vakansiya shabloni: maosh davri, afzalliklar, bandlar va ishonch belgisi',
   assert.equal(vac.salaryText(Object.assign({}, c)), "250 000 – 300 000 so'm / smena");
   assert.equal(vac.salaryText({ salaryFrom: 4000000, salaryTo: 6000000 }), "4 000 000 – 6 000 000 so'm");   // oylik — qo'shimchasiz
   assert.equal(vac.salaryText({ salaryFrom: 200000, salaryPeriod: 'day' }, 'ru'), 'от 200 000 сум / день');
+  // Top lavozim — dollarda (2026-11-17, shef-povar 1000 $ dan)
+  assert.equal(vac.salaryText({ salaryFrom: 1000, salaryCurrency: 'usd' }), '1 000 $ dan');
+  assert.equal(vac.salaryText({ salaryFrom: 1000, salaryTo: 1500, salaryCurrency: 'usd' }, 'ru'), '1 000 – 1 500 $');
+  assert.equal(vac.clean({ salaryCurrency: 'eur' }).salaryCurrency, 'uzs');
+  assert.equal(vac.clean({ salaryCurrency: 'usd' }).salaryCurrency, 'usd');
   assert.equal(vac.payoutText(c), "Oyiga 2 marta to'lanadi");
 
   // Nomzod: restoran nomi yo'q; ishonch belgisi faqat haqiqat bo'lsa

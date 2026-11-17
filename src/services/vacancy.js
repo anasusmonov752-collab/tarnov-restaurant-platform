@@ -66,6 +66,7 @@ function clean(b, prev = {}) {
   if (b.location !== undefined)   out.location = String(b.location).trim().slice(0, 80);
   if (b.salaryFrom !== undefined) out.salaryFrom = num(b.salaryFrom, 0, 1e9);
   if (b.salaryTo !== undefined)   out.salaryTo = num(b.salaryTo, 0, 1e9);
+  if (b.salaryCurrency !== undefined) out.salaryCurrency = b.salaryCurrency === 'usd' ? 'usd' : 'uzs';
   if (b.schedule !== undefined)   out.schedule = String(b.schedule).trim().slice(0, 120);
   if (b.conditions !== undefined) out.conditions = String(b.conditions).trim().slice(0, 400);
   if (b.notes !== undefined)      out.notes = String(b.notes).trim().slice(0, 600);
@@ -118,10 +119,11 @@ const money = n => n ? String(Math.round(Number(n))).replace(/\B(?=(\d{3})+(?!\d
 function salaryText(v, lang = 'uz') {
   // Bitta summa aytilsa ikkalasi teng bo'ladi — "4 000 000 – 4 000 000" emas
   let s = '';
-  if (v.salaryFrom && v.salaryTo && v.salaryFrom === v.salaryTo) s = t(lang, 'sal.eq', { a: money(v.salaryFrom) });
-  else if (v.salaryFrom && v.salaryTo) s = t(lang, 'sal.range', { a: money(v.salaryFrom), b: money(v.salaryTo) });
-  else if (v.salaryFrom) s = t(lang, 'sal.from', { a: money(v.salaryFrom) });
-  else if (v.salaryTo)   s = t(lang, 'sal.to', { a: money(v.salaryTo) });
+  const k = v.salaryCurrency === 'usd' ? 'sal.usd.' : 'sal.';      // "1 000 $ dan"
+  if (v.salaryFrom && v.salaryTo && v.salaryFrom === v.salaryTo) s = t(lang, k + 'eq', { a: money(v.salaryFrom) });
+  else if (v.salaryFrom && v.salaryTo) s = t(lang, k + 'range', { a: money(v.salaryFrom), b: money(v.salaryTo) });
+  else if (v.salaryFrom) s = t(lang, k + 'from', { a: money(v.salaryFrom) });
+  else if (v.salaryTo)   s = t(lang, k + 'to', { a: money(v.salaryTo) });
   if (!s) return '';
   // "250 000 – 300 000 so'm / smena" — oylik (odatiy) bo'lsa qo'shimchasiz
   if (v.salaryPeriod === 'day' || v.salaryPeriod === 'shift') s += ' ' + t(lang, 'sal.per.' + v.salaryPeriod);
@@ -153,7 +155,7 @@ function full(v, extra = {}, lang) {
     // Mini App'da tillar o'quvchi tilida ("Rus" -> "Русский"); panelda — kiritilgandek
     languages: lang ? langsLabel(v.languages, lang) : (v.languages || []),
     shift: v.shift, location: v.location,
-    salaryFrom: v.salaryFrom, salaryTo: v.salaryTo, salaryText: salaryText(v, lang || 'uz'),
+    salaryFrom: v.salaryFrom, salaryTo: v.salaryTo, salaryCurrency: v.salaryCurrency || 'uzs', salaryText: salaryText(v, lang || 'uz'),
     schedule: v.schedule,
     // "Ovqat · Forma" — ma'lum so'zlar o'quvchi tilida (th-i18n.perksText)
     conditions: lang ? I18N.perksText(v.conditions, lang) : v.conditions,

@@ -362,6 +362,10 @@ function form(v){
       <div class="fld"><label>Maosh (gacha)</label><input type="number" id="fSt2" value="${d.salaryTo ?? ''}" placeholder="5000000"></div>
     </div>
     <div class="row2">
+      <div class="fld"><label>Valyuta</label><select id="fCur">
+        <option value="uzs" ${(d.salaryCurrency || 'uzs') === 'uzs' ? 'selected' : ''}>so'm</option>
+        <option value="usd" ${d.salaryCurrency === 'usd' ? 'selected' : ''}>$ (dollar)</option>
+      </select></div>
       <div class="fld"><label>Maosh nimaga</label><select id="fSp">
         <option value="month" ${(d.salaryPeriod || 'month') === 'month' ? 'selected' : ''}>Oyiga</option>
         <option value="day"   ${d.salaryPeriod === 'day' ? 'selected' : ''}>Kuniga</option>
@@ -411,7 +415,7 @@ function form(v){
       shift: $('fSh').value, location: $('fLo').value.trim(),
       salaryFrom: $('fSf').value, salaryTo: $('fSt2').value,
       schedule: $('fSc').value.trim(), conditions: $('fCo').value.trim(),
-      salaryPeriod: $('fSp').value, payout: $('fPo').value,
+      salaryPeriod: $('fSp').value, salaryCurrency: $('fCur').value, payout: $('fPo').value,
       perks: [...document.querySelectorAll('[data-pk]:checked')].map(x => x.dataset.pk),
       venue: $('fVn').value.trim(), landmark: $('fLm').value.trim(), hook: $('fHk').value.trim(),
       duties: $('fDu').value, requirements: $('fRq').value

@@ -541,7 +541,7 @@ function vacancyCriteria(v, excludeIds = []) {
     languages: v.languages || [],
     location: v.location || null,
     shift: v.shift === 'kunduzgi' || v.shift === 'kechki' ? v.shift : null,
-    maxSalary: v.salaryTo || null,
+    maxSalary: v.salaryCurrency === 'usd' ? null : (v.salaryTo || null),
     excludeIds
   });
 }
@@ -921,7 +921,7 @@ async function appsView(agencyId, clientId, apps, lang = 'uz') {
   const byId = Object.fromEntries(cands.map(c => [c.id, c]));
   // Moslik bali uchun vakansiyalar (services/matchScore — har safar hisoblanadi)
   const vacs = await Vacancy.find({ agencyId, id: { $in: [...new Set(apps.map(a => a.vacancyId))] } },
-    'id role minExp salaryFrom salaryTo salaryPeriod location shift').lean();
+    'id role minExp salaryFrom salaryTo salaryPeriod salaryCurrency location shift').lean();
   const vacBy = Object.fromEntries(vacs.map(v => [v.id, v]));
 
   // Ko'rilgan deb belgilaymiz — nomzod "Ko'rildi" holatini ko'radi

@@ -539,6 +539,7 @@
       'sal.range': '{a} – {b} so\'m',
       'sal.from': '{a} so\'mdan',
       'sal.to': '{a} so\'mgacha',
+      'sal.usd.eq': '{a} $', 'sal.usd.range': '{a} – {b} $', 'sal.usd.from': '{a} $ dan', 'sal.usd.to': '{a} $ gacha',
 
       // ── SERVER: joy va tillar (utils/labels.js) ──
       'place.tashkent': 'Toshkent',
@@ -1719,6 +1720,7 @@
       'sal.range': '{a} – {b} сум',
       'sal.from': 'от {a} сум',
       'sal.to': 'до {a} сум',
+      'sal.usd.eq': '{a} $', 'sal.usd.range': '{a} – {b} $', 'sal.usd.from': 'от {a} $', 'sal.usd.to': 'до {a} $',
 
       'place.tashkent': 'Ташкент',
       'lang.uz': 'Узбекский', 'lang.ru': 'Русский', 'lang.en': 'Английский', 'lang.kk': 'Казахский',

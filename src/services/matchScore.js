@@ -58,7 +58,8 @@ function score(c = {}, v = {}, scr = {}) {
   } else add(y > 0 ? W.exp : W.exp * 0.6, y > 0 ? 'exp' : 'expNone', y > 0 ? true : null, { n: Math.floor(y) || 1 });
 
   // Maosh (faqat oylik vakansiyada solishtiriladi)
-  const offer = (!v.salaryPeriod || v.salaryPeriod === 'month') ? (v.salaryTo || v.salaryFrom || 0) : 0;
+  // Dollardagi maosh (salaryCurrency 'usd') so'mdagi kutilgan maosh bilan solishtirilmaydi
+  const offer = (!v.salaryPeriod || v.salaryPeriod === 'month') && v.salaryCurrency !== 'usd' ? (v.salaryTo || v.salaryFrom || 0) : 0;
   const want = parseMoney(c.salaryExpectation);
   if (offer && want) {
     if (want <= offer) add(W.salary, 'salary', true);

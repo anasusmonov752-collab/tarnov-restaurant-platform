@@ -76,7 +76,8 @@ async function connect(agencyId, code) {
 }
 
 async function tokens(agencyId) {
-  const r = await Restaurant.findOne({ id: agencyId }, '+hh.accessToken +hh.refreshToken hh').lean();
+  // Faqat "+" bilan: butun hujjat + yashirin tokenlar ("hh" ni qo'shish proyeksiyada to'qnashadi)
+  const r = await Restaurant.findOne({ id: agencyId }).select('+hh.accessToken +hh.refreshToken').lean();
   return (r && r.hh) || {};
 }
 

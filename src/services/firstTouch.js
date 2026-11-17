@@ -258,8 +258,9 @@ async function candidateInvite({ cand, lang, appBase }) {
     ? { text: '🇺🇿 O\'zbekcha', callback_data: 'ft:il:uz' }
     : { text: '🇷🇺 Русский', callback_data: 'ft:il:ru' }]);
   keyboard.push([{ text: T(lang, 'ft.iNo'), callback_data: 'ft:no' }]);
-  // Rasm (public/img/bot-welcome-<til>.jpg, ~70 KB) — rasm o'zgarsa ?v= ni oshiring (Telegram keshi)
-  const photo = appBase ? `${appBase}/img/bot-welcome-${lang === 'ru' ? 'ru' : 'uz'}.jpg?v=1` : '';
+  // Rasm — public/ ichidagi yo'l: bot faylni Telegram'ga o'zi yuklaydi (URL bersak, Telegram
+  // bepul Render'dan yuklay olmay qolardi — 2026-11-17 jonli), keyin file_id ishlatiladi
+  const photo = `img/bot-welcome-${lang === 'ru' ? 'ru' : 'uz'}.jpg`;
   return { text, keyboard, photo };
 }
 

@@ -717,29 +717,14 @@ async function startSurvey(msg, chatId, ank, appBase) {
 //                          "Orqaga" ham aynan shu ekranni chizadi)
 const escHtml = s => String(s == null ? '' : s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 
-// Telegram rasmni har safar serverimizdan yuklamasin: birinchi yuborishdan keyin
-// file_id (Telegram serveridagi nusxa) ishlatiladi — tezroq va Render uyg'onishiga bog'liq emas
-const photoIds = new Map();
-const photoRef = url => photoIds.get(url) || url;
-function keepPhoto(url, msg) {
-  const p = msg && msg.photo;
-  if (url && p && p.length) photoIds.set(url, p[p.length - 1].file_id);
-  return msg;
-}
-
 // Ekranni yuborish: rasm bo'lsa — rasm + izoh (brendli birinchi xabar), aks holda matn.
-// Rasm yuborilmasa (URL yetib bormadi va h.k.) — jim qolmasdan oddiy matn bilan.
+// scr.photo — public/ ichidagi yo'l ('img/bot-welcome-uz.jpg'): faylni o'zimiz yuklaymiz,
+// keyin file_id (services/telegram sendLocalPhoto). Rasm o'tmasa — jim qolmasdan matn bilan.
 async function sendScreen(token, chatId, scr) {
-  const extra = { parse_mode: 'HTML', reply_markup: { inline_keyboard: scr.keyboard || [] } };
+  const extra = { parse_mode: 'HTML', ...(scr.keyboard && scr.keyboard.length ? { reply_markup: { inline_keyboard: scr.keyboard } } : {}) };
   if (scr.photo) {
-    const ref = photoRef(scr.photo);
-    try { return keepPhoto(scr.photo, await tg.sendPhoto(token, chatId, ref, scr.text, extra)); }
+    try { return await tg.sendLocalPhoto(token, chatId, scr.photo, scr.text, extra); }
     catch (e) { console.warn('[TG] rasm yuborilmadi:', e.message); }
-    if (ref !== scr.photo) {                       // eski file_id — URL bilan yana bir marta
-      photoIds.delete(scr.photo);
-      try { return keepPhoto(scr.photo, await tg.sendPhoto(token, chatId, scr.photo, scr.text, extra)); }
-      catch (e) { console.warn('[TG] rasm (URL) yuborilmadi:', e.message); }
-    }
   }
   return tg.sendMessage(token, chatId, scr.text, extra);
 }
@@ -1034,27 +1019,29 @@ async function handleCallback(cq, appBase) {
         // teglar MATN bo'lib chiqadi (2026-11-14 jonli topildi).
         const opt = r.keyboard ? { reply_markup: { inline_keyboard: r.keyboard } } : {};
         if (r.html) opt.parse_mode = 'HTML';
-        // Rasmli xabar (brendli birinchi xabar): matn emas — izoh; til almashsa rasm ham
+        // Rasmli xabar (brendli birinchi xabar): matn emas — izoh; til almashsa rasm ham.
+        // Navbat bilan: rasm+izoh -> faqat izoh (rasm o'tmasa ham xabar BITTA qoladi).
         const isPhoto = !!(cq.message && cq.message.photo);
-        try {
-          if (isPhoto && r.photo) {
-            keepPhoto(r.photo, await tg.editMessageMedia(token, chatId, msgId,
-              { type: 'photo', media: photoRef(r.photo), caption: String(r.edit).slice(0, 1024), ...(r.html ? { parse_mode: 'HTML' } : {}) },
-              r.keyboard ? { reply_markup: { inline_keyboard: r.keyboard } } : {}));
-          } else if (isPhoto) {
-            await tg.editMessageCaption(token, chatId, msgId, r.edit, opt);
-          } else {
-            await tg.editMessageText(token, chatId, msgId, r.edit, opt);
-          }
-        } catch (e) {
-          // "message is not modified" — o'sha ekran, xato emas. Boshqasi (eski xabar,
-          // o'chirilgan) — jim qolmasdan yangi xabar bilan beramiz
-          if (!/not modified/i.test(e.message)) {
+        const tries = isPhoto
+          ? [r.photo && (() => tg.editLocalPhoto(token, chatId, msgId, r.photo, r.edit, opt)),
+             () => tg.editMessageCaption(token, chatId, msgId, r.edit, opt)].filter(Boolean)
+          : [() => tg.editMessageText(token, chatId, msgId, r.edit, opt)];
+        let edited = false;
+        for (const f of tries) {
+          try { await f(); edited = true; break; }
+          catch (e) {
+            // "not modified" — o'sha ekran; "canceled by new edit" — odam tugmani tez-tez
+            // bosdi, keyingi so'rov o'zi tahrirlaydi. Ikkalasi xato EMAS (yangi xabar kerak emas —
+            // 2026-11-17 jonli: shu sababli chatga ketma-ket nusxalar tushdi)
+            if (/not modified|canceled by new edit/i.test(e.message)) { edited = true; break; }
             console.warn('[CB] edit:', tag, e.message);
-            const send = isPhoto && r.photo ? sendScreen(token, chatId, { photo: r.photo, text: r.edit, keyboard: r.keyboard })
-              : tg.sendMessage(token, chatId, r.edit, opt);
-            await send.catch(err => console.error('[CB] send:', tag, err.message));
           }
+        }
+        if (!edited) {
+          // Tahrirlab bo'lmadi (xabar o'chirilgan, juda eski) — jim qolmasdan yangi xabar
+          const send = isPhoto && r.photo ? sendScreen(token, chatId, { photo: r.photo, text: r.edit, keyboard: r.keyboard })
+            : tg.sendMessage(token, chatId, r.edit, opt);
+          await send.catch(err => console.error('[CB] send:', tag, err.message));
         }
       }
       console.log('[CB]', tag, (Date.now() - t0) + 'ms');

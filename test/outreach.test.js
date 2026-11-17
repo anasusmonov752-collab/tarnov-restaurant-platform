@@ -206,7 +206,7 @@ test('shaxsiy havola ekrani: anketa yo\'q, lavozimidagi ish, tugma = ariza', asy
   assert.match(scr.text, /<b>Hozir 3 ta ochiq ish · oyiga 6–13 mln so'm<\/b>/);   // kunlik 225 000 × 26 ≈ 5,85 -> 6
   assert.match(scr.text, /Bu TalentHub/);
   // 2026-11-17: brendli rasm (shior, kimligimiz, va'dalar) — matn qisqa
-  assert.equal(scr.photo, 'https://x/img/bot-welcome-uz.jpg?v=1');
+  assert.equal(scr.photo, 'img/bot-welcome-uz.jpg');      // fayl yo'li — bot o'zi yuklaydi (URL emas)
   assert.ok(scr.text.length < 300, scr.text.length);
   assert.ok(!/bizda bor|to'ldirish shart emas|💰|1\. /.test(scr.text), scr.text);   // ro'yxat va emoji yo'q
   assert.ok(!/Xostess|Ofitsiant|Menejer/.test(scr.text), 'lavozimlar yo\'q');
@@ -227,7 +227,7 @@ test('shaxsiy havola ekrani: anketa yo\'q, lavozimidagi ish, tugma = ariza', asy
   assert.match(ru.edit, /Это TalentHub/);
   assert.match(ru.edit, /<b>Сейчас 2 открытые вакансии · до 5,9 млн сум в месяц<\/b>/);
   assert.match(ru.keyboard[0][0].text, /Смотреть вакансии/);
-  assert.equal(ru.photo, 'https://x/img/bot-welcome-ru.jpg?v=1');            // rasm ham ruschaga almashadi
+  assert.equal(ru.photo, 'img/bot-welcome-ru.jpg');                          // rasm ham ruschaga almashadi
   assert.equal(ru.html, true);
   assert.ok(ru.keyboard.flat().some(b => b.callback_data === 'ft:il:uz'));
 

@@ -35,19 +35,29 @@ async function call(token, method, payload, opts = {}) {
   }
 }
 
-async function callOnce(token, method, payload, { timeoutMs = 15000 } = {}) {
+// file — {field, name, type, data: Buffer}: fayl bilan (multipart) yuborish; qolgan
+// maydonlar forma qatori bo'ladi (obyektlar — JSON). Har urinishda forma qaytadan yig'iladi.
+function requestInit(payload, file) {
+  if (!file) {
+    return { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload || {}) };
+  }
+  const fd = new FormData();
+  for (const [k, v] of Object.entries(payload || {})) {
+    if (v === undefined || v === null) continue;
+    fd.append(k, typeof v === 'object' ? JSON.stringify(v) : String(v));
+  }
+  fd.append(file.field, new Blob([file.data], { type: file.type }), file.name);
+  return { method: 'POST', body: fd };
+}
+
+async function callOnce(token, method, payload, { timeoutMs = 15000, file } = {}) {
   if (!token) throw new TelegramError('Bot tokeni sozlanmagan', 0, true);
 
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), timeoutMs);
   let res, body;
   try {
-    res = await fetch(`${API}${token}/${method}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload || {}),
-      signal: ctl.signal
-    });
+    res = await fetch(`${API}${token}/${method}`, { ...requestInit(payload, file), signal: ctl.signal });
     body = await res.json().catch(() => ({}));
   } catch (e) {
     throw new TelegramError(
@@ -108,6 +118,61 @@ async function editMessageCaption(token, chatId, messageId, caption, opts = {}) 
 // Rasmning o'zini almashtirish (masalan, til o'zgarganda) — media: {type:'photo', media, caption, parse_mode}
 async function editMessageMedia(token, chatId, messageId, media, opts = {}) {
   return call(token, 'editMessageMedia', { chat_id: chatId, message_id: messageId, media, ...opts });
+}
+
+// ── O'ZIMIZNING RASMLAR (public/img) ──
+// Telegram'ga URL berilsa, rasmni u serverimizdan O'ZI yuklab oladi — bepul Render'da bu
+// ishonchsiz (2026-11-17 jonli: "failed to get HTTP URL content", 6–11 s kutib, tugma
+// bosilgani "ishlamadi"). Shuning uchun faylni o'zimiz yuklaymiz (multipart), javobdagi
+// file_id xotirada qoladi — keyingi safar bayt emas, file_id ketadi (deploy'da yangilanadi).
+const path = require('path');
+const fs = require('fs');
+const PUBLIC_DIR = path.join(__dirname, '..', '..', 'public');
+const LOCAL_PHOTO = /^img\/[\w.-]+\.(jpe?g|png)$/;
+const STALE_FILE = /file|identifier|media/i;       // eskirgan/yaroqsiz file_id
+const photoIds = new Map();
+
+function localKey(photo) {
+  const key = String(photo || '').replace(/^\/+/, '').replace(/[?#].*$/, '');
+  if (!LOCAL_PHOTO.test(key)) throw new TelegramError('Rasm yo\'li noto\'g\'ri: ' + key, 0, true);
+  return key;
+}
+function keepPhoto(key, msg) {
+  const p = msg && msg.photo;
+  if (p && p.length) photoIds.set(key, p[p.length - 1].file_id);
+  return msg;
+}
+async function photoFile(key) {
+  return { field: 'photo', name: path.basename(key), type: key.endsWith('.png') ? 'image/png' : 'image/jpeg',
+    data: await fs.promises.readFile(path.join(PUBLIC_DIR, key)) };
+}
+
+/** Bizning rasm ('img/bot-welcome-uz.jpg' — public/ ichidagi yo'l) + izoh */
+async function sendLocalPhoto(token, chatId, photo, caption, opts = {}) {
+  const key = localKey(photo);
+  const id = photoIds.get(key);
+  if (id) {
+    try { return keepPhoto(key, await sendPhoto(token, chatId, id, caption, opts)); }
+    catch (e) { if (!STALE_FILE.test(e.message)) throw e; photoIds.delete(key); }
+  }
+  return keepPhoto(key, await call(token, 'sendPhoto',
+    { chat_id: chatId, caption: String(caption || '').slice(0, 1024), ...opts },
+    { file: await photoFile(key), timeoutMs: 30000 }));
+}
+
+/** Rasmli xabarning rasmini ham, izohini ham almashtirish (bizning rasm) */
+async function editLocalPhoto(token, chatId, messageId, photo, caption, opts = {}) {
+  const key = localKey(photo);
+  const { parse_mode, ...rest } = opts;
+  const media = m => ({ type: 'photo', media: m, caption: String(caption || '').slice(0, 1024), ...(parse_mode ? { parse_mode } : {}) });
+  const id = photoIds.get(key);
+  if (id) {
+    try { return keepPhoto(key, await editMessageMedia(token, chatId, messageId, media(id), rest)); }
+    catch (e) { if (!STALE_FILE.test(e.message)) throw e; photoIds.delete(key); }
+  }
+  return keepPhoto(key, await call(token, 'editMessageMedia',
+    { chat_id: chatId, message_id: messageId, media: media('attach://photo'), ...rest },
+    { file: await photoFile(key), timeoutMs: 30000 }));
 }
 
 // Bot kanal/guruhda kim (administrator, can_post_messages) — services/jobPost
@@ -270,7 +335,8 @@ async function platformUsername() {
 }
 
 module.exports = {
-  call, getMe, getChat, getChatMember, sendMessage, sendVoice, sendPhoto, editMessageCaption, editMessageMedia, answerCallback, editMessageText, setChatMenuButton, resetChatMenuButton, sendChatAction,
+  call, getMe, getChat, getChatMember, sendMessage, sendVoice, sendPhoto, editMessageCaption, editMessageMedia,
+  sendLocalPhoto, editLocalPhoto, answerCallback, editMessageText, setChatMenuButton, resetChatMenuButton, sendChatAction,
   setWebhook, ensureWebhook, deleteWebhook, getWebhookInfo, getFileBase64,
   deepLink, TelegramError, MAX_LEN,
   platformToken, platformSecret, platformUsername, isPlatformReady

@@ -1247,12 +1247,17 @@ mijozga bormaydi va Mini App'da ko'rinmaydi (`noTestApps`). Kunduzi deploy — b
   salom, `ft.iIntro`, qalin `ft.iLead2` ("Hozir N ta ochiq ish · oyiga 6–13 mln so'm" —
   bazadan, kunlik×26, smena×15), `ft.iPick`. Tugmalar: Ishlarni ko'rish (web_app) / ikkinchi
   til / Hozir ish qidirmayapman. Yuborish — `routes/telegram.js sendScreen` (rasm o'tmasa —
-  matn; file_id xotirada keshlanadi). Rasm o'zgarsa `?v=` ni oshiring.
-- TUGMALAR JIM QOLMAYDI (`5a2eb07`, `61f3238`): RASMLI XABARDA `editMessageText` ISHLAMAYDI —
-  dispatcher `cq.message.photo` bo'lsa `editMessageCaption`, servis `photo` qaytarsa
-  `editMessageMedia` (til almashsa rasm ham). Servis bo'sh javob qaytarsa — `bot.stale`
-  ogohlantirishi; tahrir bo'lmasa (not modified'dan tashqari) — yangi xabar; har bosish Render
-  logida `[CB] <teg> Nms`. **Telegramda HALI BOSILMAGAN** (/test → 📄 hh nomzod).
+  matn).
+- RASMNI URL BILAN BERMANG: Telegram uni bepul Render'dan yuklay olmay qoldi (jonli: "failed to
+  get HTTP URL content", 6–11 s, ruscha tugma rasm o'rniga yangi matnli xabar yubordi). `photo` —
+  public/ ichidagi yo'l (`img/...`); `tg.sendLocalPhoto` / `tg.editLocalPhoto` faylni o'zi
+  yuklaydi (multipart, `attach://photo`), keyin xotiradagi file_id (deploy'da yangilanadi).
+  `test/tgphoto.test.js`.
+- TUGMALAR JIM QOLMAYDI (`5a2eb07`..): RASMLI XABARDA `editMessageText` ISHLAMAYDI — dispatcher
+  `cq.message.photo` bo'lsa navbat bilan: rasm+izoh (`editLocalPhoto`) -> faqat izoh; matnli
+  xabarda `editMessageText`. "not modified" va "canceled by new edit" (tez-tez bosildi) — xato
+  emas; boshqa xatoda yangi xabar. Servis bo'sh javob qaytarsa — `bot.stale` ogohlantirishi;
+  har bosish Render logida `[CB] <teg> Nms`.
 
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.

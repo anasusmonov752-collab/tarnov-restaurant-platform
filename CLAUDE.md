@@ -1214,6 +1214,46 @@ tekshiruvisiz). Anasning o'z rezyumesi yuklandi (HR-menejer, isTest). Sinov ariz
 mijozga bormaydi va Mini App'da ko'rinmaydi (`noTestApps`). Kunduzi deploy — bepul Render
 "waking up" sahifasini ko'rsatadi: mayda o'zgarishlarni kechqurun chiqaring.
 
+**STORY USLUBI (SINOV), $ MAOSH, hh API, BIRINCHI XABAR BRENDI** (2026-11-16..17,
+`6c17b34`..`61f3238`):
+- STORY RASM — panel Vakansiyalar → "Story rasm" (`public/js/th-story.js`, canvas 1080×1920,
+  uz/ru): mijozning ochiq vakansiyalaridan, maosh/filial bazadan, sarlavha tahrirlanadi;
+  standart tanlov — eng ko'p to'lanadigani oldin, har xil roldan. Analitikada Telegram
+  story — eng kuchli kanal (2026-11-16).
+- STORY USLUBI — SINOV (Anas: "yoqmasa ortga qaytaramiz"): to'q ko'k gradient, oltin doira
+  `#FFC53D`, Inter. Qo'llangan: nomzod vakansiya sahifasi tepasi (profil.html), anketa
+  kirish/yakun ekranlari (`.st*` — `.sh*` pastki oyna bilan to'qnashardi), `maosh.html`.
+  Nomzod ishlar ro'yxati ixcham (`fbe7560`): birinchi ish katta karta, qolgani bir qator;
+  tartib: mos → eng ko'p ariza → yangi.
+- MAOSH DOLLARDA (`a1781bc`): `Vacancy.salaryCurrency` uzs|usd ("1 000 $ dan"); usd vakansiya
+  so'mli hisoblarga (moslik bali, oylik oralig'i, qidiruv) KIRMAYDI. Top lavozimlar: Servis
+  menejeri, Shef-povar (milliy, Chorsu), Konditer (yevropa desertlari, Sebzor) — afzalliklarsiz.
+- Arizalar: yopilgan vakansiyaning arizasi "Yakunlangan"ga o'tadi, sanoqlarga kirmaydi.
+- hh.uz RASMIY API — ULANGAN (`bd0c1f4`..`a18b54d`): dev.hh.ru "RestoOne HR" ilovasi ISH
+  BERUVCHI akkauntida tasdiqlangan (nomzod akkauntida ko'rinmaydi — "tasdiqlanmagan" deb
+  adashmang). `services/hh.js`, `/api/hh/*` (status, connect → callback, resumes,
+  resumes/:id, import, dictionaries); tokenlar `Restaurant.hh` (`select:false` — o'qishda
+  `.select('+hh.accessToken +hh.refreshToken')`), muddati o'tsa refresh; `host=hh.uz`,
+  `area=2759`, `HH-User-Agent`. Qidiruv, rezyume ko'rish va import KVOTA YEMAYDI;
+  "Открыть контакты" — yeydi, faqat Anas qarori bilan. Import `hhResumeId` bo'yicha takrorsiz,
+  `hhUrl` (rezyume oynasida "hh.uz'da ochish"). Env (faqat Render): `HH_CLIENT_ID`,
+  `HH_CLIENT_SECRET`, `HH_REDIRECT_URI`, `HH_USER_AGENT`.
+- SMS HAVOLA EKRANI — BREND RASMI (`61f3238`; Anas: "g'alati, jalb qilmaydi, eng ko'p
+  yo'qotish shu yerda — professional agentlik sifatida ko'rinishimiz kerak"). SHIOR (Anas
+  ko'p variantdan tanladi): **"Talab bormi? Talant bor!"** / «Есть запрос? Есть таланты!» —
+  ikki tomonlama (restoranga ham, nomzodga ham), qisqa. `firstTouch.candidateInvite` →
+  `{text, keyboard, photo}`: rasm `public/img/bot-welcome-<uz|ru>.jpg` (1280×640, ~70 KB:
+  shior, "Toshkent restoranlari uchun ishga joylash agentligi", 3 va'da); izoh 4 qator —
+  salom, `ft.iIntro`, qalin `ft.iLead2` ("Hozir N ta ochiq ish · oyiga 6–13 mln so'm" —
+  bazadan, kunlik×26, smena×15), `ft.iPick`. Tugmalar: Ishlarni ko'rish (web_app) / ikkinchi
+  til / Hozir ish qidirmayapman. Yuborish — `routes/telegram.js sendScreen` (rasm o'tmasa —
+  matn; file_id xotirada keshlanadi). Rasm o'zgarsa `?v=` ni oshiring.
+- TUGMALAR JIM QOLMAYDI (`5a2eb07`, `61f3238`): RASMLI XABARDA `editMessageText` ISHLAMAYDI —
+  dispatcher `cq.message.photo` bo'lsa `editMessageCaption`, servis `photo` qaytarsa
+  `editMessageMedia` (til almashsa rasm ham). Servis bo'sh javob qaytarsa — `bot.stale`
+  ogohlantirishi; tahrir bo'lmasa (not modified'dan tashqari) — yangi xabar; har bosish Render
+  logida `[CB] <teg> Nms`. **Telegramda HALI BOSILMAGAN** (/test → 📄 hh nomzod).
+
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.
 O'z nomzodlari Telegram orqali; hh nomzodlariga — o'z SIM'dan qo'lda

@@ -438,6 +438,16 @@ const RestaurantSchema = new mongoose.Schema({
   evaluations:  [EvaluationSchema],
   staffNotes:   [StaffNoteSchema],
   telegram:     { type: TelegramSchema, default: () => ({}) },
+  // hh.uz / hh.ru API (services/hh.js): ish beruvchi akkaunti ruxsat bergandagi tokenlar.
+  // Tokenlar odatiy so'rovlarda QAYTMAYDI (select:false) — faqat services/hh o'qiydi.
+  hh: {
+    accessToken:  { type: String, default: '', select: false },
+    refreshToken: { type: String, default: '', select: false },
+    expiresAt:    { type: Date, default: null },
+    connectedAt:  { type: Date, default: null },
+    employer:     { type: String, default: '' },   // ish beruvchi nomi (/me)
+    manager:      { type: String, default: '' }
+  },
   // Agentlik: kartaga o'tkazma uchun rekvizitlar (services/cardPay). Mijozga
   // faqat buyurtma ochilganda ko'rsatiladi; o'zgarsa admin chatiga xabar boradi.
   payCard: {

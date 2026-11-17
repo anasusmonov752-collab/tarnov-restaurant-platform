@@ -1,0 +1,142 @@
+// ── hh.uz / hh.ru rasmiy API (dev.hh.ru, ilova "RestoOne HR", ariza #30261 — tasdiqlangan) ──
+// Ish beruvchi akkaunti bir marta ruxsat beradi (OAuth "authorization code"), token
+// agentlik yozuvida saqlanadi (Restaurant.hh, select:false) va muddati o'tsa yangilanadi.
+// Kalitlar FAQAT Render env'da: HH_CLIENT_ID, HH_CLIENT_SECRET (repo ochiq — bu yerda yo'q).
+// HH_REDIRECT_URI — dev.hh.ru dagi "Redirect Uri" bilan AYNAN bir xil bo'lishi shart
+// (standart: <APP_URL>/api/hh/callback). HH_USER_AGENT — hh talabi: "Ilova/versiya (email)".
+//
+// Rezyume qidiruvi pullik "доступ к базе резюме" bilan ishlaydi; kontakt ochish
+// (telefon) bu servisda YO'Q — kvota yeydi, faqat egasining qarori bilan, hh saytida.
+const jwt = require('jsonwebtoken');
+const { JWT_SECRET } = require('../middleware/auth');
+const Restaurant = require('../models/Restaurant');
+
+const API = 'https://api.hh.ru';
+const AUTH = 'https://hh.ru/oauth/authorize';
+
+const cfg = () => ({
+  id: process.env.HH_CLIENT_ID || '',
+  secret: process.env.HH_CLIENT_SECRET || '',
+  redirect: process.env.HH_REDIRECT_URI ||
+    (process.env.APP_URL ? process.env.APP_URL.replace(/\/$/, '') + '/api/hh/callback' : ''),
+  ua: process.env.HH_USER_AGENT || 'TalentHub/1.0'
+});
+const configured = () => { const c = cfg(); return !!(c.id && c.secret && c.redirect); };
+
+/** state — kim ruxsat so'radi (agentlik), 15 daqiqa; CSRF himoyasi */
+const makeState = agencyId => jwt.sign({ a: agencyId, p: 'hh' }, JWT_SECRET, { expiresIn: '15m' });
+function readState(s) {
+  try { const d = jwt.verify(String(s || ''), JWT_SECRET); return d.p === 'hh' ? d.a : null; } catch (_) { return null; }
+}
+
+function authorizeUrl(agencyId) {
+  const c = cfg();
+  const q = new URLSearchParams({ response_type: 'code', client_id: c.id, redirect_uri: c.redirect, state: makeState(agencyId) });
+  return `${AUTH}?${q}`;
+}
+
+class HhError extends Error {
+  constructor(msg, status, code) { super(msg); this.status = status; this.code = code; }
+}
+
+async function tokenRequest(form) {
+  const r = await fetch(`${API}/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'HH-User-Agent': cfg().ua, 'User-Agent': cfg().ua },
+    body: new URLSearchParams(form).toString()
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || !j.access_token) {
+    throw new HhError('hh token olinmadi: ' + (j.error_description || j.error || r.status), r.status, j.error || '');
+  }
+  return j;
+}
+
+async function saveTokens(agencyId, j) {
+  await Restaurant.updateOne({ id: agencyId }, { $set: {
+    'hh.accessToken': j.access_token,
+    'hh.refreshToken': j.refresh_token || '',
+    'hh.expiresAt': new Date(Date.now() + (Number(j.expires_in) || 1209600) * 1000)
+  } });
+}
+
+/** OAuth kodini tokenga almashtirish (callback) va kim ulanganini yozish */
+async function connect(agencyId, code) {
+  const c = cfg();
+  const j = await tokenRequest({ grant_type: 'authorization_code', client_id: c.id, client_secret: c.secret, code, redirect_uri: c.redirect });
+  await saveTokens(agencyId, j);
+  let me = {};
+  try { me = await request(agencyId, '/me'); } catch (_) {}
+  await Restaurant.updateOne({ id: agencyId }, { $set: {
+    'hh.connectedAt': new Date(),
+    'hh.employer': (me.employer && me.employer.name) || '',
+    'hh.manager': [me.first_name, me.last_name].filter(Boolean).join(' ')
+  } });
+  return me;
+}
+
+async function tokens(agencyId) {
+  const r = await Restaurant.findOne({ id: agencyId }, '+hh.accessToken +hh.refreshToken hh').lean();
+  return (r && r.hh) || {};
+}
+
+// hh: refresh faqat access muddati o'tgandan keyin ishlaydi
+async function refresh(agencyId) {
+  const t = await tokens(agencyId);
+  if (!t.refreshToken) throw new HhError('hh ulanmagan — panelda "hh.uz ulash"', 401, 'not_connected');
+  const j = await tokenRequest({ grant_type: 'refresh_token', refresh_token: t.refreshToken });
+  await saveTokens(agencyId, j);
+  return j.access_token;
+}
+
+/** API so'rovi: token muddati o'tgan bo'lsa bir marta yangilab qayta urinadi */
+async function request(agencyId, path, params = {}, retry = true) {
+  const t = await tokens(agencyId);
+  if (!t.accessToken) throw new HhError('hh ulanmagan — panelda "hh.uz ulash"', 401, 'not_connected');
+  const qs = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => (Array.isArray(v) ? v : [v]).forEach(x => x != null && x !== '' && qs.append(k, x)));
+  const r = await fetch(`${API}${path}${qs.toString() ? '?' + qs : ''}`, {
+    headers: { Authorization: `Bearer ${t.accessToken}`, 'HH-User-Agent': cfg().ua, 'User-Agent': cfg().ua }
+  });
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 403 && retry && JSON.stringify(j).includes('token_expired')) {
+    await refresh(agencyId);
+    return request(agencyId, path, params, false);
+  }
+  if (!r.ok) {
+    const e = (j.errors && j.errors[0]) || {};
+    throw new HhError(`hh API ${r.status}: ${e.value || e.type || j.description || 'xato'}`, r.status, e.value || e.type || '');
+  }
+  return j;
+}
+
+// Qidiruv parametrlari — faqat ruxsat etilganlari (boshqasi hh'ga uzatilmaydi)
+const SEARCH_KEYS = ['text', 'area', 'experience', 'age_from', 'age_to', 'gender', 'salary_from', 'salary_to',
+  'currency', 'job_search_status', 'order_by', 'page', 'per_page', 'relocation', 'period', 'label', 'search_field'];
+
+/** Rezyume qidiruvi — kontaktsiz karta ma'lumoti (kvota yemaydi) */
+async function searchResumes(agencyId, q = {}) {
+  const params = { area: '2759', per_page: '50', host: process.env.HH_HOST || 'hh.uz' };
+  SEARCH_KEYS.forEach(k => { if (q[k] != null && q[k] !== '') params[k] = q[k]; });
+  const j = await request(agencyId, '/resumes', params);
+  return {
+    found: j.found || 0, pages: j.pages || 0, page: j.page || 0,
+    items: (j.items || []).map(x => ({
+      id: x.id, title: x.title, age: x.age || null,
+      area: x.area && x.area.name, gender: x.gender && x.gender.id,
+      totalMonths: x.total_experience ? x.total_experience.months : null,
+      salary: x.salary ? `${x.salary.amount} ${x.salary.currency}` : '',
+      photo: x.photo && (x.photo.small || x.photo.medium) || '',
+      updatedAt: x.updated_at, url: x.alternate_url,
+      experience: (x.experience || []).slice(0, 4).map(e => ({ company: e.company, position: e.position, start: e.start, end: e.end }))
+    }))
+  };
+}
+
+/** Bitta rezyume (to'liq tajriba va ko'nikmalar; kontakt — ochilmagan bo'lsa yo'q) */
+async function resume(agencyId, id) {
+  if (!/^[a-f0-9]{20,64}$/i.test(String(id))) throw new HhError('Rezyume id noto\'g\'ri', 400, 'bad_id');
+  return request(agencyId, '/resumes/' + id, { host: process.env.HH_HOST || 'hh.uz' });
+}
+
+module.exports = { configured, authorizeUrl, readState, connect, request, refresh, searchResumes, resume, tokens, HhError, SEARCH_KEYS, cfg };

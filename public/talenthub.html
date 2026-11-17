@@ -58,6 +58,9 @@
   <a class="th-card" id="jobsWarn" href="/vakansiyalar.html"
      style="display:none; margin-top:14px; padding:14px 16px; text-decoration:none; color:inherit"></a>
 
+  <!-- hh.uz rasmiy API (services/hh): bir marta ulanadi, keyin rezyume qidiruvi API orqali -->
+  <div class="th-card" id="hhCard" style="display:none; margin-top:14px; padding:14px 16px; align-items:center; gap:12px"></div>
+
   <div class="sh"><div class="th-section">Sizni kutayotgan tanlovlar</div><a href="/mijozlar.html">Hammasi</a></div>
   <div class="th-group" id="queue"><div class="empty">Yuklanmoqda…</div></div>
 
@@ -88,6 +91,24 @@ const KUN = ['Yakshanba', 'Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Ju
 const OY = ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr'];
 const nowD = new Date();
 $('today').textContent = `${KUN[nowD.getDay()]}, ${nowD.getDate()}-${OY[nowD.getMonth()]}`;
+
+// hh.uz API holati: sozlanmagan -> nima kerak; ulanmagan -> "Ulash"; ulangan -> kim va qachongacha
+(async function(){
+  const qs = new URLSearchParams(location.search).get('hh');
+  if (qs === 'ok') toast('hh.uz ulandi');
+  if (qs === 'denied') toast('hh.uz ruxsat berilmadi', 'error');
+  let s; try { s = await api('/api/hh/status'); } catch(e){ return; }
+  const c = $('hhCard'); c.style.display = 'flex';
+  const ic = '<span style="flex:none;width:38px;height:38px;border-radius:11px;background:#D6001C;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px">hh</span>';
+  if (!s.configured) {
+    c.innerHTML = `${ic}<div style="flex:1;min-width:0"><b>hh.uz API sozlanmagan</b><div style="font-size:13px;color:var(--th-muted)">Render'ga HH_CLIENT_ID va HH_CLIENT_SECRET qo'shing. dev.hh.ru'dagi Redirect Uri: <code>${esc(s.redirectUri || '')}</code></div></div>`;
+  } else if (!s.connected) {
+    c.innerHTML = `${ic}<div style="flex:1;min-width:0"><b>hh.uz ulanmagan</b><div style="font-size:13px;color:var(--th-muted)">Ish beruvchi akkaunti bilan bir marta ruxsat bering — rezyume qidiruvi API orqali ishlaydi</div></div><a class="th-btn" href="/api/hh/connect" style="background:var(--th-brand);color:#fff">Ulash</a>`;
+  } else {
+    const till = s.expiresAt ? new Date(s.expiresAt).toLocaleDateString('ru-RU') : '';
+    c.innerHTML = `${ic}<div style="flex:1;min-width:0"><b>hh.uz ulangan</b><div style="font-size:13px;color:var(--th-muted)">${esc([s.employer, s.manager].filter(Boolean).join(' · '))}${till ? ' · token ' + till + ' gacha (o\'zi yangilanadi)' : ''}</div></div><a class="th-btn" href="/api/hh/connect">Qayta ulash</a>`;
+  }
+})();
 
 (async function(){
   let d;

@@ -963,7 +963,7 @@ async function handleCallback(cq, appBase) {
     const [, , lang, rid] = data.split(':');
     const fromId = String((cq.from && cq.from.id) || chatId);
     const r = await SurveyResponse.findOne({ id: rid, tgUserId: fromId });
-    if (!r) return done('', false);
+    if (!r) { console.warn('[CB] ft:lang — yozuv yo\'q'); return done(T(lang, 'bot.stale'), true); }   // jim qolmasin
     r.lang = lang;
     await r.save();
     track('lang', { agencyId: r.agencyId, tgUserId: fromId, ref: lang, rid: r.id, isTest: r.isTest,
@@ -988,18 +988,37 @@ async function handleCallback(cq, appBase) {
     try {
       const SVC = { 'iv:': 'interviews', 'ps:': 'prescreen', 'pl:': 'placements', 'vi:': 'voiceIntake', 'ob:': 'onboard',
         'sh:': 'shifts', 'ft:': 'firstTouch' };
+      const t0 = Date.now();
       const svc = require('../services/' + SVC[data.slice(0, 3)]);
       const r = await svc.handleCallback({ data, chatId, appBase, from: cq.from });
+      const tag = data.split(':').slice(0, 2).join(':');
+      // Tugma JIM qolmasin (Anas, 2026-11-17: "buttonlar ba'zida ishlamay qolyapti"):
+      // servis hech narsa qaytarmasa (yozuv topilmadi, eski xabar) — tushuntirib aytamiz
+      if (!r.text && !r.edit && !r.keyboard) {
+        console.warn('[CB] bo\'sh javob:', tag);
+        await done(I18N.t(cqLang, 'bot.stale'), true);
+        return;
+      }
       await done(r.text || '', !!r.alert);
       if (r.edit) {
         // r.html — matnda <b> bor (services/firstTouch). parse_mode bo'lmasa
         // teglar MATN bo'lib chiqadi (2026-11-14 jonli topildi).
         const opt = r.keyboard ? { reply_markup: { inline_keyboard: r.keyboard } } : {};
         if (r.html) opt.parse_mode = 'HTML';
-        await tg.editMessageText(token, chatId, msgId, r.edit, opt).catch(() => {});
+        try {
+          await tg.editMessageText(token, chatId, msgId, r.edit, opt);
+        } catch (e) {
+          // "message is not modified" — o'sha ekran, xato emas. Boshqasi (eski xabar,
+          // o'chirilgan) — jim qolmasdan yangi xabar bilan beramiz
+          if (!/not modified/i.test(e.message)) {
+            console.warn('[CB] edit:', tag, e.message);
+            await tg.sendMessage(token, chatId, r.edit, opt).catch(err => console.error('[CB] send:', tag, err.message));
+          }
+        }
       }
+      console.log('[CB]', tag, (Date.now() - t0) + 'ms');
     } catch (e) {
-      console.error('[IV] tugma:', e.message);
+      console.error('[CB] tugma xatosi:', data.split(':').slice(0, 2).join(':'), e.message);
       await done(I18N.errText(cqLang, e.message), true);
     }
     return;

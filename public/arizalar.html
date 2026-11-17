@@ -131,7 +131,7 @@ function card(x){
   const c = x.candidate || {};
   const role = ROLES[c.role] || c.desiredPosition || 'Nomzod';
   const sub = [role, c.experienceYears ? c.experienceYears + ' yil tajriba' : 'Tajribasiz', c.location].filter(Boolean).join(' · ');
-  const decided = x.state === 'shortlisted' || x.state === 'rejected';
+  const decided = x.state === 'shortlisted' || x.state === 'rejected' || x.closed;   // yopilgan vakansiyada amal yo'q
   const tel = c.phone ? String(c.phone).replace(/[^\d+]/g, '') : '';
   // Telegram chati: username bo'lsa — u, aks holda raqam bo'yicha (t.me/+998...)
   let tgd = tel.replace(/\D/g, ''); if (tgd.length === 9) tgd = '998' + tgd;

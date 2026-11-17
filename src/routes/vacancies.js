@@ -83,7 +83,7 @@ router.get('/applications/inbox', guard, asyncHandler(async (req, res) => {
   const [cands, vs, sls] = await Promise.all([
     Candidate.find({ restaurantId: agencyId, id: { $in: [...new Set(apps.map(a => a.candidateId))] } },
       'id publicCode fullName phone role desiredPosition experienceYears age location source channel phoneVerifiedAt hasPhoto tgState tgUsername updatedAt').lean(),
-    Vacancy.find({ agencyId, id: { $in: [...new Set(apps.map(a => a.vacancyId))] } }, 'id title clientId venue role').lean(),
+    Vacancy.find({ agencyId, id: { $in: [...new Set(apps.map(a => a.vacancyId))] } }, 'id title clientId venue role status').lean(),
     Shortlist.find({ agencyId, id: { $in: apps.map(a => a.shortlistId).filter(Boolean) } }, 'id items').lean()
   ]);
   const clients = await Client.find({ agencyId, id: { $in: [...new Set(vs.map(v => v.clientId))] } }, 'id name status').lean();
@@ -97,14 +97,19 @@ router.get('/applications/inbox', guard, asyncHandler(async (req, res) => {
     const life = appLife.stepsFor(a, item);
     const v = V[a.vacancyId] || {};
     const decided = a.state === 'shortlisted' || a.state === 'rejected';
-    const tab = life.final ? 'done' : (!a.contactedAt && !decided ? 'new' : 'work');
+    // Vakansiya yopilgan (yoki o'chirilgan) — ariza "Yakunlangan"da, sanoqqa kirmaydi.
+    // Nomzodga xabar YUBORILMAYDI, yozuv o'zgarmaydi (Anas, 2026-11-17: eski 28 ta ariza)
+    const closed = !v.id || !['open', 'paused'].includes(v.status);
+    const tab = life.final || closed ? 'done' : (!a.contactedAt && !decided ? 'new' : 'work');
     return {
       id: a.id, vacancyId: a.vacancyId, state: a.state, message: a.message,
       createdAt: a.createdAt, contactedAt: a.contactedAt, agencySeenAt: a.agencySeenAt,
-      unseen: !a.agencySeenAt && !decided,
+      unseen: !a.agencySeenAt && !decided && !closed, closed,
       // Javobsiz: hali bog'lanilmagan va qaror yo'q — 24 soatdan oshsa sariq
       waitingMs: tab === 'new' ? now - new Date(a.createdAt).getTime() : 0,
-      tab, stage: life.stage, stageLabel: life.stageLabel, tone: life.tone,
+      tab, stage: life.stage,
+      stageLabel: closed && !life.final ? 'Vakansiya yopilgan' : life.stageLabel,
+      tone: closed && !life.final ? 'no' : life.tone,
       vacancy: { id: v.id, title: v.title || 'Vakansiya o\'chirilgan', venue: v.venue || '' },
       client: { id: v.clientId, name: (K[v.clientId] || {}).name || '', status: (K[v.clientId] || {}).status || '' },
       candidate: C[a.candidateId] || null

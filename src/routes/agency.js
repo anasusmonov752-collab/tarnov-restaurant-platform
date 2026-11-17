@@ -25,9 +25,11 @@ router.get('/today', guard, asyncHandler(async (req, res) => {
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const weekAgo = new Date(now - 7 * 864e5);
 
+  // Yopilgan vakansiyaga kelgan arizalar sanoqqa kirmaydi (Arizalar — "Yakunlangan")
+  const liveVac = await Vacancy.distinct('id', { agencyId, status: { $in: ['open', 'paused'] } });
   const [shortlists, appsNew, clients, candTotal, candWeek, unread, anketaUnseen, baseWeek, appsUnseen] = await Promise.all([
     Shortlist.find({ agencyId, status: { $ne: 'done' } }, 'id clientId items createdAt updatedAt summary').lean(),
-    Application.countDocuments({ agencyId, state: 'new', isTest: { $ne: true } }),
+    Application.countDocuments({ agencyId, state: 'new', isTest: { $ne: true }, vacancyId: { $in: liveVac } }),
     Client.find({ agencyId }, 'id name credits status isTest').lean(),
     // Sinov yozuvlari (admin test rejimi) sanoqlarga kirmaydi
     Candidate.countDocuments({ restaurantId: agencyId, isTest: { $ne: true } }),
@@ -38,7 +40,7 @@ router.get('/today', guard, asyncHandler(async (req, res) => {
     Candidate.countDocuments(Object.assign({ restaurantId: agencyId, source: 'anketa', isTest: { $ne: true } }, contactLog.UNSEEN)),
     Candidate.countDocuments({ restaurantId: agencyId, source: { $ne: 'anketa' }, createdAt: { $gte: weekAgo }, isTest: { $ne: true } }),
     // "Arizalar" — agentlik hali ochmagan va qaror qilinmagan arizalar
-    Application.countDocuments({ agencyId, agencySeenAt: null, state: { $in: ['new', 'seen'] }, isTest: { $ne: true } })
+    Application.countDocuments({ agencyId, agencySeenAt: null, state: { $in: ['new', 'seen'] }, isTest: { $ne: true }, vacancyId: { $in: liveVac } })
   ]);
   // Nomzodga KO'RINADIGAN ochiq ishlar. Tasdiqlanmagani (confirmedAt 14 kundan
   // eski — vac.STALE_DAYS) botda ham, nomzod kabinetida ham ko'rinmaydi: hammasi

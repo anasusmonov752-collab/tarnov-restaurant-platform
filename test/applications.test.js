@@ -108,6 +108,15 @@ test('panel: kirish qutisi, ko\'rildi/bog\'landim va taklif — nomzod bosqichi 
   assert.equal(it.tab, 'new'); assert.equal(it.client.status, 'pending');
   assert.equal(it.candidate.fullName, 'Aziz');
 
+  // Vakansiya yopilsa — ariza "Yakunlangan"da, sanoqqa kirmaydi, yozuv o'zgarmaydi (2026-11-17)
+  await M.Vacancy.updateOne({ id: 'v1' }, { $set: { status: 'closed' } });
+  const cbox = (await call(R.inbox, {})).j;
+  assert.equal(cbox.counts.new, 0); assert.equal(cbox.counts.unseen, 0);
+  assert.equal(cbox.items[0].tab, 'done'); assert.equal(cbox.items[0].closed, true);
+  assert.equal(cbox.items[0].stageLabel, 'Vakansiya yopilgan');
+  assert.equal((await M.Application.findOne({ id: it.id }).lean()).state, 'new');
+  await M.Vacancy.updateOne({ id: 'v1' }, { $set: { status: 'open' } });
+
   await call(R.mark, { params: { appId: it.id, mark: 'seen' } });
   const seen1 = (await M.Application.findOne({ id: it.id }).lean()).agencySeenAt;
   await call(R.mark, { params: { appId: it.id, mark: 'seen' } });          // ikkinchi marta surmaydi

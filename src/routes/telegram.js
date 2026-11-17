@@ -240,7 +240,7 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
         if (me) {
           const lang = I18N.resolve(me.lang, me.tgLang || tgLang);
           const scr = await require('../services/firstTouch').candidateInvite({ cand: me, lang, appBase: publicBase(req) });
-          await tg.sendMessage(token, chatId, scr.text, { parse_mode: 'HTML', reply_markup: { inline_keyboard: scr.keyboard } });
+          await sendScreen(token, chatId, scr);
         } else {
           await plainStart(msg, chatId, tgLang, publicBase(req));
         }
@@ -275,12 +275,14 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
           const scr = await ft.candidateInvite({ cand, lang: I18N.resolve(cand.lang, tgLang), appBase: publicBase(req) });
           await tg.sendMessage(token, chatId,
             `👀 <b>Ko'rinish</b> — bu havola ${escHtml(relay.displayName(cand))} uchun. ` +
-            `Siz admin, akkauntingiz ulanmadi; havola nomzodning o'zi uchun ishlayveradi.\n\n` +
-            `———\n\n${scr.text}`, { parse_mode: 'HTML' });
+            `Siz admin, akkauntingiz ulanmadi; havola nomzodning o'zi uchun ishlayveradi. ` +
+            `Nomzod quyidagini ko'radi (tugmalar unda bo'ladi):`, { parse_mode: 'HTML' });
+          // Rasm bilan, lekin TUGMASIZ: admin chatidagi tugma nomzodga emas, adminga ta'sir qilardi
+          await sendScreen(token, chatId, { ...scr, keyboard: [] });
         } else {
           const me = claim.me;
           const scr = await ft.candidateInvite({ cand: me, lang: I18N.resolve(me.lang, me.tgLang || tgLang), appBase: publicBase(req) });
-          await tg.sendMessage(token, chatId, scr.text, { parse_mode: 'HTML', reply_markup: { inline_keyboard: scr.keyboard } });
+          await sendScreen(token, chatId, scr);
           if (rest.telegram && rest.telegram.adminChatId) {
             await tg.sendMessage(token, rest.telegram.adminChatId,
               `${relay.displayName(cand)} uchun SMS havolasini boshqa odam bosdi ` +
@@ -320,7 +322,7 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
       await Candidate.updateOne({ _id: cand._id }, { $set: { tgLang: cand.tgLang } });
       const ilang = I18N.resolve(cand.lang, cand.tgLang || tgLang);
       const scr = await require('../services/firstTouch').candidateInvite({ cand, lang: ilang, appBase: publicBase(req) });
-      await tg.sendMessage(token, chatId, scr.text, { parse_mode: 'HTML', reply_markup: { inline_keyboard: scr.keyboard } });
+      await sendScreen(token, chatId, scr);
       track('start', { agencyId: cand.restaurantId, tgUserId: chatId, candidateId: cand.id,
         channel: cand.tgInviteChannel || 'sms', name: cand.fullName, isTest: cand.isTest });
 
@@ -715,6 +717,33 @@ async function startSurvey(msg, chatId, ank, appBase) {
 //                          "Orqaga" ham aynan shu ekranni chizadi)
 const escHtml = s => String(s == null ? '' : s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 
+// Telegram rasmni har safar serverimizdan yuklamasin: birinchi yuborishdan keyin
+// file_id (Telegram serveridagi nusxa) ishlatiladi — tezroq va Render uyg'onishiga bog'liq emas
+const photoIds = new Map();
+const photoRef = url => photoIds.get(url) || url;
+function keepPhoto(url, msg) {
+  const p = msg && msg.photo;
+  if (url && p && p.length) photoIds.set(url, p[p.length - 1].file_id);
+  return msg;
+}
+
+// Ekranni yuborish: rasm bo'lsa — rasm + izoh (brendli birinchi xabar), aks holda matn.
+// Rasm yuborilmasa (URL yetib bormadi va h.k.) — jim qolmasdan oddiy matn bilan.
+async function sendScreen(token, chatId, scr) {
+  const extra = { parse_mode: 'HTML', reply_markup: { inline_keyboard: scr.keyboard || [] } };
+  if (scr.photo) {
+    const ref = photoRef(scr.photo);
+    try { return keepPhoto(scr.photo, await tg.sendPhoto(token, chatId, ref, scr.text, extra)); }
+    catch (e) { console.warn('[TG] rasm yuborilmadi:', e.message); }
+    if (ref !== scr.photo) {                       // eski file_id — URL bilan yana bir marta
+      photoIds.delete(scr.photo);
+      try { return keepPhoto(scr.photo, await tg.sendPhoto(token, chatId, scr.photo, scr.text, extra)); }
+      catch (e) { console.warn('[TG] rasm (URL) yuborilmadi:', e.message); }
+    }
+  }
+  return tg.sendMessage(token, chatId, scr.text, extra);
+}
+
 async function firstScreen({ lang, from, agencyId, v, closed, r, appBase }) {
   const ft = require('../services/firstTouch');
   const first = String((from && from.first_name) || '').trim().slice(0, 30);
@@ -1005,14 +1034,26 @@ async function handleCallback(cq, appBase) {
         // teglar MATN bo'lib chiqadi (2026-11-14 jonli topildi).
         const opt = r.keyboard ? { reply_markup: { inline_keyboard: r.keyboard } } : {};
         if (r.html) opt.parse_mode = 'HTML';
+        // Rasmli xabar (brendli birinchi xabar): matn emas — izoh; til almashsa rasm ham
+        const isPhoto = !!(cq.message && cq.message.photo);
         try {
-          await tg.editMessageText(token, chatId, msgId, r.edit, opt);
+          if (isPhoto && r.photo) {
+            keepPhoto(r.photo, await tg.editMessageMedia(token, chatId, msgId,
+              { type: 'photo', media: photoRef(r.photo), caption: String(r.edit).slice(0, 1024), ...(r.html ? { parse_mode: 'HTML' } : {}) },
+              r.keyboard ? { reply_markup: { inline_keyboard: r.keyboard } } : {}));
+          } else if (isPhoto) {
+            await tg.editMessageCaption(token, chatId, msgId, r.edit, opt);
+          } else {
+            await tg.editMessageText(token, chatId, msgId, r.edit, opt);
+          }
         } catch (e) {
           // "message is not modified" — o'sha ekran, xato emas. Boshqasi (eski xabar,
           // o'chirilgan) — jim qolmasdan yangi xabar bilan beramiz
           if (!/not modified/i.test(e.message)) {
             console.warn('[CB] edit:', tag, e.message);
-            await tg.sendMessage(token, chatId, r.edit, opt).catch(err => console.error('[CB] send:', tag, err.message));
+            const send = isPhoto && r.photo ? sendScreen(token, chatId, { photo: r.photo, text: r.edit, keyboard: r.keyboard })
+              : tg.sendMessage(token, chatId, r.edit, opt);
+            await send.catch(err => console.error('[CB] send:', tag, err.message));
           }
         }
       }

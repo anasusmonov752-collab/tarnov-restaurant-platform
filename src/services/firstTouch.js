@@ -240,10 +240,13 @@ async function candidateInvite({ cand, lang, appBase }) {
   if (!cand.isTest) rows = rows.filter(v => !v.isTest);
   const name = require('./outreach').nameWord(cand.fullName);
   const pay = payRange(rows, lang);
+  // 2026-11-17 (Anas: "g'alati, jalb qilmaydi, eng ko'p yo'qotish shu yerda — professional
+  // agentlik sifatida ko'rinishimiz kerak"): xabar BREND RASMI bilan (shior "Talab bormi? Talant
+  // bor!", kimligimiz va va'dalar rasmda), matn esa 3 qator: salom, kimdan, raqam — va bitta harakat.
   const text = [
     T(lang, 'ft.iHi', { name: esc(name) }).replace(/,\s*!/, '!'), '',
-    n ? T(lang, 'ft.iLead', { n, pay: pay ? T(lang, 'ft.iPay', { x: pay }) : '' }) : T(lang, 'ft.iNoJobs'), '',
-    T(lang, 'ft.iAbout'),
+    T(lang, 'ft.iIntro'), '',
+    n ? T(lang, 'ft.iLead2', { n, pay: pay ? ' · ' + pay : '' }) : T(lang, 'ft.iNoJobs'),
     n ? '' : null,
     n ? T(lang, 'ft.iPick') : null
   ].filter(x => x !== null).join('\n');
@@ -251,11 +254,13 @@ async function candidateInvite({ cand, lang, appBase }) {
   const keyboard = [];
   if (appBase && n) keyboard.push([{ text: T(lang, 'ft.iSee'), web_app: { url: `${appBase}/profil.html#jobs` } }]);
   else if (appBase) keyboard.push([{ text: T(lang, 'ft.iProfile'), web_app: { url: `${appBase}/profil.html` } }]);
-  keyboard.push([{ text: T(lang, 'ft.iNo'), callback_data: 'ft:no' }]);
   keyboard.push([lang === 'ru'
     ? { text: '🇺🇿 O\'zbekcha', callback_data: 'ft:il:uz' }
     : { text: '🇷🇺 Русский', callback_data: 'ft:il:ru' }]);
-  return { text, keyboard };
+  keyboard.push([{ text: T(lang, 'ft.iNo'), callback_data: 'ft:no' }]);
+  // Rasm (public/img/bot-welcome-<til>.jpg, ~70 KB) — rasm o'zgarsa ?v= ni oshiring (Telegram keshi)
+  const photo = appBase ? `${appBase}/img/bot-welcome-${lang === 'ru' ? 'ru' : 'uz'}.jpg?v=1` : '';
+  return { text, keyboard, photo };
 }
 
 /** Botdagi bir tugmali ariza — kabinet (routes/candidate apply) bilan bir xil shartlar */
@@ -427,7 +432,8 @@ async function handleCallback({ data, chatId, appBase, from }) {
       lang = arg;
       await Candidate.updateOne({ _id: cand._id }, { $set: { lang } });
       const r = await candidateInvite({ cand, lang, appBase });
-      return { text: T(lang, 'bot.langToast'), edit: r.text, keyboard: r.keyboard, html: true };
+      // photo — rasmli xabarda rasm ham shu tilga almashadi (telegram.js dispatcher)
+      return { text: T(lang, 'bot.langToast'), edit: r.text, keyboard: r.keyboard, html: true, photo: r.photo };
     }
     if (act === 'no') {
       await Candidate.updateOne({ _id: cand._id }, { $set: { jobStatus: 'not_looking', jobStatusAt: new Date() } });

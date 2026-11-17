@@ -97,6 +97,19 @@ async function sendMessage(token, chatId, text, opts = {}) {
   });
 }
 
+// Rasm + izoh (izoh ≤ 1024 belgi). photo — URL yoki file_id. firstTouch: brendli birinchi xabar
+async function sendPhoto(token, chatId, photo, caption, opts = {}) {
+  return call(token, 'sendPhoto', { chat_id: chatId, photo, caption: String(caption || '').slice(0, 1024), ...opts });
+}
+// Rasmli xabarning izohini (va tugmalarini) yangilash — editMessageText rasmli xabarda ishlamaydi
+async function editMessageCaption(token, chatId, messageId, caption, opts = {}) {
+  return call(token, 'editMessageCaption', { chat_id: chatId, message_id: messageId, caption: String(caption || '').slice(0, 1024), ...opts });
+}
+// Rasmning o'zini almashtirish (masalan, til o'zgarganda) — media: {type:'photo', media, caption, parse_mode}
+async function editMessageMedia(token, chatId, messageId, media, opts = {}) {
+  return call(token, 'editMessageMedia', { chat_id: chatId, message_id: messageId, media, ...opts });
+}
+
 // Bot kanal/guruhda kim (administrator, can_post_messages) — services/jobPost
 function getChatMember(token, chatId, userId) {
   return call(token, 'getChatMember', { chat_id: chatId, user_id: userId });
@@ -257,7 +270,7 @@ async function platformUsername() {
 }
 
 module.exports = {
-  call, getMe, getChat, getChatMember, sendMessage, sendVoice, answerCallback, editMessageText, setChatMenuButton, resetChatMenuButton, sendChatAction,
+  call, getMe, getChat, getChatMember, sendMessage, sendVoice, sendPhoto, editMessageCaption, editMessageMedia, answerCallback, editMessageText, setChatMenuButton, resetChatMenuButton, sendChatAction,
   setWebhook, ensureWebhook, deleteWebhook, getWebhookInfo, getFileBase64,
   deepLink, TelegramError, MAX_LEN,
   platformToken, platformSecret, platformUsername, isPlatformReady

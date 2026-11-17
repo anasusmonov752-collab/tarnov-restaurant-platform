@@ -531,6 +531,42 @@ body.vp-lock{overflow:hidden}
 .lsw{display:flex;background:var(--th-fill);border-radius:9px;padding:2px;gap:2px}
 .lsw button{border:0;background:transparent;font:inherit;font-size:13px;font-weight:700;padding:5px 13px;border-radius:7px;color:var(--muted);cursor:pointer}
 .lsw button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+/* ══ ISHLAR RO'YXATI — IXCHAM (2026-11-17, sinov; JC2=false — eski karta) ══
+   Birinchi ish — story uslubidagi katta karta, qolganlari bir qatorli: ikonka, nom,
+   kimda/qayerda, maosh (katta), 2 ta belgi, o'ng tomonda ›. */
+.jh{position:relative;overflow:hidden;color:#fff;border-radius:24px;padding:20px 20px 18px;margin-bottom:14px;
+  background:linear-gradient(160deg,#10275A 0%,#0A1A3D 55%,#06102A 100%);box-shadow:0 14px 30px rgba(6,16,42,.22)}
+.jh::before{content:'';position:absolute;width:170px;height:170px;border-radius:50%;right:-60px;top:-70px;
+  background:radial-gradient(circle at 40% 60%,#FFD36B,#FFC53D 45%,#E9A21C);box-shadow:0 0 60px 12px rgba(255,197,61,.22)}
+.jh > *{position:relative}
+.jh-eye{display:inline-block;padding:5px 11px;border-radius:999px;background:rgba(255,197,61,.18);color:#FFC53D;
+  font-size:12px;font-weight:700;letter-spacing:.3px;margin-bottom:12px}
+.jh-ti{font-size:26px;font-weight:var(--th-fw-h);letter-spacing:calc(-.6px * var(--th-lsk));line-height:1.15;max-width:78%}
+.jh-wh{margin-top:6px;font-size:14px;color:#A9BCE0;max-width:85%}
+.jh-sl{margin-top:16px;font-size:30px;font-weight:var(--th-fw-h);letter-spacing:calc(-.8px * var(--th-lsk));font-variant-numeric:tabular-nums}
+.jh-sl small{font-size:14px;font-weight:600;color:#8FA6CF}
+.jh-ch{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.jh-ch span{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:600;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.13)}
+.jh-ch span.g{background:#FFC53D;color:#1A1300}
+.jh-ch span.ok{background:rgba(52,199,89,.22);color:#7CE495}
+.jh-ch svg{width:13px;height:13px}
+.jh-go{margin-top:14px;font-size:14px;font-weight:700;color:#6FAEFF}
+.jc2{display:flex;align-items:flex-start;gap:12px;background:var(--card);border-radius:20px;padding:15px 14px 15px 15px;margin-bottom:10px}
+.jc2-ic{flex:none;width:42px;height:42px;border-radius:13px;background:var(--th-brand-soft);color:var(--blue);display:flex;align-items:center;justify-content:center}
+.jc2-ic svg{width:21px;height:21px}
+.jc2-b{flex:1;min-width:0}
+.jc2-ti{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:16.5px;font-weight:var(--th-fw-h);letter-spacing:calc(-.2px * var(--th-lsk));line-height:1.25}
+.jc2-ti .g{font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:#FFC53D;color:#1A1300;letter-spacing:0}
+.jc2-wh{margin-top:3px;font-size:13.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.jc2-sl{margin-top:8px;font-size:19px;font-weight:var(--th-fw-h);letter-spacing:calc(-.3px * var(--th-lsk));font-variant-numeric:tabular-nums}
+.jc2-sl small{font-size:13px;font-weight:600;color:var(--muted)}
+.jc2-sl.no{font-size:14px;font-weight:600;color:var(--muted)}
+.jc2-ch{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.jc2-ch span{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:4px 9px;border-radius:999px;background:var(--th-fill);color:var(--ink-2)}
+.jc2-ch span.ok{background:var(--th-ok-soft);color:var(--ok)}
+.jc2-ch svg{width:12px;height:12px}
+.jc2-ar{flex:none;align-self:center;color:var(--th-tertiary);transform:rotate(180deg)}
+.jc2-ar svg{width:18px;height:18px}
 /* ══ VAKANSIYA TEPASI — STORY USLUBI (2026-11-16, sinov: yoqmasa shu blokni olib tashlang) ══
    Nomzod "boraymi" qarorini shu yerda qiladi: maosh katta, oltin urg'u. O'z foni bor —
    Telegram kunduz/tun mavzusidan qat'i nazar bir xil ko'rinadi. Pastki qism o'zgarmagan. */
@@ -1491,6 +1527,22 @@ async function loadJobs(){
   }catch(e){ $('jobList').innerHTML = `<div class="msg">${esc(e.message)}</div>`; }
 }
 
+// Ixcham ro'yxat (sinov — yoqmasa false: eski karta qaytadi)
+const JC2 = true;
+// "Buyurtma yig'uvchi (saboy, dostavka)" -> ["Buyurtma yig'uvchi", "saboy, dostavka"]
+const splitT = s => { const m = /^(.*?)\s*\((.+)\)\s*$/.exec(String(s || '')); return m ? [m[1], m[2]] : [String(s || ''), '']; };
+// "Sebzor, Drujba, Chorsu" -> "3 ta filial" (bitta joy bo'lsa — bo'sh, o'rniga joy nomi)
+// Ro'yxatda maosh bir qatorda: "7 500 000 – 13 000 000 so'm" -> "7,5–13 mln so'm"
+const salShort = v => {
+  const s = salLine(v); if (!s) return '';
+  let big = false;
+  const out = s.replace(/\d{1,3}(?: \d{3}){2,}/g, m => { const n = +m.replace(/ /g, ''); if (n < 1e6) return m; big = true;
+    return String(Math.round(n / 1e5) / 10).replace('.', ','); });
+  // salLine HTML-xavfsiz: apostrof "&#39;" bo'lib keladi
+  return big ? out.replace(/ – /, '–').replace(/(\d)( (?:so'm|so&#39;m|сум))/, `$1 ${t('mk.mln')}$2`) : out;
+};
+const branchesOf = v => { const n = String(v.where || v.place || '').split(/\s*[,;·]\s*/).filter(Boolean).length; return n > 1 ? t('cb.branches', { n }) : ''; };
+
 function drawJobs(){
   const q = norm(JF.q).trim();
   const list = JOBS.map((v, i) => [v, i]).filter(([v]) =>
@@ -1499,6 +1551,42 @@ function drawJobs(){
   if (!list.length) {
     $('jobList').innerHTML = `<div class="msg">${esc(t('cb.noFound'))}<br><button class="lnk" id="jobReset">${esc(t('cb.reset'))}</button></div>`;
     $('jobReset').onclick = () => { JF.q = ''; JF.mos = false; JF.role = ''; $('jobQ').value = ''; drawJobFilter(); drawJobs(); };
+    return;
+  }
+  // ── Ixcham kartalar (2026-11-17, Anas: "ma'lumot juda ko'p, tushunish qiyin") ──
+  // Kartada faqat: nima ish, kimda/qayerda, qancha, 2 ta belgi. Qolgani — sahifada
+  // (kartani bosish). Ariza tugmasi ro'yxatda YO'Q — vakansiya sahifasida pastda turadi.
+  // Birinchi ish — story uslubidagi katta karta ("Sizga mos" yoki "Eng ko'p so'ralgan").
+  if (JC2) {
+    const card = ([v, i], k) => {
+      const [main, note] = splitT(v.title);
+      const where = [v.employer, branchesOf(v) || placeOf(v)].filter(Boolean).join(' · ');
+      const pk = perksOf(v);
+      const noExp = (v.perkLabels || []).includes(t('perk.tajribasiz'));
+      const chips = [v.applied ? '' : v.payoutText, ...pk.chips.filter(p => p !== t('perk.tajribasiz'))].filter(Boolean).slice(0, 2);
+      const tag = v.match ? t('cb.fit2') : (v.popular >= 3 ? t('cb.hot') : '');
+      if (k === 0) return `<div class="jh tap" data-vi="${i}">
+        ${tag ? `<div class="jh-eye">${esc(tag)}</div>` : ''}
+        <div class="jh-ti">${esc(main)}</div>
+        <div class="jh-wh">${esc([where, note].filter(Boolean).join(' · '))}</div>
+        <div class="jh-sl">${salShort(v) || esc(t('cb.noSal'))}</div>
+        <div class="jh-ch">${noExp ? `<span class="g">${esc(t('perk.tajribasiz'))}</span>` : ''}${v.applied ? `<span class="ok">${VP_IC.check}${esc(t('cb.applied'))}</span>` : ''}${chips.map(c => `<span>${esc(c)}</span>`).join('')}</div>
+        <div class="jh-go">${esc(t('cb.more'))}</div>
+      </div>`;
+      return `<div class="jc2 tap" data-vi="${i}">
+        <div class="jc2-ic">${VP_IC.job}</div>
+        <div class="jc2-b">
+          <div class="jc2-ti">${esc(main)}${noExp ? `<span class="g">${esc(t('perk.tajribasiz'))}</span>` : ''}</div>
+          <div class="jc2-wh">${esc([where, note].filter(Boolean).join(' · '))}</div>
+          <div class="jc2-sl ${v.salaryText ? '' : 'no'}">${salShort(v) || esc(t('cb.noSal'))}</div>
+          ${v.applied ? `<div class="jc2-ch"><span class="ok">${VP_IC.check}${esc(t('cb.applied'))}</span></div>`
+            : chips.length ? `<div class="jc2-ch">${chips.map(c => `<span>${esc(c)}</span>`).join('')}</div>` : ''}
+        </div>
+        <div class="jc2-ar">${VP_IC.back}</div>
+      </div>`;
+    };
+    $('jobList').innerHTML = list.map(card).join('');
+    document.querySelectorAll('[data-vi]').forEach(el => el.onclick = () => showJob(JOBS[+el.dataset.vi]));
     return;
   }
   {

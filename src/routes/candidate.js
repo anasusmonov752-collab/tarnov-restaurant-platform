@@ -394,16 +394,23 @@ router.get('/vacancies', guard, asyncHandler(async (req, res) => {
 
   // Ish beruvchi reytingi (services/employerRating): "Ishchilar tasdiqlagan: maosh va'da qilinganidek"
   const rating = await require('../services/employerRating').forClients(c.restaurantId, cids);
+  // Talab: shu ishga nechta odam ariza bergan (sinov arizalari sanalmaydi) — tartib va "Eng ko'p so'ralgan"
+  const popRows = await Application.aggregate([
+    { $match: { agencyId: c.restaurantId, vacancyId: { $in: rows.map(v => v.id) }, isTest: { $ne: true } } },
+    { $group: { _id: '$vacancyId', n: { $sum: 1 } } }
+  ]);
+  const pop = Object.fromEntries(popRows.map(x => [x._id, x.n]));
   const out = rows.map(v => Object.assign(vacFor(v, byId[v.clientId], openSet, req.lang), {
     employerOk: !!(rating[v.clientId] && rating[v.clientId].ok),
     applied: !!appMap[v.id],
     appState: appMap[v.id] || '',
+    popular: pop[v.id] || 0,
     // "Sizga mos" belgisi: lavozim bir xil va tajriba yetadi
     match: v.role === c.role && (!v.minExp || (c.experienceYears || 0) >= v.minExp)
   }));
 
-  // Mos kelganlari yuqorida
-  out.sort((a, b) => (b.match - a.match) || (a.freshDays - b.freshDays));
+  // Mos kelganlari yuqorida, keyin eng ko'p ariza berilgani (Anas, 2026-11-17: xostess tepada), keyin yangisi
+  out.sort((a, b) => (b.match - a.match) || (b.popular - a.popular) || (a.freshDays - b.freshDays));
   res.json(out);
 }));
 

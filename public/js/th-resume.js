@@ -140,6 +140,7 @@
         ${tel ? `<a class="thr-btn p" href="tel:${esc(tel)}">Qo'ng'iroq</a>` : ''}
         ${tgHref(c) ? `<a class="thr-btn tg" href="${esc(tgHref(c))}" target="_blank" rel="noopener">${TG_SVG} Telegram</a>` : ''}
         ${c.hasFile ? `<a class="thr-btn" href="/api/recruitment/${encodeURIComponent(c.id)}/file" target="_blank" rel="noopener">Asl rezyume (PDF)</a>` : ''}
+        ${c.hhUrl ? `<a class="thr-btn" href="${esc(c.hhUrl)}" target="_blank" rel="noopener">hh.uz'da ochish</a>` : ''}
         <a class="thr-btn" href="/recruitment.html?${ank ? 'src=anketa&' : ''}q=${encodeURIComponent(c.publicCode || c.fullName || '')}">Bazada ochish</a>
       </div>
       ${sec('Kontaktlar', row('Telefon', tel ? `<a href="tel:${esc(tel)}" style="color:var(--th-link)">${esc(c.phone)}</a>` : '')

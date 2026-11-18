@@ -1295,6 +1295,21 @@ mijozga bormaydi va Mini App'da ko'rinmaydi (`noTestApps`). Kunduzi deploy — b
   o'zgartirsa — shu maydonning ruschasi o'chadi (`clean`, eskirgan grafik ruscha qolmasin). Tarnovning
   9 vakansiyasiga ruscha qo'lda yozildi ("Salatchi" — "Повар холодного цеха (салаты)", jinssiz).
   `test/vacru.test.js`. Mijoz Mini App formasida ruscha maydon YO'Q.
+- ARIZALARIM IXCHAM KARTA — JONLI (2026-11-18, `18a5858`, Anas: "ma'lumot ko'p, siqilgan"): nom + ⋯,
+  "restoran · maosh", 4 qadamli chiziq (`appProg`, `P_STEP`), bitta holat bloki (vaqt sarlavhada, bosilsa
+  tarix), "HR'ga yozish" havolasi. KO'K TUGMA FAQAT NOMZOD ISH QILISHI KERAK BO'LGANDA (bot savollari
+  "Ответить", suhbat "Приду"). Qaytarib olish va vakansiya — ⋯ (TG.showPopup); karta bosilsa vakansiya.
+- NOMZODGA YAKUNIY XABAR — JONLI (2026-11-18, `708eab6`, `db00b5b`, Anas qarori). Vakansiya yopilsa
+  (panel PATCH yoki mijoz Mini App PATCH, status -> closed) `appLife.closeForVacancy`: qaror qilinmagan
+  (new/seen) arizalar `state:'rejected', reason:'vac_closed'`, bot savollari 'stopped', nomzodga
+  `al.nVacClosed` + ochiq ishlar soni (bazadan, 0 bo'lsa aytilmaydi) + "Ish o'rinlari". Kabinetda
+  "O'rin yopildi" (`stage:'vacClosed'`) — "boshqa nomzod tanlandi" EMAS (yolg'on edi). Tanlovga o'tganlar
+  (shortlisted) tegilmaydi. Suhbatdan keyingi "mos kelmadi" (`shortlist.setClientState` not_fit — Mini
+  App, panel natijasi, botdagi "Ishga olasizmi?") endi nomzodga `al.nClosed` yuboradi; `no_show` — yo'q.
+  Bir martalik tozalash `POST /api/vacancies/closed-sweep` (apply:false — ko'rish) — har odamga BITTA
+  xabar ro'yxat bilan (`al.nVacClosedMany`). Bajarildi (Anas tasdig'i): 29 ariza / 12 kishi, 9 tasiga
+  ketdi (3 tasi Telegramga ulanmagan). Anas Tarnov mijoz rolidan (Mini App) ham status beradi.
+  `test/appclose.test.js`.
 
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.

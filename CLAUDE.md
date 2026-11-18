@@ -1271,6 +1271,18 @@ mijozga bormaydi va Mini App'da ko'rinmaydi (`noTestApps`). Kunduzi deploy — b
   kirmaydi, eslatma ketmaydi, eski tugma asosiysini ochadi); kanal faqat asosiysida 'bot'/bo'sh
   bo'lsa va undan OLDIN ochilgan yozuvda aniq kanal bo'lsa o'tadi (nomzod va hodisalarga ham).
   SurveyResponse sanog'ini yozsangiz — `status: { $ne: 'merged' }`. `test/openresponse.test.js`.
+  JONLI (`58c3f28`): 13 ta takror birlashtirildi, 9 tasida kanal tuzatildi.
+- ARIZALARIM — QAYTA QURILDI, JONLI (2026-11-18, `38a8a97`, Anas namunani tasdiqladi): kartada
+  nomzod tilidagi sarlavha (`vac.titleFor` — sarlavha lavozimning o'zi bo'lsa tarjima), restoran
+  nomi (showName), to'lov tartibi; BITTA holat bloki — `stateLabel` + `next` (`al.next.<stage>`);
+  botdagi tekshiruv kutsa sariq qator (`screen` — `screenPending`); faol suhbat (vaqt, joy,
+  xarita, Boraman / Bora olmayman → boshqa vaqt | umuman yo'q) — `POST /api/cand/interviews/:id/:op`
+  (y|r|x|p) botdagi `interviews.handleCallback` ning O'ZI; "HR'ga yozish" — qadalgan chat;
+  qaytarib olish `POST /api/cand/applications/:id/withdraw` — faqat qaror qilinmagan, `state:
+  'rejected', reason:'withdrawn'` (bot savollari `screen.step:'stopped'`, agentlikka ↩️; panel va
+  mijoz Mini App'ida "qaytarib oldi"); tarix bir qatorda; Faol / Yakunlangan; O'xshash ishlar.
+  CSS: `.ab` band (ariza tugmasi) — kartadagi qator `.apb`. `test/candapps.test.js`. Telegramda
+  HALI SINALMAGAN. Joy tavsifi/shartlar ruscha maydoni yo'q — ruscha kabinetda o'zbekcha qoladi.
 
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.

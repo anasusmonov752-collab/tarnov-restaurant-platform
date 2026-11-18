@@ -89,7 +89,8 @@ async function syncKanban(agencyId, candidateId, state) {
 // ── Mijoz tomoni: suhbat / ishga olish / rad ──
 // Faqat kontakt ochilgandan keyin mantiqiy — ochilmagan nomzodni
 // suhbatga chaqirib bo'lmaydi, uning raqami mijozda yo'q.
-async function setClientState({ agencyId, shortlistId, clientId, candidateId, state, reason = '', interviewAt = null }) {
+async function setClientState({ agencyId, shortlistId, clientId, candidateId, state, reason = '', interviewAt = null,
+  appBase = process.env.APP_URL || '' }) {
   if (!pipeline.CLIENT_STATES.includes(state)) throw new Error('Holat noto\'g\'ri');
   if (reason && !pipeline.CLIENT_REASON_KEYS.includes(reason)) throw new Error('Sabab noto\'g\'ri');
 
@@ -124,6 +125,18 @@ async function setClientState({ agencyId, shortlistId, clientId, candidateId, st
   await syncKanban(agencyId, candidateId, state);
   // Ishga olindi — 1/7/30-kun kuzatuvi va kafolat (services/placements)
   if (state === 'hired') await require('./placements').create({ agencyId, shortlistId, candidateId, hiredAt: now });
+  // Mos kelmadi — nomzodga yumshoq xabar (ariza bosqichidagi rad bilan bir xil matn).
+  // Ilgari suhbatdan keyingi rad nomzodga umuman yetmasdi. "Kelmadi" (no_show) —
+  // bu yerda emas: o'zi bormagan odamga "boshqa nomzod tanlandi" deyish noto'g'ri.
+  // Mijoz Mini App'i, panel natijasi, botdagi "Ishga olasizmi?" — hammasi shu nuqtadan.
+  if (state === 'not_fit' && reason !== 'no_show') {
+    try {
+      const cand = await Candidate.findOne({ restaurantId: agencyId, id: candidateId }).lean();
+      const vacancy = sl.vacancyId
+        ? await require('../models/Vacancy').findOne({ agencyId, id: sl.vacancyId }, 'id title role shift ru').lean() : null;
+      await require('./appLife').notify(cand, 'rejected', { vacancy, vacTitle: sl.summary || '', appBase });
+    } catch (e) { console.error('[SL] rad xabari:', e.message); }
+  }
   return sl;
 }
 

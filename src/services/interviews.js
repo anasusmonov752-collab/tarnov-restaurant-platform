@@ -374,7 +374,7 @@ async function handleCallback({ data, chatId, appBase = '', now = new Date() }) 
       const reason = ['experience', 'language', 'salary_ask', 'other'].includes(arg) ? arg : 'other';
       try {
         await require('./shortlist').setClientState({ agencyId: iv.agencyId, shortlistId: iv.shortlistId,
-          clientId: iv.clientId, candidateId: iv.candidateId, state: 'not_fit', reason });
+          clientId: iv.clientId, candidateId: iv.candidateId, state: 'not_fit', reason, appBase: appBase || undefined });
         return { ok: true, text: '✓', edit: T(Lc, 'ivx.cNotFitOk') };
       } catch (e) { return { ok: false, text: I18N.errText(Lc, e.message), alert: true }; }
     }

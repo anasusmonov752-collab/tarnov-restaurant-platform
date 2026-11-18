@@ -697,7 +697,8 @@ router.post('/shortlists/:id/items/:candidateId', clientGuard, asyncHandler(asyn
       candidateId: req.params.candidateId,
       state: String(b.state || ''),
       reason: String(b.reason || ''),
-      interviewAt: b.interviewAt || null
+      interviewAt: b.interviewAt || null,
+      appBase: publicBase(req)
     });
 
     // Sizga xabar — mijoz qaror qilganini bilishingiz kerak
@@ -812,9 +813,12 @@ router.patch('/vacancies/:id', clientGuard, asyncHandler(async (req, res) => {
   // Mijoz sarlavhani o'zi o'zgartirsa — endi u qo'lda yozilgan vakansiya,
   // shablon keyingi taklifda sarlavhani qayta yasab, uni bosib ketmasin
   if (v.source === 'search' && data.title && data.title !== v.title) v.source = 'manual';
+  const wasClosed = v.status === 'closed';
   Object.assign(v, data);
   v.updatedAt = new Date();
   await v.save();
+  // Yopildi — qaror qilinmagan arizachilarga "o'rin yopildi" (appLife.closeForVacancy)
+  if (!wasClosed && v.status === 'closed') await appLife.closeForVacancy(req.client.agencyId, v, { appBase: publicBase(req) });
   res.json(vac.full(v, {}, req.lang));
 }));
 
@@ -956,6 +960,7 @@ async function appsView(agencyId, clientId, apps, lang = 'uz') {
       vacancyId: a.vacancyId,
       state: a.state === 'new' ? 'seen' : a.state,
       withdrawn: a.state === 'rejected' && a.reason === 'withdrawn',   // nomzod o'zi qaytarib olgan
+      vacClosed: a.state === 'rejected' && a.reason === 'vac_closed', // vakansiya yopilgani uchun yakunlangan
       isNew: a.state === 'new',            // shu ochilishda birinchi marta ko'rildi
       message: a.message,
       createdAt: a.createdAt,

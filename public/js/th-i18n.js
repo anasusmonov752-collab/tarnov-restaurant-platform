@@ -687,6 +687,11 @@
       'al.nProposed': '✅ «{v}» — arizangiz ish beruvchiga taklif qilindi.\n\nSuhbat belgilansa xabar beramiz. Holatni "Arizalarim" bo\'limida kuzatib boring.',
       'al.nClosed': '«{v}» bo\'yicha bu safar boshqa nomzod tanlandi.\n\nProfilingiz bazada qoladi — mos ish chiqsa o\'zimiz yozamiz. Boshqa vakansiyalarni ham ko\'ring.',
       'al.bApps': '📋 Arizalarim', 'al.bJobs': '💼 Ish o\'rinlari',
+      // Vakansiya yopildi (appLife.closeForVacancy) — "boshqa nomzod tanlandi" EMAS: hech kim tanlanmagan
+      'al.nVacClosed': 'Siz ariza bergan «{v}» o\'rni yopildi.\n\nProfilingiz bazada qoladi — mos ish chiqsa, o\'zimiz yozamiz.',
+      'al.nOpenJobs': 'Hozir {n} ta ochiq ish bor — ko\'rib chiqing:',
+      'al.vacClosed': 'O\'rin yopildi', 'cb.h.vacClosed': 'O\'rin yopildi',
+      'al.next.vacClosed': 'Boshqa ochiq ishlarga ariza bera olasiz.',
 
       // ── SERVER: vakansiya sharoitlari (vacancyAuto.PERKS kalitlari) ──
       'perk.ovqat': 'Ovqat', 'perk.forma': 'Forma', 'perk.yol': 'Yo\'l kira',
@@ -1896,6 +1901,10 @@
       'al.nProposed': '✅ «{v}» — ваш отклик передан работодателю.\n\nСообщим, когда назначат собеседование. Следите за статусом в разделе «Отклики».',
       'al.nClosed': 'По вакансии «{v}» в этот раз выбрали другого кандидата.\n\nВаш профиль остаётся в базе — напишем, когда появится подходящая работа. Посмотрите и другие вакансии.',
       'al.bApps': '📋 Мои отклики', 'al.bJobs': '💼 Вакансии',
+      'al.nVacClosed': 'Вакансия «{v}», на которую вы откликнулись, закрыта.\n\nВаш профиль остаётся в базе — напишем, когда появится подходящая работа.',
+      'al.nOpenJobs': ['Сейчас открыта {n} вакансия — посмотрите:', 'Сейчас открыто {n} вакансии — посмотрите:', 'Сейчас открыто {n} вакансий — посмотрите:'],
+      'al.vacClosed': 'Вакансия закрыта', 'cb.h.vacClosed': 'Вакансия закрыта',
+      'al.next.vacClosed': 'Вы можете откликнуться на другие открытые вакансии.',
 
       'perk.ovqat': 'Питание', 'perk.forma': 'Форма', 'perk.yol': 'Проезд',
       'perk.transport': 'Служебный транспорт', 'perk.rasmiy': 'Официальное оформление',

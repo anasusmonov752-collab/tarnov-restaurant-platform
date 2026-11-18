@@ -257,6 +257,24 @@ router.post('/:id/applications/:appId/:action', guard, asyncHandler(async (req, 
   res.json({ ok: true, state: a.state, shortlistId: sl.id });
 }));
 
+// ── Yopilgan vakansiyalarning javobsiz arizalari (bir martalik tozalash) ──
+// Qoida avvaldan yopilgan vakansiyalarga ham qo'llanadi: { apply:false } — kimga
+// ketishini ko'rsatadi, { apply:true } — yakunlab, nomzodlarga xabar yuboradi.
+router.post('/closed-sweep', guard, asyncHandler(async (req, res) => {
+  const agencyId = req.user.restaurantId;
+  const apply = !!(req.body && req.body.apply);
+  const vs = await Vacancy.find({ agencyId, status: 'closed' }).lean();
+  const rows = [];
+  let closed = 0, notified = 0;
+  for (const v of vs) {
+    const r = await appLife.closeForVacancy(agencyId, v, { appBase: publicBase(req), dry: !apply });
+    if (!r.closed) continue;
+    rows.push({ id: v.id, title: v.title, n: r.closed, notified: r.notified });
+    closed += r.closed; notified += r.notified;
+  }
+  res.json({ apply, closed, notified, openJobs: await appLife.openJobsCount(agencyId), vacancies: rows });
+}));
+
 // ── Ruschaga tarjima (AI) — faqat formani to'ldiradi, saqlamaydi ──
 router.post('/translate', guard, asyncHandler(async (req, res) => {
   let ru = null;
@@ -292,9 +310,12 @@ router.patch('/:id', guard, asyncHandler(async (req, res) => {
   const v = await Vacancy.findOne({ agencyId, id: req.params.id });
   if (!v) return res.status(404).json({ error: 'Vakansiya topilmadi' });
 
+  const wasClosed = v.status === 'closed';
   Object.assign(v, vac.clean(req.body || {}, v.toObject()));
   v.updatedAt = new Date();
   await v.save();
+  // Yopildi — qaror qilinmagan arizachilarga "o'rin yopildi" (appLife.closeForVacancy)
+  if (!wasClosed && v.status === 'closed') await appLife.closeForVacancy(agencyId, v, { appBase: publicBase(req) });
   res.json(vac.full(v));
 }));
 

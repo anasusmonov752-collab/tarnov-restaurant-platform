@@ -206,7 +206,8 @@ router.post('/:id/outcome/:candidateId', guard, asyncHandler(async (req, res) =>
       candidateId: req.params.candidateId,
       state: String(b.state || ''),
       reason: String(b.reason || ''),
-      interviewAt: b.interviewAt || null
+      interviewAt: b.interviewAt || null,
+      appBase: publicBase(req)
     });
     res.json({ ok: true, counts: counts(row.items) });
   } catch (e) {

@@ -1257,7 +1257,8 @@ mijozga bormaydi va Mini App'da ko'rinmaydi (`noTestApps`). Kunduzi deploy — b
   `cq.message.photo` bo'lsa navbat bilan: rasm+izoh (`editLocalPhoto`) -> faqat izoh; matnli
   xabarda `editMessageText`. "not modified" va "canceled by new edit" (tez-tez bosildi) — xato
   emas; boshqa xatoda yangi xabar. Servis bo'sh javob qaytarsa — `bot.stale` ogohlantirishi;
-  har bosish Render logida `[CB] <teg> Nms`.
+  har bosish Render logida `[CB] <teg> Nms`. JONLI: Anas Telegramda sinadi (2026-11-17, `e8180e0`) —
+  rasm, UZ/RU almashishi va tugmalar ISHLADI.
 
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.

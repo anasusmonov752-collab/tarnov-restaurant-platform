@@ -1348,12 +1348,10 @@ npm run dev        # Development with auto-reload (nodemon)
 npm install        # Install dependencies
 ```
 
-**Deploy:** Push to `main` branch → Render auto-deploys. Use stored token for push:
-```bash
-git remote set-url origin https://TOKEN@github.com/anasusmonov752-collab/tarnov-restaurant-platform.git
-git push origin main
-git remote set-url origin https://github.com/anasusmonov752-collab/tarnov-restaurant-platform.git
-```
+**Deploy:** `deploy` skill (`.claude/skills/deploy/`, faqat shu kompyuterda — `.claude/` gitignore'da):
+`bash .claude/skills/deploy/deploy.sh` (fonda) — `tmp-syntax-check` -> CI (`npm test`) -> o'tsa `main`
+-> Render -> `/ping` yangi commitda. CI yiqilsa main'ga chiqmaydi. `--check` — faqat holat,
+`--ci` — faqat CI. To'g'ridan-to'g'ri `git push origin main` QILMANG (lokalda Node yo'q, testsiz chiqadi).
 
 ## Environment Variables (Render)
 

@@ -117,24 +117,77 @@ async function openJobsCount(agencyId) {
 // (2026-11-18: yopilgan 33 ta import vakansiyaning arizachilari 25 kun kutgan).
 // Tanlovga o'tgan (shortlisted) arizalar — mijoz qo'lida, bu yerda tegilmaydi.
 // Atomik: shu holatdagi arizani faqat BITTA chaqiruv yakunlaydi — xabar ikki marta ketmaydi.
-async function closeForVacancy(agencyId, vacancy, { appBase = process.env.APP_URL || '', dry = false } = {}) {
+// quiet — xabar yubormaydi, yakunlangan arizalarni qaytaradi (closedSweep o'zi guruhlaydi)
+async function closeForVacancy(agencyId, vacancy, { appBase = process.env.APP_URL || '', dry = false, quiet = false } = {}) {
   const Application = require('../models/Application');
   const Candidate = require('../models/Candidate');
   const open = await Application.find({ agencyId, vacancyId: vacancy.id, state: { $in: ['new', 'seen'] } }).lean();
-  if (dry || !open.length) return { closed: open.length, notified: 0 };
+  if (dry || !open.length) return { closed: open.length, notified: 0, apps: open };
   const now = new Date();
-  const openJobs = await openJobsCount(agencyId);
+  const openJobs = quiet ? 0 : await openJobsCount(agencyId);
   let closed = 0, notified = 0;
+  const apps = [];
   for (const a of open) {
     const set = { state: 'rejected', reason: 'vac_closed', decidedAt: now };
     if (a.screen && a.screen.step && !['done', 'stopped'].includes(a.screen.step)) set['screen.step'] = 'stopped';
     const up = await Application.findOneAndUpdate({ _id: a._id, state: a.state }, { $set: set });
     if (!up) continue;
-    closed++;
+    closed++; apps.push(a);
+    if (quiet) continue;
     const cand = await Candidate.findOne({ restaurantId: agencyId, id: a.candidateId }).lean();
     if (await notify(cand, 'vacClosed', { vacancy, appBase, openJobs })) notified++;
   }
-  return { closed, notified };
+  return { closed, notified, apps };
 }
 
-module.exports = { stepsFor, notify, closeForVacancy, openJobsCount, STEP_LABEL, fmt };
+// ── Avvaldan yopilgan vakansiyalar (bir martalik tozalash) ──
+// Bitta odam bir nechta yopilgan o'ringa ariza bergan bo'lishi mumkin (jonli bazada
+// 12 kishiga 29 ta ariza, bittasida 7 ta) — har odamga BITTA xabar, o'rinlar ro'yxati bilan.
+async function closedSweep(agencyId, { appBase = process.env.APP_URL || '', apply = false } = {}) {
+  const Vacancy = require('../models/Vacancy');
+  const Candidate = require('../models/Candidate');
+  const vs = await Vacancy.find({ agencyId, status: 'closed' }).lean();
+  const byCand = new Map();
+  let closed = 0;
+  for (const v of vs) {
+    const r = await closeForVacancy(agencyId, v, { appBase, dry: !apply, quiet: true });
+    closed += r.closed;
+    for (const a of r.apps) {
+      if (!byCand.has(a.candidateId)) byCand.set(a.candidateId, []);
+      byCand.get(a.candidateId).push(v);
+    }
+  }
+  const openJobs = await openJobsCount(agencyId);
+  let notified = 0;
+  if (apply) {
+    for (const [cid, list] of byCand) {
+      const cand = await Candidate.findOne({ restaurantId: agencyId, id: cid }).lean();
+      if (list.length === 1) {
+        if (await notify(cand, 'vacClosed', { vacancy: list[0], appBase, openJobs })) notified++;
+      } else if (await notifyMany(cand, list, { appBase, openJobs })) notified++;
+    }
+  }
+  return { apply, closed, people: byCand.size, notified, openJobs,
+    perPerson: [...byCand.values()].map(l => l.length).sort((a, b) => b - a) };
+}
+
+async function notifyMany(cand, list, { appBase = '', openJobs = 0 } = {}) {
+  try {
+    if (!cand || !cand.tgChatId || ['blocked', 'stopped'].includes(cand.tgState)) return false;
+    const lang = I18N.resolve(cand.lang, cand.tgLang);
+    const vac = require('./vacancy');
+    const titles = [...new Set(list.map(v => vac.titleFor(v, lang)))];
+    const lines = titles.slice(0, 5).map(x => '• ' + x).join('\n') + (titles.length > 5 ? '\n…' : '');
+    let text = I18N.t(lang, 'al.nVacClosedMany', { list: lines });
+    if (openJobs > 0) text += '\n\n' + I18N.t(lang, 'al.nOpenJobs', { n: openJobs });
+    const opts = appBase ? { reply_markup: { inline_keyboard: [[
+      { text: I18N.t(lang, 'al.bJobs'), web_app: { url: `${appBase}/profil.html#jobs` } }]] } } : {};
+    await tg.sendMessage(tg.platformToken(), cand.tgChatId, text, opts);
+    return true;
+  } catch (e) {
+    console.error('[APP] yopilgan o\'rinlar xabari ketmadi:', e.message);
+    return false;
+  }
+}
+
+module.exports = { stepsFor, notify, closeForVacancy, closedSweep, openJobsCount, STEP_LABEL, fmt };

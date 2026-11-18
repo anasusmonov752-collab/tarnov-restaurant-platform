@@ -261,18 +261,8 @@ router.post('/:id/applications/:appId/:action', guard, asyncHandler(async (req, 
 // Qoida avvaldan yopilgan vakansiyalarga ham qo'llanadi: { apply:false } — kimga
 // ketishini ko'rsatadi, { apply:true } — yakunlab, nomzodlarga xabar yuboradi.
 router.post('/closed-sweep', guard, asyncHandler(async (req, res) => {
-  const agencyId = req.user.restaurantId;
-  const apply = !!(req.body && req.body.apply);
-  const vs = await Vacancy.find({ agencyId, status: 'closed' }).lean();
-  const rows = [];
-  let closed = 0, notified = 0;
-  for (const v of vs) {
-    const r = await appLife.closeForVacancy(agencyId, v, { appBase: publicBase(req), dry: !apply });
-    if (!r.closed) continue;
-    rows.push({ id: v.id, title: v.title, n: r.closed, notified: r.notified });
-    closed += r.closed; notified += r.notified;
-  }
-  res.json({ apply, closed, notified, openJobs: await appLife.openJobsCount(agencyId), vacancies: rows });
+  res.json(await appLife.closedSweep(req.user.restaurantId,
+    { appBase: publicBase(req), apply: !!(req.body && req.body.apply) }));
 }));
 
 // ── Ruschaga tarjima (AI) — faqat formani to'ldiradi, saqlamaydi ──

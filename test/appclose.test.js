@@ -109,6 +109,26 @@ test('tozalash: avval ko\'rish (apply:false) hech narsa o\'zgartirmaydi', async 
   assert.equal((await M.Application.findOne({ id: 'a5' }).lean()).reason, 'vac_closed');
 });
 
+test('tozalash: bitta odamga bir nechta yopilgan o\'rin — BITTA xabar, ro\'yxat bilan', async () => {
+  await M.Vacancy.create([
+    { id: 'vx1', agencyId: A, clientId: 'c1', title: 'Ofitsiant — kafe-bar', role: 'ofitsiant', status: 'closed' },
+    { id: 'vx2', agencyId: A, clientId: 'c1', title: 'Ofitsiant — steak-house', role: 'ofitsiant', status: 'closed' }
+  ]);
+  await M.Application.create([
+    { id: 'm1', agencyId: A, vacancyId: 'vx1', candidateId: 'k2', clientId: 'c1', state: 'new' },
+    { id: 'm2', agencyId: A, vacancyId: 'vx2', candidateId: 'k2', clientId: 'c1', state: 'new' }
+  ]);
+  const sweep = handler(require('../src/routes/vacancies'), 'post', '/closed-sweep');
+  SENT = [];
+  const pre = await call(sweep, { user: { restaurantId: A }, body: {} });
+  assert.deepEqual([pre.j.closed, pre.j.people], [2, 1]);
+  const s = await call(sweep, { user: { restaurantId: A }, body: { apply: true } });
+  assert.deepEqual([s.j.closed, s.j.people, s.j.notified], [2, 1, 1]);
+  assert.equal(SENT.length, 1);
+  assert.match(SENT[0].text, /o'rinlar yopildi:\n• Ofitsiant — kafe-bar\n• Ofitsiant — steak-house/);
+  assert.match(SENT[0].text, /Hozir 2 ta ochiq ish bor/);
+});
+
 test('suhbatdan keyin "mos kelmadi" — nomzodga xabar; "kelmadi" — yo\'q', async () => {
   const sl = require('../src/services/shortlist');
   await M.Shortlist.create({ id: 's1', agencyId: A, clientId: 'c1', vacancyId: 'vo1', summary: 'Ofitsiant',

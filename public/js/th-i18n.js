@@ -690,6 +690,7 @@
       // Vakansiya yopildi (appLife.closeForVacancy) — "boshqa nomzod tanlandi" EMAS: hech kim tanlanmagan
       'al.nVacClosed': 'Siz ariza bergan «{v}» o\'rni yopildi.\n\nProfilingiz bazada qoladi — mos ish chiqsa, o\'zimiz yozamiz.',
       'al.nOpenJobs': 'Hozir {n} ta ochiq ish bor — ko\'rib chiqing:',
+      'al.nVacClosedMany': 'Siz ariza bergan o\'rinlar yopildi:\n{list}\n\nProfilingiz bazada qoladi — mos ish chiqsa, o\'zimiz yozamiz.',
       'al.vacClosed': 'O\'rin yopildi', 'cb.h.vacClosed': 'O\'rin yopildi',
       'al.next.vacClosed': 'Boshqa ochiq ishlarga ariza bera olasiz.',
 
@@ -1903,6 +1904,7 @@
       'al.bApps': '📋 Мои отклики', 'al.bJobs': '💼 Вакансии',
       'al.nVacClosed': 'Вакансия «{v}», на которую вы откликнулись, закрыта.\n\nВаш профиль остаётся в базе — напишем, когда появится подходящая работа.',
       'al.nOpenJobs': ['Сейчас открыта {n} вакансия — посмотрите:', 'Сейчас открыто {n} вакансии — посмотрите:', 'Сейчас открыто {n} вакансий — посмотрите:'],
+      'al.nVacClosedMany': 'Вакансии, на которые вы откликнулись, закрыты:\n{list}\n\nВаш профиль остаётся в базе — напишем, когда появится подходящая работа.',
       'al.vacClosed': 'Вакансия закрыта', 'cb.h.vacClosed': 'Вакансия закрыта',
       'al.next.vacClosed': 'Вы можете откликнуться на другие открытые вакансии.',
 

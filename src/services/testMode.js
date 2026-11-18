@@ -24,8 +24,31 @@ const Candidate = require('../models/Candidate');
 const SurveyResponse = require('../models/SurveyResponse');
 const credits = require('./credits');
 
-const MODES = ['admin', 'client', 'candidate', 'hh'];
+// real — HAQIQIY mijoz sifatida (2026-11-18, Anas: "Tarnovni mijoz sifatida ulab o'taman").
+// Bu SINOV EMAS: haqiqiy vakansiyalar, haqiqiy nomzodlar, kontakt ochilsa haqiqiy kredit
+// yechiladi. Sinov himoyalari (isTest) bu mijozga qo'llanmaydi — ataylab.
+const MODES = ['admin', 'client', 'candidate', 'hh', 'real'];
 const TEST_CREDITS = 5;
+
+/** Haqiqiy mijozlar (sinov emas, faol) — /test menyusida tanlash uchun */
+async function realClients(agencyId) {
+  return Client.find({ agencyId, isTest: { $ne: true }, status: 'active' }, 'id name credits').sort({ createdAt: 1 }).lean();
+}
+
+// Qaysi haqiqiy mijoz: aniq tanlangan -> oldin tanlangan -> yagona faol mijoz.
+// Bir nechta bo'lsa va tanlanmagan — xato `choose` ro'yxati bilan (bot tugmalar chiqaradi).
+async function pickReal(agencyId, st, clientId) {
+  const id = clientId || st.realClientId;
+  if (id) {
+    const c = await Client.findOne({ agencyId, id, isTest: { $ne: true }, status: 'active' });
+    if (c) return c;
+    if (clientId) throw Object.assign(new Error('Mijoz topilmadi yoki faol emas'), { status: 400 });
+  }
+  const list = await realClients(agencyId);
+  if (list.length === 1) return Client.findOne({ agencyId, id: list[0].id });
+  throw Object.assign(new Error(list.length ? 'Qaysi mijoz sifatida kirasiz?' : 'Faol haqiqiy mijoz yo\'q'),
+    { status: 400, choose: list });
+}
 
 /** Bu akkaunt test rejimidan foydalana oladimi — agentlik admin chati. */
 async function testerAgency(tgUserId) {
@@ -61,7 +84,7 @@ const unlinkCand = { tgChatId: '', tgUsername: '', tgState: 'none' };
  * Rejimni almashtiradi.
  * @returns {{mode, client?, candidate?}} — client/candidate: hozir ulangan sinov yozuvi
  */
-async function setMode(tgUserId, mode, tgUser) {
+async function setMode(tgUserId, mode, tgUser, { clientId = '' } = {}) {
   const uid = String(tgUserId);
   if (!MODES.includes(mode)) throw new Error('Rejim noto\'g\'ri');
   const ag = await testerAgency(uid);
@@ -69,6 +92,12 @@ async function setMode(tgUserId, mode, tgUser) {
 
   let st = await TestMode.findOne({ tgUserId: uid });
   if (!st) st = new TestMode({ tgUserId: uid, agencyId: ag.id });
+  // Haqiqiy mijozni uzishdan OLDIN aniqlaymiz: tanlanmagan bo'lsa hech narsa o'zgarmasin
+  const real = mode === 'real' ? await pickReal(ag.id, st, clientId) : null;
+  // Haqiqiy mijozning o'z Telegrami (boshqa odam) bo'lsa — uni uzib qo'ymaymiz
+  if (real && real.tgChatId && real.tgChatId !== uid) {
+    throw Object.assign(new Error(`«${real.name}» boshqa Telegram akkauntiga ulangan — avval panelda uzing`), { status: 409 });
+  }
 
   // Birinchi marta test rejimiga kirish: hozirgi (haqiqiy) ulanishlar
   // eslab qolinadi — admin rejimida qaytariladi
@@ -92,6 +121,13 @@ async function setMode(tgUserId, mode, tgUser) {
     await c.save();
     st.clientId = c.id;
     out.client = c;
+  } else if (mode === 'real') {
+    // Kredit to'ldirilmaydi, isTest qo'yilmaydi — haqiqiy mijozning o'zi
+    real.tgChatId = uid;
+    if (tgUser && tgUser.language_code) real.tgLang = tgUser.language_code;
+    await real.save();
+    st.realClientId = real.id;
+    out.client = real;
   } else if (mode === 'candidate') {
     const cand = st.candidateId && await Candidate.findOne({ restaurantId: ag.id, id: st.candidateId, isTest: true });
     if (cand) {
@@ -167,4 +203,5 @@ async function setHhCandidate(agencyId, candidateId) {
   return c;
 }
 
-module.exports = { MODES, testerAgency, state, modeOf, setMode, resetSurvey, noteCandidate, setHhCandidate, TEST_CREDITS };
+module.exports = { MODES, testerAgency, state, modeOf, setMode, resetSurvey, noteCandidate, setHhCandidate, realClients,
+  TEST_CREDITS };

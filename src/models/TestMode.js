@@ -8,7 +8,8 @@ const mongoose = require('mongoose');
 const TestModeSchema = new mongoose.Schema({
   tgUserId:    { type: String, required: true, unique: true },
   agencyId:    { type: String, required: true },
-  mode:        { type: String, default: 'admin' },     // admin | client | candidate
+  mode:        { type: String, default: 'admin' },     // admin | client | candidate | hh | real
+  realClientId: { type: String, default: '' },         // real rejimi: HAQIQIY mijoz (Tarnov) — oxirgi tanlangan
   clientId:    { type: String, default: '' },          // sinov mijozi (isTest)
   candidateId: { type: String, default: '' },          // sinov nomzodi (isTest), anketadan
   hhCandidateId: { type: String, default: '' },        // sinov hh nomzodi (isTest) — SMS havolasi oqimi uchun, paneldan tanlanadi

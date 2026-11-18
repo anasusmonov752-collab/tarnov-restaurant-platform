@@ -551,19 +551,26 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
 // berk ko'chaga kirardi, mijoz esa o'z botida begonadek qolardi
 // (2026-10-20 Anas sinovida topildi).
 // ── Admin test rejimi (services/testMode) ────────────────────
-const TEST_LABEL = { admin: '🛠 Admin', client: '👔 Mijoz', candidate: '👤 Nomzod', hh: '📄 hh nomzod' };
+const TEST_LABEL = { admin: '🛠 Admin', client: '🧪 Sinov mijoz', candidate: '👤 Nomzod', hh: '📄 hh nomzod', real: '👔 Haqiqiy mijoz' };
 async function sendTestMenu(token, chatId, mode) {
+  // Haqiqiy mijoz tugmasi uning nomi bilan (bitta bo'lsa) — "👔 Tarnov"
+  const ag = await testMode.testerAgency(chatId);
+  const st = await testMode.state(chatId);
+  const reals = ag ? await testMode.realClients(ag.id) : [];
+  const cur = st && st.mode === 'real' && st.realClientId ? reals.find(c => c.id === st.realClientId) : null;
+  const realName = (reals.find(c => st && c.id === st.realClientId) || (reals.length === 1 ? reals[0] : null) || {}).name;
+  const realBtn = '👔 ' + (realName || 'Haqiqiy mijoz');
   await tg.sendMessage(token, chatId,
-    `🧪 Test rejimi\n\nHozir: ${TEST_LABEL[mode] || mode}\n\n` +
-    `👔 Mijoz — «🧪 Sinov restoran» kabineti va bot qidiruvi\n` +
+    `🧪 Test rejimi\n\nHozir: ${cur ? '👔 ' + cur.name : (TEST_LABEL[mode] || mode)}\n\n` +
+    `${realBtn} — HAQIQIY mijoz kabineti: haqiqiy vakansiyalar va nomzodlar, kontakt ochilsa KREDIT YECHILADI\n` +
+    `🧪 Sinov mijoz — «🧪 Sinov restoran»: faqat sinov nomzodining kontakti ochiladi\n` +
     `👤 Nomzod — sinov nomzodi kabineti (anketadan)\n` +
     `📄 hh nomzod — SMS olgan hh nomzodi kabi: SMS matni va shaxsiy havola (har bosishda noldan)\n` +
     `🛠 Admin — hammasi oldingi holatga qaytadi\n` +
-    `🔄 Anketani qaytadan — bot sizni yangi odam deb ko'radi\n\n` +
-    `Sinov haqiqiy ma'lumotga tegmaydi: haqiqiy nomzod kontakti ochilmaydi, sanoqlarga kirmaydi.`,
+    `🔄 Anketani qaytadan — bot sizni yangi odam deb ko'radi`,
     { reply_markup: { inline_keyboard: [
-      [{ text: '👔 Mijoz', callback_data: 'tm:client' }, { text: '👤 Nomzod', callback_data: 'tm:candidate' }],
-      [{ text: '📄 hh nomzod', callback_data: 'tm:hh' }],
+      [{ text: realBtn, callback_data: 'tm:real' }, { text: '🧪 Sinov mijoz', callback_data: 'tm:client' }],
+      [{ text: '👤 Nomzod', callback_data: 'tm:candidate' }, { text: '📄 hh nomzod', callback_data: 'tm:hh' }],
       [{ text: '🛠 Admin', callback_data: 'tm:admin' }, { text: '🔄 Anketani qaytadan', callback_data: 'tm:reset' }]
     ] } });
 }
@@ -571,7 +578,7 @@ async function sendTestMenu(token, chatId, mode) {
 // adminga — test rejimidan oldingi holat (mijozga ulangan bo'lsa Kabinet)
 async function applyTestMenu(token, chatId, mode, out, appBase) {
   try {
-    if (mode === 'client') return await setMenu(token, chatId, langOf(out.client, null), appBase);
+    if (mode === 'client' || mode === 'real') return await setMenu(token, chatId, langOf(out.client, null), appBase);
     if (mode === 'candidate') return await tg.setChatMenuButton(token, chatId, 'Profilim', `${appBase}/profil.html`);
     const cl = await Client.findOne({ tgChatId: chatId });
     if (cl) return await setMenu(token, chatId, langOf(cl, null), appBase);
@@ -582,6 +589,11 @@ async function applyTestMenu(token, chatId, mode, out, appBase) {
 }
 function testModeText(m, out) {
   const reopen = '\n\nMini App ochiq bo\'lsa — yopib, qayta oching.';
+  if (m === 'real') {
+    return `👔 «${out.client.name}» — HAQIQIY mijoz sifatida ulandingiz, ${out.client.credits || 0} kredit.\n\n` +
+      `Bu sinov emas: vakansiyalar, arizalar va nomzodlar haqiqiy. Kontakt ochsangiz — haqiqiy kredit yechiladi, ` +
+      `nomzodga xabar boradi. Pastdagi Kabinet tugmasi.\n\n🛠 Admin rejimiga qaytsangiz, bu akkaunt «${out.client.name}»dan uziladi.` + reopen;
+  }
   if (m === 'client') {
     return `👔 Mijoz rejimi — «${out.client.name}», ${out.client.credits} kredit.\n\n` +
       `Botga yozing (masalan: "kechki smenaga ofitsiant kerak") yoki pastdagi Kabinet tugmasi.` +
@@ -1115,11 +1127,14 @@ async function handleCallback(cq, appBase) {
   }
 
   // ── Admin test rejimi: rejim tugmalari (/test) ──
-  if (/^tm:(admin|client|candidate|reset|hh)$/.test(data)) {
+  // tm:rc:<clientId> — bir nechta haqiqiy mijozdan tanlangani
+  if (/^tm:(admin|client|candidate|reset|hh|real)$/.test(data) || /^tm:rc:[\w-]{1,60}$/.test(data)) {
     if (!(await testMode.testerAgency(chatId))) { await done('Faqat agentlik admini uchun', true); return; }
-    const m = data.slice(3);
+    const rc = data.startsWith('tm:rc:') ? data.slice(6) : '';
+    const m = rc ? 'real' : data.slice(3);
     try {
-      const out = m === 'reset' ? await testMode.resetSurvey(chatId, cq.from) : await testMode.setMode(chatId, m, cq.from);
+      const out = m === 'reset' ? await testMode.resetSurvey(chatId, cq.from)
+        : await testMode.setMode(chatId, m, cq.from, { clientId: rc });
       await applyTestMenu(token, chatId, m === 'reset' ? 'candidate' : m, out, appBase);
       await done('Tayyor');
       await tg.sendMessage(token, chatId, testModeText(m, out));
@@ -1129,7 +1144,12 @@ async function handleCallback(cq, appBase) {
         await tg.sendMessage(token, chatId, outreach.render(outreach.DEFAULT_TPL, out.hh, `t.me/${uname}?start=${out.hh.tgInviteToken}`));
       }
     } catch (e) {
-      await done(e.message, true);
+      // Bir nechta haqiqiy mijoz — qaysi biri sifatida kirishni so'raymiz
+      if (e.choose && e.choose.length) {
+        await done('');
+        await tg.sendMessage(token, chatId, '👔 ' + e.message, { reply_markup: { inline_keyboard:
+          e.choose.slice(0, 20).map(c => [{ text: `${c.name} · ${c.credits || 0} kredit`, callback_data: 'tm:rc:' + c.id }]) } });
+      } else await done(e.message, true);
     }
     return;
   }

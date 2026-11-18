@@ -1282,7 +1282,19 @@ mijozga bormaydi va Mini App'da ko'rinmaydi (`noTestApps`). Kunduzi deploy — b
   'rejected', reason:'withdrawn'` (bot savollari `screen.step:'stopped'`, agentlikka ↩️; panel va
   mijoz Mini App'ida "qaytarib oldi"); tarix bir qatorda; Faol / Yakunlangan; O'xshash ishlar.
   CSS: `.ab` band (ariza tugmasi) — kartadagi qator `.apb`. `test/candapps.test.js`. Telegramda
-  HALI SINALMAGAN. Joy tavsifi/shartlar ruscha maydoni yo'q — ruscha kabinetda o'zbekcha qoladi.
+  HALI SINALMAGAN.
+- VAKANSIYANING RUSCHA MATNI — JONLI (2026-11-18, `dc1c67f`): `Vacancy.ru` {title, venue, landmark,
+  hook, schedule, conditions, duties, requirements}. Qoida YAGONA — `vac.tx(v, maydon, lang)`: rus
+  tilidagi o'quvchiga ruscha nusxa, bo'sh bo'lsa o'zbekcha; `titleFor` ham `ru.title` ni oladi (bot ish
+  ro'yxati, Arizalarim, bildirishnomalar — hammasi shundan). `forCandidate`, prescreen shartlar qatori,
+  mijoz botidagi vakansiya kartasi tx orqali; `full()` XOM qaytaradi (+`ru`, `hasRu`) — formalar tahrir
+  manbai, u yerda tarjima qilinmaydi. Tuman (`location`) ATAYLAB yo'q — qidiruv filtri. Kanal posti
+  o'zbekcha qoladi. Panel formasida "Ruscha" bo'limi + "Ruschaga tarjima (AI)" (`POST
+  /api/vacancies/translate` — faqat formani to'ldiradi, SAQLAMAYDI; asl matni bo'sh maydon bo'sh qoladi);
+  ro'yxatda ochiq vakansiyada "RU yo'q". Ruschasiz forma (mijoz Mini App'i) o'zbekcha maydonni
+  o'zgartirsa — shu maydonning ruschasi o'chadi (`clean`, eskirgan grafik ruscha qolmasin). Tarnovning
+  9 vakansiyasiga ruscha qo'lda yozildi ("Salatchi" — "Повар холодного цеха (салаты)", jinssiz).
+  `test/vacru.test.js`. Mijoz Mini App formasida ruscha maydon YO'Q.
 
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.

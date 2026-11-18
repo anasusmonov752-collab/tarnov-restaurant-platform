@@ -955,6 +955,7 @@ async function appsView(agencyId, clientId, apps, lang = 'uz') {
       id: a.id,
       vacancyId: a.vacancyId,
       state: a.state === 'new' ? 'seen' : a.state,
+      withdrawn: a.state === 'rejected' && a.reason === 'withdrawn',   // nomzod o'zi qaytarib olgan
       isNew: a.state === 'new',            // shu ochilishda birinchi marta ko'rildi
       message: a.message,
       createdAt: a.createdAt,

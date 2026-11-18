@@ -21,7 +21,8 @@ const STEP_LABEL = {
   proposed:  'Ish beruvchiga taklif qilindi',
   interview: 'Suhbat',
   hired:     'Ishga qabul qilindingiz',
-  closed:    'Bu safar boshqa nomzod tanlandi'
+  closed:    'Bu safar boshqa nomzod tanlandi',
+  withdrawn: 'Ariza qaytarib olindi'        // nomzod o'zi (kabinet) — panel va nomzodga bir xil gap
 };
 // Tanlovdagi holatdan nomzod ko'radigan natija (pipeline.STATES)
 const FINAL_BAD = ['candidate_no', 'not_fit', 'refunded'];
@@ -38,11 +39,13 @@ function stepsFor(a, item, lang = 'uz') {
   const add = (key, at, label) => s.push({ key, label: label || L(key), at: at || null, done: true });
   add('sent', a.createdAt);
   const seen = a.agencySeenAt || a.seenAt;
-  if (seen || a.contactedAt || a.state === 'shortlisted' || a.state === 'rejected') add('reviewed', seen);
+  // Nomzod o'zi qaytarib olgan (reason 'withdrawn') — "ko'rib chiqildi" deb yozilmaydi
+  const withdrawn = a.state === 'rejected' && a.reason === 'withdrawn';
+  if (seen || a.contactedAt || a.state === 'shortlisted' || (a.state === 'rejected' && !withdrawn)) add('reviewed', seen);
   if (a.contactedAt) add('contacted', a.contactedAt);
 
   let final = '';
-  if (a.state === 'rejected') final = 'closed';
+  if (a.state === 'rejected') final = withdrawn ? 'withdrawn' : 'closed';
   if (a.state === 'shortlisted') {
     add('proposed', a.decidedAt);
     if (item) {

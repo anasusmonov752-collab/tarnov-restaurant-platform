@@ -574,4 +574,4 @@ async function latestFor(agencyId, clientId, pairs) {
 }
 
 module.exports = { offer, cancel, handleCallback, clientSays, tick, makeSlots, cleanPrefs, prefsOf, latestFor, view,
-  reachable, CB_RE, DEFAULT_PREFS, ACTIVE };
+  reachable, mapUrl, CB_RE, DEFAULT_PREFS, ACTIVE };

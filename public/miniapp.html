@@ -2265,7 +2265,7 @@ function appCardHtml(it){
   const done = it.state === 'shortlisted' || it.state === 'rejected';
   const w = whoOf(c);
   const chip = w.open ? ['open', t('ap.open')]
-             : it.state === 'shortlisted' ? ['waiting', t('ap.picked')] : it.state === 'rejected' ? ['no', t('ap.rejected')]
+             : it.state === 'shortlisted' ? ['waiting', t('ap.picked')] : it.state === 'rejected' ? ['no', t(it.withdrawn ? 'ap.withdrawn' : 'ap.rejected')]
              : it.isNew ? ['waiting', t('ap.new')] : ['no', t('ap.seen')];
   const photo = c.hasPhoto ? `<img src="${candPhoto(c.id)}" alt="">` : w.avatar;
   const head = `<div class="cd-top">

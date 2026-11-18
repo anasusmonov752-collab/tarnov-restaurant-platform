@@ -139,7 +139,14 @@ const perkLabels = (v, lang = 'uz') => (v.perks || []).filter(k => I18N.PERK_KEY
 function titleFor(v, lang) {
   if (!lang) return v.title;
   const auto = I18N.LANGS.some(l => v.title === I18N.vacTitle(v.role, v.shift, l));
-  return auto ? I18N.vacTitle(v.role, v.shift, lang) : v.title;
+  if (auto) return I18N.vacTitle(v.role, v.shift, lang);
+  // Sarlavha — lavozimning o'zi ("Xostess") bo'lsa, o'quvchi tilida ("Хостес"). Qo'shimchali
+  // nomlar ("Ranner (ovqat tashuvchi)") yozilganicha qoladi (2026-11-18: ruscha kabinetda "Xostess")
+  const norm = s => String(s || '').trim().toLowerCase();
+  const key = 'role.' + v.role;
+  if (v.role && I18N.LANGS.every(l => I18N.t(l, key) !== key)
+      && I18N.LANGS.some(l => norm(v.title) === norm(I18N.t(l, key)))) return I18N.t(lang, key);
+  return v.title;
 }
 
 /**

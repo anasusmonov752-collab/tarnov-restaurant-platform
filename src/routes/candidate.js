@@ -31,6 +31,8 @@ const applications = require('../services/applications');
 const { publicBase } = require('../utils/publicBase');
 const { phoneKey } = require('../utils/candidateKeys');
 const appLife = require('../services/appLife');
+const interviews = require('../services/interviews');
+const Interview = require('../models/Interview');
 const profileStyle = require('../services/profileStyle');
 const survey = require('../services/survey');
 const I18N = require('../../public/js/th-i18n');
@@ -468,6 +470,13 @@ router.get('/applications', guard, asyncHandler(async (req, res) => {
   // Tanlovga o'tganlarining bosqichi (suhbat, natija) — Shortlist elementidan
   const sls = await Shortlist.find({ agencyId: c.restaurantId, id: { $in: rows.map(r => r.shortlistId).filter(Boolean) } }, 'id items').lean();
   const slById = Object.fromEntries(sls.map(s => [s.id, s]));
+  // Faol suhbat (services/interviews) — botdagi tugmalar ilovada ham: vaqt, manzil, "Boraman"
+  const ivs = await Interview.find({ agencyId: c.restaurantId, candidateId: c.id, status: { $in: interviews.ACTIVE } })
+    .sort({ createdAt: -1 }).lean();
+  const ivBySl = {};
+  for (const iv of ivs) if (!ivBySl[iv.shortlistId]) ivBySl[iv.shortlistId] = iv;
+  const ivClients = await Client.find({ agencyId: c.restaurantId, id: { $in: [...new Set(ivs.map(i => i.clientId))] } }, 'id name').lean();
+  const ivClName = Object.fromEntries(ivClients.map(x => [x.id, x.name]));
 
   res.json(rows.map(a => {
     const v = vById[a.vacancyId];
@@ -475,19 +484,83 @@ router.get('/applications', guard, asyncHandler(async (req, res) => {
     const sl = slById[a.shortlistId];
     const item = sl ? (sl.items || []).find(i => i.candidateId === c.id) : null;
     const life = appLife.stepsFor(a, item, req.lang);
+    const contactOpen = !!(vv && vv.companyOpen && !life.final);
+    const iv = a.shortlistId && ivBySl[a.shortlistId];
     return {
       id: a.id,
       state: a.state,
       // Kontakt ochilgan bo'lsa — aniq holat; aks holda bosqichlar yo'li
-      stateLabel: vv && vv.companyOpen && !life.final ? I18N.t(req.lang, 'al.contactOpen') : life.stageLabel,
+      stateLabel: contactOpen ? I18N.t(req.lang, 'al.contactOpen') : life.stageLabel,
+      stage: contactOpen ? 'contactOpen' : life.stage,
+      // Keyin nima bo'ladi — nomzod kutishni bilsin (2026-11-18, Anas: "Сообщим о следующем шаге" noaniq)
+      next: I18N.t(req.lang, 'al.next.' + (contactOpen ? 'contactOpen' : life.stage)),
       tone: life.tone,
       steps: life.steps,
       final: life.final,
+      // Qaror qilinmagan ariza — nomzod o'zi qaytarib oladi (tanlovga o'tgani — HR orqali)
+      canWithdraw: !life.final && a.state !== 'shortlisted' && a.state !== 'rejected',
+      // Botdagi tekshiruv savollari (services/prescreen) javob kutyaptimi
+      screen: screenPending(a.screen),
+      interview: iv ? {
+        id: iv.id, status: iv.status, at: iv.at, confirmed: !!iv.confirmedAt,
+        slots: iv.status === 'offered' ? (iv.slots || []).map((d, i) => ({ i, at: d })).filter(s => new Date(s.at).getTime() > Date.now() + 30 * 6e4) : [],
+        place: ivClName[iv.clientId] || '', address: iv.address || '',
+        map: iv.address ? interviews.mapUrl(iv.address) : ''
+      } : null,
       message: a.message,
       createdAt: a.createdAt,
       vacancy: vv
     };
   }));
+}));
+
+// Botdagi tekshiruv: nechta savol qolgan (ovozli tanishuv — ixtiyoriy, alohida)
+function screenPending(scr) {
+  const step = scr && scr.step;
+  if (!step || ['done', 'stopped'].includes(step)) return null;
+  if (step === 'voice') return { left: 0, voice: true };
+  const L = scr.startPre ? ['fit', 'commute'] : ['fit', 'start', 'commute'];
+  const i = L.indexOf(step === 'fitWhy' ? 'fit' : step);
+  return { left: i < 0 ? 1 : L.length - i, voice: false };
+}
+
+// ── Arizani qaytarib olish ── (faqat qaror qilinmagan; tanlovga o'tgan bo'lsa — HR orqali)
+router.post('/applications/:id/withdraw', guard, asyncHandler(async (req, res) => {
+  const c = req.cand;
+  const now = new Date();
+  const a = await Application.findOneAndUpdate(
+    { agencyId: c.restaurantId, candidateId: c.id, id: String(req.params.id), state: { $nin: ['shortlisted', 'rejected'] } },
+    { $set: { state: 'rejected', reason: 'withdrawn', decidedAt: now } }, { new: true }).lean();
+  if (!a) return res.status(409).json({ error: I18N.t(req.lang, 'cb.wdLate'), code: 'decided' });
+  // Botdagi tekshiruv savollari to'xtaydi (eslatma ham ketmaydi — prescreen.tick ro'yxatida yo'q)
+  await Application.updateOne({ _id: a._id, 'screen.step': { $in: ['fit', 'fitWhy', 'start', 'commute', 'voice'] } },
+    { $set: { 'screen.step': 'stopped' } });
+  // Agentlikka — HR bu odamga qo'ng'iroq qilib vaqt sarflamasin
+  const [ag, v] = await Promise.all([
+    Restaurant.findOne({ id: c.restaurantId }, 'telegram').lean(),
+    Vacancy.findOne({ agencyId: c.restaurantId, id: a.vacancyId }, 'title').lean()
+  ]);
+  const adm = ag && ag.telegram && ag.telegram.adminChatId;
+  if (adm && !c.isTest) {
+    const tg = require('../services/telegram');
+    tg.sendMessage(tg.platformToken(), adm, `↩️ ${c.fullName || 'Nomzod'} «${(v && v.title) || 'vakansiya'}» arizasini qaytarib oldi`).catch(() => {});
+  }
+  res.json({ ok: true });
+}));
+
+// ── Suhbatga javob (botdagi tugmalar bilan BIR XIL yo'l — services/interviews) ──
+//   y — boraman · r — boshqa vaqt · x — umuman bormayman · p — vaqt tanlash ({slot})
+router.post('/interviews/:id/:op', guard, asyncHandler(async (req, res) => {
+  const op = String(req.params.op);
+  if (!['y', 'r', 'x', 'p'].includes(op)) return res.status(400).json({ error: 'bad op', code: 'bad' });
+  const slot = parseInt((req.body || {}).slot, 10);
+  if (op === 'p' && !(slot >= 0 && slot < 50)) return res.status(400).json({ error: 'bad slot', code: 'bad' });
+  const r = await interviews.handleCallback({
+    data: `iv:${op}:${String(req.params.id)}${op === 'p' ? ':' + slot : ''}`,
+    chatId: req.cand.tgChatId, appBase: publicBase(req)
+  });
+  if (r.ok === false) return res.status(409).json({ error: r.text || I18N.t(req.lang, 'cb.ivStale'), code: 'stale' });
+  res.json({ ok: true, text: r.text || '' });
 }));
 
 // ── O'z fotosi ──

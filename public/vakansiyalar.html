@@ -203,7 +203,7 @@ async function load(){
     <tbody>${ROWS.map(v => {
       const [cls, lbl] = ST[v.status] || ST.open;
       return `<tr>
-        <td><b>${esc(v.title)}</b>
+        <td><b>${esc(v.title)}</b>${v.status === 'open' && !v.hasRu ? ` <span title="Rus tilidagi nomzod o'zbekcha matnni ko'radi — Tahrirlash → Ruscha" style="font-size:11px;font-weight:600;color:var(--warn);border:1px solid currentColor;border-radius:6px;padding:0 5px;margin-left:4px">RU yo'q</span>` : ''}
           ${v.venue ? `<div style="font-size:12px;color:var(--muted)">${esc(v.venue)}</div>` : ''}
           ${v.headcount > 1 ? `<div style="font-size:12px;color:var(--muted)">${v.headcount} ta odam</div>` : ''}</td>
         <td>${esc(v.clientName)}
@@ -333,6 +333,7 @@ const autoTitle = (r, s) => {
 
 function form(v){
   const d = v || {};
+  const ru = d.ru || {};
   const opts = CLIENTS.map(c => `<option value="${c.id}" ${d.clientId === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('');
   const roleOpts = `<option value="">— tanlang —</option>` + ROLES.map(([k, l]) =>
     `<option value="${k}" ${d.role === k ? 'selected' : ''}>${l}</option>`).join('');
@@ -392,6 +393,20 @@ function form(v){
     <div class="fld"><label>Vazifalar (har qatorda bittadan)</label><textarea id="fDu" rows="3">${esc((d.duties || []).join('\n'))}</textarea></div>
     <div class="fld"><label>Talablar (har qatorda bittadan)</label><textarea id="fRq" rows="3">${esc((d.requirements || []).join('\n'))}</textarea></div>
     <div class="fld"><label>Qo'shimcha (erkin matn)</label><textarea id="fCo" rows="2">${esc(d.conditions)}</textarea></div>
+
+    <div class="sec" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <span>Ruscha — rus tilidagi nomzod ko'radi</span>
+      <button type="button" class="btn btn-sm" id="fRuAi" style="text-transform:none;letter-spacing:0;flex:none">Ruschaga tarjima (AI)</button>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin:-4px 0 8px">Bo'sh maydon o'rniga o'zbekcha matn chiqadi. AI faqat to'ldiradi — tekshirib, keyin saqlang.</div>
+    <div class="fld"><label>Sarlavha</label><input type="text" id="rTi" value="${esc(ru.title)}" maxlength="120" placeholder="Официант, вечерняя смена"></div>
+    <div class="fld"><label>Joy tavsifi</label><input type="text" id="rVn" value="${esc(ru.venue)}" maxlength="80"></div>
+    <div class="fld"><label>Mo'ljal</label><input type="text" id="rLm" value="${esc(ru.landmark)}" maxlength="80"></div>
+    <div class="fld"><label>Jalb</label><input type="text" id="rHk" value="${esc(ru.hook)}" maxlength="160"></div>
+    <div class="fld"><label>Grafik</label><input type="text" id="rSc" value="${esc(ru.schedule)}" maxlength="120"></div>
+    <div class="fld"><label>Vazifalar (har qatorda bittadan)</label><textarea id="rDu" rows="3">${esc((ru.duties || []).join('\n'))}</textarea></div>
+    <div class="fld"><label>Talablar (har qatorda bittadan)</label><textarea id="rRq" rows="3">${esc((ru.requirements || []).join('\n'))}</textarea></div>
+    <div class="fld"><label>Qo'shimcha</label><textarea id="rCo" rows="2">${esc(ru.conditions)}</textarea></div>
     ${v ? `<div class="fld"><label>Holat</label><select id="fStt">
       <option value="open"   ${d.status==='open'?'selected':''}>Ochiq</option>
       <option value="paused" ${d.status==='paused'?'selected':''}>To'xtatilgan</option>
@@ -406,6 +421,24 @@ function form(v){
   $('fRo').onchange = syncT;
   $('fSh').onchange = syncT;
 
+  // Ruscha maydonlar: [forma id, kalit, ro'yxatmi]
+  const RU_F = [['rTi','title'],['rVn','venue'],['rLm','landmark'],['rHk','hook'],['rSc','schedule'],
+    ['rDu','duties',1],['rRq','requirements',1],['rCo','conditions']];
+  const ruBody = () => Object.fromEntries(RU_F.map(([id, k]) => [k, $(id).value.trim()]));
+  $('fRuAi').onclick = async () => {
+    const src = { title: $('fTi').value, venue: $('fVn').value, landmark: $('fLm').value, hook: $('fHk').value,
+      schedule: $('fSc').value, duties: $('fDu').value, requirements: $('fRq').value, conditions: $('fCo').value };
+    const filled = RU_F.some(([id]) => $(id).value.trim());
+    if (filled && !confirm('Ruscha maydonlardagi matn AI tarjimasi bilan almashtiriladi. Davom etasizmi?')) return;
+    const b = $('fRuAi'); b.disabled = true; b.textContent = 'Tarjima qilinmoqda...';
+    try {
+      const { ru: r } = await api('/api/vacancies/translate', { method: 'POST', body: JSON.stringify(src) });
+      RU_F.forEach(([id, k, list]) => { $(id).value = list ? (r[k] || []).join('\n') : (r[k] || ''); });
+      toast('Tarjima tayyor — tekshirib, saqlang', 'success');
+    } catch (e) { toast(e.message, 'error'); }
+    b.disabled = false; b.textContent = 'Ruschaga tarjima (AI)';
+  };
+
   $('fSave').onclick = async () => {
     const role = $('fRo').value;
     if (!role) return toast('Lavozimni tanlang', 'error');
@@ -418,7 +451,8 @@ function form(v){
       salaryPeriod: $('fSp').value, salaryCurrency: $('fCur').value, payout: $('fPo').value,
       perks: [...document.querySelectorAll('[data-pk]:checked')].map(x => x.dataset.pk),
       venue: $('fVn').value.trim(), landmark: $('fLm').value.trim(), hook: $('fHk').value.trim(),
-      duties: $('fDu').value, requirements: $('fRq').value
+      duties: $('fDu').value, requirements: $('fRq').value,
+      ru: ruBody()
     };
     if (!v) body.clientId = $('fCl').value;
     if (v && $('fStt')) body.status = $('fStt').value;

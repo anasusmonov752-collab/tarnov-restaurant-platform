@@ -270,8 +270,8 @@ function templateText(v, lang = 'uz') {
   return [
     `📋 ${vac.titleFor(v, lang)}`,
     vac.salaryText(v, lang) ? `${T('vk.salary')}: ${vac.salaryText(v, lang)}` : '',
-    v.schedule   ? `${T('vk.schedule')}: ${v.schedule}` : '',
-    v.conditions ? `${T('vk.cond')}: ${I18N.perksText(v.conditions, lang)}` : '',
+    v.schedule   ? `${T('vk.schedule')}: ${vac.tx(v, 'schedule', lang)}` : '',
+    v.conditions ? `${T('vk.cond')}: ${I18N.perksText(vac.tx(v, 'conditions', lang), lang)}` : '',
     v.location   ? `${T('vk.region')}: ${v.location}` : '',
     v.startDate  ? `${T('vk.start')}: ${dmy(v.startDate, lang)}` : '',
     v.headcount > 1 ? `${T('vk.need')}: ${I18N.t(lang, 'unit.people', { n: v.headcount })}` : ''

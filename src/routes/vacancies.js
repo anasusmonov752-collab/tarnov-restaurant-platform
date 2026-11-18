@@ -257,6 +257,15 @@ router.post('/:id/applications/:appId/:action', guard, asyncHandler(async (req, 
   res.json({ ok: true, state: a.state, shortlistId: sl.id });
 }));
 
+// ── Ruschaga tarjima (AI) — faqat formani to'ldiradi, saqlamaydi ──
+router.post('/translate', guard, asyncHandler(async (req, res) => {
+  let ru = null;
+  try { ru = await vac.translateRu(req.body || {}, req.user.restaurantId); }
+  catch (e) { console.warn('[vac.translate]', e.message); }
+  if (!ru) return res.status(502).json({ error: 'Tarjima qilinmadi — keyinroq urinib ko\'ring yoki qo\'lda yozing' });
+  res.json({ ru });
+}));
+
 // ── Yaratish (mijoz nomidan) ──
 // Mijoz o'zi ham yarata oladi, lekin telefonda aytsa siz kiritasiz.
 router.post('/', guard, asyncHandler(async (req, res) => {

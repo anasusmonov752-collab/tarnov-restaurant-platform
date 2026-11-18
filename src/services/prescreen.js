@@ -28,7 +28,7 @@ const send = (chatId, text, opts) => tg.sendMessage(tg.platformToken(), chatId, 
 // Shartlar qatori: joy · smena · maosh (vakansiyada bori)
 function termsOf(v, lang) {
   const shift = v.shift ? T(lang, 'shift.' + v.shift) : '';
-  return [[v.location, v.landmark].filter(Boolean).join(', '), shift, vac.salaryText(v, lang)].filter(Boolean).join(' · ');
+  return [[v.location, vac.tx(v, 'landmark', lang)].filter(Boolean).join(', '), shift, vac.salaryText(v, lang)].filter(Boolean).join(' · ');
 }
 
 // Savollar ro'yxati: anketada "qachondan" javob berilgan bo'lsa (startPre) — so'ralmaydi

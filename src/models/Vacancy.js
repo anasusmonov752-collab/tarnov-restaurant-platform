@@ -56,6 +56,22 @@ const VacancySchema = new mongoose.Schema({
   // confirmedAt'dan farqi: u — "ro'yxatda tursin" taymeri, bu — ishonch belgisi.
   verifiedAt:   { type: Date, default: null },
 
+  // ── RUSCHA MATN (2026-11-18) ──
+  // Nomzod kabineti va bot rus tilida, lekin erkin matn (joy, vazifalar,
+  // shartlar) faqat o'zbekcha edi — ruscha kabinetda yarmi o'zbekcha chiqardi.
+  // Bo'sh maydon — asosiy (o'zbekcha) matn ko'rsatiladi: vac.tx() qoidasi.
+  // Tuman (location) bu yerda YO'Q — u qidiruv filtri, joy nomlari bir xil.
+  ru: {
+    title:        { type: String, default: '' },
+    venue:        { type: String, default: '' },
+    landmark:     { type: String, default: '' },
+    hook:         { type: String, default: '' },
+    schedule:     { type: String, default: '' },
+    conditions:   { type: String, default: '' },
+    duties:       { type: [String], default: [] },
+    requirements: { type: [String], default: [] }
+  },
+
   status: { type: String, default: 'open' },    // open | paused | closed
   // Sinov mijozining vakansiyasi — haqiqiy nomzodlarga ko'rinmaydi (pastdagi hook)
   isTest: { type: Boolean, default: false },

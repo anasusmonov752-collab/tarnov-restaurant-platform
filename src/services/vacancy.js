@@ -26,6 +26,24 @@ const PAYOUTS = ['daily', 'weekly', 'tenday', 'twice', 'monthly'];
 const lines = x => (Array.isArray(x) ? x : String(x || '').split('\n'))
   .map(s => String(s).replace(/^[\s•\-–—*]+/, '').trim().slice(0, 140)).filter(Boolean).slice(0, 6);
 
+// ── Ruscha matn (Vacancy.ru) ──
+// Erkin matnning ruscha nusxasi. O'quvchi rus tilida bo'lsa va nusxa
+// to'ldirilgan bo'lsa — o'sha, aks holda asosiy matn. YAGONA qoida: tx().
+const RU_TEXT = { title: 120, venue: 80, landmark: 80, hook: 160, schedule: 120, conditions: 400 };
+const RU_LIST = ['duties', 'requirements'];
+function cleanRu(x) {
+  const out = {};
+  for (const [k, n] of Object.entries(RU_TEXT)) out[k] = String((x && x[k]) || '').trim().slice(0, n);
+  for (const k of RU_LIST) out[k] = lines(x && x[k]);
+  return out;
+}
+function tx(v, f, lang) {
+  const ru = lang === 'ru' && v.ru ? v.ru[f] : null;
+  if (RU_LIST.includes(f)) return ru && ru.length ? ru : (v[f] || []);
+  return ru || v[f] || '';
+}
+const hasRu = v => !!(v.ru && (Object.keys(RU_TEXT).some(k => v.ru[k]) || RU_LIST.some(k => (v.ru[k] || []).length)));
+
 // Vakansiya necha kundan keyin "eskirgan" hisoblanadi.
 // hh'da soxta e'lon muammosi shundan kelib chiqadi: e'lon osilib turadi,
 // lekin o'rin allaqachon to'lgan.
@@ -81,6 +99,20 @@ function clean(b, prev = {}) {
   }
   if (b.duties !== undefined)       out.duties = lines(b.duties);
   if (b.requirements !== undefined) out.requirements = lines(b.requirements);
+  if (b.ru !== undefined)           out.ru = cleanRu(b.ru);       // butunlay almashtiriladi
+  // Ruschasiz forma (mijoz Mini App'i) o'zbekcha matnni o'zgartirsa — shu maydonning
+  // eski ruscha nusxasi o'chadi: rus tilidagi nomzod eskirgan grafik/shartni o'qimasin
+  else if (prev.ru && hasRu(prev)) {
+    const val = (f, x) => (RU_LIST.includes(f) ? JSON.stringify(x || []) : String(x || '').trim());
+    const ru = cleanRu(prev.ru);
+    let changed = false;
+    for (const f of [...Object.keys(RU_TEXT), ...RU_LIST]) {
+      if (out[f] !== undefined && val(f, out[f]) !== val(f, prev[f]) && (RU_LIST.includes(f) ? ru[f].length : ru[f])) {
+        ru[f] = RU_LIST.includes(f) ? [] : ''; changed = true;
+      }
+    }
+    if (changed) out.ru = ru;
+  }
   if (b.headcount !== undefined)  out.headcount = num(b.headcount, 1, 200) || 1;
   if (b.autoNotify !== undefined) out.autoNotify = !!b.autoNotify;
   // E'lon qilish — "hozir ochiq" degani, shuning uchun tasdiq ham yangilanadi.
@@ -138,6 +170,7 @@ const perkLabels = (v, lang = 'uz') => (v.perks || []).filter(k => I18N.PERK_KEY
 // vakansiya o'zbek tilli o'quvchiga ham o'zbekcha chiqsin.
 function titleFor(v, lang) {
   if (!lang) return v.title;
+  if (lang === 'ru' && v.ru && v.ru.title) return v.ru.title;
   const auto = I18N.LANGS.some(l => v.title === I18N.vacTitle(v.role, v.shift, l));
   if (auto) return I18N.vacTitle(v.role, v.shift, lang);
   // Sarlavha — lavozimning o'zi ("Xostess") bo'lsa, o'quvchi tilida ("Хостес"). Qo'shimchali
@@ -170,6 +203,8 @@ function full(v, extra = {}, lang) {
     salaryPeriod: v.salaryPeriod || 'month', payout: v.payout || '', payoutText: payoutText(v, lang || 'uz'),
     perks: v.perks || [], perkLabels: perkLabels(v, lang || 'uz'),
     duties: v.duties || [], requirements: v.requirements || [],
+    // Formalar uchun xom holda — full() tahrir manbai, ko'rsatish emas
+    ru: cleanRu(v.ru || {}), hasRu: hasRu(v),
     verifiedAt: v.verifiedAt || null,
     startDate: v.startDate, headcount: v.headcount,
     notes: v.notes, status: v.status,
@@ -205,19 +240,19 @@ function forCandidate(v, client, lang = 'uz') {
     // Ish beruvchi nomi — faqat mijoz ochiq ko'rsatishga rozi bo'lsa
     // (Client.showName). Standart: bo'sh — nom kontakt ochilgach ko'rinadi.
     employer: (client && client.showName && client.name) ? String(client.name) : '',
-    venue: v.venue || '',
-    landmark: v.landmark || '',
-    hook: v.hook || '',
+    venue: tx(v, 'venue', lang),
+    landmark: tx(v, 'landmark', lang),
+    hook: tx(v, 'hook', lang),
     salaryText: salaryText(v, lang),
     payoutText: payoutText(v, lang),
     perkLabels: perkLabels(v, lang),
-    duties: v.duties || [],
-    requirements: v.requirements || [],
+    duties: tx(v, 'duties', lang),
+    requirements: tx(v, 'requirements', lang),
     trust,
     trustDays: Math.floor((Date.now() - new Date(since).getTime()) / 864e5),
     shift: v.shift,
-    schedule: v.schedule,
-    conditions: I18N.perksText(v.conditions, lang),
+    schedule: tx(v, 'schedule', lang),
+    conditions: I18N.perksText(tx(v, 'conditions', lang), lang),
     minExp: v.minExp,
     minAge: v.minAge, maxAge: v.maxAge,
     headcount: v.headcount || 1,
@@ -228,5 +263,48 @@ function forCandidate(v, client, lang = 'uz') {
   };
 }
 
+// ── AI tarjima — faqat TAKLIF ──
+// Panelda "Ruschaga tarjima" bosilganda maydonlar to'ldiriladi, agentlik
+// ko'rib chiqib o'zi saqlaydi (bazaga AI to'g'ridan-to'g'ri yozmaydi).
+// Har maydon alohida: bo'sh maydon bo'sh qaytadi, qo'shimcha so'z yo'q.
+const RU_SCHEMA = {
+  type: 'object',
+  properties: Object.assign(
+    Object.fromEntries(Object.keys(RU_TEXT).map(k => [k, { type: 'string' }])),
+    Object.fromEntries(RU_LIST.map(k => [k, { type: 'array', items: { type: 'string' } }]))),
+  required: [...Object.keys(RU_TEXT), ...RU_LIST]
+};
+const RU_SYSTEM = `Sen restoran vakansiyasi matnini o'zbek tilidan rus tiliga tarjima qilasan.
+O'quvchi — Toshkentdagi ish qidirayotgan oddiy odam (ofitsiant, oshpaz, xostess).
+QOIDALAR:
+- Har maydonni ALOHIDA tarjima qil. Bo'sh maydon — bo'sh satr (ro'yxat — []).
+- Mazmunni o'zgartirma: hech narsa qo'shma, olib tashlama, reklama so'zi qo'shma.
+  Raqamlar, summalar, foizlar, vaqt, "6/1" kabi grafik — aynan.
+- So'm — "сум". Ro'yxat bandlari soni va tartibi asl bilan bir xil.
+- Joy nomlari Toshkentda ruscha qanday aytilsa: Chilonzor — Чиланзар,
+  Sebzor — Себзар, Chorsu — Чорсу, Drujba — Дружба, Yunusobod — Юнусабад.
+  Restoran nomi va qavs ichidagi brend — o'zgarmaydi.
+- Lavozimlar: ofitsiant — официант, xostess — хостес, oshpaz — повар,
+  ranner — раннер, salatchi — салатчица/салатник (kontekstga qarab), kassir — кассир.
+- Qisqa, sodda, jonli rus tili; rasmiy-byurokratik emas.`;
+
+async function translateRu(src, agencyId) {
+  const input = {};
+  for (const k of Object.keys(RU_TEXT)) input[k] = String(src[k] || '').trim().slice(0, RU_TEXT[k]);
+  for (const k of RU_LIST) input[k] = lines(src[k]);
+  const r = await require('./ai').complete({
+    system: RU_SYSTEM,
+    messages: [{ role: 'user', content: JSON.stringify(input) }],
+    json: true, schema: RU_SCHEMA, maxTokens: 1200, tier: 'fast', restaurantId: agencyId
+  });
+  if (!r || typeof r !== 'object') return null;
+  const out = cleanRu(r);
+  // Asl matni bo'sh maydonni AI to'ldirib yubormasin
+  for (const k of Object.keys(RU_TEXT)) if (!input[k]) out[k] = '';
+  for (const k of RU_LIST) if (!input[k].length) out[k] = [];
+  return out;
+}
+
 module.exports = { clean, full, forCandidate, salaryText, payoutText, perkLabels, titleFor, isStale, guessRole,
+  tx, hasRu, cleanRu, translateRu, RU_TEXT, RU_LIST,
   VALID_STATUS, SHIFTS, PERIODS, PAYOUTS, STALE_DAYS };

@@ -6,7 +6,7 @@
 <title>Mening profilim</title>
 <link rel="stylesheet" href="/css/th.css?v=2">  <!-- dizayn tizimi: ranglar, kunduz/tun -->
 <script src="/js/uz-date.js"></script>  <!-- o'zbekcha sana: brauzerda uz formati bo'lmasa -->
-<script src="/js/th-i18n.js?v=28"></script>  <!-- uz/ru lug'at (cb.*), server bilan bitta -->
+<script src="/js/th-i18n.js?v=29"></script>  <!-- uz/ru lug'at (cb.*), server bilan bitta -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="/js/th-viewer.js?v=2" defer></script>  <!-- rasmni to'liq ko'rish -->
 <style>
@@ -609,6 +609,27 @@ body.vp-lock{overflow:hidden}
 .apb button.okb{background:var(--ok);color:#fff}
 .apb button.nob{color:var(--danger)}
 .awd{display:block;margin:10px auto 0;border:0;background:none;color:var(--muted);font:500 13px var(--th-font);padding:4px 8px}
+/* Ixcham karta (2026-11-18): nom + ⋯, restoran · maosh, 4 qadam, holat, "HR'ga yozish" havolasi */
+.jb.ac{padding:14px 16px 6px}
+.ach{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.amore{flex:0 0 auto;width:32px;height:32px;margin:-5px -8px 0 0;border:0;border-radius:50%;background:none;color:var(--muted);display:flex;align-items:center;justify-content:center}
+.amore svg{width:20px;height:20px}
+.jb.ac .pl{margin-top:2px;font-size:14px}
+.jb.ac .pl .sal{color:var(--ok);font-weight:600;font-variant-numeric:tabular-nums}
+.apg{margin-top:12px}
+.apg-b,.apg-l{display:grid;grid-template-columns:1fr .7fr 1.5fr 1fr;gap:4px}
+.apg-b i{height:4px;border-radius:2px;background:var(--th-fill)}
+.apg-b i.on{background:var(--blue)}
+.apg-l{margin-top:5px}
+.apg-l span{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.apg-l span.cur{color:var(--ink);font-weight:600}
+.jb.ac .as{margin-top:10px;cursor:pointer}
+.as b small{font-size:13px;font-weight:500;color:var(--muted)}
+.jb.ac .ah{margin-top:8px}
+.jb.ac .aq{background:var(--th-fill);padding:8px 8px 8px 12px}
+.jb.ac .aq b{background:var(--blue);color:#fff;border-radius:9px;padding:7px 12px;font-weight:600;font-size:14px}
+.ahr{display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:var(--blue);font:600 14px var(--th-font);padding:10px 0 8px}
+.ahr svg{width:17px;height:17px}
 .slots{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .slots button{border:0;border-radius:10px;padding:9px 12px;background:var(--th-fill);color:var(--blue);font:600 14px var(--th-font)}
 .asim-h{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin:18px 4px 8px}
@@ -1674,6 +1695,8 @@ const IC_OK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
 const IC_WAIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>';
 const IC_NO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M7 7l10 10M17 7L7 17"/></svg>';
 const IC_CAL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M8 3.5v4M16 3.5v4M4 10h16"/></svg>';
+const IC_MORE = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5.5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="18.5" cy="12" r="1.8"/></svg>';
+const IC_CHAT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z"/></svg>';
 const sameDay = (a, b) => a.toDateString() === b.toDateString();
 const hm = d => new Date(d).toLocaleTimeString(LOC(), { hour: '2-digit', minute: '2-digit' });
 // Tarix: bugungisi — soati, qolgani — sanasi ("14:20", "18 нояб.")
@@ -1707,27 +1730,42 @@ function appStatus(a){
   }
   const tone = a.stage === 'contactOpen' ? 'ok' : ({ ok: 'ok', no: 'no', go: 'go', wait: 'wait' }[a.tone] || 'wait');
   const ic = tone === 'no' ? IC_NO : tone === 'wait' ? IC_WAIT : IC_OK;
-  return `<div class="as ${tone}"><i>${ic}</i><div><b>${esc(a.stateLabel)}</b>${a.next ? `<p>${esc(a.next)}</p>` : ''}</div></div>`;
+  const last = (a.steps || []).filter(s => s.at).slice(-1)[0];
+  return `<div class="as ${tone}" data-hist="1"><i>${ic}</i><div><b>${esc(a.stateLabel)}${last ? `<small> · ${esc(hAt(last.at))}</small>` : ''}</b>${a.next ? `<p>${esc(a.next)}</p>` : ''}</div></div>`;
 }
 
+// Ixcham karta (2026-11-18, Anas: "ma'lumot ko'p, siqilib qolgan"). Ariza bergan odamga
+// joy tavsifi va to'lov tartibi qayta kerak emas (vakansiya sahifasida bor) — kartada:
+// nom, restoran · maosh, 4 qadamli chiziq, BITTA holat bloki. Tarix — blok bosilganda.
+// KO'K/YASHIL TUGMA FAQAT NOMZOD BIROR ISH QILISHI KERAK BO'LGANDA (savollar, suhbat
+// vaqti, "Boraman"); kutish bosqichida — faqat "HR'ga yozish" havolasi.
+// Qaytarib olish — ⋯ menyusida (kamdan-kam va qaytarib bo'lmaydigan amal).
+const P_STEP = { sent: 1, reviewed: 2, contacted: 2, proposed: 3, contactOpen: 3, interview: 3, hired: 4 };
+function appProg(a){
+  const n = a.final && a.stage !== 'hired' ? 0 : (P_STEP[a.stage] || 1);
+  if (!n) return '';
+  const L = ['cb.p.sent', 'cb.p.hr', 'cb.p.iv', 'cb.p.dec'];
+  return `<div class="apg"><div class="apg-b">${L.map((_, k) => `<i class="${k < n ? 'on' : ''}"></i>`).join('')}</div>`
+    + `<div class="apg-l">${L.map((l, k) => `<span class="${k + 1 === n ? 'cur' : ''}">${esc(t(l))}</span>`).join('')}</div></div>`;
+}
 function appCard(a, i){
   const v = a.vacancy;
-  const where = v ? (v.companyOpen ? v.place : [v.venue, placeOf(v)].filter(Boolean).join(' · ')) : '';
-  const emp = v && !v.companyOpen && v.employer ? `<span class="emp">${esc(v.employer)}</span> · ` : '';
+  const who = v ? (v.companyOpen ? v.place : (v.employer || placeOf(v))) : '';
+  const sub = v ? [who ? `<span class="emp">${esc(who)}</span>` : '', v.salaryText ? `<span class="sal">${esc(v.salaryText)}</span>` : '']
+    .filter(Boolean).join(' · ') : '';
   const scr = a.screen && !a.final
     ? `<div class="aq" data-bot="1"><span>${esc(a.screen.voice ? t('cb.aVoice') : t('cb.aScreen', { n: a.screen.left }))}</span><b>${esc(t('cb.aAnswer'))}</b></div>` : '';
   const hist = (a.steps || []).length > 1
-    ? `<div class="ah">${a.steps.map(s => `<span>${esc(t('cb.h.' + s.key))}${s.at ? ' ' + esc(hAt(s.at)) : ''}</span>`).join('')}</div>` : '';
-  return `<div class="jb ${v ? 'tap' : ''}" data-ai="${i}">
-    <div class="ti">${v ? esc(v.title) : esc(t('cb.vDeleted'))}</div>
-    ${v ? `<div class="pl">${emp}${esc(where)}</div>` : ''}
-    ${v && v.salaryText ? `<div class="sl">${salLine(v)}${v.payoutText ? ` <small>· ${esc(v.payoutText)}</small>` : ''}</div>` : ''}
+    ? `<div class="ah" hidden>${a.steps.map(s => `<span>${esc(t('cb.h.' + s.key))}${s.at ? ' ' + esc(hAt(s.at)) : ''}</span>`).join('')}</div>` : '';
+  return `<div class="jb ac ${v ? 'tap' : ''}" data-ai="${i}">
+    <div class="ach"><div class="ti">${v ? esc(v.title) : esc(t('cb.vDeleted'))}</div>
+      ${a.canWithdraw ? `<button class="amore" data-more="${i}" aria-label="⋯">${IC_MORE}</button>` : ''}</div>
+    ${sub ? `<div class="pl">${sub}</div>` : ''}
+    ${appProg(a)}
     ${appStatus(a)}
     ${scr}
     ${hist}
-    <div class="apb"><button class="${a.final ? '' : 'pri'}" data-hr="1">${esc(t('cb.aWriteHr'))}</button>
-      ${v ? `<button data-vac="${i}">${esc(v.companyOpen ? t('cb.aboutCo') : t('cb.aVacancy'))}</button>` : ''}</div>
-    ${a.canWithdraw ? `<button class="awd" data-wd="${esc(a.id)}">${esc(t('cb.aWithdraw'))}</button>` : ''}
+    <button class="ahr" data-hr="1">${IC_CHAT}${esc(t('cb.aWriteHr'))}</button>
   </div>`;
 }
 
@@ -1766,7 +1804,7 @@ async function drawSimilar(){
   const box = $('appSim');
   if (!box || !pick.length) return;
   box.innerHTML = `<div class="asim-h">${esc(t('cb.aSimilar'))}</div><div class="asim">${pick.map(v =>
-    `<div data-sim="${esc(v.id)}"><span><b>${esc(v.title)}</b><small>${esc([v.employer, v.venue || placeOf(v)].filter(Boolean).join(' · '))}</small></span>`
+    `<div data-sim="${esc(v.id)}"><span><b>${esc(v.title)}</b><small>${esc(v.employer || placeOf(v))}</small></span>`
     + `${v.salaryText ? `<em>${esc(v.salaryText)}</em>` : ''}</div>`).join('')}</div>`;
   box.querySelectorAll('[data-sim]').forEach(el => el.onclick = () => {
     const v = JOBS.find(x => x.id === el.dataset.sim);
@@ -1803,16 +1841,25 @@ function wireApps(){
     ev.stopPropagation();
     try { TG && TG.openLink ? TG.openLink(el.dataset.map) : window.open(el.dataset.map, '_blank'); } catch(e){ window.open(el.dataset.map, '_blank'); }
   });
-  box.querySelectorAll('[data-vac]').forEach(el => el.onclick = ev => { ev.stopPropagation(); openAppTarget(+el.dataset.vac); });
-  box.querySelectorAll('[data-wd]').forEach(el => el.onclick = ev => {
-    ev.stopPropagation();
-    askOk(t('cb.aWdConfirm'), async () => {
-      try {
-        await api('/api/cand/applications/' + encodeURIComponent(el.dataset.wd) + '/withdraw', { method: 'POST', body: '{}' });
-        haptic(); note(t('cb.aWdOk'));
-      } catch(e){ note(e.message); }
-      loadApps(); JOBS = [];
-    });
+  // Holat blokini bosish — tarix ochiladi/yopiladi
+  box.querySelectorAll('[data-hist]').forEach(el => el.onclick = ev => {
+    const h = el.closest('.jb') && el.closest('.jb').querySelector('.ah');
+    if (!h) return;
+    ev.stopPropagation(); haptic();
+    h.hidden = !h.hidden;
+  });
+  // ⋯ — vakansiyani ochish / arizani qaytarib olish (Telegram'ning o'z menyusi)
+  box.querySelectorAll('[data-more]').forEach(el => el.onclick = ev => {
+    ev.stopPropagation(); haptic();
+    const i = +el.dataset.more, a = APPS[i];
+    const go = id => { if (id === 'vac') openAppTarget(i); else if (id === 'wd') withdrawApp(a.id); };
+    try {
+      if (TG && TG.showPopup) return TG.showPopup({ message: (a.vacancy && a.vacancy.title) || t('cb.aVacancy'), buttons: [
+        { id: 'vac', type: 'default', text: t('cb.aVacancy') },
+        { id: 'wd', type: 'destructive', text: t('cb.aWithdraw') },
+        { type: 'cancel' }] }, go);
+    } catch(e){}
+    withdrawApp(a.id);
   });
   box.querySelectorAll('[data-ivid]').forEach(el => el.onclick = ev => {
     ev.stopPropagation();
@@ -1832,6 +1879,16 @@ function wireApps(){
   box.querySelectorAll('[data-ai]').forEach(el => el.onclick = ev => {
     if (ev.target.closest('button, a')) return;
     openAppTarget(+el.dataset.ai);
+  });
+}
+
+function withdrawApp(id){
+  askOk(t('cb.aWdConfirm'), async () => {
+    try {
+      await api('/api/cand/applications/' + encodeURIComponent(id) + '/withdraw', { method: 'POST', body: '{}' });
+      haptic(); note(t('cb.aWdOk'));
+    } catch(e){ note(e.message); }
+    loadApps(); JOBS = [];
   });
 }
 

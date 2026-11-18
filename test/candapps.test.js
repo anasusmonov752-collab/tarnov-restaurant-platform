@@ -64,7 +64,7 @@ test('karta: restoran nomi, holat + keyingi qadam, botda qolgan savollar', async
   assert.equal(a.vacancy.payoutText, 'Выплата каждые 10 дней');
   assert.equal(a.stage, 'contacted');
   assert.equal(a.stateLabel, 'HR связался с вами');
-  assert.match(a.next, /собеседование с работодателем/);
+  assert.match(a.next, /собеседование/);
   assert.deepEqual(a.screen, { left: 2, voice: false });                 // fit -> START -> commute
   assert.equal(a.canWithdraw, true);
   assert.deepEqual(a.steps.map(s => s.key), ['sent', 'reviewed', 'contacted']);

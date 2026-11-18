@@ -683,18 +683,26 @@ async function startSurvey(msg, chatId, ank, appBase) {
 
   const tgUserId = String((msg.from && msg.from.id) || chatId);
   const vacancyId = v ? v.id : '';
-  // Chala qolgan shu anketa bo'lsa — davom ettiriladi (javoblar saqlangan)
-  let r = await SurveyResponse.findOne({ agencyId: s.agencyId, tgUserId, surveyId: s.id, vacancyId, status: 'started' })
-    .sort({ updatedAt: -1 });
   // Admin test rejimida (nomzod) to'ldirilgan anketa — sinov: nomzodi isTest
   const isTest = (await testMode.modeOf(tgUserId)) === 'candidate';
-  if (!r) {
-    r = await SurveyResponse.create({ id: uuidv4(), agencyId: s.agencyId, surveyId: s.id, vacancyId,
-      channel: ank.channel, tgUserId, chatId, status: 'started', isTest, refBy: ank.refBy || '' });
-  } else if ((ank.channel && !r.channel) || (isTest && !r.isTest)) {
-    if (ank.channel && !r.channel) r.channel = ank.channel;
-    if (isTest) r.isTest = true;
-    await r.save();
+  let r;
+  if (!vacancyId) {
+    // Vakansiyasiz: bitta odamga BITTA ochiq yozuv — chala qolgani davom etadi, javobsizi
+    // shu anketaga o'tadi; lavozim tanlanganda ham o'sha yozuv (survey.openResponse)
+    r = await surveySvc.openResponse({ agencyId: s.agencyId, tgUserId, chatId, surveyId: s.id,
+      channel: ank.channel, refBy: ank.refBy || '', isTest, resume: !!s.isDefault });
+  } else {
+    // Vakansiya havolasi: chala qolgan shu anketa bo'lsa — davom ettiriladi (javoblar saqlangan)
+    r = await SurveyResponse.findOne({ agencyId: s.agencyId, tgUserId, surveyId: s.id, vacancyId, status: 'started' })
+      .sort({ updatedAt: -1 });
+    if (!r) {
+      r = await SurveyResponse.create({ id: uuidv4(), agencyId: s.agencyId, surveyId: s.id, vacancyId,
+        channel: ank.channel, tgUserId, chatId, status: 'started', isTest, refBy: ank.refBy || '' });
+    } else if ((ank.channel && !r.channel) || (isTest && !r.isTest)) {
+      if (ank.channel && !r.channel) r.channel = ank.channel;
+      if (isTest) r.isTest = true;
+      await r.save();
+    }
   }
 
   // Nomzod yo'li (services/track): kirdi; vakansiya havolasi bilan kelgan bo'lsa

@@ -126,12 +126,10 @@ async function candidateRole({ agencyId, role, lang, tgUserId, chatId, appBase, 
   const survey = await Survey.findOne({ agencyId, role, active: true, isDefault: false }).lean()
     || await require('./survey').ensureDefault(agencyId);
 
-  let r = await SurveyResponse.findOne({ agencyId, tgUserId, surveyId: survey.id, vacancyId: '', status: 'started' })
-    .sort({ updatedAt: -1 });
-  if (!r) {
-    r = await SurveyResponse.create({ id: uuidv4(), agencyId, surveyId: survey.id, vacancyId: '',
-      channel: 'bot', tgUserId, chatId, status: 'started', isTest: !!isTest, lang });
-  }
+  // /start da ochilgan yozuvning o'zi (kanal — story, SMS... — va tavsiya saqlanadi).
+  // Ilgari bu yerda yangi yozuv 'bot' kanali bilan ochilardi (survey.openResponse izohi)
+  const r = await require('./survey').openResponse({ agencyId, tgUserId, chatId, surveyId: survey.id,
+    isTest: !!isTest, lang });
   // Nomzod yo'li: qaysi lavozimni qidiryapti (services/track)
   require('./track').track('role', { agencyId, tgUserId, ref: role, rid: r.id, channel: r.channel,
     name, isTest: r.isTest || !!isTest });
@@ -194,7 +192,8 @@ async function candidatePick({ agencyId, lang, name, rid, appBase, closed }) {
 
   const keyboard = roleRows(lang, 'ft:c:');
   // Chiqish yo'li: lavozimi ro'yxatda bo'lmagan odam ham o'tib keta olsin
-  if (rid && appBase) keyboard.push([{ text: T(lang, 'ft.cOther'), web_app: { url: `${appBase}/anketa.html?r=${rid}` } }]);
+  // g=1 — UMUMIY anketa: oldin lavozim tanlagan bo'lsa, javobsiz yozuv umumiyga qaytadi (routes/anketa)
+  if (rid && appBase) keyboard.push([{ text: T(lang, 'ft.cOther'), web_app: { url: `${appBase}/anketa.html?r=${rid}&g=1` } }]);
   if (rid) keyboard.push([langSwitchBtn(lang, rid)]);
   return { text, keyboard };
 }

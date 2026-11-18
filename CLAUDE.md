@@ -1259,6 +1259,18 @@ mijozga bormaydi va Mini App'da ko'rinmaydi (`noTestApps`). Kunduzi deploy — b
   emas; boshqa xatoda yangi xabar. Servis bo'sh javob qaytarsa — `bot.stale` ogohlantirishi;
   har bosish Render logida `[CB] <teg> Nms`. JONLI: Anas Telegramda sinadi (2026-11-17, `e8180e0`) —
   rasm, UZ/RU almashishi va tugmalar ISHLADI.
+- ANKETA YOZUVI — BITTA ODAMGA BITTA (2026-11-18; Anas: story'dan kelganlar «Botni o'zi topgan»).
+  Sabab: lavozim tanlanganda `candidateRole` YANGI yozuv ochib kanalga 'bot' yozardi — nomzod
+  kartasi, hodisalar, anketa statistikasi shu bo'yicha; /start dagi (kanalli) yozuv bo'sh qolib
+  "boshladi, tugatmadi" va analitikadagi "Birinchi savolgacha"ni sun'iy oshirardi. Qoida YAGONA —
+  `survey.openResponse` (startSurvey vakansiyasiz + candidateRole): shu anketaning ochiq yozuvi →
+  javobsiz yozuv shu anketaga o'tadi → (umumiy havola, `resume`) chala anketa davom etadi → yangi
+  (kanal va tavsiya meros). «Lavozimim ro'yxatda yo'q» — `anketa.html?r=..&g=1` (javobsiz yozuv
+  umumiy anketaga qaytadi). Eski ma'lumot — `migrations.mergeShells` (server ishga tushganda,
+  takror xavfsiz): javobsiz takrorlar `status:'merged'` + `mergedInto` (O'CHIRILMAYDI; statistikaga
+  kirmaydi, eslatma ketmaydi, eski tugma asosiysini ochadi); kanal faqat asosiysida 'bot'/bo'sh
+  bo'lsa va undan OLDIN ochilgan yozuvda aniq kanal bo'lsa o'tadi (nomzod va hodisalarga ham).
+  SurveyResponse sanog'ini yozsangiz — `status: { $ne: 'merged' }`. `test/openresponse.test.js`.
 
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.

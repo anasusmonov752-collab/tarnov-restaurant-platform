@@ -29,7 +29,10 @@ const SurveyResponseSchema = new mongoose.Schema({
   phoneVerifiedAt: { type: Date, default: null },
 
   step:        { type: String, default: '' },
-  status:      { type: String, default: 'started' },   // started | done
+  status:      { type: String, default: 'started' },   // started | done | merged
+  // merged — javobsiz takror yozuv asosiysiga qo'shilgan (services/migrations mergeShells;
+  // o'chirilmaydi, statistikaga kirmaydi). Eski tugma uni ochsa — asosiysi ochiladi.
+  mergedInto:  { type: String, default: '' },
   isTest:      { type: Boolean, default: false },           // admin test rejimida boshlangan
   candidateId: { type: String, default: '' },
 

@@ -270,7 +270,8 @@ let draft = {};        // shu savoldagi tanlov (saqlanmagan)
 // ══ Boshlash ══
 (async function(){
   if (!INIT || !RID) { $('main').innerHTML = `<div class="msg">${esc(t('boot.needTg'))}</div>`; return; }
-  try { S = await api(''); }
+  // ?g=1 — «Lavozimim ro'yxatda yo'q»: umumiy anketa (routes/anketa)
+  try { S = await api(new URLSearchParams(location.search).get('g') === '1' ? '?g=1' : ''); }
   catch(e){ $('main').innerHTML = `<div class="msg">${esc(errText(e.code))}</div>`; return; }
   Q = S.questions || [];
   if (S.status === 'done') { renderDone(null, true); return; }

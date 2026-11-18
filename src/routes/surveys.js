@@ -33,7 +33,8 @@ router.get('/', guard, asyncHandler(async (req, res) => {
     // Lavozimsiz va umumiy bo'lmagan — o'chirilgan takror nusxa (ensureDefault), ko'rsatilmaydi
     Survey.find({ agencyId, $or: [{ isDefault: true }, { role: { $ne: '' } }] }).sort({ isDefault: -1, createdAt: 1 }).lean(),
     SurveyResponse.aggregate([
-      { $match: { agencyId, isTest: { $ne: true } } },
+      // merged — asosiysiga qo'shilgan takror yozuv (services/migrations mergeShells), sanalmaydi
+      { $match: { agencyId, isTest: { $ne: true }, status: { $ne: 'merged' } } },
       { $group: { _id: '$surveyId', started: { $sum: 1 },
                   done: { $sum: { $cond: [{ $eq: ['$status', 'done'] }, 1, 0] } } } }
     ])
@@ -91,7 +92,7 @@ router.get('/stats', guard, asyncHandler(async (req, res) => {
   if (req.query.surveyId) match.surveyId = String(req.query.surveyId);
   const [byChannel, dropAt] = await Promise.all([
     SurveyResponse.aggregate([
-      { $match: match },
+      { $match: Object.assign({ status: { $ne: 'merged' } }, match) },
       { $group: { _id: '$channel', started: { $sum: 1 },
                   done: { $sum: { $cond: [{ $eq: ['$status', 'done'] }, 1, 0] } } } },
       { $sort: { started: -1 } }

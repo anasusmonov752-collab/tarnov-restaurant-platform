@@ -334,7 +334,7 @@ router.get('/sections', guard, asyncHandler(async (req, res) => {
     Candidate.countDocuments({ restaurantId, source: { $ne: 'anketa' }, isTest: { $ne: true } }),
     Candidate.countDocuments({ restaurantId, source: { $ne: 'anketa' }, createdAt: { $gte: week }, isTest: { $ne: true } }),
     SurveyResponse.aggregate([
-      { $match: { agencyId: restaurantId, isTest: { $ne: true } } },
+      { $match: { agencyId: restaurantId, isTest: { $ne: true }, status: { $ne: 'merged' } } },
       { $group: { _id: null, started: { $sum: 1 }, done: { $sum: { $cond: [{ $eq: ['$status', 'done'] }, 1, 0] } } } }
     ])
   ]);

@@ -857,7 +857,50 @@ async function finalize(r, { appBase } = {}) {
   return { candidate: cand, created, applied, vacancy };
 }
 
+// ══ NOMZODNING OCHIQ ANKETASI (vakansiyasiz) — bitta odamga BITTA yozuv ══
+// /start havolasi (kanal: tg, ig, sms...) yozuv ochadi; lavozim tanlansa
+// (firstTouch.candidateRole) yoki «Lavozimim ro'yxatda yo'q» bosilsa — javobi hali
+// yo'q o'sha yozuvning o'zi kerakli anketaga o'tadi. 2026-11-18 gacha lavozim
+// tanlanganda YANGI yozuv ochilib, kanali 'bot' bo'lardi: story'dan kelganlar «Botni
+// o'zi topgan» bo'lib ketdi, birinchi (bo'sh) yozuv esa statistikada «boshladi,
+// tugatmadi» bo'lib qolardi. Kanal — birinchi tegish (kirgan havola), bo'lmasa 'bot'.
+function isShell(r) {
+  return !!r && r.status === 'started' && r.mode !== 'voice' && !r.step && !r.photo
+    && !Object.keys(r.answers || {}).length;
+}
+
+// resume — umumiy havola: boshqa anketani yarmigacha to'ldirgan odam o'shani davom ettiradi
+// (yangi bo'sh yozuv ochilmaydi)
+async function openResponse({ agencyId, tgUserId, chatId = '', surveyId, channel = '', refBy = '', isTest = false, lang = '', resume = false }) {
+  const uid = String(tgUserId);
+  const base = { agencyId, tgUserId: uid, vacancyId: '', status: 'started' };
+  const same = await SurveyResponse.findOne(Object.assign({ surveyId }, base)).sort({ updatedAt: -1 });
+  const prev = same || await SurveyResponse.findOne(base).sort({ updatedAt: -1 });
+  const now = new Date();
+  let r = same;
+  if (!r && resume && prev && !isShell(prev)) r = prev;
+  if (!r && isShell(prev)) {
+    // Javobsiz — o'sha yozuv shu anketaga o'tadi (yangi urinish: eslatma hisobi noldan)
+    r = prev;
+    Object.assign(r, { surveyId, startedAt: now, updatedAt: now, reminders: 0, remindedAt: null });
+  }
+  if (!r) {
+    r = new SurveyResponse({ id: uuidv4(), agencyId, surveyId, vacancyId: '', tgUserId: uid,
+      chatId: chatId || uid, status: 'started', startedAt: now, updatedAt: now });
+  }
+  const ch = r.channel || channel || (prev && prev.channel) || 'bot';
+  if (r.channel !== ch) r.channel = ch;
+  const rb = r.refBy || refBy || (prev && prev.refBy) || '';
+  if (r.refBy !== rb) r.refBy = rb;
+  if (isTest && !r.isTest) r.isTest = true;
+  if (lang && !r.lang) r.lang = lang;
+  if (chatId && !r.chatId) r.chatId = chatId;
+  if (r.isNew || r.isModified()) await r.save();
+  return r;
+}
+
 module.exports = {
+  isShell, openResponse,
   CHANNELS, DISTRICTS, CATALOG, CUSTOM_TYPES, START_DAYS, catalogInfo, cleanQuestions, surveyForVacancy,
   isShown, skipped, shownQuestions, forRole, withMeta, rolePreset, upgradeQuestions, PRESET_ROLES,
   template, makeCode, ensureDefault,

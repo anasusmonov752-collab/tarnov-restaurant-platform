@@ -36,7 +36,11 @@ const fail = (res, status, code, extra) => res.status(status).json(Object.assign
 const guard = asyncHandler(async (req, res, next) => {
   const v = initData.verify(req.get('X-Telegram-Init-Data') || '');
   if (!v.ok) return fail(res, 401, 'auth');
-  const r = await SurveyResponse.findOne({ id: req.params.rid, tgUserId: String(v.user.id) });
+  let r = await SurveyResponse.findOne({ id: req.params.rid, tgUserId: String(v.user.id) });
+  // Asosiysiga qo'shilgan takror yozuv (eski tugma) — asosiysi ochiladi
+  if (r && r.status === 'merged' && r.mergedInto) {
+    r = await SurveyResponse.findOne({ id: r.mergedInto, tgUserId: String(v.user.id) });
+  }
   if (!r) return fail(res, 404, 'notFound');
   req.tgUser = v.user;
   req.resp = r;
@@ -53,6 +57,12 @@ async function contextOf(r) {
 // ── Anketa holati ──
 router.get('/:rid', guard, asyncHandler(async (req, res) => {
   const r = req.resp;
+  // ?g=1 — «Lavozimim ro'yxatda yo'q»: UMUMIY anketa. Oldin lavozim tanlagan bo'lsa
+  // (yozuv lavozim anketasiga o'tgan), javobi hali yo'q yozuv umumiyga qaytadi
+  if (req.query.g === '1' && !r.vacancyId && survey.isShell(r)) {
+    const def = await survey.ensureDefault(r.agencyId);
+    if (def && r.surveyId !== def.id) { r.surveyId = def.id; r.updatedAt = new Date(); await r.save(); }
+  }
   const { s, v, presetRole } = await contextOf(r);
   if (!s) return fail(res, 404, 'notFound');
   // Nomzod yo'li: anketani ochdi (30 daqiqada bir marta — track.QUIET)

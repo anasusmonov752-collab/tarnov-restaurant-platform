@@ -12,7 +12,7 @@
 <script src="/js/th-shell.js?v=4" defer></script>
 <script src="/js/th-viewer.js?v=2" defer></script>
 <script src="/js/th-i18n.js?v=27"></script>
-<script src="/js/th-story.js?v=1" defer></script>  <!-- afzalliklar ro'yxati serverniki bilan bir xil (PERK_KEYS) -->
+<script src="/js/th-story.js?v=2" defer></script>  <!-- afzalliklar ro'yxati serverniki bilan bir xil (PERK_KEYS) -->
 <style>
 :root{
   --bg:#EEF3FB; --ink:#16233A; --green:#0F2747; --green2:#0A1B33;
@@ -489,7 +489,11 @@ async function storyForm(){
         <div class="fld"><label>Sarlavha (har qator alohida, *so'z* — oltin)</label><textarea id="sH1" rows="3"></textarea></div>
         <div class="fld"><label>Ostki qator</label><input type="text" id="sSub"></div>
         <div class="fld"><label>Filiallar</label><input type="text" id="sLoc"></div>
-        <button class="btn btn-p" id="sDl" style="width:100%;margin-top:6px">PNG yuklab olish</button>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <button class="btn btn-p" id="sDl" style="flex:1">PNG yuklab olish</button>
+          <button class="btn btn-p" id="sVid" style="flex:1">🎬 Video (${thStory.VIDEO_SECONDS} s)</button>
+        </div>
+        <div id="sVidSt" style="font-size:12.5px;color:var(--muted);margin-top:8px;line-height:1.5"></div>
         <div style="font-size:12.5px;color:var(--muted);margin-top:8px;line-height:1.5">Story'da pastki bo'sh joyga Telegram «Ссылка» stikerini qo'ying: t.me/TalentHubUzBot</div>
       </div>
       <div style="flex:0 0 auto"><canvas id="sCv" style="width:270px;height:480px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.18);display:block"></canvas></div>
@@ -530,6 +534,26 @@ async function storyForm(){
   $('sDl').onclick = () => {
     const a = document.createElement('a');
     a.download = `TalentHub-story-${S.lang}.png`; a.href = $('sCv').toDataURL('image/png'); a.click();
+  };
+  // Video — o'sha dizayn, animatsiya bilan (thStory.renderVideo); brauzer real vaqtda yozadi
+  if (!thStory.videoType()) { $('sVid').disabled = true; $('sVidSt').textContent = 'Bu brauzer video yoza olmaydi — Chrome yoki Safari\'da oching.'; }
+  $('sVid').onclick = async () => {
+    const b = $('sVid'), st = $('sVidSt');
+    const rs = cur().filter(v => S.sel.has(v.id));
+    const d = thStory.fromVacancies(rs, { lang: S.lang, name: S.showName ? byCl[S.cl].name : '' });
+    d.lines = $('sH1').value.split('\n'); d.sub = $('sSub').value; d.loc = $('sLoc').value;
+    b.disabled = true; $('sDl').disabled = true;
+    st.textContent = 'Yozilmoqda… shu oynani yopmang va boshqa varaqqa o\'tmang';
+    try {
+      const v = await thStory.renderVideo(d, { onProgress: p => { b.textContent = `🎬 ${Math.round(p * 100)}%`; } });
+      const url = URL.createObjectURL(v.blob);
+      const a = document.createElement('a');
+      a.download = `TalentHub-story-${S.lang}.${v.ext}`; a.href = url; a.click();
+      st.innerHTML = `${v.mp4 ? 'MP4 tayyor' : 'WebM tayyor — Telegram/Instagram uchun MP4 kerak bo\'lsa Chrome\'ni yangilang'} · ${(v.blob.size / 1048576).toFixed(1)} MB. `
+        + `<a href="${url}" download="TalentHub-story-${S.lang}.${v.ext}">Qayta yuklash</a>`
+        + `<video src="${url}" controls muted playsinline style="display:block;width:270px;margin-top:8px;border-radius:14px"></video>`;
+    } catch (e) { st.textContent = e.message; toast(e.message, 'error'); }
+    b.disabled = false; $('sDl').disabled = false; b.textContent = `🎬 Video (${thStory.VIDEO_SECONDS} s)`;
   };
   vacList(); draw(true);
 }

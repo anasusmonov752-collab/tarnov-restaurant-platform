@@ -74,11 +74,34 @@
     await Promise.all(['400', '500', '600', '700', '800'].map(w => document.fonts.load(`${w} 40px Inter`, 'AaЖж')));
   }
 
+  // ── Animatsiya (video uchun) ──
+  // paint(ctx, d, t): t — soniya. t = Infinity — yakuniy kadr (PNG aynan shu).
+  // Bitta chizish funksiyasi: rasm va video dizayni hech qachon ajralmaydi.
+  const clamp = x => Math.max(0, Math.min(1, x));
+  const easeOut = x => 1 - Math.pow(1 - clamp(x), 3);
+  const VIDEO_SECONDS = 9;
+
   async function render(d) {
     await fonts();
     const cv = document.createElement('canvas');
     cv.width = W; cv.height = H;
-    const ctx = cv.getContext('2d');
+    paint(cv.getContext('2d'), d, Infinity);
+    return cv;
+  }
+
+  function paint(ctx, d, t) {
+    const live = Number.isFinite(t);
+    const at = (start, dur) => live ? easeOut((t - start) / dur) : 1;
+    // Element paydo bo'lishi: shaffoflik + siljish (+ kattalashish)
+    const show = (a, { dx = 0, dy = 0, s = 1, ox = 0, oy = 0 } = {}, fn) => {
+      if (a <= 0) return;
+      ctx.save(); ctx.globalAlpha = a;
+      ctx.translate(dx * (1 - a), dy * (1 - a));
+      if (s !== 1) { const k = s + (1 - s) * a; ctx.translate(ox, oy); ctx.scale(k, k); ctx.translate(-ox, -oy); }
+      fn(); ctx.restore();
+    };
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.letterSpacing = '0px'; ctx.textBaseline = 'alphabetic'; ctx.globalAlpha = 1;
     const F = (w, s) => `${w} ${s}px Inter, system-ui, sans-serif`;
 
     // Fon
@@ -88,15 +111,24 @@
     g = ctx.createRadialGradient(30, 1270, 0, 30, 1270, 450);
     g.addColorStop(0, 'rgba(47,139,255,.32)'); g.addColorStop(.65, 'rgba(47,139,255,0)');
     ctx.fillStyle = g; ctx.fillRect(0, 700, 700, 1100);
-    // Oltin doira (brend nuqtasi)
+    // Oltin doira (brend nuqtasi) — videoda o'sib chiqadi va sekin "nafas oladi"
+    const gr = 380 * (live ? .9 + .1 * at(0, 1.1) + .015 * Math.sin(t * 1.6) : 1);
     ctx.save();
     ctx.shadowColor = 'rgba(255,197,61,.30)'; ctx.shadowBlur = 180;
-    g = ctx.createRadialGradient(924, 196, 20, 1000, 120, 380);
+    g = ctx.createRadialGradient(924, 196, 20, 1000, 120, gr);
     g.addColorStop(0, '#FFD36B'); g.addColorStop(.4, '#FFC53D'); g.addColorStop(1, '#E9A21C');
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(1000, 120, 380, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(1000, 120, gr, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
 
-    // Brend
+    // Brend birinchi kadrdanoq turadi: yozuvchi ~0.5 s kech boshlaydi — video bo'sh ekran bilan boshlanmasin
+    brand(ctx, d, F);
+    const y0 = headline(ctx, d, F, show, at);
+    tilesBlock(ctx, d, F, show, at, y0, t, live);
+    show(at(2.5, .55), { dy: 140 }, () => cta(ctx, d, F, t, live));
+  }
+
+  function brand(ctx, d, F) {
+    let g;
     const bx = PAD, by = 128;
     g = ctx.createLinearGradient(0, by, 0, by + 60); g.addColorStop(0, '#3A92FF'); g.addColorStop(1, '#0050C8');
     ctx.fillStyle = g; rr(ctx, bx, by, 60, 60, 15); ctx.fill();
@@ -112,56 +144,86 @@
     ctx.fillStyle = 'rgba(8,22,52,.78)'; rr(ctx, W - PAD - cw, by + 2, cw, 56, 28); ctx.fill();
     ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 1.5; ctx.stroke();
     ctx.fillStyle = '#fff'; ctx.fillText(d.city, W - PAD - cw + 22, by + 31);
+    ctx.textBaseline = 'alphabetic';
+  }
 
-    // Sarlavha — eng uzun qatorga qarab o'lcham
+  // Sarlavha, ostki qator, filiallar — qatorma-qator pastdan chiqadi. Plitkalar boshlanadigan y ni qaytaradi.
+  function headline(ctx, d, F, show, at) {
     ctx.textBaseline = 'alphabetic';
     const lines = (d.lines || []).filter(Boolean).slice(0, 4);
     let hs = 118;
     for (const l of lines) hs = Math.min(hs, fit(ctx, l.replace(/\*/g, ''), F(800, '{s}'), 118, W - PAD * 2, -0.038));
-    ctx.font = F(800, hs); ctx.letterSpacing = (-0.038 * hs) + 'px';
     let y = 338 + hs * .82;
-    for (const l of lines) {
-      const gold = /^\*.*\*$/.test(l.trim());
-      ctx.fillStyle = gold ? '#FFC53D' : '#fff';
-      ctx.fillText(l.replace(/\*/g, ''), PAD, y);
+    lines.forEach((l, i) => {
+      const yy = y;
+      show(at(i * .2, .5), { dy: 56 }, () => {
+        ctx.font = F(800, hs); ctx.letterSpacing = (-0.038 * hs) + 'px';
+        ctx.fillStyle = /^\*.*\*$/.test(l.trim()) ? '#FFC53D' : '#fff';
+        ctx.fillText(l.replace(/\*/g, ''), PAD, yy);
+      });
       y += hs * .98;
-    }
+    });
     y += -hs * .98 + 44 + 34 * .9;                    // pastki chiziqli harflar (g, y) sarlavhaga tegmasin
-    if (d.sub) { ctx.font = F(600, 34); ctx.letterSpacing = '0px'; ctx.fillStyle = '#C9D7F2'; fit(ctx, d.sub, F(600, '{s}'), 34, W - PAD * 2); ctx.fillText(d.sub, PAD, y); y += 48; }
-    if (d.loc) { fit(ctx, d.loc, F(500, '{s}'), 27, W - PAD * 2); ctx.fillStyle = '#7F96C2'; ctx.fillText(d.loc, PAD, y); y += 10; }
+    if (d.sub) {
+      const yy = y;
+      show(at(.85, .45), { dy: 30 }, () => {
+        ctx.letterSpacing = '0px'; fit(ctx, d.sub, F(600, '{s}'), 34, W - PAD * 2);
+        ctx.fillStyle = '#C9D7F2'; ctx.fillText(d.sub, PAD, yy);
+      });
+      y += 48;
+    }
+    if (d.loc) {
+      const yy = y;
+      show(at(1.0, .45), { dy: 30 }, () => {
+        ctx.letterSpacing = '0px'; fit(ctx, d.loc, F(500, '{s}'), 27, W - PAD * 2);
+        ctx.fillStyle = '#7F96C2'; ctx.fillText(d.loc, PAD, yy);
+      });
+      y += 10;
+    }
+    return y;
+  }
 
-    // Plitkalar 2 ustun
+  // Plitkalar 2 ustun — navbatma-navbat "ochiladi"; eng ko'p to'lanadigani keyin sekin yonib turadi
+  function tilesBlock(ctx, d, F, show, at, y, t, live) {
+    let g;
     const tiles = (d.tiles || []).slice(0, 4);
     const tw = (W - PAD * 2 - 20) / 2, th = 232;
     let ty = y + 62;
-    tiles.forEach((t, i) => {
+    tiles.forEach((tl, i) => {
       const x = PAD + (i % 2) * (tw + 20), yy = ty + Math.floor(i / 2) * (th + 20);
-      if (t.hot) {
+      show(at(1.2 + i * .22, .5), { dy: 40, s: .9, ox: x + tw / 2, oy: yy + th / 2 }, () => {
+      if (tl.hot) {
         g = ctx.createLinearGradient(x, yy, x + tw, yy + th);
         g.addColorStop(0, 'rgba(47,139,255,.38)'); g.addColorStop(1, 'rgba(0,80,200,.22)');
         ctx.fillStyle = g; rr(ctx, x, yy, tw, th, 32); ctx.fill();
-        ctx.strokeStyle = 'rgba(111,174,255,.45)';
+        // Videoda: 3 s dan keyin chegara sekin yonib-o'chadi (ko'z shunga tushsin)
+        const glow = live && t > 3 ? .45 + .35 * (0.5 + 0.5 * Math.sin((t - 3) * 3)) : .45;
+        ctx.strokeStyle = `rgba(111,174,255,${glow.toFixed(3)})`;
       } else {
         ctx.fillStyle = 'rgba(255,255,255,.07)'; rr(ctx, x, yy, tw, th, 32); ctx.fill();
         ctx.strokeStyle = 'rgba(255,255,255,.10)';
       }
-      ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.lineWidth = tl.hot && live && t > 3 ? 3 : 1.5; ctx.stroke();
       let bw = 0;
-      if (t.badge) {
+      if (tl.badge) {
         ctx.font = F(700, 21); ctx.letterSpacing = '0px';
-        bw = ctx.measureText(t.badge).width + 28;
+        bw = ctx.measureText(tl.badge).width + 28;
         ctx.fillStyle = '#FFC53D'; rr(ctx, x + tw - 24 - bw, yy + 26, bw, 38, 19); ctx.fill();
-        ctx.fillStyle = '#1A1300'; ctx.textBaseline = 'middle'; ctx.fillText(t.badge, x + tw - 24 - bw + 14, yy + 46); ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = '#1A1300'; ctx.textBaseline = 'middle'; ctx.fillText(tl.badge, x + tw - 24 - bw + 14, yy + 46); ctx.textBaseline = 'alphabetic';
       }
-      fit(ctx, t.role, F(600, '{s}'), 32, tw - 64 - (bw ? bw + 12 : 0));
-      ctx.fillStyle = '#C9D7F2'; ctx.fillText(t.role, x + 32, yy + 38 + 30);
-      fit(ctx, t.pay, F(800, '{s}'), 62, tw - 64, -0.032);
-      ctx.fillStyle = '#fff'; ctx.fillText(t.pay, x + 32, yy + 38 + 30 + 18 + 56);
+      fit(ctx, tl.role, F(600, '{s}'), 32, tw - 64 - (bw ? bw + 12 : 0));
+      ctx.fillStyle = '#C9D7F2'; ctx.fillText(tl.role, x + 32, yy + 38 + 30);
+      fit(ctx, tl.pay, F(800, '{s}'), 62, tw - 64, -0.032);
+      ctx.fillStyle = '#fff'; ctx.fillText(tl.pay, x + 32, yy + 38 + 30 + 18 + 56);
       ctx.font = F(500, 25); ctx.letterSpacing = '0px'; ctx.fillStyle = '#8FA6CF';
-      ctx.fillText(t.unit || '', x + 32, yy + 38 + 30 + 18 + 56 + 40);
+      ctx.fillText(tl.unit || '', x + 32, yy + 38 + 30 + 18 + 56 + 40);
+      });
     });
+  }
 
-    // CTA — oq blok (pastda havola stikeri uchun joy qoladi)
+  // CTA — oq blok (pastda havola stikeri uchun joy qoladi); videoda o'q tugmasi "chaqiradi"
+  function cta(ctx, d, F, t, live) {
+    let g;
     const cy = H - 236 - 160, cx = PAD, cW = W - PAD * 2;
     ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 80; ctx.shadowOffsetY = 30;
     ctx.fillStyle = '#fff'; rr(ctx, cx, cy, cW, 160, 36); ctx.fill(); ctx.restore();
@@ -172,11 +234,83 @@
     ctx.fillStyle = '#4A5D80'; ctx.fillText(d.cta || '', cx + 156, cy + 66);
     fit(ctx, '@' + d.bot, F(800, '{s}'), 54, cW - 290, -0.028);
     ctx.fillStyle = '#0050C8'; ctx.fillText('@' + d.bot, cx + 156, cy + 124);
-    ctx.fillStyle = '#EEF4FF'; ctx.beginPath(); ctx.arc(cx + cW - 66, cy + 80, 32, 0, Math.PI * 2); ctx.fill();
+    const ax = cx + cW - 66, ay = cy + 80;
+    // 3.2 s dan keyin: doira atrofida to'lqin va o'q o'ngga "itariladi" (har 1.4 s)
+    const ph = live && t > 3.2 ? ((t - 3.2) % 1.4) / 1.4 : -1;
+    if (ph >= 0) {
+      ctx.save(); ctx.globalAlpha *= (1 - ph) * .6;
+      ctx.strokeStyle = '#3A92FF'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(ax, ay, 32 + ph * 26, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+    }
+    const nudge = ph >= 0 ? 7 * Math.sin(Math.min(ph * 2, 1) * Math.PI) : 0;
+    ctx.fillStyle = '#EEF4FF'; ctx.beginPath(); ctx.arc(ax, ay, 32, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = '#0050C8'; ctx.lineWidth = 4.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    ctx.beginPath(); ctx.moveTo(cx + cW - 80, cy + 80); ctx.lineTo(cx + cW - 52, cy + 80); ctx.moveTo(cx + cW - 64, cy + 68); ctx.lineTo(cx + cW - 52, cy + 80); ctx.lineTo(cx + cW - 64, cy + 92); ctx.stroke();
-    return cv;
+    ctx.beginPath(); ctx.moveTo(ax - 14 + nudge, ay); ctx.lineTo(ax + 14 + nudge, ay); ctx.moveTo(ax + 2 + nudge, ay - 12); ctx.lineTo(ax + 14 + nudge, ay); ctx.lineTo(ax + 2 + nudge, ay + 12); ctx.stroke();
   }
 
-  window.thStory = { render, fromVacancies, money, TXT };
+  // ── Video: 1080×1920, ~9 s, brauzerning o'zi yozadi (MediaRecorder) ──
+  // Server va tashqi kutubxona yo'q. Chrome 126+ va Safari — MP4 (H.264) — Telegram va
+  // Instagram story to'g'ridan-to'g'ri qabul qiladi; eski brauzerda WebM (ogohlantirish bilan).
+  // Real vaqtda yoziladi: shu 9 s davomida varaq ochiq tursin (fonda kadrlar to'xtaydi).
+  const VIDEO_TYPES = ['video/mp4;codecs=avc1.640028', 'video/mp4;codecs=avc1.4d0028', 'video/mp4;codecs=avc1', 'video/mp4',
+    'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'];
+  function videoType() {
+    if (typeof MediaRecorder === 'undefined') return '';
+    return VIDEO_TYPES.find(x => MediaRecorder.isTypeSupported(x)) || '';
+  }
+
+  async function renderVideo(d, { seconds = VIDEO_SECONDS, fps = 30, onProgress } = {}) {
+    const type = videoType();
+    if (!type) throw new Error('Bu brauzer video yoza olmaydi — Chrome yoki Safari kerak');
+    await fonts();
+    const cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    const ctx = cv.getContext('2d');
+    paint(ctx, d, 0);
+    const stream = cv.captureStream(fps);
+    const rec = new MediaRecorder(stream, { mimeType: type, videoBitsPerSecond: 8e6 });
+    const chunks = [];
+    rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+    const stopped = new Promise(res => { rec.onstop = res; });
+    let startedAt = 0;
+    rec.onstart = () => { startedAt = performance.now(); };
+    rec.start(250);
+    // Yozuvchi kech "uyg'onadi" — animatsiya boshi tushib qolmasin: birinchi kadrni
+    // chizib turamiz (yozuvchi kadr kelgandagina ishga tushadi — kutib o'tirsak qotadi),
+    // ishga tushgach yana 0.15 s, keyin soat boshlanadi. Eng ko'pi 2 s.
+    // Taymer — requestAnimationFrame EMAS: u yashirin/fondagi varaqda butunlay to'xtaydi
+    // (video abadiy "yozilmoqda" bo'lib qotardi — sinovda o'lchandi). setTimeout fonda
+    // sekinlashadi, lekin to'xtamaydi.
+    const tick = 1000 / fps;
+    await new Promise(done => {
+      const h0 = performance.now();
+      const hold = () => {
+        paint(ctx, d, 0);
+        const now = performance.now();
+        if ((startedAt && now - startedAt >= 150) || now - h0 >= 2000) return done();
+        setTimeout(hold, tick);
+      };
+      hold();
+    });
+    const t0 = performance.now();
+    await new Promise(done => {
+      const frame = () => {
+        const t = (performance.now() - t0) / 1000;
+        paint(ctx, d, Math.min(t, seconds));
+        if (onProgress) onProgress(Math.min(1, t / seconds));
+        if (t >= seconds) return done();
+        setTimeout(frame, tick);
+      };
+      frame();
+    });
+    // Oxirgi kadr ham yozilsin
+    await new Promise(r => setTimeout(r, 120));
+    rec.stop();
+    await stopped;
+    stream.getTracks().forEach(tr => tr.stop());
+    const mp4 = type.startsWith('video/mp4');
+    return { blob: new Blob(chunks, { type: mp4 ? 'video/mp4' : 'video/webm' }), ext: mp4 ? 'mp4' : 'webm', mp4 };
+  }
+
+  window.thStory = { render, renderVideo, videoType, paint, fromVacancies, money, TXT, W, H, VIDEO_SECONDS };
 })();

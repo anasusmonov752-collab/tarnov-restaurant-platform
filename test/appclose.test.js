@@ -125,7 +125,9 @@ test('tozalash: bitta odamga bir nechta yopilgan o\'rin — BITTA xabar, ro\'yxa
   const s = await call(sweep, { user: { restaurantId: A }, body: { apply: true } });
   assert.deepEqual([s.j.closed, s.j.people, s.j.notified], [2, 1, 1]);
   assert.equal(SENT.length, 1);
-  assert.match(SENT[0].text, /o'rinlar yopildi:\n• Ofitsiant — kafe-bar\n• Ofitsiant — steak-house/);
+  assert.match(SENT[0].text, /o'rinlar yopildi:\n• Ofitsiant — /);    // tartib bazaga bog'liq emas
+  assert.match(SENT[0].text, /• Ofitsiant — kafe-bar/);
+  assert.match(SENT[0].text, /• Ofitsiant — steak-house/);
   assert.match(SENT[0].text, /Hozir 2 ta ochiq ish bor/);
 });
 

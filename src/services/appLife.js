@@ -146,7 +146,7 @@ async function closeForVacancy(agencyId, vacancy, { appBase = process.env.APP_UR
 async function closedSweep(agencyId, { appBase = process.env.APP_URL || '', apply = false } = {}) {
   const Vacancy = require('../models/Vacancy');
   const Candidate = require('../models/Candidate');
-  const vs = await Vacancy.find({ agencyId, status: 'closed' }).lean();
+  const vs = await Vacancy.find({ agencyId, status: 'closed' }).sort({ createdAt: 1, _id: 1 }).lean();   // ro'yxat tartibi barqaror
   const byCand = new Map();
   let closed = 0;
   for (const v of vs) {

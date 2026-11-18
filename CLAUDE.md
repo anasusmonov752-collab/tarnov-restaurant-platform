@@ -1310,6 +1310,18 @@ mijozga bormaydi va Mini App'da ko'rinmaydi (`noTestApps`). Kunduzi deploy — b
   xabar ro'yxat bilan (`al.nVacClosedMany`). Bajarildi (Anas tasdig'i): 29 ariza / 12 kishi, 9 tasiga
   ketdi (3 tasi Telegramga ulanmagan). Anas Tarnov mijoz rolidan (Mini App) ham status beradi.
   `test/appclose.test.js`.
+- TEST REJIMI — HAQIQIY MIJOZ (2026-11-18, `1b74781`): `/test` → "👔 <mijoz nomi>" (`tm:real`, `TestMode.
+  realClientId`) — admin akkaunti HAQIQIY mijozga (Tarnov) ulanadi: kredit to'ldirilmaydi, isTest yo'q, kontakt
+  ochilsa haqiqiy kredit yechiladi. Bir nechta faol haqiqiy mijoz bo'lsa — tanlash (`tm:rc:<id>`), keyin eslab
+  qoladi. Boshqa Telegramga ulangan mijoz uzilmaydi (409). "🧪 Sinov mijoz" (`tm:client`) — eskicha.
+  `test/testmode-real.test.js`. Prod'da "Sinov 2" va "SINOV Chaykhana Navruz" faol va isTest EMAS — ro'yxatga
+  tushadi (tozalash kerak). Telegramda HALI BOSILMAGAN.
+- STORY VIDEO — JONLI (2026-11-18, `1e18ccf`): panel Vakansiyalar → Story rasm → "🎬 Video (9 s)". Bitta
+  `thStory.paint(ctx, d, t)` — `t=Infinity` PNG (eski bilan pikselma-piksel bir xil, o'lchandi), `t` soniya —
+  video kadri. `renderVideo`: brauzer `MediaRecorder` (Chrome 126+/Safari — MP4 H.264, aks holda WebM ogohlantirish),
+  real vaqtda ~10 s, taymer `setTimeout` (rAF yashirin varaqda to'xtaydi — video qotardi). Yozuvchi ~0.5 s kech
+  boshlaydi — brend birinchi kadrdanoq turadi. Jonli: Tarnov 9 vakansiya → 1080×1920, 10.4 s, 3.3 MB.
+  Skill: `.claude/skills/story-video` (lokal). Deploy skill birinchi haqiqiy ishida ishladi (208/208).
 
 **Eskiz SMS — QOLDIRILDI** (2026-10-20, Anas): yuridik shaxs shartnomasi,
 ERI bilan Didox'da imzo, kamida 300 ming so'm — hozircha kerak emas.

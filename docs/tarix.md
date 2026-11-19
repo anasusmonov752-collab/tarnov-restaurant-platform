@@ -1373,3 +1373,25 @@ yubormaydi — `sxRecStart` MediaRecorder (iOS mp4/AAC, Android webm/Opus; 30 s;
 qidirish" (`miniapp.html?sx=1` — qidiruv sahifasi, lavozim plitkalari AI'siz); Mini App qidiruvi 503 +
 `sx.aiBusy`. Sabab (Anas, 2026-11-19): Gemini bepul kunlik limiti tugagan payt. Mini App mikrofoni
 Telegram iOS'da HALI SINALMAGAN — ruxsat oynasi chiqmasa zaxira yo'l ishlaydi.
+
+**NOMZOD YO'LI TAHLILI VA TUZATISHLAR — JONLI** (2026-11-19, `145cde1`..`b289adc`, 217/217). Anas: "botni o'zi
+topgan odamning anketa yo'lini 7-qoida bo'yicha tahlil qil". Topilganlar: bot "tugagach ariza berasiz" desa-da ariza
+o'zi ketmasdi (kabinetda qo'lda), "2 daqiqa" va'dasi real 2,5–3,5 daqiqa, barmen/kassir/menejer/operator
+lavozimni ikki marta tanlardi, rasm majburiy va chiqish yo'lisiz, "1 / 12" boshidan, sana g'ildiragi bugundan,
+14 yoshga ruxsat, lavozim tugmalarida son yo'q. Tuzatildi:
+- `SurveyResponse.role` + `offerIds` (firstTouch.candidateRole yozadi). `survey.presetRoleOf(r, s, v)` — YAGONA:
+  vakansiya -> lavozim anketasi -> botdagi lavozim (routes/anketa, voiceIntake, finalize). "Lavozimim ro'yxatda
+  yo'q" (g=1) ikkalasini tozalaydi.
+- `finalize`: vakansiyasiz va `offerIds` bo'lsa — hali ochiq/ko'rinadigan ishlarga botdagi tartibda ariza;
+  `applications.submit({prescreen})` — bot savollari faqat birinchisiga. Javobda `appliedTo`; anketa
+  `appliedN`, Rahmat ekrani "Arizangiz N ta ishga yuborildi", bot xabari `ank.botApplied` + "📋 Arizalarim".
+  `ft.cAsk`: "arizangiz shu ishlarga o'zi yuboriladi" (va'da = natija).
+- Rasm: `answer {q:'photo', value:'later'}` -> `answers.photoLater`; submit majburiylikni o'tkazadi; rahmat
+  xabarida `ank.botNoPhoto`. Rasm baribir so'raladi (Anas qarori saqlandi — faqat keyinroq yuborish yo'li).
+- Sana: kun/oy/yil `<select>` (MONTHS uz/ru), 16–70 yosh, 31-fevral rad (server: UTC tushlikda solishtiriladi —
+  Toshkent yarim tuni UTC'da oldingi kun, birinchi variant HAMMA sanani rad etdi, CI ushladi).
+- Hisoblagich: oxirgi 3 savolda "Yana N ta savol" / "Oxirgi savol". Kirishda "javoblar saqlanadi".
+- Vaqt matnlari "3 daqiqa" (ovoz "2 daqiqa") — 12 kalit uz/ru.
+- Lavozim tugmalarida ochiq ishlar soni ("🍽 Ofitsiant · 3"), ishi bor lavozim oldin (`roleRows(counts)`).
+`test/anketaflow.test.js`. Telegramda HALI bosib o'tilmagan. Qolgan: "HR 24 soatda qo'ng'iroq qiladi" va'dasi
+uchun HR'ga ogohlantirish yo'q; real vaqtni analitikada (open -> done mediani) o'lchash.

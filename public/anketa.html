@@ -821,7 +821,7 @@ function renderDone(r, already){
     <h1>${esc(already ? t('ank.already') : t('ank.doneH'))}</h1>
     ${r && r.applied && r.vacancyTitle ? `<div class="st-tile"><b>${esc(t('ank.doneApplied', { v: r.vacancyTitle }))}</b></div>`
       : r && r.appliedN > 1 ? `<div class="st-tile"><b>${esc(t('ank.doneAppliedN', { n: r.appliedN }))}</b></div>` : ''}
-    ${n ? `<div class="st-num">${big('ank.matches', n)}</div>` : all ? `<div class="st-num">${big('ank.jobsAll', all)}</div>` : ''}
+    ${r && r.applied ? '' : n ? `<div class="st-num">${big('ank.matches', n)}</div>` : all ? `<div class="st-num">${big('ank.jobsAll', all)}</div>` : ''}
     <p>${esc(t('ank.going'))}</p>
   </div>`;
   showBar(next === 'apps' ? t('ank.goApps') : t('ank.goJobs'), true, go);

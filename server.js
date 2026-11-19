@@ -223,6 +223,9 @@ async function startServer() {
     // Smena bozori: 2 soat oldin eslatma, smenadan keyin "keldimi?" (services/shifts)
     try { await require('./src/services/shifts').tick(); }
     catch (e) { console.error('[SH] tick:', e.message); }
+    // "HR 24 soatda qo'ng'iroq qiladi" va'dasi: 18 va 24 soatda admin chatiga (services/slaAlert)
+    try { await require('./src/services/slaAlert').tick(); }
+    catch (e) { console.error('[SLA] tick:', e.message); }
     finally { ivBusy = false; }
   }, 2 * 60 * 1000);
 

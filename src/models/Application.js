@@ -54,7 +54,11 @@ const ApplicationSchema = new mongoose.Schema({
   // Agentlik tomoni (panel "Arizalar"): nomzod "ko'rib chiqildi / HR bog'landi"ni
   // sana bilan ko'radi — services/appLife.stepsFor
   agencySeenAt: { type: Date, default: null },
-  contactedAt:  { type: Date, default: null }
+  contactedAt:  { type: Date, default: null },
+  // "HR 24 soatda qo'ng'iroq qiladi" nazorati (services/slaAlert): admin chatiga
+  // 18 soatda ogohlantirish, 24 soatda kechikish — har biri bir marta
+  slaWarnAt:    { type: Date, default: null },
+  slaLateAt:    { type: Date, default: null }
 });
 
 // Bitta nomzod bitta vakansiyaga bir marta ariza beradi

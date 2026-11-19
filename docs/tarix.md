@@ -1306,3 +1306,31 @@ yozilgan edi, endi so'raydigan qilib o'zgartirilgan). Superadmin paroli
 endi Render'dagi `SUPERADMIN_PASSWORD` orqali almashtiriladi (eski
 boshlang'ich parol git tarixida qoladi — env qo'yilmaguncha u amal qiladi).
 
+
+**MIJOZ MINI APP v3 — BUGUN · NOMZODLAR · NOMZOD SAHIFASI** (2026-11-19, `7305ab4`, Anas: "nomzod
+tomoni zo'r, mijoz tomoni sodda, ma'lumot tiqilib qolgan"). Avval `.preview/mijoz-v3.html` prototipi
+(v3 -> v3.1 "yengilroq") ko'rsatildi, Anas tasdiqladi. Tablar: **Bugun** (`tTD/vTD`, bosh ekran) ·
+**Nomzodlar** (`tAP`, arizalar + tanlovlar BITTA ro'yxatda) · Vakansiya · Aloqa · Hisob. "Tanlovlar"
+(`vSL`) menyuda yo'q — yashirin, `SL_ROWS` ma'lumoti uchun yuklanadi.
+- Ma'lumot: `loadPeople()` = `/api/ma/applications` + `/api/ma/shortlists`; `candRows()` ularni bitta
+  qator modeliga yig'adi (`k:'ap'|'sl'`, `seg: new|work|hired|arch`). `shortlisted` ariza tashlanadi —
+  u tanlov elementi bo'lib turibdi. `renderCab()` — ochiq bo'limni qayta chizadi (`loadApps`,
+  `loadShortlists` ham chaqiradi).
+- Bugun (`renderToday`): javob kutayotgan arizalar (ball bo'yicha 3 tasi + "Hammasini ko'rish"), faol
+  suhbatlar (vaqt chapda; o'tgan suhbatda Keldi/Kelmadi — `data-ivo`), kontakt ochilgan-u suhbat yo'q
+  ("Qo'ng'iroq kutmoqda"), 30 kun ichidagi yangi xodimlar, balans + tarif (`ME_PLAN` /me dan).
+  Ariza yo'q bo'lsa — "Mos nomzodlarni ko'rish" -> Vakansiya.
+- Qator (`rowHtml3`): 2 satr — "Lavozim · tajriba" (ochiq bo'lsa ism) va BITTA fakt (yosh·hudud yoki
+  holat: 36 soatdan ko'p javobsiz — sariq, kontakt ochildi — ko'k). O'ngda vaqt va % (75+ yashil,
+  aks holda kulrang matn). Vakansiya bo'yicha guruh sarlavhasi kichik kulrang.
+- Nomzod sahifasi (`showCand`, `#cx`, `.vp` uslubi, z 65): bosh qism, holat (tanlovda `stepsHtml` —
+  `.cd` ichida, `wireCards` ishlashi uchun), moslik halqasi, ishonch qatorlari, ovozli tanishuv,
+  rezyume (`/api/ma/candidates/:id`). Pastda: qaror qilinmagan ariza — Rad etish / Ochish · 1 kredit
+  (+ "Suhbatga kelmasa — kredit qaytariladi") yoki Tanlash; ochiq kontakt — Yozish / Qo'ng'iroq.
+  Amallar `wireApps`/`wireCards` orqali (mantiq takrorlanmaydi). Telegram Orqaga: sheet -> cx -> vx.
+- CSS tuzoq: miniapp.html'da global `.w`, `.b` klasslari bor — modifikatorlar `is-w`, `is-b`, `ib`,
+  `ia`, `cw-y`, `cw-n` deb nomlandi.
+- Lokal sinov: `.preview/miniapp.html` = public nusxasi + `/__p/mock.js` + `/__p/mock-v3.js`,
+  telegram-web-app.js olib tashlangan (aks holda mock ishlamaydi).
+Hali: Vakansiya va Hisob bo'limlari eski ko'rinishda; arizaning 14 yosh / 15 yil tajriba nomuvofiqligi
+(anketa yosh ≥14 va tajriba yig'indisini tekshirmaydi) tuzatilmagan.

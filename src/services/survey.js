@@ -503,7 +503,9 @@ function checkAnswer(q, value) {
       const age = ageOf(d);
       // 16 yosh — mehnat shartnomasi tuzish mumkin bo'lgan yosh (14 yoshli "15 yil tajriba"
       // holati shu chegaradan o'tib ketgan edi). Kalendar xatosi (31-fevral) ham rad etiladi.
-      if (isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== new Date(value + 'T12:00:00Z').toISOString().slice(0, 10)
+      // Kalendar tekshiruvi UTC tushlikda: Toshkent yarim tuni UTC bo'yicha oldingi kun — solishtirish xato chiqardi
+      const real = new Date(value + 'T12:00:00Z');
+      if (isNaN(d.getTime()) || isNaN(real.getTime()) || real.toISOString().slice(0, 10) !== String(value)
         || age < 16 || age > 70) err('age');
       return String(value);
     }
@@ -859,7 +861,7 @@ async function finalize(r, { appBase } = {}) {
     // o'zi yuboriladi" deb va'da qilgan (ft.cAsk). Faqat hali ochiq va nomzodga ko'rinadiganlari,
     // botdagi tartibda. Bot savollari (prescreen) faqat BIRINCHISIGA — uchta ariza uchta
     // savollar oqimi bo'lib chatni to'ldirmasin.
-    const fresh = new Date(Date.now() - vac.STALE_DAYS * 864e5);
+    const fresh = new Date(Date.now() - require('./vacancy').STALE_DAYS * 864e5);   // kabinet ro'yxati qoidasi
     const vq = { agencyId: r.agencyId, id: { $in: r.offerIds.slice(0, 5) }, status: 'open', listed: { $ne: false }, confirmedAt: { $gte: fresh } };
     if (!r.isTest) vq.isTest = { $ne: true };
     const rows = await Vacancy.find(vq).lean();

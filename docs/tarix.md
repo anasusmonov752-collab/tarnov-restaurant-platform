@@ -1395,3 +1395,11 @@ lavozimni ikki marta tanlardi, rasm majburiy va chiqish yo'lisiz, "1 / 12" boshi
 - Lavozim tugmalarida ochiq ishlar soni ("🍽 Ofitsiant · 3"), ishi bor lavozim oldin (`roleRows(counts)`).
 `test/anketaflow.test.js`. Telegramda HALI bosib o'tilmagan. Qolgan: "HR 24 soatda qo'ng'iroq qiladi" va'dasi
 uchun HR'ga ogohlantirish yo'q; real vaqtni analitikada (open -> done mediani) o'lchash.
+**HR 24 SOAT VA'DASI NAZORATI — JONLI** (2026-11-19, `b3d874c`, 219/219): `services/slaAlert.js`, server
+2 daqiqalik taymerida. Qaror qilinmagan (new/seen), `contactedAt` yo'q, ariza tushgach nomzod bilan aloqa
+(`Candidate.firstContactAt`) bo'lmagan arizalar: 18 soatda "⏳ 6 soat qoldi", 24 soatda "⏰ 24 soatdan beri
+qo'ng'iroq qilinmadi" — agentlik admin chatiga yig'ma xabar (ism, vakansiya, soat, telefon, "📨 Arizalarni
+ochish" -> /arizalar.html). Har bosqich bir marta (`Application.slaWarnAt/slaLateAt`, atomik), kunduzi 09–21,
+sinov / yopilgan vakansiya / 7 kundan eski yo'q. Ro'yxatdan chiqarish — panelda "Bog'landim".
+Birinchi kunduzgi tickda oxirgi 7 kunda "Bog'landim" bosilmagan arizalar bitta xabarda keladi.
+`test/sla.test.js`.

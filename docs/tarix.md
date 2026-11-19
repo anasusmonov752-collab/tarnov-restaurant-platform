@@ -1365,3 +1365,11 @@ bazadan qidiruvni Mini App ichida professionalroq qiling").
   nomzodlar" tugmasi ham shu sahifani ochadi; eski `openSearch` (qidiruv rejimi) endi chaqirilmaydi.
 - CSS tuzoq: global `.mk`, `.rx` ham bor ekan — `sx-mk`, `sx-rx`.
 Telegramda HALI SINALMAGAN: haqiqiy ovozning iPhone'da o'ynashi, AI qidiruvning haqiqiy bazada natijasi.
+**Ovoz bilan qidirish Mini App ichida + "AI band"** (2026-11-19, `3cb2283`): "Сказать голосом" endi botga
+yubormaydi — `sxRecStart` MediaRecorder (iOS mp4/AAC, Android webm/Opus; 30 s; Bekor/Tayyor), base64
+`POST /api/ma/search {audio}` -> `voiceAudio.toOgg` (ffmpeg, 16 kHz Opus) -> `parseQuery({audio})` ->
+`transcript` matn maydoniga yoziladi. Mikrofonga ruxsat yo'q — `sx.micNo` (matn yoki bot). `ai.isBusy(err)`
+(timeout, kvota, 429/503): bot xom "Gemini 45 s ichida javob bermadi" o'rniga `bot.aiBusy` + "🔎 Ilovada
+qidirish" (`miniapp.html?sx=1` — qidiruv sahifasi, lavozim plitkalari AI'siz); Mini App qidiruvi 503 +
+`sx.aiBusy`. Sabab (Anas, 2026-11-19): Gemini bepul kunlik limiti tugagan payt. Mini App mikrofoni
+Telegram iOS'da HALI SINALMAGAN — ruxsat oynasi chiqmasa zaxira yo'l ishlaydi.

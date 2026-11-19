@@ -1334,3 +1334,9 @@ tomoni zo'r, mijoz tomoni sodda, ma'lumot tiqilib qolgan"). Avval `.preview/mijo
   telegram-web-app.js olib tashlangan (aks holda mock ishlamaydi).
 Hali: Vakansiya va Hisob bo'limlari eski ko'rinishda; arizaning 14 yosh / 15 yil tajriba nomuvofiqligi
 (anketa yosh ≥14 va tajriba yig'indisini tekshirmaydi) tuzatilmagan.
+**v3.2** (2026-11-19, `8af5441`): nomzod sahifasida ovozli tanishuv bosh qism ostida (`cx-voice`; ariza
+ovozi — `data-voice`, rezyume ovozi — `/candidates/:id/voice`), "Bir qarashda" plitkalari (qachon chiqadi,
+smena, kutgan maosh, tillar — `cx-gl`), ish tajribasi soni bilan. Vakansiya ro'yxati — ixcham qator
+(`vr`: maosh·grafik, ko'pi bilan 3 fakt, yangi ariza -> Nomzodlar shu vakansiya filtri bilan; "Mos
+nomzodlar" va ⋯ — vakansiya sahifasida). Hisob: tariflar `plansSheet()` pastki oynasida (`showPlans`
+ham shuni ochadi), qatorlar Xizmatlar / Ma'lumot guruhlarida.

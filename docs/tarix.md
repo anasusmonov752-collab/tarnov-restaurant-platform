@@ -1340,3 +1340,28 @@ smena, kutgan maosh, tillar — `cx-gl`), ish tajribasi soni bilan. Vakansiya ro
 (`vr`: maosh·grafik, ko'pi bilan 3 fakt, yangi ariza -> Nomzodlar shu vakansiya filtri bilan; "Mos
 nomzodlar" va ⋯ — vakansiya sahifasida). Hisob: tariflar `plansSheet()` pastki oynasida (`showPlans`
 ham shuni ochadi), qatorlar Xizmatlar / Ma'lumot guruhlarida.
+
+**OVOZ SAHIFADA + "KIM KERAK?" QIDIRUVI — JONLI** (2026-11-19, `b82c427`, Anas: "nega ovoz chatga ketadi?
+bazadan qidiruvni Mini App ichida professionalroq qiling").
+- OVOZ: Telegram ovozi OGG/Opus — iPhone Mini App'da ishonchsiz, shuning uchun chatga yuborilardi. Endi
+  `services/voiceAudio.js`: getFile -> ffmpeg-static AAC (m4a, faststart) -> xotirada 40 ta kesh, bir vaqtdagi
+  so'rov bitta o'giriladi; `send()` Range qo'llaydi (iOS <audio> 206 talab qiladi). Endpoint'lar
+  `GET /api/ma/candidates/:id/voice.m4a`, `/applications/:id/voice.m4a` — `?t=photoToken` (audio sarlavha
+  yubora olmaydi), ruxsat POST .../voice bilan bir xil. Frontend `mountVoice(box, src, dur, sendPath)` —
+  nomzod sahifasi va rezyume oynasida; o'ynamasa — eskicha chatga (`sendPath`). `stopVoice()` sahifa/oyna
+  yopilganda. `test/voiceaudio.test.js`.
+- QIDIRUV: `POST /api/ma/search` — `{text}` -> `candidateSearch.parseQuery` (bot bilan BITTA AI parser; yiqilsa
+  `guessRole`) yoki `{criteria}` (chiplar, `cleanCriteria` — faqat ma'lum maydonlar) -> `search()` yumshatish
+  bilan, 30 ta -> `countRelaxed` jami, `facets` (toraytirish + son), `market.stats` (median/p25/p75, 5 tadan
+  kam bo'lsa yo'q) -> `SearchSession` (tanlov eski `POST /shortlist`, foto `/photo/:key/:id`). `vacancyId`
+  berilsa (vakansiyadan) tanlov shu vakansiyaga. Kartalar `sessionCards()` — bot seansi bilan bitta;
+  `picked` — allaqachon tanlangan. `clientKnows` endi 24 soatlik qidiruv seansini ham oladi (anonim
+  rezyume, foto, ovoz — qidiruv kartasi darajasida).
+- Mini App `#sx` (`openSx`, `runSx`, `drawSx`): matn (Enter), "Ovozda aytish" (botga yo'naltiradi — Mini App
+  mikrofoni iOS Telegram'da ishonchsiz), lavozim plitkalari, chiplar (× — olib tashlab qayta qidiradi),
+  "+ variant · N", natija kartochkasi (jami, bozor maoshi, nima hisobga olinmadi), qatorlar + belgilash,
+  "Tanlash (N)" -> Nomzodlar "Jarayonda". Qatorni bosish — nomzod sahifasi (`k:'sx'`, pastda Tanlash).
+  "Kim kerak?" qatori Bugun va Nomzodlar tepasida. Botdagi qidiruv (`?s=`) va vakansiyaning "Mos
+  nomzodlar" tugmasi ham shu sahifani ochadi; eski `openSearch` (qidiruv rejimi) endi chaqirilmaydi.
+- CSS tuzoq: global `.mk`, `.rx` ham bor ekan — `sx-mk`, `sx-rx`.
+Telegramda HALI SINALMAGAN: haqiqiy ovozning iPhone'da o'ynashi, AI qidiruvning haqiqiy bazada natijasi.

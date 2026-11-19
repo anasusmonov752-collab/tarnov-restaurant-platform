@@ -23,7 +23,7 @@ async function afterFinalize(r, out, { appBase, lang, via = 'anketa' }) {
     Vacancy.countDocuments(vq),
     c.role && c.role !== 'boshqa' ? Vacancy.countDocuments(Object.assign({ role: c.role }, vq)) : 0
   ]);
-  const next = out.applied ? 'apps' : 'jobs';
+  const next = out.applied ? 'apps' : 'jobs';    // ariza(lar) bo'lsa — "Arizalarim"
 
   // Nomzodga — rahmat va TUGMA bilan
   try {
@@ -31,11 +31,17 @@ async function afterFinalize(r, out, { appBase, lang, via = 'anketa' }) {
     const chat = r.chatId || r.tgUserId;
     await tg.setChatMenuButton(token, chat, I18N.t(lang, 'ank.menu'), `${appBase}/profil.html`)
       .catch(e => console.error('[ANKETA] menyu tugmasi:', e.message));
+    const nApplied = out.vacancy ? 0 : (out.appliedTo || []).length;
     await tg.sendMessage(token, chat,
       I18N.t(lang, 'ank.botThanks2', { name: (c.fullName || '').split(' ')[0] || '',
-        jobs: matches ? I18N.t(lang, 'ank.botThanksJobs', { n: matches }) : '' }),
+        jobs: nApplied ? I18N.t(lang, 'ank.botApplied', { n: nApplied })
+          : matches ? I18N.t(lang, 'ank.botThanksJobs', { n: matches }) : '' })
+        // Rasmsiz yuborgan ("Keyinroq qo'shaman") — eslatma, kabinetda 1 daqiqa
+        + (!c.hasPhoto ? '\n\n' + I18N.t(lang, 'ank.botNoPhoto') : ''),
       { reply_markup: { inline_keyboard: [[
-        { text: I18N.t(lang, 'ank.botJobs'), web_app: { url: `${appBase}/profil.html#jobs` } },
+        out.applied
+          ? { text: I18N.t(lang, 'ank.botApps'), web_app: { url: `${appBase}/profil.html#apps` } }
+          : { text: I18N.t(lang, 'ank.botJobs'), web_app: { url: `${appBase}/profil.html#jobs` } },
         { text: I18N.t(lang, 'ank.botProfile'), web_app: { url: `${appBase}/profil.html` } }
       ]] } });
   } catch (e) { console.error('[ANKETA] rahmat xabari ketmadi:', e.message); }

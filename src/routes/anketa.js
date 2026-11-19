@@ -50,7 +50,7 @@ const guard = asyncHandler(async (req, res, next) => {
 async function contextOf(r) {
   const s = await Survey.findOne({ agencyId: r.agencyId, id: r.surveyId }).lean();
   const v = r.vacancyId ? await Vacancy.findOne({ agencyId: r.agencyId, id: r.vacancyId }).lean() : null;
-  const presetRole = (v && v.role !== 'boshqa' && v.role) || (s && s.role) || '';
+  const presetRole = survey.presetRoleOf(r, s, v);
   return { s, v, presetRole };
 }
 
@@ -61,7 +61,10 @@ router.get('/:rid', guard, asyncHandler(async (req, res) => {
   // (yozuv lavozim anketasiga o'tgan), javobi hali yo'q yozuv umumiyga qaytadi
   if (req.query.g === '1' && !r.vacancyId && survey.isShell(r)) {
     const def = await survey.ensureDefault(r.agencyId);
-    if (def && r.surveyId !== def.id) { r.surveyId = def.id; r.updatedAt = new Date(); await r.save(); }
+    // Lavozim ro'yxatda yo'q — botda oldin tanlangan lavozim va ishlar ham bekor
+    if (def && (r.surveyId !== def.id || r.role || (r.offerIds || []).length)) {
+      Object.assign(r, { surveyId: def.id, role: '', offerIds: [], updatedAt: new Date() }); await r.save();
+    }
   }
   const { s, v, presetRole } = await contextOf(r);
   if (!s) return fail(res, 404, 'notFound');
@@ -116,11 +119,22 @@ router.post('/:rid/answer', guard, asyncHandler(async (req, res) => {
     return res.json({ ok: true });
   }
 
+  // Rasm: "Keyinroq qo'shaman" — anketa to'xtamasin (rasmi qo'lida yo'q odam shu yerda
+  // tashlab ketardi). Rasm kabinetda qo'shiladi, rahmat xabarida eslatiladi (anketaDone).
+  if (q.type === 'photo' && b.value === 'later') {
+    r.answers = Object.assign({}, r.answers || {}, { photoLater: true });
+    r.markModified('answers'); r.step = q.id; r.updatedAt = new Date(); await r.save();
+    return res.json({ ok: true });
+  }
+
   let val;
   try { val = survey.checkAnswer(q, b.value); }
   catch (e) { return fail(res, 400, e.code || 'option'); }
 
-  if (q.type === 'photo') r.photo = val || '';
+  if (q.type === 'photo') {
+    r.photo = val || '';
+    if (r.answers && r.answers.photoLater) { r.answers = Object.assign({}, r.answers, { photoLater: false }); r.markModified('answers'); }
+  }
   else {
     r.answers = Object.assign({}, r.answers || {}, { [q.id]: val });
     r.markModified('answers');
@@ -147,7 +161,7 @@ router.post('/:rid/submit', guard, asyncHandler(async (req, res) => {
     if (!q.required) continue;
     const ok = q.type === 'contact' ? (r.phoneVerifiedAt || a.phone)
              : q.type === 'consent' ? a.consent === true
-             : q.type === 'photo' ? !!r.photo
+             : q.type === 'photo' ? !!(r.photo || a.photoLater)
              : a[q.id] != null && a[q.id] !== '';
     if (!ok) return fail(res, 400, 'required', { q: q.id });
   }
@@ -164,7 +178,9 @@ router.post('/:rid/submit', guard, asyncHandler(async (req, res) => {
     { appBase, lang, via: voice ? 'voice' : undefined });
 
   res.json({ ok: true, created: out.created, applied: out.applied,
-    vacancyTitle: out.vacancy ? vac.titleFor(out.vacancy, lang) : '',
+    vacancyTitle: out.vacancy ? vac.titleFor(out.vacancy, lang)
+      : (out.appliedTo || []).length === 1 ? vac.titleFor(out.appliedTo[0], lang) : '',
+    appliedN: out.vacancy ? (out.applied ? 1 : 0) : (out.appliedTo || []).length,
     jobs, matches, next });
 }));
 

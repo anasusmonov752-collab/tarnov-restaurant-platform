@@ -124,7 +124,7 @@ function answersFrom(p, questions, now = new Date()) {
 async function contextOf(r) {
   const s = await Survey.findOne({ agencyId: r.agencyId, id: r.surveyId }).lean();
   const v = r.vacancyId ? await Vacancy.findOne({ agencyId: r.agencyId, id: r.vacancyId }, 'role').lean() : null;
-  const presetRole = (v && isValidRole(v.role) && v.role) || (s && s.role) || '';
+  const presetRole = survey.presetRoleOf(r, s, v);
   const visible = s ? survey.visibleQuestions(s, presetRole) : [];
   return { s, presetRole, visible };
 }

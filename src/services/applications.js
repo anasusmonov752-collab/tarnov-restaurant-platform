@@ -22,7 +22,7 @@ const I18N = require('../../public/js/th-i18n');
  * @param {string} via      agentlik xabarida ko'rinadi: 'kabinet' | 'anketa'
  * @throws code 11000 — takroriy ariza (unique indeks)
  */
-async function submit({ cand: c, vacancy: v, message = '', appBase, via = 'kabinet' }) {
+async function submit({ cand: c, vacancy: v, message = '', appBase, via = 'kabinet', prescreen = true }) {
   const a = await Application.create({
     id: uuidv4(),
     agencyId: c.restaurantId,
@@ -80,7 +80,7 @@ async function submit({ cand: c, vacancy: v, message = '', appBase, via = 'kabin
 
   // Nomzodga botda 3 ta qisqa savol (HR qo'ng'irog'i o'rniga) — services/prescreen.
   // Yiqilsa jim: ariza allaqachon tushgan.
-  await require('./prescreen').start({ app: a, cand: c, vacancy: v });
+  if (prescreen) await require('./prescreen').start({ app: a, cand: c, vacancy: v });
 
   return a;
 }

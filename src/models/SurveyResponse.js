@@ -19,6 +19,12 @@ const SurveyResponseSchema = new mongoose.Schema({
   chatId:    { type: String, default: '' },
   lang:      { type: String, default: '' },     // anketa tili (uz | ru)
 
+  // Botda (vakansiyasiz /start) tanlangan lavozim va o'sha ekranda ko'rsatilgan ishlar:
+  // anketa lavozimni QAYTA so'ramaydi (survey.presetRoleOf), tugagach shu ishlarga ariza
+  // o'zi ketadi (survey.finalize). Bot matni shuni va'da qiladi (ft.cAsk).
+  role:      { type: String, default: '' },
+  offerIds:  { type: [String], default: [] },
+
   answers:   { type: mongoose.Schema.Types.Mixed, default: {} },
   photo:     { type: String, default: '' },     // dataURL — answers'da emas, ro'yxatlar yengil bo'lsin
 

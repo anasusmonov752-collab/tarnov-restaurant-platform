@@ -43,12 +43,17 @@ const money = n => String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '
 const ROLES = ROLE_KEYS.filter(k => k !== 'boshqa');
 const EMOJI = { ofitsiant: '🍽', barmen: '🍸', xostess: '💁', oshpaz: '👨‍🍳', kassir: '🧾', menejer: '📋', operator: '📞' };
 
-/** Lavozim tugmalari — ikki ustun. prefix: 'ft:c:' nomzod, 'ft:e:' restoran */
-function roleRows(lang, prefix) {
+/**
+ * Lavozim tugmalari — ikki ustun. prefix: 'ft:c:' nomzod, 'ft:e:' restoran.
+ * counts berilsa (nomzod): ochiq ishi bor lavozim oldin va tugmada soni —
+ * "🍽 Ofitsiant · 3". Ishi yo'q lavozim ham qoladi (anketa kelajak uchun).
+ */
+function roleRows(lang, prefix, counts) {
+  const list = counts ? ROLES.slice().sort((a, b) => (counts[b] || 0) - (counts[a] || 0)) : ROLES;
   const rows = [];
-  for (let i = 0; i < ROLES.length; i += 2) {
-    rows.push(ROLES.slice(i, i + 2).map(r => ({
-      text: `${EMOJI[r] || ''} ${T(lang, 'role.' + r)}`.trim(),
+  for (let i = 0; i < list.length; i += 2) {
+    rows.push(list.slice(i, i + 2).map(r => ({
+      text: `${EMOJI[r] || ''} ${T(lang, 'role.' + r)}${counts && counts[r] ? ' · ' + counts[r] : ''}`.trim(),
       callback_data: prefix + r
     })));
   }
@@ -130,6 +135,11 @@ async function candidateRole({ agencyId, role, lang, tgUserId, chatId, appBase, 
   // Ilgari bu yerda yangi yozuv 'bot' kanali bilan ochilardi (survey.openResponse izohi)
   const r = await require('./survey').openResponse({ agencyId, tgUserId, chatId, surveyId: survey.id,
     isTest: !!isTest, lang });
+  // Lavozim anketaga o'tadi (qayta so'ralmaydi) va ko'rsatilgan ishlarga ariza anketa
+  // tugagach o'zi ketadi (survey.finalize). Javobi bor anketada ham yangilanadi —
+  // odam boshqa lavozimni tanlab qaytgan bo'lishi mumkin.
+  r.role = role; r.offerIds = rows.map(v => v.id); r.updatedAt = new Date();
+  await r.save();
   // Nomzod yo'li: qaysi lavozimni qidiryapti (services/track)
   require('./track').track('role', { agencyId, tgUserId, ref: role, rid: r.id, channel: r.channel,
     name, isTest: r.isTest || !!isTest });
@@ -167,7 +177,8 @@ async function openByRole(agencyId, lang) {
   return {
     n: rows.reduce((s, x) => s + x.n, 0),
     top: rows.filter(x => isValidRole(x._id) && x._id !== 'boshqa').slice(0, 5)
-      .map(x => `${T(lang, 'role.' + x._id).toLowerCase()} ${x.n}`).join(' \u00b7 ')
+      .map(x => `${T(lang, 'role.' + x._id).toLowerCase()} ${x.n}`).join(' \u00b7 '),
+    counts: Object.fromEntries(rows.filter(x => isValidRole(x._id)).map(x => [x._id, x.n]))
   };
 }
 
@@ -182,7 +193,7 @@ async function openByRole(agencyId, lang) {
  * yozmaysiz, HR o'zi qo'ng'iroq qiladi).
  */
 async function candidatePick({ agencyId, lang, name, rid, appBase, closed }) {
-  const { n, top } = await openByRole(agencyId, lang);
+  const { n, top, counts } = await openByRole(agencyId, lang);
   const text = [
     T(lang, 'ank.hookHi', { name: name ? ', ' + esc(name) : '' }), '',
     closed ? T(lang, 'ank.hookClosed') : '',
@@ -190,7 +201,7 @@ async function candidatePick({ agencyId, lang, name, rid, appBase, closed }) {
     n ? T(lang, 'ft.cPick', { n, top: esc(top) }) : T(lang, 'ft.cPick0')
   ].filter(x => x !== null).join('\n').replace(/\n{3,}/g, '\n\n');
 
-  const keyboard = roleRows(lang, 'ft:c:');
+  const keyboard = roleRows(lang, 'ft:c:', counts);
   // Chiqish yo'li: lavozimi ro'yxatda bo'lmagan odam ham o'tib keta olsin
   // g=1 — UMUMIY anketa: oldin lavozim tanlagan bo'lsa, javobsiz yozuv umumiyga qaytadi (routes/anketa)
   if (rid && appBase) keyboard.push([{ text: T(lang, 'ft.cOther'), web_app: { url: `${appBase}/anketa.html?r=${rid}&g=1` } }]);

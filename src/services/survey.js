@@ -501,7 +501,10 @@ function checkAnswer(q, value) {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value))) err('date');
       const d = new Date(value + 'T00:00:00+05:00');
       const age = ageOf(d);
-      if (isNaN(d.getTime()) || age < 14 || age > 70) err('age');
+      // 16 yosh — mehnat shartnomasi tuzish mumkin bo'lgan yosh (14 yoshli "15 yil tajriba"
+      // holati shu chegaradan o'tib ketgan edi). Kalendar xatosi (31-fevral) ham rad etiladi.
+      if (isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== new Date(value + 'T12:00:00Z').toISOString().slice(0, 10)
+        || age < 16 || age > 70) err('age');
       return String(value);
     }
     case 'choice':
@@ -781,7 +784,7 @@ async function finalize(r, { appBase } = {}) {
   if (!survey) throw new Error('Anketa topilmadi');
   const vacancy = r.vacancyId
     ? await Vacancy.findOne({ agencyId: r.agencyId, id: r.vacancyId }).lean() : null;
-  const presetRole = (vacancy && isValidRole(vacancy.role) && vacancy.role) || survey.role || '';
+  const presetRole = presetRoleOf(r, survey, vacancy);
 
   const a = r.answers || {};
   const phone = r.phoneVerifiedAt ? r.phone : a.phone;
@@ -843,6 +846,7 @@ async function finalize(r, { appBase } = {}) {
     candidateId: cand.id, channel: r.channel, name: cand.fullName, isTest: r.isTest });
 
   let applied = false;
+  const appliedTo = [];
   if (vacancy && vacancy.status === 'open') {
     try {
       await applications.submit({ cand, vacancy, appBase, via: 'anketa' });
@@ -850,11 +854,41 @@ async function finalize(r, { appBase } = {}) {
     } catch (e) {
       if (e.code !== 11000) console.error('[SURVEY] ariza berilmadi:', e.message);   // 11000 — allaqachon bergan
     }
+  } else if (!vacancy && Array.isArray(r.offerIds) && r.offerIds.length) {
+    // Botda lavozim tanlaganda ko'rsatilgan ishlar — bot "tugagach arizangiz shu ishlarga
+    // o'zi yuboriladi" deb va'da qilgan (ft.cAsk). Faqat hali ochiq va nomzodga ko'rinadiganlari,
+    // botdagi tartibda. Bot savollari (prescreen) faqat BIRINCHISIGA — uchta ariza uchta
+    // savollar oqimi bo'lib chatni to'ldirmasin.
+    const fresh = new Date(Date.now() - vac.STALE_DAYS * 864e5);
+    const vq = { agencyId: r.agencyId, id: { $in: r.offerIds.slice(0, 5) }, status: 'open', listed: { $ne: false }, confirmedAt: { $gte: fresh } };
+    if (!r.isTest) vq.isTest = { $ne: true };
+    const rows = await Vacancy.find(vq).lean();
+    const ordered = r.offerIds.map(id => rows.find(v => v.id === id)).filter(Boolean);
+    for (const v of ordered) {
+      try {
+        await applications.submit({ cand, vacancy: v, appBase, via: 'anketa', prescreen: !appliedTo.length });
+        appliedTo.push(v);
+      } catch (e) {
+        if (e.code !== 11000) console.error('[SURVEY] ariza berilmadi:', e.message);
+      }
+    }
+    applied = appliedTo.length > 0;
   }
 
   await SurveyResponse.updateOne({ agencyId: r.agencyId, id: r.id },
     { $set: { status: 'done', candidateId: cand.id, completedAt: new Date(), updatedAt: new Date() } });
-  return { candidate: cand, created, applied, vacancy };
+  return { candidate: cand, created, applied, vacancy, appliedTo };
+}
+
+/**
+ * Anketada lavozim ma'lummi (savol so'ralmaydi, shartlar shu lavozim bo'yicha) — YAGONA qoida:
+ * vakansiya havolasi -> lavozim anketasi -> botda tanlangan lavozim (umumiy anketada ham).
+ * routes/anketa, voiceIntake va finalize shundan oladi.
+ */
+function presetRoleOf(r, s, v) {
+  if (v && isValidRole(v.role) && v.role !== 'boshqa') return v.role;
+  if (s && s.role) return s.role;
+  return r && isValidRole(r.role) && r.role !== 'boshqa' ? r.role : '';
 }
 
 // ══ NOMZODNING OCHIQ ANKETASI (vakansiyasiz) — bitta odamga BITTA yozuv ══
@@ -900,7 +934,7 @@ async function openResponse({ agencyId, tgUserId, chatId = '', surveyId, channel
 }
 
 module.exports = {
-  isShell, openResponse,
+  isShell, openResponse, presetRoleOf,
   CHANNELS, DISTRICTS, CATALOG, CUSTOM_TYPES, START_DAYS, catalogInfo, cleanQuestions, surveyForVacancy,
   isShown, skipped, shownQuestions, forRole, withMeta, rolePreset, upgradeQuestions, PRESET_ROLES,
   template, makeCode, ensureDefault,

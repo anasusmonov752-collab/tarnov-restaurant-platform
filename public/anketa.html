@@ -188,6 +188,10 @@ input.in:focus,textarea.in:focus{box-shadow:inset 0 0 0 2px var(--blue);backgrou
 .st-done h1{margin-top:22px}
 .st-num{margin-top:18px;font-size:18px;font-weight:600;color:#C9D7F2;line-height:1.35}
 .st-num .gold{display:block;font-size:56px;font-weight:800;color:#FFC53D;letter-spacing:-2px;line-height:1;margin-bottom:2px}
+/* Tug'ilgan sana: kun / oy / yil */
+.dsel{display:grid;grid-template-columns:1fr 1.6fr 1.2fr;gap:8px;margin-top:6px}
+.dsel select{width:100%;padding:14px 10px;border-radius:14px;border:1px solid var(--th-line);background:var(--th-surface);
+  color:var(--th-ink);font:inherit;font-size:16px;-webkit-appearance:none;appearance:none;text-align:center}
 </style>
 </head>
 <body>
@@ -328,7 +332,7 @@ function answeredQ(q){
   const a = S.answers || {};
   return q.type === 'contact' ? !!(S.phoneVerified || a.phone)
     : q.type === 'consent' ? a.consent === true
-    : q.type === 'photo' ? !!S.hasPhoto
+    : q.type === 'photo' ? !!(S.hasPhoto || (S.answers || {}).photoLater)
     : a[q.id] != null && a[q.id] !== '';
 }
 // To'ldirish rejimida: boshida yetishmaganlar + javob o'zgarib yangi chiqqan majburiy savol
@@ -385,7 +389,9 @@ function renderQ(){
   // Progress — faqat ko'rinadigan savollar bo'yicha (lavozim tanlangach soni o'zgaradi)
   const vis = shownList(), pos = Math.max(0, vis.indexOf(q));
   $('pg').style.width = Math.round((pos / vis.length) * 100) + '%';
-  $('stp').textContent = t('ank.step', { a: pos + 1, b: vis.length });
+  // Katta son qo'rqitadi (7-qoida): boshida faqat chiziq, oxirida "Yana N ta savol"
+  const left = vis.length - pos - 1;
+  $('stp').textContent = left === 0 ? t('ank.lastQ') : left <= 3 ? t('ank.left', { n: left }) : '';
   $('bBack').disabled = nextShown(idx, -1) < 0;
   try { if (TG && TG.BackButton) TG.BackButton.show(); } catch(e){}
   window.scrollTo(0, 0);
@@ -404,8 +410,17 @@ function renderQ(){
   } else if (q.type === 'longtext') {
     body = `<textarea class="in" id="fIn" maxlength="600">${esc(draft.value || '')}</textarea>`;
   } else if (q.type === 'date') {
-    const max = isoYearsAgo(14), min = isoYearsAgo(70);
-    body = `<input class="in" id="fIn" type="date" min="${min}" max="${max}" value="${esc(draft.value || '')}">`;
+    // Kun / oy / yil — uchta tanlov. Oddiy <input type=date> iPhone'da bugungi sanadan
+    // boshlanardi: 20+ yil orqaga aylantirish kerak edi (2026-11-19 tahlili). 16–70 yosh.
+    const [yy, mm, dd] = String(draft.value || '').split('-');
+    const y0 = new Date().getFullYear();
+    const opt = (v, txt, cur) => `<option value="${v}"${String(cur) === String(v) ? ' selected' : ''}>${txt}</option>`;
+    const years = []; for (let y = y0 - 16; y >= y0 - 70; y--) years.push(opt(y, y, yy));
+    const days = []; for (let d = 1; d <= 31; d++) days.push(opt(String(d).padStart(2, '0'), d, dd));
+    body = `<div class="dsel">
+      <select id="fD"><option value="">${esc(t('ank.dDay'))}</option>${days.join('')}</select>
+      <select id="fM"><option value="">${esc(t('ank.dMonth'))}</option>${MONTHS[LANG].map((n, i) => opt(String(i + 1).padStart(2, '0'), n, mm)).join('')}</select>
+      <select id="fY"><option value="">${esc(t('ank.dYear'))}</option>${years.join('')}</select></div>`;
   } else if (q.type === 'contact') {
     body = contactHtml();
   } else if (q.type === 'photo') {
@@ -433,6 +448,10 @@ function valueOf(q){
   }
   return S.answers[q.id] != null ? S.answers[q.id] : '';
 }
+const MONTHS = {
+  uz: ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr'],
+  ru: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
+};
 function isoYearsAgo(n){ const d = new Date(); d.setFullYear(d.getFullYear() - n); return d.toISOString().slice(0, 10); }
 
 function wireQ(q){
@@ -446,7 +465,19 @@ function wireQ(q){
       setTimeout(() => save(q), 160);
     });
     showBar(nextTxt, !!draft.value, () => save(q));
-  } else if (q.type === 'text' || q.type === 'longtext' || q.type === 'date') {
+  } else if (q.type === 'date') {
+    const read = () => {
+      const d = $('fD').value, m = $('fM').value, y = $('fY').value;
+      const v = d && m && y ? `${y}-${m}-${d}` : '';
+      // 31-fevral kabi sana — xato (server ham tekshiradi)
+      const ok = v && new Date(v + 'T12:00:00Z').toISOString().slice(0, 10) === v;
+      draft.value = ok ? v : '';
+      $('err').textContent = v && !ok ? t('ank.err.date') : '';
+      $('bNext').disabled = !draft.value;
+    };
+    ['fD', 'fM', 'fY'].forEach(id => { $(id).onchange = read; });
+    showBar(nextTxt, !!draft.value, () => save(q));
+  } else if (q.type === 'text' || q.type === 'longtext') {
     const inp = $('fIn');
     const sync = () => { draft.value = inp.value; $('bNext').disabled = q.required && !inp.value.trim(); };
     inp.oninput = sync; inp.onchange = sync;
@@ -459,6 +490,18 @@ function wireQ(q){
     $('bPick').onclick = () => $('fFile').click();
     $('fFile').onchange = () => pickPhoto(q);
     showBar(nextTxt, S.hasPhoto, () => save(q));
+    // Chiqish yo'li: rasmi qo'lida yo'q odam anketani tashlab ketmasin — kabinetda qo'shadi
+    if (!S.hasPhoto) {
+      const sk = $('bSkip');
+      sk.textContent = t('ank.photoLater'); sk.classList.remove('hide');
+      sk.onclick = async () => {
+        sk.disabled = true;
+        try { await api('/answer', { method: 'POST', body: JSON.stringify({ q: q.id, value: 'later' }) });
+          S.answers = Object.assign({}, S.answers, { photoLater: true }); go(1); }
+        catch(e){ $('err').textContent = e.message; }
+        sk.disabled = false;
+      };
+    }
   } else if (q.type === 'consent') {
     $('fChk').onchange = () => { draft.value = $('fChk').checked; $('bNext').disabled = !draft.value; };
     showBar(nextTxt, draft.value === true, () => save(q));
@@ -471,7 +514,7 @@ function wireQ(q){
     $('bSkip').textContent = t('ank.skip');
     $('bSkip').classList.remove('hide');
     $('bSkip').onclick = () => go(1);
-  } else $('bSkip').classList.add('hide');
+  } else if (!(q.type === 'photo' && !S.hasPhoto)) $('bSkip').classList.add('hide');   // rasm: "Keyinroq qo'shaman" yuqorida
 }
 
 // ── Ish tajribasi ──
@@ -776,7 +819,8 @@ function renderDone(r, already){
   $('main').innerHTML = `<div class="st st-done">
     <div class="st-ok">&#10003;</div>
     <h1>${esc(already ? t('ank.already') : t('ank.doneH'))}</h1>
-    ${r && r.applied && r.vacancyTitle ? `<div class="st-tile"><b>${esc(t('ank.doneApplied', { v: r.vacancyTitle }))}</b></div>` : ''}
+    ${r && r.applied && r.vacancyTitle ? `<div class="st-tile"><b>${esc(t('ank.doneApplied', { v: r.vacancyTitle }))}</b></div>`
+      : r && r.appliedN > 1 ? `<div class="st-tile"><b>${esc(t('ank.doneAppliedN', { n: r.appliedN }))}</b></div>` : ''}
     ${n ? `<div class="st-num">${big('ank.matches', n)}</div>` : all ? `<div class="st-num">${big('ank.jobsAll', all)}</div>` : ''}
     <p>${esc(t('ank.going'))}</p>
   </div>`;

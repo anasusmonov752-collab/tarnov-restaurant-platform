@@ -295,7 +295,7 @@ body{font-family:var(--th-font);
 .pm-pw{text-align:center;font-size:11.5px;color:var(--muted);margin-top:12px;letter-spacing:.3px}
 .pl-banner-b{width:100%;text-align:left;border:none;font:inherit;font-size:13.5px;cursor:pointer;display:block}
 /* ══ HISOB bo'limi ══ */
-.ac-wrap{padding-top:14px}
+.ac-wrap{padding-top:14px;padding-bottom:40px}
 .ac-hero{position:relative;overflow:hidden;border-radius:22px;padding:18px 18px 16px;color:#fff;margin-bottom:12px;
   background:radial-gradient(130% 120% at 100% 0%,#2F6BFF 0%,#16357A 42%,#0B1430 100%);
   box-shadow:0 14px 34px rgba(11,20,48,.28)}
@@ -1048,6 +1048,26 @@ body.vp-lock{overflow:hidden}
 #cxFoot .row3 .btn{flex:1;width:auto;margin:0}
 #cxFoot .btn.s{flex:0 0 34%;background:var(--th-fill);color:var(--ink);box-shadow:none}
 #cxFoot .btn svg{width:19px;height:19px;vertical-align:-4px;margin-right:6px}
+.vr{display:flex;align-items:center;gap:12px;padding:14px 14px 14px 16px;position:relative;cursor:pointer}
+.vr:active{background:var(--th-fill)}
+.vr+.vr::before{content:"";position:absolute;top:0;left:76px;right:0;border-top:.5px solid var(--line)}
+.vr.closed{opacity:.6}
+.vr-new{display:inline-flex;align-items:center;gap:6px;margin-top:6px;border:none;background:var(--th-brand-soft);color:var(--blue);border-radius:99px;padding:5px 11px;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer}
+.vr-new i{width:7px;height:7px;border-radius:50%;background:var(--blue)}
+.vr-f{display:block;font-size:13px;color:var(--muted);margin-top:4px}
+.vr-ask{display:block;font-size:13px;color:var(--warn);font-weight:600;margin-top:5px}
+#vcList .vk-closed-h{margin-top:14px}
+.cx-voice{display:flex;align-items:center;gap:12px;width:100%;margin-top:16px;padding:12px 14px;border:none;border-radius:18px;background:var(--card);font:inherit;color:inherit;text-align:left;cursor:pointer}
+.cx-voice:active{transform:scale(.99)}
+.cx-vic{flex:none;width:40px;height:40px;border-radius:50%;background:var(--th-amber-soft);color:var(--th-amber);display:grid;place-items:center}
+.cx-vic svg{width:20px;height:20px}
+.cx-voice .m{flex:1;min-width:0}
+.cx-voice b{display:block;font-size:15.5px;font-weight:600}
+.cx-voice .m span{font-size:13px;color:var(--muted)}
+.cx-gl{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.cx-gl div{background:var(--card);border-radius:16px;padding:11px 13px;min-width:0}
+.cx-gl span{display:block;font-size:12px;color:var(--muted);font-weight:600}
+.cx-gl b{display:block;font-size:15px;font-weight:700;margin-top:3px;line-height:1.3;word-break:break-word}
 .cx-g{display:flex;align-items:center;justify-content:center;gap:6px;font-size:12.5px;color:var(--muted);margin-top:8px;text-align:center}
 .cx-g svg{width:14px;height:14px;color:var(--ok);flex:none}
 </style>
@@ -1921,6 +1941,9 @@ function appsBtn(id, f){
     : `<button class="vk-apps calm" data-apps="${esc(id)}"><span>${esc(t('apps.all', { n: f.apps }))}</span>${esc(t('apps.view'))}</button>`;
 }
 
+// v3 (2026-11-19): vakansiya — ixcham qator (iOS ro'yxati). Kartadagi 4 ta
+// nol raqam va har kartadagi katta tugma olib tashlandi: qatorda BITTA holat
+// satri; "Mos nomzodlar", tahrirlash, yopish — vakansiya sahifasida.
 function vacCardHtml(v){
   const active = v.status !== 'closed';
   const f = v.funnel || {};
@@ -1928,22 +1951,26 @@ function vacCardHtml(v){
                 v.schedule || (v.shift && shiftL(v.shift) !== v.shift ? shiftL(v.shift) + ' ' + t('word.shift') : '')]
     .filter(Boolean).join(' · ');
   const n = daysAgo(v.confirmedAt || v.createdAt);
-  // "Tasdiqlash" o'rniga ma'nosi bilan: e'lon qilingan va bir necha kun
-  // yangilanmagan bo'lsa — "Hali ochiqmi?"
   const ask = v.status === 'open' && v.listed && n >= 3;
-  const foot = [
-    !active ? t('vac.closed') : (n === 0 ? t('vac.today') : t('vac.daysAgo', { n })),
-    v.status === 'paused' ? t('vac.paused') : '',
-    active && !v.listed ? t('vac.private') : ''
-  ].filter(Boolean).map(esc).join(' · ');
-  return `<div class="vk ${active ? '' : 'closed'}" data-vk="${esc(v.id)}">
-    <div class="vk-h"><div class="vk-ti">${esc(v.title)}</div>
-      <button class="vk-more" data-more="${esc(v.id)}" aria-label="${esc(t('vac.more'))}">&#8943;</button></div>
-    <div class="vk-mt">${esc(meta)}</div>
-    ${funnelHtml(f)}
-    ${appsBtn(v.id, f)}
-    ${v.status === 'open' ? `<button class="btn vk-cta" data-match="${esc(v.id)}">${esc(t('vac.matches'))}</button>` : ''}
-    <div class="vk-ft">${foot}${ask ? ` · ${esc(t('vac.stillOpen'))} <button class="vk-yes" data-conf="${esc(v.id)}">${esc(t('common.yes'))}</button>` : ''}</div>
+  // Holat satri: yangi ariza bo'lsa — ko'k (bosiladi), aks holda voronka qisqacha
+  // Ko'pi bilan 3 ta fakt — satr ikkiga bo'linmasin
+  const facts = [
+    !active ? t('vac.closed') : v.status === 'paused' ? t('vac.paused') : !v.listed ? t('vac.private') : '',
+    f.hired ? t('vc.hired', { n: f.hired }) : '',
+    f.apps && !f.appsNew ? t('apps.all', { n: f.apps }) : '',
+    f.mos ? t('vc.mos', { n: f.mos }) : '',
+    f.contact ? t('vc.contacts', { n: f.contact }) : ''
+  ].filter(Boolean).slice(0, 3).join(' · ');
+  return `<div class="vr ${active ? '' : 'closed'}" data-vk="${esc(v.id)}">
+    <span class="cr-av">${roleIcon(v.role)}</span>
+    <span class="cr-m">
+      <span class="cr-1"><span>${esc(v.title)}</span></span>
+      <span class="cr-2">${esc(meta)}</span>
+      ${f.appsNew ? `<button class="vr-new" data-apps="${esc(v.id)}"><i></i>${esc(t('apps.new', { n: f.appsNew }))}</button>`
+        : facts ? `<span class="vr-f">${esc(facts)}</span>` : ''}
+      ${ask ? `<span class="vr-ask">${esc(t('vac.stillOpen'))} <button class="vk-yes" data-conf="${esc(v.id)}">${esc(t('common.yes'))}</button></span>` : ''}
+    </span>
+    <svg class="chev3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
   </div>`;
 }
 
@@ -1953,20 +1980,22 @@ function renderVacs(){
     return;
   }
   const act = VACS.filter(v => v.status !== 'closed'), cl = VACS.filter(v => v.status === 'closed');
-  $('vcList').innerHTML = act.map(vacCardHtml).join('') + (cl.length
+  $('vcList').innerHTML = (act.length ? `<div class="bx">${act.map(vacCardHtml).join('')}</div>` : '') + (cl.length
     ? `<button class="vk-closed-h" id="bClosed">${showClosed ? '&#9662;' : '&#9656;'} ${esc(t('vac.closedList', { n: cl.length }))}</button>` +
-      (showClosed ? cl.map(vacCardHtml).join('') : '')
+      (showClosed ? `<div class="bx">${cl.map(vacCardHtml).join('')}</div>` : '')
     : '');
   if ($('bClosed')) $('bClosed').onclick = () => { showClosed = !showClosed; renderVacs(); };
 
   const root = $('vcList');
   root.querySelectorAll('[data-vk]').forEach(el => el.onclick = e => {
     if (e.target.closest('button')) return;              // ichidagi tugmalar o'zi ishlaydi
-    showVacancy(el.dataset.vk);
+    haptic(); showVacancy(el.dataset.vk);
   });
-  root.querySelectorAll('[data-more]').forEach(b => b.onclick = () => vacMenu(b.dataset.more));
-  root.querySelectorAll('[data-apps]').forEach(b => b.onclick = () => showApps(b.dataset.apps));
-  root.querySelectorAll('[data-match]').forEach(b => b.onclick = () => startMatches(b.dataset.match, b));
+  // Yangi arizalar -> Nomzodlar, shu vakansiya bo'yicha
+  root.querySelectorAll('[data-apps]').forEach(b => b.onclick = () => {
+    const v = VACS.find(x => x.id === b.dataset.apps);
+    CD_SEG = 'new'; CD_VAC = v ? v.title : ''; pickTab('tAP');
+  });
   root.querySelectorAll('[data-conf]').forEach(b => b.onclick = async () => {
     b.disabled = true;
     try { await api(`/api/ma/vacancies/${b.dataset.conf}/confirm`, { method:'POST' }); haptic(); loadVacancies(); }
@@ -2745,7 +2774,8 @@ async function showCand(key){
   const facts = [expTxt(c.experienceYears, c.experienceMonths), c.age ? t('fact.age', { n: c.age }) : '', c.location].filter(Boolean).join(' · ');
   let html = `<div class="cx-hd"><div class="cx-av">${ph ? `<img src="${esc(ph)}" alt="">` : w.avatar}</div>
       <h1>${esc(w.title)}</h1><p>${esc([w.sub, ctx].filter(Boolean).join(' · '))}</p>
-      <p>${esc(facts)}</p></div>`;
+      <p>${esc(facts)}</p></div>
+    <div id="cxVoice"></div><div id="cxGlance"></div>`;
 
   // Holat: tanlov elementi — bosqichlar chizig'i (Kontakt → Suhbat → Ishga olindi);
   // ariza — moslik bali va sabablari
@@ -2772,11 +2802,16 @@ async function showCand(key){
   const trust = (c.phoneVerified ? cxRow('', CX_IC.ok, t('card.verified'), t('cx.viaTg')) : '')
     + (c.fromAnketa ? cxRow('ib', CX_IC.doc, t('card.anketa'), t('cx.self')) : '')
     + (c.rel && c.rel.total ? cxRow(c.rel.came === c.rel.total ? '' : 'ia', CX_IC.cal, t('rel.came', { a: c.rel.came, b: c.rel.total }), t('cx.relSub')) : '')
-    + (c.rel && c.rel.stayed ? cxRow('', CX_IC.ok, t('rel.stayed'), t('cx.relSub')) : '')
-    + (voiceApp ? `<button class="cx-row" data-voice="${esc(it.id)}"><span class="cx-ic ia">${MIC_IC}</span><span class="m"><b>${esc(t('ms.voice'))}</b><span>${it.screen.voiceDur ? mmss(it.screen.voiceDur) : ''}</span></span><span class="cx-play">${CX_IC.play}</span></button>` : '');
+    + (c.rel && c.rel.stayed ? cxRow('', CX_IC.ok, t('rel.stayed'), t('cx.relSub')) : '');
+  html += '<div id="cxWork"></div>';
   if (trust) html += cxSec(t('cx.trust'), trust);
   html += '<div id="cxRz"></div>';
   $('cxBody').innerHTML = html;
+  // Ovoz — eng kuchli signal (zal xodimi qanday gapiradi): bosh qism ostida
+  const voiceHtml = (attr, dur) => `<button class="cx-voice" ${attr}><span class="cx-vic">${MIC_IC}</span>
+      <span class="m"><b>${esc(t('cx.listen'))}${dur ? ' · ' + mmss(dur) : ''}</b><span>${esc(t('cx.listenSub'))}</span></span>
+      <span class="cx-play">${CX_IC.play}</span></button>`;
+  if (voiceApp) $('cxVoice').innerHTML = voiceHtml(`data-voice="${esc(it.id)}"`, it.screen.voiceDur);
 
   // Pastki tugmalar: qaror qilinmagan ariza — Rad etish / Ochish; ochiq kontakt — Yozish / Qo'ng'iroq
   const foot = $('cxFoot');
@@ -2801,15 +2836,29 @@ async function showCand(key){
   let rz;
   try { rz = await api('/api/ma/candidates/' + encodeURIComponent(r.cid)); } catch(e){ return; }
   if (CX_KEY !== key || !$('cxRz') || !rz || typeof rz !== 'object' || Array.isArray(rz)) return;
-  const about = rz.experienceSummary || rz.summary || '';
-  const work = (rz.workHistory || []).map(x => `<div class="cx-job"><b>${esc(x.position || t('rz.pos'))}</b>
+  // Bir qarashda: menejer birinchi so'raydigan 4 savol — qachon chiqadi, qaysi smena,
+  // qancha so'raydi, qaysi tilda gapiradi
+  const start = rz.availableFrom && new Date(rz.availableFrom) > new Date() ? t('cx.from2', { d: dShort(rz.availableFrom) }) : startL(rz.startWhen);
+  const tiles = [[t('rz.start'), start], [t('d.shift'), shiftL(rz.shift)], [t('cx.salary'), rz.salaryExpectation],
+                 [t('d.langs'), (rz.languages || []).join(', ')], [t('d.edu'), rz.education]].filter(x => x[1]).slice(0, 4);
+  if (tiles.length) $('cxGlance').innerHTML = `<div class="cx-gl">${tiles.map(([k, v]) => `<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div>`;
+  if (!voiceApp && rz.voice) {
+    $('cxVoice').innerHTML = voiceHtml('id="cxVoiceC"', rz.voiceDur);
+    $('cxVoiceC').onclick = async () => {
+      const b = $('cxVoiceC'); b.disabled = true;
+      try { await api('/api/ma/candidates/' + encodeURIComponent(r.cid) + '/voice', { method: 'POST', body: '{}' }); haptic(); showMsg(t('ms.voiceSent')); }
+      catch(e){ showMsg(e.message); }
+      b.disabled = false;
+    };
+  }
+  // Ish tajribasi: qayerda, qaysi lavozimda, qancha — tanlovning asosi
+  const jobs = rz.workHistory || [];
+  const work = jobs.map(x => `<div class="cx-job"><b>${esc(x.position || t('rz.pos'))}</b>
       <span>${esc([x.company, x.period].filter(Boolean).join(' · '))}</span>${x.description ? `<p>${esc(x.description)}</p>` : ''}</div>`).join('');
-  const kv = (k, v) => v ? `<div class="cx-job"><b>${esc(v)}</b><span>${esc(t(k))}</span></div>` : '';
-  const info = kv('rz.start', startL(rz.startWhen)) + kv('d.shift', shiftL(rz.shift)) + kv('rz.salary', rz.salaryExpectation)
-    + kv('d.langs', (rz.languages || []).join(', ')) + kv('d.edu', rz.education);
+  $('cxWork').innerHTML = `<div class="gh3"><span>${esc(t('rz.work'))}</span>${jobs.length ? `<span>${esc(t('cx.jobsN', { n: jobs.length }))}</span>` : ''}</div>
+    <div class="bx">${work || `<div class="cx-tx" style="color:var(--muted)">${esc(t('cx.noWork'))}</div>`}</div>`;
+  const about = rz.experienceSummary || rz.summary || '';
   $('cxRz').innerHTML = (about ? cxSec(t(rz.experienceSummary ? 'rz.about' : 'rz.summary'), `<div class="cx-tx">${esc(about)}</div>`) : '')
-    + (work ? cxSec(t('rz.work'), work) : '')
-    + (info ? cxSec(t('rz.info'), info) : '')
     + (!w.open ? `<div class="cx-g" style="margin:14px 0 4px">${esc(t('rz.locked'))}</div>` : '');
 }
 
@@ -2853,8 +2902,30 @@ function openExt(url){
 function showCredits(){ closeSheet(); pickTab('tHS'); }
 function showPlans(){
   closeSheet(); pickTab('tHS');
-  const go = () => { const el = $('hsPlans'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); else setTimeout(go, 120); };
+  let n = 0;
+  const go = () => { if (PLANS) plansSheet(); else if (n++ < 40) setTimeout(go, 150); };
   setTimeout(go, 60);
+}
+
+// v3: tariflar — alohida pastki oyna (Hisob sahifasi qisqa qoladi).
+// Ichi avvalgidek: segment Base/Pro/Max + batafsil + "Sotib olish" -> choosePay
+function plansSheet(){
+  const d = PLANS; if (!d) return;
+  if (!HS_PLAN || !d.plans.some(p => p.key === HS_PLAN)) HS_PLAN = d.plans.some(p => p.key === (d.current || {}).key) ? d.current.key : 'pro';
+  sheetEnter('plans', plansSheet);
+  openSheet(t('ac.plans'), `<div class="ac-fine" style="margin:0 2px 12px">${esc(t('pl.launch'))}</div>
+    <div class="ac-seg">${d.plans.map(p => `<button class="${p.key === HS_PLAN ? 'on' : ''}" data-plan="${p.key}">${esc(t('plan.' + p.key))}${p.popular ? '<i>★</i>' : ''}</button>`).join('')}</div>
+    <div id="psPlan">${planDetail(d.plans.find(p => p.key === HS_PLAN), d.current)}</div>
+    <div class="ac-fine">${esc(t('pl.terms'))}</div>`);
+  const root = $('shB');
+  const wire = () => root.querySelectorAll('[data-buy]').forEach(b => b.onclick = () => choosePay(b.dataset.buy));
+  root.querySelectorAll('[data-plan]').forEach(b => b.onclick = () => {
+    HS_PLAN = b.dataset.plan; haptic('sel');
+    root.querySelectorAll('[data-plan]').forEach(x => x.classList.toggle('on', x === b));
+    $('psPlan').innerHTML = planDetail(d.plans.find(p => p.key === HS_PLAN), d.current);
+    wire();
+  });
+  wire();
 }
 
 async function loadAccount(){
@@ -2965,17 +3036,20 @@ function renderAccount(){
     ${guaranteeCard(d.guarantee)}
     ${c.trialAvailable ? `<div class="ac-card ac-trial"><div><b>🎁 ${esc(t('pl.trialT'))}</b><span>${esc(t('pl.trialD'))}</span></div>
       <button class="btn" id="hsTrial">${esc(t('pl.trialBtn'))}</button></div>` : ''}
-    <div class="ac-sec" id="hsPlans"><h3>${esc(t('ac.plans'))}</h3><span>${esc(t('pl.launch'))}</span></div>
-    <div class="ac-seg">${d.plans.map(p => `<button class="${p.key === HS_PLAN ? 'on' : ''}" data-plan="${p.key}">${esc(t('plan.' + p.key))}${p.popular ? '<i>★</i>' : ''}</button>`).join('')}</div>
-    <div id="hsPlan">${planDetail(d.plans.find(p => p.key === HS_PLAN), c)}</div>
-    <div class="ac-fine">${esc(t('pl.terms'))}</div>
     <div class="ac-list">
-      ${ar.available ? rowHtml('auto', AIC.refresh, '#0A84FF', t('pl.auto'), ar.masked ? '•••• ' + String(ar.masked).slice(-4) : t('ac.autoD'), t(ar.on ? 'ac.autoOn' : 'ac.autoOff')) : ''}
+      ${rowHtml('plans', AIC.card, '#0A84FF', t('ac.planRow'), c.key && c.key !== 'trial' ? t('ac.planRowD', { p: t('plan.' + c.key), n: c.daysLeft }) : t('pl.launch'), '')}
+      ${ar.available ? rowHtml('auto', AIC.refresh, '#34C759', t('pl.auto'), ar.masked ? '•••• ' + String(ar.masked).slice(-4) : t('ac.autoD'), t(ar.on ? 'ac.autoOn' : 'ac.autoOff')) : ''}
+    </div>
+    <div class="ac-sec"><h3>${esc(t('ac.svc'))}</h3></div>
+    <div class="ac-list" style="margin-top:0">
       ${rowHtml('shf', AIC.clock, '#FF9500', t('sh.rowT'), t('sh.rowD'), '')}
       ${rowHtml('onb', AIC.user, '#5856D6', t('ob.rowT'), t('ob.rowD'), '')}
       ${rowHtml('ref', AIC.gift, '#E8A317', t('ref.title'), t('ref.short'), '')}
-      ${rowHtml('oferta', AIC.doc, '#8E8E93', t('pl.oferta'), '', '')}
+    </div>
+    <div class="ac-sec"><h3>${esc(t('ac.more'))}</h3></div>
+    <div class="ac-list" style="margin-top:0">
       ${rowHtml('help', AIC.help, '#34C759', t('cp.help'), '', '')}
+      ${rowHtml('oferta', AIC.doc, '#8E8E93', t('pl.oferta'), '', '')}
     </div>
     <div class="ac-sec"><h3>${esc(t('ac.hist'))}</h3></div>
     <div class="ac-seg sm"><button class="${HS_HIST === 'pay' ? 'on' : ''}" data-h="pay">${esc(t('ac.hPay'))}</button><button class="${HS_HIST === 'cr' ? 'on' : ''}" data-h="cr">${esc(t('ac.hCr'))}</button></div>
@@ -2986,7 +3060,7 @@ function renderAccount(){
 
 function wireAccount(){
   const d = PLANS;
-  $('hsCta').onclick = () => { const el = $('hsPlans'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+  $('hsCta').onclick = () => plansSheet();
   if ($('hsPend')) $('hsPend').onclick = () => showCardPay(null, d.pendingManual.id);
   if ($('hsTrial')) $('hsTrial').onclick = async () => {
     const b = $('hsTrial'); b.disabled = true;
@@ -2997,13 +3071,6 @@ function wireAccount(){
       showMsg(t('pl.trialOk')); loadAccount();
     } catch(e){ b.disabled = false; showMsg(e.message); }
   };
-  $('hsBody').querySelectorAll('[data-plan]').forEach(b => b.onclick = () => {
-    HS_PLAN = b.dataset.plan; haptic('sel');
-    $('hsBody').querySelectorAll('[data-plan]').forEach(x => x.classList.toggle('on', x === b));
-    $('hsPlan').innerHTML = planDetail(d.plans.find(p => p.key === HS_PLAN), d.current);
-    wireBuy();
-  });
-  wireBuy();
   $('hsBody').querySelectorAll('[data-h]').forEach(b => b.onclick = () => {
     HS_HIST = b.dataset.h; haptic('sel');
     $('hsBody').querySelectorAll('[data-h]').forEach(x => x.classList.toggle('on', x === b));
@@ -3011,7 +3078,8 @@ function wireAccount(){
   });
   $('hsBody').querySelectorAll('.ac-list [data-a]').forEach(b => b.onclick = () => {
     const a = b.dataset.a;
-    if (a === 'auto') showAuto();
+    if (a === 'plans') plansSheet();
+    else if (a === 'auto') showAuto();
     else if (a === 'ref') showReferral();
     else if (a === 'onb') showOnboard();
     else if (a === 'shf') showShifts();

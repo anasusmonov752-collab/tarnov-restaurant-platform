@@ -38,6 +38,8 @@ const ChatThread = require('../models/ChatThread');
 const { publicBase } = require('../utils/publicBase');
 const cardPay = require('../services/cardPay');
 const appLife = require('../services/appLife');
+const voiceAudio = require('../services/voiceAudio');
+const market = require('../services/market');
 const I18N = require('../../public/js/th-i18n');
 const billing = require('../services/billing');
 const PL = require('../data/plans');
@@ -156,32 +158,113 @@ router.post('/session/:key', clientGuard, asyncHandler(async (req, res) => {
     '-fileData -rawText -photo -tgInviteToken'
   ).lean();
 
-  // Qisqa kodni KO'RSATILGANDA beramiz — migratsiya kerak emas, va kod
-  // faqat mijoz haqiqatan ko'rgan nomzodlarda paydo bo'ladi.
-  await assignCodes(ses.agencyId, rows);
-
   // Tartib seansdagidek bo'lsin — bot aytgan tartib saqlanadi
   const byId = {};
   for (const r of rows) byId[r.id] = r;
   const ordered = ses.candidateIds.map(id => byId[id]).filter(Boolean);
 
-  // Anonim karta + kimlik qoidasi: oldin kontaktini ochgan nomzod qidiruvda
-  // yana chiqsa — ism bilan; bir xil yozuv (lavozim, Toshkent, tillar)
-  const ids = await identities(ses.agencyId, req.client.id, ordered, req.lang);
-  const relBy = await reliability.forCandidates(ses.agencyId, ordered.map(c => c.id));
-  const cards = anonymize.forClientList(ordered).map(card => Object.assign(card, ids[card.id], {
-    rel: relBy[card.id] || null,                  // ishonchlilik tarixi (services/reliability)
-    roleLabel: ids[card.id].roleText,
-    location: placeLabel(card.location, req.lang),
-    languages: langsLabel(card.languages, req.lang)
-  }));
-
   res.json({
     summary: ses.summary,
+    criteria: publicCriteria(ses.criteria),
+    vacancyId: ses.vacancyId || '',
     credits: req.client.credits,
     clientName: req.client.name,
     lang: req.lang,
-    candidates: cards
+    candidates: await sessionCards(ses.agencyId, req.client, ordered, req.lang)
+  });
+}));
+
+// Qidiruv kartalari — bot seansi ham, Mini App qidiruvi ham shundan.
+// Anonim karta + kimlik qoidasi: oldin kontaktini ochgan nomzod qidiruvda
+// yana chiqsa — ism bilan; bir xil yozuv (lavozim, Toshkent, tillar).
+// picked — shu mijozning tanlovida allaqachon bor (qayta tanlanmaydi).
+async function sessionCards(agencyId, client, ordered, lang) {
+  // Qisqa kodni KO'RSATILGANDA beramiz — kod faqat ko'rilgan nomzodlarda
+  await assignCodes(agencyId, ordered);
+  const [ids, relBy, sls] = await Promise.all([
+    identities(agencyId, client.id, ordered, lang),
+    reliability.forCandidates(agencyId, ordered.map(c => c.id)),
+    Shortlist.find({ agencyId, clientId: client.id, 'items.candidateId': { $in: ordered.map(c => c.id) } }, 'items.candidateId').lean()
+  ]);
+  const picked = new Set(sls.flatMap(s => s.items.map(i => i.candidateId)));
+  return anonymize.forClientList(ordered).map(card => Object.assign(card, ids[card.id], {
+    rel: relBy[card.id] || null,                  // ishonchlilik tarixi (services/reliability)
+    roleLabel: ids[card.id].roleText,
+    location: placeLabel(card.location, lang),
+    languages: langsLabel(card.languages, lang),
+    picked: picked.has(card.id)
+  }));
+}
+
+// Kriteriyalar — mijoz tahrirlaydigan qismi (chiplar)
+const publicCriteria = c => {
+  c = c || {};
+  return { role: c.role || null, minExp: c.minExp || null, location: c.location || null, shift: c.shift || null,
+    languages: c.languages || [], keywords: c.keywords || [], maxSalary: c.maxSalary || null };
+};
+// Mijozdan kelgan (yoki AI ajratgan) kriteriyani tozalash — faqat ma'lum maydonlar
+function cleanCriteria(b) {
+  b = b || {};
+  const c = Object.assign({}, candidateSearch.EMPTY, { languages: [], keywords: [] });
+  if (isValidRole(b.role) && b.role !== 'boshqa') c.role = b.role;
+  const e = parseInt(b.minExp, 10); if (e > 0 && e <= 10) c.minExp = e;
+  if (typeof b.location === 'string' && b.location.trim()) c.location = b.location.trim().slice(0, 40);
+  c.shift = candidateSearch.normalizeShift(b.shift) || null;
+  const list = (v, n) => (Array.isArray(v) ? v : []).map(x => String(x || '').trim().slice(0, 24)).filter(Boolean).slice(0, n);
+  c.languages = list(b.languages, 3);
+  c.keywords = list(b.keywords, 3);
+  const ms = parseInt(b.maxSalary, 10); if (ms >= 1e6 && ms <= 5e7) c.maxSalary = ms;
+  return c;
+}
+
+// ── "Kim kerak?" — Mini App ichida bazadan qidiruv ──
+// Matn -> AI kriteriyalar (candidateSearch.parseQuery, bot bilan BITTA) yoki
+// mijoz chiplarda tahrirlagan kriteriyalar -> qidiruv (yumshatish bilan) ->
+// seans (tanlov POST /shortlist va /photo/:key/:id shu seansdan ishlaydi) +
+// jami son, bozor maoshi (services/market), toraytirish variantlari (facets).
+router.post('/search', clientGuard, asyncHandler(async (req, res) => {
+  const b = req.body || {}, agencyId = req.client.agencyId;
+  const text = String(b.text || '').trim().slice(0, 300);
+  let crit, summary = '';
+  if (text) {
+    try {
+      const r = await candidateSearch.parseQuery({ text }, agencyId);
+      crit = cleanCriteria(r); summary = String(r.summary || '').slice(0, 200);
+    } catch (e) {
+      // AI ishlamasa ham qidiruv to'xtamasin: lavozimni matndan taniymiz
+      console.error('[MA] qidiruv AI:', e.message);
+      crit = cleanCriteria({ role: vac.guessRole(text) });
+    }
+  } else crit = cleanCriteria(b.criteria);
+  if (!crit.role && !crit.keywords.length && !crit.location) return res.status(400).json({ error: tl(req, 'sx.needMore') });
+
+  crit.includeTest = !!req.client.isTest;    // sinov mijozi sinov nomzodini ham ko'radi (agent bilan bir xil)
+  crit.limit = 30;
+  const found = await candidateSearch.search(crit, agencyId, { limit: 30 });
+  const total = found.rows.length ? await candidateSearch.countRelaxed(crit, agencyId) : 0;
+  const [facets, mk] = await Promise.all([
+    found.rows.length ? candidateSearch.facets(crit, agencyId, total) : [],
+    crit.role ? market.stats(agencyId, { role: crit.role, location: crit.location || '' }).catch(() => null) : null
+  ]);
+
+  // Vakansiyadan kelgan qidiruv shu vakansiyaga bog'lanadi (tanlov o'sha vakansiyaga)
+  let vacancyId = '';
+  if (b.vacancyId) {
+    const v = await Vacancy.findOne({ agencyId, clientId: req.client.id, id: String(b.vacancyId) }, 'id').lean();
+    if (v) vacancyId = v.id;
+  }
+  const key = relay.makeToken();
+  await SearchSession.create({ key, agencyId, clientId: req.client.id, vacancyId,
+    criteria: publicCriteria(crit), summary, candidateIds: found.rows.map(r => r.id) });
+
+  res.json({
+    key, vacancyId, summary,
+    criteria: publicCriteria(crit),
+    total, shown: found.rows.length,
+    relaxed: found.relaxFields || [],
+    facets: facets.map(f => ({ key: f.key, count: f.count, patch: f.patch })),
+    market: mk && mk.median ? { median: mk.median, p25: mk.p25, p75: mk.p75, n: mk.n } : null,
+    candidates: await sessionCards(agencyId, req.client, found.rows, req.lang)
   });
 }));
 
@@ -1289,11 +1372,14 @@ router.get('/chats', clientGuard, asyncHandler(async (req, res) => {
 // Mijoz bu nomzodni ko'rishga haqlimi: tanlovida bor yoki uning
 // vakansiyasiga ariza bergan. Boshqa nomzodni id bilan ochib bo'lmasin.
 async function clientKnows(agencyId, clientId, candidateId) {
-  const [s, a] = await Promise.all([
+  // + so'nggi 24 soatdagi qidiruv seansi (TTL): mijoz shu nomzodning anonim
+  // kartasini qidiruvda ko'rgan — anonim rezyume, foto va ovoz ham shu darajada
+  const [s, a, q] = await Promise.all([
     Shortlist.exists({ agencyId, clientId, 'items.candidateId': candidateId }),
-    Application.exists({ agencyId, clientId, candidateId })
+    Application.exists({ agencyId, clientId, candidateId }),
+    SearchSession.exists({ agencyId, clientId, candidateIds: candidateId })
   ]);
-  return !!(s || a);
+  return !!(s || a || q);
 }
 
 // ── Nomzod rezyumesi ──
@@ -1358,6 +1444,38 @@ router.get('/candidates/:id/photo', asyncHandler(async (req, res) => {
   res.set('Content-Type', m[1]);
   res.set('Cache-Control', 'private, max-age=3600');
   res.send(Buffer.from(m[2], 'base64'));
+}));
+
+// ── Ovozni Mini App ichida eshitish (services/voiceAudio: OGG -> m4a) ──
+// <audio src> sarlavha yubora olmaydi — rasm kabi photoToken bilan. Ruxsat
+// POST .../voice (chatga yuborish) bilan bir xil: nomzod shu mijozga
+// tanish (tanlovida yoki unga ariza bergan) yoki kontakt ochilgan.
+async function voiceClient(req, res) {
+  const uid = photoToken.verify(req.query.t);
+  if (!uid) { res.status(401).end(); return null; }
+  const client = await Client.findOne({ tgChatId: uid, status: 'active' });
+  if (!client) { res.status(403).end(); return null; }
+  return client;
+}
+async function sendVoiceFile(req, res, fileId) {
+  if (!fileId) return res.status(404).end();
+  try { voiceAudio.send(req, res, await voiceAudio.m4a(fileId)); }
+  catch (e) { console.error('[MA] ovoz:', e.message); if (!res.headersSent) res.status(502).end(); }
+}
+router.get('/candidates/:id/voice.m4a', asyncHandler(async (req, res) => {
+  const client = await voiceClient(req, res); if (!client) return;
+  const agencyId = client.agencyId, id = req.params.id;
+  const known = await contactView.isOpenPair({ agencyId, clientId: client.id, candidateId: id })
+    || await clientKnows(agencyId, client.id, id);
+  if (!known) return res.status(403).end();
+  const c = await Candidate.findOne({ restaurantId: agencyId, id }, 'voiceIntro').lean();
+  await sendVoiceFile(req, res, c && c.voiceIntro && c.voiceIntro.fileId);
+}));
+router.get('/applications/:id/voice.m4a', asyncHandler(async (req, res) => {
+  const client = await voiceClient(req, res); if (!client) return;
+  const a = await Application.findOne({ agencyId: client.agencyId, clientId: client.id, id: req.params.id }, 'screen').lean();
+  if (!a) return res.status(404).end();
+  await sendVoiceFile(req, res, a.screen && a.screen.voiceFileId);
 }));
 
 // ── O'qilmaganlar soni — pastki paneldagi qizil nuqta uchun ──

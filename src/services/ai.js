@@ -221,4 +221,12 @@ async function complete({ system, messages, json = false, schema, maxTokens = 10
   }
 }
 
-module.exports = { complete, isConfigured, activeProvider, MODELS };
+// AI vaqtincha javob bermayapti (Google band, kvota, timeout) — foydalanuvchiga
+// xom xato emas, "keyinroq urining" va zaxira yo'l ko'rsatiladi
+function isBusy(err) {
+  if (!err) return false;
+  if (['AI_TIMEOUT', 'QUOTA_EXHAUSTED'].includes(err.code)) return true;
+  return /429|503|RESOURCE_EXHAUSTED|UNAVAILABLE|overloaded|quota|rate limit/i.test(String(err.message || ''));
+}
+
+module.exports = { complete, isConfigured, activeProvider, isBusy, MODELS };

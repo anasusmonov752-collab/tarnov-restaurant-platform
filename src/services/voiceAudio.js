@@ -77,4 +77,22 @@ function send(req, res, buf) {
   return res.status(206).end(buf.subarray(r.start, r.end + 1));
 }
 
-module.exports = { m4a, send, parseRange, _cache: cache };
+/** Mini App'da yozilgan ovoz (iOS — mp4/AAC, Android — webm/Opus) -> OGG/Opus 16 kHz (Gemini o'qiydi) */
+async function toOgg(buf) {
+  if (!buf || !buf.length) throw new Error('Ovoz bo\'sh');
+  if (buf.length > MAX_BYTES) throw new Error('Ovoz juda uzun');
+  const ffmpeg = require('ffmpeg-static');
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'thr-'));
+  try {
+    const inp = path.join(dir, 'in.bin'), out = path.join(dir, 'out.ogg');
+    await fs.writeFile(inp, buf);
+    await new Promise((resolve, reject) => execFile(ffmpeg,
+      ['-y', '-v', 'error', '-i', inp, '-ac', '1', '-ar', '16000', '-c:a', 'libopus', '-b:a', '24k', out],
+      { timeout: 30000 }, err => err ? reject(err) : resolve()));
+    return await fs.readFile(out);
+  } finally {
+    fs.rm(dir, { recursive: true, force: true }).catch(() => {});
+  }
+}
+
+module.exports = { m4a, toOgg, send, parseRange, _cache: cache };

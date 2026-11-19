@@ -1090,6 +1090,13 @@ body.vp-lock{overflow:hidden}
 .sx-go:disabled{opacity:.4}
 .sx-mic{display:inline-flex;align-items:center;gap:6px;border:none;background:none;font:inherit;font-size:14px;font-weight:600;color:var(--blue);padding:10px 4px 2px;cursor:pointer}
 .sx-mic svg{width:16px;height:16px}
+.sx-rec{display:flex;align-items:center;gap:10px;margin-top:10px;padding:10px 10px 10px 14px;border-radius:16px;background:var(--th-danger-soft)}
+.sx-rec i{flex:none;width:12px;height:12px;border-radius:50%;background:var(--danger);animation:cxPulse 1s ease-in-out infinite}
+.sx-rec .m{flex:1;min-width:0}
+.sx-rec b{display:block;font-size:15px;font-weight:700;color:var(--danger);font-variant-numeric:tabular-nums}
+.sx-rec small{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.sx-rb{flex:none;border:none;border-radius:11px;padding:9px 12px;font:inherit;font-size:14px;font-weight:600;background:var(--card);color:var(--ink);cursor:pointer}
+.sx-rb.p{background:var(--danger);color:#fff}
 .sx-roles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .sx-roles button{display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 6px;border:none;border-radius:16px;background:var(--card);font:inherit;font-size:13.5px;font-weight:600;color:var(--ink);cursor:pointer}
 .sx-roles button:active{transform:scale(.97)}
@@ -2995,6 +3002,7 @@ async function openSx(o = {}){
   SX.loading = false; drawSx();
 }
 function closeSx(){
+  if (SX_REC) sxRecStop(false);
   $('sx').classList.remove('on');
   if (!$('vx').classList.contains('on') && !$('cx').classList.contains('on')) document.body.classList.remove('vp-lock');
   syncBack();
@@ -3007,6 +3015,7 @@ async function runSx(body){
   try {
     const d = await api('/api/ma/search', { method: 'POST', body: JSON.stringify(Object.assign({ vacancyId: SX.vacancyId }, body)) });
     Object.assign(SX, d, { cands: d.candidates || [], loaded: true });
+    if (d.transcript) SX.q = d.transcript;          // ovozdan nima tushunilgani — matn maydonida
     SX_SEL = new Set();
   } catch(e){ SX.err = e.message; }
   SX.loading = false; SX_BUSY = false; drawSx();
@@ -3046,7 +3055,9 @@ function drawSx(){
   const chips = sxChips(S.criteria);
   let html = `<div class="sx-box"><textarea id="sxQ" rows="1" maxlength="300" placeholder="${esc(t('sx.ph'))}">${esc(S.q || '')}</textarea>
       <button class="sx-go" id="sxGo" aria-label="${esc(t('sx.title'))}">${SX_IC.go}</button></div>
-    <button class="sx-mic" id="sxMic">${MIC_IC}${esc(t('sx.mic'))}</button>`;
+    ${SX_REC ? `<div class="sx-rec"><i></i><span class="m"><b id="sxRecT">${esc(t('sx.rec', { t: '0:00' }))}</b><small>${esc(t('sx.recHint'))}</small></span>
+        <button class="sx-rb" id="sxRecCancel">${esc(t('sx.recCancel'))}</button><button class="sx-rb p" id="sxRecStop">${esc(t('sx.recStop'))}</button></div>`
+      : `<button class="sx-mic" id="sxMic">${MIC_IC}${esc(t('sx.mic'))}</button>`}`;
 
   if (!S.loaded && !S.loading) {
     html += `<div class="gh3"><span>${esc(t('sx.orRole'))}</span></div>
@@ -3080,7 +3091,9 @@ function drawSx(){
   q.oninput = fit; fit();
   q.onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); go(); } };
   $('sxGo').onclick = go;
-  $('sxMic').onclick = () => { showMsg(t('sx.micMsg')); setTimeout(() => { try { TG && TG.close(); } catch(e){} }, 1600); };
+  if ($('sxMic')) $('sxMic').onclick = sxRecStart;
+  if ($('sxRecStop')) $('sxRecStop').onclick = () => sxRecStop(true);
+  if ($('sxRecCancel')) $('sxRecCancel').onclick = () => sxRecStop(false);
   $('sxBody').querySelectorAll('[data-role]').forEach(b => b.onclick = () => { haptic('sel'); runSx({ criteria: { role: b.dataset.role } }); });
   $('sxBody').querySelectorAll('[data-chip]').forEach(b => b.onclick = () => { haptic('sel'); runSx({ criteria: chips[+b.dataset.chip][1] }); });
   $('sxBody').querySelectorAll('[data-fc]').forEach(b => b.onclick = () => {
@@ -3095,6 +3108,51 @@ function drawSx(){
   });
   drawSxFoot();
 }
+// ── Ovoz bilan qidirish: Mini App ichida yoziladi (MediaRecorder), server
+// OGG ga o'girib AI'ga beradi (bot bilan bitta parseQuery). Mikrofon yo'q yoki
+// ruxsat berilmasa — matn yoki bot (sx.micNo). 30 soniyada o'zi to'xtaydi.
+let SX_REC = null;
+async function sxRecStart(){
+  if (SX_REC || SX_BUSY) return;
+  const md = navigator.mediaDevices;
+  if (!md || !md.getUserMedia || typeof MediaRecorder === 'undefined') { showMsg(t('sx.micNo')); return; }
+  let stream;
+  try { stream = await md.getUserMedia({ audio: true }); }
+  catch(e){ showMsg(t('sx.micNo')); return; }
+  const mime = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus']
+    .find(m => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) || '';
+  let rec;
+  try { rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined); }
+  catch(e){ stream.getTracks().forEach(x => x.stop()); showMsg(t('sx.micNo')); return; }
+  const chunks = [];
+  rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+  SX_REC = { rec, stream, chunks, t0: Date.now(), send: false };
+  rec.onstop = () => {
+    const R = SX_REC; SX_REC = null;
+    clearInterval(R.timer); R.stream.getTracks().forEach(x => x.stop());
+    drawSx();
+    if (!R.send || !chunks.length) return;
+    const blob = new Blob(chunks, { type: rec.mimeType || mime || 'audio/webm' });
+    const fr = new FileReader();
+    fr.onload = () => runSx({ audio: String(fr.result).split(',')[1] || '', mime: blob.type });
+    fr.readAsDataURL(blob);
+  };
+  rec.start(250);
+  try { TG && TG.HapticFeedback && TG.HapticFeedback.impactOccurred('medium'); } catch(e){}
+  drawSx();
+  SX_REC.timer = setInterval(() => {
+    if (!SX_REC) return;
+    const s = Math.floor((Date.now() - SX_REC.t0) / 1000);
+    if ($('sxRecT')) $('sxRecT').textContent = t('sx.rec', { t: mmss(s) });
+    if (s >= 30) sxRecStop(true);
+  }, 250);
+}
+function sxRecStop(send){
+  if (!SX_REC) return;
+  SX_REC.send = send && Date.now() - SX_REC.t0 > 700;      // juda qisqa bosish — yuborilmaydi
+  try { SX_REC.rec.stop(); } catch(e){ SX_REC = null; drawSx(); }
+}
+
 function sxToggle(id){
   if (SX_SEL.has(id)) SX_SEL.delete(id); else SX_SEL.add(id);
   haptic('sel');
@@ -4139,6 +4197,8 @@ $('bBackCab').onclick = backToCab;
   loadToday();                                   // Bugun — bosh ekran (arizalar + tanlovlar)
   refreshUnread();
   if (KEY) { openSx({ key: KEY }); return; }
+  // Botdagi "Ilovada qidirish" tugmasi (AI band bo'lganda): ?sx=1
+  if (new URLSearchParams(location.search).get('sx')) { openSx(); return; }
 
   // Telegram'dagi "yangi ariza" xabarining "Ko'rish" tugmasi: ?apps=<vakansiya>
   const APPS = new URLSearchParams(location.search).get('apps');

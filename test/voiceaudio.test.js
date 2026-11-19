@@ -43,3 +43,13 @@ test('m4a: keshdagi fayl Telegram\'ga qayta so\'rov yubormaydi', async () => {
   assert.equal(await va.m4a('fid-test', { token: 'x' }), b);
   await assert.rejects(() => va.m4a('', { token: 'x' }), /Ovoz/);
 });
+
+test('ai.isBusy: timeout, kvota, 429/503 — "band"; boshqa xato — yo\'q', () => {
+  const ai = require('../src/services/ai');
+  assert.equal(ai.isBusy(Object.assign(new Error('Gemini 45 s ichida javob bermadi'), { code: 'AI_TIMEOUT' })), true);
+  assert.equal(ai.isBusy(Object.assign(new Error('x'), { code: 'QUOTA_EXHAUSTED' })), true);
+  assert.equal(ai.isBusy(new Error('got status: 429 RESOURCE_EXHAUSTED')), true);
+  assert.equal(ai.isBusy(new Error('503 UNAVAILABLE: The model is overloaded')), true);
+  assert.equal(ai.isBusy(new Error('AI javobini JSON sifatida o\'qib bo\'lmadi')), false);
+  assert.equal(ai.isBusy(null), false);
+});

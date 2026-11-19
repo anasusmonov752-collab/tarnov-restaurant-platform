@@ -40,6 +40,7 @@ const cardPay = require('../services/cardPay');
 const appLife = require('../services/appLife');
 const voiceAudio = require('../services/voiceAudio');
 const market = require('../services/market');
+const ai = require('../services/ai');
 const I18N = require('../../public/js/th-i18n');
 const billing = require('../services/billing');
 const PL = require('../data/plans');
@@ -225,18 +226,35 @@ function cleanCriteria(b) {
 router.post('/search', clientGuard, asyncHandler(async (req, res) => {
   const b = req.body || {}, agencyId = req.client.agencyId;
   const text = String(b.text || '').trim().slice(0, 300);
-  let crit, summary = '';
-  if (text) {
+  const audio = typeof b.audio === 'string' ? b.audio : '';
+  let crit, summary = '', transcript = '', aiErr = null;
+  if (audio) {
+    // Mini App ichida yozilgan ovoz -> OGG -> AI (bot bilan bitta parseQuery)
+    if (audio.length > 7e6) return res.status(400).json({ error: tl(req, 'sx.voiceFail') });
+    let ogg;
+    try { ogg = await voiceAudio.toOgg(Buffer.from(audio, 'base64')); }
+    catch (e) { console.error('[MA] ovoz o\'girilmadi:', e.message); return res.status(400).json({ error: tl(req, 'sx.voiceFail') }); }
+    try {
+      const r = await candidateSearch.parseQuery({ audio: { mimeType: 'audio/ogg', data: ogg.toString('base64') } }, agencyId);
+      crit = cleanCriteria(r); summary = String(r.summary || '').slice(0, 200); transcript = String(r.transcript || '').slice(0, 300);
+    } catch (e) {
+      console.error('[MA] ovozli qidiruv AI:', e.message);
+      return res.status(ai.isBusy(e) ? 503 : 400).json({ error: tl(req, ai.isBusy(e) ? 'sx.aiBusy' : 'sx.voiceFail') });
+    }
+  } else if (text) {
     try {
       const r = await candidateSearch.parseQuery({ text }, agencyId);
       crit = cleanCriteria(r); summary = String(r.summary || '').slice(0, 200);
     } catch (e) {
       // AI ishlamasa ham qidiruv to'xtamasin: lavozimni matndan taniymiz
       console.error('[MA] qidiruv AI:', e.message);
+      aiErr = e;
       crit = cleanCriteria({ role: vac.guessRole(text) });
     }
   } else crit = cleanCriteria(b.criteria);
-  if (!crit.role && !crit.keywords.length && !crit.location) return res.status(400).json({ error: tl(req, 'sx.needMore') });
+  if (!crit.role && !crit.keywords.length && !crit.location) {
+    return res.status(aiErr && ai.isBusy(aiErr) ? 503 : 400).json({ error: tl(req, aiErr && ai.isBusy(aiErr) ? 'sx.aiBusy' : 'sx.needMore') });
+  }
 
   crit.includeTest = !!req.client.isTest;    // sinov mijozi sinov nomzodini ham ko'radi (agent bilan bir xil)
   crit.limit = 30;
@@ -258,7 +276,7 @@ router.post('/search', clientGuard, asyncHandler(async (req, res) => {
     criteria: publicCriteria(crit), summary, candidateIds: found.rows.map(r => r.id) });
 
   res.json({
-    key, vacancyId, summary,
+    key, vacancyId, summary, transcript,
     criteria: publicCriteria(crit),
     total, shown: found.rows.length,
     relaxed: found.relaxFields || [],

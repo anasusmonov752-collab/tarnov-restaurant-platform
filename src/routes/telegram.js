@@ -910,6 +910,12 @@ async function handleClientSearch(client, chatId, { text, voice }, appBase, lang
 
   } catch (e) {
     console.error('[TG] mijoz suhbati xatosi:', e.message);
+    if (require('../services/ai').isBusy(e)) {
+      // Google band / kvota / timeout — "45 s ichida javob bermadi" degan xom matn emas
+      await tg.sendMessage(token, chatId, T(lang, 'bot.aiBusy'), appBase ? { reply_markup: { inline_keyboard: [[
+        { text: T(lang, 'bot.aiBusyBtn'), web_app: { url: `${appBase}/miniapp.html?sx=1` } }]] } } : undefined);
+      return;
+    }
     await tg.sendMessage(token, chatId, e.code === 'AI_NOT_CONFIGURED'
       ? T(lang, 'bot.aiOff')
       : T(lang, 'bot.replyFail', { e: I18N.errText(lang, e.message) }));

@@ -940,6 +940,116 @@ body.vp-lock{overflow:hidden}
 .vx-sh h3{font-size:20px;font-weight:var(--th-fw-h);letter-spacing:calc(-.3px * var(--th-lsk))}
 .vx-none{font-size:14px;color:var(--muted);text-align:center}
 .vx-menu{width:100%;margin-top:6px;padding:13px}
+/* ══ MIJOZ v3 (2026-11-19): Bugun · Nomzodlar · nomzod sahifasi ══════
+   Qoida: ekranda bitta qalin sarlavha (bo'lim nomi), bo'lim sarlavhalari
+   kichik kulrang (iOS guruh), nomzod qatori 2 satr, % faqat 75+ rangli.
+   Qaror va tafsilot — nomzod sahifasida (#cx), ro'yxat faqat ko'rsatadi. */
+.gh3{display:flex;justify-content:space-between;align-items:baseline;padding:22px 4px 7px;font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+.gh3 button{border:none;background:none;font:inherit;font-size:13px;color:var(--blue);text-transform:none;letter-spacing:0;font-weight:600;cursor:pointer}
+.gh3:first-child{padding-top:4px}
+.bx{background:var(--card);border-radius:18px;overflow:hidden}
+.td-hero{padding:18px 16px 16px}
+.td-k{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--warn);text-transform:uppercase;letter-spacing:.3px}
+.td-k i{width:8px;height:8px;border-radius:50%;background:#FF9500;display:block}
+.td-k.ok{color:var(--muted)} .td-k.ok i{background:var(--th-tertiary)}
+.td-hero h3{font-size:26px;font-weight:var(--th-fw-h);letter-spacing:calc(-.5px * var(--th-lsk));margin-top:4px;line-height:1.15}
+.td-hero p{font-size:14.5px;color:var(--muted);margin-top:5px;line-height:1.4}
+.td-hero .btn{width:100%;margin-top:14px;padding:14px;font-size:16px}
+.td-mini{margin-top:10px;border-top:.5px solid var(--line)}
+.td-mini .cr{padding:12px 0}
+.td-mini .cr+.cr::before{left:60px}
+/* Nomzod qatori — ro'yxatda va Bugun'da bitta */
+.cr{display:flex;align-items:center;gap:12px;width:100%;padding:13px 16px;border:none;background:none;font:inherit;color:inherit;text-align:left;position:relative;cursor:pointer}
+.cr:active{background:var(--th-fill)}
+.cr+.cr::before{content:"";position:absolute;top:0;left:76px;right:0;border-top:.5px solid var(--line)}
+.cr-av{flex:none;width:48px;height:48px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:var(--th-brand-soft);color:var(--blue);font-size:16px;font-weight:700}
+.cr-av img{width:100%;height:100%;object-fit:cover}
+.cr-av .role-ic{width:24px;height:24px}
+.td-mini .cr-av{width:44px;height:44px}
+.cr-m{flex:1;min-width:0;display:block}
+.cr-2{display:block}
+.cr-1{display:flex;align-items:center;gap:6px;font-size:16px;font-weight:600;line-height:1.25}
+.cr-1 span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cr-1 i{flex:none;width:8px;height:8px;border-radius:50%;background:var(--blue)}
+.cr-2{font-size:14px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cr-2.is-w{color:var(--warn);font-weight:600}
+.cr-2.is-b{color:var(--blue);font-weight:600}
+.cr-r{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.cr-t{font-size:13px;color:var(--muted)}
+.pc{font-size:13px;font-weight:700;border-radius:99px;padding:4px 9px;background:var(--th-ok-soft);color:var(--ok)}
+.pc.lo{background:none;color:var(--muted);font-weight:600;padding:4px 0}
+/* Suhbat qatori (vaqt chapda) */
+.iv3{display:flex;align-items:center;gap:12px;padding:12px 16px;position:relative;width:100%;border:none;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.iv3+.iv3::before,.iv3-yn+.iv3::before{content:"";position:absolute;top:0;left:72px;right:0;border-top:.5px solid var(--line)}
+.iv3-t{flex:none;width:46px;text-align:center}
+.iv3-t b{display:block;font-size:17px;font-weight:var(--th-fw-h);font-variant-numeric:tabular-nums}
+.iv3-t span{font-size:11.5px;color:var(--muted);font-weight:600}
+.iv3-yn{display:flex;gap:8px;padding:0 16px 14px 74px;margin-top:-4px}
+.iv3-yn button{flex:1;border:none;border-radius:11px;padding:10px;font:inherit;font-size:14px;font-weight:600;background:var(--th-fill);color:var(--ink);cursor:pointer}
+.iv3-yn button.ok{background:var(--th-ok-soft);color:var(--ok)}
+.iv3-yn button.no{background:var(--th-danger-soft);color:var(--danger)}
+.st3{flex:none;font-size:12px;font-weight:700;border-radius:99px;padding:4px 9px;background:var(--th-fill);color:var(--muted)}
+.st3.ok{background:var(--th-ok-soft);color:var(--ok)} .st3.w{background:var(--th-warn-soft);color:var(--warn)}
+.bal3{display:flex;align-items:center;gap:12px;padding:14px 16px;width:100%;border:none;background:var(--card);border-radius:18px;font:inherit;color:inherit;text-align:left;margin-top:22px;cursor:pointer}
+.bal3-ic{flex:none;width:34px;height:34px;border-radius:10px;background:var(--th-brand-soft);color:var(--blue);display:grid;place-items:center}
+.bal3-ic svg{width:19px;height:19px}
+.bal3 b{display:block;font-size:15.5px;font-weight:600}
+.bal3 span{font-size:13px;color:var(--muted)}
+.chev3{flex:none;width:18px;height:18px;color:var(--th-tertiary)}
+/* Nomzodlar: segment va vakansiya filtri */
+.seg3{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -14px;padding:2px 14px 4px}
+.seg3::-webkit-scrollbar{display:none}
+.seg3 button{flex:none;border:none;border-radius:99px;padding:8px 13px;font:inherit;font-size:14px;font-weight:600;background:var(--card);color:var(--ink);white-space:nowrap;cursor:pointer}
+.seg3 button b{color:var(--muted);margin-left:4px;font-weight:700}
+.seg3 button.on{background:var(--ink);color:var(--bg)}
+.seg3 button.on b{color:inherit;opacity:.7}
+.vf3{display:flex;align-items:center;gap:6px;padding:12px 4px 0;font-size:14px;color:var(--muted);font-weight:600}
+.vf3 select{border:none;background:none;font:inherit;font-weight:600;color:var(--blue);max-width:70%;padding:2px 0;cursor:pointer}
+.msg3{padding:40px 20px;text-align:center;color:var(--muted);font-size:15px;line-height:1.45}
+/* Nomzod sahifasi */
+.cx-hd{text-align:center;padding:6px 6px 2px}
+.cx-av{width:88px;height:88px;border-radius:50%;margin:0 auto;overflow:hidden;display:grid;place-items:center;background:var(--th-brand-soft);color:var(--blue);font-size:30px;font-weight:700}
+.cx-av img{width:100%;height:100%;object-fit:cover}
+.cx-av .role-ic{width:40px;height:40px}
+.cx-hd h1{font-size:26px;font-weight:var(--th-fw-h);letter-spacing:calc(-.5px * var(--th-lsk));margin-top:10px;line-height:1.2}
+.cx-hd p{font-size:14px;color:var(--muted);margin-top:4px;line-height:1.4}
+.cx-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px;margin-top:14px}
+.cx-facts div{background:var(--card);border-radius:16px;padding:11px 6px;text-align:center;min-width:0}
+.cx-facts b{display:block;font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cx-facts span{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.cx-match{display:flex;gap:14px;align-items:center;padding:14px 16px}
+.cx-ring{flex:none;width:64px;height:64px;position:relative}
+.cx-ring svg{width:64px;height:64px;transform:rotate(-90deg)}
+.cx-ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:17px;font-weight:var(--th-fw-h)}
+.cx-why{flex:1;display:grid;gap:5px;min-width:0}
+.cx-why div{display:flex;gap:7px;font-size:14px;line-height:1.3}
+.cx-why i{flex:none;font-style:normal;font-weight:700;color:var(--muted)}
+.cx-why .cw-y i{color:var(--ok)} .cx-why .cw-n i{color:var(--warn)}
+.cx-note{padding:0 16px 14px;font-size:13.5px;color:var(--muted)}
+.cx-row{display:flex;align-items:center;gap:12px;padding:12px 16px;position:relative;width:100%;border:none;background:none;font:inherit;color:inherit;text-align:left}
+.cx-row+.cx-row::before{content:"";position:absolute;top:0;left:56px;right:0;border-top:.5px solid var(--line)}
+.cx-ic{flex:none;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:var(--th-ok-soft);color:var(--ok)}
+.cx-ic svg{width:16px;height:16px}
+.cx-ic.ib{background:var(--th-brand-soft);color:var(--blue)} .cx-ic.ia{background:var(--th-amber-soft);color:var(--th-amber)}
+.cx-row .m{flex:1;min-width:0}
+.cx-row b{display:block;font-size:15px;font-weight:600}
+.cx-row .m span{font-size:13px;color:var(--muted)}
+.cx-play{flex:none;width:34px;height:34px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center}
+.cx-play svg{width:14px;height:14px;margin-left:2px}
+.cx-job{padding:12px 16px;position:relative}
+.cx-job+.cx-job::before{content:"";position:absolute;top:0;left:16px;right:0;border-top:.5px solid var(--line)}
+.cx-job b{font-size:15.5px;font-weight:600}
+.cx-job span{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+.cx-job p{font-size:14px;color:var(--ink-2);margin-top:5px;line-height:1.4;white-space:pre-line}
+.cx-tx{padding:13px 16px;font-size:14.5px;line-height:1.45;color:var(--ink-2);white-space:pre-line}
+.cx-st{padding:6px 14px 4px;margin:0;border-radius:18px}
+.cx-st .cd-steps{margin-top:8px}
+#cxFoot .row3{display:flex;gap:8px}
+#cxFoot .row3 .btn{flex:1;width:auto;margin:0}
+#cxFoot .btn.s{flex:0 0 34%;background:var(--th-fill);color:var(--ink);box-shadow:none}
+#cxFoot .btn svg{width:19px;height:19px;vertical-align:-4px;margin-right:6px}
+.cx-g{display:flex;align-items:center;justify-content:center;gap:6px;font-size:12.5px;color:var(--muted);margin-top:8px;text-align:center}
+.cx-g svg{width:14px;height:14px;color:var(--ok);flex:none}
 </style>
 </head>
 <body>
@@ -962,11 +1072,17 @@ body.vp-lock{overflow:hidden}
 <div id="cabMode" class="hide">
   <!-- Katta sarlavha (iOS large title): restoran nomi + bo'lim nomi. Balans — Hisob bo'limida -->
   <div class="lt">
-    <div class="lt-t"><small id="cName">—</small><h1 id="ltTitle" data-t="tab.sl">Tanlovlar</h1></div>
+    <div class="lt-t"><small id="cName">—</small><h1 id="ltTitle" data-t="tab.td">Bugun</h1></div>
     <button class="lt-act hide" id="ltAct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span data-t="vac.newShort">Yangi</span></button>
   </div>
 
-  <div id="vSL">
+  <!-- Bugun (v3, 2026-11-19): bosh ekran — nima qilish kerak (loadToday) -->
+  <div id="vTD">
+    <div class="wrap" id="tdBody"><div class="msg" data-t="common.loading">Yuklanmoqda…</div></div>
+  </div>
+
+  <!-- Eski "Tanlovlar" ro'yxati — menyuda yo'q; SL_ROWS ma'lumoti uchun yuklanadi -->
+  <div id="vSL" class="hide">
     <div class="stats" id="cStats"></div>
     <div class="wrap" id="slList"><div class="msg" data-t="common.loading">Yuklanmoqda…</div></div>
   </div>
@@ -1029,11 +1145,22 @@ body.vp-lock{overflow:hidden}
     <div class="vp-f hide" id="vxFoot"><button class="btn" id="vxMatch" data-t="vac.matches">Mos nomzodlarni ko'rish</button></div>
   </div>
 
+  <!-- Nomzod — to'liq ekran sahifa (showCand): moslik, ishonch, rezyume, qaror -->
+  <div class="vp" id="cx" aria-hidden="true">
+    <div class="vp-h">
+      <button class="vp-ib" id="cxBack" aria-label="Orqaga" data-ta="common.back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+      <b class="vp-ht" id="cxHT"></b>
+      <span style="width:38px;flex:none"></span>
+    </div>
+    <div class="vp-b" id="cxBody"></div>
+    <div class="vp-f hide" id="cxFoot"></div>
+  </div>
+
   <!-- Ikonkalar: Lucide (clipboard-list, inbox, briefcase, message-circle) -->
   <nav class="tabs">
     <span class="lens" id="lens" aria-hidden="true"></span>
-    <button class="tb on" id="tSL"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg></span><span data-t="tab.sl">Tanlovlar</span></button>
-    <button class="tb"    id="tAP"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg><i class="dot" id="dAP"></i></span><span data-t="tab.ap">Arizalar</span></button>
+    <button class="tb on" id="tTD"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></span><span data-t="tab.td">Bugun</span></button>
+    <button class="tb"    id="tAP"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><i class="dot" id="dAP"></i></span><span data-t="tab.cd">Nomzodlar</span></button>
     <button class="tb"    id="tVC"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg></span><span data-t="tab.vc">Vakansiya</span></button>
     <button class="tb"    id="tMS"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg><i class="dot" id="dMS"></i></span><span data-t="tab.ms">Aloqa</span></button>
     <button class="tb"    id="tHS"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg></span><span data-t="tab.hs">Hisob</span></button>
@@ -1311,6 +1438,7 @@ async function loadMe(){
     useLang(m.lang);                     // haqiqiy tanlov — serverda (Client.lang)
     $('cName').textContent = m.name || t('cab.client');
     CREDITS = m.credits;                 // "Kontaktni ochish" tasdig'ida balans
+    ME_PLAN = m.plan || null;            // Bugun: balans qatori
     const s = m.stats || {};
     $('cStats').innerHTML = `
       <div class="stat"><b>${s.searches||0}</b><span>${t('st.searches')}</span></div>
@@ -1570,7 +1698,7 @@ const inFilter = (it, f) => f === 'all'
 const prio = it => inFilter(it, 'contact') ? 0 : it.state === 'waiting' ? 1 : it.stage === 'hired' ? 2 : 3;
 
 async function loadShortlists(){
-  try { SL_ROWS = await api('/api/ma/shortlists'); renderShortlists(); }
+  try { SL_ROWS = await api('/api/ma/shortlists'); renderShortlists(); renderCab(); }
   catch(e){ $('slList').innerHTML = `<div class="msg">${esc(e.message)}</div>`; }
 }
 
@@ -1629,6 +1757,7 @@ async function decide(slId, candId, body){
 // Suhbat oynasini nomzod bilan to'g'ridan-to'g'ri ochish
 async function openChatWith(candId){
   closeSheet();
+  if ($('cx').classList.contains('on')) closeCand();
   pickTab('tMS');
   try { CHATS = await api('/api/ma/chats'); drawChats(); } catch(e){ return; }
   const c = CHATS.find(x => x.candidateId === candId);
@@ -1741,7 +1870,7 @@ function syncBack(){
     if (TG && TG.BackButton && TG.isVersionAtLeast && TG.isVersionAtLeast('6.1')) {
       // Oyna yopilganda tugmani yashiramiz — lekin qidiruvda nomzod ochiq bo'lsa, u uniki
       const inDetail = !$('searchMode').classList.contains('hide') && cur >= 0;
-      const inVac = !$('cabMode').classList.contains('hide') && $('vx').classList.contains('on');
+      const inVac = !$('cabMode').classList.contains('hide') && ($('vx').classList.contains('on') || $('cx').classList.contains('on'));
       if ($('sheet').classList.contains('on') || inDetail || inVac) TG.BackButton.show(); else TG.BackButton.hide();
     }
   } catch(e){}
@@ -1760,6 +1889,7 @@ function onTgBack(){
   if (window.thViewer && thViewer.consumeBack()) return;
   if ($('sheet').classList.contains('on')) { sheetBack(); return; }
   if (!$('searchMode').classList.contains('hide') && cur >= 0) { renderList(); return; }
+  if (!$('cabMode').classList.contains('hide') && $('cx').classList.contains('on')) { closeCand(); return; }
   if (!$('cabMode').classList.contains('hide') && $('vx').classList.contains('on')) closeVacancy();
 }
 try { TG && TG.BackButton && TG.BackButton.onClick(onTgBack); } catch(e){}
@@ -2245,8 +2375,9 @@ async function openFromApp(b, refresh){
     const r = await api(`/api/ma/applications/${b.dataset.open}/open`, { method:'POST', body:'{}' });
     if (r.balance != null) CREDITS = r.balance;
     try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(e){}
-    loadMe(); loadShortlists(); if (VACS.length) loadVacancies();
-    if (!$('vAP').classList.contains('hide')) loadApps();
+    loadMe(); if (VACS.length) loadVacancies();
+    if ($('cx').classList.contains('on')) closeCand();    // nomzod sahifasidan ochilgan bo'lsa
+    loadCab(); loadShortlists();
     showResume(r.candidateId || b.dataset.cand);          // darhol ism va telefon
   } catch(e){
     showMsg(e.message);
@@ -2382,41 +2513,304 @@ async function showApps(id){
 let AP_ROWS = [], APF = 'wait';
 const appWaiting = it => it.state !== 'shortlisted' && it.state !== 'rejected';
 
+// v3: Arizalar tabi yo'q — ma'lumot "Nomzodlar" va "Bugun"da (renderCab)
 async function loadApps(){
-  try { AP_ROWS = await api('/api/ma/applications'); renderApps(); }
+  try { AP_ROWS = await api('/api/ma/applications'); renderCab(); }
   catch(e){ $('apList').innerHTML = `<div class="msg">${esc(e.message)}</div>`; }
 }
 
-function renderApps(){
-  if (!AP_ROWS.length) {
-    $('apList').innerHTML = `<div class="msg">${t('ap.empty')}</div>`;
-    return;
-  }
-  const waitN = AP_ROWS.filter(appWaiting).length;
-  if (APF === 'wait' && !waitN) APF = 'all';                 // kutilayotgani yo'q — hammasini ko'rsat
-  const rows = AP_ROWS.filter(it => APF === 'all' || appWaiting(it));
+// ══════════════════════════════════════════════════════════
+//  MIJOZ v3 (2026-11-19): BUGUN · NOMZODLAR · NOMZOD SAHIFASI
+// ══════════════════════════════════════════════════════════
+// Bitta ro'yxat: arizalar (AP_ROWS) va tanlov elementlari (SL_ROWS). Mijozga
+// nomzod qaysi yo'l bilan kelgani emas, HOLATI muhim. Ro'yxat faqat
+// ko'rsatadi; qaror va tafsilot — nomzod sahifasida (showCand). Amallar
+// mavjud ishlovchilardan o'tadi (wireApps, wireCards) — mantiq takrorlanmaydi.
+let CD_SEG = '', CD_VAC = '', CX_KEY = null, ME_PLAN = null;
+const ROW_BY = {};
+const CD_SEGS = ['new', 'work', 'hired', 'arch'];
+const hoursAgo = s => (Date.now() - new Date(s).getTime()) / 36e5;
+const hhmm = d => String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+const dayDiff = d => { const a = new Date(); a.setHours(0, 0, 0, 0); const b = new Date(d); b.setHours(0, 0, 0, 0); return Math.round((a - b) / 864e5); };
+// Ro'yxatdagi vaqt: bugun — soat, kecha — "kecha", aks holda sana
+const shortAgo = s => { if (!s) return ''; const dd = dayDiff(s); return dd === 0 ? hhmm(new Date(s)) : dd === 1 ? t('td.dYest') : dShort(s); };
+const dayWord = d => { const dd = dayDiff(d); return dd === 0 ? t('td.dToday') : dd === -1 ? t('td.dTom') : dd === 1 ? t('td.dYest') : dShort(d); };
+const slSeg = it => it.stage === 'hired' ? 'hired'
+  : (it.stage === 'not_fit' || it.state === 'no' || it.state === 'refunded') ? 'arch' : 'work';
+const candOf = r => r.k === 'ap' ? r.it.candidate : r.it;
+const photoOf = r => r.k === 'ap'
+  ? (r.it.candidate.hasPhoto ? candPhoto(r.cid) : '')
+  : (r.it.hasPhoto ? `/api/ma/photo-sl/${encodeURIComponent(r.it.shortlistId)}/${encodeURIComponent(r.cid)}?t=${encodeURIComponent(PT)}` : '');
 
+function candRows(){
+  const out = [];
+  for (const s of SL_ROWS) for (const it of s.items) out.push({
+    k: 'sl', it, key: 'sl:' + it.shortlistId + ':' + it.candidateId, cid: it.candidateId,
+    vac: s.vacancyTitle || '', at: it.revealedAt || s.createdAt, seg: slSeg(it)
+  });
+  for (const a of AP_ROWS) {
+    // Tanlovga o'tgan ariza — tanlov elementi bo'lib ro'yxatda turibdi
+    if (!a.candidate || a.state === 'shortlisted') continue;
+    out.push({ k: 'ap', it: a, key: 'ap:' + a.id, cid: a.candidate.id, vac: a.vacancyTitle || '',
+      at: a.createdAt, seg: a.state === 'rejected' ? 'arch' : 'new' });
+  }
+  out.forEach(r => { ROW_BY[r.key] = r; });
+  return out;
+}
+const byScore = (a, b) => ((b.it.score ?? -1) - (a.it.score ?? -1)) || (new Date(b.at) - new Date(a.at));
+// "Jarayonda": harakat kutayotganlar tepada (suhbat natijasi, qo'ng'iroq)
+const workPrio = r => r.it.iv && r.it.iv.canAnswer ? 0 : (r.it.stage === 'contact' && !r.it.iv) ? 1 : r.it.iv ? 2 : 3;
+
+// Qatorning ikkinchi satri: [matn, klass]. Bitta fakt — holat yoki yosh/hudud.
+function rowLine(r){
+  const c = candOf(r), it = r.it;
+  if (r.k === 'ap') {
+    if (r.seg === 'arch') return [t(it.withdrawn ? 'ap.withdrawn' : it.vacClosed ? 'al.vacClosed' : 'ap.rejected'), ''];
+    const h = hoursAgo(it.createdAt);
+    if (h >= 36) return [t('cd.waitD', { n: Math.floor(h / 24) }), 'is-w'];
+    return [[c.age ? t('fact.age', { n: c.age }) : '', c.location].filter(Boolean).join(' · '), ''];
+  }
+  if (r.seg === 'hired') return [plLine(it.pl), ''];
+  if (r.seg === 'arch') return [it.reason || it.stateLabel || '', ''];
+  if (it.state === 'waiting') return [t('line.hr', { t: agoTxt(it.since) }), ''];
+  if (it.iv) return [ivLine(it.iv), it.iv.canAnswer ? 'is-w' : IV_LIVE.includes(it.iv.status) ? 'is-b' : ''];
+  if (it.stage === 'contact') return [t('cd.callNow'), 'is-b'];
+  return [it.stateLabel || '', ''];
+}
+
+function rowHtml3(r){
+  const c = candOf(r), w = whoOf(c), ph = photoOf(r);
+  // Anonim: "Xostess · 2 yil tajriba"; ochiq: ism (lavozim holat satrida emas — rezyumeda)
+  const title = w.open ? w.title : w.title + ' · ' + expTxt(c.experienceYears, c.experienceMonths);
+  const [line, cls] = rowLine(r);
+  const sc = r.k === 'ap' && r.seg === 'new' && r.it.score != null
+    ? `<span class="pc ${r.it.score >= 75 ? '' : 'lo'}">${r.it.score}%</span>` : '';
+  return `<button class="cr" data-cx="${esc(r.key)}">
+    <span class="cr-av">${ph ? `<img src="${esc(ph)}" alt="" data-nozoom>` : w.avatar}</span>
+    <span class="cr-m"><span class="cr-1">${r.k === 'ap' && r.it.isNew ? '<i></i>' : ''}<span>${esc(title)}</span></span>
+      <span class="cr-2 ${cls}">${esc(line)}</span></span>
+    <span class="cr-r"><span class="cr-t">${esc(shortAgo(r.at))}</span>${sc}</span>
+  </button>`;
+}
+const wireRows = root => root.querySelectorAll('[data-cx]').forEach(b => b.onclick = () => { haptic(); showCand(b.dataset.cx); });
+
+// Ikkala ma'lumot bir vaqtda — Bugun ham, Nomzodlar ham shundan
+async function loadPeople(){
+  const [a, s] = await Promise.all([api('/api/ma/applications'), api('/api/ma/shortlists')]);
+  AP_ROWS = a; SL_ROWS = s;
+}
+// Ochiq bo'limni qayta chizish (boshqa joydan ma'lumot yangilanganda)
+function renderCab(){
+  if (!$('vAP').classList.contains('hide')) renderCands();
+  if (!$('vTD').classList.contains('hide')) renderToday();
+}
+function loadCab(){
+  if (!$('vAP').classList.contains('hide')) loadCands();
+  else if (!$('vTD').classList.contains('hide')) loadToday();
+}
+
+// ── NOMZODLAR ──
+async function loadCands(){
+  try { await loadPeople(); } catch(e){ $('apList').innerHTML = `<div class="msg">${esc(e.message)}</div>`; return; }
+  renderCands(); refreshUnread();
+}
+function renderCands(){
+  const all = candRows();
+  const vacs = [...new Set(all.map(r => r.vac).filter(Boolean))];
+  if (CD_VAC && !vacs.includes(CD_VAC)) CD_VAC = '';
+  const rows = all.filter(r => !CD_VAC || r.vac === CD_VAC);
+  const cnt = Object.fromEntries(CD_SEGS.map(s => [s, rows.filter(r => r.seg === s).length]));
+  if (!CD_SEG) CD_SEG = cnt.new ? 'new' : cnt.work ? 'work' : 'new';
+  const list = rows.filter(r => r.seg === CD_SEG).sort(CD_SEG === 'new' ? byScore
+    : CD_SEG === 'work' ? (a, b) => (workPrio(a) - workPrio(b)) || (new Date(b.at) - new Date(a.at))
+    : (a, b) => new Date(b.at) - new Date(a.at));
+
+  // Vakansiya bo'yicha guruh (filtr "hammasi" bo'lsa); sarlavha — kichik kulrang
   const groups = [], gBy = {};
-  for (const it of rows) {
-    let g = gBy[it.vacancyId];
-    if (!g) { g = gBy[it.vacancyId] = { title: it.vacancyTitle, closed: it.vacancyStatus === 'closed', items: [] }; groups.push(g); }
-    g.items.push(it);
+  for (const r of list) {
+    const g = CD_VAC ? '' : r.vac;
+    if (!gBy[g]) { gBy[g] = { title: g, rows: [] }; groups.push(gBy[g]); }
+    gBy[g].rows.push(r);
   }
-  groups.sort((a, b) => a.closed - b.closed);                // yopilganlar pastda
-
+  const one = groups.length === 1;
   $('apList').innerHTML =
-    `<div class="flt">
-      <button class="${APF === 'wait' ? 'on' : ''}" data-af="wait">${esc(t('ap.fWait'))}<b>${waitN}</b></button>
-      <button class="${APF === 'all' ? 'on' : ''}" data-af="all">${esc(t('ap.fAll'))}<b>${AP_ROWS.length}</b></button>
-    </div>` +
-    (groups.length ? groups.map(g => `<div class="grp">
-      <div class="grp-h"><b>${esc(g.title)}</b>${g.closed ? `<span class="cl">${esc(t('grp.closed'))}</span>` : ''}
-        <span>${esc(t('ap.count', { n: g.items.length }))}</span></div>
-      ${g.items.slice().sort(appOrder).map(appCardHtml).join('')}
-    </div>`).join('') : `<div class="msg">${esc(t('ap.noneWait'))}</div>`);
+    `<div class="seg3">${CD_SEGS.map(s => `<button class="${CD_SEG === s ? 'on' : ''}" data-seg="${s}">${esc(t('cd.' + s))}${cnt[s] ? `<b>${cnt[s]}</b>` : ''}</button>`).join('')}</div>`
+    + (vacs.length > 1 ? `<div class="vf3"><select id="cdVac"><option value="">${esc(t('cd.vacAll'))}</option>${vacs.map(v =>
+        `<option value="${esc(v)}"${v === CD_VAC ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select></div>` : '')
+    + (list.length
+      ? groups.map(g => `${!one || g.title ? `<div class="gh3"><span>${esc(g.title || t('cd.fromSearch'))}</span><span>${g.rows.length}</span></div>` : '<div style="height:14px"></div>'}
+          <div class="bx">${g.rows.map(rowHtml3).join('')}</div>`).join('')
+      : `<div class="msg3">${esc(t(CD_SEG === 'new' ? 'cd.emptyNew' : 'cd.empty'))}</div>`);
 
-  $('apList').querySelectorAll('[data-af]').forEach(b => b.onclick = () => { APF = b.dataset.af; haptic('sel'); renderApps(); });
-  wireApps($('apList'), loadApps);
+  $('apList').querySelectorAll('[data-seg]').forEach(b => b.onclick = () => { CD_SEG = b.dataset.seg; haptic('sel'); renderCands(); window.scrollTo(0, 0); });
+  if ($('cdVac')) $('cdVac').onchange = e => { CD_VAC = e.target.value; renderCands(); };
+  wireRows($('apList'));
+}
+
+// ── BUGUN: nima qilish kerak — javob kutayotgan arizalar, suhbatlar,
+//    qo'ng'iroq kutayotgan kontaktlar, yangi xodimlar, balans ──
+async function loadToday(){
+  try { await loadPeople(); } catch(e){ $('tdBody').innerHTML = `<div class="msg">${esc(e.message)}</div>`; return; }
+  renderToday(); refreshUnread();
+}
+function ivRow3(r){
+  const it = r.it, iv = it.iv, w = whoOf(it), d = iv.at ? new Date(iv.at) : null;
+  const st = iv.canAnswer ? '' : iv.status === 'confirmed' ? (iv.onWay ? ['ok', 'iv3.onway'] : ['ok', 'iv3.confirmed'])
+    : iv.status === 'scheduled' ? ['w', 'iv3.scheduled'] : ['', 'iv3.offered'];
+  return `<button class="iv3" data-cx="${esc(r.key)}">
+      <span class="iv3-t"><b>${d ? hhmm(d) : '—'}</b><span>${d ? esc(dayWord(d)) : ''}</span></span>
+      <span class="cr-m"><span class="cr-1"><span>${esc(w.title)}</span></span>
+        <span class="cr-2 ${iv.canAnswer ? 'is-w' : ''}">${esc(iv.canAnswer ? t('iv3.ask') : (w.open ? w.sub : r.vac))}</span></span>
+      ${st ? `<span class="st3 ${st[0]}">${esc(t(st[1]))}</span>` : ''}
+    </button>
+    ${iv.canAnswer ? `<div class="iv3-yn"><button class="ok" data-ivo="${esc(iv.id)}" data-came="1">${esc(t('ivm.came'))}</button>
+      <button class="no" data-ivo="${esc(iv.id)}" data-came="">${esc(t('ivm.noShowBtn'))}</button></div>` : ''}`;
+}
+function renderToday(){
+  const all = candRows();
+  const wait = all.filter(r => r.seg === 'new').sort(byScore);
+  const sls = all.filter(r => r.k === 'sl' && r.seg === 'work');
+  const ivs = sls.filter(r => r.it.iv && (IV_LIVE.includes(r.it.iv.status) || r.it.iv.canAnswer))
+    .sort((a, b) => (b.it.iv.canAnswer - a.it.iv.canAnswer) || (new Date(a.it.iv.at || 0) - new Date(b.it.iv.at || 0)));
+  const calls = sls.filter(r => r.it.stage === 'contact' && !r.it.iv);
+  const hired = all.filter(r => r.k === 'sl' && r.seg === 'hired' && r.it.pl && r.it.pl.status === 'active');
+
+  const hero = wait.length
+    ? `<div class="bx td-hero"><div class="td-k"><i></i>${esc(t('td.wait'))}</div>
+        <h3>${esc(t('td.apps', { n: wait.length }))}</h3>
+        <div class="td-mini">${wait.slice(0, 3).map(rowHtml3).join('')}</div>
+        <button class="btn" data-go="new">${esc(t('td.seeAll', { n: wait.length }))}</button></div>`
+    : `<div class="bx td-hero"><div class="td-k ok"><i></i>${esc(t('td.wait'))}</div>
+        <h3>${esc(t('td.noApps'))}</h3><p>${esc(t('td.noAppsSub'))}</p>
+        <button class="btn" data-go="vac">${esc(t('td.toVacs'))}</button></div>`;
+  const sec = (title, html, more) => `<div class="gh3"><span>${esc(title)}</span>${more ? `<button data-go="${more}">${esc(t('td.all'))}</button>` : ''}</div><div class="bx">${html}</div>`;
+
+  // Balans: kontakt soni va tarif muddati (Hisob bo'limiga olib boradi)
+  const p = ME_PLAN || {};
+  const planTxt = p.key ? t('td.planTo', { p: p.key[0].toUpperCase() + p.key.slice(1), d: dShort(p.endsAt) }) : t('td.noPlan');
+  const bal = `<button class="bal3" data-go="acc"><span class="bal3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg></span>
+      <span class="cr-m"><b>${esc(t('td.bal', { n: CREDITS == null ? '—' : CREDITS }))}</b><span>${esc(planTxt)}</span></span>
+      <svg class="chev3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>`;
+
+  $('tdBody').innerHTML = hero
+    + (ivs.length ? sec(t('td.iv'), ivs.slice(0, 4).map(ivRow3).join(''), ivs.length > 4 ? 'work' : '') : '')
+    + (calls.length ? sec(t('td.call'), calls.slice(0, 4).map(rowHtml3).join(''), calls.length > 4 ? 'work' : '') : '')
+    + (hired.length ? sec(t('td.hired'), hired.slice(0, 3).map(rowHtml3).join(''), hired.length > 3 ? 'hired' : '') : '')
+    + bal;
+
+  const root = $('tdBody');
+  wireRows(root);
+  root.querySelectorAll('[data-go]').forEach(b => b.onclick = () => {
+    const g = b.dataset.go;
+    if (g === 'acc') return pickTab('tHS');
+    if (g === 'vac') return pickTab('tVC');
+    CD_SEG = g; CD_VAC = ''; pickTab('tAP');
+  });
+  wireCards(root, loadToday);                    // Keldi / Kelmadi (data-ivo)
+}
+
+// ── NOMZOD SAHIFASI ──
+const CX_IC = {
+  ok: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+  doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4M9 15l2 2 4-4"/></svg>',
+  play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l14 8-14 8z"/></svg>',
+  shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>'
+};
+const cxSec = (title, html) => `<div class="gh3"><span>${esc(title)}</span></div><div class="bx">${html}</div>`;
+const cxRow = (cls, ic, title, sub, right = '') =>
+  `<div class="cx-row"><span class="cx-ic ${cls}">${ic}</span><span class="m"><b>${esc(title)}</b>${sub ? `<span>${esc(sub)}</span>` : ''}</span>${right}</div>`;
+
+function closeCand(){
+  $('cx').classList.remove('on');
+  CX_KEY = null;
+  if (!$('vx').classList.contains('on')) document.body.classList.remove('vp-lock');
+  syncBack();
+}
+$('cxBack').onclick = closeCand;
+$('cxBody').addEventListener('scroll', () => $('cx').classList.toggle('scrolled', $('cxBody').scrollTop > 90), { passive: true });
+
+async function showCand(key){
+  const r = ROW_BY[key]; if (!r) return;
+  CX_KEY = key;
+  const c = candOf(r), it = r.it, w = whoOf(c), ph = photoOf(r);
+  const undecided = r.k === 'ap' && r.seg === 'new';
+  $('cxHT').textContent = w.title;
+  $('cx').classList.remove('scrolled'); $('cx').classList.add('on');
+  document.body.classList.add('vp-lock');
+  $('cxBody').scrollTop = 0;
+  syncBack();
+
+  const ctx = r.k === 'ap' ? t('cx.from', { v: r.vac }) : r.vac ? t('cx.forVac', { v: r.vac }) : t('cd.fromSearch');
+  const facts = [expTxt(c.experienceYears, c.experienceMonths), c.age ? t('fact.age', { n: c.age }) : '', c.location].filter(Boolean).join(' · ');
+  let html = `<div class="cx-hd"><div class="cx-av">${ph ? `<img src="${esc(ph)}" alt="">` : w.avatar}</div>
+      <h1>${esc(w.title)}</h1><p>${esc([w.sub, ctx].filter(Boolean).join(' · '))}</p>
+      <p>${esc(facts)}</p></div>`;
+
+  // Holat: tanlov elementi — bosqichlar chizig'i (Kontakt → Suhbat → Ishga olindi);
+  // ariza — moslik bali va sabablari
+  if (r.k === 'sl') {
+    ITEM_BY[it.shortlistId + ':' + it.candidateId] = it;          // ivSheet shu yerdan oladi
+    if (it.state === 'waiting') html += cxSec(t('cx.status'), `<div class="cx-tx">${esc(t('cx.hr'))} · ${esc(agoTxt(it.since))}</div>`);
+    else if (it.stage && it.stage !== 'not_fit') html += cxSec(t('cx.status'), `<div class="cd cx-st">${stepsHtml(it)}<div class="cd-box"></div></div>`);
+    else html += cxSec(t('cx.status'), `<div class="cx-tx">${esc(it.reason || it.stateLabel || '')}</div>`);
+  } else if (undecided && it.score != null) {
+    const why = (it.scoreWhy || []).slice().sort((a, b) => (b.ok === true) - (a.ok === true)).slice(0, 5);
+    const dash = (Math.max(0, Math.min(100, it.score)) / 100 * 97.4).toFixed(1);
+    html += cxSec(t('cx.match'), `<div class="cx-match">
+        <div class="cx-ring"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--th-fill)" stroke-width="4"/>
+          <circle cx="18" cy="18" r="15.5" fill="none" stroke="${it.score >= 75 ? 'var(--ok)' : it.score >= 50 ? 'var(--warn)' : 'var(--muted)'}" stroke-width="4" stroke-linecap="round" stroke-dasharray="${dash} 97.4"/></svg>
+          <b>${it.score}%</b></div>
+        <div class="cx-why">${why.map(x => `<div class="${x.ok === true ? 'cw-y' : x.ok === false ? 'cw-n' : ''}"><i>${x.ok === true ? '✓' : x.ok === false ? '!' : '·'}</i>${esc(x.t)}</div>`).join('')}</div>
+      </div>${it.screen && it.screen.waiting ? `<div class="cx-note">${esc(t('ms.wait'))}</div>` : ''}`);
+  } else if (r.seg === 'arch') {
+    html += cxSec(t('cx.status'), `<div class="cx-tx">${esc(rowLine(r)[0])}</div>`);
+  }
+
+  // Ishonch: telefon, anketa, suhbatlarga kelgani, ovozli tanishuv
+  const voiceApp = r.k === 'ap' && it.screen && it.screen.voice;
+  const trust = (c.phoneVerified ? cxRow('', CX_IC.ok, t('card.verified'), t('cx.viaTg')) : '')
+    + (c.fromAnketa ? cxRow('ib', CX_IC.doc, t('card.anketa'), t('cx.self')) : '')
+    + (c.rel && c.rel.total ? cxRow(c.rel.came === c.rel.total ? '' : 'ia', CX_IC.cal, t('rel.came', { a: c.rel.came, b: c.rel.total }), t('cx.relSub')) : '')
+    + (c.rel && c.rel.stayed ? cxRow('', CX_IC.ok, t('rel.stayed'), t('cx.relSub')) : '')
+    + (voiceApp ? `<button class="cx-row" data-voice="${esc(it.id)}"><span class="cx-ic ia">${MIC_IC}</span><span class="m"><b>${esc(t('ms.voice'))}</b><span>${it.screen.voiceDur ? mmss(it.screen.voiceDur) : ''}</span></span><span class="cx-play">${CX_IC.play}</span></button>` : '');
+  if (trust) html += cxSec(t('cx.trust'), trust);
+  html += '<div id="cxRz"></div>';
+  $('cxBody').innerHTML = html;
+
+  // Pastki tugmalar: qaror qilinmagan ariza — Rad etish / Ochish; ochiq kontakt — Yozish / Qo'ng'iroq
+  const foot = $('cxFoot');
+  const tel = c.contact && String(c.contact.phone || '').replace(/[^\d+]/g, '');
+  if (undecided) {
+    foot.innerHTML = `<div class="row3"><button class="btn s" data-rej="${esc(it.id)}">${esc(t('ap.reject'))}</button>
+        ${it.instant ? `<button class="btn" data-open="${esc(it.id)}" data-cand="${esc(r.cid)}">${IC.phone}${esc(t('ap.openContact'))}</button>`
+          : `<button class="btn" data-pick="${esc(it.id)}">${esc(t('ap.pick'))}</button>`}</div>
+      ${it.instant ? `<div class="cx-g">${CX_IC.shield}${esc(t('cx.guar'))}</div>` : it.why ? `<div class="cx-g">${esc(it.why)}</div>` : ''}`;
+    foot.classList.remove('hide');
+  } else if (w.open && (tel || c.threadId) && r.seg !== 'arch') {
+    foot.innerHTML = `<div class="row3">${c.threadId ? `<button class="btn s" data-chat="${esc(r.cid)}">${esc(t('act.write'))}</button>` : ''}
+        ${tel ? `<a class="btn" href="tel:${esc(tel)}" style="text-align:center;text-decoration:none">${IC.phone}${esc(t('act.call'))}</a>` : ''}</div>`;
+    foot.classList.remove('hide');
+  } else { foot.innerHTML = ''; foot.classList.add('hide'); }
+
+  const refresh = () => { closeCand(); loadCab(); };
+  wireApps($('cx'), refresh);
+  wireCards($('cxBody'), refresh);
+
+  // Rezyume: o'zi haqida, ish tajribasi, ma'lumotlar (kontaktgacha anonim — server)
+  let rz;
+  try { rz = await api('/api/ma/candidates/' + encodeURIComponent(r.cid)); } catch(e){ return; }
+  if (CX_KEY !== key || !$('cxRz') || !rz || typeof rz !== 'object' || Array.isArray(rz)) return;
+  const about = rz.experienceSummary || rz.summary || '';
+  const work = (rz.workHistory || []).map(x => `<div class="cx-job"><b>${esc(x.position || t('rz.pos'))}</b>
+      <span>${esc([x.company, x.period].filter(Boolean).join(' · '))}</span>${x.description ? `<p>${esc(x.description)}</p>` : ''}</div>`).join('');
+  const kv = (k, v) => v ? `<div class="cx-job"><b>${esc(v)}</b><span>${esc(t(k))}</span></div>` : '';
+  const info = kv('rz.start', startL(rz.startWhen)) + kv('d.shift', shiftL(rz.shift)) + kv('rz.salary', rz.salaryExpectation)
+    + kv('d.langs', (rz.languages || []).join(', ')) + kv('d.edu', rz.education);
+  $('cxRz').innerHTML = (about ? cxSec(t(rz.experienceSummary ? 'rz.about' : 'rz.summary'), `<div class="cx-tx">${esc(about)}</div>`) : '')
+    + (work ? cxSec(t('rz.work'), work) : '')
+    + (info ? cxSec(t('rz.info'), info) : '')
+    + (!w.open ? `<div class="cx-g" style="margin:14px 0 4px">${esc(t('rz.locked'))}</div>` : '');
 }
 
 // ══ HISOB: balans, kafolat, tariflar, to'lov, tarix ══════════
@@ -3238,20 +3632,22 @@ document.addEventListener('visibilitychange', () => {
 $('cvSend').onclick = sendMsg;
 $('cvIn').onkeydown = e => { if (e.key === 'Enter') sendMsg(); };
 // ── Tablar ──
-const TABS = [['tSL','vSL'], ['tAP','vAP'], ['tVC','vVC'], ['tMS','vMS'], ['tHS','vHS']];
+// v3 (2026-11-19): Bugun · Nomzodlar (arizalar + tanlovlar) · Vakansiya · Aloqa · Hisob
+const TABS = [['tTD','vTD'], ['tAP','vAP'], ['tVC','vVC'], ['tMS','vMS'], ['tHS','vHS']];
 function pickTab(id){
   TABS.forEach(([t,v]) => {
     $(t).classList.toggle('on', t === id);
     $(v).classList.toggle('hide', t !== id);
   });
   haptic('sel');
-  if (id === 'tAP') loadApps();
-  if (id === 'tSL') loadShortlists();
+  if ($('cx').classList.contains('on')) closeCand();
+  if (id === 'tTD') { loadToday(); window.scrollTo(0, 0); }
+  if (id === 'tAP') { loadCands(); window.scrollTo(0, 0); }
   if (id === 'tVC') loadVacancies();
   if (id === 'tMS') loadChats();
   if (id === 'tHS') { loadAccount(); window.scrollTo(0, 0); }
   // Katta sarlavha: bo'lim nomi; Vakansiyada "+ Yangi"
-  const TT = { tSL: 'tab.sl', tAP: 'tab.ap', tVC: 'tab.vc', tMS: 'tab.ms', tHS: 'tab.hs' };
+  const TT = { tTD: 'tab.td', tAP: 'tab.cd', tVC: 'tab.vc', tMS: 'tab.ms', tHS: 'tab.hs' };
   $('ltTitle').dataset.t = TT[id]; $('ltTitle').textContent = t(TT[id]);
   $('ltAct').classList.toggle('hide', id !== 'tVC');
   moveLens();
@@ -3267,7 +3663,7 @@ async function setLang(l){
   try { await api('/api/ma/lang', { method:'PATCH', body: JSON.stringify({ lang: l }) }); } catch(e){}
   loadMe();
   const on = TABS.find(([tb]) => $(tb).classList.contains('on'));
-  pickTab(on ? on[0] : 'tSL');                 // linza ham yangi yozuv kengligiga moslashadi
+  pickTab(on ? on[0] : 'tTD');                 // linza ham yangi yozuv kengligiga moslashadi
 }
 document.querySelectorAll('[data-lang]').forEach(b => { b.onclick = () => setLang(b.dataset.lang); });
 
@@ -3419,7 +3815,7 @@ $('bBackCab').onclick = backToCab;
   // Avval /me — u haqiqiy tilni (Client.lang) beradi; ro'yxatlar shu tilda chizilsin
   await loadMe();
   moveLens();                                    // til almashgan bo'lsa tab yozuvlari kengligi o'zgargan
-  loadShortlists();
+  loadToday();                                   // Bugun — bosh ekran (arizalar + tanlovlar)
   refreshUnread();
 
   // Telegram'dagi "yangi ariza" xabarining "Ko'rish" tugmasi: ?apps=<vakansiya>

@@ -188,7 +188,7 @@ router.get('/me', guard, asyncHandler(async (req, res) => {
       // revealedAt bo'yicha, holat bo'yicha EMAS: mijoz "suhbat belgilandi"
       // yoki "ishga oldim" qo'ygach holat o'zgaradi, kontakt esa ochiqligicha
       // qoladi (mijoz kabinetidagi 3c6caca tuzatishi bilan bir xil mantiq)
-      if (it.candidateId === c.id && it.revealedAt && it.state !== 'refunded') opened++;
+      if (it.candidateId === c.id && require('../services/contactView').isOpen(it)) opened++;   // ta'rif YAGONA
     }
   }
 
@@ -390,9 +390,12 @@ router.get('/vacancies', guard, asyncHandler(async (req, res) => {
   const byId = Object.fromEntries(clients.map(x => [x.id, x]));
 
   // Qaysilariga allaqachon ariza berganini belgilaymiz
+  // O'zi qaytarib olgani (reason 'withdrawn') — "ariza berilgan" emas: qayta topshira oladi
+  // (applications.submit o'sha yozuvni qayta ochadi)
   const mine = await Application.find(
-    { agencyId: c.restaurantId, candidateId: c.id }, 'vacancyId state').lean();
-  const appMap = Object.fromEntries(mine.map(a => [a.vacancyId, a.state]));
+    { agencyId: c.restaurantId, candidateId: c.id }, 'vacancyId state reason').lean();
+  const appMap = Object.fromEntries(mine.filter(a => !(a.state === 'rejected' && a.reason === 'withdrawn'))
+    .map(a => [a.vacancyId, a.state]));
 
   // Ish beruvchi reytingi (services/employerRating): "Ishchilar tasdiqlagan: maosh va'da qilinganidek"
   const rating = await require('../services/employerRating').forClients(c.restaurantId, cids);

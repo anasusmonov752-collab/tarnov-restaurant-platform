@@ -51,6 +51,11 @@ button{font-family:inherit}
 .tag.nw{background:var(--gold);color:#fff}
 .tag.wt{background:rgba(217,142,43,.14);color:#9A5B0C}
 .tag.ok{background:rgba(46,158,91,.12);color:#1E7A46}
+.tag.sc{background:rgba(37,99,235,.1);color:#1D4ED8;cursor:help}
+.tag.sc.lo{background:#F1F5FA;color:var(--muted)}
+.srt{display:flex;gap:6px;align-items:center;justify-content:flex-end;margin:-6px 0 10px;font-size:12.5px;color:var(--muted)}
+.srt button{border:1px solid var(--line,#E3E8EF);background:var(--th-surface,#fff);border-radius:8px;padding:4px 10px;font-size:12.5px;cursor:pointer;color:var(--ink)}
+.srt button.on{border-color:var(--ink);font-weight:600}
 .tag.go{background:rgba(37,99,235,.1);color:#1D4ED8}
 .tag.no{background:rgba(194,91,76,.12);color:var(--danger)}
 .acts{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px;align-items:center}
@@ -76,6 +81,7 @@ button{font-family:inherit}
 <div class="main"><div class="wrap">
   <div class="mx" id="mx"></div>
   <div class="seg" id="seg"></div>
+  <div class="srt" id="srt"></div>
   <div id="list"><div class="empty">Yuklanmoqda…</div></div>
 </div></div>
 
@@ -90,7 +96,7 @@ const ROLES = { ofitsiant:'Ofitsiant', barmen:'Barmen', xostess:'Xostess', oshpa
 const SRC = { hh:'hh.uz', anketa:'Anketa', manual:"Qo'lda", telegram:'Telegram', referral:'Tavsiya', other:'Boshqa' };
 const TABS = [['new','Yangi'], ['work','Jarayonda'], ['done','Yakunlangan'], ['all','Hammasi']];
 
-let DATA = { items: [], counts: {} }, TAB = 'new', ASK = '';   // ASK — rad etishni tasdiqlash kutilayotgan ariza
+let DATA = { items: [], counts: {} }, TAB = 'new', ASK = '', SORT = 'new';   // ASK — rad etishni tasdiqlash kutilayotgan ariza; SORT: new — yangilari oldin, fit — eng moslari oldin
 
 const initials = n => (n || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || '?';
 function ago(d){
@@ -118,7 +124,11 @@ function render(){
   $('seg').innerHTML = TABS.map(([k, l]) => `<button data-t="${k}" class="${TAB === k ? 'on' : ''}">${l}<span class="n">${c[k] || 0}</span></button>`).join('');
   $('seg').querySelectorAll('[data-t]').forEach(b => b.onclick = () => { TAB = b.dataset.t; ASK = ''; render(); });
 
+  $('srt').innerHTML = `Tartib: <button data-s="new" class="${SORT === 'new' ? 'on' : ''}">Yangilari oldin</button><button data-s="fit" class="${SORT === 'fit' ? 'on' : ''}" title="Moslik bali — mijoz Mini App'idagi bilan bir xil">Eng moslari oldin</button>`;
+  $('srt').querySelectorAll('[data-s]').forEach(b => b.onclick = () => { SORT = b.dataset.s; render(); });
+
   const rows = DATA.items.filter(x => TAB === 'all' || x.tab === TAB);
+  if (SORT === 'fit') rows.sort((a, b) => (b.score == null ? -1 : b.score) - (a.score == null ? -1 : a.score));
   if (!rows.length) {
     $('list').innerHTML = `<div class="empty">${TAB === 'new' ? 'Javob kutayotgan ariza yo\'q.' : 'Bu bo\'lim bo\'sh.'}</div>`;
     return;
@@ -150,6 +160,7 @@ function card(x){
     <div class="tags">
       ${x.unseen ? '<span class="tag nw">Ko\'rilmagan</span>' : ''}
       ${x.waitingMs ? `<span class="tag ${x.waitingMs > 864e5 ? 'wt' : ''}">${waitLabel(x.waitingMs)}</span>` : ''}
+      ${x.score != null ? `<span class="tag sc ${x.score < 60 ? 'lo' : ''}" title="${esc((x.scoreWhy || []).join(' · '))}">Moslik ${x.score}%</span>` : ''}
       <span class="tag ${x.tone === 'wait' ? '' : x.tone}">${esc(x.stageLabel)}</span>
       <span class="tag">${esc(SRC[c.source] || c.source || '')}</span>
       ${c.phoneVerifiedAt ? '<span class="tag ok">Telefon tasdiqlangan</span>' : ''}

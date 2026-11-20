@@ -151,6 +151,39 @@ router.get('/:id/credits', guard, asyncHandler(async (req, res) => {
   })));
 }));
 
+// ── Sinov mijozlarini tozalash (2026-11-20) ──
+// Nomi "sinov/test" bo'lgan, lekin isTest belgilanmagan mijozlar haqiqiy sanoqlarga,
+// qidiruvga va SLA nazoratiga kirib ketgan ("Sinov 2", "SINOV Chaykhana Navruz").
+// O'CHIRILMAYDI — isTest qo'yiladi (testMode qoidasi: sinov yozuvlari hamma joyda chetda),
+// ularning vakansiyalari va arizalari ham. { apply:false } — ro'yxat (hech narsa yozilmaydi),
+// { apply:true, ids:[...] } — faqat ko'rsatilgan id'lar (Anas tasdig'i bilan).
+router.post('/cleanup-test', guard, asyncHandler(async (req, res) => {
+  const agencyId = req.user.restaurantId;
+  const Vacancy = require('../models/Vacancy');
+  const Application = require('../models/Application');
+  const rows = await Client.find({ agencyId, isTest: { $ne: true }, name: /(^|\s)(sinov|test|тест)/i },
+    'id name status credits createdAt tgChatId').lean();
+  const ids = rows.map(c => c.id);
+  const [vacs, apps] = await Promise.all([
+    Vacancy.aggregate([{ $match: { agencyId, clientId: { $in: ids } } }, { $group: { _id: '$clientId', n: { $sum: 1 } } }]),
+    Application.aggregate([{ $match: { agencyId, clientId: { $in: ids } } }, { $group: { _id: '$clientId', n: { $sum: 1 } } }])
+  ]);
+  const vBy = Object.fromEntries(vacs.map(x => [x._id, x.n])), aBy = Object.fromEntries(apps.map(x => [x._id, x.n]));
+  const list = rows.map(c => ({ id: c.id, name: c.name, status: c.status, credits: c.credits,
+    linked: !!c.tgChatId, vacancies: vBy[c.id] || 0, applications: aBy[c.id] || 0, createdAt: c.createdAt }));
+  const b = req.body || {};
+  if (b.apply !== true) return res.json({ apply: false, found: list.length, clients: list });
+
+  const pick = (Array.isArray(b.ids) ? b.ids.map(String) : []).filter(id => ids.includes(id));
+  if (!pick.length) return res.status(400).json({ error: 'ids — tasdiqlangan mijozlar ro\'yxati kerak' });
+  const [c, v, a] = await Promise.all([
+    Client.updateMany({ agencyId, id: { $in: pick } }, { $set: { isTest: true } }),
+    Vacancy.updateMany({ agencyId, clientId: { $in: pick } }, { $set: { isTest: true } }),
+    Application.updateMany({ agencyId, clientId: { $in: pick } }, { $set: { isTest: true } })
+  ]);
+  res.json({ apply: true, clients: c.modifiedCount, vacancies: v.modifiedCount, applications: a.modifiedCount });
+}));
+
 router.post('/:id/unlink', guard, asyncHandler(async (req, res) => {
   const c = await Client.findOne({ agencyId: req.user.restaurantId, id: req.params.id });
   if (!c) return res.status(404).json({ error: 'Mijoz topilmadi' });

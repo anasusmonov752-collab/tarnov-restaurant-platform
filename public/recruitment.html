@@ -299,6 +299,19 @@ let ALL = [], FS = 'new', FR = '', Q = '', SEL = new Set();
 // Baza bitta: dublikat, qidiruv va tanlov hamma nomzod bo'yicha ishlaydi.
 const MODE = new URLSearchParams(location.search).get('src') === 'anketa' ? 'anketa' : 'base';
 const LIST_URL = '/api/recruitment?source=' + MODE;
+// Hamma nomzod — 500 talik bo'laklarda (server 1000 dan ortig'ini bir so'rovda bermaydi;
+// ilgari 1000 dan keyingilar umuman ko'rinmasdi)
+async function loadAllCands(){
+  const out = [];
+  for (let skip = 0; skip < 20000; skip += 500) {
+    const r = await fetch(`${LIST_URL}&limit=500&skip=${skip}`, { headers:{'Content-Type':'application/json'} });
+    if (r.status === 401) { location.href = '/index.html'; throw new Error('auth'); }
+    if (!r.ok) throw new Error((await r.json().catch(()=>({}))).error || 'Xato');
+    out.push(...await r.json());
+    if (r.headers.get('X-Has-More') !== '1') break;
+  }
+  return out;
+}
 const isAnk = c => c.source === 'anketa';
 // Javobsiz (contactLog.WAITING): yangi bosqichda va hali bog'lanilmagan
 const waitingFor = c => isAnk(c) && (c.status || 'new') === 'new' && !c.firstContactAt
@@ -891,7 +904,7 @@ document.getElementById('bTgInvite').onclick = async ()=>{
     const links = (r.items||[]).filter(x=>x.ok && x.link);
     toast(`${r.sent} ta tayyor${r.failed?`, ${r.failed} xato`:''}`);
     if(links.length) showLinks(links);
-    ALL = await api(LIST_URL);
+    ALL = await loadAllCands();
     SEL.clear(); render();
   }catch(e){
     document.getElementById('prog').classList.remove('on');
@@ -984,7 +997,7 @@ async function doUpload(fileList){
   if(agg.duplicates) msg += `, ${agg.duplicates} takror`;
   if(agg.failed) msg += `, ${agg.failed} xato`;
   toast(msg);
-  ALL = await api(LIST_URL);
+  ALL = await loadAllCands();
   render();
 }
 
@@ -1055,7 +1068,7 @@ document.getElementById('tgStatusBtn').onclick = async ()=>{
 (async function(){
   loadMx();
   try{
-    ALL = await api(LIST_URL);
+    ALL = await loadAllCands();
     render();
   }catch(e){
     document.getElementById('list').innerHTML = '<div class="empty">Yuklab bo\'lmadi: '+esc(e.message)+'</div>';

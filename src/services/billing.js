@@ -113,34 +113,43 @@ async function createOrder({ client, planKey, provider, invoice, auto, card }) {
  * by: payme | click | admin
  */
 async function activate(orderId, { by = 'admin', now = new Date() } = {}) {
-  const o = await Order.findOneAndUpdate({ id: orderId, status: 'pending' },
-    { $set: { status: 'paid', paidAt: now, paidBy: by } }, { new: true });
-  if (!o) {
+  // Buyurtma "to'landi" + kreditlar + tarif — BITTA tranzaksiyada (credits.withTxn). Ilgari uch
+  // alohida yozuv edi: orada server qayta ishga tushsa, to'langan buyurtma kreditsiz qolardi va
+  // provayderning qayta so'rovi "already" olib, hech qachon tuzalmasdi (2026-11-20 tekshiruvi).
+  const step = async session => {
+    const o = await Order.findOneAndUpdate({ id: orderId, status: 'pending' },
+      { $set: { status: 'paid', paidAt: now, paidBy: by } }, { new: true, session });
+    if (!o) return { o: null };
+    const plan = PL.PLANS[o.planKey];
+    const { balance } = await credits.moveIn({ agencyId: o.agencyId, clientId: o.clientId, delta: plan.contacts,
+      reason: 'purchase', note: `Tarif ${planName('uz', o.planKey)} · ${o.id.slice(0, 8)}` }, session);
+    // Faol pullik tarif bo'lsa yangi muddat uning OXIRIDAN boshlanadi —
+    // oldindan (yoki avto-yangilash bilan) to'lagan mijoz kunlarini yo'qotmaydi
+    const cur = await Client.findOne({ agencyId: o.agencyId, id: o.clientId }, 'plan').session(session).lean();
+    const cp = (cur && cur.plan) || {};
+    const from = PL.isPlan(cp.key) && !cp.expiredAt && cp.endsAt && new Date(cp.endsAt) > now ? new Date(cp.endsAt) : now;
+    await Order.updateOne({ id: o.id }, { $set: { prevPlan: { key: cp.key || '', startedAt: cp.startedAt || null, endsAt: cp.endsAt || null } } }, { session });
+    const endsAt = new Date(from.getTime() + plan.days * DAY);
+    const c = await Client.findOneAndUpdate({ agencyId: o.agencyId, id: o.clientId },
+      { $set: { 'plan.key': o.planKey, 'plan.startedAt': now, 'plan.endsAt': endsAt,
+                'plan.remindedAt': null, 'plan.expiredAt': null, 'plan.lowAt': null, 'plan.guaranteeExtendedAt': null,
+                'autoRenew.error': '' } }, { new: true, session }).lean();
+    return { o, plan, balance, endsAt, c };
+  };
+  let r;
+  try { r = await credits.withTxn(step); }
+  catch (e) {
+    // Tranzaksiyasiz bazada (replika emas) yarim yo'lda yiqilsa — buyurtma qaytadi (eski xatti-harakat)
+    await Order.updateOne({ id: orderId, status: 'paid', paidAt: now }, { $set: { status: 'pending', paidAt: null, paidBy: '' } }).catch(() => {});
+    throw e;
+  }
+  if (!r.o) {
     const ex = await Order.findOne({ id: orderId }).lean();
     if (!ex) fail('Buyurtma topilmadi', 404);
     if (ex.status === 'paid') return { already: true, order: ex };
     fail('Buyurtma bekor qilingan');
   }
-  const plan = PL.PLANS[o.planKey];
-  let balance;
-  try {
-    ({ balance } = await credits.purchase({ agencyId: o.agencyId, clientId: o.clientId, amount: plan.contacts,
-      note: `Tarif ${planName('uz', o.planKey)} · ${o.id.slice(0, 8)}` }));
-  } catch (e) {
-    await Order.updateOne({ id: o.id }, { $set: { status: 'pending', paidAt: null, paidBy: '' } });
-    throw e;
-  }
-  // Faol pullik tarif bo'lsa yangi muddat uning OXIRIDAN boshlanadi —
-  // oldindan (yoki avto-yangilash bilan) to'lagan mijoz kunlarini yo'qotmaydi
-  const cur = await Client.findOne({ agencyId: o.agencyId, id: o.clientId }, 'plan').lean();
-  const cp = (cur && cur.plan) || {};
-  const from = PL.isPlan(cp.key) && !cp.expiredAt && cp.endsAt && new Date(cp.endsAt) > now ? new Date(cp.endsAt) : now;
-  await Order.updateOne({ id: o.id }, { $set: { prevPlan: { key: cp.key || '', startedAt: cp.startedAt || null, endsAt: cp.endsAt || null } } });
-  const endsAt = new Date(from.getTime() + plan.days * DAY);
-  const c = await Client.findOneAndUpdate({ agencyId: o.agencyId, id: o.clientId },
-    { $set: { 'plan.key': o.planKey, 'plan.startedAt': now, 'plan.endsAt': endsAt,
-              'plan.remindedAt': null, 'plan.expiredAt': null, 'plan.lowAt': null, 'plan.guaranteeExtendedAt': null,
-              'autoRenew.error': '' } }, { new: true }).lean();
+  const { o, plan, balance, endsAt, c } = r;
 
   if (c) {
     const L = langOf(c);
@@ -215,11 +224,11 @@ async function guaranteeProgress(c) {
 }
 const guaranteeMet = g => !g || ((!g.needCandidates || g.candidates >= g.needCandidates) && (!g.needHire || g.hired >= g.needHire));
 
-// ── Kam balans: kontakt ochilib 2 yoki kam qolsa — bir marta taklif (Max — cheksiz, yozilmaydi) ──
+// ── Kam balans: kontakt ochilib 2 yoki kam qolsa — bir marta taklif (Max ham: unda ham 100 ta chegara) ──
 const LOW_AT = 2;
 async function lowBalance({ agencyId, clientId, balance, appBase }) {
   if (balance > LOW_AT) return false;
-  const c = await Client.findOneAndUpdate({ agencyId, id: clientId, 'plan.lowAt': null, 'plan.key': { $ne: 'max' } },
+  const c = await Client.findOneAndUpdate({ agencyId, id: clientId, 'plan.lowAt': null },
     { $set: { 'plan.lowAt': new Date() } }, { new: true }).lean();
   if (!c || !c.tgChatId) return false;
   const L = langOf(c);
@@ -362,8 +371,11 @@ async function tick({ now = new Date() } = {}) {
       const g = await guaranteeProgress(c);
       if (!guaranteeMet(g)) {
         const endsAt = new Date(new Date(c.plan.endsAt).getTime() + plan.days * DAY);
-        await Client.updateOne({ agencyId: c.agencyId, id: c.id },
+        // Atomik: shu orada to'lov (activate) yangi muddat yozgan bo'lsa — tegmaymiz
+        const ext = await Client.findOneAndUpdate({ agencyId: c.agencyId, id: c.id, 'plan.endsAt': c.plan.endsAt,
+          'plan.expiredAt': null, 'plan.guaranteeExtendedAt': null },
           { $set: { 'plan.endsAt': endsAt, 'plan.guaranteeExtendedAt': now, 'plan.remindedAt': null } });
+        if (!ext) continue;
         const L = langOf(c);
         const got = g.needHire ? I18N.t(L, 'bill.gHire', { n: g.hired }) : I18N.t(L, 'bill.gCand', { n: g.candidates, need: g.needCandidates });
         await say(c.tgChatId, I18N.t(L, 'bill.extended', { plan: planName(L, c.plan.key), got, date: dmy(endsAt) }));
@@ -375,15 +387,25 @@ async function tick({ now = new Date() } = {}) {
         continue;
       }
     }
+    // Avval ATOMIK egallaymiz (muddat o'zgarmagan bo'lsa): shu orada to'lov yangi tarif yozgan
+    // bo'lsa — eski hisob bilan yangi tarifni "tugagan" qilib, kreditlarini yondirmaymiz;
+    // ikki parallel tick ham ikki xabar yubormaydi
+    const own = await Client.findOneAndUpdate({ agencyId: c.agencyId, id: c.id, 'plan.endsAt': c.plan.endsAt, 'plan.expiredAt': null },
+      { $set: { 'plan.expiredAt': now } }, { new: true }).lean();
+    if (!own) continue;
     let burned = 0;
-    if (c.credits > 0) {
+    // Sinovda faqat sinov kreditlari yonadi — panel orqali sotib olingan kreditlar qoladi
+    const cap = c.plan.key === 'trial' ? PL.TRIAL.contacts : Infinity;
+    for (let i = 0; i < 2 && !burned; i++) {
+      const fresh = i ? await Client.findOne({ agencyId: c.agencyId, id: c.id }, 'credits').lean() : own;
+      const n = Math.min((fresh && fresh.credits) || 0, cap);
+      if (n <= 0) break;
       try {
-        await credits.move({ agencyId: c.agencyId, clientId: c.id, delta: -c.credits, reason: 'expire',
+        await credits.move({ agencyId: c.agencyId, clientId: c.id, delta: -n, reason: 'expire',
           note: `Tarif muddati tugadi (${planName('uz', c.plan.key)})` });
-        burned = c.credits;
-      } catch (e) { console.error('[BILL] yondirish:', e.message); }
+        burned = n;
+      } catch (e) { console.error('[BILL] yondirish:', e.message); }       // shu orada kontakt ochildi — qayta o'qib
     }
-    await Client.updateOne({ agencyId: c.agencyId, id: c.id }, { $set: { 'plan.expiredAt': now } });
     out.expired++; out.burned += burned;
     const L = langOf(c);
     await say(c.tgChatId, I18N.t(L, 'bill.expired', { plan: planName(L, c.plan.key) }));
@@ -391,7 +413,8 @@ async function tick({ now = new Date() } = {}) {
   const soon = await Client.find({ 'plan.endsAt': { $gt: now, $lte: new Date(now.getTime() + PL.REMIND_DAYS * DAY) },
     'plan.remindedAt': null, 'plan.key': { $nin: ['', null] } }).lean();
   for (const c of soon) {
-    await Client.updateOne({ agencyId: c.agencyId, id: c.id }, { $set: { 'plan.remindedAt': now } });
+    const own = await Client.findOneAndUpdate({ agencyId: c.agencyId, id: c.id, 'plan.remindedAt': null }, { $set: { 'plan.remindedAt': now } });
+    if (!own) continue;
     const L = langOf(c);
     await say(c.tgChatId, I18N.t(L, 'bill.remind', { plan: planName(L, c.plan.key), date: dmy(c.plan.endsAt), n: c.credits }));
     out.reminded++;

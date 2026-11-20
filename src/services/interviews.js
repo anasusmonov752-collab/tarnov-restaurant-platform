@@ -203,19 +203,30 @@ async function offer({ agencyId, clientId, shortlistId, candidateId, mode = 'pic
   const P = prefsOf(client.toObject());
   const addr = String(address || P.address || client.address || '').trim().slice(0, 200);
 
+  // Band vaqtlar — shu nomzodning almashtiriladigan suhbatisiz (u bo'shaydi)
+  const busy = (await Interview.find({ clientId, status: { $in: ['scheduled', 'confirmed'] }, at: { $gte: now },
+    $nor: [{ shortlistId, candidateId }] }, 'at').lean()).map(x => x.at);
+  const doc = { id: newId(), agencyId, clientId, candidateId, shortlistId, vacancyId: sl.vacancyId || '',
+    mode, address: addr, offeredAt: now, createdAt: now, updatedAt: now };
+
+  // Yangi vaqt AVVAL tekshiriladi, eski suhbat KEYIN bekor qilinadi: aks holda noto'g'ri vaqt
+  // (10 daqiqadan keyin) xato bersa ham belgilangan suhbat jimgina bekor bo'lib qolardi
+  let d = null, slots = null;
+  if (mode === 'fixed') {
+    d = at ? new Date(at) : null;
+    if (!d || isNaN(d.getTime())) throw new Error('Suhbat sanasi noto\'g\'ri');
+    if (d.getTime() < now.getTime() + 30 * MIN) throw new Error('Suhbat vaqti kamida 30 daqiqadan keyin bo\'lsin');
+  } else {
+    slots = makeSlots(P, now, busy);
+    if (!slots.length) throw new Error('Yaqin 7 kunda bo\'sh vaqt yo\'q — suhbat kunlari yoki soatlarini kengaytiring');
+  }
+
   // Shu nomzod bilan oldingi faol taklif bekor (yangi vaqt bilan almashtiriladi)
   await Interview.updateMany({ agencyId, shortlistId, candidateId, status: { $in: ACTIVE } },
     { $set: { status: 'cancelled', updatedAt: now } });
 
-  const busy = (await Interview.find({ clientId, status: { $in: ['scheduled', 'confirmed'] }, at: { $gte: now } }, 'at').lean()).map(x => x.at);
-  const doc = { id: newId(), agencyId, clientId, candidateId, shortlistId, vacancyId: sl.vacancyId || '',
-    mode, address: addr, offeredAt: now, createdAt: now, updatedAt: now };
-
   const lang = langCa(cand);
   if (mode === 'fixed') {
-    const d = at ? new Date(at) : null;
-    if (!d || isNaN(d.getTime())) throw new Error('Suhbat sanasi noto\'g\'ri');
-    if (d.getTime() < now.getTime() + 30 * MIN) throw new Error('Suhbat vaqti kamida 30 daqiqadan keyin bo\'lsin');
     Object.assign(doc, { status: 'scheduled', at: d, scheduledAt: now });
     const iv = await Interview.create(doc);
     await markItem(iv, d);
@@ -225,8 +236,6 @@ async function offer({ agencyId, clientId, shortlistId, candidateId, mode = 'pic
     return view(iv);
   }
 
-  const slots = makeSlots(P, now, busy);
-  if (!slots.length) throw new Error('Yaqin 7 kunda bo\'sh vaqt yo\'q — suhbat kunlari yoki soatlarini kengaytiring');
   Object.assign(doc, { status: 'offered', slots });
   const iv = await Interview.create(doc);
   await send(cand.tgChatId, slotsText(iv, client, lang), slotsKeyboard(iv, lang));
@@ -255,8 +264,11 @@ async function refundNoShow(iv, why) {
     await adminSay(iv.agencyId, `↩️ ${client.name}: ${candName(cand)} — ${why}. Kredit qaytdi${r.credited ? '' : ' (yechilmagan edi)'}.`);
     return r;
   } catch (e) {
-    // Qaytarib bo'lmadi (masalan allaqachon ishga olingan) — bayroqni tushiramiz
-    await Interview.updateOne({ _id: iv._id }, { $set: { refundedAt: null } });
+    // Qaytarib bo'lmadi — bayroqni tushiramiz. Doimiy sabab (ishga olingan, kontakt ochilmagan) —
+    // qayta urinilmaydi; vaqtinchalik xato — tick 8-qadami 3 martagacha qayta urinadi
+    const permanent = /ishga olingan|ochilmagan|topilmadi/i.test(e.message || '');
+    await Interview.updateOne({ _id: iv._id }, { $set: { refundedAt: null, refundError: String(e.message || '').slice(0, 200) },
+      $inc: { refundTries: permanent ? 9 : 1 } });
     console.error('[IV] kredit qaytmadi:', e.message);
     return null;
   }
@@ -430,7 +442,9 @@ async function settle(iv, appBase = '') {
   }
   if (iv.clientSaid === 'noshow' && iv.candSaid === 'went') {
     const up = await Interview.findOneAndUpdate({ _id: iv._id, status: { $ne: 'conflict' } }, { $set: { status: 'conflict', updatedAt: new Date() } });
-    if (up) await adminSay(iv.agencyId, `⚠️ ${client.name}: «${candName(cand)} kelmadi» dedi, nomzod esa «bordim» dedi. Kredit qaytmadi — tekshiring.`);
+    // Kredit mijoz «kelmadi» deganda qaytgan bo'lishi mumkin — xabar HAQIQIY holatni aytadi
+    if (up) await adminSay(iv.agencyId, `⚠️ ${client.name}: «${candName(cand)} kelmadi» dedi, nomzod esa «bordim» dedi. ` +
+      (iv.refundedAt ? 'Kredit mijozga QAYTARILGAN — nomzod rost aytgan bo\'lsa, panelda kreditni qayta yeching.' : 'Kredit qaytmadi — tekshiring.'));
     return 'conflict';
   }
   if (iv.clientSaid === 'noshow' || iv.candSaid === 'missed') {
@@ -524,9 +538,9 @@ async function tick(now = new Date(), { appBase = process.env.APP_URL || '' } = 
     out.warn++;
   }
 
-  // 6. Suhbatdan 1 soat keyin — ikki tomondan "keldimi?"
-  for (const iv of await Interview.find({ status: { $in: ['scheduled', 'confirmed'] }, askedAt: null,
-    at: { $lte: new Date(t - H) } }).limit(50).lean()) {
+  // 6. Suhbatdan 1 soat keyin — ikki tomondan "keldimi?" (kunduzi: kechki suhbat — ertalab so'raladi)
+  for (const iv of daytime(now) ? await Interview.find({ status: { $in: ['scheduled', 'confirmed'] }, askedAt: null,
+    at: { $lte: new Date(t - H) } }).limit(50).lean() : []) {
     const up = await claim({ _id: iv._id, askedAt: null }, { askedAt: now });
     if (!up) continue;
     const { client, cand } = await partiesOf(up);
@@ -550,6 +564,13 @@ async function tick(now = new Date(), { appBase = process.env.APP_URL || '' } = 
         kb([[{ text: T(Lc, 'ivx.cCame'), callback_data: cb('cc', up) }, { text: T(Lc, 'ivx.cNoShow'), callback_data: cb('cn', up) }]]));
       out.reasked++;
     }
+  }
+
+  // 8. Yiqilgan kredit qaytarish (tarmoq, tranzaksiya to'qnashuvi) — qayta urinish, ko'pi bilan 3 marta.
+  //    "Kelmagan nomzod uchun to'lamaysiz" va'dasi bir martalik xato bilan buzilmasin.
+  for (const iv of await Interview.find({ status: { $in: ['expired', 'noshow', 'declined'] }, refundedAt: null,
+    refundTries: { $gt: 0, $lt: 3 }, updatedAt: { $gte: new Date(t - 7 * 24 * H) } }).limit(20).lean()) {
+    await refundNoShow(iv, 'qayta urinish');
   }
   return out;
 }

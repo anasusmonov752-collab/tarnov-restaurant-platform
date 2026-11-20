@@ -85,7 +85,12 @@ const OPS = {
       await Order.updateOne({ id: o.id, uzumState: 'CREATED' }, { $set: { uzumState: 'FAILED' } });
       return fail(b, ERR.txCanceled);
     }
-    await billing.activate(o.id, { by: 'uzum' });
+    // Shu orada boshqa yo'l bilan to'langan yoki bekor qilingan — Uzum puli yechilmasin (ikki marta to'lov)
+    const act = await billing.activate(o.id, { by: 'uzum' }).catch(e => ({ error: e }));
+    if (act.error || (act.already && act.order && act.order.paidBy !== 'uzum')) {
+      await Order.updateOne({ id: o.id, uzumState: 'CREATED' }, { $set: { uzumState: 'FAILED' } });
+      return fail(b, act.error ? ERR.txCanceled : (ERR.paid || ERR.txCanceled));
+    }
     await Order.updateOne({ id: o.id, uzumState: 'CREATED' }, { $set: { uzumState: 'CONFIRMED', uzumConfirmTime: now } });
     const fresh = await Order.findOne({ id: o.id }).lean();
     return ok({ serviceId: b.serviceId, transId: b.transId, status: 'CONFIRMED', confirmTime: fresh.uzumConfirmTime,

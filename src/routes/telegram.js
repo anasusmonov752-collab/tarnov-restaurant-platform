@@ -130,10 +130,21 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
       await require('../services/voiceIntake').afterContact(chatId, msg.from, publicBase(req)).catch(e => console.error('[VI] kontakt:', e.message));
       return;
     }
-    // Ovozli anketa ochiq bo'lsa — ovoz, matn va rasm shu yerga (services/voiceIntake)
+    // Botni bloklagan (yoki /stop degan) nomzod qaytib yozdi — demak unga yozish mumkin.
+    // Aks holda "Profilim" 403 berardi va /start uni yangi odamdek qayta anketaga solardi.
+    if (text !== '/stop') {
+      await Candidate.updateMany({ tgChatId: chatId, tgState: { $in: ['blocked', 'stopped'] } },
+        { $set: { tgState: 'linked' } }).catch(e => console.error('[TG] qayta ulash:', e.message));
+    }
+    // Ovozli anketa ochiq bo'lsa — ovoz, matn va rasm shu yerga (services/voiceIntake).
+    // Mijoz va admin chati (test rejimida emas) bu yerga TUSHMAYDI: yarim qolgan sinov ovozli
+    // anketasi admin javobini yoki mijoz xabarini "rezyume" deb yutib yuborardi.
     if (!text.startsWith('/') && (voice || text || msg.photo)) {
+      const isClient = await Client.exists({ tgChatId: chatId, status: 'active' });
+      const isAdmin = !isClient && await Restaurant.exists({ 'telegram.adminChatId': chatId, active: true })
+        && (await testMode.modeOf(chatId)) === 'admin';
       const vi = require('../services/voiceIntake');
-      if (await vi.onMessage({ msg, chatId, appBase: publicBase(req) })) return;
+      if (!isClient && !isAdmin && await vi.onMessage({ msg, chatId, appBase: publicBase(req) })) return;
     }
     if (!text && !voice) return;
     const token = tg.platformToken();
@@ -157,6 +168,10 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
           await tg.sendMessage(token, chatId, T(tgLang, 'bot.linkExpired'));
           return;
         }
+        // Bitta Telegram — bitta mijoz: shu akkaunt boshqa mijozga ulangan bo'lsa u yerdan uziladi
+        // (aks holda Mini App tasodifiy birini ochadi; Client.tgChatId noyob indeks)
+        await Client.updateMany({ tgChatId: String(chatId), _id: { $ne: cl._id } },
+          { $set: { tgChatId: '', tgUsername: '' } });
         cl.tgChatId    = chatId;
         cl.tgUsername  = (msg.from && msg.from.username) || '';
         cl.tgLang      = (msg.from && msg.from.language_code) || '';
@@ -312,7 +327,7 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
       // Nomzodga O'Z tugmasi. Bu chat ilgari mijoz bo'lgan bo'lsa,
       // unda "Kabinet" tugmasi qolgan bo'ladi va mijoz kabinetini
       // ochadi — rol o'zgarganda tugma ham o'zgarishi shart.
-      await tg.setChatMenuButton(token, chatId, 'Profilim',
+      await tg.setChatMenuButton(token, chatId, T(I18N.resolve(cand.lang, cand.tgLang), 'ank.menu'),
         `${publicBase(req)}/profil.html`).catch(e =>
           console.error('[TG] nomzod menyu tugmasi qo\'yilmadi:', e.message));
 
@@ -345,7 +360,7 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
       if (cand) {
         cand.tgState = 'stopped';
         await cand.save();
-        await tg.sendMessage(token, chatId, 'Siz yozishmadan chiqdingiz. Boshqa xabar yubormaymiz.');
+        await tg.sendMessage(token, chatId, T(I18N.resolve(cand.lang, cand.tgLang), 'bot.stopped'));
       }
       return;
     }
@@ -443,7 +458,7 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
     // Tugmani har xabarda qayta qo'yamiz: kabinet qo'shilishidan oldin
     // ulangan nomzodlarda u yo'q, chat ilgari mijoz bo'lgan bo'lsa esa
     // noto'g'ri kabinetga olib borardi.
-    await tg.setChatMenuButton(token, chatId, 'Profilim',
+    await tg.setChatMenuButton(token, chatId, T(I18N.resolve(cand.lang, cand.tgLang), 'ank.menu'),
       `${publicBase(req)}/profil.html`).catch(() => {});
 
     // /til — nomzod ham tilni almashtira oladi (mijozdagi bilan bir xil tugmalar)
@@ -510,7 +525,7 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
           // Javob HAR DOIM ketadi. Avval `if (out.text)` edi — model bo'sh
           // matn qaytarsa nomzod jim qolardi va "bot o'lgan" deb o'ylardi.
           await tg.sendMessage(token, chatId,
-            out.text || 'Qabul qildim, HR javob beradi.');
+            out.text || T(I18N.resolve(cand.lang, cand.tgLang), 'bot.gotIt'));
           if (cand.prefersVoice && out.text) {
             await require('../services/tts').speak(chatId, out.text, I18N.resolve(cand.lang, cand.tgLang)).catch(() => {});
           }
@@ -526,7 +541,7 @@ router.post('/webhook/:secret', webhookLimiter, asyncHandler(async (req, res) =>
           // uzatiladi (pastda), nomzodga esa shuni aytamiz.
           console.error('[TG] nomzod agenti xatosi:', e.message);
           await tg.sendMessage(token, chatId,
-            'Xabaringizni HR\'ga uzatdim, tez orada javob beradi.').catch(() => {});
+            T(I18N.resolve(cand.lang, cand.tgLang), 'bot.forwarded')).catch(() => {});
           if (rest.telegram && rest.telegram.adminChatId) {
             await tg.sendMessage(token, rest.telegram.adminChatId,
               `⚠️ AI javob bera olmadi (${relay.displayName(cand)}): ${e.message}`).catch(() => {});
@@ -579,11 +594,11 @@ async function sendTestMenu(token, chatId, mode) {
 async function applyTestMenu(token, chatId, mode, out, appBase) {
   try {
     if (mode === 'client' || mode === 'real') return await setMenu(token, chatId, langOf(out.client, null), appBase);
-    if (mode === 'candidate') return await tg.setChatMenuButton(token, chatId, 'Profilim', `${appBase}/profil.html`);
+    if (mode === 'candidate') return await tg.setChatMenuButton(token, chatId, T('uz', 'ank.menu'), `${appBase}/profil.html`);
     const cl = await Client.findOne({ tgChatId: chatId });
     if (cl) return await setMenu(token, chatId, langOf(cl, null), appBase);
     const cand = await Candidate.findOne({ tgChatId: chatId });
-    if (cand) return await tg.setChatMenuButton(token, chatId, 'Profilim', `${appBase}/profil.html`);
+    if (cand) return await tg.setChatMenuButton(token, chatId, T(I18N.resolve(cand.lang, cand.tgLang), 'ank.menu'), `${appBase}/profil.html`);
     await tg.resetChatMenuButton(token, chatId);
   } catch (e) { console.error('[TEST] menyu tugmasi:', e.message); }
 }
@@ -697,6 +712,28 @@ async function startSurvey(msg, chatId, ank, appBase) {
   const vacancyId = v ? v.id : '';
   // Admin test rejimida (nomzod) to'ldirilgan anketa — sinov: nomzodi isTest
   const isTest = (await testMode.modeOf(tgUserId)) === 'candidate';
+
+  // Profili TAYYOR nomzod (shu agentlikda, Telegram ulangan, ism va to'g'ri raqam bor) kanal
+  // postidagi havolani bossa — butun anketani qayta to'ldirmaydi (finalize profilini ustidan
+  // yozardi ham): vakansiya + bir bosishda ariza (firstTouch.inviteApply — kabinet qoidasi)
+  if (v) {
+    const known = await Candidate.findOne({ restaurantId: v.agencyId, tgChatId: chatId, tgState: 'linked' }).lean();
+    if (known && String(known.fullName || '').trim() && require('../services/applyReveal').validPhone(known.phone || '')) {
+      const L = I18N.resolve(known.lang, known.tgLang || (msg.from && msg.from.language_code));
+      const meta = [v.location, vac.salaryText(v, L)].filter(Boolean).join(' · ');
+      const first = String((msg.from && msg.from.first_name) || '').trim().slice(0, 30);
+      await tg.sendMessage(token, chatId, [
+        T(L, 'ank.hookHi', { name: first ? ', ' + escHtml(first) : '' }), '',
+        T(L, 'ank.hookVac', { v: escHtml(vac.titleFor(v, L)), meta: meta ? '\n' + escHtml(meta) : '' }), '',
+        T(L, 'ft.vKnown')
+      ].join('\n').replace(/\n{3,}/g, '\n\n'), { parse_mode: 'HTML', reply_markup: { inline_keyboard: [
+        [{ text: T(L, 'ft.vApply1'), callback_data: 'ft:ap:' + v.id }],
+        [{ text: T(L, 'ank.botProfile'), web_app: { url: `${appBase}/profil.html` } }]
+      ] } });
+      track('view', { agencyId: v.agencyId, tgUserId, ref: v.id, channel: ank.channel || 'bot', name: msg.from && msg.from.first_name, isTest });
+      return;
+    }
+  }
   let r;
   if (!vacancyId) {
     // Vakansiyasiz: bitta odamga BITTA ochiq yozuv — chala qolgani davom etadi, javobsizi
@@ -971,13 +1008,30 @@ function profileCard(c) {
 // Ikki oila: nomzod o'z profili ustida ('cp'/'cn') va agentlik tanlov
 // ustida ('r:'/'n:'). Birinchisida id kerak emas — tugma nomzodning
 // O'Z chatida turadi, ya'ni chat uni aniqlaydi.
+// Qobiq: ichida biror DB chaqiruvi yiqilsa, answerCallbackQuery chaqirilmay tugma Telegramda
+// cheksiz aylanib qolardi. Javob berilmagan bo'lsa — xato matni (foydalanuvchi tilida).
 async function handleCallback(cq, appBase) {
+  const st = { answered: false };
+  try { await handleCallbackInner(cq, appBase, st); }
+  catch (e) {
+    console.error('[TG] callback:', (cq && cq.data) || '', e.message);
+    if (!st.answered) {
+      const L = I18N.fromTelegram(cq.from && cq.from.language_code);
+      await tg.answerCallback(tg.platformToken(), cq.id, I18N.errText ? I18N.errText(L, e.message) : T(L, 'common.error'), true).catch(() => {});
+    }
+    throw e;            // tashqi catch (alert) ham ko'rsin
+  }
+}
+
+async function handleCallbackInner(cq, appBase, st) {
   const token = tg.platformToken();
   const chatId = cq.message && cq.message.chat && String(cq.message.chat.id);
   const msgId = cq.message && cq.message.message_id;
 
-  const done = (text, alert = false) =>
-    tg.answerCallback(token, cq.id, text, alert).catch(() => {});
+  const done = (text, alert = false) => {
+    st.answered = true;
+    return tg.answerCallback(token, cq.id, text, alert).catch(() => {});
+  };
 
   if (!chatId) return;
   const data = String(cq.data || '');

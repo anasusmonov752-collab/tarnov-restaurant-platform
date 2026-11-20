@@ -24,6 +24,16 @@ router.post('/reminders', asyncHandler(async (req, res) => {
   if (!process.env.CRON_SECRET) return res.status(503).json({ error: 'CRON_SECRET sozlanmagan' });
   if (!secretOk(req)) return res.status(401).json({ error: 'Ruxsat yo\'q' });
   const dry = !!(req.body && req.body.dry);
+  // Bir vaqtda bittasi: curl --retry 120 s dan uzoq ishlagan chaqiruvni qayta yuborsa,
+  // ikkinchisi ishlamaydi (eslatma va tarif xabarlari takrorlanmasin)
+  if (!dry && busySince && Date.now() - busySince < 15 * 60e3) return res.json({ busy: true });
+  if (!dry) busySince = Date.now();
+  try { res.json(await runCron(req, dry)); }
+  finally { if (!dry) busySince = 0; }
+}));
+
+let busySince = 0;
+async function runCron(req, dry) {
   const r = await reminders.run({ appBase: publicBase(req), dry });
   // Suhbat eslatmalari — asosan server ichidagi taymer (server.js), bu zaxira
   if (!dry) {
@@ -35,7 +45,7 @@ router.post('/reminders', asyncHandler(async (req, res) => {
     try { r.billing = await require('../services/billing').tick(); }
     catch (e) { r.billing = { error: e.message }; }
   }
-  res.json(r);
-}));
+  return r;
+}
 
 module.exports = router;

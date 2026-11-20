@@ -305,6 +305,31 @@ async function translateRu(src, agencyId) {
   return out;
 }
 
-module.exports = { clean, full, forCandidate, salaryText, payoutText, perkLabels, titleFor, isStale, guessRole,
+/**
+ * Ruscha nusxasi bo'sh maydonlarni AI bilan to'ldiradi va SAQLAYDI (mijoz Mini App'i — unda
+ * ruscha forma yo'q: menejer ikki tilda yozmaydi, rus tilidagi nomzod esa o'zbekcha o'qimasin).
+ * Qo'lda yozilgan ruscha (panel) USTIDAN YOZILMAYDI — faqat bo'sh maydon. AI band/xato — jim
+ * (o'zbekcha ko'rinadi, keyingi tahrirda yana urinadi). Fonda chaqiriladi, javobni kutmaydi.
+ */
+async function fillRu(v) {
+  try {
+    const ru = cleanRu(v.ru || {});
+    const need = [...Object.keys(RU_TEXT).filter(k => String(v[k] || '').trim() && !ru[k]),
+                  ...RU_LIST.filter(k => lines(v[k]).length && !ru[k].length)];
+    if (!need.length) return false;
+    const tr = await translateRu(v, v.agencyId);
+    if (!tr) return false;
+    for (const k of need) ru[k] = tr[k];
+    const Vacancy = require('../models/Vacancy');
+    // updatedAt tegilmaydi; shu orada boshqa tahrir bo'lsa — faqat ruscha qism
+    await Vacancy.updateOne({ agencyId: v.agencyId, id: v.id }, { $set: { ru } });
+    return true;
+  } catch (e) {
+    console.error("[VAC] ruscha tarjima bo'lmadi:", e.message);
+    return false;
+  }
+}
+
+module.exports = { clean, full, forCandidate, fillRu, salaryText, payoutText, perkLabels, titleFor, isStale, guessRole,
   tx, hasRu, cleanRu, translateRu, RU_TEXT, RU_LIST,
   VALID_STATUS, SHIFTS, PERIODS, PAYOUTS, STALE_DAYS };

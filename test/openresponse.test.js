@@ -35,7 +35,7 @@ const mine = () => M.SurveyResponse.find({ agencyId: A, tgUserId: '77' }).lean()
 test('story havolasi -> lavozim: o\'sha yozuv lavozim anketasiga o\'tadi, kanal "tg" qoladi', async () => {
   const r0 = await survey.openResponse({ agencyId: A, tgUserId: '77', chatId: '77', surveyId: def.id, channel: 'tg', refBy: 'c9' });
   assert.equal(r0.channel, 'tg');
-  await ft.candidateRole({ agencyId: A, role: 'xostess', lang: 'ru', tgUserId: '77', chatId: '77', appBase: 'https://x', name: 'Aziza' });
+  await ft.candidateRole({ agencyId: A, role: 'xostess', lang: 'ru', tgUserId: '77', chatId: '77', appBase: 'https://x', name: 'Aziza', chosenLang: 'ru' });
   await tick();
   const rows = await mine();
   assert.equal(rows.length, 1, 'ikkinchi yozuv ochilmadi');

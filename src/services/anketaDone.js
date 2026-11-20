@@ -31,9 +31,11 @@ async function afterFinalize(r, out, { appBase, lang, via = 'anketa' }) {
     const chat = r.chatId || r.tgUserId;
     await tg.setChatMenuButton(token, chat, I18N.t(lang, 'ank.menu'), `${appBase}/profil.html`)
       .catch(e => console.error('[ANKETA] menyu tugmasi:', e.message));
-    const nApplied = out.vacancy ? 0 : (out.appliedTo || []).length;
+    // Vakansiya havolasidan kelgan ham ARIZA bergan — matn buni aytadi (ovozli yo'lda boshqa
+    // "ariza ketdi" ekrani yo'q). Ariza bo'lsa xulosa gap tugmaga mos: "Arizalarim", ishlar emas.
+    const nApplied = !out.applied ? 0 : ((out.appliedTo || []).length || (out.vacancy ? 1 : 0));
     await tg.sendMessage(token, chat,
-      I18N.t(lang, 'ank.botThanks2', { name: (c.fullName || '').split(' ')[0] || '',
+      I18N.t(lang, nApplied ? 'ank.botThanksA' : 'ank.botThanks2', { name: (c.fullName || '').split(' ')[0] || '',
         jobs: nApplied ? I18N.t(lang, 'ank.botApplied', { n: nApplied })
           : matches ? I18N.t(lang, 'ank.botThanksJobs', { n: matches }) : '' })
         // Rasmsiz yuborgan ("Keyinroq qo'shaman") — eslatma, kabinetda 1 daqiqa

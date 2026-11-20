@@ -1,3 +1,5 @@
+// Parol ochiq repoda turmasin — muhitdan: TARNOV_ADMIN_PASSWORD=... node iiko_upload.js
+if (!process.env.TARNOV_ADMIN_PASSWORD) { console.error('TARNOV_ADMIN_PASSWORD sozlanmagan'); process.exit(1); }
 // IIKO menyusini platformaga yuklash
 const https = require('https');
 const http = require('http');
@@ -32,7 +34,7 @@ function request(opts, data) {
 let cookie = '';
 
 async function login() {
-  const body = JSON.stringify({ loginType: 'restaurant', email: 'admin@tarnov.uz', password: 'anas2024' });
+  const body = JSON.stringify({ loginType: 'restaurant', email: 'admin@tarnov.uz', password: process.env.TARNOV_ADMIN_PASSWORD });
   const res = await request({
     hostname: 'tarnov-restaurant-platform.onrender.com',
     path: '/api/auth/login',

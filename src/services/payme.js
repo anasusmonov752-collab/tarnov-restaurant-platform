@@ -115,7 +115,13 @@ const METHODS = {
     if (o.paymeState === 2) return { result: { transaction: o.id, perform_time: o.paymePerformTime, state: 2 } };
     if (o.paymeState !== 1) return err('noPerform');
     if (now - created(o) > TIMEOUT) { await cancelExpired(o, now); return err('noPerform'); }
-    await billing.activate(o.id, { by: 'payme' });
+    // Buyurtma shu orada BOSHQA yo'l bilan to'langan (Click/Uzum/karta/admin) — Payme puli
+    // yechilmasin: ikki marta to'lov bo'lardi, keyingi Cancel esa haqiqiy to'lovni qaytarardi
+    const act = await billing.activate(o.id, { by: 'payme' }).catch(e => ({ error: e }));
+    if (act.error || (act.already && act.order && act.order.paidBy !== 'payme')) {
+      await Order.updateOne({ id: o.id, paymeState: 1 }, { $set: { paymeState: -1, paymeCancelTime: now, paymeReason: 5 } });
+      return err('noPerform');
+    }
     await Order.updateOne({ id: o.id, paymeState: 1 }, { $set: { paymeState: 2, paymePerformTime: now } });
     const fresh = await Order.findOne({ id: o.id }).lean();
     return { result: { transaction: o.id, perform_time: fresh.paymePerformTime, state: 2 } };

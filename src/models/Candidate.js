@@ -188,6 +188,10 @@ const CandidateSchema = new mongoose.Schema({
 CandidateSchema.index({ restaurantId: 1, createdAt: -1 });
 // Manba bo'yicha bo'limlar (Anketadan / hh.uz bazasi)
 CandidateSchema.index({ restaurantId: 1, source: 1, createdAt: -1 });
+// Panel yon menyusi sanoqlari (har sahifada, agency/today): isTest indeksda bo'lmasa har nomzod
+// hujjati (ichida PDF — fileData) o'qilardi; endi sanoq faqat indeksdan (COUNT_SCAN)
+CandidateSchema.index({ restaurantId: 1, isTest: 1, createdAt: -1 });
+CandidateSchema.index({ restaurantId: 1, source: 1, isTest: 1, createdAt: -1 });
 CandidateSchema.index({ restaurantId: 1, id: 1 }, { unique: true });
 CandidateSchema.index({ refCode: 1 }, { unique: true, sparse: true });   // do'st tavsiyasi havolasi
 // Deep link tokenini yechish (sparse — ko'pchilikda bo'sh)
@@ -208,9 +212,20 @@ CandidateSchema.add({
   phoneKey: { type: String, default: '' },
   textHash: { type: String, default: '' }
 });
+// Kutilayotgan maosh RAQAM bo'lib (so'm, pastki chegara) — qidiruvdagi "maosh N gacha" filtri
+// uchun. Matn (salaryExpectation) asosiy, bu undan hisoblanadi (matchScore.parseMoney bilan
+// bir xil qoida). Dollardagisi — null: so'm bilan solishtirilmaydi.
+CandidateSchema.add({ salaryMin: { type: Number, default: null } });
+const salaryMinOf = s => {
+  if (!s || /(\$|usd|dollar|доллар|у\.е)/i.test(s)) return null;
+  const n = require('../services/matchScore').parseMoney(s);
+  return n && n >= 3e5 && n <= 2e8 ? n : null;
+};
 CandidateSchema.pre('save', function () {
   this.phoneKey = phoneKey(this.phone);
+  if (this.isNew || this.isModified('salaryExpectation')) this.salaryMin = salaryMinOf(this.salaryExpectation);
 });
+CandidateSchema.statics.salaryMinOf = salaryMinOf;
 CandidateSchema.index({ restaurantId: 1, phoneKey: 1 });
 CandidateSchema.index({ restaurantId: 1, textHash: 1 });
 

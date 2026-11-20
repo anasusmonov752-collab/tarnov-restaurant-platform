@@ -1332,7 +1332,8 @@ async function api(path, opt){
   }, opt));
   PT = r.headers.get('X-Photo-Token') || PT;
   const d = await r.json().catch(()=>({}));
-  if(!r.ok) throw new Error(d.error || t('common.error'));    // server xatoni mijoz tilida beradi
+  // server xatoni mijoz tilida beradi; javob tanasi ham qoladi (noCredits — tariflarga yo'l)
+  if(!r.ok) throw Object.assign(new Error(d.error || t('common.error')), { data: d, status: r.status });
   return d;
 }
 
@@ -1634,6 +1635,11 @@ function stepsHtml(it){
 // ── Suhbatga chaqirish oynasi ──
 // Nomzod Telegramda bo'lsa — bot vaqtlarni o'zi kelishadi (services/interviews);
 // bo'lmasa — eski usul: mijoz vaqtni qo'lda yozadi.
+// datetime-local "min" — hozirdan 30 daqiqa keyin (server shu qoidani tekshiradi), mahalliy vaqtda
+function ivMin(){
+  const d = new Date(Date.now() + 30 * 60e3 - new Date().getTimezoneOffset() * 60e3);
+  return d.toISOString().slice(0, 16);
+}
 async function ivSheet(it, refresh){
   sheetEnter('iv:' + it.shortlistId + ':' + it.candidateId, () => ivSheet(it, refresh));
   const title = whoOf(it).title;
@@ -1641,10 +1647,10 @@ async function ivSheet(it, refresh){
 
   if (!it.tg) {
     openSheet(t('ivm.title'), `<div class="hint" style="margin:2px 0 10px">${esc(t('ivm.noTg'))}</div>
-      <div class="fl"><label>${esc(t('ivm.when'))}</label><input id="ivAt" type="datetime-local"></div>
+      <div class="fl"><label>${esc(t('ivm.when'))}</label><input id="ivAt" type="datetime-local" min="${ivMin()}"></div>
       <button class="btn" id="ivGo" style="width:100%;margin-top:14px">${esc(t('common.save'))}</button>`);
     $('ivGo').onclick = async () => {
-      const v = $('ivAt').value; if (!v) return;
+      const v = $('ivAt').value; if (!v) return showMsg(t('ivm.whenReq'));
       $('ivGo').disabled = true;
       try { await decide(it.shortlistId, it.candidateId, { state:'interview', interviewAt: new Date(v).toISOString() }); closeSheet(); refresh(); }
       catch(e){ showMsg(e.message); $('ivGo').disabled = false; }
@@ -1660,7 +1666,7 @@ async function ivSheet(it, refresh){
       <button class="btn ghost" id="ivCx" style="width:100%;margin-top:8px">${esc(t('ivm.cancel'))}</button>`);
     $('ivRe').onclick = () => ivSheet(Object.assign({}, it, { _resched: true }), refresh);
     $('ivCx').onclick = async () => {
-      if (!confirm(t('ivm.cancelQ'))) return;
+      if (!(await askConfirm(t('ivm.cancelQ')))) return;
       $('ivCx').disabled = true;
       try { await api('/api/ma/interviews/' + encodeURIComponent(iv.id) + '/cancel', { method:'POST', body:'{}' }); closeSheet(); refresh(); }
       catch(e){ showMsg(e.message); $('ivCx').disabled = false; }
@@ -1690,7 +1696,7 @@ async function ivSheet(it, refresh){
       <div class="hint">${esc(t('ivm.saved'))}</div>
     </div>
     <div id="ivFix" class="hide">
-      <div class="fl"><label>${esc(t('ivm.when'))}</label><input id="ivAt" type="datetime-local"></div>
+      <div class="fl"><label>${esc(t('ivm.when'))}</label><input id="ivAt" type="datetime-local" min="${ivMin()}"></div>
     </div>
     <div class="fl"><label>${esc(t('ivm.addr'))}</label><input id="ivAddr" maxlength="200" value="${esc(P.address)}" placeholder="${esc(t('ivm.addrPh'))}"></div>
     <button class="btn" id="ivGo" style="width:100%;margin-top:16px">${esc(t('ivm.send'))}</button>`;
@@ -1708,7 +1714,7 @@ async function ivSheet(it, refresh){
       if (!days.length) return showMsg(t('ivm.daysReq'));
       body.prefs = { days, from: $('ivFrom').value, to: $('ivTo').value };
     } else {
-      const v = $('ivAt').value; if (!v) return;
+      const v = $('ivAt').value; if (!v) return showMsg(t('ivm.whenReq'));
       body.at = new Date(v).toISOString();
     }
     $('ivGo').disabled = true; $('ivGo').textContent = t('common.saving');
@@ -1882,7 +1888,7 @@ function wireCards(root, refresh){
 
   // Ishga olindi — butun tizimning yakuniy ko'rsatkichi
   root.querySelectorAll('[data-hire]').forEach(b => b.onclick = async () => {
-    if (!confirm(t('hire.confirm'))) return;
+    if (!(await askConfirm(t('hire.confirm')))) return;
     b.disabled = true;
     try { await decide(b.dataset.sl, b.dataset.hire, { state:'hired' }); refresh(); }
     catch(e){ showMsg(e.message); b.disabled = false; }
@@ -1905,18 +1911,6 @@ function wireCards(root, refresh){
 
 // Kredit harakati sababi -> t('crr.<sabab>'); notanish sabab o'zicha
 const crReason = r => ['purchase', 'bonus', 'reveal', 'refund', 'adjust', 'expire', 'payrefund'].includes(r) ? t('crr.' + r) : r;
-
-async function loadCredits(){
-  try{
-    const rows = await api('/api/ma/credits');
-    if (!rows.length) { $('crList').innerHTML = `<div class="msg">${esc(t('cr.none'))}</div>`; return; }
-    $('crList').innerHTML = rows.map(r => `<div class="le">
-      <div class="dl ${r.delta>0?'p':'m'}">${r.delta>0?'+':''}${r.delta}</div>
-      <div class="rr">${esc(crReason(r.reason))}<i>${dt(r.createdAt)}${r.note ? ' · ' + esc(r.note) : ''}</i></div>
-      <div class="ba">${r.balanceAfter}</div>
-    </div>`).join('');
-  }catch(e){ $('crList').innerHTML = `<div class="msg">${esc(e.message)}</div>`; }
-}
 
 $('bChat').onclick = () => { if (TG) TG.close(); };
 
@@ -1951,7 +1945,8 @@ function syncBack(){
       // Oyna yopilganda tugmani yashiramiz — lekin qidiruvda nomzod ochiq bo'lsa, u uniki
       const inDetail = !$('searchMode').classList.contains('hide') && cur >= 0;
       const inVac = !$('cabMode').classList.contains('hide') && ($('vx').classList.contains('on') || $('cx').classList.contains('on') || $('sx').classList.contains('on'));
-      if ($('sheet').classList.contains('on') || inDetail || inVac) TG.BackButton.show(); else TG.BackButton.hide();
+      const inChat = !$('cv').classList.contains('hide');
+      if ($('sheet').classList.contains('on') || inDetail || inVac || inChat) TG.BackButton.show(); else TG.BackButton.hide();
     }
   } catch(e){}
 }
@@ -1968,6 +1963,7 @@ function onTgBack(){
   // Avval ochiq rasm (th-viewer) yopiladi — ilova yoki oyna emas
   if (window.thViewer && thViewer.consumeBack()) return;
   if ($('sheet').classList.contains('on')) { sheetBack(); return; }
+  if (!$('cv').classList.contains('hide')) { closeChatView(); return; }
   if (!$('searchMode').classList.contains('hide') && cur >= 0) { renderList(); return; }
   if (!$('cabMode').classList.contains('hide') && $('cx').classList.contains('on')) { closeCand(); return; }
   if (!$('cabMode').classList.contains('hide') && $('sx').classList.contains('on')) { closeSx(); return; }
@@ -2189,13 +2185,14 @@ function vacMenu(id, vObj){
   $('shB').querySelectorAll('[data-m]').forEach(b => b.onclick = async () => {
     const m = b.dataset.m;
     if (m === 'edit') { vacForm(v); return; }
-    if (m === 'close' && !confirm(t('m.closeConfirm'))) return;
+    if (m === 'close' && !(await askConfirm(t('m.closeConfirm')))) return;
     const body = m === 'list' ? { listed: true } : m === 'unlist' ? { listed: false }
                : m === 'close' ? { status: 'closed' } : { status: 'open' };
     b.disabled = true;
     try {
       await api('/api/ma/vacancies/' + encodeURIComponent(id), { method:'PATCH', body: JSON.stringify(body) });
       closeSheet(); haptic(); loadVacancies();
+      if (VX_ID === id && $('vx').classList.contains('on')) showVacancy(id);   // ochiq sahifa eskirmasin ("Ochiq" — yopilgandan keyin)
     } catch(e){ showMsg(e.message); b.disabled = false; }
   });
 }
@@ -2427,6 +2424,7 @@ function vacForm(v){
       if (v) await api('/api/ma/vacancies/' + v.id, { method:'PATCH', body: JSON.stringify(body) });
       else   await api('/api/ma/vacancies', { method:'POST', body: JSON.stringify(body) });
       closeSheet(); loadVacancies();
+      if (v && VX_ID === v.id && $('vx').classList.contains('on')) showVacancy(v.id);   // sahifada yangi sarlavha/maosh
     } catch(e){ showMsg(e.message); $('fSave').disabled = false; $('fSave').textContent = t('common.retry'); }
   };
 }
@@ -2473,6 +2471,7 @@ async function openFromApp(b, refresh){
   } catch(e){
     showMsg(e.message);
     b.disabled = false; b.innerHTML = was;
+    if (e.data && e.data.noCredits) { CREDITS = 0; showPlans(); return; }   // kredit tugagan — darhol tariflar
     refresh();                                            // holat o'zgargan bo'lishi mumkin
   }
 }
@@ -2568,12 +2567,13 @@ function wireApps(root, refresh){
     catch(e){ showMsg(e.message); b.disabled = false; }
   });
   root.querySelectorAll('[data-rej]').forEach(b => b.onclick = async () => {
+    // Bir bosishda qaytarib bo'lmaydigan amal (nomzodga xabar ketadi) — tasdiq
+    if (!(await askConfirm(t('ap.rejectQ')))) return;
     b.disabled = true;
     try { await api(`/api/ma/applications/${b.dataset.rej}/reject`, { method:'POST', body: JSON.stringify({}) });
       refresh(); }
     catch(e){ showMsg(e.message); b.disabled = false; }
   });
-  // Server arizalarni ochilganda 'seen' qildi — nuqta va qizil belgilar o'chsin
   refreshUnread();
 }
 
@@ -2601,14 +2601,8 @@ async function showApps(id){
 // Har kuni ishlatiladi — alohida bo'lim (Balans o'rnida; balans tepadagi
 // raqamni bosganda ochiladi). Vakansiya bo'yicha guruhlangan; filtr:
 // "Kutilmoqda" (qaror qilinmagan) va "Hammasi".
-let AP_ROWS = [], APF = 'wait';
+let AP_ROWS = [];
 const appWaiting = it => it.state !== 'shortlisted' && it.state !== 'rejected';
-
-// v3: Arizalar tabi yo'q — ma'lumot "Nomzodlar" va "Bugun"da (renderCab)
-async function loadApps(){
-  try { AP_ROWS = await api('/api/ma/applications'); renderCab(); }
-  catch(e){ $('apList').innerHTML = `<div class="msg">${esc(e.message)}</div>`; }
-}
 
 // ══════════════════════════════════════════════════════════
 //  MIJOZ v3 (2026-11-19): BUGUN · NOMZODLAR · NOMZOD SAHIFASI
@@ -2617,7 +2611,7 @@ async function loadApps(){
 // nomzod qaysi yo'l bilan kelgani emas, HOLATI muhim. Ro'yxat faqat
 // ko'rsatadi; qaror va tafsilot — nomzod sahifasida (showCand). Amallar
 // mavjud ishlovchilardan o'tadi (wireApps, wireCards) — mantiq takrorlanmaydi.
-let CD_SEG = '', CD_VAC = '', CX_KEY = null, ME_PLAN = null;
+let CD_SEG = '', CD_VAC = '', CD_VAC_ID = '', CX_KEY = null, ME_PLAN = null;
 const ROW_BY = {};
 const CD_SEGS = ['new', 'work', 'hired', 'arch'];
 const hoursAgo = s => (Date.now() - new Date(s).getTime()) / 36e5;
@@ -2709,6 +2703,12 @@ async function loadCands(){
 function renderCands(){
   const all = candRows();
   const vacs = [...new Set(all.map(r => r.vac).filter(Boolean))];
+  // ?apps=<vakansiya id> (bot "yangi ariza" tugmasi) — shu vakansiya filtri, bir marta
+  if (CD_VAC_ID) {
+    const hit = all.find(r => r.it && (r.it.vacancyId === CD_VAC_ID || r.it.shortlistVacancyId === CD_VAC_ID));
+    if (hit) { CD_VAC = hit.vac; CD_SEG = 'new'; }
+    CD_VAC_ID = '';
+  }
   if (CD_VAC && !vacs.includes(CD_VAC)) CD_VAC = '';
   const rows = all.filter(r => !CD_VAC || r.vac === CD_VAC);
   const cnt = Object.fromEntries(CD_SEGS.map(s => [s, rows.filter(r => r.seg === s).length]));
@@ -2780,7 +2780,7 @@ function renderToday(){
 
   // Balans: kontakt soni va tarif muddati (Hisob bo'limiga olib boradi)
   const p = ME_PLAN || {};
-  const planTxt = p.key ? t('td.planTo', { p: p.key[0].toUpperCase() + p.key.slice(1), d: dShort(p.endsAt) }) : t('td.noPlan');
+  const planTxt = p.key ? t('td.planTo', { p: t('plan.' + p.key), d: dShort(p.endsAt) }) : t('td.noPlan');
   const bal = `<button class="bal3" data-go="acc"><span class="bal3-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg></span>
       <span class="cr-m"><b>${esc(t('td.bal', { n: CREDITS == null ? '—' : CREDITS }))}</b><span>${esc(planTxt)}</span></span>
       <svg class="chev3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>`;
@@ -2868,6 +2868,11 @@ async function showCand(key){
   CX_KEY = key;
   const c = candOf(r), it = r.it, w = whoOf(c), ph = photoOf(r);
   const undecided = r.k === 'ap' && r.seg === 'new';
+  // Ariza KO'RILDI — faqat shu yerda (ro'yxat yuklanishi emas): nomzod "Ko'rildi" ni ko'radi
+  if (r.k === 'ap' && it && it.isNew && it.id) {
+    it.isNew = false;
+    api('/api/ma/applications/' + encodeURIComponent(it.id) + '/seen', { method: 'POST' }).catch(() => {});
+  }
   $('cxHT').textContent = w.title;
   $('cx').classList.remove('scrolled'); $('cx').classList.add('on');
   document.body.classList.add('vp-lock');
@@ -3214,7 +3219,6 @@ function openExt(url){
 }
 
 // Eski chaqiruvlar (tepadagi balans, "kredit yo'q", bot havolasi) — bo'limga
-function showCredits(){ closeSheet(); pickTab('tHS'); }
 function showPlans(){
   closeSheet(); pickTab('tHS');
   let n = 0;
@@ -3311,7 +3315,7 @@ function guaranteeCard(g){
 function planDetail(p, cur){
   const g = p.guarantee || {};
   const isCur = cur && cur.key === p.key;
-  const per = p.unlimited ? t('ac.perMax') : t('ac.per', { sum: fmtSum(Math.round(p.price / p.contacts / 100) * 100) });
+  const per = p.personalHr ? t('ac.perMax', { n: p.contacts }) : t('ac.per', { sum: fmtSum(Math.round(p.price / p.contacts / 100) * 100) });
   const feats = [
     g.candidates ? t('pl.gCand', { n: g.candidates }) : '',
     g.hire ? t('pl.gHire') : '',
@@ -3326,7 +3330,7 @@ function planDetail(p, cur){
     <div class="ac-price">${fmtSum(p.price)}<small>${esc(t('pl.sum'))} / ${esc(t('pl.days', { n: p.days }))}</small></div>
     <div class="ac-per">${esc(per)}</div>
     <div class="ac-kpi">
-      <div><b>${p.unlimited ? '∞' : p.contacts}</b><span>${esc(t('ac.kC'))}</span></div>
+      <div><b>${p.contacts}</b><span>${esc(t('ac.kC'))}</span></div>
       <div><b>${p.days}</b><span>${esc(t('ac.kD'))}</span></div>
       <div><b>${g.hire || g.candidates || '—'}</b><span>${esc(t(g.hire ? 'ac.kH' : 'ac.kG'))}</span></div>
     </div>
@@ -3402,7 +3406,6 @@ function wireAccount(){
     else if (a === 'help') openSupport();
   });
 }
-function wireBuy(){ $('hsBody').querySelectorAll('[data-buy]').forEach(b => b.onclick = () => choosePay(b.dataset.buy)); }
 
 const ST_CLS = { paid: 'ok', checking: 'info', waiting: 'warn', rejected: 'bad', canceled: 'mute', refunded: 'mute' };
 async function drawHistory(){
@@ -3465,7 +3468,7 @@ function choosePay(key){
   // Faol pullik tarif bo'lsa yangi muddat uning oxiridan (billing.activate qoidasi)
   const from = c.key && c.key !== 'trial' && c.endsAt && new Date(c.endsAt) > new Date() ? new Date(c.endsAt) : new Date();
   const to = new Date(from.getTime() + p.days * DAY_MS);
-  const add = p.unlimited ? p.contacts : p.contacts;
+  const add = p.contacts;
   const methods = [];
   if (d.card) methods.push({ k: 'card', title: t('pl.card'), sub: t('pl.cardD'), tag: t('ck.fast') });
   for (const k of d.providers || []) if (PM[k]) methods.push({ k, title: k === 'uzum' ? 'Uzum Bank' : PM[k].txt, sub: t(k === 'uzum' ? 'pl.uzumD' : 'pl.afterPay') });
@@ -3476,11 +3479,11 @@ function choosePay(key){
   openSheet(t('ck.title'), `
     <div class="ck-sum">
       <div class="ck-h"><span class="ck-badge ${key}">${esc(t('plan.' + key)).slice(0, 1)}</span>
-        <div><b>${esc(t('ck.plan', { plan: t('plan.' + key) }))}</b><small>${esc(t('pl.days', { n: p.days }))} · ${esc(p.unlimited ? t('pl.unlimited') : t('pl.contacts', { n: p.contacts }))}</small></div></div>
+        <div><b>${esc(t('ck.plan', { plan: t('plan.' + key) }))}</b><small>${esc(t('pl.days', { n: p.days }))} · ${esc(t('pl.contacts', { n: p.contacts }))}</small></div></div>
       <div class="ck-rows">
         <div><span>${esc(t('ck.valid'))}</span><b>${esc(dmyL(from))} — ${esc(dmyL(to))}</b></div>
-        <div><span>${esc(t('ck.contacts'))}</span><b>${p.unlimited ? esc(t('pl.unlimited')) : '+' + p.contacts}</b></div>
-        ${!p.unlimited && d.credits > 0 ? `<div><span>${esc(t('ck.balance'))}</span><b>${d.credits} → ${d.credits + add}</b></div>` : ''}
+        <div><span>${esc(t('ck.contacts'))}</span><b>+${p.contacts}</b></div>
+        ${d.credits > 0 ? `<div><span>${esc(t('ck.balance'))}</span><b>${d.credits} → ${d.credits + add}</b></div>` : ''}
         ${g.candidates || g.hire ? `<div><span>${esc(t('ck.guar'))}</span><b>${esc(g.hire ? t('ck.gHire') : t('ck.gCand', { n: g.candidates }))}</b></div>` : ''}
       </div>
       <div class="ck-total"><span>${esc(t('ck.total'))}</span><b>${fmtSum(p.price)} ${esc(t('pl.sum'))}</b></div>
@@ -3834,6 +3837,7 @@ async function openChat(c){
   $('cvBody').innerHTML = '<div class="ch-empty">' + esc(t('common.loading')) + '</div>';
   MSG_SIG = '';
   $('cv').classList.remove('hide');
+  syncBack();                                  // Telegram "Orqaga" — suhbatdan ro'yxatga (ilovadan chiqib ketmasin)
   await reloadMsgs();
   c.unread = 0;
   drawChats();
@@ -3987,7 +3991,8 @@ function refreshUnread(){
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshUnread(); });
 
-$('cvBack').onclick = () => { $('cv').classList.add('hide'); CUR = null; refreshUnread(); };
+function closeChatView(){ $('cv').classList.add('hide'); CUR = null; refreshUnread(); syncBack(); }
+$('cvBack').onclick = closeChatView;
 
 // ── Jonli chat ──
 // Mini App'ga server o'zi xabar yubora olmaydi (push faqat bot orqali,
@@ -4021,6 +4026,9 @@ function pickTab(id){
   haptic('sel');
   if ($('cx').classList.contains('on')) closeCand();
   if ($('sx').classList.contains('on')) closeSx();
+  // Vakansiya sahifasi (z 65) chat (z 60) va bo'limlar USTIDA qolardi: "Yozish", "Yordam",
+  // to'lovdan keyin Hisob — hech narsa ko'rinmasdi
+  if ($('vx').classList.contains('on')) closeVacancy();
   if (id === 'tTD') { loadToday(); window.scrollTo(0, 0); }
   if (id === 'tAP') { loadCands(); window.scrollTo(0, 0); }
   if (id === 'tVC') loadVacancies();
@@ -4141,7 +4149,10 @@ window.addEventListener('resize', moveLens);
 // Telegram push tugmasi miniapp.html#chat ga olib keladi — Aloqa tabini ochamiz.
 // Element tekshiriladi: INIT bo'lmasa sahifa body'ni almashtiradi va
 // tablar yo'qoladi — shunda pickTab null ustida yiqilardi.
-if (location.hash === '#chat') setTimeout(() => { if ($('tMS')) pickTab('tMS'); }, 0);
+// Telegram ishga tushirish parametrlarini HASH'ga qo'yadi (CLAUDE.md tuzog'i) — #chat yo'qolishi
+// mumkin; asosiy yo'l ?tab=chat (services/chat.js), #chat — eski xabarlardagi havolalar uchun.
+if (location.hash.startsWith('#chat') || new URLSearchParams(location.search).get('tab') === 'chat')
+  setTimeout(() => { if ($('tMS')) pickTab('tMS'); }, 0);
 
 // ── Qidiruv natijasini ochish ──
 // Ikki joydan: botdagi "Ko'rish" (?s=) va kabinetdagi "Mos nomzodlar".
@@ -4202,7 +4213,7 @@ $('bBackCab').onclick = backToCab;
 
   // Telegram'dagi "yangi ariza" xabarining "Ko'rish" tugmasi: ?apps=<vakansiya>
   const APPS = new URLSearchParams(location.search).get('apps');
-  if (APPS) pickTab('tAP');                     // Arizalar bo'limi
+  if (APPS) { CD_VAC_ID = APPS; pickTab('tAP'); }   // Nomzodlar — shu vakansiya arizalari
   // Bot "kredit kam qoldi" xabarining tugmasi: ?open=plans
   // Botdagi to'lov xabari / eslatma: ?open=pay&o=<buyurtma>
   const QS = new URLSearchParams(location.search);

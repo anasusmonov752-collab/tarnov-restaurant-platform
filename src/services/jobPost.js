@@ -109,15 +109,35 @@ async function post(v, { appBase = process.env.APP_URL || '', now = new Date() }
 
   const client = await Client.findOne({ agencyId: v.agencyId, id: v.clientId }).lean();
   const rating = (await require('./employerRating').forClients(v.agencyId, [v.clientId]))[v.clientId];
+  let msg;
   try {
-    const msg = await tg.sendMessage(tg.platformToken(), chat, postText(claimed, client, { employerOk: !!(rating && rating.ok) }), {
+    msg = await tg.sendMessage(tg.platformToken(), chat, postText(claimed, client, { employerOk: !!(rating && rating.ok) }), {
       parse_mode: 'HTML',
       reply_markup: { inline_keyboard: [[{ text: T('uz', 'jp.btn'), url: await botLink(claimed) }]] }
     });
+  } catch (e) {
+    // Joylanmadi — bayroq qaytadi, lekin avtomatik qayta urinish 6 soatdan keyin (tick):
+    // bot kanal admini bo'lmasa har 2 daqiqada bir xil 3 ta vakansiya urinib, qolganlarini
+    // to'sib qo'yardi. Agentlikka bir marta xabar.
+    const first = !(v.channelPost && v.channelPost.failedAt);
+    await Vacancy.updateOne({ agencyId: v.agencyId, id: v.id },
+      { $set: { 'channelPost.postedAt': null, 'channelPost.failedAt': now, 'channelPost.error': String(e.message || '').slice(0, 200) } });
+    console.error('[JP] kanalga chiqmadi:', e.message);
+    if (first && e.fatal) {
+      const ag = await Restaurant.findOne({ id: v.agencyId }, 'telegram').lean();
+      const adm = ag && ag.telegram && ag.telegram.adminChatId;
+      if (adm) await tg.sendMessage(tg.platformToken(), adm,
+        `⚠️ Kanalga e'lon chiqmadi: ${v.title}\n${e.message}\n\nBot kanalda admin ekanini tekshiring (panel → Vakansiyalar → Kanal).`).catch(() => {});
+    }
+    return { ok: false, error: 'Kanalga joylab bo\'lmadi: ' + e.message };
+  }
+  // Post KANALDA — bundan keyingi xato bayroqni qaytarmaydi (aks holda e'lon ikki marta chiqardi)
+  try {
     const username = msg && msg.chat && msg.chat.username;
     const url = username ? `https://t.me/${username}/${msg.message_id}` : '';
     await Vacancy.updateOne({ agencyId: v.agencyId, id: v.id },
-      { $set: { 'channelPost.messageId': msg.message_id, 'channelPost.url': url, 'channelPost.chatId': String((msg.chat && msg.chat.id) || chat) } });
+      { $set: { 'channelPost.messageId': msg.message_id, 'channelPost.url': url, 'channelPost.chatId': String((msg.chat && msg.chat.id) || chat),
+                'channelPost.failedAt': null, 'channelPost.error': '' } });
 
     const alerted = await alertCandidates(claimed, { appBase, now });
     // Mijozga — vakansiyasi kanalga chiqdi va nechta nomzodga yozildi
@@ -129,10 +149,8 @@ async function post(v, { appBase = process.env.APP_URL || '', now = new Date() }
     }
     return { ok: true, url, alerted };
   } catch (e) {
-    // Joylanmadi — bayroqni qaytaramiz, keyingi tick qayta urinadi
-    await Vacancy.updateOne({ agencyId: v.agencyId, id: v.id }, { $set: { 'channelPost.postedAt': null } });
-    console.error('[JP] kanalga chiqmadi:', e.message);
-    return { ok: false, error: 'Kanalga joylab bo\'lmadi: ' + e.message };
+    console.error('[JP] e\'londan keyingi qadam:', e.message);
+    return { ok: true, url: '', alerted: 0 };
   }
 }
 
@@ -212,7 +230,11 @@ async function tick(now = new Date(), { appBase = process.env.APP_URL || '' } = 
   for (const ag of ags) {
     const since = ag.telegram.jobChannelSince;
     const rows = await Vacancy.find({ agencyId: ag.id, status: 'open', listed: { $ne: false }, isTest: { $ne: true },
-      'channelPost.postedAt': null, $or: [{ createdAt: { $gte: since } }, { confirmedAt: { $gte: since } }] })
+      'channelPost.postedAt': null,
+      $and: [
+        { $or: [{ createdAt: { $gte: since } }, { confirmedAt: { $gte: since } }] },
+        { $or: [{ 'channelPost.failedAt': null }, { 'channelPost.failedAt': { $lte: new Date(now.getTime() - 6 * 36e5) } }] }
+      ] })
       .sort({ createdAt: 1 }).limit(PER_TICK - out.posted).lean();
     for (const v of rows) {
       const r = await post(v, { appBase, now });

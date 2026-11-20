@@ -105,7 +105,9 @@ Panel umumiy qismi: `js/th-shell.js` (menyu, sanoqlar), `css/th.css` + `css/th-a
 ## Tuzoqlar (har biri bir marta jonli buzilgan)
 
 - **Mini App oq ekran:** bitta nom ikki marta `const`/`function` (`IC` band — `AIC` ishlating); izohda yopuvchi
-  script tegi; shell bilan HTML tahriri (6-qoida). Katta HTML/JS — `Write`/`Edit`.
+  script tegi; shell bilan HTML tahriri (6-qoida). Katta HTML/JS — `Write`/`Edit`. `test/htmlsyntax.test.js`
+  har sahifa skriptini CI'da kompilyatsiya qiladi. Git Bash heredoc teskari chiziqni yeydi (`\'` -> `'`,
+  `\n` -> yangi qator) — skriptni `Write` bilan faylga yozing.
 - **Telegram ichida `alert()` ko'rinmaydi** — tugma jim qoladi. Mini App'da `showMsg`/`TG.showAlert`, profilda `fail()`.
 - Telegram launch parametrlarini hash'ga qo'yadi — Mini App havolasida `?param=`, hash emas.
 - **Bot rasmini URL bilan bermang** (Telegram Render'dan yuklay olmaydi) — `tg.sendLocalPhoto`/`editLocalPhoto`.
@@ -130,20 +132,21 @@ ovoz: `AISHA_API_KEY` (VoiceLab `vlk_`), `VOICELAB_VOICE_UZ/_RU`, `AI_VOICE`, hh
 `HH_CLIENT_SECRET`, `HH_REDIRECT_URI`, `HH_USER_AGENT`, Verifix: `VERIFIX_CLIENT_ID/_SECRET`, boshqa:
 `JOB_CHANNEL`, `REPLACE_GUARANTEE`, `REFERRAL_REWARD`. Lokal — `.env` (gitignore), shakli `.env.example`.
 
-## Ochiq ishlar (2026-11-19)
+## Ochiq ishlar (2026-11-20)
 
 **Telegramda HALI SINALMAGAN** (kod jonli, haqiqiy akkaunt bilan bosilmagan): `/test` -> haqiqiy mijoz (Tarnov),
 Arizalarim yangi kartasi, suhbat kelishish (ikki akkaunt kerak), prescreen va moslik bali, ishga olingandan
 keyingi kuzatuv, o'sish funksiyalari (smena bozori, do'st taklifi, birinchi kun), anketa ish tajribasi ekrani,
-nomzod kabinetida ish tarixi tahriri, ruscha TTS ovozi.
+nomzod kabinetida ish tarixi tahriri, ruscha TTS ovozi; mijoz Mini App v3 (iPhone'da ovoz, mikrofon bilan
+qidiruv), yangi anketa oqimi, SLA xabari, kanal havolasidan bir bosishda ariza.
 **Anas qiladi:** jobChannel kanalini ulash (bot — kanal admini, panel Vakansiyalar -> "Kanal"; Tarnov
 vakansiyalarida "Kanalga joylash"); Payme/Click/Uzum merchant shartnoma; haqiqiy kartani panelga kiritish;
 Verifix'da OAuth foydalanuvchisiga "Вакансии" ruxsati; ochilib ketgan eski kalitlarni bekor qilish (GitHub
-token, bot tokeni, `admin@tarnov.uz` paroli); Render Starter ($7) — pulli mijozlardan oldin.
-**Kod:** sinov mijozlarini tozalash ("Sinov 2", "SINOV Chaykhana Navruz" faol va `isTest` emas); arizaga
-24 soat SLA ogohlantirishi; mijoz Mini App vakansiya formasida ruscha maydonlar; panel `arizalar.html`da
-moslik bali; maosh filtri (maosh matn); Client `tgChatId` noyobligi; nomzodlar ro'yxati/kanban
-birlashtirish, 1000+ sahifalash; `'ca'` suhbat turi uchun unikal indeks.
+token, bot tokeni, `admin@tarnov.uz` paroli, **MongoDB Atlas foydalanuvchi paroli va `JWT_SECRET` — ochiq git
+tarixida bor**); Mijozlar -> "Sinov mijozlari" tugmasi bilan sinov mijozlarini belgilash; Render Starter ($7)
+— pulli mijozlardan oldin.
+**Kod:** Candidate `fileData`/`photo` ni alohida kolleksiyaga (Atlas 512 MB); eski `#searchMode` kodini
+olib tashlash (qurilmada sinab); nomzodlar ro'yxati/kanban birlashtirish. 2026-11-20 tekshiruvi — `docs/tarix.md`.
 Huquqiy: hh nomzodlari roziliksiz mijozga ko'rinadi, oferta loyihasi yuristga, Gemini bepul tarifi.
 
 Qo'shimcha: `docs/restoone.md` (RestoOne arxitekturasi, dizayn, ofitsiant test tizimi), `docs/claude-skills.md`

@@ -3,7 +3,8 @@ const bcrypt = require('bcryptjs');
 
 async function connectDB() {
   const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/tarnov';
-  await mongoose.connect(uri);
+  // Osilib qolgan so'rov abadiy kutmasin (taymer qo'riqchisi bilan birga): 45 s dan keyin xato
+  await mongoose.connect(uri, { socketTimeoutMS: 45000, serverSelectionTimeoutMS: 15000 });
   console.log('✦ MongoDB connected');
   await seedSuperAdmin();
 }

@@ -117,7 +117,7 @@ test('to\'liq oqim: rozilik -> shablon -> ovoz -> tasdiq -> yetishmaganlar -> ta
   assert.equal(c.voiceIntro.fileId, 'V1');
   assert.equal(c.summary, 'Mehmonlar bilan tez til topishadi.');
   assert.ok(c.hasPhoto);
-  assert.ok(sent.some(x => /Rezyumengiz tayyor/.test(x.text)));
+  assert.ok(sent.some(x => /Profilingiz tayyor/.test(x.text)));
 });
 
 test('ovozli anketa bo\'lmasa xabar boshqa yo\'lga ketadi; boshqa odam tugmasi ishlamaydi', async () => {

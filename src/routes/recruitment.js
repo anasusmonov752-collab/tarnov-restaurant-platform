@@ -39,9 +39,11 @@ const VALID_SOURCE = ['hh', 'manual', 'referral', 'telegram', 'anketa', 'other']
 // Fayllar xotirada (buffer) — PDF matnini ajratamiz va (kerak bo'lsa) base64 saqlaymiz.
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 15 * 1024 * 1024, files: 30 },
+  // Bepul Render (512 MB RAM): 30 x 15 MB bitta so'rovda xotirani to'ldirardi
+  limits: { fileSize: 8 * 1024 * 1024, files: 15 },
   fileFilter: (req, file, cb) => {
-    const ok = /pdf|text|plain/i.test(file.mimetype) || /\.(pdf|txt)$/i.test(file.originalname || '');
+    // text/html "text" bo'lib o'tib ketardi — faqat PDF va oddiy matn
+    const ok = /^(application\/pdf|text\/plain)$/i.test(file.mimetype) || /\.(pdf|txt)$/i.test(file.originalname || '');
     cb(ok ? null : new Error('Faqat PDF yoki matn (.txt) fayl yuklash mumkin'), ok);
   }
 });
@@ -225,7 +227,9 @@ router.post('/manual', guard, asyncHandler(async (req, res) => {
 
 // ── Ro'yxat (filtr bilan) ──
 router.get('/', guard, asyncHandler(async (req, res) => {
-  const { q, role, status, source, language, minExp, sort } = req.query;
+  // Takrorlangan parametr (?q=a&q=b) massiv bo'lib kelardi — q.trim yiqilib 500 berardi
+  const one = x => (Array.isArray(x) ? String(x[0] || '') : String(x || ''));
+  const [q, role, status, source, language, minExp, sort] = ['q', 'role', 'status', 'source', 'language', 'minExp', 'sort'].map(k => one(req.query[k]));
   const query = { restaurantId: req.user.restaurantId };
 
   if (role && role !== 'all') query.role = role;
@@ -252,11 +256,17 @@ router.get('/', guard, asyncHandler(async (req, res) => {
   };
   // tgInviteToken frontendga chiqmaydi — kim uni bilsa, o'sha nomzod
   // sifatida botga ulanib oladi.
-  const list = await Candidate.find(query, '-fileData -rawText -photo -workHistory -tgInviteToken')
-    .sort(sortMap[sort] || sortMap.new)
-    .limit(1000)
+  // Sahifalab: ?skip=&limit= (eng ko'pi 1000). Ilgari qat'iy 1000 edi — 1000 dan keyingi nomzodlar
+  // ro'yxatda umuman ko'rinmasdi. recruitment.html bo'laklab hammasini yig'adi; javob — massiv (eski
+  // chaqiruvlar buzilmaydi), X-Has-More sarlavhasi keyingi bo'lak borligini aytadi.
+  const lim = Math.max(1, Math.min(parseInt(one(req.query.limit), 10) || 1000, 1000));
+  const skip = Math.max(0, parseInt(one(req.query.skip), 10) || 0);
+  const list = await Candidate.find(query, '-fileData -rawText -photo -workHistory -tgInviteToken -tgLinkToken')
+    .sort(Object.assign({}, sortMap[sort] || sortMap.new, { _id: -1 }))   // _id — sahifalar orasida tartib barqaror
+    .skip(skip).limit(lim + 1)
     .lean();
-  res.json(list);
+  if (res.setHeader) res.setHeader('X-Has-More', list.length > lim ? '1' : '0');
+  res.json(list.slice(0, lim));
 }));
 
 // ── Statistika (holatlar bo'yicha, filtrsiz umumiy) ──
@@ -346,7 +356,10 @@ router.get('/sections', guard, asyncHandler(async (req, res) => {
 }));
 
 router.get('/:id', guard, asyncHandler(async (req, res) => {
-  const c = await Candidate.findOne({ restaurantId: req.user.restaurantId, id: req.params.id }, '-fileData -photo').lean();
+  // Taklif/ulash tokenlari brauzerga chiqmaydi (ro'yxatdagi kabi): tokenni bilgan odam botga
+  // shu nomzod sifatida ulanib olardi
+  const c = await Candidate.findOne({ restaurantId: req.user.restaurantId, id: req.params.id },
+    '-fileData -photo -tgInviteToken -tgLinkToken').lean();
   if (!c) return res.status(404).json({ error: 'Nomzod topilmadi' });
   c.hasFile = await Candidate.exists({ restaurantId: req.user.restaurantId, id: req.params.id, fileData: { $ne: '' } }) ? true : false;
   res.json(c);
@@ -356,8 +369,11 @@ router.get('/:id', guard, asyncHandler(async (req, res) => {
 router.get('/:id/photo', guard, asyncHandler(async (req, res) => {
   const c = await Candidate.findOne({ restaurantId: req.user.restaurantId, id: req.params.id }, 'photo').lean();
   if (!c || !c.photo) return res.status(404).end();
-  const m = /^data:(image\/[\w.+-]+);base64,(.*)$/i.exec(c.photo);
+  // Faqat raster rasm: image/svg+xml ichida skript bo'lishi mumkin — panel domenida ishlab
+  // ketardi (nomzodlar telefonlarini o'qiydi). nosniff — brauzer turini o'zi taxmin qilmasin
+  const m = /^data:(image\/(?:jpeg|jpg|png|webp|gif));base64,(.*)$/i.exec(c.photo);
   if (!m) return res.status(404).end();
+  res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Content-Type', m[1]);
   res.setHeader('Cache-Control', 'private, no-cache');     // ETag bilan: foto yangilansa darhol ko'rinadi
   res.send(Buffer.from(m[2], 'base64'));
@@ -368,8 +384,13 @@ router.get('/:id/file', guard, asyncHandler(async (req, res) => {
   const c = await Candidate.findOne({ restaurantId: req.user.restaurantId, id: req.params.id }, 'fileData fileType fileName').lean();
   if (!c || !c.fileData) return res.status(404).json({ error: 'Fayl saqlanmagan' });
   const buf = Buffer.from(c.fileData, 'base64');
-  res.setHeader('Content-Type', c.fileType || 'application/pdf');
-  res.setHeader('Content-Disposition', 'inline; filename="' + encodeURIComponent(c.fileName || 'resume.pdf') + '"');
+  // XSS himoyasi: saqlangan turga ishonmaymiz (yuklashda text/html o'tib ketgan bo'lishi mumkin).
+  // PDF — PDF bo'lib ochiladi, qolgani — oddiy matn; sandbox — skript ishlamaydi
+  const isPdf = /pdf/i.test(c.fileType || '') || buf.slice(0, 5).toString() === '%PDF-';
+  res.setHeader('Content-Type', isPdf ? 'application/pdf' : 'text/plain; charset=utf-8');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Content-Security-Policy', 'sandbox');
+  res.setHeader('Content-Disposition', (isPdf ? 'inline' : 'attachment') + '; filename="' + encodeURIComponent(c.fileName || 'resume.pdf') + '"');
   res.send(buf);
 }));
 
@@ -482,7 +503,7 @@ router.patch('/:id', guard, asyncHandler(async (req, res) => {
   await doc.save();
 
   const o = doc.toObject();
-  delete o.fileData; delete o.rawText;
+  delete o.fileData; delete o.rawText; delete o.tgInviteToken; delete o.tgLinkToken;
   res.json(o);
 }));
 

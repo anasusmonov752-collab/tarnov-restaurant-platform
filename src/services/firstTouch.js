@@ -125,7 +125,7 @@ async function employerNames(agencyId, rows) {
  * Anketa shu lavozimniki bo'lsa (konstruktorda yaratilgan) — lavozim
  * savoli umuman so'ralmaydi, forma qisqaradi.
  */
-async function candidateRole({ agencyId, role, lang, tgUserId, chatId, appBase, isTest, name }) {
+async function candidateRole({ agencyId, role, lang, tgUserId, chatId, appBase, isTest, name, chosenLang = '' }) {
   const { n, rows } = await openJobs(agencyId, role);
   // Shu lavozim anketasi bo'lsa o'sha, bo'lmasa umumiy (surveyForVacancy qoidasi)
   const survey = await Survey.findOne({ agencyId, role, active: true, isDefault: false }).lean()
@@ -133,8 +133,11 @@ async function candidateRole({ agencyId, role, lang, tgUserId, chatId, appBase, 
 
   // /start da ochilgan yozuvning o'zi (kanal — story, SMS... — va tavsiya saqlanadi).
   // Ilgari bu yerda yangi yozuv 'bot' kanali bilan ochilardi (survey.openResponse izohi)
+  // Yozuvga faqat TANLANGAN til (chosenLang) tushadi: `lang` bu yerda Telegram interfeysidan
+  // TAXMIN bo'lishi mumkin — yozuvga tushsa anketa til ekranini o'tkazib yuborardi va ruscha
+  // telefonli o'zbek butun anketani ruscha to'ldirardi (2026-11-20 tekshiruvi).
   const r = await require('./survey').openResponse({ agencyId, tgUserId, chatId, surveyId: survey.id,
-    isTest: !!isTest, lang });
+    isTest: !!isTest, lang: I18N.LANGS.includes(chosenLang) ? chosenLang : '' });
   // Lavozim anketaga o'tadi (qayta so'ralmaydi) va ko'rsatilgan ishlarga ariza anketa
   // tugagach o'zi ketadi (survey.finalize). Javobi bor anketada ham yangilanadi —
   // odam boshqa lavozimni tanlab qaytgan bo'lishi mumkin.
@@ -428,8 +431,9 @@ async function handleCallback({ data, chatId, appBase, from }) {
     }
     if (!isValidRole(arg)) return { text: '' };
     const isTest = (await require('./testMode').modeOf(tgUserId)) === 'candidate';
+    // chosenLang — faqat odam O'ZI tanlagan til (bot tugmasi yoki profil); Telegram taxmini emas
     const r = await candidateRole({ agencyId: survey.agencyId, role: arg, lang, tgUserId, chatId, appBase, isTest,
-      name: from && from.first_name });
+      name: from && from.first_name, chosenLang: (open && open.lang) || (cand && cand.lang) || '' });
     return { edit: r.text, keyboard: r.keyboard, html: true };
   }
 

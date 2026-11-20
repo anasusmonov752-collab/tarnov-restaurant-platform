@@ -37,7 +37,11 @@ async function mergeShells() {
   const Event = require('../models/Event');
   const { isShell } = require('./survey');
   const rows = await SurveyResponse.find(
-    { vacancyId: '', status: { $in: ['started', 'done'] }, tgUserId: { $nin: ['', null] } },
+    // Bir martalik tozalash: faqat tuzatishdan (2026-11-18) OLDIN ochilgan yozuvlar. Aks holda har
+    // deploy/qayta ishga tushishda yangi /start bilan ochilgan (hali javobsiz) yozuv tugagan anketaga
+    // qo'shilib, nomzodning tugmasi "allaqachon yuborilgan" xatosini berardi (2026-11-20 tekshiruvi).
+    { vacancyId: '', status: { $in: ['started', 'done'] }, tgUserId: { $nin: ['', null] },
+      startedAt: { $lt: new Date('2026-11-19T00:00:00+05:00') } },
     // photo (dataURL) ataylab olinmaydi — og'ir; rasm savoliga javob step'ni ham yozadi
     'id agencyId tgUserId status channel refBy step answers mode candidateId startedAt'
   ).sort({ startedAt: 1 }).lean();
@@ -80,11 +84,56 @@ async function mergeShells() {
   return { merged, fixed };
 }
 
+// Noyob indekslar takror yozuvlar bor bazada qurilmaydi (autoIndex jim yiqiladi).
+// Shuning uchun: takrorni SANAYMIZ — yo'q bo'lsa indeksni quramiz (eski noyob emasini
+// o'chirib), bor bo'lsa ma'lumotga TEGMAYMIZ, agentlik chatiga xabar (tozalash — Anas qarori).
+async function uniqueIndexes() {
+  const Client = require('../models/Client');
+  const ChatThread = require('../models/ChatThread');
+  const out = {};
+  const checks = [
+    { name: 'Client.tgChatId', model: Client, match: { tgChatId: { $gt: '' } }, key: '$tgChatId', drop: 'tgChatId_1' },
+    { name: "ChatThread 'ca'", model: ChatThread, match: { kind: 'ca' }, key: { a: '$agencyId', c: '$clientId' } }
+  ];
+  for (const c of checks) {
+    const dup = await c.model.aggregate([
+      { $match: c.match }, { $group: { _id: c.key, n: { $sum: 1 } } }, { $match: { n: { $gt: 1 } } }, { $count: 'n' }
+    ]);
+    const n = dup.length ? dup[0].n : 0;
+    out[c.name] = n;
+    if (n) {
+      console.error(`✦ ${c.name}: ${n} ta takror — noyob indeks qurilmadi`);
+      require('./alert').report('migrations.uniqueIndexes', `${c.name}: ${n} ta takror guruh — noyob indeks qurilmadi, tozalash kerak`);
+      continue;
+    }
+    if (c.drop) await c.model.collection.dropIndex(c.drop).catch(() => {});
+    await c.model.createIndexes();
+  }
+  return out;
+}
+
+// 2026-11-20: Candidate.salaryMin (qidiruvdagi maosh filtri) — oldin to'ldirilganlarga.
+// Faqat hali hisoblanmaganlarga tegadi (salaryMin yo'q maydon); natija null bo'lsa ham
+// yoziladi — keyingi ishga tushishda qayta ko'rilmaydi.
+async function backfillSalaryMin() {
+  const rows = await Candidate.find(
+    { salaryExpectation: { $nin: ['', null] }, salaryMin: { $exists: false } }, 'salaryExpectation'
+  ).limit(5000).lean();
+  if (!rows.length) return 0;
+  await Candidate.bulkWrite(rows.map(r => ({
+    updateOne: { filter: { _id: r._id }, update: { $set: { salaryMin: Candidate.salaryMinOf(r.salaryExpectation) } } }
+  })));
+  return rows.length;
+}
+
 async function run() {
+  await uniqueIndexes().catch(e => console.error('✦ Noyob indeks:', e.message));
+  const sm = await backfillSalaryMin().catch(e => { console.error('✦ salaryMin:', e.message); return 0; });
+  if (sm) console.log(`✦ Ko'chirish: ${sm} ta nomzodga maosh raqami yozildi`);
   const n = await backfillExperienceMonths();
   if (n) console.log(`✦ Ko'chirish: ${n} ta anketa nomzodiga tajriba oylari yozildi`);
   const m = await mergeShells();
   if (m.merged || m.fixed) console.log(`✦ Ko'chirish: ${m.merged} ta javobsiz anketa yozuvi asosiysiga qo'shildi, ${m.fixed} tasida kanal tuzatildi`);
 }
 
-module.exports = { run, backfillExperienceMonths, mergeShells, PERIOD_MONTHS };
+module.exports = { run, uniqueIndexes, backfillSalaryMin, backfillExperienceMonths, mergeShells, PERIOD_MONTHS };

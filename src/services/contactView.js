@@ -52,7 +52,10 @@ function resumeOf(c) {
     hasPhoto: !!c.hasPhoto,
     desiredPosition: c.desiredPosition, role: c.role,
     age: c.age, location: c.location, shift: c.shift,
-    experienceYears: c.experienceYears,
+    // experienceMonths, availableFrom — anonim kartada bor edi, to'langan rezyumeda yo'q edi:
+    // 1 yilgacha ishlagan "Tajribasiz" bo'lib, "qachondan" plitkasi yo'qolardi (2026-11-20)
+    experienceYears: c.experienceYears, experienceMonths: c.experienceMonths,
+    availableFrom: c.availableFrom,
     experienceSummary: c.experienceSummary,
     summary: c.summary,
     education: c.education,

@@ -101,7 +101,7 @@ async function pushNotify({ agencyId, th, from, text, appBase }) {
     // kabineti hali o'zbekcha, shuning uchun nomzodga 'uz'.
     if (from !== 'client') {
       const cl = await Client.findOne({ agencyId, id: th.clientId }, 'tgChatId lang tgLang').lean();
-      if (cl && cl.tgChatId) targets.push({ chatId: cl.tgChatId, url: appBase + '/miniapp.html#chat',
+      if (cl && cl.tgChatId) targets.push({ chatId: cl.tgChatId, url: appBase + '/miniapp.html?tab=chat',
         lang: I18N.resolve(cl.lang, cl.tgLang) });
     }
     if (from !== 'candidate' && th.kind === 'cc' && th.candidateId) {
@@ -160,18 +160,27 @@ async function backfill({ agencyId, clientId = '', candidateId = '' }) {
   if (candidateId) q['items.candidateId'] = candidateId;
 
   const rows = await Shortlist.find(q, 'id clientId items').limit(200).lean();
+  const want = [];
   for (const s of rows) {
     for (const it of (s.items || [])) {
-      if (!it.revealedAt) continue;                 // to'lanmagan — suhbat yo'q
-      if (it.state === 'refunded') continue;        // kredit qaytarilgan
+      // "Ochilgan" ta'rifi YAGONA (contactView.isOpen): to'lanmagan yoki qaytarilgan — suhbat yo'q
+      if (!require('./contactView').isOpen(it)) continue;
       if (candidateId && it.candidateId !== candidateId) continue;
-      try {
-        await ensureThread({
-          agencyId, clientId: s.clientId, candidateId: it.candidateId,
-          shortlistId: s.id, kind: 'cc'
-        });
-      } catch (e) { console.error('[CHAT] backfill:', e.message); }
+      want.push({ clientId: s.clientId, candidateId: it.candidateId, shortlistId: s.id });
     }
+  }
+  if (!want.length) return;
+  // Bor suhbatlar BITTA so'rovda — ilgari har ochilgan kontakt uchun alohida findOne (inbox
+  // har ochilishda yuzlab so'rov). Faqat yo'qlari yaratiladi.
+  const have = await ChatThread.find({ agencyId, kind: 'cc', candidateId: { $in: [...new Set(want.map(w => w.candidateId))] } },
+    'clientId candidateId').lean();
+  const has = new Set(have.map(t => t.clientId + '|' + t.candidateId));
+  for (const w of want) {
+    const k = w.clientId + '|' + w.candidateId;
+    if (has.has(k)) continue;
+    has.add(k);
+    try { await ensureThread({ agencyId, clientId: w.clientId, candidateId: w.candidateId, shortlistId: w.shortlistId, kind: 'cc' }); }
+    catch (e) { console.error('[CHAT] backfill:', e.message); }
   }
 }
 // ── INBOX ────────────────────────────────────────────────────

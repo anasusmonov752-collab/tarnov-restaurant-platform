@@ -133,6 +133,7 @@ input:focus,textarea:focus{outline:none;border-color:var(--gold)}
     <div class="head">
       <h2>Mijozlar</h2>
       <div class="sp"></div>
+      <button class="btn" id="bTestCl" title="Nomi «sinov/test» bo'lgan, lekin sinov deb belgilanmagan mijozlar">Sinov mijozlari</button>
       <button class="btn btn-p" id="bNew">+ Yangi mijoz</button>
     </div>
     <div id="qual"></div>
@@ -304,6 +305,32 @@ function showEdit(id){
     } catch(e){ toast(e.message, 'error'); $('eSave').disabled = false; }
   };
 }
+
+// Sinov mijozlari: avval RO'YXAT (bazaga hech narsa yozilmaydi), keyin belgilanganlarga
+// "sinov" belgisi — o'chirilmaydi; sanoq, qidiruv va SLA dan chiqadi (routes/clients cleanup-test)
+$('bTestCl').onclick = async () => {
+  let d;
+  try { d = await api('/api/clients/cleanup-test', { method:'POST', body: JSON.stringify({ apply: false }) }); }
+  catch(e){ return toast(e.message, 'error'); }
+  if (!d.clients.length) return toast('Belgilanmagan sinov mijozi yo\'q', 'success');
+  openMd('Sinov mijozlari', `
+    <div style="font-size:13px;color:var(--muted);margin-bottom:10px">Bular haqiqiy sanoqlarga kirib turibdi. Belgilansa — o'chirilmaydi, faqat «sinov» bo'ladi: vakansiya, ariza va sanoqlardan chiqadi.</div>
+    ${d.clients.map(c => `<label style="display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line,#E3E8EF)">
+      <input type="checkbox" data-tc="${esc(c.id)}" checked style="margin-top:3px">
+      <span><b>${esc(c.name)}</b><br><small style="color:var(--muted)">${esc(c.status)} · ${c.credits} kredit · ${c.vacancies} vakansiya · ${c.applications} ariza${c.linked ? ' · Telegram ulangan' : ''}</small></span>
+    </label>`).join('')}
+    <button class="btn btn-p" id="tcGo" style="width:100%;margin-top:12px">Belgilanganlarni «sinov» qilish</button>`);
+  $('tcGo').onclick = async () => {
+    const ids = [...document.querySelectorAll('[data-tc]:checked')].map(x => x.dataset.tc);
+    if (!ids.length) return toast('Hech biri tanlanmagan', 'error');
+    $('tcGo').disabled = true;
+    try {
+      const r = await api('/api/clients/cleanup-test', { method:'POST', body: JSON.stringify({ apply: true, ids }) });
+      toast(`${r.clients} mijoz, ${r.vacancies} vakansiya, ${r.applications} ariza — sinov deb belgilandi`, 'success');
+      closeMd(); loadClients();
+    } catch(e){ toast(e.message, 'error'); $('tcGo').disabled = false; }
+  };
+};
 
 $('bNew').onclick = () => {
   openMd('Yangi mijoz', `

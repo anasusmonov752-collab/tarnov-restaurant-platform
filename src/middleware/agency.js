@@ -21,12 +21,17 @@ const kinds = new Map();               // restaurantId -> { kind, at }
 let anyCache = { val: false, at: 0 };
 
 async function kindOf(id) {
+  return (await infoOf(id)).kind;
+}
+
+// kind + active bitta so'rovda, 60 s kesh. active=false — super-admin o'chirgan akkaunt
+async function infoOf(id) {
   const c = kinds.get(id);
-  if (c && Date.now() - c.at < TTL) return c.kind;
-  const r = await Restaurant.findOne({ id }, 'kind').lean();
-  const kind = (r && r.kind) || 'restaurant';
-  kinds.set(id, { kind, at: Date.now() });
-  return kind;
+  if (c && Date.now() - c.at < TTL) return c;
+  const r = await Restaurant.findOne({ id }, 'kind active').lean();
+  const v = { kind: (r && r.kind) || 'restaurant', active: !!(r && r.active !== false), at: Date.now() };
+  kinds.set(id, v);
+  return v;
 }
 
 async function anyAgency() {
@@ -49,6 +54,8 @@ const restaurantAuth = auth(['restaurant']);
 function agencyAuth(req, res, next) {
   restaurantAuth(req, res, async () => {
     try {
+      // O'chirilgan akkaunt (super-admin) eski tokeni bilan 24 soat ishlayverardi
+      if (!(await infoOf(req.user.restaurantId)).active) return res.status(401).json({ error: 'Akkaunt faol emas' });
       if (await canRecruit(req.user.restaurantId)) return next();
       res.status(403).json({ error: 'Bu bo\'lim faqat TalentHub agentligi uchun' });
     } catch (e) { next(e); }

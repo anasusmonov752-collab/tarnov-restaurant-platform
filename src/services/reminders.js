@@ -47,6 +47,7 @@ async function due(now = new Date()) {
   const rows = await SurveyResponse.find({
     status: 'started',
     remindStop: { $ne: true },
+    isTest: { $ne: true },
     startedAt: { $gte: new Date(t - MAX_AGE) },
     $or: [
       { reminders: { $in: [0, null] }, updatedAt: { $lte: new Date(t - FIRST_AFTER) } },
@@ -102,15 +103,18 @@ async function run({ appBase, dry = false, now = new Date(), send } = {}) {
     const item = { id: r.id, channel: r.channel, kind: r.step ? 'partial' : 'notStarted', n: (r.reminders || 0) + 1 };
     report.items.push(item);
     if (dry) continue;
+    // Avval egallaymiz (bir vaqtda ikki chaqiruv — curl qayta urinishi — ikki eslatma yubormasin)
+    const own = await SurveyResponse.findOneAndUpdate({ id: r.id, reminders: r.reminders || { $in: [0, null] } },
+      { $set: { remindedAt: now }, $inc: { reminders: 1 } });
+    if (!own) continue;
     try {
       await doSend(r.chatId || r.tgUserId, m.text, { reply_markup: { inline_keyboard: [[
         { text: m.button, web_app: { url: `${appBase}/anketa.html?r=${r.id}` } }
       ]] } });
-      await SurveyResponse.updateOne({ id: r.id }, { $set: { remindedAt: now }, $inc: { reminders: 1 } });
       report.sent++;
     } catch (e) {
-      // 403 — botni bloklagan: boshqa yozmaymiz
-      if (e && e.code === 403) {
+      // 403 — botni bloklagan, 400 — chat yo'q: boshqa yozmaymiz (har soat 7 kun urinmasin)
+      if (e && (e.code === 403 || e.code === 400 || e.fatal)) {
         await SurveyResponse.updateOne({ id: r.id }, { $set: { remindStop: true } });
         report.blocked++;
       } else report.failed++;

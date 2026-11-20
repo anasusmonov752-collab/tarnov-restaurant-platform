@@ -152,7 +152,8 @@ async function setMode(tgUserId, mode, tgUser, { clientId = '' } = {}) {
   } else {
     // Admin: test rejimidan oldingi holat
     const sv = st.saved || {};
-    if ((sv.clients || []).length) await Client.updateMany({ id: { $in: sv.clients } }, { $set: { tgChatId: uid } });
+    // Bitta Telegram — bitta mijoz (Client.tgChatId noyob): faqat birinchisi qaytadi
+    if ((sv.clients || []).length) await Client.updateOne({ id: sv.clients[0] }, { $set: { tgChatId: uid } });
     if ((sv.candidates || []).length) {
       await Candidate.updateMany({ id: { $in: sv.candidates } }, { $set: { tgChatId: uid, tgState: 'linked' } });
     }

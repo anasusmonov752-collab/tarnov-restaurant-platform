@@ -1403,3 +1403,60 @@ ochish" -> /arizalar.html). Har bosqich bir marta (`Application.slaWarnAt/slaLat
 sinov / yopilgan vakansiya / 7 kundan eski yo'q. Ro'yxatdan chiqarish — panelda "Bog'landim".
 Birinchi kunduzgi tickda oxirgi 7 kunda "Bog'landim" bosilmagan arizalar bitta xabarda keladi.
 `test/sla.test.js`.
+
+**TO'LIQ TEKSHIRUV VA TUZATISHLAR** (2026-11-20, Anas: "platformani yakuniy holatga keltir — xato, bag,
+nomuvofiqlik, vaqt oladiganlar — hammasi"). 5 yo'nalish parallel o'qib chiqildi (pul, mijoz Mini App, nomzod
+boti/anketa, panel+xavfsizlik, taymerlar) — 68 topilma; batafsil ro'yxat ATAYLAB repoda EMAS (ochiq repo).
+Lokal testlar endi ishlaydi (`npm install --no-package-lock` + `npm i --no-save mongodb-memory-server@10`).
+Tuzatildi (249/249):
+- **Pul.** Bir vaqtdagi ikki ochish bir-birining TO'LANMAGAN bandligini ko'rib bepul ochardi — `reveal`
+  oldingi ochilishni faqat jurnaldagi 'reveal' bilan hisoblaydi; Mini App `/applications/:id/open|pick|reject`
+  arizani ATOMIK band qiladi, ochish yiqilsa ariza avvalgi holatiga qaytadi (osilib qolmaydi). Pullik ochilish
+  qaytarilsa boshqa tanlovdagi bepul nusxa ham `refunded`. Payme Perform / Uzum confirm: buyurtma boshqa yo'l
+  bilan to'langan bo'lsa pul yechilmaydi (-31008); ochiq tranzaksiyali buyurtmani mijoz bekor qila olmaydi.
+  `billing.activate` (buyurtma+kredit+tarif) — BITTA tranzaksiya (`credits.withTxn`). `billing.tick`: muddat
+  tugashi, kafolat uzaytirish, eslatma — atomik shart bilan (shu orada to'lov yangi tarif yozgan bo'lsa tegmaydi);
+  sinov tugaganda faqat sinov kreditlari yonadi. Max "Cheksiz/∞" -> "100 ta kontakt" (oferta "cheksiz*, texnik
+  100" — matni yuristda, tegilmadi); Max'ga ham kam balans ogohlantirishi. Haqiqiy mijozga sinov nomzodi
+  ochilmaydi. Suhbatdagi "kelmadi"/"bordim" ziddiyatida admin xabari kredit qaytgan-qaytmaganini to'g'ri aytadi;
+  yiqilgan qaytarish 3 martagacha qayta urinadi (`Interview.refundTries`).
+- **Taymerlar.** server.js tick: qadamlar ro'yxati, har xato `alert.report`ga, 10 daqiqalik qo'riqchi (osilgan
+  so'rov hamma taymerni to'xtatmaydi), Mongo `socketTimeoutMS`. jobPost: post kanalga chiqqach keyingi xato
+  takror post qilmaydi; kanal buzilsa 6 soat kutadi va agentlikka bir marta xabar (`channelPost.failedAt/error`).
+  403 (bot bloklangan) — `services/telegram` YAGONA joyda nomzodni `blocked` qiladi; qaytib yozsa `linked`.
+  Cron: bir vaqtda bitta (curl qayta urinishi), eslatma avval egallanadi, 400 ham to'xtatadi, sinov yozuvlariga
+  yo'q. `mergeShells` endi faqat 2026-11-19 gacha bo'lgan yozuvlarga (har deployda jonli anketani buzardi).
+  SLA: kutilmaydigan arizalarga ham bayroq (qayta o'qilmaydi, limitni to'smaydi), indekslar. Suhbatdan keyingi
+  "keldimi?" kunduzi.
+- **Mijoz Mini App.** Suhbat vaqtini o'zgartirish: yangi vaqt AVVAL tekshiriladi (noto'g'ri vaqt eski suhbatni
+  jimgina bekor qilardi); sana maydonida `min`, bo'sh — xabar. `confirm()` -> `askConfirm` (Ishga olindi, suhbat
+  bekor, vakansiya yopish); Rad etish — tasdiq bilan. Vakansiya sahifasi bo'lim almashganda yopiladi (chat ostida
+  qolardi); tahrir/yopishdan keyin sahifa yangilanadi. "Ko'rildi" endi nomzod sahifasi ochilganda (`POST
+  /applications/:id/seen`), ro'yxat yuklanganda emas. `fitScore/fitReason` mijozga chiqmaydi. "N mos" sanoqlari
+  parallel. Vakansiya yopilganda arizachilarga xabar fonda. `noCredits` -> tariflar. To'langan rezyumeda tajriba
+  oylari va "qachondan"; tanlovda ishonch belgilari. `/topup` o'chirildi. Chatda Telegram "Orqaga". Chat havolasi
+  `?tab=chat`. `?apps=` shu vakansiya filtri. Ishlatilmaydigan funksiyalar olib tashlandi.
+- **Nomzod.** Ovozli anketa yarim qolsa admin/mijoz xabarlarini yutardi — mijoz va admin chati o'tkazib
+  yuboriladi. `survey.finalize` atomik (`finalizingAt`) — ikki bosish ikki nomzod yaratmaydi; 409 `ank.err.already`.
+  Profili tayyor nomzod kanal havolasini bossa — anketa emas, bir bosishda ariza (`ft:ap:`). Telegram tili TAXMIN
+  yozuvga saqlanmaydi (`chosenLang`) — anketa til ekranini ko'rsatadi. Rahmat xabari ariza bo'lsa "Arizalarim" ga
+  mos (`ank.botThanksA`). `handleCallback` qobig'i — xatoda tugma aylanib qolmaydi. Menyu tugmasi va bot javoblari
+  nomzod tilida. Qaytarib olingan ariza qayta topshiriladi. Yosh Toshkent kalendari bo'yicha. auditoriya.md:
+  ft.cPick0 dan agentlik tavsifi, "rezyume/anketa" so'zlari olib tashlandi. Ruscha "от 21 года".
+- **Panel va xavfsizlik.** Login faqat satr (NoSQL operator), PIN tanlashga restoran bo'yicha chegara, so'rov
+  satri `simple` parser, o'chirilgan akkaunt 1 daqiqada chiqariladi, rezyume fayli PDF/matn + `CSP: sandbox`,
+  rasm faqat raster, tokenlar `/recruitment/:id` javobidan olindi, multer 8 MB x 15. Ildizdagi 7 ta eski
+  RestoOne skriptidan ochiq parol olindi (`TARNOV_ADMIN_PASSWORD`). Sanoq indekslari (`isTest` bilan).
+  Suhbatlar backfill bitta so'rov. Nomzodlar ro'yxati 1000 chegarasisiz (500 talik bo'laklar, `X-Has-More`).
+  Arizalar sahifasi 1000 ta.
+- **Ochiq ishlar (CLAUDE.md).** `Client.tgChatId` noyob (bitta Telegram — bitta mijoz; ulashda boshqasidan
+  uziladi), `'ca'` suhbat noyob — `migrations.uniqueIndexes` takror bo'lsa indeks qurmaydi va xabar beradi.
+  Arizalar sahifasida moslik bali va "Eng moslari oldin". Mijoz Mini App'da saqlangan vakansiyaning bo'sh ruscha
+  maydonlari fonda AI bilan (`vac.fillRu`, qo'lda yozilgan ruscha ustidan yozilmaydi). Maosh filtri:
+  `Candidate.salaryMin` (pre-save + migratsiya), qidiruvda +15%, noma'lum tashlanmaydi, yumshatishda "maosh".
+  Sinov mijozlari: Mijozlar -> "Sinov mijozlari" (avval ro'yxat, keyin tanlanganlarga `isTest` — o'chirilmaydi).
+- **CI.** `test/htmlsyntax.test.js` — har sahifa ichki skriptini kompilyatsiya qiladi ("Mini App oq ekran"
+  tuzog'i deploydan oldin ushlanadi). `test/fixes1120.test.js` — yuqoridagi asosiy tuzatishlar.
+Qolgan (kod): Candidate'da `fileData`/`photo` (Atlas 512 MB, og'ir hujjat) — alohida kolleksiyaga ko'chirish
+(katta ish, migratsiya); eski `#searchMode` kodi (BackButton bilan bog'liq, qurilmada sinab olib tashlash).
+Anas: ochiq git tarixidagi Mongo paroli va `JWT_SECRET` ni almashtirish.

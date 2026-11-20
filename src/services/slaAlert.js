@@ -38,18 +38,27 @@ async function due(kind, now) {
     createdAt: { $gte: new Date(from), $lte: new Date(to) }, [flag]: null
   }).sort({ createdAt: 1 }).limit(200).lean();
   if (!rows.length) return [];
+  const agencies = [...new Set(rows.map(a => a.agencyId))];
   const [cands, vacs] = await Promise.all([
-    Candidate.find({ id: { $in: rows.map(a => a.candidateId) } }, 'id fullName phone firstContactAt isTest').lean(),
-    Vacancy.find({ id: { $in: rows.map(a => a.vacancyId) } }, 'id title status').lean()
+    Candidate.find({ restaurantId: { $in: agencies }, id: { $in: rows.map(a => a.candidateId) } }, 'id fullName phone firstContactAt isTest').lean(),
+    Vacancy.find({ agencyId: { $in: agencies }, id: { $in: rows.map(a => a.vacancyId) } }, 'id title status').lean()
   ]);
   const cBy = Object.fromEntries(cands.map(c => [c.id, c]));
   const vBy = Object.fromEntries(vacs.map(v => [v.id, v]));
-  return rows
-    .map(a => ({ app: a, cand: cBy[a.candidateId], vac: vBy[a.vacancyId], hours: Math.floor((t - new Date(a.createdAt)) / H) }))
-    .filter(x => x.cand && !x.cand.isTest)
+  const all = rows.map(a => ({ app: a, cand: cBy[a.candidateId], vac: vBy[a.vacancyId], hours: Math.floor((t - new Date(a.createdAt)) / H) }));
+  const keep = x => x.cand && !x.cand.isTest
     // Ariza tushgandan keyin nomzod bilan aloqa bo'lgan (Telegram xabari, bosqich) — qo'ng'iroq hisoblanadi
-    .filter(x => !(x.cand.firstContactAt && new Date(x.cand.firstContactAt) >= new Date(x.app.createdAt)))
-    .filter(x => !x.vac || x.vac.status !== 'closed');
+    && !(x.cand.firstContactAt && new Date(x.cand.firstContactAt) >= new Date(x.app.createdAt))
+    && (!x.vac || x.vac.status !== 'closed');
+  // Kutilmaydiganlarga ham bayroq qo'yiladi (xabarsiz) — har 2 daqiqada qayta o'qilmasin va
+  // limit(200) ni egallab, yangi kechikkan arizalarni to'sib qo'ymasin
+  const skip = all.filter(x => !keep(x)).map(x => x.app._id);
+  if (skip.length) {
+    const set = { [flag]: now };
+    if (kind === 'late') set.slaWarnAt = now;
+    await Application.updateMany({ _id: { $in: skip }, [flag]: null }, { $set: set });
+  }
+  return all.filter(keep);
 }
 
 function messageFor(kind, list) {

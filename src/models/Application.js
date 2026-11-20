@@ -65,5 +65,8 @@ const ApplicationSchema = new mongoose.Schema({
 ApplicationSchema.index({ vacancyId: 1, candidateId: 1 }, { unique: true });
 ApplicationSchema.index({ agencyId: 1, clientId: 1, state: 1, createdAt: -1 });
 ApplicationSchema.index({ agencyId: 1, candidateId: 1, createdAt: -1 });
+// Taymerlar (har 2 daqiqa): SLA nazorati va botdagi tekshiruv eslatmasi — kolleksiyani to'liq o'qimasin
+ApplicationSchema.index({ state: 1, contactedAt: 1, createdAt: 1 });
+ApplicationSchema.index({ 'screen.step': 1, 'screen.startedAt': 1 });
 
 module.exports = mongoose.model('Application', ApplicationSchema);

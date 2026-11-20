@@ -19,7 +19,9 @@ const { roleLabel } = require('../data/roles');
 const PUBLIC_FIELDS = [
   'publicCode', 'role', 'desiredPosition', 'experienceYears', 'experienceMonths', 'experienceSummary',
   'workHistory', 'skills', 'languages', 'location', 'age', 'education',
-  'salaryExpectation', 'summary', 'fitScore', 'fitReason', 'shift',
+  // fitScore/fitReason ATAYLAB yo'q — AI bahosi agentlikning ichki fikri (qidiruv, arizalar,
+  // seans orqali mijozga sizib chiqardi; rezyumedan esa o'chirilardi — 2026-11-20)
+  'salaryExpectation', 'summary', 'shift',
   'jobStatus', 'hasPhoto', 'source',
   'startWhen', 'availableFrom'     // anketadan: "qachondan chiqa oladi" — shaxsni ochmaydi
 ];

@@ -693,11 +693,15 @@ function workText(list) {
   return workToHistory(list).map(h => `${h.position}, ${h.company}, ${h.period}`).join('; ');
 }
 
-function ageOf(d) {
-  const now = new Date();
-  let a = now.getFullYear() - d.getFullYear();
-  const m = now.getMonth() - d.getMonth();
-  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) a--;
+// Yosh TOSHKENT kalendari bo'yicha: d — Toshkent yarim tuni (+05:00), server UTC'da ishlaydi.
+// Mahalliy getFullYear/getDate bilan hisoblansa tug'ilgan kun ~19 soat oldin "o'tib" ketardi
+// (ertaga 16 bo'ladigan bugun 16+ tekshiruvidan o'tardi). Ikkala sana +5 soat siljitilib UTC'da olinadi.
+const TZ_MS = 5 * 36e5;
+function ageOf(d, now = new Date()) {
+  const b = new Date(d.getTime() + TZ_MS), n = new Date(now.getTime() + TZ_MS);
+  let a = n.getUTCFullYear() - b.getUTCFullYear();
+  const m = n.getUTCMonth() - b.getUTCMonth();
+  if (m < 0 || (m === 0 && n.getUTCDate() < b.getUTCDate())) a--;
   return a;
 }
 // "+998 90 123 45 67" ko'rinishi; 9 raqam bo'lsa 998 qo'shiladi
@@ -782,6 +786,20 @@ function toFields(answers, survey, presetRole) {
  * @returns {{candidate, created:boolean, applied:boolean}}
  */
 async function finalize(r, { appBase } = {}) {
+  // ATOMIK egallash: oxirgi tugmani ikki marta bosish (ikki webhook / ikki so'rov) ikkita
+  // nomzod yaratib, ikki marta "rahmat" va ikki xabar yuborardi. 2 daqiqadan eski
+  // egallash — yiqilgan urinish, qayta ruxsat.
+  const lockAt = new Date();
+  const own = await SurveyResponse.findOneAndUpdate(
+    { _id: r._id, status: { $ne: 'done' },
+      $or: [{ finalizingAt: null }, { finalizingAt: { $lt: new Date(lockAt.getTime() - 120e3) } }] },
+    { $set: { finalizingAt: lockAt } });
+  if (!own) throw Object.assign(new Error('already'), { status: 409, already: true });
+  try { return await finalizeOwned(r, { appBase }); }
+  catch (e) { await SurveyResponse.updateOne({ _id: r._id }, { $set: { finalizingAt: null } }).catch(() => {}); throw e; }
+}
+
+async function finalizeOwned(r, { appBase } = {}) {
   const survey = await Survey.findOne({ agencyId: r.agencyId, id: r.surveyId }).lean();
   if (!survey) throw new Error('Anketa topilmadi');
   const vacancy = r.vacancyId

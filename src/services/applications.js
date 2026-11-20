@@ -23,7 +23,16 @@ const I18N = require('../../public/js/th-i18n');
  * @throws code 11000 — takroriy ariza (unique indeks)
  */
 async function submit({ cand: c, vacancy: v, message = '', appBase, via = 'kabinet', prescreen = true }) {
-  const a = await Application.create({
+  // Nomzod o'zi qaytarib olgan arizasi bo'lsa — o'sha yozuv QAYTA ochiladi (noyob indeks
+  // {vacancyId, candidateId} ikkinchisini yaratishga yo'l qo'ymaydi; qaytarib olish abadiy emas)
+  const now = new Date();
+  const a = await Application.findOneAndUpdate(
+    { vacancyId: v.id, candidateId: c.id, state: 'rejected', reason: 'withdrawn' },
+    { $set: { state: 'new', reason: '', decidedAt: null, contactedAt: null, agencySeenAt: null, seenAt: null,
+              slaWarnAt: null, slaLateAt: null, createdAt: now,
+              message: String(message || '').trim().slice(0, 500) } },
+    { new: true }
+  ) || await Application.create({
     id: uuidv4(),
     agencyId: c.restaurantId,
     vacancyId: v.id,

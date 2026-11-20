@@ -155,11 +155,12 @@ const FIELDS = 'id fullName phone email role desiredPosition experienceYears exp
 // ishonchsizligi bo'yicha: kalit so'zlar AI o'ylab topishi oson
 // ("zal menejeri" dan "zal" chiqib, hamma natijani o'ldirgan edi),
 // shahar ham xato aniqlanishi mumkin.
-const RELAX_ORDER = ['keywords', 'location', 'shift', 'languages', 'minExp'];
+const RELAX_ORDER = ['keywords', 'location', 'shift', 'maxSalary', 'languages', 'minExp'];
 const RELAX_LABEL = {
   keywords:  'kalit so\'zlar',
   location:  'hudud',
   shift:     'smena',
+  maxSalary: 'maosh',
   languages: 'til',
   minExp:    'tajriba yili'
 };
@@ -195,6 +196,11 @@ function buildQuery(criteria, restaurantId, skip) {
       { shift: { $regex: 'ikkala|оба|любая', $options: 'i' } },
       { shift: '' }, { shift: null }
     ]});
+  }
+  // Maosh shifti: nomzod kutgani shiftdan 15% gacha oshsa ham ko'rsatiladi (kelishiladi).
+  // Maoshi ma'lum emaslar (salaryMin null) TASHLANMAYDI — bazada ko'pchilik yozmagan.
+  if (!skip.has('maxSalary') && Number.isFinite(criteria.maxSalary) && criteria.maxSalary > 0) {
+    and.push({ $or: [{ salaryMin: { $lte: Math.round(criteria.maxSalary * 1.15) } }, { salaryMin: null }] });
   }
   if (!skip.has('languages')) {
     // Har bir til ALOHIDA shart — "ingliz va rus" ikkalasi ham talab qilinadi.
@@ -247,6 +253,7 @@ async function search(criteria, restaurantId, { limit = 8 } = {}) {
                : field === 'languages' ? criteria.languages.length
                : field === 'location'  ? !!criteria.location
                : field === 'shift'     ? !!criteria.shift
+               : field === 'maxSalary' ? Number.isFinite(criteria.maxSalary) && criteria.maxSalary > 0
                : Number.isFinite(criteria.minExp) && criteria.minExp > 0;
     skip.add(field);
     if (used) relaxed.push(RELAX_LABEL[field]);

@@ -16,6 +16,9 @@ const { errorHandler } = require('./src/middleware/errorHandler');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+// So'rov satri ODDIY parser bilan: ?status[$regex]=... obyektga aylanib Mongo so'roviga
+// operator bo'lib tushardi (filtrni chetlab o'tish, ReDoS). Ichma-ich parametr ishlatilmaydi.
+app.set('query parser', 'simple');
 
 if (!process.env.JWT_SECRET) {
   console.warn('⚠️  JWT_SECRET env variable not set — using insecure default!');
@@ -205,28 +208,29 @@ async function startServer() {
   // yaramaydi. Server UptimeRobot bilan uyg'oq, shuning uchun ichki taymer.
   // Har xabar oldidan bayroq atomik qo'yiladi — takror yuborilmaydi.
   const ivSvc = require('./src/services/interviews');
-  let ivBusy = false;
+  // Har qadam alohida: biri yiqilsa qolganlari ishlaydi; xato egasiga (alert — o'zi siqadi).
+  // Qo'riqchi: bitta so'rov osilib qolsa (Mongo javob bermadi) ivBusy abadiy true bo'lib,
+  // HAMMA taymer to'xtardi — 10 daqiqadan oshsa qayta ochiladi va xabar beriladi.
+  const STEPS = [
+    ['IV', () => ivSvc.tick()],
+    ['PS', () => require('./src/services/prescreen').tick()],    // arizadan keyingi tekshiruv eslatmasi
+    ['JP', () => require('./src/services/jobPost').tick()],      // kanalga e'lon / "Yopildi"
+    ['PL', () => require('./src/services/placements').tick()],   // ishga olingandan keyin 1/7/30-kun
+    ['SH', () => require('./src/services/shifts').tick()],       // smena bozori
+    ['SLA', () => require('./src/services/slaAlert').tick()]     // "HR 24 soatda qo'ng'iroq qiladi"
+  ];
+  const alertSvc = require('./src/services/alert');
+  let ivBusy = 0;
   setInterval(async () => {
-    if (ivBusy) return;
-    ivBusy = true;
-    try { await ivSvc.tick(); }
-    catch (e) { console.error('[IV] tick:', e.message); }
-    // Arizadan keyingi tekshiruvga javob bermaganlarga bitta eslatma
-    try { await require('./src/services/prescreen').tick(); }
-    catch (e) { console.error('[PS] tick:', e.message); }
-    // Yangi vakansiyalar kanalga, yopilganlari "Yopildi" (services/jobPost)
-    try { await require('./src/services/jobPost').tick(); }
-    catch (e) { console.error('[JP] tick:', e.message); }
-    // Ishga olinganlar: 1/7/30-kun so'rovlari (services/placements)
-    try { await require('./src/services/placements').tick(); }
-    catch (e) { console.error('[PL] tick:', e.message); }
-    // Smena bozori: 2 soat oldin eslatma, smenadan keyin "keldimi?" (services/shifts)
-    try { await require('./src/services/shifts').tick(); }
-    catch (e) { console.error('[SH] tick:', e.message); }
-    // "HR 24 soatda qo'ng'iroq qiladi" va'dasi: 18 va 24 soatda admin chatiga (services/slaAlert)
-    try { await require('./src/services/slaAlert').tick(); }
-    catch (e) { console.error('[SLA] tick:', e.message); }
-    finally { ivBusy = false; }
+    if (ivBusy && Date.now() - ivBusy < 10 * 60e3) return;
+    if (ivBusy) alertSvc.report('taymer', 'Oldingi tick 10 daqiqadan beri tugamadi — qayta ishga tushirildi');
+    const mine = ivBusy = Date.now();
+    try {
+      for (const [k, fn] of STEPS) {
+        try { await fn(); }
+        catch (e) { console.error(`[${k}] tick:`, e.message); alertSvc.report('tick:' + k, e); }
+      }
+    } finally { if (ivBusy === mine) ivBusy = 0; }
   }, 2 * 60 * 1000);
 
   const tgSvc = require('./src/services/telegram');

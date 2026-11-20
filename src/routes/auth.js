@@ -20,8 +20,29 @@ const loginLimiter = rateLimit({
   legacyHeaders: false
 });
 
+// PIN tanlab topish: IP almashtirib urinilsa ham restoran bo'yicha chegara (10 ta 4 raqamli
+// PIN tanlovi ~500 urinishda topilardi)
+const pinFails = new Map();             // restaurantId -> { n, since }
+const PIN_MAX = 20, PIN_WIN = 15 * 60e3;
+const pinBlocked = id => { const x = pinFails.get(id); return !!x && Date.now() - x.since < PIN_WIN && x.n >= PIN_MAX; };
+const pinFail = id => {
+  const x = pinFails.get(id);
+  if (!x || Date.now() - x.since >= PIN_WIN) pinFails.set(id, { n: 1, since: Date.now() }); else x.n++;
+  if (pinFails.size > 2000) pinFails.delete(pinFails.keys().next().value);
+};
+
 router.post('/login', loginLimiter, asyncHandler(async (req, res) => {
-  const { loginType, email, password, restaurantId, pin } = req.body;
+  // Faqat SATR: {"email":{"$ne":""}} kabi obyekt to'g'ridan-to'g'ri so'rovga tushib, emailni
+  // bilmasdan parol tanlashga (yoki $regex bilan emailni aniqlashga) imkon berardi
+  const str = x => (typeof x === 'string' ? x : '');
+  const loginType = str(req.body && req.body.loginType);
+  const email = str(req.body && req.body.email).trim().toLowerCase();
+  const password = str(req.body && req.body.password);
+  const restaurantId = str(req.body && req.body.restaurantId);
+  const pin = str(req.body && req.body.pin);
+  if ((loginType === 'superadmin' || loginType === 'restaurant') && (!email || !password)) {
+    return res.status(400).json({ error: 'Email va parolni kiriting' });
+  }
 
   if (loginType === 'superadmin') {
     const admin = await SuperAdmin.findOne({ email });
@@ -51,10 +72,11 @@ router.post('/login', loginLimiter, asyncHandler(async (req, res) => {
 
   if (loginType === 'waiter') {
     if (!restaurantId || !pin) return res.status(400).json({ error: 'Restoran va PIN kiritish shart' });
+    if (pinBlocked(restaurantId)) return res.status(429).json({ error: 'Juda ko\'p noto\'g\'ri PIN. 15 daqiqadan so\'ng qayta urinib ko\'ring.' });
     const restaurant = await Restaurant.findOne({ id: restaurantId, active: true });
     if (!restaurant) return res.status(404).json({ error: 'Restoran topilmadi' });
     const waiter = restaurant.waiters.find(w => w.pin === pin && w.active);
-    if (!waiter) return res.status(401).json({ error: 'Noto\'g\'ri PIN' });
+    if (!waiter) { pinFail(restaurantId); return res.status(401).json({ error: 'Noto\'g\'ri PIN' }); }
     const token = jwt.sign(
       { role: 'waiter', restaurantId: restaurant.id, restaurantName: restaurant.name, waiterId: waiter.id, waiterName: waiter.name, waiterRole: waiter.role || 'ofitsiant' },
       JWT_SECRET, { expiresIn: '12h' }

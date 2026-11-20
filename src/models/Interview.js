@@ -49,6 +49,8 @@ const InterviewSchema = new mongoose.Schema({
   clientSaid: { type: String, default: '' },          // came | noshow
   candSaid:   { type: String, default: '' },          // went | missed
   refundedAt: { type: Date, default: null },
+  refundTries: { type: Number, default: 0 },          // yiqilgan qaytarish urinishlari (tick 8-qadam)
+  refundError: { type: String, default: '' },
 
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }

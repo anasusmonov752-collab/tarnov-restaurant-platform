@@ -83,7 +83,10 @@ const VacancySchema = new mongoose.Schema({
     messageId: { type: Number, default: 0 },
     url:       { type: String, default: '' },
     postedAt:  { type: Date, default: null },
-    closedAt:  { type: Date, default: null }
+    closedAt:  { type: Date, default: null },
+    // Joylab bo'lmadi (bot admin emas, kanal o'zgargan) — avtomatik qayta urinish 6 soatdan keyin
+    failedAt:  { type: Date, default: null },
+    error:     { type: String, default: '' }
   },
   // Bazadagi mos nomzodlarga "sizga mos ish" xabari (services/jobPost)
   alertedAt: { type: Date, default: null },

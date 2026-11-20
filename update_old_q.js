@@ -1,3 +1,5 @@
+// Parol ochiq repoda turmasin — muhitdan: TARNOV_ADMIN_PASSWORD=... node update_old_q.js
+if (!process.env.TARNOV_ADMIN_PASSWORD) { console.error('TARNOV_ADMIN_PASSWORD sozlanmagan'); process.exit(1); }
 // Eski 25 ta savolni yangi standartga moslashtirish
 const https = require('https');
 
@@ -175,7 +177,7 @@ function req(method, path, body, cookie) {
 }
 
 async function main() {
-  const login = await req('POST', '/api/auth/login', { loginType:'restaurant', email:'admin@tarnov.uz', password:'anas2024' });
+  const login = await req('POST', '/api/auth/login', { loginType:'restaurant', email:'admin@tarnov.uz', password:process.env.TARNOV_ADMIN_PASSWORD });
   const cookie = (login.headers['set-cookie'] || []).map(c => c.split(';')[0]).join('; ');
   console.log('Login:', login.status);
 

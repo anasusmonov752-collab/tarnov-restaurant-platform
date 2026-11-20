@@ -122,7 +122,10 @@ const ClientSchema = new mongoose.Schema({
 
 ClientSchema.index({ agencyId: 1, createdAt: -1 });
 ClientSchema.index({ agencyId: 1, id: 1 }, { unique: true });
-ClientSchema.index({ tgChatId: 1 }, { sparse: true });
+// Bitta Telegram akkaunt — bitta mijoz (Mini App kirishi findOne({tgChatId}) — ikkitasi bo'lsa
+// tasodifiy biri ochilardi). Bo'sh qiymat ('' — ulanmagan) hisoblanmaydi. Eski noyob emas indeks
+// (tgChatId_1) migrations.uniqueIndexes da o'chiriladi — takror bo'lsa indeks qurilmaydi, xabar beriladi.
+ClientSchema.index({ tgChatId: 1 }, { name: 'tgChatId_uniq', unique: true, partialFilterExpression: { tgChatId: { $gt: '' } } });
 ClientSchema.index({ tgLinkToken: 1 }, { sparse: true });
 ClientSchema.index({ referralCode: 1 }, { unique: true, partialFilterExpression: { referralCode: { $gt: '' } } });
 ClientSchema.index({ agencyId: 1, referredBy: 1 }, { partialFilterExpression: { referredBy: { $gt: '' } } });

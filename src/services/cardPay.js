@@ -175,7 +175,10 @@ async function reject(agencyId, orderId) {
 
 /** Mijoz o'zi bekor qiladi ("To'ladim" bosilmagan bo'lsa) */
 async function cancelByClient(client, orderId) {
-  const r = await Order.updateOne({ agencyId: client.agencyId, clientId: client.id, id: orderId, status: 'pending', claimedAt: null },
+  // Payme/Uzum'da OCHIQ tranzaksiyasi bor buyurtma bekor qilinmaydi: provayder pulni
+  // yechib, "bekor qilingan" javobini olardi
+  const r = await Order.updateOne({ agencyId: client.agencyId, clientId: client.id, id: orderId, status: 'pending', claimedAt: null,
+    paymeState: { $ne: 1 }, uzumState: { $ne: 'CREATED' } },
     { $set: { status: 'canceled', canceledAt: new Date() } });
   if (!r.modifiedCount) fail('Bu buyurtmani bekor qilib bo\'lmaydi');
   return { ok: true };

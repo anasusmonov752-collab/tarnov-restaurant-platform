@@ -167,7 +167,9 @@ router.post('/:rid/submit', guard, asyncHandler(async (req, res) => {
   }
 
   const appBase = publicBase(req);
-  const out = await survey.finalize(r, { appBase });
+  let out;
+  try { out = await survey.finalize(r, { appBase }); }
+  catch (e) { if (e.already) return fail(res, 409, 'already'); throw e; }
   const lang = I18N.LANGS.includes(r.lang) ? r.lang : I18N.fromTelegram(req.tgUser.language_code);
   // Ovozli rezyumedan kelgan (yetishmaganini Mini App'da to'ldirdi — anketa.html?fill=1):
   // ovoz yozuvi, tavsif va "ovozni afzal ko'radi" ham yoziladi (bot yo'li bilan bir xil)

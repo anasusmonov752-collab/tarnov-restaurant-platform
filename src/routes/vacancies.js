@@ -15,6 +15,8 @@ const Application = require('../models/Application');
 const Candidate = require('../models/Candidate');
 const vac = require('../services/vacancy');
 const appLife = require('../services/appLife');
+const matchScore = require('../services/matchScore');
+const I18N = require('../../public/js/th-i18n');
 const jobPost = require('../services/jobPost');
 const Restaurant = require('../models/Restaurant');
 const { publicBase } = require('../utils/publicBase');
@@ -77,13 +79,21 @@ router.get('/', guard, asyncHandler(async (req, res) => {
 // vakansiyaga, qachon, ko'rildimi, bog'lanildimi, qaysi bosqichda.
 // tab: new — hali bog'lanilmagan, work — jarayonda, done — yakunlangan
 const DAY = 864e5;
+function inboxScore(c, v, scr) {
+  if (!c || !v) return { score: null, scoreWhy: [] };
+  const r = matchScore.score(c, v, scr || {});
+  return { score: r.score, scoreWhy: r.parts.map(p => (p.ok === true ? '✓ ' : p.ok === false ? '✗ ' : '• ') + I18N.t('uz', 'ms.' + p.k, p.v)) };
+}
+
 router.get('/applications/inbox', guard, asyncHandler(async (req, res) => {
   const agencyId = req.user.restaurantId;
-  const apps = await Application.find({ agencyId }).sort({ createdAt: -1 }).limit(300).lean();
+  // 1000 ta (ilgari 300: undan oshganda yon menyudagi sanoq bilan sahifa farq qilardi)
+  const apps = await Application.find({ agencyId }).sort({ createdAt: -1 }).limit(1000).lean();
   const [cands, vs, sls] = await Promise.all([
     Candidate.find({ restaurantId: agencyId, id: { $in: [...new Set(apps.map(a => a.candidateId))] } },
-      'id publicCode fullName phone role desiredPosition experienceYears age location source channel phoneVerifiedAt hasPhoto tgState tgUsername updatedAt').lean(),
-    Vacancy.find({ agencyId, id: { $in: [...new Set(apps.map(a => a.vacancyId))] } }, 'id title clientId venue role status').lean(),
+      'id publicCode fullName phone role desiredPosition experienceYears experienceMonths salaryExpectation shift age location source channel phoneVerifiedAt hasPhoto tgState tgUsername updatedAt').lean(),
+    Vacancy.find({ agencyId, id: { $in: [...new Set(apps.map(a => a.vacancyId))] } },
+      'id title clientId venue role status minExp salaryFrom salaryTo salaryPeriod salaryCurrency location shift').lean(),
     Shortlist.find({ agencyId, id: { $in: apps.map(a => a.shortlistId).filter(Boolean) } }, 'id items').lean()
   ]);
   const clients = await Client.find({ agencyId, id: { $in: [...new Set(vs.map(v => v.clientId))] } }, 'id name status').lean();
@@ -112,7 +122,9 @@ router.get('/applications/inbox', guard, asyncHandler(async (req, res) => {
       tone: closed && !life.final ? 'no' : life.tone,
       vacancy: { id: v.id, title: v.title || 'Vakansiya o\'chirilgan', venue: v.venue || '' },
       client: { id: v.clientId, name: (K[v.clientId] || {}).name || '', status: (K[v.clientId] || {}).status || '' },
-      candidate: C[a.candidateId] || null
+      candidate: C[a.candidateId] || null,
+      // Moslik bali — mijoz Mini App'idagi bilan BIR XIL (services/matchScore), sabablari bilan
+      ...inboxScore(C[a.candidateId], V[a.vacancyId], a.screen)
     };
   });
   const count = t => items.filter(x => x.tab === t).length;

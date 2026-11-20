@@ -55,4 +55,10 @@ ChatThreadSchema.index(
   { unique: true, partialFilterExpression: { kind: 'cc' } }
 );
 
+// Mijoz va agentlik o'rtasida BITTA 'ca' suhbat (ensureThread poygasi ikkinchisini ochmasin)
+ChatThreadSchema.index(
+  { agencyId: 1, clientId: 1, kind: 1 },
+  { name: 'ca_uniq', unique: true, partialFilterExpression: { kind: 'ca' } }
+);
+
 module.exports = mongoose.model('ChatThread', ChatThreadSchema);

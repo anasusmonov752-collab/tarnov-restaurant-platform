@@ -76,6 +76,15 @@ async function callOnce(token, method, payload, { timeoutMs = 15000, file } = {}
       FATAL_CODES.includes(code)
     );
     err.retryAfter = body.parameters && body.parameters.retry_after;
+    // 403 shaxsiy chatda — odam botni bloklagan. Nomzod BITTA joyda belgilanadi (har yuboruvchi
+    // o'zi qilmaydi): smena/ish xabarlari ro'yxatida u boshqalarning o'rnini egallamasin.
+    // Qaytib yozsa — routes/telegram.js 'linked' ga qaytaradi.
+    if (code === 403 && payload && /^\d+$/.test(String(payload.chat_id || ''))) {
+      try {
+        require('../models/Candidate').updateMany({ tgChatId: String(payload.chat_id), tgState: 'linked' },
+          { $set: { tgState: 'blocked' } }).catch(() => {});
+      } catch { /* model yuklanmagan (test) */ }
+    }
     throw err;
   }
   return body.result;

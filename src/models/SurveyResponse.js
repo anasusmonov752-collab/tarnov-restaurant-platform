@@ -36,6 +36,7 @@ const SurveyResponseSchema = new mongoose.Schema({
 
   step:        { type: String, default: '' },
   status:      { type: String, default: 'started' },   // started | done | merged
+  finalizingAt: { type: Date, default: null },         // survey.finalize atomik egallashi (ikki bosish)
   // merged — javobsiz takror yozuv asosiysiga qo'shilgan (services/migrations mergeShells;
   // o'chirilmaydi, statistikaga kirmaydi). Eski tugma uni ochsa — asosiysi ochiladi.
   mergedInto:  { type: String, default: '' },

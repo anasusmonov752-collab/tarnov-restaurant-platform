@@ -160,9 +160,12 @@ async function guardTestReveal(agencyId, shortlistId, candidateId) {
   const sl = await Shortlist.findOne({ agencyId, id: shortlistId }, 'clientId').lean();
   if (!sl) return;
   const cl = await Client.findOne({ agencyId, id: sl.clientId }, 'isTest').lean();
-  if (!cl || !cl.isTest) return;
   const cand = await Candidate.findOne({ restaurantId: agencyId, id: candidateId }, 'isTest').lean();
-  if (!cand || !cand.isTest) throw Object.assign(new Error(TEST_REVEAL_ERR), { status: 400 });
+  if (cl && cl.isTest && (!cand || !cand.isTest)) throw Object.assign(new Error(TEST_REVEAL_ERR), { status: 400 });
+  // Teskarisi ham: HAQIQIY mijoz sinov nomzodi uchun kredit to'lamasin (panelda adashib qo'shilsa)
+  if (cl && !cl.isTest && cand && cand.isTest) {
+    throw Object.assign(new Error('Bu sinov nomzodi — haqiqiy mijozga ochilmaydi'), { status: 400 });
+  }
 }
 
 async function reveal({ agencyId, shortlistId, candidateId, appBase = '', viaApplication = false }) {
@@ -210,9 +213,15 @@ async function reveal({ agencyId, shortlistId, candidateId, appBase = '', viaApp
   // yangi qidiruvda yana chiqib tanlanadi; arizadan ochishda ikki bosish
   // ikkita tanlov yaratadi (2026-10-20 auditda topildi). Bu tanlovda
   // ham ochilgan bo'lib qoladi; xabar va chat qayta yuborilmaydi.
-  const prior = (await contactView.openPairs({ agencyId, clientId: claimed.clientId, candidateId }))
-    .filter(p => p.shortlistId !== shortlistId);
-  if (prior.length) {
+  // FAQAT haqiqatan pul yechilgan ochilish hisoblanadi (jurnalda 'reveal'): bir vaqtda
+  // kelgan ikki so'rov bir-birining hali to'lanmagan bandligini ko'rib, ikkalasi ham
+  // bepul ochib yuborardi (2026-11-20 tekshiruvi).
+  const priorIds = (await contactView.openPairs({ agencyId, clientId: claimed.clientId, candidateId }))
+    .filter(p => p.shortlistId !== shortlistId).map(p => p.shortlistId);
+  const prior = priorIds.length ? await CreditLedger.exists({
+    agencyId, clientId: claimed.clientId, candidateId, reason: 'reveal', shortlistId: { $in: priorIds }
+  }) : null;
+  if (prior) {
     await syncKanban(agencyId, candidateId, 'revealed');
     return { already: true, shortlist: claimed, state: 'revealed', openedBefore: true };
   }
@@ -296,6 +305,14 @@ async function refund({ agencyId, shortlistId, candidateId, reason }) {
         { $set: { 'items.$.state': prev.state, 'items.$.refundedAt': null, 'items.$.reason': prev.reason || '' } });
       throw e;
     }
+    // Shu to'lov tufayli BOSHQA tanlovlarda bepul ochilgan nusxalar ham yopiladi — aks holda
+    // kredit qaytgach kontakt, chat va rezyume mijozda tekin qolardi
+    await Shortlist.updateMany(
+      { agencyId, clientId: before.clientId, id: { $ne: shortlistId },
+        items: { $elemMatch: { candidateId, state: { $in: pipeline.REFUNDABLE_STATES } } } },
+      { $set: { 'items.$[it].state': 'refunded', 'items.$[it].refundedAt': now, 'items.$[it].reason': reason, updatedAt: now } },
+      { arrayFilters: [{ 'it.candidateId': candidateId, 'it.state': { $in: pipeline.REFUNDABLE_STATES } }] }
+    );
   }
 
   // Mijozga — o'z tilida. Yiqilsa jim: kredit qaytgan, kabinetda ko'rinadi.

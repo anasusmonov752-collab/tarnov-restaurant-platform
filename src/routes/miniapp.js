@@ -456,7 +456,9 @@ const CLIENT_STATE = {
 
 // ── Mijoz haqida: balans va qisqa statistika ──
 router.get('/me', clientGuard, asyncHandler(async (req, res) => {
-  const rows = await Shortlist.find({ agencyId: req.client.agencyId, clientId: req.client.id }).lean();
+  // /me har qaror, to'lov va til almashishidan keyin chaqiriladi — faqat sanoq uchun kerakli maydonlar
+  const rows = await Shortlist.find({ agencyId: req.client.agencyId, clientId: req.client.id },
+    'createdAt items.state items.revealedAt').lean();
 
   let picked = 0, revealed = 0, hours = [];
   for (const r of rows) {
@@ -562,7 +564,7 @@ async function shortlistView(agencyId, clientId, rows, lang = 'uz') {
   const [cands, vs, threads] = await Promise.all([
     Candidate.find({ restaurantId: agencyId, id: { $in: ids } },
       'id publicCode role desiredPosition age location experienceYears experienceMonths hasPhoto ' +
-      'languages shift jobStatus fullName phone email tgChatId tgState').lean(),
+      'languages shift jobStatus fullName phone email tgChatId tgState phoneVerifiedAt source').lean(),
     // role/shift — avtomatik sarlavhani mijoz tilida ko'rsatish uchun (titleFor)
     vids.length ? Vacancy.find({ agencyId, id: { $in: vids } }, 'id title status role shift').lean() : [],
     // "Yozish" tugmasi to'g'ridan-to'g'ri suhbatni ochishi uchun
@@ -607,6 +609,8 @@ async function shortlistView(agencyId, clientId, rows, lang = 'uz') {
         languages: c.languages || [],
         shift: c.shift || '',
         hasPhoto: !!c.hasPhoto,
+        // Ishonch belgilari — arizalar ro'yxatidagi bilan bir xil (anonymize): tanlovga o'tganda yo'qolmasin
+        phoneVerified: !!c.phoneVerifiedAt, fromAnketa: c.source === 'anketa',
         state: CLIENT_STATE[stKey],
         stateLabel: I18N.t(lang, 'cs.' + stKey),
         stage: open ? (STAGE[it.state] || 'contact') : null,
@@ -662,14 +666,19 @@ async function funnelFor(agencyId, clientId, vacancies) {
   ]);
   const aBy = Object.fromEntries(apps.map(a => [a._id, a]));
   const out = {};
+  // "N mos" sanoqlari PARALLEL (har biri bir nechta countDocuments) — ketma-ket 50 vakansiyada
+  // Vakansiyalar bo'limi har ochilishda sekin edi
+  const itemsOf = v => sls.filter(s => s.vacancyId === v.id).flatMap(s => s.items || []);
+  const mosBy = Object.fromEntries(await Promise.all(vacancies.map(async v => {
+    if (v.status !== 'open' || !isValidRole(v.role)) return [v.id, null];
+    const picked = [...new Set(itemsOf(v).map(i => i.candidateId))];
+    try { return [v.id, await candidateSearch.countRelaxed(vacancyCriteria(v, picked), agencyId)]; }
+    catch (e) { console.error('[MA] mos sanog\'i:', e.message); return [v.id, null]; }
+  })));
   for (const v of vacancies) {
-    const items = sls.filter(s => s.vacancyId === v.id).flatMap(s => s.items || []);
+    const items = itemsOf(v);
     const picked = [...new Set(items.map(i => i.candidateId))];
-    let mos = null;
-    if (v.status === 'open' && isValidRole(v.role)) {
-      try { mos = await candidateSearch.countRelaxed(vacancyCriteria(v, picked), agencyId); }
-      catch (e) { console.error('[MA] mos sanog\'i:', e.message); }
-    }
+    const mos = mosBy[v.id];
     out[v.id] = {
       mos,
       picked: picked.length,
@@ -900,6 +909,7 @@ router.post('/vacancies', clientGuard, asyncHandler(async (req, res) => {
     }
   } catch (e) { console.error('[MA] vakansiya xabari ketmadi:', e.message); }
 
+  vac.fillRu(v.toObject());                      // fonda — rus tilidagi nomzodlar uchun
   res.json(vac.full(v, {}, req.lang));
 }));
 
@@ -919,7 +929,11 @@ router.patch('/vacancies/:id', clientGuard, asyncHandler(async (req, res) => {
   v.updatedAt = new Date();
   await v.save();
   // Yopildi — qaror qilinmagan arizachilarga "o'rin yopildi" (appLife.closeForVacancy)
-  if (!wasClosed && v.status === 'closed') await appLife.closeForVacancy(req.client.agencyId, v, { appBase: publicBase(req) });
+  // Arizachilarga "o'rin yopildi" — FONDA: har biriga Telegram xabari, katta vakansiyada so'rov
+  // vaqti tugab, vakansiya yopilgan bo'lsa ham mijoz xato ko'rardi
+  if (!wasClosed && v.status === 'closed') appLife.closeForVacancy(req.client.agencyId, v.toObject(), { appBase: publicBase(req) })
+    .catch(e => console.error('[MA] yopilish xabarlari:', e.message));
+  else if (v.status !== 'closed') vac.fillRu(v.toObject());   // o'zgargan maydonning ruschasi clean() da o'chgan
   res.json(vac.full(v, {}, req.lang));
 }));
 
@@ -1029,14 +1043,8 @@ async function appsView(agencyId, clientId, apps, lang = 'uz') {
     'id role minExp salaryFrom salaryTo salaryPeriod salaryCurrency location shift').lean();
   const vacBy = Object.fromEntries(vacs.map(v => [v.id, v]));
 
-  // Ko'rilgan deb belgilaymiz — nomzod "Ko'rildi" holatini ko'radi
-  const unseen = apps.filter(a => a.state === 'new').map(a => a.id);
-  if (unseen.length) {
-    await Application.updateMany(
-      { agencyId, id: { $in: unseen } },
-      { $set: { state: 'seen', seenAt: new Date() } }
-    );
-  }
+  // "Ko'rildi" bu yerda QO'YILMAYDI: ro'yxat Mini App ochilishi bilan yuklanadi va hamma ariza
+  // ko'rilmay turib "Ko'rildi" bo'lib qolardi. Mijoz nomzod sahifasini ochganda — POST .../seen.
 
   const anon = Object.fromEntries(
     anonymize.forClientList(cands.filter(Boolean)).map(c => [c.publicCode, c])
@@ -1104,6 +1112,13 @@ router.post('/applications/:id/voice', clientGuard, asyncHandler(async (req, res
   } catch (e) { res.status(400).json({ error: e.message }); }
 }));
 
+// ── Ariza ko'rildi — mijoz nomzod sahifasini ochdi (nomzod "Ko'rildi" ni ko'radi) ──
+router.post('/applications/:id/seen', clientGuard, asyncHandler(async (req, res) => {
+  const r = await Application.updateOne({ agencyId: req.client.agencyId, clientId: req.client.id, id: req.params.id, state: 'new' },
+    { $set: { state: 'seen', seenAt: new Date() } });
+  res.json({ ok: true, changed: !!r.modifiedCount });
+}));
+
 // ── Arizachini tanlash yoki rad etish ──
 router.post('/applications/:id/:action', clientGuard, asyncHandler(async (req, res) => {
   const agencyId = req.client.agencyId;
@@ -1118,6 +1133,27 @@ router.post('/applications/:id/:action', clientGuard, asyncHandler(async (req, r
   if (a.state === 'shortlisted' || a.state === 'rejected') {
     return res.status(400).json({ error: 'Bu ariza bo\'yicha qaror qabul qilingan' });
   }
+  const prevAppState = a.state;
+
+  // Ochishdan oldingi tekshiruv — arizani band qilishdan OLDIN (rad bo'lsa ariza o'zgarmaydi)
+  if (act === 'open') {
+    const cand = await Candidate.findOne({ restaurantId: agencyId, id: a.candidateId },
+      'id phone jobStatus jobStatusAt').lean();
+    const el = applyReveal.eligibility(a, cand);
+    if (!el.ok) return res.status(400).json({ error: whyText(req.lang, el) });
+    if ((req.client.credits || 0) < 1) {
+      return res.status(400).json({ error: 'Kredit yetarli emas', noCredits: true });
+    }
+  }
+
+  // Arizani ATOMIK band qilamiz: ikki marta bosish (yoki ikki so'rov) ikkita tanlov yaratib,
+  // kontaktni bepul ochib yuborardi (2026-11-20 tekshiruvi). Ikkinchisi shu yerda to'xtaydi.
+  const lock = await Application.findOneAndUpdate(
+    { _id: a._id, state: { $nin: ['shortlisted', 'rejected'] } },
+    { $set: { state: act === 'reject' ? 'rejected' : 'shortlisted', decidedAt: new Date() } },
+    { new: true }
+  );
+  if (!lock) return res.status(400).json({ error: 'Bu ariza bo\'yicha qaror qabul qilingan' });
 
   if (act === 'reject') {
     a.state = 'rejected';
@@ -1131,19 +1167,9 @@ router.post('/applications/:id/:action', clientGuard, asyncHandler(async (req, r
     return res.json({ ok: true, state: a.state });
   }
 
-  // Arizadan o'zi ochish: shart SERVERDA qayta tekshiriladi — tugma
-  // ko'rinishiga ishonmaymiz. Kredit oldindan tekshiriladi: yetmasa ariza
-  // "tanlangan" bo'lib qolib, mijozga xato chiqmasin (reveal() baribir
-  // atomik yechadi — bu faqat tushunarli xabar uchun).
-  if (act === 'open') {
-    const cand = await Candidate.findOne({ restaurantId: agencyId, id: a.candidateId },
-      'id phone jobStatus jobStatusAt').lean();
-    const el = applyReveal.eligibility(a, cand);
-    if (!el.ok) return res.status(400).json({ error: whyText(req.lang, el) });
-    if ((req.client.credits || 0) < 1) {
-      return res.status(400).json({ error: 'Kredit yetarli emas', noCredits: true });
-    }
-  }
+  // Arizadan o'zi ochish: shart SERVERDA tekshirildi (yuqorida, band qilishdan oldin) —
+  // tugma ko'rinishiga ishonmaymiz. Kredit oldindan tekshirildi: tushunarli xabar uchun
+  // (reveal() baribir atomik yechadi; yiqilsa ariza pastda avvalgi holatiga qaytadi).
 
   // Shu vakansiya bo'yicha ochiq tanlov bormi — bo'lsa unga qo'shamiz,
   // aks holda yangisini ochamiz. Har arizaga alohida tanlov yaratsak,
@@ -1185,6 +1211,10 @@ router.post('/applications/:id/:action', clientGuard, asyncHandler(async (req, r
       r = await shortlistSvc.reveal({ agencyId, shortlistId: sl.id, candidateId: a.candidateId,
         appBase: publicBase(req), viaApplication: true });
     } catch (e) {
+      // Ochilmadi (kredit poygasi, sinov himoyasi, nomzod bosh tortgan) — ariza "qaror qilingan"
+      // bo'lib osilib qolmasin: avvalgi holatiga qaytadi, tanlovga qo'shilgan element olinadi
+      await Application.updateOne({ _id: a._id }, { $set: { state: prevAppState, shortlistId: '', decidedAt: null } });
+      await Shortlist.updateOne({ agencyId, id: sl.id }, { $pull: { items: { candidateId: a.candidateId, state: 'selected' } } });
       return res.status(400).json({ error: e.message });
     }
     // Sizga — nazoratdan chiqmaysiz, lekin tugma kerak emas: kontakt ochilgan
@@ -1244,21 +1274,8 @@ router.get('/credits', clientGuard, asyncHandler(async (req, res) => {
   })));
 }));
 
-// ── Kredit so'rash ──
-// To'lov tizimi hali yo'q — so'rov sizga xabar bo'lib keladi, qo'lda qo'shasiz.
-router.post('/topup', clientGuard, asyncHandler(async (req, res) => {
-  const want = Math.max(1, Math.min(parseInt((req.body || {}).amount, 10) || 10, 500));
-
-  const agency = await Restaurant.findOne({ id: req.client.agencyId });
-  const adminChat = agency && agency.telegram && agency.telegram.adminChatId;
-  if (adminChat) {
-    await tg.sendMessage(tg.platformToken(), adminChat,
-      `💳 Kredit so'rovi\n\n${req.client.name}\n` +
-      `So'ralgan: ${want} kredit\nJoriy balans: ${req.client.credits}\n\n` +
-      `Panel -> Mijozlar -> Kredit`).catch(() => {});
-  }
-  res.json({ ok: true });
-}));
+// (/topup — eski "kredit so'rash" o'chirildi 2026-11-20: tariflar to'lovi bor, Mini App
+// chaqirmasdi, istalgan mijoz uni admin chatini to'ldirish uchun ishlata olardi)
 
 // ── Tariflar: ro'yxat, holat, ulangan to'lov usullari ──
 // providers bo'sh — to'lov tizimi hali ulanmagan: Mini App qo'lda so'rov yuboradi

@@ -1,3 +1,5 @@
+// Parol ochiq repoda turmasin — muhitdan: TARNOV_ADMIN_PASSWORD=... node add_menu.js
+if (!process.env.TARNOV_ADMIN_PASSWORD) { console.error('TARNOV_ADMIN_PASSWORD sozlanmagan'); process.exit(1); }
 // tarnov.uz dan olingan mahsulotlarni platformaga qo'shish skripti
 const https = require('https');
 
@@ -223,7 +225,7 @@ function request(method, path, body, cookies) {
 async function main() {
   // Login
   const loginRes = await request('POST', '/api/auth/login', {
-    loginType: 'restaurant', email: 'admin@tarnov.uz', password: 'anas2024'
+    loginType: 'restaurant', email: 'admin@tarnov.uz', password: process.env.TARNOV_ADMIN_PASSWORD
   });
   const setCookie = loginRes.headers['set-cookie'];
   const cookie = setCookie ? setCookie.map(c => c.split(';')[0]).join('; ') : '';

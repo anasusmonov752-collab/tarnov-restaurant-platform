@@ -218,7 +218,9 @@ async function applyVoice(fresh, out) {
 async function finish(r, chatId, lang, appBase) {
   const fresh = await SurveyResponse.findOne({ _id: r._id });
   if (!fresh || fresh.status === 'done') return null;
-  const out = await survey.finalize(fresh, { appBase });
+  let out;
+  try { out = await survey.finalize(fresh, { appBase }); }
+  catch (e) { if (e.already) return null; throw e; }        // ikkinchi bosish — birinchisi yakunlayapti
   await applyVoice(fresh, out);
   await send(chatId, T(lang, 'vi.done'), { reply_markup: { remove_keyboard: true } });
   await require('./anketaDone').afterFinalize(fresh, out, { appBase, lang, via: 'voice' });

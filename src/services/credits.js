@@ -28,16 +28,25 @@ const noTxn = e => e && (e.code === 20 || /replica set|Transaction numbers/i.tes
  */
 async function move(args) {
   if (!Number.isFinite(args.delta) || args.delta === 0) throw new Error('delta noto\'g\'ri');
+  return withTxn(session => moveIn(args, session));
+}
+
+/**
+ * fn(session) ni BITTA tranzaksiyada bajaradi (bir nechta yozuv — hammasi yoki hech biri).
+ * MongoDB tranzaksiyani qo'llamasa (replika emas) — fn(null): oldingi xatti-harakat.
+ * billing.activate ham shundan foydalanadi (buyurtma + kredit + tarif).
+ */
+async function withTxn(fn) {
   if (!txnUnsupported) {
     try {
-      return await mongoose.connection.transaction(session => moveIn(args, session));
+      return await mongoose.connection.transaction(session => fn(session));
     } catch (e) {
       if (!noTxn(e)) throw e;
       txnUnsupported = true;
       console.warn('[CREDITS] MongoDB tranzaksiyani qo\'llamaydi — jurnal alohida yoziladi');
     }
   }
-  return moveIn(args, null);
+  return fn(null);
 }
 
 async function moveIn({ agencyId, clientId, delta, reason, shortlistId = '', candidateId = '', note = '' }, session) {
@@ -83,4 +92,4 @@ async function balance(agencyId, clientId) {
   return c ? c.credits : null;
 }
 
-module.exports = { move, purchase, bonus, reveal, refund, history, balance };
+module.exports = { move, moveIn, withTxn, purchase, bonus, reveal, refund, history, balance };

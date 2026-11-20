@@ -1,3 +1,5 @@
+// Parol ochiq repoda turmasin — muhitdan: TARNOV_ADMIN_PASSWORD=... node add_details.js
+if (!process.env.TARNOV_ADMIN_PASSWORD) { console.error('TARNOV_ADMIN_PASSWORD sozlanmagan'); process.exit(1); }
 /**
  * 1. Asosiy taomlarning ingredients/allergens/servingSuggestion ni to'ldirish
  * 2. Tarkib, alergen va tavsiya bo'yicha ~50 yangi savol qo'shish
@@ -156,7 +158,7 @@ const newQuestions = [
 ];
 
 async function main() {
-  const login = await req('POST','/api/auth/login',{loginType:'restaurant',email:'admin@tarnov.uz',password:'anas2024'});
+  const login = await req('POST','/api/auth/login',{loginType:'restaurant',email:'admin@tarnov.uz',password:process.env.TARNOV_ADMIN_PASSWORD});
   const cookie = (login.headers['set-cookie']||[]).map(c=>c.split(';')[0]).join('; ');
   console.log('Login:', login.status);
 

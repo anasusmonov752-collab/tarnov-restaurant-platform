@@ -171,3 +171,30 @@ test('asl PDF rezyume: faqat api.hh.ru havolasi, token bilan, PDF tekshiriladi',
     await assert.rejects(hh.resumePdf(A, id), /PDF havolasini/);
   } finally { global.fetch = prev; }
 });
+
+test('kontakt ochish: faqat hh bergan with_contact havolasi orqali; begona havola rad etiladi', async () => {
+  const prev = global.fetch;
+  const id = 'eeee1111ffff2222aaaa3333bbbb';
+  let link = `https://api.hh.ru/resumes/${id}?with_contact=tok123&host=hh.uz`;
+  const seen = [];
+  global.fetch = async (url) => {
+    const u = String(url); seen.push(u);
+    const json = (status, body) => ({ ok: status < 300, status, json: async () => body });
+    if (u.includes('with_contact=tok123')) return json(200, { id, title: 'HR', first_name: 'Dilnoza', last_name: 'K', contact_view_status: 'FULL',
+      alternate_url: 'https://hh.uz/resume/' + id,
+      contact: [{ type: { id: 'cell' }, preferred: true, value: { country: '998', city: '90', number: '1234567', formatted: '+998 (90) 123-45-67' } },
+        { type: { id: 'email' }, value: 'd@example.com' }] });
+    if (u.includes('/resumes/' + id)) return json(200, { id, title: 'HR', contact_view_status: 'NONE', actions: { get_with_contact: { url: link } } });
+    return json(404, {});
+  };
+  try {
+    const r = await hh.openContacts(A, id);
+    assert.equal(r.name, 'K Dilnoza'); assert.equal(r.status, 'FULL');
+    assert.deepEqual(r.contacts.map(c => c.value), ['+998 (90) 123-45-67', 'd@example.com']);
+    assert.ok(seen.some(u => u.includes('with_contact=tok123')));
+    link = 'https://evil.example/resumes/' + id + '?with_contact=x';
+    await assert.rejects(hh.openContacts(A, id), /kutilmagan/);
+    link = null;
+    await assert.rejects(hh.openContacts(A, id), /havolasini bermadi/);
+  } finally { global.fetch = prev; }
+});

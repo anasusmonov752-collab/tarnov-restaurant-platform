@@ -54,10 +54,21 @@ router.get('/resumes/:id', guard, asyncHandler(async (req, res) => {
 // hh'ning asl PDF rezyumesi (kontaktsiz — kvota yemaydi)
 router.get('/resumes/:id/pdf', guard, asyncHandler(async (req, res) => {
   try {
-    const { buf, title } = await hh.resumePdf(req.user.restaurantId, req.params.id);
+    const { buf, title } = await hh.resumePdf(req.user.restaurantId, req.params.id, true, req.query.contact === '1');
     res.set('Content-Type', 'application/pdf');
     res.set('Content-Disposition', `attachment; filename="resume.pdf"; filename*=UTF-8''${encodeURIComponent(title.slice(0, 80))}.pdf`);
     res.send(buf);
+  } catch (e) { res.status(e.status && e.status < 500 ? e.status : 502).json({ error: e.message, code: e.code }); }
+}));
+
+// KONTAKT OCHISH — kvotadan 1 ta. Faqat { apply: true } bilan (egasining aniq qarori); busiz hech narsa yechilmaydi
+router.post('/resumes/:id/contacts', guard, asyncHandler(async (req, res) => {
+  try {
+    if (!(req.body && req.body.apply === true)) {
+      return res.json({ applied: false, note: 'Kontakt ochilmadi: { apply: true } kerak (kvotadan 1 ta yechiladi)' });
+    }
+    if (!/^[a-f0-9]{20,64}$/i.test(req.params.id)) return res.status(400).json({ error: 'Rezyume id noto\'g\'ri' });
+    res.json(Object.assign({ applied: true }, await hh.openContacts(req.user.restaurantId, req.params.id)));
   } catch (e) { res.status(e.status && e.status < 500 ? e.status : 502).json({ error: e.message, code: e.code }); }
 }));
 

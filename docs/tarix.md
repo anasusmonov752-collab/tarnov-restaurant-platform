@@ -1510,3 +1510,6 @@ sanog'i va arizalar rezyume bilan (ixcham), faqat o'qish: holat o'zgartirilmaydi
 rekruteri, hh vacancy 139742433 (2026-11-23, Anas qarori bilan testsiz, "Стандарт" paketi).
 Asl PDF: `hh.resumePdf` + `GET /api/hh/resumes/:id/pdf` — hh'ning o'z PDF rezyumesi (token bilan; havola faqat
 `api.hh.ru/resumes/.../download/`, javob `%PDF` bilan tekshiriladi). Kontakt ochilmagan bo'lsa anonim — kvota yemaydi.
+Kontakt ochish: `hh.openContacts` + `POST /api/hh/resumes/:id/contacts` — FAQAT `{apply:true}` bilan (kvotadan 1 ta;
+hh bergan `actions.get_with_contact` havolasi, boshqa xost rad etiladi). Ism-telefonli PDF — `.../pdf?contact=1`
+(faqat kontakt ochilgandan keyin). Birinchi ochilgan: rekruter nomzodi K28 (2026-11-23, Anas qarori).

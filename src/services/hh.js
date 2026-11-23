@@ -208,14 +208,37 @@ async function resume(agencyId, id) {
   return request(agencyId, '/resumes/' + id, { host: process.env.HH_HOST || 'hh.uz' });
 }
 
-/** hh'ning asl PDF rezyumesi (kontakt ochilmagan bo'lsa — anonim). Faqat api.hh.ru/resumes/ havolasi */
-async function resumePdf(agencyId, id, retry = true) {
+/** KONTAKT OCHISH — hh kvotasidan 1 ta yechiladi (allaqachon ochilgan bo'lsa yechilmaydi).
+ *  Faqat egasining qarori bilan chaqiriladi (route'da apply:true). Ism, telefon, email qaytadi. */
+async function openContacts(agencyId, id) {
   const j = await resume(agencyId, id);
-  const url = j.download && j.download.pdf && j.download.pdf.url;
+  const link = j.actions && j.actions.get_with_contact && j.actions.get_with_contact.url;
+  let u;
+  try { u = new URL(String(link)); } catch (_) { throw new HhError('hh kontakt havolasini bermadi (kvota tugagan yoki ruxsat yo\'q)', 403, 'no_contact_link'); }
+  if (u.origin !== API || u.pathname !== '/resumes/' + id || !u.searchParams.get('with_contact')) {
+    throw new HhError('Kontakt havolasi kutilmagan ko\'rinishda', 502, 'bad_contact_link');
+  }
+  const full = await request(agencyId, u.pathname, Object.fromEntries(u.searchParams));
+  const contacts = (full.contact || []).map(c => ({
+    type: c.type && c.type.id, preferred: !!c.preferred, comment: c.comment || '',
+    value: typeof c.value === 'string' ? c.value : (c.value && (c.value.formatted || [c.value.country, c.value.city, c.value.number].filter(Boolean).join(''))) || ''
+  }));
+  return {
+    id, title: full.title || '', name: [full.last_name, full.first_name, full.middle_name].filter(Boolean).join(' '),
+    contacts, status: full.contact_view_status || '', url: full.alternate_url || ''
+  };
+}
+
+/** hh'ning asl PDF rezyumesi. withContact — kontakt OCHILGANDAN keyin, ism-telefon bilan */
+async function resumePdf(agencyId, id, retry = true, withContact = false) {
+  const j = await resume(agencyId, id);
+  const src = withContact ? (j.actions && j.actions.download_with_contact) : j.download;
+  if (withContact && j.contact_view_status !== 'FULL') throw new HhError('Kontakt hali ochilmagan', 409, 'contact_closed');
+  const url = src && src.pdf && src.pdf.url;
   if (!url || !/^https:\/\/api\.hh\.ru\/resumes\/[a-f0-9]+\/download\//i.test(url)) throw new HhError('hh PDF havolasini bermadi', 404, 'no_pdf');
   const t = await tokens(agencyId);
   const r = await fetch(url, { headers: { Authorization: `Bearer ${t.accessToken}`, 'HH-User-Agent': cfg().ua, 'User-Agent': cfg().ua } });
-  if (r.status === 403 && retry) { await refresh(agencyId); return resumePdf(agencyId, id, false); }
+  if (r.status === 403 && retry) { await refresh(agencyId); return resumePdf(agencyId, id, false, withContact); }
   if (!r.ok) throw new HhError('hh PDF ' + r.status, r.status, 'pdf_failed');
   const buf = Buffer.from(await r.arrayBuffer());
   if (buf.slice(0, 4).toString() !== '%PDF') throw new HhError('hh PDF emas javob qaytardi', 502, 'not_pdf');
@@ -281,4 +304,4 @@ async function importResume(agencyId, id, { tag = '' } = {}) {
 }
 
 module.exports = { configured, authorizeUrl, readState, connect, request, refresh, searchResumes, resume, tokens, HhError, SEARCH_KEYS, cfg,
-  importResume, toCandidate, drafts, publications, DRAFT_KEYS, applicants, resumePdf };
+  importResume, toCandidate, drafts, publications, DRAFT_KEYS, applicants, resumePdf, openContacts };

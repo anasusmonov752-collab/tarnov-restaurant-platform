@@ -232,8 +232,10 @@ async function openContacts(agencyId, id) {
 /** hh'ning asl PDF rezyumesi. withContact — kontakt OCHILGANDAN keyin, ism-telefon bilan */
 async function resumePdf(agencyId, id, retry = true, withContact = false) {
   const j = await resume(agencyId, id);
-  const src = withContact ? (j.actions && j.actions.download_with_contact) : j.download;
+  // Kontakt ochilgandan keyin hh oddiy download havolasining o'zini ism-telefonli qiladi
+  // (actions.download_with_contact faqat OCHILMAGAN rezyumeda bo'ladi — uni so'rash kvota yeyishi mumkin, ishlatilmaydi)
   if (withContact && j.contact_view_status !== 'FULL') throw new HhError('Kontakt hali ochilmagan', 409, 'contact_closed');
+  const src = j.download || (j.actions && j.actions.download);
   const url = src && src.pdf && src.pdf.url;
   if (!url || !/^https:\/\/api\.hh\.ru\/resumes\/[a-f0-9]+\/download\//i.test(url)) throw new HhError('hh PDF havolasini bermadi', 404, 'no_pdf');
   const t = await tokens(agencyId);

@@ -1482,3 +1482,17 @@ Xulosa: tor joy — qo'ng'iroq bosqichi (inson halqasi), kod emas. Anas tekshiru
   bepul" (avval "3 daqiqalik anketa").
 - Panelda yaratilgan/tahrirlangan vakansiyaning bo'sh ruscha maydonlari ham fonda (`vac.fillRu`) —
   kabinetda tillar aralashmasin. SMS matniga TEGILMADI (Anas tanlagan yakuniy 4-versiya).
+
+**EKRANLAR AUDITI — 17 BAND** (2026-11-23, Anas: "xato topa olmasligimga kafolat berasanmi?" — kafolat
+berilmadi, qolgan ekranlar tekshirildi). Mijoz Mini App (Nomzodlar, Vakansiya, forma, Hisob), nomzod kabineti
+(Profilim, Ish o'rinlari, Arizalarim), anketa, jonli panel (Bugun, Arizalar, Vakansiyalar, Anketadan
+kelganlar, Mijozlar) skrinshotda; lug'at skript bilan (nomzod kalitlarida taqiqlangan so'zlar, ruscha ko'plik).
+- Panel "Bugun": bosh kartochka "Ko'rilmagan arizalar: 2" edi, holbuki 10 ta arizaga va 38 ta anketa nomzodiga
+  qo'ng'iroq qilinmagan (hammasi 24 soatdan oshgan) — endi "Qo'ng'iroq kutmoqda" (ariza + anketa,
+  `callWaiting/callLate/ankWaiting/ankLate`, 24 soatdan oshgani qizil). Kutish navbatidan sinov mijozlari olindi.
+- Nomzodga "vakansiya" -> "ish" (13 kalit: cb.*, ank.*, ivx.k*, jp.closedNote), "rezyume" -> "profil"
+  (hh ekrani "Mening rezyumem", ank.fillH, vi.consent — Anas 2026-11-16 qarori), sarlavhada "anketa" yo'q
+  (ank.doneH, ank.botClosed). Mijozga ruscha ko'plik: "Осталось бесплатных поисков: {n}", "кандидатам: {n}".
+- Anketa kirish ekranidagi til tugmasi sariq bezak ustida o'qilmasdi — to'q fon.
+Ko'rilib, nuqson topilmadi: Mini App ro'yxatlari, forma, tariflar; kabinet Arizalarim (bosqich chizig'i);
+panel Arizalar (moslik bali), Mijozlar (ma'lumot sifati bloki). Telegramda haqiqiy akkaunt bilan sinalmagan.

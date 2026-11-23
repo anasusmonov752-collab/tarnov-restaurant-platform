@@ -45,6 +45,20 @@ router.get('/today', guard, asyncHandler(async (req, res) => {
   // Nomzodga KO'RINADIGAN ochiq ishlar. Tasdiqlanmagani (confirmedAt 14 kundan
   // eski — vac.STALE_DAYS) botda ham, nomzod kabinetida ham ko'rinmaydi: hammasi
   // eskirsa nomzod BO'SH ekran ko'radi. Shuning uchun bu yerda va yon menyuda.
+  // "HR 24 soatda qo'ng'iroq qiladi" — bosh ko'rsatkich (2026-11-23: 10 ta arizaga qo'ng'iroq
+  // qilinmagan, 8 tasi 6–7 kun — bosh sahifa esa "ko'rilmagan: 2" derdi). Arizalar sahifasining
+  // "Javob kutmoqda" qoidasi bilan bir xil: qaror yo'q, Bog'landim yo'q, vakansiya ochiq, sinov emas
+  const callQ = { agencyId, state: { $in: ['new', 'seen'] }, contactedAt: null, isTest: { $ne: true }, vacancyId: { $in: liveVac } };
+  // + anketani o'zi to'ldirib, hali hech kim bog'lanmagan nomzodlar (contactLog.WAITING — panel
+  // "Anketadan kelganlar" bilan bir xil qoida): 2026-11-23 da 38 tasi, hammasi 1 kundan oshgan
+  const ankQ = Object.assign({ restaurantId: agencyId, source: 'anketa', isTest: { $ne: true } }, contactLog.WAITING);
+  const [callWaiting, callLate, ankWaiting, ankLate] = await Promise.all([
+    Application.countDocuments(callQ),
+    Application.countDocuments(Object.assign({ createdAt: { $lte: new Date(now - 864e5) } }, callQ)),
+    Candidate.countDocuments(ankQ),
+    Candidate.countDocuments(Object.assign({ createdAt: { $lte: new Date(now - 864e5) } }, ankQ))
+  ]);
+
   const vacSvc = require('../services/vacancy');
   const fresh = new Date(Date.now() - vacSvc.STALE_DAYS * 864e5);
   const openQ = { agencyId, status: 'open', listed: { $ne: false }, isTest: { $ne: true } };
@@ -77,11 +91,12 @@ router.get('/today', guard, asyncHandler(async (req, res) => {
       contacting: waiting.filter(i => i.state === 'contacting').length,
       since: s.createdAt, updatedAt: s.updatedAt
     };
-  }).filter(q => q.waiting > 0).sort((a, b) => new Date(a.since) - new Date(b.since));
+  // Sinov mijozlarining tanlovlari navbatga kirmaydi ("eng eskisi 48 kun" sinovdan edi)
+  }).filter(q => q.waiting > 0 && !(byClient[q.clientId] || {}).isTest).sort((a, b) => new Date(a.since) - new Date(b.since));
 
   const active = clients.filter(c => c.status === 'active' && !c.isTest);
   res.json({
-    appsNew,
+    appsNew, callWaiting, callLate, ankWaiting, ankLate,
     waitingShortlists: queue.length,
     oldestWaitingDays: queue.length ? Math.floor((now - new Date(queue[0].since)) / 864e5) : 0,
     revealedMonth: (month[0] || {}).revealed || 0,

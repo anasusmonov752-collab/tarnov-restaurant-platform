@@ -140,6 +140,36 @@ const drafts = {
   publish: async (a, id) => request(a, '/vacancies/drafts/' + draftId(id) + '/publish', HOST(), true, { method: 'POST', body: {} })
 };
 
+// ── Vakansiyaga kelgan arizalar (hh /negotiations) — FAQAT O'QISH ──
+// Holat (taklif/rad) bu yerdan o'zgartirilmaydi. Arizachining kontakti kvota yemaydi.
+const vacId = id => { if (!/^\d{1,15}$/.test(String(id))) throw new HhError('Vakansiya id noto\'g\'ri', 400, 'bad_id'); return String(id); };
+const toApplicant = n => {
+  const r = n.resume || {};
+  const sal = r.salary;
+  return {
+    negotiationId: n.id, state: n.employer_state ? n.employer_state.id : (n.state && n.state.id) || '',
+    createdAt: n.created_at, hasUpdates: !!n.has_updates,
+    resumeId: r.id || '', title: r.title || '', age: r.age || null,
+    name: [r.last_name, r.first_name].filter(Boolean).join(' '),
+    gender: r.gender ? r.gender.id : '', area: r.area ? r.area.name : '',
+    totalMonths: r.total_experience ? r.total_experience.months : null,
+    salary: sal && sal.amount ? `${sal.amount} ${sal.currency}` : '',
+    education: r.education && r.education.level ? r.education.level.name : '',
+    url: r.alternate_url || '',
+    experience: (r.experience || []).slice(0, 5).map(e => ({ company: e.company, position: e.position, start: e.start, end: e.end }))
+  };
+};
+async function applicants(agencyId, vacancyId, { collection = '', page = 0, per_page = 50 } = {}) {
+  const vid = vacId(vacancyId);
+  const list = await request(agencyId, '/negotiations', Object.assign({ vacancy_id: vid }, HOST()));
+  const collections = (list.collections || []).map(c => ({ id: c.id, name: c.name, total: (c.counters || {}).total || 0 }));
+  if (!collection) return { collections };
+  if (!/^[a-z_0-9]{1,40}$/.test(String(collection))) throw new HhError('To\'plam nomi noto\'g\'ri', 400, 'bad_collection');
+  const j = await request(agencyId, '/negotiations/' + collection,
+    Object.assign({ vacancy_id: vid, page: Math.max(0, +page || 0), per_page: Math.min(50, Math.max(1, +per_page || 50)) }, HOST()));
+  return { collections, found: j.found || 0, pages: j.pages || 0, page: j.page || 0, items: (j.items || []).map(toApplicant) };
+}
+
 /** Shu hudud va lavozim uchun mavjud nashr variantlari (tarif paketlari) */
 async function publications(agencyId, { area = '2759', role = '' } = {}) {
   const me = await request(agencyId, '/me');
@@ -237,4 +267,4 @@ async function importResume(agencyId, id, { tag = '' } = {}) {
 }
 
 module.exports = { configured, authorizeUrl, readState, connect, request, refresh, searchResumes, resume, tokens, HhError, SEARCH_KEYS, cfg,
-  importResume, toCandidate, drafts, publications, DRAFT_KEYS };
+  importResume, toCandidate, drafts, publications, DRAFT_KEYS, applicants };

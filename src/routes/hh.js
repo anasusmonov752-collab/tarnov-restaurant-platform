@@ -72,6 +72,9 @@ router.post('/vacancy-drafts', guard, wrap(req => hh.drafts.create(req.user.rest
 router.get('/vacancy-drafts/:id', guard, wrap(req => hh.drafts.get(req.user.restaurantId, req.params.id)));
 router.put('/vacancy-drafts/:id', guard, wrap(req => hh.drafts.update(req.user.restaurantId, req.params.id, req.body)));
 router.delete('/vacancy-drafts/:id', guard, wrap(req => hh.drafts.remove(req.user.restaurantId, req.params.id)));
+// Vakansiyaga kelgan arizalar: ?collection= bo'lmasa — to'plamlar va sanoq; bilan — arizalar (50 tadan)
+router.get('/vacancies/:vid/applicants', guard, wrap(req => hh.applicants(req.user.restaurantId, req.params.vid,
+  { collection: req.query.collection, page: req.query.page, per_page: req.query.per_page })));
 router.get('/publications', guard, wrap(req => hh.publications(req.user.restaurantId, { area: req.query.area, role: req.query.role })));
 
 // Nashr — ochiq e'lon (Tarnov nomidan, tarif paketidan yechiladi). Faqat egasi tasdiqlagandan keyin:

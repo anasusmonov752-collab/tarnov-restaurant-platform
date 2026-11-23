@@ -118,3 +118,35 @@ test('vakansiya qoralamasi: POST JSON, faqat ruxsat etilgan maydonlar; nashr alo
     assert.equal(p.vacancies[0].id, '555'); assert.equal(seen.pop().method, 'POST');
   } finally { global.fetch = prev; }
 });
+
+test('vakansiya arizalari: to\'plamlar, ixcham ro\'yxat, faqat GET', async () => {
+  const seen = [];
+  const prev = global.fetch;
+  global.fetch = async (url, o = {}) => {
+    const u = String(url); seen.push({ u, method: o.method || 'GET' });
+    const json = (status, body) => ({ ok: status < 300, status, json: async () => body });
+    if (/\/negotiations\?/.test(u)) return json(200, { collections: [{ id: 'response', name: 'Отклики', counters: { total: 2 } }] });
+    if (/\/negotiations\/response\?/.test(u)) return json(200, { found: 2, pages: 1, page: 0, items: [
+      { id: 'n1', created_at: '2026-11-23T10:00:00+0300', employer_state: { id: 'response' }, has_updates: true,
+        resume: { id: 'r1', title: 'Рекрутер', age: 23, first_name: 'Ali', last_name: 'V', gender: { id: 'female' }, area: { name: 'Ташкент' },
+          total_experience: { months: 40 }, salary: { amount: 8000000, currency: 'UZS' }, alternate_url: 'https://hh.uz/resume/r1',
+          education: { level: { name: 'Высшее' } }, experience: [{ company: 'Safia', position: 'Рекрутер', start: '2023-05-01', end: null }] } },
+      { id: 'n2', resume: {} }] });
+    return json(404, {});
+  };
+  try {
+    const c = await hh.applicants(A, '139742433');
+    assert.deepEqual(c.collections, [{ id: 'response', name: 'Отклики', total: 2 }]);
+    assert.equal(c.items, undefined);
+    const r = await hh.applicants(A, '139742433', { collection: 'response', per_page: 500 });
+    assert.equal(r.found, 2);
+    const a = r.items[0];
+    assert.equal(a.title, 'Рекрутер'); assert.equal(a.name, 'V Ali'); assert.equal(a.totalMonths, 40);
+    assert.equal(a.salary, '8000000 UZS'); assert.equal(a.experience[0].company, 'Safia'); assert.equal(a.state, 'response');
+    assert.equal(r.items[1].resumeId, '');
+    assert.match(seen.pop().u, /per_page=50/);                       // 50 dan oshmaydi
+    assert.ok(seen.every(s => s.method === 'GET'));
+    await assert.rejects(hh.applicants(A, '1/../me'), /id noto/);
+    await assert.rejects(hh.applicants(A, '139742433', { collection: '../me' }), /noto/);
+  } finally { global.fetch = prev; }
+});

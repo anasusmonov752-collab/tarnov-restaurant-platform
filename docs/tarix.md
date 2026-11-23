@@ -1505,3 +1505,6 @@ kabinetdagi "Черновики" da turadi. Nashr `POST /api/hh/vacancy-drafts/:
 busiz qoralamaning o'zi qaytadi (prod qoidasi: avval ko'rsat). Ruxsat etilmagan maydonlar hh'ga uzatilmaydi
 (`DRAFT_KEYS`). Test savollarini (hh "тест к вакансии") API yaratmaydi — kabinetda qo'lda, qoralamaga `test.id`
 bilan ulanadi. Birinchi qoralama — Tarnov rekruteri (6–8 mln, 6/1 10:00–20:00).
+Arizalar: `hh.applicants` + `GET /api/hh/vacancies/:vid/applicants` (`?collection=response&page=`) — to'plamlar
+sanog'i va arizalar rezyume bilan (ixcham), faqat o'qish: holat o'zgartirilmaydi. Birinchi vakansiya — Tarnov
+rekruteri, hh vacancy 139742433 (2026-11-23, Anas qarori bilan testsiz, "Стандарт" paketi).

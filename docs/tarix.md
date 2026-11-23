@@ -1496,3 +1496,12 @@ kelganlar, Mijozlar) skrinshotda; lug'at skript bilan (nomzod kalitlarida taqiql
 - Anketa kirish ekranidagi til tugmasi sariq bezak ustida o'qilmasdi — to'q fon.
 Ko'rilib, nuqson topilmadi: Mini App ro'yxatlari, forma, tariflar; kabinet Arizalarim (bosqich chizig'i);
 panel Arizalar (moslik bali), Mijozlar (ma'lumot sifati bloki). Telegramda haqiqiy akkaunt bilan sinalmagan.
+
+**hh VAKANSIYA QORALAMASI (API)** (2026-11-23, Anas: "HeadHunter'ga API orqali vakansiya ochib to'ldir, joylashdan
+oldin menga ko'rsat"). `services/hh.js` — `request()` endi `{method, body}` qabul qiladi; `drafts` (list/create/get/
+update/remove/publish) va `publications` (`/employers/{id}/services/available_publications` — tarif paketlari).
+Route'lar `/api/hh/vacancy-drafts*`, `/api/hh/publications` (agentlik guard'i). Qoralama hh'da E'LON QILINMAYDI —
+kabinetdagi "Черновики" da turadi. Nashr `POST /api/hh/vacancy-drafts/:id/publish` faqat `{apply:true}` bilan;
+busiz qoralamaning o'zi qaytadi (prod qoidasi: avval ko'rsat). Ruxsat etilmagan maydonlar hh'ga uzatilmaydi
+(`DRAFT_KEYS`). Test savollarini (hh "тест к вакансии") API yaratmaydi — kabinetda qo'lda, qoralamaga `test.id`
+bilan ulanadi. Birinchi qoralama — Tarnov rekruteri (6–8 mln, 6/1 10:00–20:00).

@@ -90,25 +90,63 @@ async function refresh(agencyId) {
   return j.access_token;
 }
 
-/** API so'rovi: token muddati o'tgan bo'lsa bir marta yangilab qayta urinadi */
-async function request(agencyId, path, params = {}, retry = true) {
+/** API so'rovi: token muddati o'tgan bo'lsa bir marta yangilab qayta urinadi.
+ *  opts: { method, body } — yozuvchi so'rovlar (vakansiya qoralamasi) uchun */
+async function request(agencyId, path, params = {}, retry = true, opts = {}) {
   const t = await tokens(agencyId);
   if (!t.accessToken) throw new HhError('hh ulanmagan — panelda "hh.uz ulash"', 401, 'not_connected');
   const qs = new URLSearchParams();
   Object.entries(params).forEach(([k, v]) => (Array.isArray(v) ? v : [v]).forEach(x => x != null && x !== '' && qs.append(k, x)));
+  const headers = { Authorization: `Bearer ${t.accessToken}`, 'HH-User-Agent': cfg().ua, 'User-Agent': cfg().ua };
+  if (opts.body !== undefined) headers['Content-Type'] = 'application/json';
   const r = await fetch(`${API}${path}${qs.toString() ? '?' + qs : ''}`, {
-    headers: { Authorization: `Bearer ${t.accessToken}`, 'HH-User-Agent': cfg().ua, 'User-Agent': cfg().ua }
+    method: opts.method || 'GET', headers,
+    body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined
   });
-  const j = await r.json().catch(() => ({}));
+  const j = r.status === 204 ? {} : await r.json().catch(() => ({}));
   if (r.status === 403 && retry && JSON.stringify(j).includes('token_expired')) {
     await refresh(agencyId);
-    return request(agencyId, path, params, false);
+    return request(agencyId, path, params, false, opts);
   }
   if (!r.ok) {
     const e = (j.errors && j.errors[0]) || {};
-    throw new HhError(`hh API ${r.status}: ${e.value || e.type || j.description || 'xato'}`, r.status, e.value || e.type || '');
+    const err = new HhError(`hh API ${r.status}: ${e.value || e.type || j.description || 'xato'}`, r.status, e.value || e.type || '');
+    err.details = j.errors || j.bad_arguments || null;     // maydon xatolari (qoralama/nashr)
+    throw err;
   }
   return j;
+}
+
+// ── Vakansiya qoralamasi (hh /vacancies/drafts) ──
+// Qoralama hh'da E'LON QILINMAYDI — ish beruvchi kabinetida "Черновики" da turadi.
+// Nashr (publish) — alohida, faqat Anas tasdig'i bilan (route'da apply:true).
+const DRAFT_KEYS = ['name', 'description', 'area', 'areas', 'address', 'professional_roles', 'experience', 'employment',
+  'employment_form', 'schedule', 'work_format', 'work_schedule_by_days', 'working_days', 'working_hours',
+  'working_time_intervals', 'working_time_modes', 'night_shifts', 'salary', 'salary_range', 'key_skills', 'languages',
+  'response_letter_required', 'response_notifications', 'allow_messages', 'accept_incomplete_resumes', 'accept_temporary',
+  'accept_labor_contract', 'accept_handicapped', 'accept_kids', 'test', 'contacts', 'code', 'department',
+  'employer_service_id', 'vacancy_properties', 'closed_for_applicants', 'driver_license_types', 'internship',
+  'civil_law_contracts', 'age_restriction', 'auto_response'];
+const pickDraft = b => Object.fromEntries(Object.entries(b || {}).filter(([k]) => DRAFT_KEYS.includes(k)));
+const HOST = () => ({ host: process.env.HH_HOST || 'hh.uz' });
+const draftId = id => { if (!/^\d{1,15}$/.test(String(id))) throw new HhError('Qoralama id noto\'g\'ri', 400, 'bad_id'); return String(id); };
+
+const drafts = {
+  list: a => request(a, '/vacancies/drafts', Object.assign({ per_page: 50 }, HOST())),
+  create: (a, body) => request(a, '/vacancies/drafts', HOST(), true, { method: 'POST', body: pickDraft(body) }),
+  get: async (a, id) => request(a, '/vacancies/drafts/' + draftId(id), HOST()),
+  update: async (a, id, body) => request(a, '/vacancies/drafts/' + draftId(id), HOST(), true, { method: 'PUT', body: pickDraft(body) }),
+  remove: async (a, id) => request(a, '/vacancies/drafts/' + draftId(id), HOST(), true, { method: 'DELETE' }),
+  publish: async (a, id) => request(a, '/vacancies/drafts/' + draftId(id) + '/publish', HOST(), true, { method: 'POST', body: {} })
+};
+
+/** Shu hudud va lavozim uchun mavjud nashr variantlari (tarif paketlari) */
+async function publications(agencyId, { area = '2759', role = '' } = {}) {
+  const me = await request(agencyId, '/me');
+  const emp = me.employer && me.employer.id;
+  if (!emp) throw new HhError('Ulangan akkaunt ish beruvchi emas', 403, 'not_employer');
+  return request(agencyId, `/employers/${emp}/services/available_publications`,
+    Object.assign({ area_id: area, professional_role_id: role }, HOST()));
 }
 
 // Qidiruv parametrlari — faqat ruxsat etilganlari (boshqasi hh'ga uzatilmaydi)
@@ -199,4 +237,4 @@ async function importResume(agencyId, id, { tag = '' } = {}) {
 }
 
 module.exports = { configured, authorizeUrl, readState, connect, request, refresh, searchResumes, resume, tokens, HhError, SEARCH_KEYS, cfg,
-  importResume, toCandidate };
+  importResume, toCandidate, drafts, publications, DRAFT_KEYS };

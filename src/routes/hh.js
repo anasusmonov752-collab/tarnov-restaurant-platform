@@ -64,6 +64,28 @@ router.post('/import', guard, asyncHandler(async (req, res) => {
     failed: out.filter(x => x.error).length, items: out });
 }));
 
+// ── Vakansiya qoralamalari: yaratish/ko'rish/tahrir — hh'da e'lon QILINMAYDI ──
+const hhFail = (res, e) => res.status(e.status && e.status < 500 ? e.status : 502).json({ error: e.message, code: e.code, details: e.details || null });
+const wrap = fn => asyncHandler(async (req, res) => { try { res.json(await fn(req)); } catch (e) { hhFail(res, e); } });
+router.get('/vacancy-drafts', guard, wrap(req => hh.drafts.list(req.user.restaurantId)));
+router.post('/vacancy-drafts', guard, wrap(req => hh.drafts.create(req.user.restaurantId, req.body)));
+router.get('/vacancy-drafts/:id', guard, wrap(req => hh.drafts.get(req.user.restaurantId, req.params.id)));
+router.put('/vacancy-drafts/:id', guard, wrap(req => hh.drafts.update(req.user.restaurantId, req.params.id, req.body)));
+router.delete('/vacancy-drafts/:id', guard, wrap(req => hh.drafts.remove(req.user.restaurantId, req.params.id)));
+router.get('/publications', guard, wrap(req => hh.publications(req.user.restaurantId, { area: req.query.area, role: req.query.role })));
+
+// Nashr — ochiq e'lon (Tarnov nomidan, tarif paketidan yechiladi). Faqat egasi tasdiqlagandan keyin:
+// body { apply: true } bo'lmasa — hech narsa yuborilmaydi, qoralamaning o'zi qaytadi.
+router.post('/vacancy-drafts/:id/publish', guard, asyncHandler(async (req, res) => {
+  try {
+    if (!(req.body && req.body.apply === true)) {
+      return res.json({ applied: false, note: 'Nashr qilinmadi: { apply: true } kerak (egasining tasdig\'i)',
+        draft: await hh.drafts.get(req.user.restaurantId, req.params.id) });
+    }
+    res.json({ applied: true, result: await hh.drafts.publish(req.user.restaurantId, req.params.id) });
+  } catch (e) { hhFail(res, e); }
+}));
+
 // Lug'atlar (tajriba oraliqlari, hududlar...) — qidiruv formasi uchun
 router.get('/dictionaries', guard, asyncHandler(async (req, res) => {
   try { res.json(await hh.request(req.user.restaurantId, '/dictionaries')); }

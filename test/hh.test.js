@@ -91,3 +91,30 @@ test('bazaga qo\'shish: kontaktsiz nomzod, rasm bilan, takror qo\'shilmaydi', as
   assert.equal(b.duplicate, true);
   assert.equal(await Candidate.countDocuments({ hhResumeId: id }), 1);
 });
+
+test('vakansiya qoralamasi: POST JSON, faqat ruxsat etilgan maydonlar; nashr alohida yo\'l', async () => {
+  const seen = [];
+  const prev = global.fetch;
+  global.fetch = async (url, o = {}) => {
+    seen.push({ url: String(url), method: o.method || 'GET', body: o.body ? JSON.parse(o.body) : null, ct: (o.headers || {})['Content-Type'] });
+    const json = (status, body) => ({ ok: status < 300, status, json: async () => body });
+    if (String(url).includes('/vacancies/drafts/77/publish')) return json(201, { vacancies: [{ id: '555' }] });
+    if (/\/vacancies\/drafts\/77/.test(String(url))) return o.method === 'DELETE' ? { ok: true, status: 204, json: async () => ({}) } : json(200, { id: '77', name: 'Рекрутер' });
+    if (String(url).includes('/vacancies/drafts')) return json(201, { id: '77' });
+    return json(404, {});
+  };
+  try {
+    const r = await hh.drafts.create(A, { name: 'Рекрутер', description: '<p>x</p>', salary_range: { from: 6000000, to: 8000000, currency: 'UZS' }, evil: 1 });
+    assert.equal(r.id, '77');
+    const c = seen[0];
+    assert.equal(c.method, 'POST'); assert.equal(c.ct, 'application/json');
+    assert.match(c.url, /\/vacancies\/drafts\?host=hh\.uz$/);
+    assert.equal(c.body.name, 'Рекрутер'); assert.equal(c.body.salary_range.to, 8000000); assert.equal(c.body.evil, undefined);
+    assert.equal((await hh.drafts.get(A, '77')).name, 'Рекрутер');
+    await assert.rejects(hh.drafts.get(A, '../me'), /id noto/);
+    assert.deepEqual(await hh.drafts.remove(A, '77'), {});
+    assert.ok(!seen.some(s => s.url.includes('/publish')));        // yaratish/ko'rish nashr qilmaydi
+    const p = await hh.drafts.publish(A, '77');
+    assert.equal(p.vacancies[0].id, '555'); assert.equal(seen.pop().method, 'POST');
+  } finally { global.fetch = prev; }
+});

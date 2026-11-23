@@ -303,6 +303,9 @@ router.post('/', guard, asyncHandler(async (req, res) => {
     id: uuidv4(), agencyId, clientId,
     location: data.location || client.location || ''
   }, data));
+  // Ruscha nusxa bo'sh maydonlarga fonda (vac.fillRu — qo'lda yozilgan ruscha ustidan yozilmaydi).
+  // Aks holda rus tilidagi nomzod kabinetida "Официант" yonida "Oshpaz (turk taomlari)" chiqardi
+  vac.fillRu(v.toObject());
   res.json(vac.full(v));
 }));
 
@@ -318,6 +321,7 @@ router.patch('/:id', guard, asyncHandler(async (req, res) => {
   await v.save();
   // Yopildi — qaror qilinmagan arizachilarga "o'rin yopildi" (appLife.closeForVacancy)
   if (!wasClosed && v.status === 'closed') await appLife.closeForVacancy(agencyId, v, { appBase: publicBase(req) });
+  else if (v.status !== 'closed' && !(req.body && req.body.ru)) vac.fillRu(v.toObject());   // forma ruschani yubormagan bo'lsa
   res.json(vac.full(v));
 }));
 

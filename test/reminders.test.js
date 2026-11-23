@@ -64,8 +64,8 @@ test('yuborish: matn turi, tugma havolasi, hisob; bloklagan — to\'xtatiladi', 
   const r = await rem.run({ appBase: 'https://x', now: NOON, send });
   assert.equal(r.sent, 2); assert.equal(r.blocked, 1);
   const a = sent.find(s => s.chat === 'ua'), b = sent.find(s => s.chat === 'ub');
-  assert.match(a.text, /hali to'ldirilmagan/);
-  assert.match(b.text, /yarmida qoldi/);
+  assert.match(a.text, /hali javob bermadingiz/);
+  assert.match(b.text, /yarmi qoldi/);
   assert.match(b.btn, /Davom ettirish/);
   assert.equal(a.url, 'https://x/anketa.html?r=a');
   assert.equal((await SR.findOne({ id: 'a' }).lean()).reminders, 1);

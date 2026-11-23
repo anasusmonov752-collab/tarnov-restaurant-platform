@@ -273,6 +273,10 @@ test('kirill ism SMS\'ni bo\'lib yubormaydi — lotinga o\'giriladi', () => {
   assert.equal(outreach.firstName('ФИО скрыто соискателем'), '');
   assert.equal(outreach.firstName('Кудратова САИДА'), 'Saida');
   assert.equal(outreach.nameWord('Кудратова САИДА'), 'Саида');
+  // Anketa tartibi "Ism Familiya" (2026-11-23): familiya ism bo'lib qolmasin
+  assert.equal(outreach.nameWord('Zuhra Tolibxonova'), 'Zuhra');
+  assert.equal(outreach.nameWord('Islombek Sherabdullayev'), 'Islombek');
+  assert.equal(outreach.nameWord('Ramazonov vohidjon'), 'Vohidjon');
   const hid = outreach.render(outreach.DEFAULT_TPL, { fullName: 'ФИО скрыто соискателем', role: 'xostess' }, 't.me/x');
   assert.ok(hid.startsWith('Assalomu alaykum! TalentHub'), hid);
   const tpl = "Assalomu alaykum, {ism}. Tarnov restoraniga xostess kerak, kuniga 225 000 so'm. Telegramda anketasiz ariza bering: {havola}";

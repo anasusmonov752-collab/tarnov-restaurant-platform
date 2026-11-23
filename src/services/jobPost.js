@@ -66,9 +66,10 @@ function postText(v, client, { closed = false, employerOk = false } = {}) {
   const where = [c.where || 'Toshkent', c.landmark].filter(Boolean).join(' · ');
   const head = [closed ? '❌ <b>YOPILDI</b>' : '', `<b>${html(c.title)}</b>`,
     [c.employer, c.venue].filter(Boolean).map(html).join(' · ')];
+  // Tartib — nomzod savoli tartibida (docs/auditoriya.md): avval qancha to'laydi, keyin qayerda
   const facts = [
-    `📍 ${html(where)}`,
     `💰 ${html(c.salaryText || T('uz', 'cb.noSal'))}${c.payoutText ? ' · ' + html(c.payoutText) : ''}`,
+    `📍 ${html(where)}`,
     c.schedule || c.shift ? `🕒 ${html([c.schedule, c.shift ? T('uz', 'shift.' + c.shift) : ''].filter(Boolean).join(' · '))}` : '',
     (c.perkLabels || []).length ? `✅ ${html(c.perkLabels.join(' · '))}` : '',
     // Ish beruvchi reytingi (services/employerRating)

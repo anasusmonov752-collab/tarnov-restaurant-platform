@@ -67,6 +67,12 @@ test('anketa tugagach botda ko\'rsatilgan ishlarga ariza o\'zi ketadi, bot savol
   r.phone = '+998901234567'; r.phoneVerifiedAt = new Date();
   await r.save();
   const out = await survey.finalize(r, { appBase: 'https://x' });
+  // Bot savollari rahmatdan KEYIN (anketaDone) — haqiqiy oqim: finalize, keyin afterFinalize
+  sent = [];
+  await require('../src/services/anketaDone').afterFinalize(r, out, { appBase: 'https://x', lang: 'uz' });
+  const toCand = sent.filter(m => m.chat === '502');
+  assert.ok(toCand.length >= 2, 'rahmat va savol');
+  assert.match(toCand[toCand.length - 1].text, /1\/2|1\/3/, 'oxirgi xabar — bot savoli (faol harakat pastda)');
   assert.equal(out.applied, true);
   assert.deepEqual(out.appliedTo.map(v => v.id), ['v1']);
   assert.equal(out.candidate.role, 'ofitsiant');            // lavozim botdagi tanlovdan
@@ -82,6 +88,7 @@ test('bir nechta ish: hammasiga ariza, bot savollari bitta', async () => {
   r.answers = { fullName: 'Ali Valiyev', consent: true };
   await r.save();
   const out = await survey.finalize(r, { appBase: 'https://x' });
+  await require('../src/services/anketaDone').afterFinalize(r, out, { appBase: 'https://x', lang: 'ru' });
   assert.equal(out.appliedTo.length, 3);
   const apps = await M.Application.find({ agencyId: A, candidateId: out.candidate.id }).lean();
   assert.equal(apps.length, 3);

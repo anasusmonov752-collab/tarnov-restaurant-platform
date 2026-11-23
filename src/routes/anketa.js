@@ -167,6 +167,9 @@ router.post('/:rid/submit', guard, asyncHandler(async (req, res) => {
   }
 
   const appBase = publicBase(req);
+  // Til tanlanmagan bo'lsa (eski havola, til ekrani o'tkazib yuborilgan) — rahmat qaysi tilda
+  // yozilsa, nomzod ham shu tilda saqlanadi: aks holda rahmat ruscha, bot savollari o'zbekcha chiqardi
+  if (!I18N.LANGS.includes(r.lang)) { r.lang = I18N.fromTelegram(req.tgUser.language_code); await r.save(); }
   let out;
   try { out = await survey.finalize(r, { appBase }); }
   catch (e) { if (e.already) return fail(res, 409, 'already'); throw e; }

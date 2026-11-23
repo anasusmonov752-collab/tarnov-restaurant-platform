@@ -218,6 +218,9 @@ async function applyVoice(fresh, out) {
 async function finish(r, chatId, lang, appBase) {
   const fresh = await SurveyResponse.findOne({ _id: r._id });
   if (!fresh || fresh.status === 'done') return null;
+  // Ovozli yo'lda til ekrani yo'q: suhbat qaysi tilda bo'lgan bo'lsa — o'sha. Aks holda nomzod
+  // tili bo'sh qolib, keyingi bot xabarlari (savollar, ariza holati) o'zbekchaga tushardi
+  if (!fresh.lang && I18N.LANGS.includes(lang)) { fresh.lang = lang; await fresh.save(); }
   let out;
   try { out = await survey.finalize(fresh, { appBase }); }
   catch (e) { if (e.already) return null; throw e; }        // ikkinchi bosish — birinchisi yakunlayapti

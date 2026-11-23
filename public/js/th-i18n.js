@@ -982,7 +982,7 @@
       // ── Botga birinchi kirish (services/firstTouch) ──
       'ft.back': '\u2b05\ufe0f Orqaga',
       'ft.cPick': '🔥 Hozir Toshkentda <b>{n} ta ochiq ish</b> bor:\n{top}\n\nMaoshi va tumani bilan ko\'rsataman — qaysi ish kerak?',
-      'ft.cOther': 'Lavozimim ro\'yxatda yo\'q — anketa',
+      'ft.cOther': 'Lavozimim ro\'yxatda yo\'q',
       'ft.cPick0': '• Bepul\n• Rezyume yozmaysiz — 3 daqiqa savol-javob\n• Mos ish chiqishi bilan HR o\'zi qo\'ng\'iroq qiladi\n\nQaysi ish kerak?',
       'ft.cJobs': '{head} \u2014 hozir <b>{n} ta ochiq ish</b>:',
       // Lavozim ostida boshqa nomli ishlar ham bo'lsa (ranner, yig'uvchi \u2014 ofitsiant rolida):
@@ -1119,7 +1119,7 @@
       'rel.stayed': 'Oldingi ishda 1+ oy',
       // ── Kanalga e'lon va mos nomzodlarga xabar (services/jobPost) ──
       'jp.btn': '📝 Ariza berish',
-      'jp.howTo': '👉 Ariza berish uchun pastdagi tugmani bosing — 3 daqiqalik anketa, HR 24 soat ichida bog\'lanadi.',
+      'jp.howTo': '👉 Ariza — pastdagi tugma: 3 daqiqa, rezyume shart emas, bepul. HR 24 soat ichida qo\'ng\'iroq qiladi.',
       'jp.closedNote': 'Bu o\'rin to\'ldi. Yangi vakansiyalar shu kanalda.',
       'jp.clientPosted': '📢 «{v}» vakansiyangiz kanalga joylandi. Bazadagi {n} ta mos nomzodga xabar yuborildi.',
       'jp.clientSee': 'Kanalda ko\'rish',
@@ -1303,12 +1303,12 @@
       // ── ANKETA: bot xabarlari ──
       'ank.botInvite': 'Assalomu alaykum! Ishga ariza berish uchun qisqa anketani to\'ldiring — 3 daqiqa.',
       'ank.botInviteVac': '\n\nVakansiya: {v}',
-      'ank.botOpen': '📝 Anketani boshlash · 3 daqiqa',
+      'ank.botOpen': '📝 Savollarga javob berish · 3 daqiqa',
       // Chala anketa eslatmasi (services/reminders)
-      'rem.notStarted': '👋 Anketangiz hali to\'ldirilmagan. Bu 3 daqiqa — savollarga bir bosishda javob berasiz, keyin sizga mos ishlarni darhol ko\'rsatamiz.',
-      'rem.partial': '📝 Anketangiz yarmida qoldi — javoblaringiz saqlangan. Davom ettirsangiz, 1 daqiqada tugaydi va mos ishlarni ko\'rasiz.',
+      'rem.notStarted': '👋 Savollarga hali javob bermadingiz. Bu 3 daqiqa — bir bosishda javob berasiz, keyin sizga mos ishlarni maoshi bilan ko\'rsatamiz.',
+      'rem.partial': '📝 Javoblaringiz saqlangan — yarmi qoldi. Davom ettirsangiz, tez tugaydi va mos ishlarni ko\'rasiz.',
       'rem.jobs': '🔥 Hozir {n} ta ochiq ish bor.',
-      'rem.last': 'Oxirgi eslatma 🙂',
+      'rem.last': 'Oxirgi eslatma.',
       'rem.btnContinue': '▶️ Davom ettirish',
       // /start dan keyingi birinchi xabar (routes/telegram startSurvey) — HTML
       'ank.hookHi': '👋 Assalomu alaykum{name}!',
@@ -2246,7 +2246,7 @@
       // ── Первый вход в бот (services/firstTouch) ──
       'ft.back': '\u2b05\ufe0f Назад',
       'ft.cPick': ['🔥 Сейчас в Ташкенте открыта <b>{n} вакансия</b>:\n{top}\n\nПокажу зарплату и район — какая работа нужна?', '🔥 Сейчас в Ташкенте открыто <b>{n} вакансии</b>:\n{top}\n\nПокажу зарплату и район — какая работа нужна?', '🔥 Сейчас в Ташкенте открыто <b>{n} вакансий</b>:\n{top}\n\nПокажу зарплату и район — какая работа нужна?'],
-      'ft.cOther': 'Моей должности нет — анкета',
+      'ft.cOther': 'Моей должности нет в списке',
       'ft.cPick0': '• Бесплатно\n• Резюме писать не нужно — 3 минуты вопросов\n• Появится подходящая работа — HR позвонит сам\n\nКакая работа нужна?',
       'ft.cJobs': ['{head} — сейчас <b>{n} открытая вакансия</b>:', '{head} — сейчас <b>{n} открытые вакансии</b>:', '{head} — сейчас <b>{n} открытых вакансий</b>:'],
       'ft.cJobsMix': ['{head} и похожая работа — сейчас <b>{n} вакансия</b>:', '{head} и похожая работа — сейчас <b>{n} вакансии</b>:', '{head} и похожая работа — сейчас <b>{n} вакансий</b>:'],
@@ -2377,7 +2377,7 @@
       'rel.came': 'Пришёл {a} из {b} раз (собеседования и смены)',
       'rel.stayed': 'На прошлой работе 1+ мес.',
       'jp.btn': '📝 Откликнуться',
-      'jp.howTo': '👉 Чтобы откликнуться, нажмите кнопку ниже — анкета на 3 минуты, HR свяжется в течение 24 часов.',
+      'jp.howTo': '👉 Отклик — кнопка ниже: 3 минуты, резюме не нужно, бесплатно. HR позвонит в течение 24 часов.',
       'jp.closedNote': 'Место уже занято. Новые вакансии — в этом канале.',
       'jp.clientPosted': '📢 Ваша вакансия «{v}» опубликована в канале. Сообщение отправлено {n} подходящим кандидатам из базы.',
       'jp.clientSee': 'Открыть в канале',
@@ -2552,11 +2552,11 @@
 
       'ank.botInvite': 'Здравствуйте! Чтобы откликнуться на работу, заполните короткую анкету — 3 минуты.',
       'ank.botInviteVac': '\n\nВакансия: {v}',
-      'ank.botOpen': '📝 Начать анкету · 3 минуты',
-      'rem.notStarted': '👋 Ваша анкета ещё не заполнена. Это 3 минуты — ответы в одно касание, а потом сразу покажем подходящие вакансии.',
-      'rem.partial': '📝 Анкета заполнена наполовину — ответы сохранены. Продолжите — это займёт минуту, и вы увидите подходящие вакансии.',
-      'rem.jobs': ['🔥 Сейчас открыта {n} вакансия.', '🔥 Сейчас открыто {n} вакансии.', '🔥 Сейчас открыто {n} вакансий.'],
-      'rem.last': 'Последнее напоминание 🙂',
+      'ank.botOpen': '📝 Ответить на вопросы · 3 минуты',
+      'rem.notStarted': '👋 Вы ещё не ответили на вопросы. Это 3 минуты — ответы в одно касание, а потом покажем подходящую работу с зарплатой.',
+      'rem.partial': '📝 Ответы сохранены — осталась половина. Продолжите — это быстро, и вы увидите подходящую работу.',
+      'rem.jobs': ['🔥 Сейчас открыта {n} работа.', '🔥 Сейчас открыто {n} работы.', '🔥 Сейчас открыто {n} работ.'],
+      'rem.last': 'Последнее напоминание.',
       'rem.btnContinue': '▶️ Продолжить',
       'ank.hookHi': '👋 Здравствуйте{name}!',
       'ank.hookVac': '📌 <b>{v}</b>{meta}',

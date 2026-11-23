@@ -59,9 +59,13 @@ async function submit({ cand: c, vacancy: v, message = '', appBase, via = 'kabin
     const chat = agency && agency.telegram && agency.telegram.adminChatId;
     if (chat) {
       await tg.sendMessage(tg.platformToken(), chat,
-        `${c.isTest ? '🧪 SINOV · ' : ''}📨 Yangi ariza${via === 'anketa' ? ' (anketa)' : ''}\n\n${c.fullName || 'Nomsiz'} — ${v.title}\n` +
-        `${c.desiredPosition || ''}${c.experienceYears ? ' · ' + c.experienceYears + ' yil' : ''}\n` +
-        `${c.phone || ''}`);
+        // Profil lavozimi faqat ariza ishidan FARQ qilsa ("Xostess" arizasi — profili "Ofitsiant");
+        // ilgari "Ofitsiant — Ofitsiant / Ofitsiant" kabi takror chiqardi (2026-11-23 oqim auditi)
+        [`${c.isTest ? '🧪 SINOV · ' : ''}📨 Yangi ariza${via === 'anketa' ? ' (anketa)' : ''}`, '',
+         `${c.fullName || 'Nomsiz'} — ${v.title}`,
+         [c.desiredPosition && c.desiredPosition.toLowerCase() !== String(v.title || '').toLowerCase() ? 'Profili: ' + c.desiredPosition : '',
+          c.experienceYears ? c.experienceYears + ' yil tajriba' : ''].filter(Boolean).join(' · '),
+         c.phone || ''].filter((x, i) => i < 2 || x).join('\n'));
     }
   } catch (e) { console.error('[APP] ariza xabari ketmadi:', e.message); }
 

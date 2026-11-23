@@ -1460,3 +1460,25 @@ Tuzatildi (249/249):
 Qolgan (kod): Candidate'da `fileData`/`photo` (Atlas 512 MB, og'ir hujjat) — alohida kolleksiyaga ko'chirish
 (katta ish, migratsiya); eski `#searchMode` kodi (BackButton bilan bog'liq, qurilmada sinab olib tashlash).
 Anas: ochiq git tarixidagi Mongo paroli va `JWT_SECRET` ni almashtirish.
+
+**JONLI RAQAMLAR VA NOMZOD YO'LI AUDITI** (2026-11-23). Panel (o'qish): 30 kunda botga 29 kirdi, 17 anketa
+tugadi, 10 ariza (Telegram kanali eng samarali: 12 -> 7 ariza; vakansiya.uz 6 -> 0). Tarnovga haftada 13
+ariza, 10 tasi qo'ng'iroqsiz (8 tasi 6–7 kun — "HR 24 soat" va'dasi buzilgan), bu oy ochilgan kontakt 0,
+ishga olingan 0; faol mijoz faqat Tarnov, 19 potensial restoran 22-oktabrdan beri faollashmagan.
+Xulosa: tor joy — qo'ng'iroq bosqichi (inson halqasi), kod emas. Anas tekshiruv mantiqi xotirada
+(`anas-tekshiruv-mantiqi`, 17 band). Yo'l haqiqiy kod bilan lokal bazada bosib o'qildi (`.preview/flow-audit.js`
+— webhook + anketa API, Telegram yozib olinadi; git'da emas). Tuzatildi:
+- Ariza tushgach bot savollari (prescreen) rahmat xabaridan OLDIN ketib, uning ostida ko'milardi —
+  endi `finalize` boshlamaydi (`prescreenFor`), `anketaDone.afterFinalize` rahmatdan KEYIN boshlaydi
+  (faol savol chatning eng pastida). Ovozli yo'l ham shu orqali.
+- Til tanlanmagan holatda rahmat ruscha, savollar o'zbekcha chiqardi — submit'da va ovozli yo'lda til
+  yozuvga avval yoziladi. Anketa kirish ekranida doimiy til tugmasi (botda tanlangan bo'lsa ham).
+- `outreach.nameWord` doim 2-so'zni ism derdi ("Zuhra Tolibxonova" -> "Tolibxonova!") — familiya qo'shimchasi
+  bo'yicha tartib aniqlanadi, kichik harf bosh harfga.
+- Agentlikka "Yangi ariza" xabarida "Ofitsiant — Ofitsiant / Ofitsiant" takrori — profil lavozimi faqat
+  farq qilsa ("Profili: ...").
+- auditoriya.md: eslatma va tugmalarda "anketa" (`rem.*`, `ank.botOpen`, `ft.cOther`), "Oxirgi eslatma 🙂",
+  ruscha "вакансий" -> "работ"; kanal postida avval 💰 keyin 📍, chaqiruv "3 daqiqa, rezyume shart emas,
+  bepul" (avval "3 daqiqalik anketa").
+- Panelda yaratilgan/tahrirlangan vakansiyaning bo'sh ruscha maydonlari ham fonda (`vac.fillRu`) —
+  kabinetda tillar aralashmasin. SMS matniga TEGILMADI (Anas tanlagan yakuniy 4-versiya).

@@ -152,8 +152,15 @@ function nameWord(full) {
   const s = String(full || '').trim();
   if (!s || /скрыт|hidden|^фио\b/i.test(s)) return '';
   const parts = s.split(/\s+/).filter(Boolean);
-  let w = parts.length >= 2 ? parts[1] : parts[0];
+  // Tartib manbaga qarab har xil: hh — "Familiya Ism", anketa — "Ism Familiya". Familiya qo'shimchasi
+  // (-ov/-ova/-yev/-eva/-skiy...) bo'yicha aniqlanadi; aniqlanmasa — hh tartibi (2-so'z).
+  // Ilgari doim 2-so'z olinardi: "Zuhra Tolibxonova" -> "Assalomu alaykum, Tolibxonova!"
+  const SUR = /(ov|ova|ev|eva|yev|yeva|ova|in|ina|skiy|skaya|ovich|ovna|evich|evna|ов|ова|ев|ева|ин|ина|ский|ская)$/i;
+  let w = parts[0];
+  if (parts.length >= 2) w = SUR.test(parts[0]) && !SUR.test(parts[1]) ? parts[1]
+    : SUR.test(parts[1]) && !SUR.test(parts[0]) ? parts[0] : parts[1];
   if (w.length > 1 && w === w.toUpperCase()) w = w[0] + w.slice(1).toLowerCase();
+  if (w && w[0] !== w[0].toUpperCase()) w = w[0].toUpperCase() + w.slice(1);    // "vohidjon" -> "Vohidjon"
   return w;
 }
 

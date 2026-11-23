@@ -63,6 +63,12 @@ async function afterFinalize(r, out, { appBase, lang, via = 'anketa' }) {
       }
     } catch (e) { console.error('[ANKETA] agentlik xabari ketmadi:', e.message); }
   }
+  // Bot savollari (prescreen) — rahmatdan KEYIN: faol savol chatning eng pastida (survey.finalize izohi)
+  if (out.prescreenFor) {
+    const fc = await require('../models/Candidate').findOne({ _id: c._id }).lean();
+    await require('./prescreen').start({ app: out.prescreenFor.app, cand: fc || c, vacancy: out.prescreenFor.vacancy })
+      .catch(e => console.error('[ANKETA] prescreen:', e.message));
+  }
   return { jobs, matches, next };
 }
 

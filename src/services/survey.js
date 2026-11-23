@@ -867,9 +867,14 @@ async function finalizeOwned(r, { appBase } = {}) {
 
   let applied = false;
   const appliedTo = [];
+  // Bot savollari (prescreen) bu yerda BOSHLANMAYDI: ular rahmat xabaridan OLDIN ketib, uning ostida
+  // ko'milib qolardi (oxirgi xabar — "Arizalarim", savol tepada). anketaDone.afterFinalize rahmatdan
+  // KEYIN boshlaydi — faol savol chatning eng pastida turadi (2026-11-23 oqim auditi).
+  let prescreenFor = null;
   if (vacancy && vacancy.status === 'open') {
     try {
-      await applications.submit({ cand, vacancy, appBase, via: 'anketa' });
+      const app = await applications.submit({ cand, vacancy, appBase, via: 'anketa', prescreen: false });
+      prescreenFor = { app, vacancy };
       applied = true;
     } catch (e) {
       if (e.code !== 11000) console.error('[SURVEY] ariza berilmadi:', e.message);   // 11000 — allaqachon bergan
@@ -886,7 +891,8 @@ async function finalizeOwned(r, { appBase } = {}) {
     const ordered = r.offerIds.map(id => rows.find(v => v.id === id)).filter(Boolean);
     for (const v of ordered) {
       try {
-        await applications.submit({ cand, vacancy: v, appBase, via: 'anketa', prescreen: !appliedTo.length });
+        const app = await applications.submit({ cand, vacancy: v, appBase, via: 'anketa', prescreen: false });
+        if (!prescreenFor) prescreenFor = { app, vacancy: v };        // savollar faqat birinchisiga
         appliedTo.push(v);
       } catch (e) {
         if (e.code !== 11000) console.error('[SURVEY] ariza berilmadi:', e.message);
@@ -897,7 +903,7 @@ async function finalizeOwned(r, { appBase } = {}) {
 
   await SurveyResponse.updateOne({ agencyId: r.agencyId, id: r.id },
     { $set: { status: 'done', candidateId: cand.id, completedAt: new Date(), updatedAt: new Date() } });
-  return { candidate: cand, created, applied, vacancy, appliedTo };
+  return { candidate: cand, created, applied, vacancy, appliedTo, prescreenFor };
 }
 
 /**

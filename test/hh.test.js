@@ -150,3 +150,24 @@ test('vakansiya arizalari: to\'plamlar, ixcham ro\'yxat, faqat GET', async () =>
     await assert.rejects(hh.applicants(A, '139742433', { collection: '../me' }), /noto/);
   } finally { global.fetch = prev; }
 });
+
+test('asl PDF rezyume: faqat api.hh.ru havolasi, token bilan, PDF tekshiriladi', async () => {
+  const seen = [];
+  const prev = global.fetch;
+  const id = 'aaaa1111bbbb2222cccc3333dddd';
+  let pdfUrl = `https://api.hh.ru/resumes/${id}/download/x.pdf?type=pdf`;
+  global.fetch = async (url, o = {}) => {
+    const u = String(url); seen.push({ u, auth: (o.headers || {}).Authorization });
+    if (u.includes('/download/')) return { ok: true, status: 200, arrayBuffer: async () => Buffer.from('%PDF-1.4 test') };
+    if (u.includes('/resumes/' + id)) return { ok: true, status: 200, json: async () => ({ id, title: 'HR специалист', download: { pdf: { url: pdfUrl } } }) };
+    return { ok: false, status: 404, json: async () => ({}) };
+  };
+  try {
+    const r = await hh.resumePdf(A, id);
+    assert.equal(r.title, 'HR специалист');
+    assert.equal(r.buf.slice(0, 4).toString(), '%PDF');
+    assert.match(seen.pop().auth, /^Bearer /);
+    pdfUrl = 'https://evil.example/resumes/x/download/a.pdf';
+    await assert.rejects(hh.resumePdf(A, id), /PDF havolasini/);
+  } finally { global.fetch = prev; }
+});

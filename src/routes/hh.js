@@ -51,6 +51,16 @@ router.get('/resumes/:id', guard, asyncHandler(async (req, res) => {
   catch (e) { res.status(e.status && e.status < 500 ? e.status : 502).json({ error: e.message, code: e.code }); }
 }));
 
+// hh'ning asl PDF rezyumesi (kontaktsiz — kvota yemaydi)
+router.get('/resumes/:id/pdf', guard, asyncHandler(async (req, res) => {
+  try {
+    const { buf, title } = await hh.resumePdf(req.user.restaurantId, req.params.id);
+    res.set('Content-Type', 'application/pdf');
+    res.set('Content-Disposition', `attachment; filename="resume.pdf"; filename*=UTF-8''${encodeURIComponent(title.slice(0, 80))}.pdf`);
+    res.send(buf);
+  } catch (e) { res.status(e.status && e.status < 500 ? e.status : 502).json({ error: e.message, code: e.code }); }
+}));
+
 // Tanlangan rezyumelarni nomzodlar bazasiga qo'shish (kontaktsiz). body: { ids:[...], tag }
 router.post('/import', guard, asyncHandler(async (req, res) => {
   const ids = [...new Set((req.body && req.body.ids) || [])].filter(x => /^[a-f0-9]{20,64}$/i.test(String(x))).slice(0, 50);

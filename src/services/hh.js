@@ -208,6 +208,20 @@ async function resume(agencyId, id) {
   return request(agencyId, '/resumes/' + id, { host: process.env.HH_HOST || 'hh.uz' });
 }
 
+/** hh'ning asl PDF rezyumesi (kontakt ochilmagan bo'lsa — anonim). Faqat api.hh.ru/resumes/ havolasi */
+async function resumePdf(agencyId, id, retry = true) {
+  const j = await resume(agencyId, id);
+  const url = j.download && j.download.pdf && j.download.pdf.url;
+  if (!url || !/^https:\/\/api\.hh\.ru\/resumes\/[a-f0-9]+\/download\//i.test(url)) throw new HhError('hh PDF havolasini bermadi', 404, 'no_pdf');
+  const t = await tokens(agencyId);
+  const r = await fetch(url, { headers: { Authorization: `Bearer ${t.accessToken}`, 'HH-User-Agent': cfg().ua, 'User-Agent': cfg().ua } });
+  if (r.status === 403 && retry) { await refresh(agencyId); return resumePdf(agencyId, id, false); }
+  if (!r.ok) throw new HhError('hh PDF ' + r.status, r.status, 'pdf_failed');
+  const buf = Buffer.from(await r.arrayBuffer());
+  if (buf.slice(0, 4).toString() !== '%PDF') throw new HhError('hh PDF emas javob qaytardi', 502, 'not_pdf');
+  return { buf, title: String(j.title || 'rezyume') };
+}
+
 // ── hh rezyumesini nomzodlar bazasiga qo'shish (kontaktsiz — kvota yemaydi) ──
 // Ism/telefon hh'da kontakt ochilmaguncha yo'q: fullName = rezyume sarlavhasi,
 // telefon bo'sh (SMS navbatiga tushmaydi). Takror: hhResumeId bo'yicha.
@@ -267,4 +281,4 @@ async function importResume(agencyId, id, { tag = '' } = {}) {
 }
 
 module.exports = { configured, authorizeUrl, readState, connect, request, refresh, searchResumes, resume, tokens, HhError, SEARCH_KEYS, cfg,
-  importResume, toCandidate, drafts, publications, DRAFT_KEYS, applicants };
+  importResume, toCandidate, drafts, publications, DRAFT_KEYS, applicants, resumePdf };

@@ -19,6 +19,7 @@
     menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
     send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
     chart: '<path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',
+    phone: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>',
     inbox: '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>'
   };
   const svg = n => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
@@ -26,6 +27,8 @@
   const NAV = [
     { g: '', items: [{ href: '/talenthub.html', l: 'Bugun', ic: 'sun' }] },
     { g: 'Ish', items: [
+      // Bitta ro'yxat: ariza + anketa, natija bir bosishda (services/callQueue)
+      { href: '/qongiroq.html', l: 'Qo\'ng\'iroqlar', ic: 'phone', n: 'callsDue', nTitle: 'qo\'ng\'iroq kutayotgan nomzodlar', hot: true },
       // Nomzodlar manba bo'yicha ikki bo'lim (baza bitta — recruitment.html ?src=)
       { href: '/recruitment.html?src=anketa', also: ['/recruitment-kanban.html?src=anketa'], l: 'Anketadan', ic: 'inbox',
         n: 'anketaUnseen', nTitle: 'ko\'rilmagan anketalar', hot: true },

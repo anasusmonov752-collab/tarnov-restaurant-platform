@@ -45,19 +45,10 @@ router.get('/today', guard, asyncHandler(async (req, res) => {
   // Nomzodga KO'RINADIGAN ochiq ishlar. Tasdiqlanmagani (confirmedAt 14 kundan
   // eski — vac.STALE_DAYS) botda ham, nomzod kabinetida ham ko'rinmaydi: hammasi
   // eskirsa nomzod BO'SH ekran ko'radi. Shuning uchun bu yerda va yon menyuda.
-  // "HR 24 soatda qo'ng'iroq qiladi" — bosh ko'rsatkich (2026-11-23: 10 ta arizaga qo'ng'iroq
-  // qilinmagan, 8 tasi 6–7 kun — bosh sahifa esa "ko'rilmagan: 2" derdi). Arizalar sahifasining
-  // "Javob kutmoqda" qoidasi bilan bir xil: qaror yo'q, Bog'landim yo'q, vakansiya ochiq, sinov emas
-  const callQ = { agencyId, state: { $in: ['new', 'seen'] }, contactedAt: null, isTest: { $ne: true }, vacancyId: { $in: liveVac } };
-  // + anketani o'zi to'ldirib, hali hech kim bog'lanmagan nomzodlar (contactLog.WAITING — panel
-  // "Anketadan kelganlar" bilan bir xil qoida): 2026-11-23 da 38 tasi, hammasi 1 kundan oshgan
-  const ankQ = Object.assign({ restaurantId: agencyId, source: 'anketa', isTest: { $ne: true } }, contactLog.WAITING);
-  const [callWaiting, callLate, ankWaiting, ankLate] = await Promise.all([
-    Application.countDocuments(callQ),
-    Application.countDocuments(Object.assign({ createdAt: { $lte: new Date(now - 864e5) } }, callQ)),
-    Candidate.countDocuments(ankQ),
-    Candidate.countDocuments(Object.assign({ createdAt: { $lte: new Date(now - 864e5) } }, ankQ))
-  ]);
+  // "HR 24 soatda qo'ng'iroq qiladi" — bosh ko'rsatkich va yon menyu "Qo'ng'iroqlar" sanog'i.
+  // Qoida bitta joyda — services/callQueue (ariza + anketa, bir odam bir marta, "javob bermadi"
+  // deganlar ertagacha sanalmaydi)
+  const calls = await require('../services/callQueue').counts(agencyId, now);
 
   const vacSvc = require('../services/vacancy');
   const fresh = new Date(Date.now() - vacSvc.STALE_DAYS * 864e5);
@@ -96,7 +87,7 @@ router.get('/today', guard, asyncHandler(async (req, res) => {
 
   const active = clients.filter(c => c.status === 'active' && !c.isTest);
   res.json({
-    appsNew, callWaiting, callLate, ankWaiting, ankLate,
+    appsNew, calls, callsDue: calls.due,
     waitingShortlists: queue.length,
     oldestWaitingDays: queue.length ? Math.floor((now - new Date(queue[0].since)) / 864e5) : 0,
     revealedMonth: (month[0] || {}).revealed || 0,
@@ -107,6 +98,56 @@ router.get('/today', guard, asyncHandler(async (req, res) => {
     openJobs, staleJobs,
     unreadChats: (unread[0] || {}).n || 0,
     queue: queue.slice(0, 20)
+  });
+}));
+
+// ── QO'NG'IROQ RO'YXATI (services/callQueue, panel /qongiroq.html) ──
+router.get('/calls', guard, asyncHandler(async (req, res) => {
+  const q = await require('../services/callQueue').build(req.user.restaurantId);
+  res.json(q);
+}));
+
+router.post('/calls/:candId', guard, asyncHandler(async (req, res) => {
+  try {
+    const out = await require('../services/callQueue').record({ agencyId: req.user.restaurantId, candId: req.params.candId,
+      result: String((req.body || {}).result || ''), appBase: require('../utils/publicBase').publicBase(req) });
+    res.json(out);
+  } catch (e) {
+    if (e.status) return res.status(e.status).json({ error: e.message });
+    throw e;
+  }
+}));
+
+// ── Baza hajmi (Atlas bepul tarifi 512 MB) — faqat o'qish ──
+// Nomzod hujjatida PDF (fileData) va rasm (photo) base64 bo'lib yotadi; ular qancha joy
+// egallashini bilmasdan alohida kolleksiyaga ko'chirish (katta migratsiya) kerakmi — aytib bo'lmaydi.
+router.get('/storage', guard, asyncHandler(async (req, res) => {
+  const mongoose = require('mongoose');
+  const db = mongoose.connection.db;
+  const MB = 1024 * 1024, r1 = n => Math.round((n || 0) / MB * 10) / 10;
+  const st = await db.stats();
+  const cols = [];
+  for (const c of await db.listCollections({}, { nameOnly: true }).toArray()) {
+    let size = null, storage = null, idx = null, count = null;
+    try {
+      const [s] = await db.collection(c.name).aggregate([{ $collStats: { storageStats: {} } }]).toArray();
+      const ss = (s && s.storageStats) || {};
+      size = ss.size; storage = ss.storageSize; idx = ss.totalIndexSize; count = ss.count;
+    } catch (e) { count = await db.collection(c.name).estimatedDocumentCount().catch(() => null); }
+    cols.push({ name: c.name, count, dataMB: size == null ? null : r1(size), storageMB: storage == null ? null : r1(storage), indexMB: idx == null ? null : r1(idx) });
+  }
+  cols.sort((a, b) => (b.dataMB || 0) - (a.dataMB || 0));
+  const [heavy] = await Candidate.aggregate([{ $group: { _id: null, n: { $sum: 1 },
+    fileData: { $sum: { $strLenBytes: { $ifNull: ['$fileData', ''] } } },
+    photo: { $sum: { $strLenBytes: { $ifNull: ['$photo', ''] } } },
+    rawText: { $sum: { $strLenBytes: { $ifNull: ['$rawText', ''] } } },
+    withFile: { $sum: { $cond: [{ $gt: [{ $strLenBytes: { $ifNull: ['$fileData', ''] } }, 0] }, 1, 0] } } } }]);
+  res.json({
+    limitMB: 512,
+    dataMB: r1(st.dataSize), storageMB: r1(st.storageSize), indexMB: r1(st.indexSize),
+    usedMB: r1((st.dataSize || 0) + (st.indexSize || 0)),
+    candidates: heavy ? { count: heavy.n, withFile: heavy.withFile, fileDataMB: r1(heavy.fileData), photoMB: r1(heavy.photo), rawTextMB: r1(heavy.rawText) } : null,
+    collections: cols
   });
 }));
 

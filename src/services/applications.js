@@ -98,4 +98,27 @@ async function submit({ cand: c, vacancy: v, message = '', appBase, via = 'kabin
   return a;
 }
 
-module.exports = { submit };
+/**
+ * Agentlik arizani rad etadi — panel "Arizalar" va "Qo'ng'iroqlar" ("Mos emas") shu yerdan.
+ * Atomik: qaror qilingan arizaga tegilmaydi (ikki bosish ikki xabar yubormaydi).
+ * Nomzodga yumshoq xabar (appLife.notify 'rejected').
+ * @returns {object|null} yangilangan ariza yoki null (allaqachon qaror qilingan / topilmadi)
+ */
+async function agencyReject({ agencyId, appId, appBase }) {
+  const now = new Date();
+  const a = await Application.findOneAndUpdate(
+    { agencyId, id: appId, state: { $nin: ['shortlisted', 'rejected'] } },
+    { $set: { state: 'rejected', reason: 'agency', decidedAt: now } }, { returnDocument: 'after' });
+  if (!a) return null;
+  if (!a.agencySeenAt) await Application.updateOne({ _id: a._id, agencySeenAt: null }, { $set: { agencySeenAt: now } });
+  const Vacancy = require('../models/Vacancy');
+  const Candidate = require('../models/Candidate');
+  const [v0, cand] = await Promise.all([
+    Vacancy.findOne({ agencyId, id: a.vacancyId }, 'title role shift').lean(),
+    Candidate.findOne({ restaurantId: agencyId, id: a.candidateId }, 'id tgChatId tgState lang tgLang').lean()
+  ]);
+  await require('./appLife').notify(cand, 'rejected', { vacancy: v0, vacTitle: v0 && v0.title, appBase });
+  return a;
+}
+
+module.exports = { submit, agencyReject };

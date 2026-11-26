@@ -146,7 +146,13 @@ router.post('/applications/:appId/:mark(seen|contacted)', guard, asyncHandler(as
   const a = await Application.findOneAndUpdate({ agencyId, id: req.params.appId, [field]: null }, { $set: set }, { new: true });
   if (!a && !await Application.exists({ agencyId, id: req.params.appId })) return res.status(404).json({ error: 'Ariza topilmadi' });
   // Bog'lanildi — ko'rildi ham (ochmasdan qo'ng'iroq qilingan bo'lishi mumkin)
-  if (field === 'contactedAt') await Application.updateOne({ agencyId, id: req.params.appId, agencySeenAt: null }, { $set: { agencySeenAt: new Date() } });
+  if (field === 'contactedAt') {
+    await Application.updateOne({ agencyId, id: req.params.appId, agencySeenAt: null }, { $set: { agencySeenAt: new Date() } });
+    // Nomzodning o'zi ham "bog'lanilgan" (contactLog) — aks holda anketa nomzodi Qo'ng'iroqlar
+    // ro'yxatida va "Anketadan" bo'limida hali kutayotgandek turardi
+    const one = a || await Application.findOne({ agencyId, id: req.params.appId }, 'candidateId').lean();
+    if (one) await require('../services/contactLog').contacted(agencyId, [one.candidateId]);
+  }
   res.json({ ok: true });
 }));
 
@@ -241,16 +247,16 @@ router.post('/:id/applications/:appId/:action', guard, asyncHandler(async (req, 
   if (!a) return res.status(404).json({ error: 'Ariza topilmadi' });
   if (a.state === 'shortlisted' || a.state === 'rejected') return res.status(400).json({ error: 'Bu ariza bo\'yicha qaror qabul qilingan' });
 
+  if (act === 'reject') {
+    // Qoida bitta joyda (Qo'ng'iroqlar sahifasidagi "Mos emas" ham shu)
+    const r = await require('../services/applications').agencyReject({ agencyId, appId: a.id, appBase: publicBase(req) });
+    if (!r) return res.status(400).json({ error: 'Bu ariza bo\'yicha qaror qabul qilingan' });
+    return res.json({ ok: true, state: r.state });
+  }
+
   const v0 = await Vacancy.findOne({ agencyId, id: a.vacancyId }, 'title role shift').lean();
   const cand = await Candidate.findOne({ restaurantId: agencyId, id: a.candidateId }, 'id tgChatId tgState lang tgLang').lean();
   if (!a.agencySeenAt) a.agencySeenAt = new Date();
-
-  if (act === 'reject') {
-    a.state = 'rejected'; a.reason = 'agency'; a.decidedAt = new Date();
-    await a.save();
-    await appLife.notify(cand, 'rejected', { vacancy: v0, vacTitle: v0 && v0.title, appBase: publicBase(req) });
-    return res.json({ ok: true, state: a.state });
-  }
 
   const v = await Vacancy.findOne({ agencyId, id: a.vacancyId }).lean();
   let sl = await Shortlist.findOne({ agencyId, clientId: a.clientId, vacancyId: a.vacancyId, status: { $ne: 'done' } });

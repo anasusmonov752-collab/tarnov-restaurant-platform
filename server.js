@@ -217,7 +217,9 @@ async function startServer() {
     ['JP', () => require('./src/services/jobPost').tick()],      // kanalga e'lon / "Yopildi"
     ['PL', () => require('./src/services/placements').tick()],   // ishga olingandan keyin 1/7/30-kun
     ['SH', () => require('./src/services/shifts').tick()],       // smena bozori
-    ['SLA', () => require('./src/services/slaAlert').tick()]     // "HR 24 soatda qo'ng'iroq qiladi"
+    ['SLA', () => require('./src/services/slaAlert').tick()],    // "HR 24 soatda qo'ng'iroq qiladi"
+    ['LK', () => require('./src/services/lookCheck').tick()],    // "Hali ish qidiryapsizmi?" (14 kunda bir)
+    ['WR', () => require('./src/services/weekly').tick()]        // haftalik hisobot, dushanba ertalab
   ];
   const alertSvc = require('./src/services/alert');
   let ivBusy = 0;

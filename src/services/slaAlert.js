@@ -70,7 +70,7 @@ function messageFor(kind, list) {
     (x.cand.phone ? `\n    ${esc(x.cand.phone)}` : ''));
   const more = list.length > MAX_LINES ? `\n…va yana ${list.length - MAX_LINES} ta` : '';
   return `${head}\nNomzodga «HR 24 soat ichida qo'ng'iroq qiladi» deganmiz.\n\n${lines.join('\n')}${more}\n\n` +
-    `Qo'ng'iroq qilgach panelda «Bog'landim» bosing — ro'yxatdan chiqadi.`;
+    `Qo'ng'iroq qilgach panel «Qo'ng'iroqlar» bo'limida «Gaplashdik» bosing — ro'yxatdan chiqadi.`;
 }
 
 /**
@@ -101,7 +101,7 @@ async function tick(now = new Date()) {
         if (!chat) continue;
         const base = (process.env.APP_URL || '').replace(/\/+$/, '');
         await tg.sendMessage(tg.platformToken(), chat, messageFor(kind, items), Object.assign({ parse_mode: 'HTML' },
-          base ? { reply_markup: { inline_keyboard: [[{ text: '📨 Arizalarni ochish', url: base + '/arizalar.html' }]] } } : {}));
+          base ? { reply_markup: { inline_keyboard: [[{ text: '📞 Qo\'ng\'iroqlarni ochish', url: base + '/qongiroq.html' }]] } } : {}));
       } catch (e) { console.error('[SLA] xabar ketmadi:', e.message); }
     }
     out[kind === 'late' ? 'late' : 'warned'] += mine.length;

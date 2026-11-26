@@ -1294,31 +1294,30 @@ async function handleCallbackInner(cq, appBase, st) {
     return;
   }
 
-  // ── Nomzod: profilni tasdiqlash / ish qidirmaslik ──
+  // ── Nomzod: "Hali ish qidiryapsizmi?" (services/lookCheck) — Ha / Yo'q ──
+  // Javoblar admin chatiga birma-bir yuborilmaydi (14 kunlik so'rovda o'nlab bo'ladi) —
+  // haftalik hisobotda sanaladi (services/weekly).
   if (data === 'cp' || data === 'cn') {
     const c = await Candidate.findOne({ tgChatId: chatId });
-    if (!c) return done('Profil topilmadi', true);
+    const L = I18N.resolve(c && c.lang, (c && c.tgLang) || (cq.from && cq.from.language_code));
+    if (!c) return done(T(L, 'bot.stale'), true);
 
     c.jobStatus   = data === 'cp' ? 'active' : 'not_looking';
     c.jobStatusAt = new Date();
     c.updatedAt   = new Date();
     await c.save();
 
-    await done(data === 'cp' ? 'Rahmat, tasdiqlandi' : 'Qabul qilindi');
+    await done(T(L, data === 'cp' ? 'lk.yesDone' : 'lk.noDone').split('\n')[0]);
     if (msgId) {
-      await tg.editMessageText(token, chatId, msgId, data === 'cp'
-        ? `✅ Profilingiz tasdiqlandi.\n\n${profileCard(c)}\n\n` +
-          `Mos ish chiqsa shu yerga xabar yuboramiz. Ma'lumotni o'zgartirmoqchi ` +
-          `bo'lsangiz istalgan payt yozing.`
-        : `Qabul qilindi — hozircha taklif yubormaymiz.\n\n` +
-          `Yana ish qidira boshlasangiz shu yerga yozing.`).catch(() => {});
-    }
-
-    const rest = await Restaurant.findOne({ id: c.restaurantId });
-    if (rest && rest.telegram && rest.telegram.adminChatId) {
-      await tg.sendMessage(token, rest.telegram.adminChatId,
-        `${relay.displayName(c)} — ${data === 'cp' ? 'profilni tasdiqladi (ish qidiryapti)' : 'ish qidirmayapti'}`)
-        .catch(() => {});
+      let text = T(L, data === 'cp' ? 'lk.yesDone' : 'lk.noDone'), markup;
+      if (data === 'cp' && appBase) {
+        const n = await require('../services/appLife').openJobsCount(c.restaurantId).catch(() => 0);
+        if (n) {
+          text += '\n\n' + T(L, 'lk.jobsNow', { n });
+          markup = { inline_keyboard: [[{ text: T(L, 'lk.jobsBtn'), web_app: { url: `${appBase}/profil.html#jobs` } }]] };
+        }
+      }
+      await tg.editMessageText(token, chatId, msgId, text, markup ? { reply_markup: markup } : undefined).catch(() => {});
     }
     return;
   }
@@ -1463,3 +1462,4 @@ router.post('/unlink-admin', guard, asyncHandler(async (req, res) => {
 
 module.exports = router;
 module.exports.firstScreen = firstScreen;   // test uchun (test/applications.test.js)
+module.exports.handleCallback = handleCallback;   // test uchun (test/calls.test.js — 'cp'/'cn')

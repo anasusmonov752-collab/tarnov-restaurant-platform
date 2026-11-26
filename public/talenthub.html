@@ -47,7 +47,7 @@
 </div>
 <div class="wrap"><div class="inner">
   <div class="kpis" id="kpis">
-    <a class="th-card kpi" href="/arizalar.html"><div class="l">Qo'ng'iroq kutmoqda</div><div class="v" id="kApps">—</div><div class="d" id="kAppsD">&nbsp;</div></a>
+    <a class="th-card kpi" href="/qongiroq.html"><div class="l">Qo'ng'iroq kutmoqda</div><div class="v" id="kApps">—</div><div class="d" id="kAppsD">&nbsp;</div></a>
     <a class="th-card kpi" href="/mijozlar.html"><div class="l">Sizni kutayotgan tanlovlar</div><div class="v" id="kWait">—</div><div class="d" id="kWaitD">&nbsp;</div></a>
     <a class="th-card kpi" href="/mijozlar.html"><div class="l">Shu oy ochilgan kontakt</div><div class="v" id="kRev">—</div><div class="d" id="kRevD">&nbsp;</div></a>
     <a class="th-card kpi" href="/mijozlar.html"><div class="l">Mijozlar krediti</div><div class="v" id="kCred" style="color:var(--th-amber)">—</div><div class="d" id="kCredD">&nbsp;</div></a>
@@ -129,11 +129,12 @@ $('today').textContent = `${KUN[nowD.getDay()]}, ${nowD.getDate()}-${OY[nowD.get
     w.style.display = 'block';
   }
   // Nomzodga "HR 24 soatda qo'ng'iroq qiladi" deganmiz — shu va'da bosh raqam
-  // Ikki manba: vakansiyaga ariza + anketani o'zi to'ldirgan (hali hech kim bog'lanmagan)
-  const callN = (d.callWaiting || 0) + (d.ankWaiting || 0), lateN = (d.callLate || 0) + (d.ankLate || 0);
-  $('kApps').textContent = d.callWaiting != null ? callN : d.appsNew;
+  // Qoida serverda (services/callQueue): ariza + anketa, bir odam bir marta; "javob bermadi" —
+  // ertagacha sanalmaydi (pastda alohida yoziladi)
+  const cs = d.calls || {}, callN = cs.due || 0, lateN = cs.late || 0;
+  $('kApps').textContent = callN;
   $('kAppsD').textContent = (lateN ? `${lateN} tasi 24 soatdan oshgan` : (callN ? 'hammasi 24 soat ichida' : 'hammasiga qo\'ng\'iroq qilingan'))
-    + (d.ankWaiting ? ` · ${d.callWaiting || 0} ariza, ${d.ankWaiting} anketa` : '');
+    + (cs.later ? ` · ertaga yana ${cs.later}` : '');
   $('kAppsD').style.color = lateN ? 'var(--th-danger, #C0392B)' : '';
   if (lateN) $('kApps').style.color = 'var(--th-danger, #C0392B)';
   $('kWait').textContent = d.waitingShortlists;

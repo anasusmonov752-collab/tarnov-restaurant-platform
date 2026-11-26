@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TalentHub — Qo'ng'iroqlar</title>
+<!-- Qo'ng'iroq ro'yxati: ariza + anketa bitta ro'yxatda, natija bir bosishda (services/callQueue) -->
+<link rel="icon" href="/img/talenthub-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/th.css?v=2">
+<link rel="stylesheet" href="/css/th-app.css?v=2">
+<script src="/js/th-shell.js?v=5" defer></script>
+<script src="/js/th-viewer.js?v=2" defer></script>
+
+<style>
+:root{ --bg:#EEF3FB; --ink:#16233A; --gold:#2563EB; --card:#FFFFFF; --line:#E1E8F2; --muted:#64748B; --danger:#C25B4C; --ok:#2E9E5B; --warn:#B4802E; --soft:#F3F7FD; }
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+button{font-family:inherit}
+.topbar{flex:none;background:var(--card);border-bottom:1px solid var(--line);padding:12px 20px;display:flex;align-items:center;gap:14px}
+.tb-title{font-size:16.5px;font-weight:var(--th-fw-h,700);letter-spacing:calc(-.4px * var(--th-lsk,1));line-height:1}
+.tb-sub{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:3px}
+.main{flex:1;overflow-y:auto;padding:20px 24px 40px}
+.wrap{max-width:820px;margin:0 auto}
+.seg{display:flex;background:var(--th-fill,#E9EEF5);border-radius:10px;padding:2px;gap:2px;margin-bottom:10px}
+.seg button{flex:1;border:0;background:none;border-radius:8px;padding:8px 10px;font-size:13.5px;cursor:pointer;color:var(--ink);font-weight:500}
+.seg button .n{color:var(--muted);margin-left:5px;font-weight:400}
+.seg button .n.late{color:var(--danger);font-weight:600}
+.seg button.on{background:var(--th-surface,#fff);box-shadow:0 3px 8px rgba(0,0,0,.12);font-weight:600}
+.hint{font-size:13px;color:var(--muted);margin:0 2px 12px;line-height:1.45}
+.cl{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:10px}
+.cl.late{box-shadow:inset 3px 0 0 var(--danger)}
+.cl-h{display:flex;gap:12px;align-items:flex-start}
+.av{width:44px;height:44px;border-radius:50%;flex:none;background:var(--soft);color:var(--gold);font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.av img{width:100%;height:100%;object-fit:cover}
+.nm{font-size:15.5px;font-weight:600;cursor:pointer}
+.nm:hover{color:var(--gold);text-decoration:underline}
+.sb{font-size:13px;color:var(--muted);margin-top:2px;line-height:1.45}
+.vc{font-size:13.5px;margin-top:6px;line-height:1.5}
+.vc b{font-weight:600}
+.msg{font-size:13.5px;margin-top:8px;padding:8px 11px;border-radius:9px;background:var(--soft);line-height:1.45}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.tag{font-size:12px;font-weight:600;padding:3px 9px;border-radius:7px;background:#F1F5FA;color:var(--muted)}
+.tag.late{background:rgba(194,91,76,.12);color:var(--danger)}
+.tag.wt{background:rgba(217,142,43,.14);color:#9A5B0C}
+.tag.ok{background:rgba(46,158,91,.12);color:#1E7A46}
+.call{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 13px;border-radius:9px;cursor:pointer;font-size:13.5px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:var(--soft)}
+.btn svg{width:16px;height:16px;flex:none}
+.btn-p{background:var(--gold);border-color:var(--gold);color:#fff}
+.btn-p:hover{background:#1D4ED8}
+.btn-tg{background:#229ED9;border-color:#229ED9;color:#fff;padding:8px 10px}
+.btn-no{color:var(--danger)}
+.btn:disabled{opacity:.45;cursor:default}
+.res{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);align-items:center}
+.res small{font-size:12.5px;color:var(--muted);margin-right:2px}
+.note{font-size:12.5px;color:var(--muted);flex-basis:100%}
+.done{font-size:14px;font-weight:600;color:var(--ok);margin-bottom:8px}
+.empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:14px;background:var(--card);border-radius:12px;border:1px solid var(--line);line-height:1.5}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:300;background:#16233A;color:#fff;padding:11px 18px;border-radius:11px;font-size:13.5px;font-weight:600;display:none;max-width:calc(100% - 32px);text-align:center}
+@media(max-width:760px){ .main{padding:14px 16px 40px} .seg button{padding:8px 4px;font-size:13px} }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div><div class="tb-title">Qo'ng'iroqlar</div><div class="tb-sub">Ariza va anketa — bitta ro'yxat</div></div>
+</div>
+
+<div class="main"><div class="wrap">
+  <div class="seg" id="seg"></div>
+  <div class="hint" id="hint"></div>
+  <div id="list"><div class="empty">Yuklanmoqda…</div></div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/js/utils.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const toastMsg = m => { const t = $('toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(() => t.style.display = 'none', 3200); };
+const ROLES = { ofitsiant:'Ofitsiant', barmen:'Barmen', xostess:'Xostess', oshpaz:'Oshpaz', kassir:'Kassir', menejer:'Menejer', operator:'Call-markaz operatori' };
+const TABS = [['due', 'Hozir'], ['later', 'Ertaga'], ['unreachable', 'Ulanmadi']];
+const PHONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>';
+const TGI = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>';
+
+let DATA = { due: [], later: [], unreachable: [], counts: {} }, TAB = 'due', ASK = '';
+// Gaplashilgan, arizasi bor nomzod: kartada "Ish beruvchiga taklif" qadami (candId -> apps)
+const AFTER = {};
+
+const initials = n => (n || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || '?';
+function waitLabel(ms){
+  const h = Math.floor(ms / 36e5);
+  return h < 24 ? `${Math.max(1, h)} soatdan beri kutyapti` : `${Math.floor(h / 24)} kundan beri kutyapti`;
+}
+function fmtPhone(p){
+  let d = String(p || '').replace(/\D/g, '');
+  if (d.length === 9) d = '998' + d;
+  return d.length === 12 ? `+${d.slice(0,3)} ${d.slice(3,5)} ${d.slice(5,8)} ${d.slice(8,10)} ${d.slice(10)}` : String(p || '');
+}
+function when(d){
+  const x = new Date(d), now = new Date();
+  const tom = new Date(now); tom.setDate(now.getDate() + 1);
+  const hm = x.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', hour12: false });
+  if (x.toDateString() === now.toDateString()) return 'bugun ' + hm;
+  if (x.toDateString() === tom.toDateString()) return 'ertaga ' + hm;
+  return x.toLocaleDateString('uz-UZ') + ' ' + hm;
+}
+
+async function load(){
+  try { DATA = await api('/api/agency/calls'); }
+  catch(e){ $('list').innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
+  render();
+}
+
+function render(){
+  const c = DATA.counts || {};
+  $('seg').innerHTML = TABS.map(([k, l]) => {
+    const n = c[k] || 0;
+    return `<button data-t="${k}" class="${TAB === k ? 'on' : ''}">${l}<span class="n ${k === 'due' && c.late ? 'late' : ''}">${n}</span></button>`;
+  }).join('');
+  $('seg').querySelectorAll('[data-t]').forEach(b => b.onclick = () => { TAB = b.dataset.t; ASK = ''; render(); });
+
+  $('hint').textContent = TAB === 'due'
+    ? (c.late ? `${c.late} tasi 24 soatdan oshgan. ` : '') + 'Qo\'ng\'iroqdan keyin natijani belgilang — nomzod ro\'yxatdan chiqadi.'
+    : TAB === 'later' ? 'Javob bermaganlar — belgilangan vaqtda «Hozir» ga qaytadi.'
+    : '3 marta ulanmadi. Telegramga yozib ko\'ring; yangi ariza bersa, ro\'yxatga o\'zi qaytadi.';
+
+  const rows = DATA[TAB] || [];
+  if (!rows.length) {
+    $('list').innerHTML = `<div class="empty">${TAB === 'due' ? 'Hozir qo\'ng\'iroq kutayotgan nomzod yo\'q.' + (c.later ? `<br>Ertaga yana ${c.later} ta.` : '') : 'Bu bo\'lim bo\'sh.'}</div>`;
+    return;
+  }
+  $('list').innerHTML = rows.map(card).join('');
+  wire();
+}
+
+function card(r){
+  const c = r.cand || {};
+  const role = ROLES[c.role] || c.desiredPosition || '';
+  const sub = [role, c.experienceYears ? c.experienceYears + ' yil tajriba' : 'Tajribasiz', c.location].filter(Boolean).join(' · ');
+  const tel = c.phone ? String(c.phone).replace(/[^\d+]/g, '') : '';
+  let tgd = tel.replace(/\D/g, ''); if (tgd.length === 9) tgd = '998' + tgd;
+  const tgUrl = c.tgUsername ? 'https://t.me/' + String(c.tgUsername).replace(/^@/, '') : (tgd.length >= 11 ? 'https://t.me/+' + tgd : '');
+  const apps = r.apps || [];
+  const what = apps.length
+    ? apps.slice(0, 3).map(a => `→ <b>${esc(a.vacancy.title || 'Vakansiya')}</b>${a.client.name ? ` · ${esc(a.client.name)}` : ''}${a.client.status === 'pending' ? ' <span class="tag" title="Hali mijoz emas">potensial mijoz</span>' : ''}`).join('<br>')
+      + (apps.length > 3 ? `<br>…yana ${apps.length - 3} ta ariza` : '')
+    : 'Anketa to\'ldirgan — ish tanlamagan';
+  const msg = apps.map(a => a.message).filter(Boolean)[0];
+  const after = AFTER[c.id];
+
+  const head = `<div class="cl-h">
+      <div class="av">${c.hasPhoto ? `<img src="/api/recruitment/${encodeURIComponent(c.id)}/photo?v=${encodeURIComponent(c.updatedAt || '')}" alt="">` : esc(initials(c.fullName))}</div>
+      <div style="min-width:0;flex:1">
+        <div class="nm" data-resume="${esc(c.id)}" title="Profilni ochish">${esc(c.fullName || 'Nomsiz')}${c.age ? `, ${c.age} yosh` : ''}</div>
+        <div class="sb">${esc(sub)}</div>
+        <div class="vc">${what}</div>
+      </div>
+    </div>`;
+
+  if (after) {
+    return `<article class="cl" data-id="${esc(c.id)}">${head}
+      <div class="res"><div class="done" style="flex-basis:100%;margin:0">✓ Gaplashildi</div>
+        ${after.map(a => `<button class="btn btn-p" data-sl="${esc(a.id)}" data-v="${esc(a.vacancyId)}" title="Mijozning shu vakansiyadagi tanloviga qo'shiladi, nomzodga xabar boradi">Ish beruvchiga taklif${after.length > 1 ? ': ' + esc(titleOf(r, a.id)) : ''}</button>`).join('')}
+        <button class="btn" data-fin="${esc(c.id)}">Keyinroq</button>
+        <span class="note">Keyinroq — «Arizalar» bo'limida davom ettirasiz.</span>
+      </div></article>`;
+  }
+
+  const tries = c.callTries || 0;
+  return `<article class="cl ${TAB === 'due' && r.late ? 'late' : ''}" data-id="${esc(c.id)}">${head}
+    ${msg ? `<div class="msg">«${esc(msg)}»</div>` : ''}
+    <div class="tags">
+      <span class="tag ${r.late ? 'late' : ''}">${waitLabel(r.waitingMs)}</span>
+      ${TAB === 'later' && c.callNextAt ? `<span class="tag wt">Qayta: ${esc(when(c.callNextAt))}</span>` : ''}
+      ${tries && c.callLast === 'noanswer' ? `<span class="tag wt">${tries} marta javob bermadi</span>` : ''}
+      ${c.callLast === 'unreachable' ? `<span class="tag">${tries || 3} marta ulanmadi</span>` : ''}
+      ${c.phoneVerifiedAt ? '<span class="tag ok">Telefon tasdiqlangan</span>' : ''}
+    </div>
+    <div class="call">
+      ${tel ? `<a class="btn btn-p" href="tel:${esc(tel)}">${PHONE}${esc(fmtPhone(c.phone))}</a>` : '<span class="tag">Telefon yo\'q</span>'}
+      ${tgUrl ? `<a class="btn btn-tg" href="${esc(tgUrl)}" target="_blank" rel="noopener" title="Telegram chatini ochish" aria-label="Telegram">${TGI}</a>` : ''}
+    </div>
+    <div class="res">
+      <small>Natija:</small>
+      <button class="btn" data-r="talked" data-c="${esc(c.id)}">Gaplashdik</button>
+      <button class="btn" data-r="noanswer" data-c="${esc(c.id)}">Javob bermadi</button>
+      ${ASK === c.id
+        ? `<button class="btn btn-no" data-r="unfit" data-c="${esc(c.id)}">Ha, mos emas</button><button class="btn" data-x="1">Bekor</button>
+           <span class="note">${apps.length ? 'Arizasi rad etiladi — nomzodga yumshoq xabar ketadi.' : 'Mijozlar qidiruvida ko\'rinmaydi.'}</span>`
+        : `<button class="btn btn-no" data-ask="${esc(c.id)}">Mos emas</button>`}
+    </div>
+  </article>`;
+}
+
+function titleOf(r, appId){
+  const a = (r.apps || []).find(x => x.id === appId);
+  return a ? a.vacancy.title : '';
+}
+function dropRow(id){
+  for (const k of ['due', 'later', 'unreachable']) DATA[k] = (DATA[k] || []).filter(r => r.cand.id !== id);
+}
+
+async function result(id, res, btn){
+  btn.disabled = true;
+  let out;
+  try { out = await api(`/api/agency/calls/${encodeURIComponent(id)}`, { method:'POST', body: JSON.stringify({ result: res }) }); }
+  catch(e){ btn.disabled = false; toastMsg(e.message); return; }
+  ASK = '';
+  if (res === 'talked' && (out.apps || []).length) {
+    AFTER[id] = out.apps;                        // kartada keyingi qadam
+    render();
+  } else {
+    toastMsg(out.result === 'noanswer' ? `Ertaga ${when(out.nextAt).replace('ertaga ', '')} da yana chiqadi`
+      : out.result === 'unreachable' ? `${out.tries} marta ulanmadi — «Ulanmadi» bo'limiga o'tdi`
+      : out.result === 'unfit' ? (out.rejected ? 'Rad etildi — nomzodga yumshoq xabar ketdi' : 'Belgilandi — mijozlar qidiruvida ko\'rinmaydi')
+      : 'Gaplashildi — ro\'yxatdan chiqdi');
+    await load();
+  }
+  window.thShell && thShell.refreshCounts();
+}
+
+async function propose(appId, vacancyId, btn){
+  btn.disabled = true;
+  try {
+    await api(`/api/vacancies/${encodeURIComponent(vacancyId)}/applications/${encodeURIComponent(appId)}/shortlist`, { method:'POST' });
+    toastMsg('Ish beruvchiga taklif qilindi — nomzodga xabar ketdi');
+  } catch(e){ btn.disabled = false; toastMsg(e.message); return; }
+  const cid = btn.closest('.cl').dataset.id;
+  AFTER[cid] = (AFTER[cid] || []).filter(a => a.id !== appId);
+  if (!AFTER[cid].length) { delete AFTER[cid]; await load(); } else render();
+}
+
+function wire(){
+  const L = $('list');
+  L.querySelectorAll('[data-r]').forEach(b => b.onclick = () => result(b.dataset.c, b.dataset.r, b));
+  L.querySelectorAll('[data-ask]').forEach(b => b.onclick = () => { ASK = b.dataset.ask; render(); });
+  L.querySelectorAll('[data-x]').forEach(b => b.onclick = () => { ASK = ''; render(); });
+  L.querySelectorAll('[data-sl]').forEach(b => b.onclick = () => propose(b.dataset.sl, b.dataset.v, b));
+  L.querySelectorAll('[data-fin]').forEach(b => b.onclick = async () => { delete AFTER[b.dataset.fin]; await load(); });
+}
+
+(async function(){ await requireRole('restaurant'); load(); })();
+</script>
+</body>
+</html>

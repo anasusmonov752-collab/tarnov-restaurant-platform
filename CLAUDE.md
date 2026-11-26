@@ -95,7 +95,9 @@ kabineti, anketa, telegram = bot webhook, vacancies, recruitment, shortlists, ag
 | Test rejimi | `testMode.js` (sinov yozuvlari `isTest` — qidiruv, sanoq, reveal himoyalangan) |
 | Analitika hodisalari | `track.js` (`Event`, xato yutiladi) |
 | Kanalga post | `jobPost.js` · chala anketa eslatmasi — `reminders.js` |
-| Ko'rildi/bog'lanildi | `contactLog.js` |
+| Ko'rildi/bog'lanildi | `contactLog.js` · qo'ng'iroq ro'yxati va natijasi — `callQueue.js` (panel `/qongiroq.html`) |
+| Agentlik arizani rad etadi | `applications.agencyReject` (Arizalar ham, Qo'ng'iroqlar "Mos emas" ham) |
+| "Hali ish qidiryapsizmi?" (14 kunda) · haftalik hisobot | `lookCheck.js` (`cp`/`cn`) · `weekly.js` |
 | Dublikat kaliti | `utils/candidateKeys.js` (textHash, phoneKey) |
 
 Panel umumiy qismi: `js/th-shell.js` (menyu, sanoqlar), `css/th.css` + `css/th-app.css` (tokenlar),
@@ -138,15 +140,17 @@ ovoz: `AISHA_API_KEY` (VoiceLab `vlk_`), `VOICELAB_VOICE_UZ/_RU`, `AI_VOICE`, hh
 Arizalarim yangi kartasi, suhbat kelishish (ikki akkaunt kerak), prescreen va moslik bali, ishga olingandan
 keyingi kuzatuv, o'sish funksiyalari (smena bozori, do'st taklifi, birinchi kun), anketa ish tajribasi ekrani,
 nomzod kabinetida ish tarixi tahriri, ruscha TTS ovozi; mijoz Mini App v3 (iPhone'da ovoz, mikrofon bilan
-qidiruv), yangi anketa oqimi, SLA xabari, kanal havolasidan bir bosishda ariza.
+qidiruv), yangi anketa oqimi, SLA xabari, kanal havolasidan bir bosishda ariza; "Hali ish qidiryapsizmi?"
+Ha/Yo'q (2026-11-26), dushanbalik haftalik hisobot.
 **Anas qiladi:** jobChannel kanalini ulash (bot — kanal admini, panel Vakansiyalar -> "Kanal"; Tarnov
 vakansiyalarida "Kanalga joylash"); Payme/Click/Uzum merchant shartnoma; haqiqiy kartani panelga kiritish;
 Verifix'da OAuth foydalanuvchisiga "Вакансии" ruxsati; ochilib ketgan eski kalitlarni bekor qilish (GitHub
 token, bot tokeni, `admin@tarnov.uz` paroli, **MongoDB Atlas foydalanuvchi paroli va `JWT_SECRET` — ochiq git
 tarixida bor**); Mijozlar -> "Sinov mijozlari" tugmasi bilan sinov mijozlarini belgilash; Render Starter ($7)
 — pulli mijozlardan oldin.
-**Kod:** Candidate `fileData`/`photo` ni alohida kolleksiyaga (Atlas 512 MB); eski `#searchMode` kodini
-olib tashlash (qurilmada sinab); nomzodlar ro'yxati/kanban birlashtirish. 2026-11-20 tekshiruvi — `docs/tarix.md`.
+**Kod:** Candidate `fileData`/`photo` ni alohida kolleksiyaga — avval `GET /api/agency/storage` bilan o'lchab,
+kerak bo'lsa; `#searchMode` — eski kod EMAS, botdagi qidiruv natijasi (`?s=`) uni ochadi: avval `?s=` ni `#sx` ga
+ko'chirish, qurilmada sinash; nomzodlar ro'yxati/kanban birlashtirish (dizayn qarori Anas bilan). Tekshiruvlar — `docs/tarix.md`.
 Huquqiy: hh nomzodlari roziliksiz mijozga ko'rinadi, oferta loyihasi yuristga, Gemini bepul tarifi.
 
 Qo'shimcha: `docs/restoone.md` (RestoOne arxitekturasi, dizayn, ofitsiant test tizimi), `docs/claude-skills.md`

@@ -1513,3 +1513,37 @@ Asl PDF: `hh.resumePdf` + `GET /api/hh/resumes/:id/pdf` — hh'ning o'z PDF rezy
 Kontakt ochish: `hh.openContacts` + `POST /api/hh/resumes/:id/contacts` — FAQAT `{apply:true}` bilan (kvotadan 1 ta;
 hh bergan `actions.get_with_contact` havolasi, boshqa xost rad etiladi). Ism-telefonli PDF — `.../pdf?contact=1`
 (faqat kontakt ochilgandan keyin). Birinchi ochilgan: rekruter nomzodi K28 (2026-11-23, Anas qarori).
+
+**QO'NG'IROQ RO'YXATI + "HALI ISH QIDIRYAPSIZMI?" + HAFTALIK HISOBOT** (2026-11-26, Anas: "barchasini qil").
+Sabab: 2026-11-23 da 50 nomzod qo'ng'iroq kutardi (46 tasi 24 soatdan oshgan) — tor joy inson halqasi, kod emas.
+- **Qo'ng'iroqlar** (`services/callQueue.js`, panel `/qongiroq.html`, menyuda birinchi, sanoq `callsDue`):
+  ariza (qaror yo'q, "Bog'landim" yo'q, vakansiya ochiq) + anketa (`contactLog.WAITING`) BITTA ro'yxatda, bir
+  odam bir qator. Natija bir bosishda: "Gaplashdik" (arizalar `contactedAt`, nomzod `firstContactAt`; arizasi
+  bo'lsa kartada "Ish beruvchiga taklif"), "Javob bermadi" (ertaga 10:00 Toshkent qayta, 3-marta — "Ulanmadi";
+  yangi ariza bersa qaytadi; urinish aloqa EMAS — nomzod "HR bog'landi" ko'rmaydi), "Mos emas" (ikki bosqich;
+  arizalar rad — nomzodga yumshoq xabar, arizasiz anketa nomzodi `status:'rejected'`). Tartib: bugun kelganlar ->
+  qayta qo'ng'iroq vaqti kelganlar -> kechikkanlar. Nomzodda `callTries/callLast/callLastAt/callNextAt`.
+  "Bugun" bosh kartochkasi va SLA xabari shu ro'yxatga (ikki ta'rif bo'lmasin; eski `callWaiting/ankWaiting` olindi).
+  Rad etish qoidasi bitta joyda — `applications.agencyReject` (Arizalar sahifasi ham, atomik: ikki bosish ikki xabar emas).
+  Topilgan nomuvofiqlik: Arizalar'dagi "Bog'landim" nomzodning `firstContactAt`'ini yozmasdi — anketa nomzodi
+  "Anketadan" bo'limida va ro'yxatda kutayotgandek qolardi. Endi `contactLog.contacted`; eski yozuvlar uchun
+  `build` arizasi bo'yicha bog'lanilganlarni anketa sifatida sanamaydi.
+- **"Hali ish qidiryapsizmi?"** (`services/lookCheck.js`, taymer `LK`): botdagi `cp`/`cn` tugmalari va `jobStatus`
+  bor edi, savolni hech kim yubormasdi. Endi Telegramga ulangan, 14 kundan beri tasdiqlamagan (`jobStatusAt`),
+  14 kunda ariza bermagan va so'ralmagan nomzodga, kunduzi 10–20, tick'da 20 ta; suhbat/sinov/ishga olingan/rad
+  etilgan — yo'q. "Ha" — `active` + ochiq ishlar soni va "Ishlarni ko'rish" (`profil.html#jobs`); "Yo'q" —
+  `not_looking` (mijoz qidiruvi va applyReveal allaqachon hisobga oladi). Javob matnlari endi nomzod tilida
+  (`lk.*`), admin chatiga birma-bir yuborilmaydi. Indeks `{tgState, lookAskedAt}` — PDF'li hujjatlar skanerlanmasin.
+- **Haftalik hisobot** (`services/weekly.js`, taymer `WR`): dushanba 09–13 Toshkent, o'tgan dush–yak, admin chatiga:
+  yangi nomzodlar (manba), arizalar va 24 soatda qo'ng'iroq qilingani, hozir kutayotganlar, qo'ng'iroq natijalari,
+  taklif/kontakt/ishga olindi, so'rov javoblari, faol baza lavozim bo'yicha (30 kun). `Restaurant.weeklyReportAt`
+  atomik — haftada bir marta.
+- **Baza hajmi** `GET /api/agency/storage` (faqat o'qish): Atlas 512 MB'dan qanchasi band va nomzod `fileData`/`photo`
+  qancha egallaydi — ko'chirish migratsiyasi kerakmi, shu raqamdan keyin qaror.
+- **Toast hamma panel sahifasida o'qilmasdi** (Arizalar, To'lovlar, Nomzodlar): `th-app.css` fonni oq shishaga
+  almashtirgan, sahifalar yozuvni oq qilgan — `color:var(--th-ink)` bitta joyda.
+- **`#searchMode` olib TASHLANMADI**: eski kod emas — mijoz botdagi qidiruv natijasida "Ko'rish" (`?s=`) shu ekranni
+  ochadi. Olib tashlash uchun avval `?s=` ni `#sx` ga ko'chirish kerak (qurilmada sinab). Nomzodlar ro'yxati/kanban
+  birlashtirish — dizayn qarori, Anas bilan kelishilmagan.
+Testlar `test/calls.test.js` (11). Lokal ko'rishda (`.preview/qongiroq.html`, soxta API) bosib ko'rildi, telefon
+kengligi ham. Telegramda HALI SINALMAGAN: "Ha/Yo'q" tugmalari, haftalik xabar.

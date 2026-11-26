@@ -92,7 +92,9 @@ body.th-app, body.th-app button, body.th-app input, body.th-app select, body.th-
 .th-app .md-top b{ font-weight:600 !important; font-size:var(--th-fs-body) !important; }
 
 /* ── Toast -> iOS bildirishnoma ── */
-.th-app .toast{ border:0 !important; border-radius:16px !important; background:var(--th-glass) !important;
+/* Yozuv rangi ham shu yerda: sahifalar toast'ni to'q fonga oq yozuv deb yozgan (arizalar, to'lovlar,
+   nomzodlar) — shisha fon ustida oq matn ko'rinmasdi (2026-11-26) */
+.th-app .toast{ border:0 !important; border-radius:16px !important; background:var(--th-glass) !important; color:var(--th-ink) !important;
   -webkit-backdrop-filter:var(--th-blur); backdrop-filter:var(--th-blur); box-shadow:var(--th-shadow-2) !important; }
 
 /* ── Telefon ── */

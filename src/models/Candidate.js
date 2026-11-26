@@ -180,12 +180,24 @@ const CandidateSchema = new mongoose.Schema({
   // Shaxsiy raqamdan taklif SMS ketgan payt (services/outreach) — navbat
   // shu bo'yicha filtrlanadi, bir odamga ikki marta yozilmasin
   smsSentAt:       { type: Date,   default: null },
+  // ── Qo'ng'iroq ro'yxati (services/callQueue) ──
+  // callLast: talked | noanswer | unreachable | unfit. "Javob bermadi" — ertaga
+  // ertalab qayta (callNextAt); 3-marta ulanmasa — unreachable, ro'yxatdan chiqadi.
+  callTries:       { type: Number, default: 0 },
+  callLast:        { type: String, default: '' },
+  callLastAt:      { type: Date,   default: null },
+  callNextAt:      { type: Date,   default: null },
+  // "Hali ish qidiryapsizmi?" bot so'rovi (services/lookCheck) — oxirgi so'ralgan payt
+  lookAskedAt:     { type: Date,   default: null },
 
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
 
 CandidateSchema.index({ restaurantId: 1, createdAt: -1 });
+// "Hali ish qidiryapsizmi?" taymeri (services/lookCheck, kunduzi har 2 daqiqa) — faqat Telegramga
+// ulanganlar o'qilsin, PDF'li hujjatlar to'liq skanerlanmasin
+CandidateSchema.index({ tgState: 1, lookAskedAt: 1 });
 // Manba bo'yicha bo'limlar (Anketadan / hh.uz bazasi)
 CandidateSchema.index({ restaurantId: 1, source: 1, createdAt: -1 });
 // Panel yon menyusi sanoqlari (har sahifada, agency/today): isTest indeksda bo'lmasa har nomzod

@@ -438,6 +438,8 @@ const RestaurantSchema = new mongoose.Schema({
   evaluations:  [EvaluationSchema],
   staffNotes:   [StaffNoteSchema],
   telegram:     { type: TelegramSchema, default: () => ({}) },
+  // Haftalik hisobot admin chatiga (services/weekly) — oxirgi yuborilgan payt, haftada bir marta
+  weeklyReportAt: { type: Date, default: null },
   // hh.uz / hh.ru API (services/hh.js): ish beruvchi akkaunti ruxsat bergandagi tokenlar.
   // Tokenlar odatiy so'rovlarda QAYTMAYDI (select:false) — faqat services/hh o'qiydi.
   hh: {

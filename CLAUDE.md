@@ -43,8 +43,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Loyiha
 
-**TalentHub** — Toshkent restoranlari uchun ishga joylash agentligi (Anasning shaxsiy biznesi, Tarnovniki
-EMAS). Ikki tomon: **mijoz** (restoran) — Mini App `miniapp.html`, kredit bilan kontakt ochadi; **nomzod** —
+**TalentHub** — Toshkentdagi ishga joylash agentligi (Anasning shaxsiy biznesi, Tarnovniki EMAS). Restorandan
+boshlangan, lekin platforma UMUMIY (Anas, 2026-11-27): nomzod matni va savoli restoranga bog'lanmasin
+(HR-rekruter, operator vakansiyalari ham bor). Ikki tomon: **mijoz** (restoran) — Mini App `miniapp.html`, kredit bilan kontakt ochadi; **nomzod** —
 bot `@TalentHubUzBot`, anketa `anketa.html`, kabinet `profil.html`. Agentlik paneli — `talenthub.html` va
 yon menyudagi sahifalar. Tarnov — birinchi haqiqiy mijoz (`showName` ochiq).
 Shu repoda eski **RestoOne** (ofitsiant o'qitish) ham bor — `docs/restoone.md`.

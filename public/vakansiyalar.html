@@ -12,7 +12,7 @@
 <script src="/js/th-shell.js?v=4" defer></script>
 <script src="/js/th-viewer.js?v=2" defer></script>
 <script src="/js/th-i18n.js?v=27"></script>
-<script src="/js/th-story.js?v=2" defer></script>  <!-- afzalliklar ro'yxati serverniki bilan bir xil (PERK_KEYS) -->
+<script src="/js/th-story.js?v=3" defer></script>  <!-- afzalliklar ro'yxati serverniki bilan bir xil (PERK_KEYS) -->
 <style>
 :root{
   --bg:#EEF3FB; --ink:#16233A; --green:#0F2747; --green2:#0A1B33;
@@ -80,6 +80,35 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold)}
 .fld{margin-bottom:14px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .sec{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:18px 0 10px}
+/* Story oynasi: chapda boshqaruv, o'ngda jonli ko'rinish (keng ekranda yopishqoq) */
+.st{display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap}
+.st-l{flex:1 1 320px;min-width:280px}
+.st-r{flex:0 0 auto;position:sticky;top:64px;margin:0 auto}
+.st-r canvas{width:288px;height:512px;border-radius:16px;box-shadow:0 10px 32px rgba(0,0,0,.18);display:block}
+.st-h{font-size:14px;font-weight:650;color:var(--ink);margin:18px 0 8px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.st-h span,.st-lbl{font-size:12px;font-weight:400;color:var(--muted);text-transform:none;letter-spacing:0}
+.st-vac{display:flex;flex-direction:column;gap:2px}
+.st label.st-ck{display:flex;gap:10px;align-items:center;font-size:14px;font-weight:500;color:var(--ink);text-transform:none;letter-spacing:0;
+  padding:6px 8px;margin:0 -8px;border-radius:8px;cursor:pointer}
+.st label.st-ck:hover{background:var(--soft)}
+.st label.st-ck input{width:16px;height:16px;margin:0;flex:none}
+.st label.st-ck span{flex:1;min-width:0}
+.st label.st-ck em{font-style:normal;font-size:12px;color:var(--muted)}
+.st label.st-ck.off{opacity:.55;cursor:default}
+.st-add{border:1px dashed var(--line2);background:transparent;color:var(--link);font-weight:600;font-size:13.5px;border-radius:9px;padding:8px 12px;margin-top:8px;cursor:pointer;width:100%;text-align:left}
+.st-add:hover{background:var(--soft)}
+.st-addf{border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:8px;background:var(--soft)}
+.st-addf .fld{margin-bottom:10px}
+.st-note{font-size:12.5px;color:var(--muted);line-height:1.5;margin:0 0 10px}
+.st-th{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.st-th button{display:flex;flex-direction:column;align-items:center;gap:6px;border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:10px 4px 8px;
+  font-size:12.5px;font-weight:500;color:var(--ink);cursor:pointer}
+.st-th button i{width:34px;height:34px;border-radius:9px;display:block;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.st-th button.on{border-color:var(--gold);box-shadow:0 0 0 3px rgba(37,99,235,.12);font-weight:650}
+.st-ph{display:flex;gap:10px;align-items:center;margin-top:10px}
+.st-ph label{text-transform:none;letter-spacing:0}
+.st-ph .st-note{margin:0}
+@media (max-width:640px){ .st-th{grid-template-columns:repeat(2,1fr)} .st-r{position:static} }
 .ci{border:1px solid var(--line);border-radius:11px;padding:13px;margin-bottom:11px}
 .ci b{font-size:14.5px}
 .ci .m{font-size:12.5px;color:var(--muted);line-height:1.6;margin-top:3px}
@@ -142,7 +171,7 @@ let ROWS = [], CLIENTS = [];
 const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const dt = s => s ? new Date(s).toLocaleDateString('uz-UZ',{day:'2-digit',month:'short'}) : '—';
 
-function openMd(t, h){ $('mdT').textContent = t; $('mdB').innerHTML = h; $('ov').classList.add('on'); }
+function openMd(t, h){ $('mdT').textContent = t; $('mdB').innerHTML = h; $('mdB').closest('.md').style.maxWidth = ''; $('ov').classList.add('on'); }
 
 // ── Vakansiyalar kanali (services/jobPost) ──
 // Bot kanalda "xabar joylash" huquqli admin bo'lishi kerak — server tekshiradi.
@@ -468,9 +497,17 @@ function form(v){
 $('bCh').onclick = channelForm;
 
 // ── Story rasm (js/th-story.js): mijozning ochiq vakansiyalaridan 1080×1920 PNG ──
-// Raqamlar bazadan; sarlavha va qatorlarni shu yerda tahrirlash mumkin (* — oltin so'z)
+// Raqamlar bazadan; sarlavha va qatorlarni shu yerda tahrirlash mumkin (* — ajratilgan so'z).
+// 2026-11-27 (Anas: "shashlikchi kerak, lekin vakansiya formasini to'ldirmoqchi emasman"):
+//   • "+ Yangi lavozim" — nomi, maosh, davr. Story'dagi lavozim qo'lda yozilgan matn EMAS:
+//     shu mijozga HAQIQIY ochiq vakansiya ochiladi (listed:true) — story'ni ko'rib botga kirgan
+//     nomzod shu ishni topib ariza beradi. Aks holda rasm va'da beradi, bot bermaydi.
+//   • 4 ta tayyor mavzu (erkin rang yo'q — brend bir xil qolsin), "O'z rasmingiz" — rasm faqat
+//     brauzerda, serverga yuklanmaydi.
+//   • Bitta lavozim tanlansa — alohida kompozitsiya (thStory: katta maosh + afzalliklar).
 async function storyForm(){
   openMd('Story rasm', '<div class="empty">Yuklanmoqda...</div>');
+  $('mdB').closest('.md').style.maxWidth = '880px';
   let rows;
   try { rows = (await api('/api/vacancies?status=open')).filter(v => v.listed !== false && !v.isTest); }
   catch (e) { $('mdB').innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
@@ -478,84 +515,196 @@ async function storyForm(){
   rows.forEach(v => { (byCl[v.clientId] = byCl[v.clientId] || { name: v.clientName, rows: [] }).rows.push(v); });
   const cls = Object.entries(byCl).sort((a, b) => b[1].rows.length - a[1].rows.length);
   if (!cls.length) { $('mdB').innerHTML = '<div class="empty">Ochiq vakansiya yo\'q.</div>'; return; }
-  const S = { cl: cls[0][0], lang: 'uz', sel: null, showName: true, edit: {} };
+  const store = { get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }, set(k, v){ try { localStorage.setItem(k, v); } catch(e){} } };
+  const THEMES = thStory.THEMES;
+  const S = { cl: cls[0][0], lang: 'uz', sel: null, showName: true, theme: THEMES[store.get('thStoryTheme')] ? store.get('thStoryTheme') : 'tungi', photo: null };
+  const SW = { tungi: 'linear-gradient(135deg,#0E2350 55%,#FFC53D 55%)', oq: 'linear-gradient(135deg,#fff 55%,#0A5BD8 55%)',
+    issiq: 'linear-gradient(135deg,#2A1A12 55%,#FF8A3D 55%)', rasm: 'url(/images/story/shashlik-1.jpg) center/cover' };
   $('mdB').innerHTML = `
-    <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start">
-      <div style="flex:1 1 280px;min-width:260px">
-        <div class="fld"><label>Mijoz</label><select id="sCl">${cls.map(([id, c]) => `<option value="${esc(id)}">${esc(c.name)} · ${c.rows.length} ta</option>`).join('')}</select></div>
-        <div class="fld"><label>Til</label><select id="sLang"><option value="uz">O'zbekcha</option><option value="ru">Ruscha</option></select></div>
-        <div class="fld"><label>Lavozimlar (ko'pi bilan 4)</label><div id="sVac" style="display:flex;flex-direction:column;gap:6px"></div></div>
-        <div class="fld"><label><input type="checkbox" id="sName" checked style="width:auto;margin-right:6px">Restoran nomini ko'rsatish</label></div>
-        <div class="fld"><label>Sarlavha (har qator alohida, *so'z* — oltin)</label><textarea id="sH1" rows="3"></textarea></div>
-        <div class="fld"><label>Ostki qator</label><input type="text" id="sSub"></div>
-        <div class="fld"><label>Filiallar</label><input type="text" id="sLoc"></div>
-        <div style="display:flex;gap:8px;margin-top:6px">
-          <button class="btn btn-p" id="sDl" style="flex:1">PNG yuklab olish</button>
-          <button class="btn btn-p" id="sVid" style="flex:1">🎬 Video (${thStory.VIDEO_SECONDS} s)</button>
+    <div class="st">
+      <div class="st-l">
+        <div class="row2">
+          <div class="fld"><label>Mijoz</label><select id="sCl">${cls.map(([id, c]) => `<option value="${esc(id)}">${esc(c.name)} · ${c.rows.length} ta</option>`).join('')}</select></div>
+          <div class="fld"><label>Til</label><select id="sLang"><option value="uz">O'zbekcha</option><option value="ru">Ruscha</option></select></div>
         </div>
-        <div id="sVidSt" style="font-size:12.5px;color:var(--muted);margin-top:8px;line-height:1.5"></div>
-        <div style="font-size:12.5px;color:var(--muted);margin-top:8px;line-height:1.5">Story'da pastki bo'sh joyga Telegram «Ссылка» stikerini qo'ying: t.me/TalentHubUzBot</div>
+        <div class="st-h">Lavozimlar <span>ko'pi bilan 4 ta · bittasini tanlasangiz — alohida ko'rinish</span></div>
+        <div id="sVac" class="st-vac"></div>
+        <button class="st-add" id="sAddBtn" type="button">+ Yangi lavozim</button>
+        <div id="sAdd" class="st-addf" hidden>
+          <div class="fld"><label>Nomi</label><input type="text" id="aT" maxlength="120" placeholder="Masalan: Shashlikchi"></div>
+          <div class="row2">
+            <div class="fld"><label>Maosh, so'm</label><input type="text" id="aP" inputmode="numeric" placeholder="300 000 yoki 250 000–350 000"></div>
+            <div class="fld"><label>Davr</label><select id="aD"><option value="day">kuniga</option><option value="month">oyiga</option><option value="shift">smenaga</option></select></div>
+          </div>
+          <div class="st-note" id="aHint"></div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-p btn-sm" id="aSave" type="button">Qo'shish</button>
+            <button class="btn btn-sm" id="aCancel" type="button">Bekor</button>
+          </div>
+        </div>
+        <div class="st-h">Dizayn</div>
+        <div class="st-th" id="sTh">${Object.entries(THEMES).map(([k, t]) => `<button type="button" data-th="${k}"><i style="background:${SW[k]}"></i>${esc(t.label)}</button>`).join('')}</div>
+        <div id="sPh" class="st-ph" hidden>
+          <button class="btn btn-sm" id="sNext" type="button">Boshqa rasm</button>
+          <label class="btn btn-sm" style="display:inline-flex;align-items:center;cursor:pointer;margin:0">O'z rasmingiz<input type="file" id="sFile" accept="image/*" hidden></label>
+          <span class="st-note" id="sPhSt">Rasm lavozimga qarab o'zi tanlanadi.</span>
+        </div>
+        <div class="st-h">Matn</div>
+        <label class="st-ck"><input type="checkbox" id="sName" checked>Restoran nomini ko'rsatish</label>
+        <div class="fld"><label>Sarlavha <span class="st-lbl">har qator alohida, *so'z* — ajratib ko'rsatiladi</span></label><textarea id="sH1" rows="3"></textarea></div>
+        <div class="row2">
+          <div class="fld"><label>Ostki qator</label><input type="text" id="sSub"></div>
+          <div class="fld"><label>Filiallar</label><input type="text" id="sLoc"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button class="btn btn-p" id="sDl" style="flex:1">PNG yuklab olish</button>
+          <button class="btn" id="sVid" style="flex:1">Video (${thStory.VIDEO_SECONDS} s)</button>
+        </div>
+        <div id="sVidSt" class="st-note" style="margin-top:8px"></div>
+        <div class="st-note" style="margin-top:6px">Story'da pastki bo'sh joyga Telegram «Ссылка» stikerini qo'ying: t.me/TalentHubUzBot</div>
       </div>
-      <div style="flex:0 0 auto"><canvas id="sCv" style="width:270px;height:480px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.18);display:block"></canvas></div>
+      <div class="st-r"><canvas id="sCv"></canvas></div>
     </div>`;
   const cur = () => byCl[S.cl].rows;
+  const hasPay = v => v.salaryFrom || v.salaryTo;
   function vacList(){
     const rs = cur();
     // Standart: eng ko'p to'lanadigani oldin, har xil roldan (keyin qo'lda almashtiriladi)
     if (!S.sel) {
       const val = v => (v.salaryPeriod === 'month' ? 1 : 26) * (v.salaryTo || v.salaryFrom || 0);
-      const paid = rs.filter(v => v.salaryFrom || v.salaryTo).sort((a, b) => val(b) - val(a));
+      const paid = rs.filter(hasPay).sort((a, b) => val(b) - val(a));
       const pick = [], seen = new Set();
       paid.forEach(v => { if (pick.length < 4 && !seen.has(v.role)) { pick.push(v.id); seen.add(v.role); } });
       paid.forEach(v => { if (pick.length < 4 && !pick.includes(v.id)) pick.push(v.id); });
       S.sel = new Set(pick);
     }
-    $('sVac').innerHTML = rs.map(v => `<label style="display:flex;gap:8px;align-items:center;font-size:13.5px;font-weight:500">
-      <input type="checkbox" data-v="${esc(v.id)}" ${S.sel.has(v.id) ? 'checked' : ''} ${v.salaryFrom || v.salaryTo ? '' : 'disabled'} style="width:auto">
-      ${esc(v.title)}${v.salaryFrom || v.salaryTo ? '' : ' <span style="color:var(--muted)">(maosh yo\'q)</span>'}</label>`).join('');
+    $('sVac').innerHTML = rs.map(v => `<label class="st-ck${hasPay(v) ? '' : ' off'}">
+      <input type="checkbox" data-v="${esc(v.id)}" ${S.sel.has(v.id) ? 'checked' : ''} ${hasPay(v) ? '' : 'disabled'}>
+      <span>${esc(v.title)}</span>${hasPay(v) ? '' : '<em>maosh yo\'q</em>'}</label>`).join('');
     $('sVac').querySelectorAll('[data-v]').forEach(el => el.onchange = () => {
       if (el.checked && S.sel.size >= 4) { el.checked = false; toast('Ko\'pi bilan 4 ta'); return; }
       el.checked ? S.sel.add(el.dataset.v) : S.sel.delete(el.dataset.v); draw(true);
     });
   }
-  async function draw(reset){
+  // "Rasm" mavzusi: o'z rasmi bo'lmasa — kutubxonadan, lavozimga qarab (thStory.photoGroup); "Boshqa rasm" — keyingisi
+  async function data(){
     const rs = cur().filter(v => S.sel.has(v.id));
     const d = thStory.fromVacancies(rs, { lang: S.lang, name: S.showName ? byCl[S.cl].name : '' });
+    d.theme = S.theme; d.photo = S.photo;
+    if (S.theme === 'rasm' && !S.photo) {
+      try { d.photo = await thStory.loadPhoto(thStory.photoUrl(thStory.photoGroup(d), S.libIdx || 0)); }
+      catch (e) { toast(e.message, 'error'); }
+    }
+    return d;
+  }
+  async function draw(reset){
+    const seq = S.seq = (S.seq || 0) + 1;      // tez-tez bosilsa eski chizish yangisining ustiga tushmasin
+    const d = await data();
     if (reset) { $('sH1').value = d.lines.join('\n'); $('sSub').value = d.sub; $('sLoc').value = d.loc; }
     d.lines = $('sH1').value.split('\n'); d.sub = $('sSub').value; d.loc = $('sLoc').value;
     const cv = await thStory.render(d);
-    const out = $('sCv'); if (!out) return;
+    const out = $('sCv'); if (!out || seq !== S.seq) return;
     out.width = cv.width; out.height = cv.height; out.getContext('2d').drawImage(cv, 0, 0);
   }
+  function themeUi(){
+    $('sTh').querySelectorAll('[data-th]').forEach(b => b.classList.toggle('on', b.dataset.th === S.theme));
+    $('sPh').hidden = S.theme !== 'rasm';
+  }
+
+  // ── Yangi lavozim -> haqiqiy vakansiya ──
+  // "300 000", "250 000–350 000", "3 mln", "300" (= 300 000 — ming deb tushuniladi, ostida ko'rsatiladi)
+  function parsePay(s){
+    const t = String(s || '').toLowerCase();
+    const mln = /mln|млн|million/.test(t);
+    const nums = t.split(/[-–—]|dan|gacha|до/).map(p => p.replace(',', '.').replace(/[^\d.]/g, '')).filter(Boolean).map(Number).filter(n => n > 0);
+    const k = n => mln && n < 1000 ? Math.round(n * 1e6) : n < 1000 ? n * 1000 : Math.round(n);
+    const [a, b] = nums.map(k);
+    if (!a) return null;
+    return b && b !== a ? { from: Math.min(a, b), to: Math.max(a, b) } : { from: a, to: null };
+  }
+  const UNIT = { day: "so'm / kun", month: "so'm / oy", shift: "so'm / smena" };
+  function addHint(){
+    const p = parsePay($('aP').value);
+    const nm = byCl[S.cl].name;
+    $('aHint').innerHTML = (p ? `Storyda: <b>${esc(thStory.money(p.from, p.to, 'uz'))}</b> ${UNIT[$('aD').value]}<br>` : '')
+      + `${esc(nm)} uchun ochiq vakansiya ham ochiladi — nomzod botda shu ishni topib ariza beradi.`;
+  }
+  // Mijozning umumiy ma'lumoti (filiallar, maosh berish tartibi) — boshqa vakansiyalaridan; afzalliklar KO'CHIRILMAYDI
+  // (har lavozimda boshqacha bo'lishi mumkin — keyin vakansiya formasida qo'shiladi)
+  const common = f => { const n = {}; cur().forEach(v => { if (v[f]) n[v[f]] = (n[v[f]] || 0) + 1; }); return (Object.entries(n).sort((a, b) => b[1] - a[1])[0] || [''])[0]; };
+  $('sAddBtn').onclick = () => { $('sAdd').hidden = false; $('sAddBtn').hidden = true; addHint(); $('aT').focus(); };
+  $('aCancel').onclick = () => { $('sAdd').hidden = true; $('sAddBtn').hidden = false; };
+  ['aP', 'aD'].forEach(id => $(id).oninput = addHint);
+  $('aSave').onclick = async () => {
+    const title = $('aT').value.trim(), p = parsePay($('aP').value);
+    if (!title) { toast('Lavozim nomini yozing'); $('aT').focus(); return; }
+    if (!p) { toast('Maoshni yozing — storyda shu raqam chiqadi'); $('aP').focus(); return; }
+    const dup = cur().find(v => v.title.trim().toLowerCase() === title.toLowerCase());
+    if (dup) { toast('Bu lavozim ro\'yxatda bor — belgilang'); return; }
+    const b = $('aSave'); b.disabled = true;
+    try {
+      const v = await api('/api/vacancies', { method: 'POST', body: JSON.stringify({
+        clientId: S.cl, title, salaryFrom: p.from, salaryTo: p.to, salaryPeriod: $('aD').value,
+        location: common('location'), payout: common('payout'), listed: true }) });
+      v.clientName = byCl[S.cl].name;
+      cur().push(v);
+      // Shu lavozim uchun story: faqat yangisi belgilanadi (bitta lavozim ko'rinishi); qolganini qo'lda qo'shish mumkin
+      S.sel = new Set([v.id]);
+      $('aT').value = ''; $('aP').value = '';
+      $('sAdd').hidden = true; $('sAddBtn').hidden = false;
+      const o = $('sCl').querySelector(`option[value="${S.cl}"]`); if (o) o.textContent = `${byCl[S.cl].name} · ${cur().length} ta`;
+      vacList(); draw(true);
+      toast('Vakansiya ochildi — botda ko\'rinadi', 'success');
+      if (typeof load === 'function') load();
+    } catch (e) { toast(e.message, 'error'); }
+    b.disabled = false;
+  };
+
+  $('sTh').onclick = e => {
+    const b = e.target.closest('[data-th]'); if (!b) return;
+    S.theme = b.dataset.th; store.set('thStoryTheme', S.theme); themeUi(); draw(false);
+  };
+  $('sNext').onclick = () => {
+    S.photo = null; S.libIdx = (S.libIdx || 0) + 1;
+    $('sPhSt').textContent = 'Rasm lavozimga qarab o\'zi tanlanadi.'; draw(false);
+  };
+  $('sFile').onchange = () => {
+    const f = $('sFile').files[0]; if (!f) return;
+    const img = new Image();
+    img.onload = () => { S.photo = img; $('sPhSt').textContent = f.name + ' · faqat shu kompyuterda, serverga yuklanmaydi'; draw(false); };
+    img.onerror = () => toast('Rasm ochilmadi', 'error');
+    img.src = URL.createObjectURL(f);
+  };
   $('sCl').onchange = () => { S.cl = $('sCl').value; S.sel = null; vacList(); draw(true); };
   $('sLang').onchange = () => { S.lang = $('sLang').value; draw(true); };
   $('sName').onchange = () => { S.showName = $('sName').checked; draw(true); };
   ['sH1', 'sSub', 'sLoc'].forEach(id => $(id).oninput = () => draw(false));
+  const fname = ext => `TalentHub-story-${S.lang}.${ext}`;
   $('sDl').onclick = () => {
     const a = document.createElement('a');
-    a.download = `TalentHub-story-${S.lang}.png`; a.href = $('sCv').toDataURL('image/png'); a.click();
+    a.download = fname('png'); a.href = $('sCv').toDataURL('image/png'); a.click();
   };
   // Video — o'sha dizayn, animatsiya bilan (thStory.renderVideo); brauzer real vaqtda yozadi
+  const vidLabel = `Video (${thStory.VIDEO_SECONDS} s)`;
   if (!thStory.videoType()) { $('sVid').disabled = true; $('sVidSt').textContent = 'Bu brauzer video yoza olmaydi — Chrome yoki Safari\'da oching.'; }
   $('sVid').onclick = async () => {
     const b = $('sVid'), st = $('sVidSt');
-    const rs = cur().filter(v => S.sel.has(v.id));
-    const d = thStory.fromVacancies(rs, { lang: S.lang, name: S.showName ? byCl[S.cl].name : '' });
+    const d = await data();
     d.lines = $('sH1').value.split('\n'); d.sub = $('sSub').value; d.loc = $('sLoc').value;
     b.disabled = true; $('sDl').disabled = true;
     st.textContent = 'Yozilmoqda… shu oynani yopmang va boshqa varaqqa o\'tmang';
     try {
-      const v = await thStory.renderVideo(d, { onProgress: p => { b.textContent = `🎬 ${Math.round(p * 100)}%`; } });
+      const v = await thStory.renderVideo(d, { onProgress: p => { b.textContent = `Video · ${Math.round(p * 100)}%`; } });
       const url = URL.createObjectURL(v.blob);
       const a = document.createElement('a');
-      a.download = `TalentHub-story-${S.lang}.${v.ext}`; a.href = url; a.click();
+      a.download = fname(v.ext); a.href = url; a.click();
       st.innerHTML = `${v.mp4 ? 'MP4 tayyor' : 'WebM tayyor — Telegram/Instagram uchun MP4 kerak bo\'lsa Chrome\'ni yangilang'} · ${(v.blob.size / 1048576).toFixed(1)} MB. `
-        + `<a href="${url}" download="TalentHub-story-${S.lang}.${v.ext}">Qayta yuklash</a>`
+        + `<a href="${url}" download="${fname(v.ext)}">Qayta yuklash</a>`
         + `<video src="${url}" controls muted playsinline style="display:block;width:270px;margin-top:8px;border-radius:14px"></video>`;
     } catch (e) { st.textContent = e.message; toast(e.message, 'error'); }
-    b.disabled = false; $('sDl').disabled = false; b.textContent = `🎬 Video (${thStory.VIDEO_SECONDS} s)`;
+    b.disabled = false; $('sDl').disabled = false; b.textContent = vidLabel;
   };
-  vacList(); draw(true);
+  themeUi(); vacList(); draw(true);
 }
 $('bStory').onclick = () => { if (!window.thStory) { toast('Yuklanmoqda, qayta bosing'); return; } storyForm(); };
 $('bNew').onclick = () => {

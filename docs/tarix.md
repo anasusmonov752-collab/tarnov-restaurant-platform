@@ -1547,3 +1547,28 @@ Sabab: 2026-11-23 da 50 nomzod qo'ng'iroq kutardi (46 tasi 24 soatdan oshgan) �
   birlashtirish — dizayn qarori, Anas bilan kelishilmagan.
 Testlar `test/calls.test.js` (11). Lokal ko'rishda (`.preview/qongiroq.html`, soxta API) bosib ko'rildi, telefon
 kengligi ham. Telegramda HALI SINALMAGAN: "Ha/Yo'q" tugmalari, haftalik xabar.
+
+**STORY OYNASI: TEZ LAVOZIM, MAVZULAR, FON RASMLARI** (2026-11-27, Anas: "shashlikchi kerak, lekin vakansiya
+yaratmoqchi emasman; nomini o'zim kiritsam, dizaynni o'zim tanlasam").
+- **Rad etilgan variant — story'ga qo'lda matn va maosh.** Rasm "Shashlikchi — 300 000" deydi, nomzod botga
+  kiradi — bunday ish yo'q (va'da beruvchi tugma qoidasi, 7-qoida). Qo'lda maosh vakansiyadagidan ajralib ketadi.
+- **"+ Yangi lavozim"** (Vakansiyalar -> Story rasm): nomi, maosh ("300 000", "250 000–350 000", "3 mln"; ostida
+  qanday tushunilgani ko'rinadi), davr. "Qo'shish" — shu mijozga HAQIQIY ochiq vakansiya (`POST /api/vacancies`,
+  `listed:true` -> tasdiqlangan, botda ko'rinadi); filiallar va maosh berish tartibi mijozning boshqa
+  vakansiyalaridan, afzalliklar KO'CHIRILMAYDI. Story'da faqat yangisi belgilanadi.
+- **Bitta lavozim kompozitsiyasi** (`th-story.js oneBlock`): "Tarnovga / *shashlikchi* / kerak" (ru: "Tarnov: /
+  требуется / *…*" — kelishik yasalmaydi), to'liq kenglikdagi katta maosh, shu vakansiyaning afzalliklari (bazadan).
+- **4 ta mavzu** (`THEMES`): Tungi (oltin doira kichraytirildi — "bachkana"), Oq, Issiq, Rasm. Erkin rang tanlash
+  YO'Q — brend bir xil qolsin. Tanlov brauzerda eslab qolinadi.
+- **Fon rasmlari kutubxonasi** `public/images/story/` — Anas fikri "AI o'zi topib joylasin" o'rniga: har safar
+  qidirish = litsenziya, sifat lotereyasi, "bu bizning oshxona" degan yolg'on taassurot. Bir marta tanlangan 17 ta
+  Pexels rasmi (tijoriy, imzosiz litsenziya), lavozimga qarab o'zi tanlanadi (`photoGroup`: bitta lavozim — o'z
+  guruhi, bir nechta — zal), "Boshqa rasm" navbatma-navbat, "O'z rasmingiz" — faqat brauzerda. Repo OCHIQ va Pexels
+  asl nusxani tarqatishni taqiqlaydi — 540×960, ffmpeg `gblur=sigma=7` nusxa (~20 KB; yuz tanilmasin). Manba ID:
+  shashlik 36606987, 31459983, 36543113 · oshpaz 4253133, 24357593 · ofitsiant 3769740, 9198288 · xostess 4254255,
+  4254257 · barmen 8941708, 4485364 · kassir 31777070, 4921159 · konditer 31040962, 37888518 · zal 16754448, 4784165.
+  Tarnovning o'z rasmlari kelsa — shu papkaga, `LIB` sonini oshirish.
+- `roles.js`: shashlikchi/mangalchi/kabobchi (kasb shakli) -> oshpaz; restoran NOMIdagi "Shashlik House" — yo'q.
+  Test `test/roles.test.js`.
+Lokal ko'rishda (`.preview/vakansiyalar.html`, soxta API) bosildi: qo'shish so'rovi, 4 mavzu bitta va 4 lavozim
+bilan, ruscha, rasm almashishi, rasmli MP4 (4,3 MB). Jonli serverda haqiqiy vakansiya ochilishi HALI SINALMAGAN.

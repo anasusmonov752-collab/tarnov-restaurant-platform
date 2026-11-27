@@ -40,7 +40,9 @@ const ROLE_STEMS = [
   ['ofitsiant', /ofits|офиц|оффиц|waiter|waitress/i],
   ['barmen',    /barm|бармен|bartend|barista|бариста/i],
   ['xostess',   /xost|host|хост/i],
-  ['oshpaz',    /oshpaz|ошпаз|povar|повар|cook|chef|shef/i],
+  // Shashlikchi/mangalchi — oshxona lavozimi (2026-11-27, story'dan tez vakansiya). Faqat kasb
+  // shakli (-chi, -щик): "Shashlik house'da ofitsiant" — restoran nomi, oshpaz emas
+  ['oshpaz',    /oshpaz|ошпаз|povar|повар|cook|chef|shef|shashlikchi|шашлычник|mangalchi|мангальщик|kabobchi|кебабщик/i],
   ['kassir',    /kass|касс|cashier/i],
   ['menejer',   /menej|менедж|manager|управляющ|direktor|директор|супервайз|supervayz|administr|админ/i],
   // Faqat call-markaz: "Старший оператор установки по очистке газа" —

@@ -1572,3 +1572,31 @@ yaratmoqchi emasman; nomini o'zim kiritsam, dizaynni o'zim tanlasam").
   Test `test/roles.test.js`.
 Lokal ko'rishda (`.preview/vakansiyalar.html`, soxta API) bosildi: qo'shish so'rovi, 4 mavzu bitta va 4 lavozim
 bilan, ruscha, rasm almashishi, rasmli MP4 (4,3 MB). Jonli serverda haqiqiy vakansiya ochilishi HALI SINALMAGAN.
+
+**ANKETA: TAHLIL VA "AQLLI QOIDALAR", ISH TAJRIBASI EKRANI** (2026-11-27, Anas: "nimaga oxirigacha
+tugatilmagan anketalar"; "platforma umumiy bo'lishi kerak, hamma narsani restoranga moslagansan").
+- **Tahlil (jonli, 90 kun):** botga 39 kirdi, 28 anketa ochdi, 23 tugatdi, 15 ariza. Umumiy anketa: 53 boshlangan,
+  35 yuborilgan; 18 chaladan 13 tasi birorta savolga javob bermagan, 3 tasi faqat lavozimni tanlagan — ya'ni 16/18
+  "Qayerda ishlagansiz?" ekranida (lavozim ma'lum bo'lsa u BIRINCHI savol edi) yoki kirish ekranida to'xtagan.
+  Asosiy tugma darhol "Restoran yoki kafe nomi"ni yozdirardi, "Hali tajribam yo'q" — kichik havola. 2026-11-27
+  ertalab operator postidan kelgan 3 kishi anketani ochib, hech narsa yozmay chiqib ketgan.
+  Tugatib ariza bermaganlar (8): tanlagan lavozimiga vakansiya yo'q (kassir, operator, menejer) — kod emas, talab.
+- **Aqlli qoidalar** (`survey.js`: `ruleHides`, `arrange`, `visibleQuestions`; anketa.html `shownAll` — flag'lar
+  savolda keladi). BAZADAGI anketaga tegilmaydi, har agentlik anketasiga ko'rsatishda qo'llanadi:
+  ish tajribasi bir bosishli savollardan (qachon, o'qish, maosh) keyin, "Siz haqingizda"dan oldin; "Hali
+  ishlamaganman" deganga tajriba savollari (`EXP_ONLY`: stol, kassa dasturi, bron, oshxona, sex) yo'q; sanitar
+  kitobcha faqat ofitsiant/oshpaz/barmen/xostess/kassirga; ro'yxatdan tashqari lavozimli vakansiyada
+  (HR-rekruter) `presetRoleOf` = 'boshqa' — "Qaysi lavozimda?" (restoran ro'yxati) so'ralmaydi; eski restoranga
+  xos izohlar (o'zgartirilmagan bo'lsa) umumiy matn bilan. Konstruktor (panel) bazadagi tartibni ko'rsatadi.
+- **Ish tajribasi ekrani:** bo'sh holatda sarlavha "Ish tajribangiz bormi?" va ikki teng karta (SVG ikonka,
+  izoh): "Ha, ishlaganman" / "Hali ishlamaganman" (bir bosishda keyingi savol). Lavozim qadami — o'zi yozadi
+  ("sotuvchi-konsultant") yoki kapsuladan tanlaydi; emoji ro'yxati olib tashlandi; yozilgani ro'yxatdagi nomga
+  mos kelsa — o'sha kalit, aks holda 'boshqa' + matn. Ish joyi so'rovi: "Kompaniya, do'kon, restoran...".
+- Botdagi nomzod matnlari umumiy: "Toshkentda hozir N ta ochiq ish", "Ish beruvchilar bilan...".
+- Analitika: kirish ekranidagi "Boshlash" — yangi hodisa `begin` ("Anketani boshladi") — kirish ekranida
+  to'xtash va birinchi savolda to'xtash endi ajraladi.
+- Yo'lda: C disk to'lgan edi (24 MB) — test bazasi ishga tushmasdi; Anas ruxsati bilan video loyihasidagi
+  `work/qaytgan/OF1/vid` (9,9 GB) o'chirildi.
+Testlar: `test/unit.test.js` (aqlli qoidalar). Lokal ko'rishda (`.preview/anketa-new.html`, serverning haqiqiy
+savollari) bosildi. Mijoz tomonidagi matnlar (bot.empHello, ft.eHi — "restoranlar uchun") va nomzod kabinetidagi
+ish tarixi tahriri (profil.html) HALI restoran uslubida.

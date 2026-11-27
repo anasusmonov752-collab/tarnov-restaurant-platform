@@ -81,7 +81,44 @@ test('anketa: shartli savollar (zanjir va lavozim)', () => {
   const f = survey.toFields({ role: 'xostess', lastJob: 'none', c_bron: 'ha', c_kuxnya: 'milliy' }, { questions: qs }, '');
   assert.equal(f.experienceSummary, 'Tajribasiz');
   assert.equal(f.experienceYears, 0);
-  assert.deepEqual(f.extraAnswers.map(x => x.a), ['Ha']);        // yashirin oshpaz savoli tushmadi
+  // Tajribasiz — tajriba savoli (bron) ham yashirin (2026-11-27); oshpaz savoli — boshqa lavozimniki
+  assert.deepEqual(f.extraAnswers.map(x => x.a), []);
+  const job = [{ place: 'Rayhon', role: 'xostess', other: '', dur: 'y1_3' }];
+  const g = survey.toFields({ role: 'xostess', lastJob: job, c_bron: 'ha', c_kuxnya: 'milliy' }, { questions: qs }, '');
+  assert.deepEqual(g.extraAnswers.map(x => x.a), ['Ha']);         // yashirin oshpaz savoli tushmadi
+});
+
+test('anketa: aqlli qoidalar — tajribasiz, sanitar kitobcha, tartib, ro\'yxatdan tashqari lavozim (2026-11-27)', () => {
+  const qs = survey.cleanQuestions(survey.template());
+  const ids = (a, pr) => survey.shownQuestions(qs, a, pr).map(q => q.id);
+  // Tajribasiz ofitsiant: "nechta stol", "kassa dasturi" so'ralmaydi
+  let v = ids({ lastJob: 'none' }, 'ofitsiant');
+  assert.ok(!v.includes('c_stol') && !v.includes('c_kassa') && v.includes('sanitary'));
+  v = ids({ lastJob: [{ place: 'X', role: 'ofitsiant', dur: 'lt6' }] }, 'ofitsiant');
+  assert.ok(v.includes('c_stol') && v.includes('c_kassa'));
+  // Sanitar kitobcha — faqat oziq-ovqat/xizmat lavozimiga
+  assert.ok(!ids({}, 'operator').includes('sanitary'));
+  assert.ok(!ids({ sanitary: 'no' }, 'boshqa').includes('c_sanit'));
+  assert.ok(ids({}, 'kassir').includes('sanitary'));
+  // Tartib: ish tajribasi bir bosishli savollardan keyin, "Siz haqingizda"dan oldin; tajriba savollari u bilan
+  const vis = survey.visibleQuestions({ questions: qs }, 'oshpaz').map(q => q.id);
+  assert.ok(!vis.includes('role'));
+  assert.ok(vis.indexOf('salary') < vis.indexOf('lastJob') && vis.indexOf('lastJob') < vis.indexOf('fullName'));
+  assert.ok(vis.indexOf('lastJob') < vis.indexOf('c_kuxnya') && vis.indexOf('c_kuxnya') < vis.indexOf('fullName'));
+  const vq = survey.visibleQuestions({ questions: qs }, 'oshpaz');
+  assert.equal(vq.find(q => q.id === 'c_kuxnya').expOnly, true);
+  assert.deepEqual(vq.find(q => q.id === 'sanitary').roles, survey.ROLE_ONLY.sanitary);
+  // Eski restoranga xos izoh (o'zgartirilmagan) — umumiy matn bilan; o'zgartirilgani tegilmaydi
+  const old = qs.map(q => q.id === 'russian' ? Object.assign({}, q, { hint: { uz: 'Mehmonlarning ko\'pchiligi rus tilida gaplashadi.', ru: 'Многие гости говорят по-русски.' } }) : q);
+  assert.match(survey.visibleQuestions({ questions: old }, '').find(q => q.id === 'russian').hint.uz, /ish joylarida/);
+  const own = qs.map(q => q.id === 'russian' ? Object.assign({}, q, { hint: { uz: 'Bizda rus tili shart', ru: '' } }) : q);
+  assert.equal(survey.visibleQuestions({ questions: own }, '').find(q => q.id === 'russian').hint.uz, 'Bizda rus tili shart');
+  // Vakansiya ro'yxatdan tashqari lavozimda (HR-rekruter) — "Qaysi lavozim?" qayta so'ralmaydi
+  assert.equal(survey.presetRoleOf({}, { role: '' }, { role: 'boshqa' }), 'boshqa');
+  assert.equal(survey.presetRoleOf({}, { role: 'oshpaz' }, { role: 'boshqa' }), 'oshpaz');
+  assert.equal(survey.presetRoleOf({ role: 'kassir' }, { role: '' }, null), 'kassir');
+  assert.ok(!survey.visibleQuestions({ questions: qs }, 'boshqa').some(q => q.id === 'role'));
+  assert.equal(survey.toFields({ fullName: 'Ali Valiyev' }, { questions: qs }, 'boshqa').role, undefined);
 });
 
 test('anketa: ish tajribasi — joy, lavozim, muddat yoki "Tajribam yo\'q"', () => {

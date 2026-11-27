@@ -93,6 +93,15 @@ router.get('/:rid', guard, asyncHandler(async (req, res) => {
   });
 }));
 
+// Kirish ekranida "Boshlash" bosildi — analitikada "ochdi, lekin boshlamadi" va "birinchi savolda
+// to'xtadi" ajralsin (2026-11-27 tahlilida ikkalasi bitta "(boshlamagan)" edi). Faqat yozuv.
+router.post('/:rid/begin', guard, asyncHandler(async (req, res) => {
+  const r = req.resp;
+  if (r.status !== 'done') track('begin', { agencyId: r.agencyId, tgUserId: r.tgUserId, rid: r.id,
+    channel: r.channel, name: req.tgUser && req.tgUser.first_name, isTest: r.isTest });
+  res.json({ ok: true });
+}));
+
 router.post('/:rid/lang', guard, asyncHandler(async (req, res) => {
   const lang = String((req.body || {}).lang || '');
   if (!I18N.LANGS.includes(lang)) return fail(res, 400, 'option');

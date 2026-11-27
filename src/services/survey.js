@@ -146,11 +146,11 @@ function template() {
 
     // ── Qo'shimcha ──
     { id: 'russian', type: 'choice', text: { uz: 'Rus tilini qanchalik bilasiz?', ru: 'Насколько хорошо вы говорите по-русски?' },
-      hint: { uz: 'Mehmonlarning ko\'pchiligi rus tilida gaplashadi.', ru: 'Многие гости говорят по-русски.' },
+      hint: { uz: 'Ko\'p ish joylarida mijozlar bilan rus tilida gaplashiladi.', ru: 'Во многих местах с клиентами говорят по-русски.' },
       options: [o('fluent', 'Erkin gaplashaman', 'Свободно'), o('medium', 'Tushunaman, gaplasha olaman', 'Понимаю, могу объясниться'),
                 o('basic', 'Boshlang\'ich', 'Начальный уровень'), o('none', 'Bilmayman', 'Не знаю')] },
     { id: 'english', type: 'choice', text: { uz: 'Ingliz tilini bilasizmi?', ru: 'Говорите ли вы по-английски?' },
-      hint: { uz: 'Xorijlik mehmonlar keladigan joylarda muhim.', ru: 'Важно в заведениях с иностранными гостями.' },
+      hint: { uz: 'Ba\'zi ish joylarida talab qilinadi.', ru: 'В некоторых местах это обязательное требование.' },
       options: [o('fluent', 'Erkin', 'Свободно'), o('medium', 'O\'rta — gaplasha olaman', 'Средне — могу объясниться'),
                 o('basic', 'Boshlang\'ich', 'Начальный уровень'), o('none', 'Bilmayman', 'Не знаю')] },
     { id: 'sanitary', type: 'choice', text: { uz: 'Sanitar kitobchangiz bormi?', ru: 'Есть ли у вас санитарная книжка?' },
@@ -159,8 +159,8 @@ function template() {
       options: [o('yes', 'Bor', 'Есть'), o('expired', 'Muddati o\'tgan', 'Просрочена'), o('no', 'Yo\'q', 'Нет')] },
     { id: 'c_sanit', type: 'choice', showIf: { q: 'sanitary', in: ['no', 'expired'] },
       text: { uz: 'Sanitar kitobchani olishga (yangilashga) tayyormisiz?', ru: 'Готовы ли вы оформить (обновить) санитарную книжку?' },
-      hint: { uz: 'Ko\'pchilik restoranlar ishga kirgach bir necha kun ichida so\'raydi.',
-              ru: 'Большинство ресторанов просят её в первые дни работы.' }, options: yesNo() },
+      hint: { uz: 'Ko\'pchilik ish beruvchilar uni ishga kirgach bir necha kun ichida so\'raydi.',
+              ru: 'Большинство работодателей просят её в первые дни работы.' }, options: yesNo() },
     { id: 'c_vaqt', type: 'text', showIf: { q: 'study', in: ['day', 'evening', 'distance'] },
       text: { uz: 'Qaysi kunlari va soatlarda ishlay olasiz?', ru: 'В какие дни и часы вы можете работать?' },
       hint: { uz: 'Masalan: dushanba–juma 17:00 dan keyin, shanba–yakshanba kun bo\'yi',
@@ -246,6 +246,7 @@ function shownQuestions(questions, answers, presetRole) {
   const out = [];
   for (const q of questions || []) {
     if (!isShown(q, eff)) continue;
+    if (ruleHides(q, eff.role, a)) continue;
     out.push(q);
     if (q.id === 'role' && presetRole) continue;
     if (a[q.id] != null && a[q.id] !== '') eff[q.id] = a[q.id];
@@ -469,8 +470,54 @@ function parsePayload(p) {
 
 // ── Ko'rinadigan savollar ──
 // Lavozim allaqachon ma'lum (vakansiya yoki lavozimli anketa) — so'ralmaydi.
+// ── Aqlli qoidalar (2026-11-27, Anas: "platforma umumiy, faqat restoran emas; tajribasi
+// yo'qqa tajriba savollari kerak emas"). Tahlil: chala anketalarning 16/18 tasi "Qayerda
+// ishlagansiz?" birinchi ekranida (yoki undan oldin) to'xtagan — lavozim ma'lum bo'lsa u
+// BIRINCHI savol edi. Bazadagi anketaga TEGMAYDI: har agentlikning har anketasiga ko'rsatishda
+// qo'llanadi (server ham, anketa.html ham — flag'lar savolda keladi).
+//   • Tajriba savollari (EXP_ONLY) — "Hali ishlamaganman" deganga ko'rsatilmaydi.
+//   • Sanitar kitobcha — faqat oziq-ovqat/xizmat lavozimlariga (operator, menejer, ro'yxatdan
+//     tashqari lavozim — HR-rekruter va h.k. — so'ralmaydi).
+//   • Ish tajribasi ekrani bir bosishli savollardan (qachon, o'qish, maosh) KEYIN — "SIZ haqingizda"
+//     bo'limidan oldin; tajriba savollari u bilan birga ko'chadi.
+//   • Eski, restoranga xos izohlar (o'zgartirilmagan bo'lsa) — umumiy matn bilan.
+const EXP_ONLY = ['c_stol', 'c_kassa', 'c_bron', 'c_kuxnya', 'c_sex'];
+const FOOD_ROLES = ['ofitsiant', 'oshpaz', 'barmen', 'xostess', 'kassir'];
+const ROLE_ONLY = { sanitary: FOOD_ROLES, c_sanit: FOOD_ROLES };
+const GENERIC_HINTS = {
+  russian: [['Mehmonlarning ko\'pchiligi rus tilida gaplashadi.', 'Многие гости говорят по-русски.'],
+            ['Ko\'p ish joylarida mijozlar bilan rus tilida gaplashiladi.', 'Во многих местах с клиентами говорят по-русски.']],
+  english: [['Xorijlik mehmonlar keladigan joylarda muhim.', 'Важно в заведениях с иностранными гостями.'],
+            ['Ba\'zi ish joylarida talab qilinadi.', 'В некоторых местах это обязательное требование.']],
+  c_sanit: [['Ko\'pchilik restoranlar ishga kirgach bir necha kun ichida so\'raydi.', 'Большинство ресторанов просят её в первые дни работы.'],
+            ['Ko\'pchilik ish beruvchilar uni ishga kirgach bir necha kun ichida so\'raydi.', 'Большинство работодателей просят её в первые дни работы.']]
+};
+// Qoida bo'yicha yashiringanmi (tartibga bog'liq emas — toFields xom tartib bilan ham to'g'ri)
+function ruleHides(q, role, answers) {
+  if (EXP_ONLY.includes(q.id) && (answers || {}).lastJob === 'none') return true;
+  const only = ROLE_ONLY[q.id];
+  return !!(only && role && !only.includes(role));
+}
+function arrange(qs) {
+  const meAt = list => list.findIndex(q => (CATALOG[q.id] || {}).sec === 'me');
+  const wi = qs.findIndex(q => q.type === 'work');
+  if (wi < 0 || meAt(qs) < 0 || wi > meAt(qs)) return qs;
+  const work = qs[wi], exp = qs.filter(q => EXP_ONLY.includes(q.id));
+  const rest = qs.filter(q => q !== work && !exp.includes(q));
+  const at = meAt(rest);
+  return rest.slice(0, at).concat(work, exp, rest.slice(at));
+}
 function visibleQuestions(survey, presetRole) {
-  return (survey.questions || []).filter(q => !(q.id === 'role' && presetRole));
+  const qs = (survey.questions || []).filter(q => !(q.id === 'role' && presetRole))
+    .map(q => {
+      const out = Object.assign({}, q.toObject ? q.toObject() : q);
+      if (EXP_ONLY.includes(out.id)) out.expOnly = true;
+      if (ROLE_ONLY[out.id]) out.roles = ROLE_ONLY[out.id];
+      const g = GENERIC_HINTS[out.id];
+      if (g && out.hint && out.hint.uz === g[0][0]) out.hint = { uz: g[1][0], ru: out.hint.ru === g[0][1] ? g[1][1] : out.hint.ru };
+      return out;
+    });
+  return arrange(qs);
 }
 
 // ── Javobni tekshirish ──
@@ -913,6 +960,9 @@ async function finalizeOwned(r, { appBase } = {}) {
  */
 function presetRoleOf(r, s, v) {
   if (v && isValidRole(v.role) && v.role !== 'boshqa') return v.role;
+  // Vakansiya ro'yxatdan tashqari lavozimda (HR-rekruter va h.k.): nomzod ishni o'zi tanlagan —
+  // "Qaysi lavozimda?" (faqat restoran lavozimlari) qayta so'ralmaydi, lavozimga xos savollar ham yo'q
+  if (v && !(s && s.role)) return 'boshqa';
   if (s && s.role) return s.role;
   return r && isValidRole(r.role) && r.role !== 'boshqa' ? r.role : '';
 }
@@ -962,7 +1012,7 @@ async function openResponse({ agencyId, tgUserId, chatId = '', surveyId, channel
 module.exports = {
   isShell, openResponse, presetRoleOf,
   CHANNELS, DISTRICTS, CATALOG, CUSTOM_TYPES, START_DAYS, catalogInfo, cleanQuestions, surveyForVacancy,
-  isShown, skipped, shownQuestions, forRole, withMeta, rolePreset, upgradeQuestions, PRESET_ROLES,
+  isShown, skipped, shownQuestions, forRole, ruleHides, arrange, EXP_ONLY, ROLE_ONLY, withMeta, rolePreset, upgradeQuestions, PRESET_ROLES,
   template, makeCode, ensureDefault,
   payloadFor, parsePayload, visibleQuestions, checkAnswer, toFields, finalize, normPhone, ageOf, workToHistory,
   MAX_JOBS, cleanWork, workFields, workSet, workRows, historyToWork, durFromPeriod, isAutoSummary, cleanPhoto

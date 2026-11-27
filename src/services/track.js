@@ -16,12 +16,13 @@ const KINDS = {
   lang:  'Tilni almashtirdi',
   role:  'Lavozim tanladi',
   open:  'Anketani ochdi',
+  begin: 'Anketani boshladi',         // kirish ekranida "Boshlash" (routes/anketa /begin)
   voice: 'Ovoz bilan boshladi',
   done:  'Anketani tugatdi',
   view:  'Vakansiyani ko\'rdi',
   apply: 'Ariza berdi'
 };
-const QUIET = { view: 30, open: 30 };   // daqiqa — shu oraliqda takror yozilmaydi
+const QUIET = { view: 30, open: 30, begin: 30 };   // daqiqa — shu oraliqda takror yozilmaydi
 
 async function record(kind, o = {}) {
   if (!KINDS[kind] || !o.agencyId || !o.tgUserId) return;
@@ -66,7 +67,7 @@ async function funnel(agencyId, days) {
   const has = (r, ks) => ks.some(k => r.kinds.includes(k));
   const stage = list => ({
     start: list.length,
-    open:  list.filter(r => has(r, ['open', 'voice', 'done', 'apply'])).length,
+    open:  list.filter(r => has(r, ['open', 'begin', 'voice', 'done', 'apply'])).length,
     done:  list.filter(r => has(r, ['done', 'apply'])).length,
     apply: list.filter(r => has(r, ['apply'])).length
   });

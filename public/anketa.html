@@ -6,7 +6,7 @@
 <title>TalentHub — Anketa</title>
 <link rel="stylesheet" href="/css/th.css?v=2">  <!-- dizayn tizimi: ranglar, kunduz/tun -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="/js/th-i18n.js?v=29"></script>
+<script src="/js/th-i18n.js?v=30"></script>
 <style>
 /* Ranglar — dizayn tizimidan (css/th.css), miniapp/profil bilan bir xil;
    kunduz/tun Telegram'dan (applyTheme). */
@@ -71,6 +71,27 @@ textarea.in{min-height:110px;resize:vertical;line-height:1.5}
 .chk input{width:22px;height:22px;accent-color:var(--blue)}
 
 /* Ish tajribasi — rezyume kartalari; qo'shish pastdan oynada (C variant) */
+/* Ish tajribasi: "Ishlaganman / Hali ishlamaganman" — ikki teng karta (2026-11-27) */
+.w-pick{display:flex;flex-direction:column;gap:10px;margin-top:20px}
+.w-opt{display:flex;align-items:center;gap:14px;width:100%;text-align:left;border:0;background:var(--th-fill,#F2F2F7);
+  border-radius:18px;padding:16px 14px 16px 16px;font:inherit;color:var(--ink);cursor:pointer;
+  transition:background .15s, box-shadow .15s, transform .1s;-webkit-tap-highlight-color:transparent}
+.w-opt:active{transform:scale(.985)}
+.w-oi{flex:none;width:48px;height:48px;border-radius:15px;display:grid;place-items:center}
+.w-opt.yes .w-oi{background:var(--blue);color:#fff;box-shadow:0 6px 14px rgba(10,91,216,.22)}
+.w-opt.no .w-oi{background:var(--card);color:var(--ink-2);box-shadow:inset 0 0 0 1px var(--line)}
+.w-ot{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.w-ot b{font-size:16.5px;font-weight:650;letter-spacing:-.01em;line-height:1.25}
+.w-ot small{font-size:13.5px;color:var(--muted);line-height:1.35}
+.w-oc{flex:none;color:var(--muted);opacity:.7;display:grid;place-items:center}
+.w-oc svg{width:18px;height:18px}
+.w-opt.on{background:var(--th-brand-soft,var(--sel));box-shadow:inset 0 0 0 2px var(--blue)}
+.w-opt.no.on .w-oi{background:var(--ok);color:#fff;box-shadow:none}
+.sh-or{font-size:12px;font-weight:650;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:26px 0 0}
+.sh-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.sh-chip{border:0;background:var(--th-fill,#F2F2F7);color:var(--ink);border-radius:99px;padding:10px 15px;font:inherit;font-size:14.5px;
+  font-weight:500;cursor:pointer;transition:background .15s, box-shadow .15s;-webkit-tap-highlight-color:transparent}
+.sh-chip.on{background:var(--th-brand-soft,var(--sel));color:var(--blue);box-shadow:inset 0 0 0 1.5px var(--blue);font-weight:650}
 .w-empty{text-align:center;padding:26px 6px 6px}
 .w-ic{width:60px;height:60px;border-radius:18px;background:var(--soft-blue);color:var(--blue);font-size:28px;
   display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
@@ -322,7 +343,11 @@ function renderIntro(){
     <p>${esc(t('ank.introP'))}</p>
     ${v ? `<div class="st-tile"><span>${esc(t('ank.forVacancy', { v: '' }).replace(/[:\s]+$/, ''))}</span><b>${esc(L(v.title))}</b>${L(v.salary) ? `<i>${esc(L(v.salary))}</i>` : ''}</div>` : ''}
   </div>`;
-  showBar(t('ank.start'), true, () => { idx = resumeIndex(); renderQ(); });
+  showBar(t('ank.start'), true, () => {
+    // Analitika: kirish ekranida to'xtadimi yoki birinchi savolda — ajratish uchun (track 'begin')
+    if (!S.step) api('/begin', { method:'POST' }).catch(() => {});
+    idx = resumeIndex(); renderQ();
+  });
   $('stLang').onclick = () => {
     LANG = other; haptic();
     api('/lang', { method:'POST', body: JSON.stringify({ lang: LANG }) }).catch(() => {});
@@ -367,6 +392,9 @@ function shownAll(){
   return Q.filter(q => {
     const s = q.showIf;
     if (s && s.q && !(s.in || []).includes(eff[s.q])) return false;
+    // Server flag'lari (survey.ruleHides): tajriba savoli — "Hali ishlamaganman"ga yo'q; lavozimga xos (sanitar kitobcha)
+    if (q.expOnly && S.answers.lastJob === 'none') return false;
+    if (q.roles && eff.role && !q.roles.includes(eff.role)) return false;
     const v = q.type === 'contact' ? S.answers.phone : S.answers[q.id];
     if (!(q.id === 'role' && S.presetRole) && v != null && v !== '') eff[q.id] = v;
     return true;
@@ -532,6 +560,14 @@ function wireQ(q){
 // "Hali tajribam yo'q" — havola (javob 'none'). Server (survey.checkAnswer
 // 'work') shu qoidani qayta tekshiradi; javob nomzodning workHistory'siga.
 const MAX_JOBS = 3;
+// Ish tajribasi tanlov kartalari ikonkalari (chiziqli SVG — emoji emas: professional ko'rinish)
+const WSVG = p => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const WICON = {
+  bag: WSVG('<rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M8.5 7V5.5A1.5 1.5 0 0 1 10 4h4a1.5 1.5 0 0 1 1.5 1.5V7"/><path d="M3 12.5h18"/><path d="M11 12.5h2"/>'),
+  spark: WSVG('<path d="M12 3.5l1.9 4.6 4.6 1.9-4.6 1.9L12 16.5l-1.9-4.6L5.5 10l4.6-1.9z"/><path d="M18.5 15.5l.8 1.9 1.9.8-1.9.8-.8 1.9-.8-1.9-1.9-.8 1.9-.8z"/>'),
+  check: WSVG('<path d="M5 12.5l4.5 4.5L19 7.5"/>'),
+  chev: WSVG('<path d="M9.5 6l6 6-6 6"/>')
+};
 const ROLE_EMOJI = { ofitsiant: '🍽', xostess: '💁', oshpaz: '👨‍🍳', barmen: '🍸', kassir: '🧾', menejer: '📋', operator: '📞', boshqa: '✏️' };
 function newJob(){ return { place: '', role: '', other: '', dur: '' }; }
 const roleLabel = w => w.role === 'boshqa' ? (w.other || t('ank.w.otherRow')) : t('role.' + w.role);
@@ -540,22 +576,31 @@ const nextLabel = () => idx === Q.length - 1 ? t('ank.submit') : t('ank.next');
 function drawWork(){
   const v = draft.value, q = Q[idx];
   const bar = (txt, fn) => { showBar(txt, true, fn); };
-  if (v === 'none') {
-    $('wk').innerHTML = `<div class="w-empty">
-      <div class="w-ic ok">&#10003;</div>
-      <div class="w-et">${esc(t('ank.w.noneSet'))}</div>
-      <button class="lnk" id="wUndo">${esc(t('ank.w.addFirst'))}</button></div>`;
-    $('wUndo').onclick = () => { draft.value = []; drawWork(); openEditor(-1); };
-    bar(nextLabel(), () => save(q));
-    return;
-  }
-  if (!v.length) {
-    $('wk').innerHTML = `<div class="w-empty">
-      <div class="w-ic">&#128188;</div>
-      <div class="w-et">${esc(t('ank.w.emptyT'))}</div>
-      <button class="lnk" id="wNone">${esc(t('ank.w.noneLink'))}</button></div>`;
-    $('wNone').onclick = () => { draft.value = 'none'; haptic(); drawWork(); setTimeout(() => save(q), 200); };
-    bar(t('ank.w.addFirst'), () => openEditor(-1));
+  // Sarlavha holatga qarab: ish joyi yo'q — "Ish tajribangiz bormi?" (bitta savol, ikki javob);
+  // kartalar bor — bazadagi savol matni ("Qayerda ishlagansiz?") va izohi
+  const qe = $('main').querySelector('.q');
+  let he = $('main').querySelector('.hint');
+  if (!he && qe) { he = document.createElement('div'); he.className = 'hint'; qe.after(he); }
+  const empty = v === 'none' || !v.length;
+  if (qe) qe.textContent = empty ? t('ank.w.askH') : L(q.text);
+  if (he) he.textContent = empty ? t('ank.w.askHint') : L(q.hint);
+  // Bo'sh yoki "Hali ishlamaganman": ikki TENG karta, bir bosishda (2026-11-27). Ilgari asosiy
+  // tugma darhol "joy nomini yozing" oynasini ochardi, "Hali tajribam yo'q" kichik havola edi —
+  // chala anketalarning ko'pi shu ekranda to'xtagan. Tajribasiz odam hech narsa yozmasdan o'tadi.
+  if (empty) {
+    const none = v === 'none';
+    $('wk').innerHTML = `<div class="w-pick">
+      <button class="w-opt yes" id="wYes" type="button"><span class="w-oi">${WICON.bag}</span>
+        <span class="w-ot"><b>${esc(t('ank.w.yes'))}</b><small>${esc(t('ank.w.yesSub'))}</small></span><span class="w-oc">${WICON.chev}</span></button>
+      <button class="w-opt no${none ? ' on' : ''}" id="wNone" type="button"><span class="w-oi">${none ? WICON.check : WICON.spark}</span>
+        <span class="w-ot"><b>${esc(t('ank.w.noneBtn'))}</b><small>${esc(t('ank.w.noneSub'))}</small></span><span class="w-oc">${none ? '' : WICON.chev}</span></button>
+    </div>`;
+    $('wYes').onclick = () => { haptic(); openEditor(-1); };
+    $('wNone').onclick = () => {
+      draft.value = 'none'; haptic(); drawWork();
+      setTimeout(() => save(q), 220);                 // tanlov ko'rinsin, keyin keyingi savol
+    };
+    if (none) bar(nextLabel(), () => save(q)); else showBar(nextLabel(), false, () => {});
     return;
   }
   $('wk').innerHTML = `<div class="w-hint">${esc(t('ank.w.cardsHint'))}</div>` +
@@ -594,7 +639,8 @@ function openEditor(i){
   const order = ['place', 'role', 'other', 'dur'];
   const back = () => {
     if (ed.step === 'place') return close();
-    ed.step = ed.step === 'dur' && ed.w.role !== 'boshqa' ? 'role' : order[order.indexOf(ed.step) - 1];
+    // Lavozim endi bitta qadamda (yozadi yoki tanlaydi) — 'other' alohida qadami ishlatilmaydi
+    ed.step = ed.step === 'dur' || ed.step === 'other' ? 'role' : order[order.indexOf(ed.step) - 1];
     draw();
   };
   closeSheet = back;
@@ -619,31 +665,50 @@ function openEditor(i){
         <input class="in sh-in" id="shIn" maxlength="${isP ? 80 : 60}" value="${esc(isP ? w.place : w.other)}" placeholder="${esc(t(isP ? 'ank.w.placePh' : 'ank.w.otherPh'))}">
         <button class="btn" id="shGo" style="margin-top:14px">${esc(t('ank.w.cont'))}</button>
         ${isP && ed.i >= 0 ? `<button class="lnk sh-del" id="shDel">${esc(t('ank.w.delete'))}</button>` : ''}`;
+    } else if (s === 'role') {
+      // Lavozim — HAR QANDAY (platforma umumiy, 2026-11-27): o'zi yozadi yoki tez tanlaydi. Yozgani
+      // ro'yxatdagi nomga to'g'ri kelsa — o'sha kalit, aks holda 'boshqa' + matn (server shu shaklni biladi).
+      // Emoji yo'q — toza kapsulalar.
+      const typed = w.role === 'boshqa' ? w.other : '';
+      body = `<div class="sh-q">${esc(t('ank.w.qRole'))}</div>
+        <div class="sh-h">${esc(w.place)}</div>
+        <input class="in sh-in" id="shIn" maxlength="60" value="${esc(typed)}" placeholder="${esc(t('ank.w.rolePh'))}">
+        <button class="btn" id="shGo" style="margin-top:14px">${esc(t('ank.w.cont'))}</button>
+        <div class="sh-or">${esc(t('ank.w.orPick'))}</div>
+        <div class="sh-chips">${I18N.WORK_ROLES.filter(r => r !== 'boshqa').map(r =>
+          `<button class="sh-chip ${w.role === r ? 'on' : ''}" data-k="${esc(r)}">${esc(t('role.' + r))}</button>`).join('')}</div>`;
     } else {
-      const isR = s === 'role';
-      const opts = isR ? I18N.WORK_ROLES.map(r => [r, (ROLE_EMOJI[r] || '') + ' ' + (r === 'boshqa' ? t('ank.w.otherRow') : t('role.' + r))])
-                       : I18N.WORK_DURS.map(d => [d, t('ank.w.dur.' + d)]);
-      const cur = isR ? w.role : w.dur;
-      body = `<div class="sh-q">${esc(t(isR ? 'ank.w.qRole' : 'ank.w.dur'))}</div>
-        <div class="sh-h">${esc(isR ? w.place : t('ank.w.durHint'))}</div>
-        <div class="sh-list ${isR ? 'ic' : ''}">${opts.map(([k, l]) => `<button class="opt ${k === cur ? 'on' : ''}" data-k="${esc(k)}"><i></i>${esc(l)}</button>`).join('')}</div>`;
+      body = `<div class="sh-q">${esc(t('ank.w.dur'))}</div>
+        <div class="sh-h">${esc(t('ank.w.durHint'))}</div>
+        <div class="sh-list">${I18N.WORK_DURS.map(d => `<button class="opt ${d === w.dur ? 'on' : ''}" data-k="${esc(d)}"><i></i>${esc(t('ank.w.dur.' + d))}</button>`).join('')}</div>`;
     }
-    sh.classList.toggle('full', s === 'place' || s === 'other');
+    sh.classList.toggle('full', s === 'place' || s === 'other' || s === 'role');
     sh.innerHTML = head + body;
     sh.querySelector('.sh-x').onclick = close;
     const bk = sh.querySelector('.sh-bk'); if (bk) bk.onclick = back;
 
-    if (s === 'place' || s === 'other') {
+    if (s === 'place' || s === 'other' || s === 'role') {
       const inp = $('shIn'), go = $('shGo');
       const ok = () => inp.value.trim().length >= 2;
       go.disabled = !ok();
       inp.oninput = () => { go.disabled = !ok(); };
       const next = () => {
         if (!ok()) return;
-        if (s === 'place') { w.place = inp.value.trim(); ed.step = 'role'; }
-        else { w.other = inp.value.trim(); ed.step = 'dur'; }
+        const val = inp.value.trim().replace(/\s+/g, ' ');
+        if (s === 'place') { w.place = val; ed.step = 'role'; }
+        else if (s === 'role') {
+          const low = val.toLowerCase();
+          const hit = I18N.WORK_ROLES.find(r => r !== 'boshqa' && I18N.LANGS.some(l => I18N.t(l, 'role.' + r).toLowerCase() === low));
+          w.role = hit || 'boshqa'; w.other = hit ? '' : val; ed.step = 'dur';
+        }
+        else { w.other = val; ed.step = 'dur'; }
         draw();
       };
+      sh.querySelectorAll('.sh-chip').forEach(b => b.onclick = () => {
+        sh.querySelectorAll('.sh-chip').forEach(x => x.classList.toggle('on', x === b));
+        haptic();
+        setTimeout(() => { w.role = b.dataset.k; w.other = ''; ed.step = 'dur'; draw(); }, 160);
+      });
       go.onclick = next;
       inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); next(); } };
       setTimeout(() => inp.focus(), 280);
@@ -653,12 +718,7 @@ function openEditor(i){
       sh.querySelectorAll('[data-k]').forEach(b => b.onclick = () => {
         sh.querySelectorAll('[data-k]').forEach(x => x.classList.toggle('on', x === b));
         haptic();
-        setTimeout(() => {
-          if (s === 'role') {
-            if (w.role !== b.dataset.k && b.dataset.k !== 'boshqa') w.other = '';
-            w.role = b.dataset.k; ed.step = w.role === 'boshqa' ? 'other' : 'dur'; draw();
-          } else { w.dur = b.dataset.k; commit(); }
-        }, 160);
+        setTimeout(() => { w.dur = b.dataset.k; commit(); }, 160);
       });
     }
   }

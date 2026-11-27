@@ -1634,3 +1634,20 @@ restoran ro'yxati bilan so'rardi. Endi `r.role === 'boshqa'` -> preset 'boshqa' 
 o'zi). Lavozim haqiqatan noma'lum bo'lsa ("Mosi yo'q — anketa qoldiraman") savol qoladi, lekin ro'yxat oxirida
 "Boshqa ish" / «Другая работа» (`ROLE_OTHER`; bazadagi eski anketalarga `visibleQuestions` qo'shadi — baza
 o'zgarmaydi). Lokal bosib chiqildi: boshqa/operator/ofitsiant — savol yo'q; tanlanmagan — 8 variant.
+
+**STORY: 4 YANGI USLUB VA MAOSHNI YASHIRISH** (2026-11-27, Anas: "kuchsiz, yuzaki; o'zgarish faqat ranglarda
+bo'lmasin, uslubda ham — professional dizayner"; "oylikni bekitish ham bo'lsin, lekin rasm bo'sh qolmasin").
+- **Muammo (o'lchandi, 8 ko'rinish chizildi):** 4 ta "dizayn" — bitta maket, faqat rang; pastki chorak bo'sh;
+  maosh yagona mazmun.
+- **Uslublar** (`th-story.js STYLES`, `STYLE_FN`; panel — "Uslub", tugmada shu lavozimlar bilan haqiqiy kichik
+  ko'rinish): **Klassik** (eski maket, "Rang" — Tungi/Oq/Issiq/Rasm faqat shunda), **Afisha** (och qog'oz, qora
+  shrift, raqamlangan qatorlar, chiziqlar), **Chipta** ("Ishga chipta": oq bilet, teshik chiziq, dumida bazadagi
+  faktlar — to'lov, filiallar, tajriba — va shtrix-kod), **Blok** (oltin tepa, to'q varaq, ajratilgan so'z to'q
+  plashkada), **Chat** (Telegram suhbati: "Ish bormi?" -> "Bor! Tarnovga kerak:" + ro'yxat -> "Rezyume kerakmi?"
+  -> "Yo'q" + "Ariza berish"; videoda "yozmoqda..." nuqtalari). Hammasi bitta `paint(ctx, d, t)` — PNG va video bir xil.
+  Sig'masa qatorlar zichlashadi / Chat'da 3-4-pufak tushadi; mazmun stiker zonasidan (pastki 236 px) yuqorida.
+- **"Maoshni ko'rsatish"** o'chirilsa: maosh o'rnida shu vakansiyaning BAZADAGI faktlari (`factsOf`: to'lov tartibi,
+  smena, qisqa jadval, afzalliklar); plitkada — eng kam uchraydigan, boshqa plitkada ishlatilmagan fakt; hech narsa
+  bo'lmasa "Maosh — suhbatda". Maoshsiz vakansiya ham tanlanadigan bo'ladi. To'qima matn yo'q.
+- Lokal: 5 uslub x (4 lavozim / 1 lavozim) x (maosh bor / yashirin) x uz/ru headless Chrome'da 432 px kenglikda
+  ko'rildi; Chat va Blok video — MP4, ~10 s, 1.0–1.4 MB. Jonli serverda HALI KO'RILMAGAN.

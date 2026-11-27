@@ -12,7 +12,7 @@
 <script src="/js/th-shell.js?v=4" defer></script>
 <script src="/js/th-viewer.js?v=2" defer></script>
 <script src="/js/th-i18n.js?v=27"></script>
-<script src="/js/th-story.js?v=3" defer></script>  <!-- afzalliklar ro'yxati serverniki bilan bir xil (PERK_KEYS) -->
+<script src="/js/th-story.js?v=4" defer></script>  <!-- afzalliklar ro'yxati serverniki bilan bir xil (PERK_KEYS) -->
 <style>
 :root{
   --bg:#EEF3FB; --ink:#16233A; --green:#0F2747; --green2:#0A1B33;
@@ -108,7 +108,12 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold)}
 .st-ph{display:flex;gap:10px;align-items:center;margin-top:10px}
 .st-ph label{text-transform:none;letter-spacing:0}
 .st-ph .st-note{margin:0}
-@media (max-width:640px){ .st-th{grid-template-columns:repeat(2,1fr)} .st-r{position:static} }
+.st-sty{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.st-sty button{display:flex;flex-direction:column;align-items:center;gap:6px;border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:6px 4px 7px;
+  font:inherit;font-size:12px;color:var(--ink);cursor:pointer}
+.st-sty canvas{width:100%;aspect-ratio:9/16;border-radius:7px;display:block;background:var(--soft)}
+.st-sty button.on{border-color:var(--gold);box-shadow:0 0 0 3px rgba(37,99,235,.12);font-weight:650}
+@media (max-width:640px){ .st-th{grid-template-columns:repeat(2,1fr)} .st-sty{grid-template-columns:repeat(3,1fr)} .st-r{position:static} }
 .ci{border:1px solid var(--line);border-radius:11px;padding:13px;margin-bottom:11px}
 .ci b{font-size:14.5px}
 .ci .m{font-size:12.5px;color:var(--muted);line-height:1.6;margin-top:3px}
@@ -517,7 +522,9 @@ async function storyForm(){
   if (!cls.length) { $('mdB').innerHTML = '<div class="empty">Ochiq vakansiya yo\'q.</div>'; return; }
   const store = { get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }, set(k, v){ try { localStorage.setItem(k, v); } catch(e){} } };
   const THEMES = thStory.THEMES;
-  const S = { cl: cls[0][0], lang: 'uz', sel: null, showName: true, theme: THEMES[store.get('thStoryTheme')] ? store.get('thStoryTheme') : 'tungi', photo: null };
+  const STY = thStory.STYLES;
+  const S = { cl: cls[0][0], lang: 'uz', sel: null, showName: true, theme: THEMES[store.get('thStoryTheme')] ? store.get('thStoryTheme') : 'tungi', photo: null,
+    style: STY[store.get('thStoryStyle')] ? store.get('thStoryStyle') : 'klassik', showPay: true };
   const SW = { tungi: 'linear-gradient(135deg,#0E2350 55%,#FFC53D 55%)', oq: 'linear-gradient(135deg,#fff 55%,#0A5BD8 55%)',
     issiq: 'linear-gradient(135deg,#2A1A12 55%,#FF8A3D 55%)', rasm: 'url(/images/story/shashlik-1.jpg) center/cover' };
   $('mdB').innerHTML = `
@@ -542,7 +549,10 @@ async function storyForm(){
             <button class="btn btn-sm" id="aCancel" type="button">Bekor</button>
           </div>
         </div>
-        <div class="st-h">Dizayn</div>
+        <label class="st-ck" style="margin-top:8px"><input type="checkbox" id="sPay" checked><span>Maoshni ko'rsatish</span><em>o'chirilsa — o'rnida vakansiyaning shartlari</em></label>
+        <div class="st-h">Uslub</div>
+        <div class="st-sty" id="sSty">${Object.entries(STY).map(([k, n]) => `<button type="button" data-st="${k}"><canvas width="108" height="192"></canvas>${esc(n)}</button>`).join('')}</div>
+        <div class="st-h" id="sThH">Rang</div>
         <div class="st-th" id="sTh">${Object.entries(THEMES).map(([k, t]) => `<button type="button" data-th="${k}"><i style="background:${SW[k]}"></i>${esc(t.label)}</button>`).join('')}</div>
         <div id="sPh" class="st-ph" hidden>
           <button class="btn btn-sm" id="sNext" type="button">Boshqa rasm</button>
@@ -578,8 +588,11 @@ async function storyForm(){
       paid.forEach(v => { if (pick.length < 4 && !pick.includes(v.id)) pick.push(v.id); });
       S.sel = new Set(pick);
     }
-    $('sVac').innerHTML = rs.map(v => `<label class="st-ck${hasPay(v) ? '' : ' off'}">
-      <input type="checkbox" data-v="${esc(v.id)}" ${S.sel.has(v.id) ? 'checked' : ''} ${hasPay(v) ? '' : 'disabled'}>
+    // Maosh ko'rsatilmasa — maoshsiz vakansiya ham tanlanadi (o'rnida shartlari chiqadi)
+    const ok = v => !S.showPay || hasPay(v);
+    if (S.showPay) [...S.sel].forEach(id => { const v = rs.find(x => x.id === id); if (v && !hasPay(v)) S.sel.delete(id); });
+    $('sVac').innerHTML = rs.map(v => `<label class="st-ck${ok(v) ? '' : ' off'}">
+      <input type="checkbox" data-v="${esc(v.id)}" ${S.sel.has(v.id) ? 'checked' : ''} ${ok(v) ? '' : 'disabled'}>
       <span>${esc(v.title)}</span>${hasPay(v) ? '' : '<em>maosh yo\'q</em>'}</label>`).join('');
     $('sVac').querySelectorAll('[data-v]').forEach(el => el.onchange = () => {
       if (el.checked && S.sel.size >= 4) { el.checked = false; toast('Ko\'pi bilan 4 ta'); return; }
@@ -589,9 +602,9 @@ async function storyForm(){
   // "Rasm" mavzusi: o'z rasmi bo'lmasa — kutubxonadan, lavozimga qarab (thStory.photoGroup); "Boshqa rasm" — keyingisi
   async function data(){
     const rs = cur().filter(v => S.sel.has(v.id));
-    const d = thStory.fromVacancies(rs, { lang: S.lang, name: S.showName ? byCl[S.cl].name : '' });
-    d.theme = S.theme; d.photo = S.photo;
-    if (S.theme === 'rasm' && !S.photo) {
+    const d = thStory.fromVacancies(rs, { lang: S.lang, name: S.showName ? byCl[S.cl].name : '', hidePay: !S.showPay });
+    d.theme = S.theme; d.photo = S.photo; d.style = S.style;
+    if (S.style === 'klassik' && S.theme === 'rasm' && !S.photo) {
       try { d.photo = await thStory.loadPhoto(thStory.photoUrl(thStory.photoGroup(d), S.libIdx || 0)); }
       catch (e) { toast(e.message, 'error'); }
     }
@@ -605,10 +618,23 @@ async function storyForm(){
     const cv = await thStory.render(d);
     const out = $('sCv'); if (!out || seq !== S.seq) return;
     out.width = cv.width; out.height = cv.height; out.getContext('2d').drawImage(cv, 0, 0);
+    if (reset || !S.thumbsDone) thumbs(d, seq);
+  }
+  // Uslub tugmalarida — shu lavozimlar bilan haqiqiy kichik ko'rinish (har uslub o'z rasmi bilan)
+  async function thumbs(d, seq){
+    S.thumbsDone = true;
+    for (const b of $('sSty').querySelectorAll('[data-st]')) {
+      const cv = await thStory.render(Object.assign({}, d, { style: b.dataset.st }));
+      if (seq !== S.seq) return;
+      const c = b.querySelector('canvas'); c.getContext('2d').drawImage(cv, 0, 0, c.width, c.height);
+    }
   }
   function themeUi(){
+    $('sSty').querySelectorAll('[data-st]').forEach(b => b.classList.toggle('on', b.dataset.st === S.style));
+    const kl = S.style === 'klassik';
+    $('sTh').hidden = $('sThH').hidden = !kl;
     $('sTh').querySelectorAll('[data-th]').forEach(b => b.classList.toggle('on', b.dataset.th === S.theme));
-    $('sPh').hidden = S.theme !== 'rasm';
+    $('sPh').hidden = !kl || S.theme !== 'rasm';
   }
 
   // ── Yangi lavozim -> haqiqiy vakansiya ──
@@ -664,6 +690,11 @@ async function storyForm(){
     const b = e.target.closest('[data-th]'); if (!b) return;
     S.theme = b.dataset.th; store.set('thStoryTheme', S.theme); themeUi(); draw(false);
   };
+  $('sSty').onclick = e => {
+    const b = e.target.closest('[data-st]'); if (!b) return;
+    S.style = b.dataset.st; store.set('thStoryStyle', S.style); themeUi(); draw(false);
+  };
+  $('sPay').onchange = () => { S.showPay = $('sPay').checked; vacList(); draw(true); };
   $('sNext').onclick = () => {
     S.photo = null; S.libIdx = (S.libIdx || 0) + 1;
     $('sPhSt').textContent = 'Rasm lavozimga qarab o\'zi tanlanadi.'; draw(false);

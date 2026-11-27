@@ -1,0 +1,32 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1280px;height:640px;overflow:hidden}
+body{font-family:Inter,sans-serif;position:relative;
+  background:radial-gradient(900px 600px at 0% 100%,#123a7a 0%,rgba(18,58,122,0) 55%),
+             linear-gradient(135deg,#0f2456 0%,#0b1a45 45%,#060f2c 100%)}
+.sun{position:absolute;right:-180px;top:-260px;width:620px;height:620px;border-radius:50%;
+  background:radial-gradient(circle at 40% 30%,#ffd56a 0%,#ffc23c 55%,#f6b520 100%);
+  box-shadow:0 0 120px 40px rgba(255,194,60,.18)}
+.logo{position:absolute;left:84px;top:76px;display:flex;align-items:center;gap:20px}
+.mark{width:72px;height:72px;border-radius:16px;background:linear-gradient(160deg,#2b8cff,#1463e6);position:relative}
+.mark:before{content:"";position:absolute;left:18px;top:20px;width:30px;height:9px;border-radius:4px;background:#fff}
+.mark:after{content:"";position:absolute;left:28px;top:20px;width:10px;height:34px;border-radius:4px;background:#fff}
+.dot{position:absolute;left:47px;top:18px;width:14px;height:14px;border-radius:50%;background:#ffc23c;z-index:2}
+.name{font-size:40px;font-weight:800;color:#fff;letter-spacing:-1px}
+.name b{color:#6aa8ff;font-weight:800}
+h1{position:absolute;left:84px;top:208px;font-size:84px;line-height:1.02;font-weight:800;letter-spacing:-2.6px;color:#fff}
+h1 span{color:#ffc23c}
+.sub{position:absolute;left:86px;top:400px;font-size:29px;font-weight:500;color:#a9c3f0}
+.chips{position:absolute;left:84px;top:515px;display:flex;gap:14px}
+.chip{height:55px;padding:0 23px;display:flex;align-items:center;border-radius:28px;font-size:24px;font-weight:600;color:#dbe6fb;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16)}
+</style></head><body>
+<div class="sun"></div>
+<div class="logo"><div class="mark"><i class="dot"></i></div><div class="name">Talent<b>Hub</b></div></div>
+<h1>Есть запрос?<br><span>Есть таланты!</span></h1>
+<div class="sub">Найдите работу, которая вам подходит</div>
+<div class="chips"><div class="chip">Проверенные вакансии</div><div class="chip">Для вас бесплатно</div><div class="chip">HR за 24 часа</div></div>
+</body></html>

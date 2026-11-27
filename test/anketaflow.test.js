@@ -123,6 +123,7 @@ test('birinchi ekran: ro\'yxatdan tashqari ish (boshqa) ham tugma oladi, nomi bi
   const pick = await ft.candidatePick({ agencyId: A, lang: 'uz' });
   assert.ok(!/\{top\}|call-markaz operatori 1/.test(pick.text), pick.text);    // taqsimot matnda yo'q
   assert.match(pick.text, /<b>4 ta ochiq ish<\/b>/);
+  assert.equal(pick.photo, 'img/bot-welcome-uz.jpg');                         // brend rasmi bilan
   const all = pick.keyboard.flat();
   assert.equal(all.find(b => b.callback_data === 'ft:c:boshqa').text, 'HR-rekruter · 1');
   const opRow = pick.keyboard.find(r => r.some(b => b.callback_data === 'ft:c:operator'));

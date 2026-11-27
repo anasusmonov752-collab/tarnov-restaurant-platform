@@ -257,8 +257,11 @@ async function candidatePick({ agencyId, lang, name, rid, appBase, closed }) {
   // g=1 — UMUMIY anketa: oldin lavozim tanlagan bo'lsa, javobsiz yozuv umumiyga qaytadi (routes/anketa)
   if (rid && appBase) keyboard.push([{ text: T(lang, 'ft.cOther'), web_app: { url: `${appBase}/anketa.html?r=${rid}&g=1` } }]);
   if (rid) keyboard.push([langSwitchBtn(lang, rid)]);
-  return { text, keyboard };
+  // Brend rasmi ("Talab bormi? Talant bor!" + "O'zingizga mos ishni toping") — SMS ekrani bilan bitta
+  // rasm (Anas, 2026-11-27: "birinchi start bosganda chiqsin"). Izoh — shu matn, tugmalar rasm ostida.
+  return { text, keyboard, photo: welcomePhoto(lang) };
 }
+const welcomePhoto = lang => `img/bot-welcome-${lang === 'ru' ? 'ru' : 'uz'}.jpg`;
 
 // Til tugmasi — BITTA, faqat ikkinchi til (o'z tilida yozilgan, tanimagan
 // ham topadi). Telegram interfeysi tili yolg'on taxmin beradi: O'zbekistonda
@@ -321,8 +324,7 @@ async function candidateInvite({ cand, lang, appBase }) {
   keyboard.push([{ text: T(lang, 'ft.iNo'), callback_data: 'ft:no' }]);
   // Rasm — public/ ichidagi yo'l: bot faylni Telegram'ga o'zi yuklaydi (URL bersak, Telegram
   // bepul Render'dan yuklay olmay qolardi — 2026-11-17 jonli), keyin file_id ishlatiladi
-  const photo = `img/bot-welcome-${lang === 'ru' ? 'ru' : 'uz'}.jpg`;
-  return { text, keyboard, photo };
+  return { text, keyboard, photo: welcomePhoto(lang) };
 }
 
 /** Botdagi bir tugmali ariza — kabinet (routes/candidate apply) bilan bir xil shartlar */
@@ -475,7 +477,7 @@ async function handleCallback({ data, chatId, appBase, from }) {
       const r = await candidatePick({ agencyId: survey.agencyId, lang,
         name: String((from && from.first_name) || '').trim().slice(0, 30),
         rid: open && open.id, appBase });
-      return { edit: r.text, keyboard: r.keyboard, html: true };
+      return { edit: r.text, keyboard: r.keyboard, html: true, photo: r.photo };
     }
     if (!isValidRole(arg) && arg !== OTHER) return { text: '' };
     const isTest =(await require('./testMode').modeOf(tgUserId)) === 'candidate';

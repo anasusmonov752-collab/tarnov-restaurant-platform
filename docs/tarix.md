@@ -1614,3 +1614,12 @@ yangilandi. Testlar: `test/anketaflow.test.js`, `test/applications.test.js`.
 Salomdan keyin kimligimiz va ilmoq qatori (`ft.cIntro`, /start ham, vakansiya havolasi ham): "Bu TalentHub —
 rezyumesiz va bepul ishga ariza berasiz" — nomzodning ikki qo'rquviga javob (pul so'rashadi, rezyume yozolmayman).
 "Platforma" so'zi va "ish topasiz" va'dasi ataylab yo'q (kafolat bera olmaymiz).
+/start BREND RASMI BILAN (Anas: "Talab bormi, talant bor rasmimiz bor edi — birinchi start bosganda chiqsin;
+o'zingizga mos ishni toping degan marketing gap"). `candidatePick` -> `photo` (SMS ekrani bilan BITTA rasm,
+`welcomePhoto`), `/start` endi `sendScreen` (rasm o'tmasa — matn). Rasm qayta yasaldi: ostidagi "Toshkent
+restoranlari uchun ishga joylash agentligi" (restoranga bog'langan) -> "O'zingizga mos ishni toping" / «Найдите
+работу, которая вам подходит»; manba `docs/brand/bot-welcome-<uz|ru>.html` (headless Chrome 1280x640 -> ffmpeg jpg).
+Rasmli xabarda: til tugmasi (`ft:lang`) rasmni ham almashtiradi (`editLocalPhoto`), "Orqaga" (`ft:cb`) `photo`
+qaytaradi, lavozim ekrani izohga yoziladi (eng uzuni ~750 belgi < 1024). Lavozim tugmalari QOLDI: ular ekrandagi
+yagona harakat — olib tashlansa bitta ortiqcha bosish yoki chatda 12 ta ishning devor ro'yxati.
+Webhook darajasida bosib chiqildi (/start ru -> uz -> Ofitsiant -> Orqaga -> HR-rekruter), har xabar o'qildi.

@@ -762,7 +762,8 @@ async function startSurvey(msg, chatId, ank, appBase) {
   if (v) track('view', Object.assign({ ref: v.id }, who));
 
   const scr = await firstScreen({ lang, from: msg.from, agencyId: s.agencyId, v, closed, r, appBase });
-  await tg.sendMessage(token, chatId, scr.text, { parse_mode: 'HTML', reply_markup: { inline_keyboard: scr.rows } });
+  // Havolasiz /start — brend rasmi bilan (rasm o'tmasa sendScreen matn yuboradi)
+  await sendScreen(token, chatId, { text: scr.text, keyboard: scr.rows, photo: scr.photo });
 }
 
 // ── Nomzodning birinchi ekrani (matn + tugmalar) ──
@@ -809,7 +810,7 @@ async function firstScreen({ lang, from, agencyId, v, closed, r, appBase }) {
   }
 
   const pick = await ft.candidatePick({ agencyId, lang, name: first, rid: r.id, appBase, closed });
-  return { text: pick.text, rows: pick.keyboard };
+  return { text: pick.text, rows: pick.keyboard, photo: pick.photo };
 }
 
 // ── Kontakt xabari ───────────────────────────────────────────
@@ -1072,8 +1073,15 @@ async function handleCallbackInner(cq, appBase, st) {
       if (!v || v.status !== 'open') { closed = !!v; v = null; }
     }
     const scr = await firstScreen({ lang, from: cq.from, agencyId: r.agencyId, v, closed, r, appBase });
-    await tg.editMessageText(token, chatId, msgId, scr.text,
-      { parse_mode: 'HTML', reply_markup: { inline_keyboard: scr.rows } }).catch(() => {});
+    const opt = { parse_mode: 'HTML', reply_markup: { inline_keyboard: scr.rows } };
+    // Rasmli birinchi xabar: rasm ham tanlangan tilga almashadi (editMessageText rasmda ishlamaydi)
+    if (cq.message && cq.message.photo) {
+      await (scr.photo ? tg.editLocalPhoto(token, chatId, msgId, scr.photo, scr.text, opt)
+        : tg.editMessageCaption(token, chatId, msgId, scr.text, opt))
+        .catch(e => console.warn('[CB] ft:lang rasm:', e.message));
+    } else {
+      await tg.editMessageText(token, chatId, msgId, scr.text, opt).catch(() => {});
+    }
     return;
   }
 

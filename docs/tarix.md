@@ -1600,3 +1600,14 @@ tugatilmagan anketalar"; "platforma umumiy bo'lishi kerak, hamma narsani restora
 Testlar: `test/unit.test.js` (aqlli qoidalar). Lokal ko'rishda (`.preview/anketa-new.html`, serverning haqiqiy
 savollari) bosildi. Mijoz tomonidagi matnlar (bot.empHello, ft.eHi — "restoranlar uchun") va nomzod kabinetidagi
 ish tarixi tahriri (profil.html) HALI restoran uslubida.
+
+**BOT /start: FAQAT ISHI BOR LAVOZIMLAR** (2026-11-27, Anas: "birinchi xabar juda ma'lumot ko'p, tushunarsiz,
+aji-buji lavozimlar qo'yib chiqishi shartmi?"). Bazaga qarab o'lchandi: 12 ta ochiq ish, lekin ekranda 7 ta
+lavozim tugmasi — Barmen va Kassirda ish 0 (bosilsa bo'sh ekran), HR-rekruter (role `boshqa`) esa tugmasiz edi;
+matndagi "oshpaz 5 · ofitsiant 3 · call-markaz operatori 1 · ..." qatori tugmalarni takrorlardi.
+Endi (`firstTouch.candidatePick` -> `pickRows`): salom + "Hozir N ta ochiq ish bor. Qaysi biri sizga kerak?" +
+FAQAT ishi bor lavozimlar, soni tugmada; ro'yxatdan tashqari ishlar `ft:c:boshqa` (bitta bo'lsa o'z nomi —
+"HR-rekruter · 1", ko'p bo'lsa "Boshqa ishlar"); uzun nom alohida qatorda; 🔥 olib tashlandi; zaxira tugma
+"Mosi yo'q — anketa qoldiraman". `openJobs('boshqa')` = ro'yxatdan tashqari HAR QANDAY lavozim (`$nin ROLE_KEYS`).
+Ish umuman yo'q bo'lsa — eski to'liq ro'yxat (anketa kelajakdagi ish uchun). `docs/auditoriya.md` formulasi
+yangilandi. Testlar: `test/anketaflow.test.js`, `test/applications.test.js`.

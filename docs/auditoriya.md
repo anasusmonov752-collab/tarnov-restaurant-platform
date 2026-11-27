@@ -56,10 +56,14 @@ o'ngda — uning tili):
 **Birinchi ekran formulasi (ochiq ish BOR):**
 ```
 salom (ism bilan, bitta qator)
-HOZIR nechta ochiq ish + lavozimlar bo'yicha taqsimot   ← bazadan
-"maoshi va tumani bilan ko'rsataman — qaysi ish kerak?"
-[lavozim tugmalari]
+HOZIR nechta ochiq ish                                  ← bazadan
+"qaysi biri sizga kerak? maoshi va manzilini ko'rsataman"
+[FAQAT ishi bor lavozimlar, soni tugmada: "Oshpaz · 5"]
+[ro'yxatdan tashqari ish — o'z nomi bilan: "HR-rekruter · 1"]
 ```
+Ishi yo'q lavozim tugmasi va taqsimot qatori YO'Q (2026-11-27: "aji-buji
+lavozimlar" — bo'sh ekranga olib boradigan tugma va tugmalarni takrorlaydigan
+qator ekranni to'ldiradi, tanlovni qiyinlashtiradi).
 Agentlik haqida bitta so'z ham yo'q. U nima bilan shug'ullanishimizni
 bilishi shart emas — ish borligini bilishi kerak.
 

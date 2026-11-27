@@ -112,5 +112,28 @@ test('birinchi ekran: lavozim tugmalarida son, ishi bor lavozim oldin', async ()
   assert.match(first.text, /· 2$/);
   const all = pick.keyboard.flat();
   assert.match(all.find(b => b.callback_data === 'ft:c:oshpaz').text, /· 1$/);
-  assert.ok(!/·/.test(all.find(b => b.callback_data === 'ft:c:barmen').text));   // ishi yo'q — sonsiz
+  // Ishi yo'q lavozim tugmasi CHIQMAYDI (Anas, 2026-11-27: "aji-buji lavozimlar")
+  assert.ok(!all.some(b => b.callback_data === 'ft:c:barmen'));
+});
+
+test('birinchi ekran: ro\'yxatdan tashqari ish (boshqa) ham tugma oladi, nomi bilan; uzun nom alohida qatorda', async () => {
+  await vacancy('o1', { role: 'boshqa', title: 'HR-rekruter (ommaviy yollash)' });
+  await vacancy('o2', { role: 'operator', title: 'Call operator' });
+  await vacancy('o3'); await vacancy('o4');
+  const pick = await ft.candidatePick({ agencyId: A, lang: 'uz' });
+  assert.ok(!/\{top\}|call-markaz operatori 1/.test(pick.text), pick.text);    // taqsimot matnda yo'q
+  assert.match(pick.text, /<b>4 ta ochiq ish<\/b>/);
+  const all = pick.keyboard.flat();
+  assert.equal(all.find(b => b.callback_data === 'ft:c:boshqa').text, 'HR-rekruter · 1');
+  const opRow = pick.keyboard.find(r => r.some(b => b.callback_data === 'ft:c:operator'));
+  assert.equal(opRow.length, 1, 'uzun nom alohida qatorda');
+  // "Boshqa" bosilsa — shu ishning o'zi, sarlavhasi o'z nomi bilan
+  const r = await ft.candidateRole({ agencyId: A, role: 'boshqa', lang: 'uz', tgUserId: '901', chatId: '901', appBase: 'https://x' });
+  assert.match(r.text, /<b>HR-rekruter<\/b> — hozir <b>1 ta ochiq ish<\/b>/);
+  assert.ok(!/va shunga yaqin/.test(r.text));
+});
+
+test('birinchi ekran: ish umuman yo\'q bo\'lsa — hamma lavozim (anketa kelajakdagi ish uchun)', async () => {
+  const pick = await ft.candidatePick({ agencyId: 'bosh-agentlik', lang: 'uz' });
+  assert.ok(pick.keyboard.flat().some(b => b.callback_data === 'ft:c:barmen'));
 });

@@ -981,8 +981,9 @@
       'bot.empHello': 'Assalomu alaykum! TalentHub — restoranlar uchun xodim topish xizmati.\n\n✅ 48 soatda 3 ta tekshirilgan nomzod\n✅ Suhbatga kelmagan nomzod uchun pul olmaymiz\n✅ 30 kun ichida ketsa — yangisini topamiz\n\nMenejerimiz tez orada siz bilan bog\'lanadi. Hozir esa ovozli xabarda kim kerakligini ayting: lavozim, nechta odam, smena va soatlar, maosh, manzil.',
       // ── Botga birinchi kirish (services/firstTouch) ──
       'ft.back': '\u2b05\ufe0f Orqaga',
-      'ft.cPick': '🔥 Hozir Toshkentda <b>{n} ta ochiq ish</b> bor:\n{top}\n\nMaoshi va tumani bilan ko\'rsataman — qaysi ish kerak?',
-      'ft.cOther': 'Lavozimim ro\'yxatda yo\'q',
+      'ft.cPick': 'Hozir Toshkentda <b>{n} ta ochiq ish</b> bor.\nQaysi biri sizga kerak? Maoshi va manzilini ko\'rsataman.',
+      'ft.cOther': 'Mosi yo\'q — anketa qoldiraman',
+      'ft.cOtherJobs': 'Boshqa ishlar',
       'ft.cPick0': '• Bepul\n• Rezyume yozmaysiz — 3 daqiqa savol-javob\n• Mos ish chiqishi bilan HR o\'zi qo\'ng\'iroq qiladi\n\nQaysi ish kerak?',
       'ft.cJobs': '{head} \u2014 hozir <b>{n} ta ochiq ish</b>:',
       // Lavozim ostida boshqa nomli ishlar ham bo'lsa (ranner, yig'uvchi \u2014 ofitsiant rolida):
@@ -2261,8 +2262,9 @@
       'bot.empHello': 'Здравствуйте! TalentHub — сервис подбора сотрудников для ресторанов.\n\n✅ 3 проверенных кандидата за 48 часов\n✅ Не пришёл на собеседование — не платите\n✅ Ушёл в течение 30 дней — найдём замену\n\nНаш менеджер скоро свяжется с вами. А пока расскажите голосовым, кто нужен: должность, сколько человек, смена и часы, зарплата, адрес.',
       // ── Первый вход в бот (services/firstTouch) ──
       'ft.back': '\u2b05\ufe0f Назад',
-      'ft.cPick': ['🔥 Сейчас в Ташкенте открыта <b>{n} вакансия</b>:\n{top}\n\nПокажу зарплату и район — какая работа нужна?', '🔥 Сейчас в Ташкенте открыто <b>{n} вакансии</b>:\n{top}\n\nПокажу зарплату и район — какая работа нужна?', '🔥 Сейчас в Ташкенте открыто <b>{n} вакансий</b>:\n{top}\n\nПокажу зарплату и район — какая работа нужна?'],
-      'ft.cOther': 'Моей должности нет в списке',
+      'ft.cPick': ['Сейчас в Ташкенте открыта <b>{n} вакансия</b>.\nКакая вам нужна? Покажу зарплату и адрес.', 'Сейчас в Ташкенте открыто <b>{n} вакансии</b>.\nКакая вам нужна? Покажу зарплату и адрес.', 'Сейчас в Ташкенте открыто <b>{n} вакансий</b>.\nКакая вам нужна? Покажу зарплату и адрес.'],
+      'ft.cOther': 'Нет подходящей — оставлю анкету',
+      'ft.cOtherJobs': 'Другая работа',
       'ft.cPick0': '• Бесплатно\n• Резюме писать не нужно — 3 минуты вопросов\n• Появится подходящая работа — HR позвонит сам\n\nКакая работа нужна?',
       'ft.cJobs': ['{head} — сейчас <b>{n} открытая вакансия</b>:', '{head} — сейчас <b>{n} открытые вакансии</b>:', '{head} — сейчас <b>{n} открытых вакансий</b>:'],
       'ft.cJobsMix': ['{head} и похожая работа — сейчас <b>{n} вакансия</b>:', '{head} и похожая работа — сейчас <b>{n} вакансии</b>:', '{head} и похожая работа — сейчас <b>{n} вакансий</b>:'],

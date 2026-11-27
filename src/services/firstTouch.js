@@ -41,6 +41,7 @@ const money = n => String(Math.round(n || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '
 
 // Tugmalarda ko'rsatiladigan lavozimlar (data/roles tartibida, 'boshqa'siz)
 const ROLES = ROLE_KEYS.filter(k => k !== 'boshqa');
+const OTHER = 'boshqa';                     // ro'yxatdan tashqari ishlar guruhi (nomzod tugmasi ft:c:boshqa)
 const EMOJI = { ofitsiant: '🍽', barmen: '🍸', xostess: '💁', oshpaz: '👨‍🍳', kassir: '🧾', menejer: '📋', operator: '📞' };
 
 /**
@@ -66,7 +67,9 @@ function roleRows(lang, prefix, counts) {
 async function openJobs(agencyId, role, limit = 3) {
   const fresh = new Date(Date.now() - vac.STALE_DAYS * 864e5);
   const q = { agencyId, status: 'open', listed: { $ne: false }, confirmedAt: { $gte: fresh }, isTest: { $ne: true } };
-  if (role) q.role = role;
+  // 'boshqa' — ro'yxatdan tashqari HAR QANDAY ish (Vacancy.role default 'boshqa', bo'sh yoki eski kalit ham)
+  if (role === OTHER) q.role = { $nin: ROLE_KEYS };
+  else if (role) q.role = role;
   const [n, rows] = await Promise.all([
     Vacancy.countDocuments(q),
     Vacancy.find(q).sort({ confirmedAt: -1 }).limit(limit).lean()
@@ -147,8 +150,13 @@ async function candidateRole({ agencyId, role, lang, tgUserId, chatId, appBase, 
   require('./track').track('role', { agencyId, tgUserId, ref: role, rid: r.id, channel: r.channel,
     name, isTest: r.isTest || !!isTest });
 
-  const head = `${EMOJI[role] || ''} <b>${esc(T(lang, 'role.' + role))}</b>`.trim();
-  const jb = jobBlocks(rows, lang, { role, emp: await employerNames(agencyId, rows) });
+  // Ro'yxatdan tashqari ishlar ('boshqa'): sarlavha — ishning o'z nomi yoki "Boshqa ishlar"
+  const other = role === 'boshqa';
+  const label = other
+    ? (n === 1 && rows[0] ? splitTitle(vac.titleFor(rows[0], lang))[0] : T(lang, 'ft.cOtherJobs'))
+    : T(lang, 'role.' + role);
+  const head = `${EMOJI[role] || ''} <b>${esc(label)}</b>`.trim();
+  const jb = jobBlocks(rows, lang, { role: other ? '' : role, emp: await employerNames(agencyId, rows) });
   const text = [
     n ? T(lang, jb.mixed ? 'ft.cJobsMix' : 'ft.cJobs', { head, n }) : T(lang, 'ft.cNoJobs', { head }),
     rows.length ? '' : null,
@@ -179,10 +187,45 @@ async function openByRole(agencyId, lang) {
   ]);
   return {
     n: rows.reduce((s, x) => s + x.n, 0),
-    top: rows.filter(x => isValidRole(x._id) && x._id !== 'boshqa').slice(0, 5)
-      .map(x => `${T(lang, 'role.' + x._id).toLowerCase()} ${x.n}`).join(' \u00b7 '),
-    counts: Object.fromEntries(rows.filter(x => isValidRole(x._id)).map(x => [x._id, x.n]))
+    // Ro'yxatda yo'q lavozim — 'boshqa' guruhiga (openJobs ham shunday qidiradi), son yo'qolmasin
+    counts: rows.reduce((o, x) => {
+      const k = isValidRole(x._id) ? x._id : OTHER;
+      o[k] = (o[k] || 0) + x.n; return o;
+    }, {})
   };
+}
+
+/**
+ * Birinchi ekran tugmalari — FAQAT ochiq ishi bor lavozimlar, soni bilan
+ * (Anas, 2026-11-27: "aji-buji lavozimlar chiqishi shartmi boshida?"). Ilgari
+ * 7 ta lavozimning hammasi chiqardi: ishi yo'q Barmen/Kassir bosilsa — bo'sh
+ * ekran, ro'yxatdan tashqari ish (role 'boshqa', masalan HR-rekruter) esa
+ * umuman tugmasiz edi. Endi u ham tugma oladi: bitta bo'lsa o'z nomi bilan.
+ * Uzun nom ("Call-markaz operatori · 1") alohida qatorda — telefonda kesilmasin.
+ * Ish umuman yo'q bo'lsa — eski ro'yxat (anketa kelajakdagi ish uchun).
+ */
+const LONG = 15;
+function pickRows(lang, counts, otherLabel) {
+  const keys = ROLES.filter(r => counts[r]).sort((a, b) => counts[b] - counts[a]);
+  if (counts.boshqa) keys.push('boshqa');
+  const btns = keys.map(r => ({
+    text: `${r === 'boshqa' ? otherLabel : T(lang, 'role.' + r)} · ${counts[r]}`,
+    callback_data: 'ft:c:' + r
+  }));
+  const rows = [];
+  for (let i = 0; i < btns.length; i++) {
+    const b = btns[i], nx = btns[i + 1];
+    if (b.text.length > LONG || !nx || nx.text.length > LONG) rows.push([b]);
+    else { rows.push([b, nx]); i++; }
+  }
+  return rows;
+}
+
+/** Ro'yxatdan tashqari ishlar nomi: bitta bo'lsa o'zi ("HR-rekruter"), ko'p bo'lsa "Boshqa ishlar" */
+async function otherLabel(agencyId, lang, n) {
+  if (n !== 1) return T(lang, 'ft.cOtherJobs');
+  const { rows } = await openJobs(agencyId, 'boshqa', 1);
+  return rows[0] ? splitTitle(vac.titleFor(rows[0], lang))[0] : T(lang, 'ft.cOtherJobs');
 }
 
 /**
@@ -196,15 +239,19 @@ async function openByRole(agencyId, lang) {
  * yozmaysiz, HR o'zi qo'ng'iroq qiladi).
  */
 async function candidatePick({ agencyId, lang, name, rid, appBase, closed }) {
-  const { n, top, counts } = await openByRole(agencyId, lang);
+  const { n, counts } = await openByRole(agencyId, lang);
+  // Lavozimlar taqsimoti matnda YO'Q — u tugmalarni takrorlardi ("oshpaz 5 · ofitsiant 3 ·
+  // call-markaz operatori 1 · ..."); son endi tugmaning o'zida
   const text = [
     T(lang, 'ank.hookHi', { name: name ? ', ' + esc(name) : '' }), '',
     closed ? T(lang, 'ank.hookClosed') : '',
     closed ? '' : null,
-    n ? T(lang, 'ft.cPick', { n, top: esc(top) }) : T(lang, 'ft.cPick0')
+    n ? T(lang, 'ft.cPick', { n }) : T(lang, 'ft.cPick0')
   ].filter(x => x !== null).join('\n').replace(/\n{3,}/g, '\n\n');
 
-  const keyboard = roleRows(lang, 'ft:c:', counts);
+  const keyboard = n
+    ? pickRows(lang, counts, counts.boshqa ? await otherLabel(agencyId, lang, counts.boshqa) : '')
+    : roleRows(lang, 'ft:c:', counts);
   // Chiqish yo'li: lavozimi ro'yxatda bo'lmagan odam ham o'tib keta olsin
   // g=1 — UMUMIY anketa: oldin lavozim tanlagan bo'lsa, javobsiz yozuv umumiyga qaytadi (routes/anketa)
   if (rid && appBase) keyboard.push([{ text: T(lang, 'ft.cOther'), web_app: { url: `${appBase}/anketa.html?r=${rid}&g=1` } }]);
@@ -429,8 +476,8 @@ async function handleCallback({ data, chatId, appBase, from }) {
         rid: open && open.id, appBase });
       return { edit: r.text, keyboard: r.keyboard, html: true };
     }
-    if (!isValidRole(arg)) return { text: '' };
-    const isTest = (await require('./testMode').modeOf(tgUserId)) === 'candidate';
+    if (!isValidRole(arg) && arg !== OTHER) return { text: '' };
+    const isTest =(await require('./testMode').modeOf(tgUserId)) === 'candidate';
     // chosenLang — faqat odam O'ZI tanlagan til (bot tugmasi yoki profil); Telegram taxmini emas
     const r = await candidateRole({ agencyId: survey.agencyId, role: arg, lang, tgUserId, chatId, appBase, isTest,
       name: from && from.first_name, chosenLang: (open && open.lang) || (cand && cand.lang) || '' });

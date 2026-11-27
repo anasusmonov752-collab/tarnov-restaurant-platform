@@ -149,7 +149,10 @@ test('/start birinchi ekrani: nomzod matni (agentlik tavsifisiz), haqiqiy ishlar
   const uz = await scr({ lang: 'uz', from: { first_name: 'Ali<b>' }, agencyId: 'agH' });
   assert.match(uz.text, /Assalomu alaykum, Ali&lt;b&gt;!/);
   assert.match(uz.text, /<b>3 ta ochiq ish<\/b>/);                     // yopiq va yashirin sanalmaydi
-  assert.match(uz.text, /ofitsiant 2 \u00b7 oshpaz 1/);
+  // Taqsimot tugmalarda (matnda takrorlanmaydi); ishi yo'q lavozim tugmasi yo'q
+  const btn = uz.rows.flat().map(b => b.text);
+  assert.ok(btn.includes('Ofitsiant \u00b7 2') && btn.includes('Oshpaz \u00b7 1'), btn.join(' | '));
+  assert.ok(!btn.some(t => /Kassir|Barmen/.test(t)));
   assert.ok(!/\n{3,}/.test(uz.text));
   // Nomzodga agentlik tavsifi YOZILMAYDI (docs/auditoriya.md)
   assert.ok(!/xodim tanlash|tavsiya qilamiz|Restoranlar bizga/.test(uz.text), uz.text);

@@ -1611,3 +1611,6 @@ FAQAT ishi bor lavozimlar, soni tugmada; ro'yxatdan tashqari ishlar `ft:c:boshqa
 "Mosi yo'q — anketa qoldiraman". `openJobs('boshqa')` = ro'yxatdan tashqari HAR QANDAY lavozim (`$nin ROLE_KEYS`).
 Ish umuman yo'q bo'lsa — eski to'liq ro'yxat (anketa kelajakdagi ish uchun). `docs/auditoriya.md` formulasi
 yangilandi. Testlar: `test/anketaflow.test.js`, `test/applications.test.js`.
+Salomdan keyin kimligimiz va ilmoq qatori (`ft.cIntro`, /start ham, vakansiya havolasi ham): "Bu TalentHub —
+rezyumesiz va bepul ishga ariza berasiz" — nomzodning ikki qo'rquviga javob (pul so'rashadi, rezyume yozolmayman).
+"Platforma" so'zi va "ish topasiz" va'dasi ataylab yo'q (kafolat bera olmaymiz).

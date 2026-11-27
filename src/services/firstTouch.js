@@ -243,7 +243,8 @@ async function candidatePick({ agencyId, lang, name, rid, appBase, closed }) {
   // Lavozimlar taqsimoti matnda YO'Q — u tugmalarni takrorlardi ("oshpaz 5 · ofitsiant 3 ·
   // call-markaz operatori 1 · ..."); son endi tugmaning o'zida
   const text = [
-    T(lang, 'ank.hookHi', { name: name ? ', ' + esc(name) : '' }), '',
+    T(lang, 'ank.hookHi', { name: name ? ', ' + esc(name) : '' }),
+    T(lang, 'ft.cIntro'), '',
     closed ? T(lang, 'ank.hookClosed') : '',
     closed ? '' : null,
     n ? T(lang, 'ft.cPick', { n }) : T(lang, 'ft.cPick0')

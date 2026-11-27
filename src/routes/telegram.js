@@ -793,7 +793,8 @@ async function firstScreen({ lang, from, agencyId, v, closed, r, appBase }) {
   if (v) {
     const meta = [v.location, vac.salaryText(v, lang)].filter(Boolean).join(' · ');
     const text = [
-      T(lang, 'ank.hookHi', { name: first ? ', ' + escHtml(first) : '' }), '',
+      T(lang, 'ank.hookHi', { name: first ? ', ' + escHtml(first) : '' }),
+      T(lang, 'ft.cIntro'), '',
       T(lang, 'ank.hookVac', { v: escHtml(vac.titleFor(v, lang)), meta: meta ? '\n' + escHtml(meta) : '' }), '',
       // Havola bilan kelganda anketa tugagach ariza AVTOMATIK yuboriladi —
       // shuning uchun tugma ham, matn ham aynan shuni va'da qiladi

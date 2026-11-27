@@ -1626,3 +1626,11 @@ Webhook darajasida bosib chiqildi (/start ru -> uz -> Ofitsiant -> Orqaga -> HR-
 Ilmoq qatori Anas so'rovi bilan almashtirildi (2026-11-27): "Bu TalentHub — orzuingizdagi ishni biz bilan toping" /
 «Это TalentHub — найдите работу мечты вместе с нами». Eslatma: rasm ostidagi "O'zingizga mos ishni toping" bilan
 ma'nosi yaqin; "rezyumesiz" ilmog'i endi ekranda yo'q ("bepul" rasm chipida qoldi).
+
+ANKETA: BOTDA TANLANGAN "BOSHQA" ISH LAVOZIMI QAYTA SO'RALMAYDI (2026-11-27, Anas: "lavozim tanlangandan keyin
+nimaga kerak? 7 ta lavozim bor, boshqasi yo'q"). Sabab: botdagi HR-rekruter tugmasi yozuvga `role: 'boshqa'`
+yozadi, `presetRoleOf` esa 'boshqa' ni "lavozim noma'lum" deb qaytarardi -> anketa "Qaysi lavozimda?" ni
+restoran ro'yxati bilan so'rardi. Endi `r.role === 'boshqa'` -> preset 'boshqa' (vakansiya havolasidagi qoidaning
+o'zi). Lavozim haqiqatan noma'lum bo'lsa ("Mosi yo'q — anketa qoldiraman") savol qoladi, lekin ro'yxat oxirida
+"Boshqa ish" / «Другая работа» (`ROLE_OTHER`; bazadagi eski anketalarga `visibleQuestions` qo'shadi — baza
+o'zgarmaydi). Lokal bosib chiqildi: boshqa/operator/ofitsiant — savol yo'q; tanlanmagan — 8 variant.

@@ -40,6 +40,9 @@ const CHANNELS = {
 
 // ── Shablon variantlari ──
 const o = (key, uz, ru) => ({ key, uz, ru });
+// "Qaysi lavozimda?" ro'yxatida yo'q ish (HR-rekruter va h.k.) — platforma faqat restoran emas.
+// Bazadagi eski anketalarga visibleQuestions qo'shadi (variantlar bazada saqlanadi).
+const ROLE_OTHER = o('boshqa', 'Boshqa ish', 'Другая работа');
 
 const DISTRICTS = [
   o('bektemir', 'Bektemir', 'Бектемир'),       o('chilonzor', 'Chilonzor', 'Чиланзар'),
@@ -73,7 +76,7 @@ function template() {
     // ── Ish haqida ──
     { id: 'role', type: 'choice', text: { uz: 'Qaysi lavozimda ishlamoqchisiz?', ru: 'На какую должность вы претендуете?' },
       hint: { uz: 'Bir nechtasi qiziq bo\'lsa — asosiysini tanlang.', ru: 'Если интересно несколько — выберите основную.' },
-      options: ROLES.map(r => o(r.key, I18N.t('uz', 'role.' + r.key), I18N.t('ru', 'role.' + r.key))) },
+      options: ROLES.map(r => o(r.key, I18N.t('uz', 'role.' + r.key), I18N.t('ru', 'role.' + r.key))).concat(ROLE_OTHER) },
     // Ish tajribasi — har ish joyi: joy, lavozim, muddat oralig'i; tepada
     // "Tajribam yo'q". Erkin matn emas: ish beruvchi "qayerda, kim bo'lib,
     // qancha" ni ko'rishi, panel tajriba bo'yicha saralashi kerak (2026-10-23,
@@ -513,6 +516,8 @@ function visibleQuestions(survey, presetRole) {
       const out = Object.assign({}, q.toObject ? q.toObject() : q);
       if (EXP_ONLY.includes(out.id)) out.expOnly = true;
       if (ROLE_ONLY[out.id]) out.roles = ROLE_ONLY[out.id];
+      if (out.id === 'role' && Array.isArray(out.options) && !out.options.some(x => x.key === 'boshqa'))
+        out.options = out.options.concat(ROLE_OTHER);
       const g = GENERIC_HINTS[out.id];
       if (g && out.hint && out.hint.uz === g[0][0]) out.hint = { uz: g[1][0], ru: out.hint.ru === g[0][1] ? g[1][1] : out.hint.ru };
       return out;
@@ -964,7 +969,8 @@ function presetRoleOf(r, s, v) {
   // "Qaysi lavozimda?" (faqat restoran lavozimlari) qayta so'ralmaydi, lavozimga xos savollar ham yo'q
   if (v && !(s && s.role)) return 'boshqa';
   if (s && s.role) return s.role;
-  return r && isValidRole(r.role) && r.role !== 'boshqa' ? r.role : '';
+  if (r && r.role === 'boshqa') return 'boshqa';     // botda ro'yxatdan tashqari ishni (HR-rekruter...) tanlagan
+  return r && isValidRole(r.role) ? r.role : '';
 }
 
 // ══ NOMZODNING OCHIQ ANKETASI (vakansiyasiz) — bitta odamga BITTA yozuv ══

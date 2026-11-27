@@ -132,6 +132,20 @@ test('birinchi ekran: ro\'yxatdan tashqari ish (boshqa) ham tugma oladi, nomi bi
   const r = await ft.candidateRole({ agencyId: A, role: 'boshqa', lang: 'uz', tgUserId: '901', chatId: '901', appBase: 'https://x' });
   assert.match(r.text, /<b>HR-rekruter<\/b> — hozir <b>1 ta ochiq ish<\/b>/);
   assert.ok(!/va shunga yaqin/.test(r.text));
+  // Anketada "Qaysi lavozimda?" QAYTA so'ralmaydi (Anas, 2026-11-27: "lavozim tanlangandan keyin nimaga kerak?")
+  const resp = await M.SurveyResponse.findOne({ agencyId: A, tgUserId: '901' }).lean();
+  const s = await M.Survey.findOne({ agencyId: A, id: resp.surveyId }).lean();
+  const preset = survey.presetRoleOf(resp, s, null);
+  assert.equal(preset, 'boshqa');
+  assert.ok(!survey.visibleQuestions(s, preset).some(q => q.id === 'role'));
+});
+
+test('"Qaysi lavozimda?" ro\'yxatida "Boshqa ish" bor — eski (bazadagi) anketada ham', async () => {
+  const s = await M.Survey.findOne({ agencyId: A, isDefault: true }).lean();
+  s.questions.find(q => q.id === 'role').options = s.questions.find(q => q.id === 'role').options.filter(x => x.key !== 'boshqa');
+  const q = survey.visibleQuestions(s, '').find(x => x.id === 'role');
+  assert.equal(q.options[q.options.length - 1].uz, 'Boshqa ish');
+  assert.equal(survey.checkAnswer(q, 'boshqa'), 'boshqa');
 });
 
 test('birinchi ekran: ish umuman yo\'q bo\'lsa — hamma lavozim (anketa kelajakdagi ish uchun)', async () => {

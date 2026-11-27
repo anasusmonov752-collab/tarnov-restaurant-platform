@@ -1623,3 +1623,6 @@ Rasmli xabarda: til tugmasi (`ft:lang`) rasmni ham almashtiradi (`editLocalPhoto
 qaytaradi, lavozim ekrani izohga yoziladi (eng uzuni ~750 belgi < 1024). Lavozim tugmalari QOLDI: ular ekrandagi
 yagona harakat — olib tashlansa bitta ortiqcha bosish yoki chatda 12 ta ishning devor ro'yxati.
 Webhook darajasida bosib chiqildi (/start ru -> uz -> Ofitsiant -> Orqaga -> HR-rekruter), har xabar o'qildi.
+Ilmoq qatori Anas so'rovi bilan almashtirildi (2026-11-27): "Bu TalentHub — orzuingizdagi ishni biz bilan toping" /
+«Это TalentHub — найдите работу мечты вместе с нами». Eslatma: rasm ostidagi "O'zingizga mos ishni toping" bilan
+ma'nosi yaqin; "rezyumesiz" ilmog'i endi ekranda yo'q ("bepul" rasm chipida qoldi).

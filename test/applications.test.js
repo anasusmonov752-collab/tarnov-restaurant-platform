@@ -147,7 +147,7 @@ test('/start birinchi ekrani: nomzod matni (agentlik tavsifisiz), haqiqiy ishlar
   const scr = o => firstScreen(Object.assign({ r: { id: 'r1' }, appBase: 'https://x' }, o));
 
   const uz = await scr({ lang: 'uz', from: { first_name: 'Ali<b>' }, agencyId: 'agH' });
-  assert.match(uz.text, /Assalomu alaykum, Ali&lt;b&gt;!\nBu <b>TalentHub<\/b> — rezyumesiz va bepul/);   // kimligimiz + ilmoq
+  assert.match(uz.text, /Assalomu alaykum, Ali&lt;b&gt;!\nBu <b>TalentHub<\/b> — orzuingizdagi ishni biz bilan toping/);   // kimligimiz + ilmoq
   assert.ok(!/platforma/i.test(uz.text));
   assert.match(uz.text, /<b>3 ta ochiq ish<\/b>/);                     // yopiq va yashirin sanalmaydi
   // Taqsimot tugmalarda (matnda takrorlanmaydi); ishi yo'q lavozim tugmasi yo'q

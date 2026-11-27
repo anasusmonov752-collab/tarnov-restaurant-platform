@@ -985,7 +985,7 @@
       'ft.cOther': 'Mosi yo\'q — anketa qoldiraman',
       'ft.cOtherJobs': 'Boshqa ishlar',
       // Birinchi ekranda kimligimiz + ikki qo'rquvga javob (pul so'rashadi, rezyume yozolmayman) — 2026-11-27
-      'ft.cIntro': 'Bu <b>TalentHub</b> — rezyumesiz va bepul ishga ariza berasiz.',
+      'ft.cIntro': 'Bu <b>TalentHub</b> — orzuingizdagi ishni biz bilan toping.',
       'ft.cPick0': '• Bepul\n• Rezyume yozmaysiz — 3 daqiqa savol-javob\n• Mos ish chiqishi bilan HR o\'zi qo\'ng\'iroq qiladi\n\nQaysi ish kerak?',
       'ft.cJobs': '{head} \u2014 hozir <b>{n} ta ochiq ish</b>:',
       // Lavozim ostida boshqa nomli ishlar ham bo'lsa (ranner, yig'uvchi \u2014 ofitsiant rolida):
@@ -2267,7 +2267,7 @@
       'ft.cPick': ['Сейчас в Ташкенте открыта <b>{n} вакансия</b>.\nКакая вам нужна? Покажу зарплату и адрес.', 'Сейчас в Ташкенте открыто <b>{n} вакансии</b>.\nКакая вам нужна? Покажу зарплату и адрес.', 'Сейчас в Ташкенте открыто <b>{n} вакансий</b>.\nКакая вам нужна? Покажу зарплату и адрес.'],
       'ft.cOther': 'Нет подходящей — оставлю анкету',
       'ft.cOtherJobs': 'Другая работа',
-      'ft.cIntro': 'Это <b>TalentHub</b> — откликайтесь на работу без резюме и бесплатно.',
+      'ft.cIntro': 'Это <b>TalentHub</b> — найдите работу мечты вместе с нами.',
       'ft.cPick0': '• Бесплатно\n• Резюме писать не нужно — 3 минуты вопросов\n• Появится подходящая работа — HR позвонит сам\n\nКакая работа нужна?',
       'ft.cJobs': ['{head} — сейчас <b>{n} открытая вакансия</b>:', '{head} — сейчас <b>{n} открытые вакансии</b>:', '{head} — сейчас <b>{n} открытых вакансий</b>:'],
       'ft.cJobsMix': ['{head} и похожая работа — сейчас <b>{n} вакансия</b>:', '{head} и похожая работа — сейчас <b>{n} вакансии</b>:', '{head} и похожая работа — сейчас <b>{n} вакансий</b>:'],

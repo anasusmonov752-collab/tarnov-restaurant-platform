@@ -1669,3 +1669,11 @@ bo'sh katak qolmasin, rus va o'zbek, har tugma mustaqil ishlasin").
   (4) story/postda "6 ta filial" — shahar nomi "Toshkent" filial sanalgan (`th-story.js`), aslida 5.
 - Tekshiruv: jonli 12 vakansiya nusxasi bilan webhook simulyatsiyasi (`/start`, 6 lavozim tugmasi, til, ovoz, "Orqaga",
   12 havola) uz va ru — jim tugma 0, server xatosi 0, til aralashuvi 0. Test `test/place.test.js`.
+
+**ANALITIKA: ISM — TELEGRAM AKKAUNTIGA HAVOLA** (2026-11-28, Anas: "so'nggi qadamlardagi ismni bossam, shu odamning
+Telegram akkauntiga o'tsin"). `Event.username` (start, lang, role hodisalarida `from.username`, faqat `[A-Za-z0-9_]{4,32}`).
+API (`agency.js usernames`) har odam uchun username'ni istalgan hodisasidan, bo'lmasa `Candidate.tgUsername` dan oladi.
+Panel: ism — `https://t.me/<username>` (hamma joyda ochiladi), username yo'q / eski yozuv — `tg://user?id=<id>` (Telegram
+ilovasini ochadi; akkaunt maxfiy bo'lsa Telegram o'zi ochmasligi mumkin — cheklov Telegramniki). Qatorning qolgan qismi
+avvalgidek odamning yo'lini ochadi; oynada "Telegramda yozish" tugmasi. Eski hodisalarda username yo'q — faqat yangi
+kirishlardan keyin t.me bo'ladi. Test `test/analytics.test.js`.

@@ -155,6 +155,22 @@ router.get('/storage', guard, asyncHandler(async (req, res) => {
 // Bitta savolga javob: odamlar qayerda tushib qolyapti?
 //   voronka (kohorta) · manba bo'yicha · anketaning qaysi savolida to'xtadi ·
 //   qaysi lavozimni qidirishadi · vakansiyani kim/qachon ko'rdi · so'nggi harakatlar
+// Telegram @username — panelda ism t.me havolasi bo'lsin (Anas, 2026-11-28). Har hodisada yozilmaydi
+// (faqat start/lang/role) — shu odamning istalgan hodisasidan, bo'lmasa nomzod profilidan (tgUsername)
+async function usernames(agencyId, ids) {
+  const Event = require('../models/Event');
+  const tg = [...new Set(ids.map(String).filter(Boolean))];
+  if (!tg.length) return {};
+  const [evs, cands] = await Promise.all([
+    Event.aggregate([{ $match: { agencyId, tgUserId: { $in: tg }, username: { $gt: '' } } }, { $sort: { at: -1 } },
+      { $group: { _id: '$tgUserId', u: { $first: '$username' } } }]),
+    Candidate.find({ restaurantId: agencyId, tgChatId: { $in: tg }, tgUsername: { $gt: '' } }, 'tgChatId tgUsername').lean()
+  ]);
+  const out = Object.fromEntries(cands.map(c => [String(c.tgChatId), c.tgUsername]));
+  for (const e of evs) out[e._id] = e.u;
+  return out;
+}
+
 router.get('/analytics', guard, asyncHandler(async (req, res) => {
   const agencyId = req.user.restaurantId;
   const days = [1, 7, 30, 90].includes(+req.query.days) ? +req.query.days : 7;
@@ -189,6 +205,7 @@ router.get('/analytics', guard, asyncHandler(async (req, res) => {
   const cRows = await Client.find({ agencyId, id: { $in: [...new Set(vRows.map(v => v.clientId))] } }, 'id name').lean();
   const cName = Object.fromEntries(cRows.map(c => [c.id, c.name]));
   const vById = Object.fromEntries(vRows.map(v => [v.id, v]));
+  const uName = await usernames(agencyId, recent.map(e => e.tgUserId));
   const chLabel = ch => survey.CHANNELS[ch] || (ch ? ch : 'Belgisiz');
   const refLabel = e => e.kind === 'role' ? (isValidRole(e.ref) ? roleLabel(e.ref) : e.ref)
     : (e.kind === 'view' || e.kind === 'apply') ? ((vById[e.ref] || {}).title || 'Vakansiya')
@@ -205,7 +222,7 @@ router.get('/analytics', guard, asyncHandler(async (req, res) => {
       client: cName[(vById[v.vacancyId] || {}).clientId] || '',
       closed: (vById[v.vacancyId] || {}).status === 'closed'
     })),
-    recent: recent.map(e => ({ tgUserId: e.tgUserId, name: e.name, kind: e.kind, label: track.KINDS[e.kind],
+    recent: recent.map(e => ({ tgUserId: e.tgUserId, name: e.name, username: uName[e.tgUserId] || '', kind: e.kind, label: track.KINDS[e.kind],
       ref: refLabel(e), channel: e.channel ? chLabel(e.channel) : '', candidateId: e.candidateId, at: e.at }))
   });
 }));
@@ -221,8 +238,10 @@ router.get('/analytics/user/:tg', guard, asyncHandler(async (req, res) => {
   const vT = Object.fromEntries(vRows.map(v => [v.id, v.title]));
   const candId = (evs.find(e => e.candidateId) || {}).candidateId || '';
   const cand = candId ? await Candidate.findOne({ restaurantId: agencyId, id: candId }, 'id fullName phone role status').lean() : null;
+  const uName = await usernames(agencyId, [req.params.tg]);
   res.json({
     name: (evs.find(e => e.name) || {}).name || '',
+    tgUserId: String(req.params.tg), username: uName[String(req.params.tg)] || '',
     candidate: cand,
     events: evs.map(e => ({ kind: e.kind, label: track.KINDS[e.kind], at: e.at, channel: e.channel,
       ref: e.kind === 'role' ? (isValidRole(e.ref) ? roleLabel(e.ref) : e.ref) : (vT[e.ref] || '') }))

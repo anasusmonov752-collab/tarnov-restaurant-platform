@@ -67,6 +67,8 @@
   .feed .tm{ color:var(--th-muted); font-size:12px; white-space:nowrap; width:76px; flex:0 0 auto; padding-top:2px; }
   .feed .tx{ flex:1; min-width:0; }
   .feed .tx b{ font-weight:600; }
+  .feed a.tgn{ font-weight:600; color:var(--th-link); text-decoration:none; }
+  .feed a.tgn:hover{ text-decoration:underline; }
   .feed .tx span{ color:var(--th-muted); }
   .tag{ display:inline-block; font-size:11px; padding:1px 7px; border-radius:6px; background:var(--th-fill); color:var(--th-muted); margin-left:4px; }
 
@@ -210,12 +212,17 @@ function drawVacancies(rows){
     </div>`).join('');
 }
 
+// Ism — Telegram akkauntiga havola (Anas, 2026-11-28): @username bo'lsa t.me (hamma joyda ochiladi),
+// bo'lmasa tg://user?id= — Telegram ilovasini ochadi (akkaunt yopiq bo'lsa Telegram o'zi ochmasligi mumkin)
+const tgHref = e => e.username ? 'https://t.me/' + encodeURIComponent(e.username) : (e.tgUserId ? 'tg://user?id=' + encodeURIComponent(e.tgUserId) : '');
+const tgName = e => { const h = tgHref(e), n = esc(e.name || 'Ismsiz');
+  return h ? `<a class="tgn" href="${esc(h)}" target="_blank" rel="noopener" title="${e.username ? '@' + esc(e.username) : 'Telegramda ochish'}">${n}</a>` : `<b>${n}</b>`; };
 function drawFeed(rows){
   if (!rows.length) { $('feed').innerHTML = '<div class="empty">Hali harakat yo\'q.</div>'; return; }
   $('feed').innerHTML = rows.map(e => `
     <div class="it" data-u="${esc(e.tgUserId)}">
       <div class="tm">${ago(e.at)}</div>
-      <div class="tx"><b>${esc(e.name || 'Ismsiz')}</b> — ${esc(e.label)}${e.ref ? ': <span>' + esc(e.ref) + '</span>' : ''}${e.channel && e.kind === 'start' ? ' <span class="tag">' + esc(e.channel) + '</span>' : ''}</div>
+      <div class="tx">${tgName(e)} —${esc(e.label)}${e.ref ? ': <span>' + esc(e.ref) + '</span>' : ''}${e.channel && e.kind === 'start' ? ' <span class="tag">' + esc(e.channel) + '</span>' : ''}</div>
     </div>`).join('');
 }
 
@@ -224,8 +231,11 @@ async function openUser(tg){
   try {
     const d = await api('/api/agency/analytics/user/' + encodeURIComponent(tg));
     $('mdBox').innerHTML = `<h3>${esc((d.candidate && d.candidate.fullName) || d.name || 'Ismsiz')}</h3>
-      <div class="sub" style="color:var(--th-muted);font-size:13px">${d.candidate ? 'Nomzod · ' + esc(d.candidate.phone || '') : 'Hali anketa tugatmagan'}</div>
-      ${d.candidate ? `<button class="th-btn" data-resume="${esc(d.candidate.id)}" style="margin-top:10px">Rezyumeni ochish</button>` : ''}
+      <div class="sub" style="color:var(--th-muted);font-size:13px">${d.candidate ? 'Nomzod · ' + esc(d.candidate.phone || '') : 'Hali anketa tugatmagan'}${d.username ? ' · @' + esc(d.username) : ''}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+        ${tgHref(d) ? `<a class="th-btn" href="${esc(tgHref(d))}" target="_blank" rel="noopener">Telegramda yozish</a>` : ''}
+        ${d.candidate ? `<button class="th-btn" data-resume="${esc(d.candidate.id)}">Rezyumeni ochish</button>` : ''}
+      </div>
       <div class="tl">${d.events.map(e => `<div>${esc(e.label)}${e.ref ? ': <b>' + esc(e.ref) + '</b>' : ''}<small>${ago(e.at)}</small></div>`).join('')}</div>`;
   } catch (e) { $('mdBox').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
 }
@@ -255,7 +265,7 @@ $('seg').addEventListener('click', e => {
   load();
 });
 $('vac').addEventListener('click', e => { const v = e.target.closest('.vac'); if (v) v.classList.toggle('open'); });
-$('feed').addEventListener('click', e => { const it = e.target.closest('.it'); if (it) openUser(it.dataset.u); });
+$('feed').addEventListener('click', e => { if (e.target.closest('a.tgn')) return; const it = e.target.closest('.it'); if (it) openUser(it.dataset.u); });   // ism — Telegram, qolgani — yo'l
 $('md').addEventListener('click', e => { if (e.target === $('md')) $('md').classList.remove('on'); });
 load();
 </script>

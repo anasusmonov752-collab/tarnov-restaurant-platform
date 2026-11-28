@@ -130,7 +130,7 @@ async function employerNames(agencyId, rows) {
  * Anketa shu lavozimniki bo'lsa (konstruktorda yaratilgan) — lavozim
  * savoli umuman so'ralmaydi, forma qisqaradi.
  */
-async function candidateRole({ agencyId, role, lang, tgUserId, chatId, appBase, isTest, name, chosenLang = '' }) {
+async function candidateRole({ agencyId, role, lang, tgUserId, chatId, appBase, isTest, name, username, chosenLang = '' }) {
   const { n, rows } = await openJobs(agencyId, role);
   // Shu lavozim anketasi bo'lsa o'sha, bo'lmasa umumiy (surveyForVacancy qoidasi)
   const survey = await Survey.findOne({ agencyId, role, active: true, isDefault: false }).lean()
@@ -149,7 +149,7 @@ async function candidateRole({ agencyId, role, lang, tgUserId, chatId, appBase, 
   r.role = role; r.offerIds = rows.map(v => v.id); r.updatedAt = new Date();
   await r.save();
   // Nomzod yo'li: qaysi lavozimni qidiryapti (services/track)
-  require('./track').track('role', { agencyId, tgUserId, ref: role, rid: r.id, channel: r.channel,
+  require('./track').track('role', { agencyId, tgUserId, ref: role, rid: r.id, channel: r.channel, username,
     name, isTest: r.isTest || !!isTest });
 
   // Ro'yxatdan tashqari ishlar ('boshqa'): sarlavha — ishning o'z nomi yoki "Boshqa ishlar"
@@ -485,7 +485,7 @@ async function handleCallback({ data, chatId, appBase, from }) {
     const isTest =(await require('./testMode').modeOf(tgUserId)) === 'candidate';
     // chosenLang — faqat odam O'ZI tanlagan til (bot tugmasi yoki profil); Telegram taxmini emas
     const r = await candidateRole({ agencyId: survey.agencyId, role: arg, lang, tgUserId, chatId, appBase, isTest,
-      name: from && from.first_name, chosenLang: (open && open.lang) || (cand && cand.lang) || '' });
+      name: from && from.first_name, username: from && from.username, chosenLang: (open && open.lang) || (cand && cand.lang) || '' });
     return { edit: r.text, keyboard: r.keyboard, html: true };
   }
 

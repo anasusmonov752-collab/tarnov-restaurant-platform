@@ -114,3 +114,19 @@ test('panel javobi: savol nomi, lavozim nomi, vakansiya sarlavhasi', async () =>
   assert.ok(out.dropAt.find(d => d.step === 'salary' && d.label && d.label !== 'salary'), JSON.stringify(out.dropAt));
   assert.equal(out.recent[0].label, track.KINDS.view);
 });
+
+test('So\'nggi harakatlar: ismda Telegram @username — boshqa hodisadan yoki nomzod profilidan', async () => {
+  await ev('u1', 'start', { channel: 'tg', name: 'Rano', username: '@rano_92' });
+  await ev('u1', 'open', { name: 'Rano' });                                  // bu hodisada username yo'q
+  await ev('u2', 'start', { channel: 'tg', name: 'Ali', username: 'bad name!' });   // noto'g'ri — yozilmaydi
+  await M.Candidate.create({ id: 'k3', restaurantId: A, fullName: 'Said', tgChatId: 'u3', tgUsername: 'said_uz' });
+  await ev('u3', 'start', { channel: 'sms', name: 'Said' });
+  const ag = require('../src/routes/agency');
+  const layer = ag.stack.find(l => l.route && l.route.path === '/analytics');
+  const h = layer.route.stack[layer.route.stack.length - 1].handle;
+  let out; await h({ user: { restaurantId: A }, query: { days: '7' } }, { json: j => { out = j; } }, e => { throw e; });
+  const by = id => out.recent.filter(e => e.tgUserId === id);
+  assert.ok(by('u1').every(e => e.username === 'rano_92'), JSON.stringify(by('u1')));
+  assert.equal(by('u2')[0].username, '');
+  assert.equal(by('u3')[0].username, 'said_uz');
+});

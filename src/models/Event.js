@@ -12,6 +12,7 @@ const EventSchema = new mongoose.Schema({
   ref:         { type: String, default: '' },      // lavozim | vakansiya id
   channel:     { type: String, default: '' },      // qayerdan kelgan (survey.CHANNELS)
   name:        { type: String, default: '' },      // Telegram ismi — panelda "kim"
+  username:    { type: String, default: '' },      // Telegram @username — panelda ism t.me havolasi (2026-11-28)
   rid:         { type: String, default: '' },      // SurveyResponse id
   candidateId: { type: String, default: '' },
   isTest:      { type: Boolean, default: false },  // admin test rejimi — analitikaga kirmaydi

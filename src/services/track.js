@@ -35,6 +35,7 @@ async function record(kind, o = {}) {
   await Event.create({
     agencyId: o.agencyId, tgUserId, kind, ref,
     channel: String(o.channel || ''), name: String(o.name || '').slice(0, 60),
+    username: (/^[A-Za-z0-9_]{4,32}$/.exec(String(o.username || '').replace(/^@/, '')) || [''])[0],
     rid: String(o.rid || ''), candidateId: String(o.candidateId || ''),
     isTest: !!o.isTest, at: o.at || new Date()
   });

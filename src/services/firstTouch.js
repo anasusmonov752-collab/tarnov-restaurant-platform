@@ -64,7 +64,9 @@ function roleRows(lang, prefix, counts) {
 // ══ NOMZOD ═══════════════════════════════════════════════════
 
 /** Shu lavozimdagi ochiq ishlar — nomzod kabinetidagi ro'yxat qoidasi bilan bir xil */
-async function openJobs(agencyId, role, limit = 3) {
+// 5 — eng uzun lavozim ekrani ~790 belgi < 1024 (izoh chegarasi). 2026-11-28: 3 bo'lganda Oshpaz bo'limida
+// Salatchi va Shef-povar ko'rinmas va arizasiz qolardi (offerIds = ko'rsatilganlar)
+async function openJobs(agencyId, role, limit = 5) {
   const fresh = new Date(Date.now() - vac.STALE_DAYS * 864e5);
   const q = { agencyId, status: 'open', listed: { $ne: false }, confirmedAt: { $gte: fresh }, isTest: { $ne: true } };
   // 'boshqa' — ro'yxatdan tashqari HAR QANDAY ish (Vacancy.role default 'boshqa', bo'sh yoki eski kalit ham)
@@ -99,7 +101,7 @@ function jobBlocks(rows, lang, { role = '', emp = {} } = {}) {
   const label = role ? T(lang, 'role.' + role).toLowerCase() : '';
   const own = v => !!label && splitTitle(vac.titleFor(v, lang))[0].toLowerCase().startsWith(label);
   const sorted = rows.slice().sort((a, b) => own(b) - own(a));
-  const locs = [...new Set(sorted.map(v => String(v.location || '').trim()))];
+  const locs = [...new Set(sorted.map(v => I18N.place(String(v.location || '').trim(), lang)))];
   const oneLoc = locs.length === 1 ? locs[0] : '';
   const blocks = sorted.map((v, i) => {
     const [main, note] = splitTitle(vac.titleFor(v, lang));
@@ -108,7 +110,7 @@ function jobBlocks(rows, lang, { role = '', emp = {} } = {}) {
       `${i + 1}. <b>${esc(main)}</b>${emp[v.clientId] ? ' · ' + esc(emp[v.clientId]) : ''}`,
       note ? `<i>${esc(note)}</i>` : '',
       money ? '💰 ' + esc(money) : '',
-      !oneLoc && v.location ? '📍 ' + esc(v.location) : ''
+      !oneLoc && v.location ? '📍 ' + esc(I18N.place(v.location, lang)) : ''
     ].filter(Boolean).join('\n');
   });
   if (oneLoc) blocks.push('📍 ' + esc(oneLoc));

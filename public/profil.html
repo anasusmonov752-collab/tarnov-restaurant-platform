@@ -1310,6 +1310,9 @@ const salLine = v => v.salaryText
   ? esc(v.salaryText).replace(/ (\/ \S+)$/, ' <small>$1</small>')
   : '';
 
+// Tajriba qatori: bo'sh (null) — "ko'rsatilmagan", qator chiqmaydi; faqat 0 — "shart emas".
+// 2026-11-28: Salatchi talabida "6 oydan tajriba", maydon bo'sh — nomzodga "shart emas" ham chiqardi (zid)
+const expTxt = v => v.minExp ? t('cb.expFrom', { n: v.minExp }) : v.minExp === 0 ? t('cb.notReq') : '';
 // Yosh oralig'i — ikkala sahifada bir xil
 const ageOf = v => v.minAge && v.maxAge ? t('cb.ageRange', { a: v.minAge, b: v.maxAge })
   : v.minAge ? t('cb.ageFrom', { n: v.minAge }) : v.maxAge ? t('cb.ageTo', { n: v.maxAge }) : '';
@@ -1326,7 +1329,7 @@ function vacancyHtml(v){
     kv('cb.vNeed', v.headcount > 1 ? t('cb.people', { n: v.headcount }) : '')
   ].join('');
   const need = [
-    kv('cb.fExp', v.minExp ? t('cb.expFrom', { n: v.minExp }) : t('cb.notReq')),
+    kv('cb.fExp', expTxt(v)),
     kv('cb.fAge', ageOf(v)),
     kv('cb.fLangs', (v.languages || []).join(', '))
   ].join('');
@@ -1368,7 +1371,7 @@ const VP_IC = {
 function vacPageHtml(v){
   const facts = [
     ['cb.fShift', vShift(v.shift)], ['cb.vSched', v.schedule], ['cb.vPay', v.payoutText],
-    ['cb.fExp', v.minExp ? t('cb.expFrom', { n: v.minExp }) : t('cb.notReq')], ['cb.fAge', ageOf(v)],
+    ['cb.fExp', expTxt(v)], ['cb.fAge', ageOf(v)],
     ['cb.vStart', v.startDate ? dLong(v.startDate) : ''], ['cb.vNeed', v.headcount > 1 ? t('cb.people', { n: v.headcount }) : ''],
     ['cb.fLangs', (v.languages || []).join(', ')]
   ].filter(f => f[1]);

@@ -179,7 +179,9 @@
     // Eng ko'p to'lanadigani birinchi va ko'k (ko'z birinchi shunga tushadi)
     tiles.sort((a, b) => b._v - a._v);
     if (tiles[0]) tiles[0].hot = true;
-    const locs = [...new Set(rows.flatMap(v => String(v.location || '').split(/\s*[,;·]\s*/)).map(s => s.trim()).filter(Boolean))];
+    // Filiallar — shahar nomi ("Toshkent") filial emas: 2026-11-28 postda "6 ta filial" chiqdi, aslida 5
+    const locs = [...new Set(rows.flatMap(v => String(v.location || '').split(/\s*[,;·]\s*/)).map(s => s.trim())
+      .filter(s => s && !/^(toshkent|tashkent|ташкент)$/i.test(s)))];
     const locTxt = locs.map(s => lang === 'ru' ? (RU_PLACE[s.toLowerCase()] || s) : s).join(' · ');
     const payouts = [...new Set(rows.map(v => v.payout).filter(Boolean))];
     const sub = [locs.length > 1 ? T.branches(locs.length) : '', payouts.length === 1 ? T.payout[payouts[0]] || '' : ''].filter(Boolean).join(' · ');

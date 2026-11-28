@@ -166,7 +166,7 @@ test('/start birinchi ekrani: nomzod matni (agentlik tavsifisiz), haqiqiy ishlar
   const ru = await scr({ lang: 'ru', from: {}, agencyId: 'agH',
     v: { id: 'h1', title: 'Ofitsiant', role: 'ofitsiant', location: 'Chilonzor', salaryFrom: 4e6, salaryTo: 5e6 } });
   assert.match(ru.text, /^\ud83d\udc4b \u0417\u0434\u0440\u0430\u0432\u0441\u0442\u0432\u0443\u0439\u0442\u0435!/);
-  assert.match(ru.text, /Chilonzor/);
+  assert.match(ru.text, /Чиланзар/);                 // joy ruschada kirillda (I18N.place)
   assert.match(ru.text, /\u041e\u0442\u043a\u043b\u0438\u043a \u0443\u0439\u0434\u0451\u0442/);   // "Otklik uydyot na etu vakansiyu srazu"
   assert.ok(!/\u0432\u0430\u043a\u0430\u043d\u0441\u0438\u0439:/.test(ru.text));                     // ro'yxat emas
   assert.equal(ru.rows.length, 3);

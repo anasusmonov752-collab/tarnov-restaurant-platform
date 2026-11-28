@@ -1651,3 +1651,21 @@ bo'lmasin, uslubda ham — professional dizayner"; "oylikni bekitish ham bo'lsin
   bo'lmasa "Maosh — suhbatda". Maoshsiz vakansiya ham tanlanadigan bo'ladi. To'qima matn yo'q.
 - Lokal: 5 uslub x (4 lavozim / 1 lavozim) x (maosh bor / yashirin) x uz/ru headless Chrome'da 432 px kenglikda
   ko'rildi; Chat va Blok video — MP4, ~10 s, 1.0–1.4 MB. Jonli serverda HALI KO'RILMAGAN.
+
+**VAKANSIYALAR AUDITI VA TO'LDIRISH** (2026-11-28, Anas: "e'lon qo'yyapman — har vakansiyani sinchiklab tekshir,
+bo'sh katak qolmasin, rus va o'zbek, har tugma mustaqil ishlasin").
+- **Jonli baza (panel API, Chrome sessiyasi):** 14 ochiq, 12 tasi botda (2 tasi sinov mijozlariniki, `listed:false` — tegilmadi).
+- **To'ldirildi (PATCH /api/vacancies/:id, uz+ru):** Call operator — majburiyat, talab, jalb qatori, shartlar, joy tavsifi,
+  grafik formati, ruscha hammasi (sarlavha "Оператор call-центра", mo'ljal); Shashlikchi — majburiyat, talab, jalb, shartlar,
+  joy; HR-rekruter — jalb, shartlar, joy; Buyurtma yig'uvchi — 3-talab. Faqat bazadagi faktlar (maosh, to'lov kuni, perks) —
+  grafik/ovqat to'qilmadi. Ruscha xato "выберете" -> "выберите" (5 vakansiya).
+- **Anas aytishi kerak (bo'sh, fakt):** Shashlikchi grafigi; Konditer va Shef-povar — maosh kuni, grafik, shartlar;
+  Servis menejeri — maosh kuni.
+- **Kod nuqsonlari (bot bosib chiqilganda topildi):** (1) ruscha botda joy lotincha ("📍 Sebzor, Drujba...") —
+  `I18N.place` (th-i18n, YAGONA): bot ro'yxati, vakansiya havolasi, kabinet (`forCandidate.where`); (2) lavozim ekrani
+  3 ta ish ko'rsatardi — Oshpaz'da Salatchi va Shef-povar ko'rinmas va arizasiz (offerIds = ko'rsatilganlar) edi;
+  `openJobs` limit 5 (eng uzun ekran ~790 belgi < 1024); (3) tajriba maydoni bo'sh (null) kabinetda "shart emas" deb
+  chiqardi — Salatchi talabi "6 oydan" bilan zid; endi faqat 0 = "shart emas", null — qator yo'q (`profil.html expTxt`);
+  (4) story/postda "6 ta filial" — shahar nomi "Toshkent" filial sanalgan (`th-story.js`), aslida 5.
+- Tekshiruv: jonli 12 vakansiya nusxasi bilan webhook simulyatsiyasi (`/start`, 6 lavozim tugmasi, til, ovoz, "Orqaga",
+  12 havola) uz va ru — jim tugma 0, server xatosi 0, til aralashuvi 0. Test `test/place.test.js`.

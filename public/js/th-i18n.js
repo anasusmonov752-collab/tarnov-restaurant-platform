@@ -2732,6 +2732,17 @@
     }).join(' · ');
   }
 
+  // Joy nomlari (Vacancy.location — ruscha nusxasi yo'q): rus tilidagi o'quvchiga kirillda.
+  // 2026-11-28: ruscha botda "📍 Sebzor, Drujba, Chorsu..." lotincha chiqardi. Bilmagan nom — o'z holicha.
+  const PLACE_RU = { sebzor: 'Себзар', drujba: 'Дружба', chorsu: 'Чорсу', keles: 'Келес', istirohat: 'Истирохат',
+    toshkent: 'Ташкент', chilonzor: 'Чиланзар', yunusobod: 'Юнусабад', sergeli: 'Сергели', olmazor: 'Алмазар',
+    mirobod: 'Мирабад', yakkasaroy: 'Яккасарай', "mirzo ulug'bek": 'Мирзо-Улугбек', shayxontohur: 'Шайхантахур',
+    uchtepa: 'Учтепа', bektemir: 'Бектемир', yashnobod: 'Яшнабад', yangihayot: 'Янгихаёт', qoyliq: 'Куйлюк', "qo'yliq": 'Куйлюк' };
+  function place(text, lang) {
+    if (lang !== 'ru' || !text) return text || '';
+    return String(text).split(/(\s*[,;·]\s*)/).map(p => PLACE_RU[p.trim().toLowerCase().replace(/[’ʻʼ`]/g, "'")] || p).join('');
+  }
+
   // Avtomatik vakansiya sarlavhasi: "Ofitsiant, kechki smena".
   // Server (vacancyAuto.makeTitle) ham, Mini App formasi ham shundan.
   function vacTitle(role, shift, lang) {
@@ -2749,6 +2760,6 @@
   const WORK_DURS = ['lt6', 'm6_12', 'y1_3', 'y3_5', 'y5'];
   const DUR_MONTHS = { lt6: 0, m6_12: 6, y1_3: 12, y3_5: 36, y5: 60 };
 
-  return { LANGS, D, t: tr, ruForm, fromTelegram, errText, vacTitle, resolve, perksText, PERK_KEYS,
+  return { LANGS, D, t: tr, ruForm, fromTelegram, errText, vacTitle, resolve, perksText, place, PERK_KEYS,
            WORK_ROLES, WORK_DURS, DUR_MONTHS };
 });

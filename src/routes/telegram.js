@@ -720,7 +720,7 @@ async function startSurvey(msg, chatId, ank, appBase) {
     const known = await Candidate.findOne({ restaurantId: v.agencyId, tgChatId: chatId, tgState: 'linked' }).lean();
     if (known && String(known.fullName || '').trim() && require('../services/applyReveal').validPhone(known.phone || '')) {
       const L = I18N.resolve(known.lang, known.tgLang || (msg.from && msg.from.language_code));
-      const meta = [v.location, vac.salaryText(v, L)].filter(Boolean).join(' · ');
+      const meta = [I18N.place(v.location, L), vac.salaryText(v, L)].filter(Boolean).join(' · ');
       const first = String((msg.from && msg.from.first_name) || '').trim().slice(0, 30);
       await tg.sendMessage(token, chatId, [
         T(L, 'ank.hookHi', { name: first ? ', ' + escHtml(first) : '' }), '',
@@ -792,7 +792,7 @@ async function firstScreen({ lang, from, agencyId, v, closed, r, appBase }) {
   const first = String((from && from.first_name) || '').trim().slice(0, 30);
 
   if (v) {
-    const meta = [v.location, vac.salaryText(v, lang)].filter(Boolean).join(' · ');
+    const meta = [I18N.place(v.location, lang), vac.salaryText(v, lang)].filter(Boolean).join(' · ');
     const text = [
       T(lang, 'ank.hookHi', { name: first ? ', ' + escHtml(first) : '' }),
       T(lang, 'ft.cIntro'), '',

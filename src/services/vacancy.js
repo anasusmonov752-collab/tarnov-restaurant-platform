@@ -225,7 +225,7 @@ function full(v, extra = {}, lang) {
  * `lang` — nomzod tili (kabinet): sarlavha, maosh, to'lov, afzalliklar shu tilda.
  */
 function forCandidate(v, client, lang = 'uz') {
-  const where = v.location || (client && client.location) || '';
+  const where = I18N.place(v.location || (client && client.location) || '', lang);   // ruscha — kirillda
   // Ishonch belgisi faqat haqiqat bo'lsa: agentlik ish beruvchiga qo'ng'iroq
   // qilib tekshirgan (verifiedAt) yoki vakansiyani ish beruvchining o'zi
   // tasdiqlagan (faol mijoz). Aks holda — faqat "qachon joylangan".

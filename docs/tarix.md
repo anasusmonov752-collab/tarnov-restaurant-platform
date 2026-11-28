@@ -1677,3 +1677,7 @@ Panel: ism — `https://t.me/<username>` (hamma joyda ochiladi), username yo'q /
 ilovasini ochadi; akkaunt maxfiy bo'lsa Telegram o'zi ochmasligi mumkin — cheklov Telegramniki). Qatorning qolgan qismi
 avvalgidek odamning yo'lini ochadi; oynada "Telegramda yozish" tugmasi. Eski hodisalarda username yo'q — faqat yangi
 kirishlardan keyin t.me bo'ladi. Test `test/analytics.test.js`.
+- **Tuzatish (o'sha kun, jonli sinovdan keyin):** `tg://user?id=` ISHLAMAYDI — Anas bosdi: Telegram ochildi, profil
+  ochilmadi (Telegram faqat "tanish" akkauntni ID bilan ochadi; nomzod bot bilan yozishgan, agentlik bilan emas).
+  Endi: username -> `t.me/<u>`; username yo'q — telefon (nomzod profili yoki anketa yozuvi) -> `t.me/+998...`;
+  ikkalasi yo'q — havola YO'Q, ustida sababi ("username yo'q, telefon hali kiritilmagan"). `agency.js tgContacts`.

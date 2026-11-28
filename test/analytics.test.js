@@ -121,6 +121,10 @@ test('So\'nggi harakatlar: ismda Telegram @username — boshqa hodisadan yoki no
   await ev('u2', 'start', { channel: 'tg', name: 'Ali', username: 'bad name!' });   // noto'g'ri — yozilmaydi
   await M.Candidate.create({ id: 'k3', restaurantId: A, fullName: 'Said', tgChatId: 'u3', tgUsername: 'said_uz' });
   await ev('u3', 'start', { channel: 'sms', name: 'Said' });
+  // username yo'q, anketada telefon bor — t.me/+998... uchun
+  const sv = await require('../src/services/survey').ensureDefault(A);
+  await M.SurveyResponse.create({ id: 'r4', agencyId: A, surveyId: sv.id, tgUserId: 'u4', status: 'started', phone: '+998 90 123 45 67' });
+  await ev('u4', 'start', { channel: 'tg', name: 'Lola' });
   const ag = require('../src/routes/agency');
   const layer = ag.stack.find(l => l.route && l.route.path === '/analytics');
   const h = layer.route.stack[layer.route.stack.length - 1].handle;
@@ -129,4 +133,7 @@ test('So\'nggi harakatlar: ismda Telegram @username — boshqa hodisadan yoki no
   assert.ok(by('u1').every(e => e.username === 'rano_92'), JSON.stringify(by('u1')));
   assert.equal(by('u2')[0].username, '');
   assert.equal(by('u3')[0].username, 'said_uz');
+  assert.equal(by('u4')[0].username, '');
+  assert.equal(by('u4')[0].phone, '998901234567');
+  assert.equal(by('u2')[0].phone, '');
 });

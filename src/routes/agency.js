@@ -155,19 +155,27 @@ router.get('/storage', guard, asyncHandler(async (req, res) => {
 // Bitta savolga javob: odamlar qayerda tushib qolyapti?
 //   voronka (kohorta) · manba bo'yicha · anketaning qaysi savolida to'xtadi ·
 //   qaysi lavozimni qidirishadi · vakansiyani kim/qachon ko'rdi · so'nggi harakatlar
-// Telegram @username — panelda ism t.me havolasi bo'lsin (Anas, 2026-11-28). Har hodisada yozilmaydi
-// (faqat start/lang/role) — shu odamning istalgan hodisasidan, bo'lmasa nomzod profilidan (tgUsername)
-async function usernames(agencyId, ids) {
+// Telegram akkauntini ochish uchun (Anas, 2026-11-28): @username — t.me/<u> har doim ochiladi; username yo'q bo'lsa
+// telefon — t.me/+998... (Telegram raqam bo'yicha ochadi, odam yopmagan bo'lsa). tg://user?id= ISHLAMAYDI: Telegram
+// faqat "tanish" akkauntni ochadi, nomzod esa bot bilan yozishgan, agentlik bilan emas (jonli sinaldi).
+// Manba: hodisalar (start/lang/role), nomzod profili (tgUsername, phone), anketa yozuvi (phone).
+const phone12 = p => { let d = String(p || '').replace(/\D/g, ''); if (d.length === 9) d = '998' + d; return /^998\d{9}$/.test(d) ? d : ''; };
+async function tgContacts(agencyId, ids) {
   const Event = require('../models/Event');
+  const SurveyResponse = require('../models/SurveyResponse');
   const tg = [...new Set(ids.map(String).filter(Boolean))];
   if (!tg.length) return {};
-  const [evs, cands] = await Promise.all([
+  const [evs, cands, resps] = await Promise.all([
     Event.aggregate([{ $match: { agencyId, tgUserId: { $in: tg }, username: { $gt: '' } } }, { $sort: { at: -1 } },
       { $group: { _id: '$tgUserId', u: { $first: '$username' } } }]),
-    Candidate.find({ restaurantId: agencyId, tgChatId: { $in: tg }, tgUsername: { $gt: '' } }, 'tgChatId tgUsername').lean()
+    Candidate.find({ restaurantId: agencyId, tgChatId: { $in: tg } }, 'tgChatId tgUsername phone').lean(),
+    SurveyResponse.find({ agencyId, tgUserId: { $in: tg }, phone: { $gt: '' } }, 'tgUserId phone').lean()
   ]);
-  const out = Object.fromEntries(cands.map(c => [String(c.tgChatId), c.tgUsername]));
-  for (const e of evs) out[e._id] = e.u;
+  const out = {};
+  const put = (id, k, v) => { if (v) (out[id] = out[id] || {})[k] = out[id][k] || v; };
+  for (const e of evs) put(e._id, 'username', e.u);
+  for (const c of cands) { put(String(c.tgChatId), 'username', c.tgUsername); put(String(c.tgChatId), 'phone', phone12(c.phone)); }
+  for (const r of resps) put(String(r.tgUserId), 'phone', phone12(r.phone));
   return out;
 }
 
@@ -205,7 +213,7 @@ router.get('/analytics', guard, asyncHandler(async (req, res) => {
   const cRows = await Client.find({ agencyId, id: { $in: [...new Set(vRows.map(v => v.clientId))] } }, 'id name').lean();
   const cName = Object.fromEntries(cRows.map(c => [c.id, c.name]));
   const vById = Object.fromEntries(vRows.map(v => [v.id, v]));
-  const uName = await usernames(agencyId, recent.map(e => e.tgUserId));
+  const tgC = await tgContacts(agencyId, recent.map(e => e.tgUserId));
   const chLabel = ch => survey.CHANNELS[ch] || (ch ? ch : 'Belgisiz');
   const refLabel = e => e.kind === 'role' ? (isValidRole(e.ref) ? roleLabel(e.ref) : e.ref)
     : (e.kind === 'view' || e.kind === 'apply') ? ((vById[e.ref] || {}).title || 'Vakansiya')
@@ -222,7 +230,7 @@ router.get('/analytics', guard, asyncHandler(async (req, res) => {
       client: cName[(vById[v.vacancyId] || {}).clientId] || '',
       closed: (vById[v.vacancyId] || {}).status === 'closed'
     })),
-    recent: recent.map(e => ({ tgUserId: e.tgUserId, name: e.name, username: uName[e.tgUserId] || '', kind: e.kind, label: track.KINDS[e.kind],
+    recent: recent.map(e => ({ tgUserId: e.tgUserId, name: e.name, username: (tgC[e.tgUserId] || {}).username || '', phone: (tgC[e.tgUserId] || {}).phone || '', kind: e.kind, label: track.KINDS[e.kind],
       ref: refLabel(e), channel: e.channel ? chLabel(e.channel) : '', candidateId: e.candidateId, at: e.at }))
   });
 }));
@@ -238,10 +246,10 @@ router.get('/analytics/user/:tg', guard, asyncHandler(async (req, res) => {
   const vT = Object.fromEntries(vRows.map(v => [v.id, v.title]));
   const candId = (evs.find(e => e.candidateId) || {}).candidateId || '';
   const cand = candId ? await Candidate.findOne({ restaurantId: agencyId, id: candId }, 'id fullName phone role status').lean() : null;
-  const uName = await usernames(agencyId, [req.params.tg]);
+  const tgC = (await tgContacts(agencyId, [req.params.tg]))[String(req.params.tg)] || {};
   res.json({
     name: (evs.find(e => e.name) || {}).name || '',
-    tgUserId: String(req.params.tg), username: uName[String(req.params.tg)] || '',
+    tgUserId: String(req.params.tg), username: tgC.username || '', phone: tgC.phone || '',
     candidate: cand,
     events: evs.map(e => ({ kind: e.kind, label: track.KINDS[e.kind], at: e.at, channel: e.channel,
       ref: e.kind === 'role' ? (isValidRole(e.ref) ? roleLabel(e.ref) : e.ref) : (vT[e.ref] || '') }))

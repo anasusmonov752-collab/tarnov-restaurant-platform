@@ -1693,3 +1693,11 @@ YOZMA vs OVOZ (o'sha o'lchov): tugatganlar 52 yozma (96%), 2 ovoz (4%) — ikkal
 - **"Ish tajribangiz bormi?" soddalashtirildi** (Anas: "tushunarsiz"): javoblar "Ha, bor" / "Yo'q, tajribasizman"
   (ru "Да, есть" / "Нет, без опыта"); izoh faqat "Ha" ostida ("Qayerda ishlaganingizni yozasiz"), sarlavha osti izohi va
   "Yo'q" osti izohi olib tashlandi (bo'sh kalit — element chizilmaydi). Lokal bosildi: "Yo'q" -> `lastJob:none`, keyingi savol.
+
+## Kabinet "Javob berish" — bot savoli qayta yuboriladi (2026-11-28)
+Nomzod (Muborak, 3 ta ariza) panel chatiga yozdi: "HR da 2 ta savol bor deb yozilgan. Javob berishni bossam kirmayapti".
+Sabab: kartadagi tugma `TG.openTelegramLink('t.me/TalentHubUzBot')` qilardi — Mini App shu botning o'zidan ochilgan,
+ko'p qurilmada bu hech narsa qilmaydi; ochilsa ham savol xabari chat tarixida yuqorida ko'milgan.
+Endi: `POST /api/cand/applications/:id/screen` -> `prescreen.resend` joriy savolni (step bo'yicha, tugmalari bilan)
+chatning ENG PASTIGA qayta yuboradi (`screen.resentAt`, 20 s da bir marta), kabinet `TG.close()` bilan yopiladi.
+Eski xabar tugmalari ham ishlaydi (handleCallback step'ni tekshiradi). Test: `prescreen.test.js` (9/9).

@@ -245,17 +245,11 @@ router.get('/analytics/user/:tg', guard, asyncHandler(async (req, res) => {
   const vRows = vIds.length ? await Vacancy.find({ agencyId, id: { $in: vIds } }, 'id title').lean() : [];
   const vT = Object.fromEntries(vRows.map(v => [v.id, v.title]));
   const candId = (evs.find(e => e.candidateId) || {}).candidateId || '';
-  // Nomzod hodisada bo'lmasa ham (SMS taklifi va h.k.) — Telegram ID bo'yicha
-  const cand = await Candidate.findOne(candId ? { restaurantId: agencyId, id: candId } : { restaurantId: agencyId, tgChatId: String(req.params.tg) },
-    'id fullName phone role status tgState tgChatId').lean();
-  // Bot orqali yozish (botRelay.canSend) — nomzodga har doim yetadigan YAGONA yo'l, javobi panelga qaytadi
-  const chatErr = cand ? require('../services/botRelay').canSend(cand) : 'Hali anketa tugatmagan';
-  if (cand) delete cand.tgChatId;
+  const cand = candId ? await Candidate.findOne({ restaurantId: agencyId, id: candId }, 'id fullName phone role status').lean() : null;
   const tgC = (await tgContacts(agencyId, [req.params.tg]))[String(req.params.tg)] || {};
   res.json({
     name: (evs.find(e => e.name) || {}).name || '',
     tgUserId: String(req.params.tg), username: tgC.username || '', phone: tgC.phone || '',
-    canChat: !chatErr, chatErr: chatErr || '',
     candidate: cand,
     events: evs.map(e => ({ kind: e.kind, label: track.KINDS[e.kind], at: e.at, channel: e.channel,
       ref: e.kind === 'role' ? (isValidRole(e.ref) ? roleLabel(e.ref) : e.ref) : (vT[e.ref] || '') }))

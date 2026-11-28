@@ -85,17 +85,6 @@
   .tl div{ position:relative; padding:6px 0; font-size:14px; }
   .tl div::before{ content:''; position:absolute; left:-20px; top:12px; width:10px; height:10px; border-radius:50%; background:var(--th-brand); }
   .tl small{ color:var(--th-muted); display:block; }
-  .bc{ margin-top:14px; border:1px solid var(--th-line); border-radius:14px; padding:12px; }
-  .bc-h{ font-weight:600; font-size:14px; margin-bottom:8px; }
-  .bc-h span{ font-weight:400; color:var(--th-muted); font-size:12px; margin-left:6px; }
-  .bc-th{ max-height:240px; overflow:auto; display:flex; flex-direction:column; gap:6px; margin-bottom:8px; }
-  .bc-m{ max-width:85%; padding:7px 10px; border-radius:12px; font-size:14px; white-space:pre-wrap; background:var(--th-fill); align-self:flex-start; }
-  .bc-m.out{ background:var(--th-brand); color:#fff; align-self:flex-end; }
-  .bc-m.err{ background:var(--th-danger-soft); color:var(--th-danger); align-self:flex-end; }
-  .bc-m small{ display:block; font-size:11px; opacity:.7; margin-top:2px; }
-  .bc-n{ color:var(--th-muted); font-size:13px; }
-  .bc-f{ display:flex; gap:8px; align-items:flex-end; }
-  .bc-f textarea{ flex:1; resize:vertical; border:1px solid var(--th-line); border-radius:10px; padding:8px 10px; font:inherit; font-size:14px; background:var(--th-surface); color:var(--th-ink); }
   @media (max-width:760px){
     .inner{ padding:16px 14px 64px; }
     .fun{ grid-template-columns:repeat(2, minmax(0,1fr)); }
@@ -223,20 +212,20 @@ function drawVacancies(rows){
     </div>`).join('');
 }
 
-// Odamga yetish (Anas, 2026-11-28). Jonli sinovdan: tg://user?id= — Telegram ochiladi, profil ochilmaydi ("tanish"
-// akkauntgina); t.me/+998... — "bunday foydalanuvchi yo'q" (raqam bo'yicha qidirish yopiq yoki boshqa raqam).
-// Ishonchli: (1) @username — t.me/<u>; (2) BOT ORQALI YOZISH — anketa tugatgan nomzodga bot har doim yetadi, javobi
-// shu oynaga qaytadi (recruitment tg/message, tg/thread). Raqam havolasi — oynada, izohi bilan, oxirgi chora.
-const tgUser = e => e.username ? 'https://t.me/' + encodeURIComponent(e.username) : '';
-const tgName = e => { const h = tgUser(e), n = esc(e.name || 'Ismsiz');
-  return h ? `<a class="tgn" href="${esc(h)}" target="_blank" rel="noopener" title="@${esc(e.username)} — Telegramda ochish">${n}</a>`
-    : `<b title="Bosing — yo'li va bot orqali yozish">${n}</b>`; };
+// Ism — Telegram akkauntiga havola (Anas, 2026-11-28): @username — t.me/<u> (har doim ochiladi); bo'lmasa telefon —
+// t.me/+998... (raqam bo'yicha). tg://user?id= ISHLATILMAYDI: Telegram faqat "tanish" akkauntni ochadi — jonli sinaldi,
+// ilova ochilib, profil ochilmadi. Ikkalasi ham yo'q bo'lsa — havola yo'q, sababi ustida.
+const NO_TG = "Telegram akkauntini ochib bo'lmaydi: username yo'q, telefon hali kiritilmagan";
+const tgHref = e => e.username ? 'https://t.me/' + encodeURIComponent(e.username) : (e.phone ? 'https://t.me/+' + e.phone : '');
+const tgName = e => { const h = tgHref(e), n = esc(e.name || 'Ismsiz');
+  return h ? `<a class="tgn" href="${esc(h)}" target="_blank" rel="noopener" title="${e.username ? '@' + esc(e.username) : 'Telefon orqali: +' + esc(e.phone)}">${n}</a>`
+    : `<b title="${esc(NO_TG)}">${n}</b>`; };
 function drawFeed(rows){
   if (!rows.length) { $('feed').innerHTML = '<div class="empty">Hali harakat yo\'q.</div>'; return; }
   $('feed').innerHTML = rows.map(e => `
     <div class="it" data-u="${esc(e.tgUserId)}">
       <div class="tm">${ago(e.at)}</div>
-      <div class="tx">${tgName(e)} — ${esc(e.label)}${e.ref ? ': <span>' + esc(e.ref) + '</span>' : ''}${e.channel && e.kind === 'start' ? ' <span class="tag">' + esc(e.channel) + '</span>' : ''}</div>
+      <div class="tx">${tgName(e)} —${esc(e.label)}${e.ref ? ': <span>' + esc(e.ref) + '</span>' : ''}${e.channel && e.kind === 'start' ? ' <span class="tag">' + esc(e.channel) + '</span>' : ''}</div>
     </div>`).join('');
 }
 
@@ -247,41 +236,11 @@ async function openUser(tg){
     $('mdBox').innerHTML = `<h3>${esc((d.candidate && d.candidate.fullName) || d.name || 'Ismsiz')}</h3>
       <div class="sub" style="color:var(--th-muted);font-size:13px">${d.candidate ? 'Nomzod · ' + esc(d.candidate.phone || '') : 'Hali anketa tugatmagan'}${d.username ? ' · @' + esc(d.username) : ''}</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-        ${tgUser(d) ? `<a class="th-btn" href="${esc(tgUser(d))}" target="_blank" rel="noopener">Telegramda ochish</a>` : ''}
+        ${tgHref(d) ? `<a class="th-btn" href="${esc(tgHref(d))}" target="_blank" rel="noopener">Telegramda yozish</a>` : `<span style="color:var(--th-muted);font-size:13px">${esc(NO_TG)}</span>`}
         ${d.candidate ? `<button class="th-btn" data-resume="${esc(d.candidate.id)}">Rezyumeni ochish</button>` : ''}
       </div>
-      ${d.canChat ? `<div class="bc">
-          <div class="bc-h">Bot orqali yozish <span>javobi shu yerga keladi</span></div>
-          <div class="bc-th" id="bcTh"><div class="bc-n">Yuklanmoqda…</div></div>
-          <div class="bc-f"><textarea id="bcTx" rows="2" placeholder="Xabar…"></textarea><button class="th-btn" id="bcGo">Yuborish</button></div>
-        </div>` : `<div class="bc-n" style="margin-top:12px">Bot orqali yozib bo'lmaydi: ${esc(d.chatErr)}.</div>`}
-      ${!tgUser(d) && d.phone ? `<div class="bc-n" style="margin-top:8px"><a href="https://t.me/+${esc(d.phone)}" target="_blank" rel="noopener">Raqam orqali Telegramda ochish</a> — odam raqam bo'yicha qidirishni yopgan bo'lsa, Telegram "topilmadi" deydi.</div>` : ''}
       <div class="tl">${d.events.map(e => `<div>${esc(e.label)}${e.ref ? ': <b>' + esc(e.ref) + '</b>' : ''}<small>${ago(e.at)}</small></div>`).join('')}</div>`;
-    if (d.canChat) botChat(d.candidate.id);
   } catch (e) { $('mdBox').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
-}
-// Bot orqali yozishma — Rekruting kartasidagi bilan bir xil API (recruitment tg/thread, tg/message)
-async function botChat(cid){
-  const load = async () => {
-    const r = await api(`/api/recruitment/${encodeURIComponent(cid)}/tg/thread`);
-    const box = $('bcTh'); if (!box) return;
-    box.innerHTML = r.messages.length ? r.messages.slice(-30).map(m => {
-      const t = new Date(m.createdAt).toLocaleString('uz', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-      if (m.kind === 'system') return `<div class="bc-n">${esc(m.text)} · ${t}</div>`;
-      return `<div class="bc-m ${m.error ? 'err' : m.direction === 'in' ? 'in' : 'out'}">${esc(m.text)}${m.error ? '\n⚠ ' + esc(m.error) : ''}<small>${t}</small></div>`;
-    }).join('') : '<div class="bc-n">Hali xabar yo\'q</div>';
-    box.scrollTop = box.scrollHeight;
-  };
-  try { await load(); } catch (e) { $('bcTh').innerHTML = `<div class="bc-n">${esc(e.message)}</div>`; }
-  const send = async () => {
-    const ta = $('bcTx'), b = $('bcGo'), text = ta.value.trim(); if (!text) return;
-    b.disabled = ta.disabled = true;
-    try { await api(`/api/recruitment/${encodeURIComponent(cid)}/tg/message`, { method: 'POST', body: JSON.stringify({ text }) }); ta.value = ''; await load(); }
-    catch (e) { toast(e.message); }
-    b.disabled = ta.disabled = false; ta.focus();
-  };
-  $('bcGo').onclick = send;
-  $('bcTx').onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } };
 }
 
 let DAYS = 7;

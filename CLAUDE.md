@@ -111,6 +111,8 @@ Panel umumiy qismi: `js/th-shell.js` (menyu, sanoqlar), `css/th.css` + `css/th-a
   script tegi; shell bilan HTML tahriri (6-qoida). Katta HTML/JS — `Write`/`Edit`. `test/htmlsyntax.test.js`
   har sahifa skriptini CI'da kompilyatsiya qiladi. Git Bash heredoc teskari chiziqni yeydi (`\'` -> `'`,
   `\n` -> yangi qator) — skriptni `Write` bilan faylga yozing.
+- **iPhone: input/textarea shrifti 16px dan kichik bo'lsa** bosilganda ekran kattalashib, yon tomonga siljib qoladi
+  (2026-11-28, mijoz chati 14.5px edi). Telegram sahifalarida viewport `maximum-scale=1` — olib tashlamang.
 - **Telegram ichida `alert()` ko'rinmaydi** — tugma jim qoladi. Mini App'da `showMsg`/`TG.showAlert`, profilda `fail()`.
 - Telegram launch parametrlarini hash'ga qo'yadi — Mini App havolasida `?param=`, hash emas.
 - **Bot rasmini URL bilan bermang** (Telegram Render'dan yuklay olmaydi) — `tg.sendLocalPhoto`/`editLocalPhoto`.

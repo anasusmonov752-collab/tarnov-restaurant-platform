@@ -1701,3 +1701,10 @@ ko'p qurilmada bu hech narsa qilmaydi; ochilsa ham savol xabari chat tarixida yu
 Endi: `POST /api/cand/applications/:id/screen` -> `prescreen.resend` joriy savolni (step bo'yicha, tugmalari bilan)
 chatning ENG PASTIGA qayta yuboradi (`screen.resentAt`, 20 s da bir marta), kabinet `TG.close()` bilan yopiladi.
 Eski xabar tugmalari ham ishlaydi (handleCallback step'ni tekshiradi). Test: `prescreen.test.js` (9/9).
+
+## Mini App: iPhone'da ekran kattalashib siljishi (2026-11-28)
+Anas skrinshoti: mijoz Mini App chatida xabarlar o'ng chetdan kesilgan, "hamma yerda shunaqa". Sahifa kengligi to'g'ri
+(375px da scrollWidth = 375) — sabab joylashuv emas: chat maydoni `font-size:14.5px` (`.cd-box input` 15px). iOS 16px dan
+kichik maydon fokusida sahifani kattalashtiradi va kattalik qoladi, shuning uchun boshqa ekranlarda ham siljigan ko'rinadi.
+Tuzatish: chat maydoni miniapp.html va profil.html'da 16px, `.cd-box input` 16px; miniapp/profil/anketa viewport'iga
+`maximum-scale=1` (Telegram tavsiyasi). Commit 4bb894d. iPhone'da jonli sinash kerak.

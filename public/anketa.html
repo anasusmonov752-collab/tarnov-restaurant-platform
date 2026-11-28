@@ -579,7 +579,7 @@ function drawWork(){
   if (!he && qe) { he = document.createElement('div'); he.className = 'hint'; qe.after(he); }
   const empty = v === 'none' || !v.length;
   if (qe) qe.textContent = empty ? t('ank.w.askH') : L(q.text);
-  if (he) he.textContent = empty ? t('ank.w.askHint') : L(q.hint);
+  if (he) { he.textContent = empty ? t('ank.w.askHint') : L(q.hint); he.style.display = he.textContent ? '' : 'none'; }
   // Bo'sh yoki "Hali ishlamaganman": ikki TENG karta, bir bosishda (2026-11-27). Ilgari asosiy
   // tugma darhol "joy nomini yozing" oynasini ochardi, "Hali tajribam yo'q" kichik havola edi —
   // chala anketalarning ko'pi shu ekranda to'xtagan. Tajribasiz odam hech narsa yozmasdan o'tadi.
@@ -589,7 +589,7 @@ function drawWork(){
       <button class="w-opt yes" id="wYes" type="button"><span class="w-oi">${WICON.bag}</span>
         <span class="w-ot"><b>${esc(t('ank.w.yes'))}</b><small>${esc(t('ank.w.yesSub'))}</small></span><span class="w-oc">${WICON.chev}</span></button>
       <button class="w-opt no${none ? ' on' : ''}" id="wNone" type="button"><span class="w-oi">${none ? WICON.check : WICON.spark}</span>
-        <span class="w-ot"><b>${esc(t('ank.w.noneBtn'))}</b><small>${esc(t('ank.w.noneSub'))}</small></span><span class="w-oc">${none ? '' : WICON.chev}</span></button>
+        <span class="w-ot"><b>${esc(t('ank.w.noneBtn'))}</b>${t('ank.w.noneSub') ? `<small>${esc(t('ank.w.noneSub'))}</small>` : ''}</span><span class="w-oc">${none ? '' : WICON.chev}</span></button>
     </div>`;
     $('wYes').onclick = () => { haptic(); openEditor(-1); };
     $('wNone').onclick = () => {

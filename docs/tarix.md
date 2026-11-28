@@ -1690,3 +1690,6 @@ qo'shaman" bosgan — birortasi keyin qo'shmagan (keyinroq = hech qachon). 90 ku
 - `routes/anketa.js`: `value:'later'` -> 400 `required`; yuborishda faqat `r.photo` (eski `photoLater` o'tkazmaydi).
 - Ovozli yo'lda rasm avvaldan majburiy (o'zgarmadi). Test `test/photoreq.test.js`.
 YOZMA vs OVOZ (o'sha o'lchov): tugatganlar 52 yozma (96%), 2 ovoz (4%) — ikkalasi noyabrda.
+- **"Ish tajribangiz bormi?" soddalashtirildi** (Anas: "tushunarsiz"): javoblar "Ha, bor" / "Yo'q, tajribasizman"
+  (ru "Да, есть" / "Нет, без опыта"); izoh faqat "Ha" ostida ("Qayerda ishlaganingizni yozasiz"), sarlavha osti izohi va
+  "Yo'q" osti izohi olib tashlandi (bo'sh kalit — element chizilmaydi). Lokal bosildi: "Yo'q" -> `lastJob:none`, keyingi savol.

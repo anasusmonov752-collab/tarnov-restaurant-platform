@@ -1681,3 +1681,9 @@ kirishlardan keyin t.me bo'ladi. Test `test/analytics.test.js`.
   ochilmadi (Telegram faqat "tanish" akkauntni ID bilan ochadi; nomzod bot bilan yozishgan, agentlik bilan emas).
   Endi: username -> `t.me/<u>`; username yo'q — telefon (nomzod profili yoki anketa yozuvi) -> `t.me/+998...`;
   ikkalasi yo'q — havola YO'Q, ustida sababi ("username yo'q, telefon hali kiritilmagan"). `agency.js tgContacts`.
+- **Ikkinchi tuzatish:** `t.me/+998...` ham ishonchsiz — Anas bosdi, Telegram "bunday foydalanuvchi yo'q" dedi (raqam
+  bo'yicha qidirish yopiq yoki anketadagi raqam Telegram raqamidan boshqa; tashqaridan ajratib bo'lmaydi). Endi ism
+  havolasi FAQAT @username bo'lsa (`t.me/<u>`). Qolganida ism bosilsa — odamning oynasi: anketa tugatgan nomzodga
+  **bot orqali yozish** (Rekruting kartasidagi API: `recruitment/:id/tg/thread`, `tg/message`; `botRelay.canSend`),
+  javobi shu oynaga qaytadi; raqam havolasi — oynada, "yopiq bo'lsa topilmaydi" izohi bilan. API `analytics/user/:tg`
+  `canChat`, `chatErr` beradi; nomzod hodisada bo'lmasa `tgChatId` bo'yicha topiladi.

@@ -1757,7 +1757,7 @@ function appCard(a, i){
   const sub = v ? [who ? `<span class="emp">${esc(who)}</span>` : '', v.salaryText ? `<span class="sal">${esc(v.salaryText)}</span>` : '']
     .filter(Boolean).join(' · ') : '';
   const scr = a.screen && !a.final
-    ? `<div class="aq" data-bot="1"><span>${esc(a.screen.voice ? t('cb.aVoice') : t('cb.aScreen', { n: a.screen.left }))}</span><b>${esc(t('cb.aAnswer'))}</b></div>` : '';
+    ? `<div class="aq" data-bot="${esc(a.id)}"><span>${esc(a.screen.voice ? t('cb.aVoice') : t('cb.aScreen', { n: a.screen.left }))}</span><b>${esc(t('cb.aAnswer'))}</b></div>` : '';
   const hist = (a.steps || []).length > 1
     ? `<div class="ah" hidden>${a.steps.map(s => `<span>${esc(t('cb.h.' + s.key))}${s.at ? ' ' + esc(hAt(s.at)) : ''}</span>`).join('')}</div>` : '';
   return `<div class="jb ac ${v ? 'tap' : ''}" data-ai="${i}">
@@ -1835,10 +1835,17 @@ function wireApps(){
   const box = $('appList');
   box.querySelectorAll('[data-seg]').forEach(el => el.onclick = () => { APP_SEG = el.dataset.seg; haptic(); drawApps(); });
   box.querySelectorAll('[data-hr]').forEach(el => el.onclick = ev => { ev.stopPropagation(); haptic(); openSupport(); });
-  box.querySelectorAll('[data-bot]').forEach(el => el.onclick = ev => {
+  // "Javob berish" (2026-11-28, nomzod: "bossam kirmayapti"): botning o'z chatiga havola Mini App
+  // ichidan ko'p qurilmada hech narsa qilmaydi, eski savol esa tarixda ko'milgan. Server savolni
+  // chatning eng pastiga qayta yuboradi, kabinet yopiladi — nomzod savol turgan chatga tushadi.
+  box.querySelectorAll('[data-bot]').forEach(el => el.onclick = async ev => {
     ev.stopPropagation(); haptic();
+    if (el.dataset.busy) return; el.dataset.busy = '1'; el.style.opacity = '.6';
+    try { await api('/api/cand/applications/' + encodeURIComponent(el.dataset.bot) + '/screen', { method: 'POST', body: '{}' }); } catch(e){}
     const url = 'https://t.me/' + ((P && P.bot) || 'TalentHubUzBot');
-    try { TG && TG.openTelegramLink ? TG.openTelegramLink(url) : window.open(url, '_blank'); } catch(e){ window.open(url, '_blank'); }
+    if (TG && TG.close) { try { TG.openTelegramLink(url); } catch(e){} setTimeout(() => { try { TG.close(); } catch(e){} }, 250); }
+    else window.open(url, '_blank');
+    setTimeout(() => { delete el.dataset.busy; el.style.opacity = ''; }, 1500);
   });
   box.querySelectorAll('[data-map]').forEach(el => el.onclick = ev => {
     ev.stopPropagation();

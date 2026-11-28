@@ -45,7 +45,8 @@ const ApplicationSchema = new mongoose.Schema({
     voiceDur:  { type: Number, default: 0 },
     startedAt: { type: Date, default: null },
     remindedAt: { type: Date, default: null },
-    doneAt:    { type: Date, default: null }
+    resentAt:  { type: Date, default: null },      // kabinetdagi "Javob berish" — savol qayta yuborildi
+    doneAt:   { type: Date, default: null }
   },
 
   createdAt: { type: Date, default: Date.now },

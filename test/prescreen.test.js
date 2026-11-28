@@ -150,3 +150,23 @@ test('eslatma: 3 soatdan keyin bir marta, kunduzi', async () => {
   assert.equal((await ps.tick(noon)).reminded, 0);
   assert.ok(sent.some(x => x.chat === 'k200' && /1\/3/.test(x.text)));
 });
+
+test('kabinetdagi "Javob berish": joriy savol chat oxiriga qayta yuboriladi (20 s da bir marta)', async () => {
+  const a = await submit();
+  await ps.handleCallback({ data: `ps:f:${a.id}:ok`, chatId: 'k200' });
+  const cand = await M.Candidate.findOne({ id: 'k1' }).lean();
+  sent = [];
+  const t0 = new Date();
+  assert.equal(await ps.resend({ app: await M.Application.findOne({ id: a.id }).lean(), cand, now: t0 }), true);
+  assert.equal(sent.length, 1);
+  assert.match(sent[0].text, /2\/3/);
+  assert.ok(btns(sent[0]).some(b => b.callback_data === `ps:s:${a.id}:week`));
+  // ketma-ket bosish — takror xabar yo'q
+  await ps.resend({ app: await M.Application.findOne({ id: a.id }).lean(), cand, now: new Date(t0.getTime() + 5e3) });
+  assert.equal(sent.length, 1);
+  // tugagan tekshiruv — yuborilmaydi
+  for (const d of [`ps:s:${a.id}:now`, `ps:c:${a.id}:60`, `ps:v:${a.id}:skip`]) await ps.handleCallback({ data: d, chatId: 'k200' });
+  sent = [];
+  assert.equal(await ps.resend({ app: await M.Application.findOne({ id: a.id }).lean(), cand, now: new Date(t0.getTime() + 60e3) }), false);
+  assert.equal(sent.length, 0);
+});

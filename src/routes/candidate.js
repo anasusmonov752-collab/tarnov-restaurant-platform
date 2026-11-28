@@ -527,6 +527,15 @@ function screenPending(scr) {
   return { left: i < 0 ? 1 : L.length - i, voice: false };
 }
 
+// ── "Javob berish": botdagi joriy savol chatning eng pastiga qayta yuboriladi (services/prescreen.resend) ──
+router.post('/applications/:id/screen', guard, asyncHandler(async (req, res) => {
+  const c = req.cand;
+  const a = await Application.findOne({ agencyId: c.restaurantId, candidateId: c.id, id: String(req.params.id) }).lean();
+  if (!a) return res.status(404).json({ error: 'not found', code: 'notFound' });
+  const sent = await require('../services/prescreen').resend({ app: a, cand: c });
+  res.json({ ok: true, sent });
+}));
+
 // ── Arizani qaytarib olish ── (faqat qaror qilinmagan; tanlovga o'tgan bo'lsa — HR orqali)
 router.post('/applications/:id/withdraw', guard, asyncHandler(async (req, res) => {
   const c = req.cand;

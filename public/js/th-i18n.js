@@ -1152,6 +1152,7 @@
       'ps.doneNo': 'Tushunarli, rahmat! Javobingizni ish beruvchiga yetkazamiz. Sizga mosroq ishlarni «Ish o\'rinlari»da ko\'ring.',
       'ps.voiceOk': '🎤 Ovozli tanishuv qabul qilindi — ish beruvchi eshitadi. Rahmat!',
       'ps.remind': '⏳ «{v}» arizangiz bo\'yicha savolga javob bermadingiz — ish beruvchi javoblarni ko\'radi:',
+      'ps.again': '📋 «{v}» — savol shu yerda. Pastdagi tugmani bosing:',
       'ps.voiceCaption': '🎤 {c} · «{v}» — ovozli tanishuv',
       // Mijoz Mini App: moslik bali va sabablari (services/matchScore)
       'ms.score': '{n}% mos', 'ms.top': 'Eng mos',
@@ -2430,6 +2431,7 @@
       'ps.doneNo': 'Понятно, спасибо! Передадим ваш ответ работодателю. Более подходящие вакансии — в разделе «Вакансии».',
       'ps.voiceOk': '🎤 Голосовое принято — работодатель его услышит. Спасибо!',
       'ps.remind': '⏳ Вы не ответили на вопрос по отклику «{v}» — работодатель видит ответы:',
+      'ps.again': '📋 «{v}» — вопрос здесь. Нажмите кнопку ниже:',
       'ps.voiceCaption': '🎤 {c} · «{v}» — голосовое знакомство',
       'ms.score': 'Совпадение {n}%', 'ms.top': 'Лучшее совпадение',
       'ms.role': 'Подходит по должности', 'ms.exp': 'Опыт {n}+ лет', 'ms.expLow': 'Опыт меньше {n} лет', 'ms.expNone': 'Без опыта',

@@ -181,6 +181,26 @@ async function tick(now = new Date()) {
   return { reminded };
 }
 
+/**
+ * Kabinetdagi "Javob berish" (2026-11-28, nomzod: "bossam kirmayapti"): eski savol xabari chat
+ * tarixida ko'milib qoladi, Mini App ichidan botning o'z chatiga havola esa ko'p qurilmada hech
+ * narsa qilmaydi. Joriy savol chatning ENG PASTIGA qayta yuboriladi, kabinet yopiladi.
+ * Eski xabar tugmalari ham ishlaydi (handleCallback step'ni tekshiradi). 20 soniyada bir marta.
+ */
+async function resend({ app, cand, now = new Date() }) {
+  const ACTIVE = ['fit', 'fitWhy', 'start', 'commute', 'voice'];
+  if (!app || !ACTIVE.includes((app.screen || {}).step) || !reachable(cand)) return false;
+  const up = await Application.findOneAndUpdate(
+    { _id: app._id, 'screen.step': { $in: ACTIVE },
+      $or: [{ 'screen.resentAt': null }, { 'screen.resentAt': { $lte: new Date(now.getTime() - 20e3) } }] },
+    { $set: { 'screen.resentAt': now } }, { new: true }).lean();
+  if (!up) return true;                                   // hozirgina yuborilgan — chat ochilaveradi
+  const v = await Vacancy.findOne({ agencyId: up.agencyId, id: up.vacancyId }).lean() || {};
+  const lang = langOf(cand);
+  const [q, opts] = question(up.screen.step, up, v, lang);
+  return !!(await send(cand.tgChatId, T(lang, 'ps.again', { v: vac.titleFor(v, lang) }) + '\n\n' + q, opts));
+}
+
 /** Mini App / panel uchun qisqa ko'rinish */
 function view(scr = {}) {
   if (!scr || !scr.step) return null;
@@ -189,4 +209,4 @@ function view(scr = {}) {
     commute: scr.commute || '', voice: !!scr.voiceFileId, voiceDur: scr.voiceDur || 0 };
 }
 
-module.exports = { start, handleCallback, takeVoice, sendVoiceTo, tick, view, termsOf, startFromDate, CB_RE };
+module.exports = { start, handleCallback, takeVoice, sendVoiceTo, tick, resend, view, termsOf, startFromDate, CB_RE };

@@ -1708,3 +1708,17 @@ Anas skrinshoti: mijoz Mini App chatida xabarlar o'ng chetdan kesilgan, "hamma y
 kichik maydon fokusida sahifani kattalashtiradi va kattalik qoladi, shuning uchun boshqa ekranlarda ham siljigan ko'rinadi.
 Tuzatish: chat maydoni miniapp.html va profil.html'da 16px, `.cd-box input` 16px; miniapp/profil/anketa viewport'iga
 `maximum-scale=1` (Telegram tavsiyasi). Commit 4bb894d. iPhone'da jonli sinash kerak.
+
+## Mijoz Mini App: Nomzodlar, Bugun, Suhbat oynasi tartiblandi (2026-11-28)
+Anas: "tartibsiz, tushunarsiz, bardak". 3 tuzilma va 3 uslub varianti chizildi (`.preview/m12`) — Anas: "eskisi chiroyli,
+uslubni o'zgartirmay tartibini to'g'irla". Dunyo tajribasi (Workable — bitta "keyingi qadam", Instawork/Workstream —
+nomzod o'zi vaqt tanlaydi + eslatma, Fountain — vazifa ko'rinishidagi bosh ekran) shu uslubda qo'llandi:
+- Nomzodlar: anonim qator sarlavhasi endi "1 yil tajriba, 25 yosh" (oldin guruh ostida 6 ta bir xil "Call-markaz operatori · T…"),
+  2-satr — tuman ("Toshkent, " olib tashlanadi, `placeShort`); vakansiya filtri ramkali qator.
+- Pastki tugmadagi son = "Yangi" bo'limi (oldin 45 — faqat ko'rilmagan, bo'limda 63). `/api/ma/unread` apps — qaror kutayotganlar.
+- Bugun: "Qo'ng'iroq qiling" qatorida qo'ng'iroq tugmasi (`callRow3`), "kontakt ochildi: 17:26"; suhbat holati "Tasdiqlamadi".
+- Suhbat oynasi: "Nomzod tanlasin / Aniq vaqt" tanlovi o'rniga 7 kunlik sana tugmalari + 09–20 soat tugmalari (`ivPicker`).
+  Bitta soat — `mode:'fixed'`, bir nechta — `mode:'pick', slots:[...]` (`interviews.offer` aniq soatlarni qabul qiladi: ≥30 daq,
+  ≤14 kun, band ±30 daq va takror chiqariladi, 8 tagacha). Band soat o'chiq + "12:00 band: Sadulloyev bilan suhbat"
+  (`/interview-prefs` -> `busy`). Nomzod oladigan xabar oynaning o'zida. iOS'dagi bo'sh datetime-local muammosi yo'q.
+Test: `interviews.test.js` (aniq soatlar), jami 277/277. Telegramda haqiqiy akkaunt bilan sinalmagan.

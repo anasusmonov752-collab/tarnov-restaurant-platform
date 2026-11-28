@@ -170,3 +170,20 @@ test('yangi taklif oldingisini bekor qiladi (bitta faol suhbat)', async () => {
   const r = await iv.handleCallback({ data: `iv:p:${a.id}:0`, chatId: 'k200', now: MON8 });
   assert.equal(r.ok, false);
 });
+
+test('mijoz aniq soatlarni o\'zi belgilaydi: o\'tganlar, takror va band vaqt chiqadi, nomzodga shu soatlar boradi', async () => {
+  const t12 = new Date(MON8.getTime() + 28 * H);                     // Se 12:00
+  const t15 = new Date(MON8.getTime() + 31 * H);                     // Se 15:00
+  const past = new Date(MON8.getTime() - H);
+  const v = await iv.offer({ agencyId: A, clientId: 'cl1', shortlistId: 's1', candidateId: 'k1', now: MON8,
+    slots: [t15.toISOString(), t12.toISOString(), t12.toISOString(), past.toISOString(), 'xato'] });
+  assert.equal(v.status, 'offered');
+  const doc = await M.Interview.findOne({ id: v.id }).lean();
+  assert.deepEqual(doc.slots.map(d => new Date(d).getTime()), [t12.getTime(), t15.getTime()]);
+  const m = sent.find(x => x.chat === 'k200');
+  assert.equal(btns(m).filter(b => /^iv:p:/.test(b.callback_data)).length, 2);
+  // Hammasi o'tib ketgan — tushunarli xato, oldingi taklif buzilmaydi
+  await assert.rejects(iv.offer({ agencyId: A, clientId: 'cl1', shortlistId: 's1', candidateId: 'k1', now: MON8, slots: [past.toISOString()] }),
+    /o'tib ketgan yoki band/);
+  assert.equal((await M.Interview.findOne({ id: v.id }).lean()).status, 'offered');
+});

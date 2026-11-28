@@ -1003,8 +1003,30 @@ body.vp-lock{overflow:hidden}
 .seg3 button b{color:var(--muted);margin-left:4px;font-weight:700}
 .seg3 button.on{background:var(--ink);color:var(--bg)}
 .seg3 button.on b{color:inherit;opacity:.7}
-.vf3{display:flex;align-items:center;gap:6px;padding:12px 4px 0;font-size:14px;color:var(--muted);font-weight:600}
-.vf3 select{border:none;background:none;font:inherit;font-weight:600;color:var(--blue);max-width:70%;padding:2px 0;cursor:pointer}
+/* Vakansiya filtri — ramkali qator (oldin havoladek ko'rinardi, bosiladigani bilinmasdi) */
+.vf3{display:flex;align-items:center;gap:10px;margin-top:10px;background:var(--card);border-radius:14px;padding:0 14px;font-size:15px;color:var(--muted);cursor:pointer}
+.vf3 select{flex:1;min-width:0;border:none;background:none;font:inherit;font-size:16px;font-weight:600;color:var(--ink);padding:12px 0;cursor:pointer;-webkit-appearance:none;appearance:none;text-align:right;text-align-last:right}
+.vf3 svg{width:16px;height:16px;flex:none;color:var(--muted)}
+/* Bugun: qatordagi qo'ng'iroq tugmasi */
+.cr-call{flex:none;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:var(--th-ok-soft);color:var(--ok)}
+.cr-call svg{width:19px;height:19px}
+/* Suhbat oynasi (2026-11-28): kun va soat tugmalari, nomzod oladigan xabar */
+.ivq{font-size:13px;font-weight:600;color:var(--muted);margin:16px 0 8px}
+.ivd{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px}
+.ivd::-webkit-scrollbar{display:none}
+.ivd button{flex:none;min-width:58px;border:1px solid var(--line);background:none;border-radius:12px;padding:7px 8px 6px;font:inherit;font-size:12px;color:var(--muted);text-align:center;cursor:pointer}
+.ivd button b{display:block;font-size:18px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1.2}
+.ivd button.on{background:var(--blue);border-color:var(--blue);color:rgba(255,255,255,.85)}.ivd button.on b{color:#fff}
+.ivs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.ivs button{border:1px solid var(--line);background:none;border-radius:10px;padding:9px 0;font:inherit;font-size:15px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;cursor:pointer}
+.ivs button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.ivs button:disabled{color:var(--muted);opacity:.45;text-decoration:line-through;cursor:default}
+.ivbusy{font-size:12.5px;color:var(--muted);margin-top:6px}
+.ivaddr{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:0 12px}
+.ivaddr svg{width:18px;height:18px;flex:none;color:var(--muted)}
+.ivaddr input{flex:1;min-width:0;border:none;background:none;font:inherit;font-size:16px;color:var(--ink);padding:12px 0;outline:none}
+.ivpv{background:var(--th-fill);border-radius:12px;padding:10px 12px;margin-top:14px;font-size:14px;line-height:1.45;color:var(--ink)}
+.ivpv small{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:2px}
 .msg3{padding:40px 20px;text-align:center;color:var(--muted);font-size:15px;line-height:1.45}
 /* Nomzod sahifasi */
 .cx-hd{text-align:center;padding:6px 6px 2px}
@@ -1640,19 +1662,55 @@ function ivMin(){
   const d = new Date(Date.now() + 30 * 60e3 - new Date().getTimezoneOffset() * 60e3);
   return d.toISOString().slice(0, 16);
 }
+// Kun va soat tugmalari (2026-11-28). iOS'da bo'sh datetime-local oq joy bo'lib ko'rinardi, "Sh" qaysi
+// shanba ekani bilinmasdi — endi kun sanasi bilan, soatlar tugma. O'tib ketgan va band (shu mijozning
+// boshqa suhbati ±30 daq) soat o'chiq. multi=false — bitta soat (Telegramsiz nomzod).
+const IV_HOURS = [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+function ivPicker(root, { busy = [], self = '', multi = true, onChange = () => {} } = {}){
+  const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + i); return d; });
+  const WD = t('ivx.wd').split(',');
+  const st = { day: 1, sel: [] };
+  const at = (di, h) => { const d = new Date(days[di]); d.setHours(h, 0, 0, 0); return d; };
+  const busyAt = d => busy.find(b => b.candidateId !== self && Math.abs(new Date(b.at) - d) < 30 * 60e3);
+  const lbl = i => i === 0 ? t('ivm.dToday') : i === 1 ? t('ivm.dTom') : WD[(days[i].getDay() + 6) % 7];
+  const hhmm2 = d => String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  function draw(){
+    const notes = busy.filter(b => b.candidateId !== self && new Date(b.at).toDateString() === days[st.day].toDateString())
+      .map(b => t(b.who ? 'ivm.busyBy' : 'ivm.busy', { t: hhmm2(new Date(b.at)), n: b.who }));
+    root.innerHTML = `<div class="ivq">${esc(t('ivm.day'))}</div>
+      <div class="ivd">${days.map((d, i) => `<button type="button" class="${i === st.day ? 'on' : ''}" data-d="${i}">${esc(lbl(i))}<b>${d.getDate()}</b></button>`).join('')}</div>
+      <div class="ivq">${esc(t(multi ? 'ivm.hours' : 'ivm.hour1'))}</div>
+      <div class="ivs">${IV_HOURS.map(h => { const d = at(st.day, h); const off = d.getTime() < Date.now() + 30 * 60e3 || busyAt(d);
+        return `<button type="button" data-h="${h}" class="${st.sel.includes(h) ? 'on' : ''}" ${off ? 'disabled' : ''}>${String(h).padStart(2, '0')}:00</button>`; }).join('')}</div>
+      ${notes.length ? `<div class="ivbusy">${esc(notes.join('; '))}</div>` : ''}`;
+    root.querySelectorAll('[data-d]').forEach(b => b.onclick = () => { st.day = +b.dataset.d; st.sel = []; haptic('sel'); draw(); onChange(); });
+    root.querySelectorAll('[data-h]').forEach(b => b.onclick = () => {
+      const h = +b.dataset.h;
+      st.sel = multi ? (st.sel.includes(h) ? st.sel.filter(x => x !== h) : [...st.sel, h].sort((a, b) => a - b)) : [h];
+      haptic('sel'); draw(); onChange();
+    });
+  }
+  draw();
+  return {
+    slots: () => st.sel.map(h => at(st.day, h)),
+    dayText: () => `${lbl(st.day)}, ${dShort(days[st.day])}`
+  };
+}
+const PIN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>';
+
 async function ivSheet(it, refresh){
   sheetEnter('iv:' + it.shortlistId + ':' + it.candidateId, () => ivSheet(it, refresh));
   const title = whoOf(it).title;
   const iv = it.iv && IV_LIVE.includes(it.iv.status) ? it.iv : null;
 
   if (!it.tg) {
-    openSheet(t('ivm.title'), `<div class="hint" style="margin:2px 0 10px">${esc(t('ivm.noTg'))}</div>
-      <div class="fl"><label>${esc(t('ivm.when'))}</label><input id="ivAt" type="datetime-local" min="${ivMin()}"></div>
-      <button class="btn" id="ivGo" style="width:100%;margin-top:14px">${esc(t('common.save'))}</button>`);
+    openSheet(t('ivm.title'), `<div class="hint" style="margin:2px 0 0">${esc(t('ivm.noTg'))}</div><div id="ivPk"></div>
+      <button class="btn" id="ivGo" style="width:100%;margin-top:16px">${esc(t('common.save'))}</button>`);
+    const pk = ivPicker($('ivPk'), { multi: false });
     $('ivGo').onclick = async () => {
-      const v = $('ivAt').value; if (!v) return showMsg(t('ivm.whenReq'));
+      const s = pk.slots(); if (!s.length) return showMsg(t('ivm.whenReq'));
       $('ivGo').disabled = true;
-      try { await decide(it.shortlistId, it.candidateId, { state:'interview', interviewAt: new Date(v).toISOString() }); closeSheet(); refresh(); }
+      try { await decide(it.shortlistId, it.candidateId, { state:'interview', interviewAt: s[0].toISOString() }); closeSheet(); refresh(); }
       catch(e){ showMsg(e.message); $('ivGo').disabled = false; }
     };
     return;
@@ -1678,52 +1736,39 @@ async function ivSheet(it, refresh){
   let P;
   try { P = await api('/api/ma/interview-prefs'); }
   catch(e){ $('shB').innerHTML = `<div class="msg">${esc(e.message)}</div>`; return; }
-  const WD = t('ivx.wd').split(',');
-  let mode = 'pick';
+  // Bitta soat — aniq vaqt (mode fixed), bir nechta — nomzod botda tanlaydi (mode pick + slots).
+  // "Nomzod tanlasin / Aniq vaqt" tanlovi yo'q: tushuncha emas, soat tanlanadi.
   $('shB').innerHTML = `
-    <div class="hint" style="margin:2px 0 12px">${esc(t('ivm.intro'))}</div>
-    <div class="seg" id="ivSeg">
-      <button class="on" data-m="pick">${esc(t('ivm.modePick'))}</button>
-      <button data-m="fixed">${esc(t('ivm.modeFixed'))}</button>
-    </div>
-    <div id="ivPick">
-      <div class="fl"><label>${esc(t('ivm.days'))}</label>
-        <div class="pks">${WD.map((w, i) => `<button type="button" class="pk ${P.days.includes(i + 1) ? 'on' : ''}" data-d="${i + 1}">${esc(w)}</button>`).join('')}</div></div>
-      <div class="two">
-        <div class="fl"><label>${esc(t('ivm.from'))}</label><input id="ivFrom" type="time" value="${esc(P.from)}"></div>
-        <div class="fl"><label>${esc(t('ivm.to'))}</label><input id="ivTo" type="time" value="${esc(P.to)}"></div>
-      </div>
-      <div class="hint">${esc(t('ivm.saved'))}</div>
-    </div>
-    <div id="ivFix" class="hide">
-      <div class="fl"><label>${esc(t('ivm.when'))}</label><input id="ivAt" type="datetime-local" min="${ivMin()}"></div>
-    </div>
-    <div class="fl"><label>${esc(t('ivm.addr'))}</label><input id="ivAddr" maxlength="200" value="${esc(P.address)}" placeholder="${esc(t('ivm.addrPh'))}"></div>
-    <button class="btn" id="ivGo" style="width:100%;margin-top:16px">${esc(t('ivm.send'))}</button>`;
-  $('shB').querySelectorAll('.pk').forEach(b => { b.onclick = () => b.classList.toggle('on'); });
-  $('ivSeg').querySelectorAll('[data-m]').forEach(b => b.onclick = () => {
-    mode = b.dataset.m;
-    $('ivSeg').querySelectorAll('[data-m]').forEach(x => x.classList.toggle('on', x === b));
-    $('ivPick').classList.toggle('hide', mode !== 'pick');
-    $('ivFix').classList.toggle('hide', mode !== 'fixed');
-  });
+    <div class="hint" style="margin:2px 0 0">${esc(t('ivm.remind'))}</div>
+    <div id="ivPk"></div>
+    <div class="ivq">${esc(t('ivm.addr'))}</div>
+    <label class="ivaddr">${PIN_SVG}<input id="ivAddr" maxlength="200" value="${esc(P.address)}" placeholder="${esc(t('ivm.addrPh'))}"></label>
+    <div class="ivpv" id="ivPv"></div>
+    <button class="btn" id="ivGo" style="width:100%;margin-top:14px">${esc(t('ivm.send'))}</button>`;
+  const tOf = d => String(d.getHours()).padStart(2, '0') + ':00';
+  const pk = ivPicker($('ivPk'), { busy: P.busy || [], self: it.candidateId, multi: true, onChange: () => pv() });
+  function pv(){
+    const s = pk.slots();
+    $('ivPv').innerHTML = !s.length ? esc(t('ivm.pv0'))
+      : `<small>${esc(t('ivm.pvT'))}</small>${esc(s.length === 1 ? t('ivm.pv1', { d: pk.dayText(), t: tOf(s[0]) })
+        : t('ivm.pvN', { d: pk.dayText(), l: s.map(tOf).join(', ') }))}`;
+    $('ivGo').textContent = s.length > 1 ? t('ivm.sendN', { n: s.length }) : t('ivm.send');
+  }
+  pv();
   $('ivGo').onclick = async () => {
-    const days = [...$('shB').querySelectorAll('.pk.on')].map(x => +x.dataset.d);
-    const body = { mode, address: $('ivAddr').value.trim() };
-    if (mode === 'pick') {
-      if (!days.length) return showMsg(t('ivm.daysReq'));
-      body.prefs = { days, from: $('ivFrom').value, to: $('ivTo').value };
-    } else {
-      const v = $('ivAt').value; if (!v) return showMsg(t('ivm.whenReq'));
-      body.at = new Date(v).toISOString();
-    }
+    const s = pk.slots();
+    if (!s.length) return showMsg(t('ivm.slotReq'));
+    const body = s.length === 1
+      ? { mode: 'fixed', at: s[0].toISOString(), address: $('ivAddr').value.trim() }
+      : { mode: 'pick', slots: s.map(d => d.toISOString()), address: $('ivAddr').value.trim() };
+    const label = $('ivGo').textContent;
     $('ivGo').disabled = true; $('ivGo').textContent = t('common.saving');
     try {
       await api(`/api/ma/shortlists/${encodeURIComponent(it.shortlistId)}/items/${encodeURIComponent(it.candidateId)}/interview`,
         { method:'POST', body: JSON.stringify(body) });
       try { TG && TG.HapticFeedback && TG.HapticFeedback.notificationOccurred('success'); } catch(_){}
       closeSheet(); showMsg(t('ivm.sent')); refresh();
-    } catch(e){ showMsg(e.message); $('ivGo').disabled = false; $('ivGo').textContent = t('ivm.send'); }
+    } catch(e){ showMsg(e.message); $('ivGo').disabled = false; $('ivGo').textContent = label; }
   };
 }
 
@@ -2647,14 +2692,18 @@ const byScore = (a, b) => ((b.it.score ?? -1) - (a.it.score ?? -1)) || (new Date
 // "Jarayonda": harakat kutayotganlar tepada (suhbat natijasi, qo'ng'iroq)
 const workPrio = r => r.it.iv && r.it.iv.canAnswer ? 0 : (r.it.stage === 'contact' && !r.it.iv) ? 1 : r.it.iv ? 2 : 3;
 
-// Qatorning ikkinchi satri: [matn, klass]. Bitta fakt — holat yoki yosh/hudud.
-function rowLine(r){
+// "Toshkent, Chilonzor" -> "Chilonzor": shahar har qatorda takrorlanib joy yeydi (2026-11-28)
+const placeShort = s => String(s || '').replace(/^\s*(toshkent|tashkent|ташкент)(\s*(sh\.?|shahri|shahar|г\.?))?\s*,\s*/i, '');
+// Qatorning ikkinchi satri: [matn, klass]. Bitta fakt — holat yoki hudud.
+// opt.noRole — ro'yxat vakansiya bo'yicha guruhlangan (sarlavhada lavozim bor), qatorda takrorlanmaydi
+function rowLine(r, opt = {}){
   const c = candOf(r), it = r.it;
   if (r.k === 'ap') {
     if (r.seg === 'arch') return [t(it.withdrawn ? 'ap.withdrawn' : it.vacClosed ? 'al.vacClosed' : 'ap.rejected'), ''];
     const h = hoursAgo(it.createdAt);
     if (h >= 36) return [t('cd.waitD', { n: Math.floor(h / 24) }), 'is-w'];
-    return [[c.age ? t('fact.age', { n: c.age }) : '', c.location].filter(Boolean).join(' · '), ''];
+    const pl = placeShort(c.location);
+    return [(opt.noRole ? [pl] : [r.vac, pl]).filter(Boolean).join(', '), ''];
   }
   if (r.seg === 'hired') return [plLine(it.pl), ''];
   if (r.seg === 'arch') return [it.reason || it.stateLabel || '', ''];
@@ -2664,11 +2713,13 @@ function rowLine(r){
   return [it.stateLabel || '', ''];
 }
 
-function rowHtml3(r){
+function rowHtml3(r, opt = {}){
   const c = candOf(r), w = whoOf(c), ph = photoOf(r);
-  // Anonim: "Xostess · 2 yil tajriba"; ochiq: ism (lavozim holat satrida emas — rezyumeda)
-  const title = w.open ? w.title : w.title + ' · ' + expTxt(c.experienceYears, c.experienceMonths);
-  const [line, cls] = rowLine(r);
+  // Anonim: "1 yil tajriba, 25 yosh" — nomzodlarni bir-biridan AJRATADIGAN fakt birinchi (2026-11-28: oldin
+  // "Call-markaz operatori · T…" — guruh ostida 6 ta bir xil qator edi). Lavozim — guruh sarlavhasida yoki 2-satrda.
+  // Ochiq: ism (lavozim holat satrida emas — rezyumeda)
+  const title = w.open ? w.title : [expTxt(c.experienceYears, c.experienceMonths), c.age ? t('fact.age', { n: c.age }) : ''].filter(Boolean).join(', ');
+  const [line, cls] = rowLine(r, opt);
   const sc = r.k === 'ap' && r.seg === 'new' && r.it.score != null
     ? `<span class="pc ${r.it.score >= 75 ? '' : 'lo'}">${r.it.score}%</span>` : '';
   return `<button class="cr" data-cx="${esc(r.key)}">
@@ -2678,7 +2729,22 @@ function rowHtml3(r){
     <span class="cr-r"><span class="cr-t">${esc(shortAgo(r.at))}</span>${sc}</span>
   </button>`;
 }
-const wireRows = root => root.querySelectorAll('[data-cx]').forEach(b => b.onclick = () => { haptic(); showCand(b.dataset.cx); });
+const wireRows = root => {
+  root.querySelectorAll('[data-cx]').forEach(b => b.onclick = () => { haptic(); showCand(b.dataset.cx); });
+  // Qatordagi qo'ng'iroq tugmasi — nomzod sahifasini ochmaydi
+  root.querySelectorAll('[data-stop]').forEach(a => a.onclick = e => { e.stopPropagation(); haptic(); });
+};
+// Bugun: "Qo'ng'iroq qiling" qatori — tugma qatorning o'zida (dunyo tajribasi: bitta bosishda qo'ng'iroq)
+function callRow3(r){
+  const it = r.it, w = whoOf(it), ph = photoOf(r);
+  const tel = String((it.contact && it.contact.phone) || '').replace(/[^\d+]/g, '');
+  return `<div class="cr" data-cx="${esc(r.key)}" role="button">
+    <span class="cr-av">${ph ? `<img src="${esc(ph)}" alt="" data-nozoom>` : w.avatar}</span>
+    <span class="cr-m"><span class="cr-1"><span>${esc(w.title)}</span></span>
+      <span class="cr-2">${esc([w.open ? w.sub : r.vac, t('cd.opened', { t: shortAgo(r.at) })].filter(Boolean).join(', '))}</span></span>
+    ${tel ? `<a class="cr-call" href="tel:${esc(tel)}" data-stop aria-label="${esc(t('act.call'))}">${IC.phone}</a>` : ''}
+  </div>`;
+}
 
 // Ikkala ma'lumot bir vaqtda — Bugun ham, Nomzodlar ham shundan
 async function loadPeople(){
@@ -2727,13 +2793,15 @@ function renderCands(){
   const one = groups.length === 1;
   $('apList').innerHTML = sxEntryHtml() +
     `<div class="seg3">${CD_SEGS.map(s => `<button class="${CD_SEG === s ? 'on' : ''}" data-seg="${s}">${esc(t('cd.' + s))}${cnt[s] ? `<b>${cnt[s]}</b>` : ''}</button>`).join('')}</div>`
-    + (vacs.length > 1 ? `<div class="vf3"><select id="cdVac"><option value="">${esc(t('cd.vacAll'))}</option>${vacs.map(v =>
-        `<option value="${esc(v)}"${v === CD_VAC ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select></div>` : '')
+    + (vacs.length > 1 ? `<label class="vf3"><span>${esc(t('cd.vacL'))}</span><select id="cdVac"><option value="">${esc(t('cd.vacAll'))}</option>${vacs.map(v =>
+        `<option value="${esc(v)}"${v === CD_VAC ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></label>` : '')
     + (list.length
       ? groups.map(g => `${!one || g.title ? `<div class="gh3"><span>${esc(g.title || t('cd.fromSearch'))}</span><span>${g.rows.length}</span></div>` : '<div style="height:14px"></div>'}
-          <div class="bx">${g.rows.map(rowHtml3).join('')}</div>`).join('')
+          <div class="bx">${g.rows.map(r => rowHtml3(r, { noRole: true })).join('')}</div>`).join('')
       : `<div class="msg3">${esc(t(CD_SEG === 'new' ? 'cd.emptyNew' : 'cd.empty'))}</div>`);
 
+  // Pastki tugmadagi son = "Yangi" bo'limi (ikki xil son mijozni chalg'itardi)
+  if (!CD_VAC) setAppsDot(cnt.new);
   $('apList').querySelectorAll('[data-seg]').forEach(b => b.onclick = () => { CD_SEG = b.dataset.seg; haptic('sel'); renderCands(); window.scrollTo(0, 0); });
   if ($('cdVac')) $('cdVac').onchange = e => { CD_VAC = e.target.value; renderCands(); };
   wireSxEntry($('apList'));
@@ -2787,11 +2855,12 @@ function renderToday(){
 
   $('tdBody').innerHTML = sxEntryHtml() + hero
     + (ivs.length ? sec(t('td.iv'), ivs.slice(0, 4).map(ivRow3).join(''), ivs.length > 4 ? 'work' : '') : '')
-    + (calls.length ? sec(t('td.call'), calls.slice(0, 4).map(rowHtml3).join(''), calls.length > 4 ? 'work' : '') : '')
+    + (calls.length ? sec(t('td.call'), calls.slice(0, 4).map(callRow3).join(''), calls.length > 4 ? 'work' : '') : '')
     + (hired.length ? sec(t('td.hired'), hired.slice(0, 3).map(rowHtml3).join(''), hired.length > 3 ? 'hired' : '') : '')
     + bal;
 
   const root = $('tdBody');
+  setAppsDot(wait.length);
   wireSxEntry(root);
   wireRows(root);
   root.querySelectorAll('[data-go]').forEach(b => b.onclick = () => {

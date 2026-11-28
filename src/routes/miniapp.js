@@ -761,7 +761,13 @@ router.get('/market', clientGuard, asyncHandler(async (req, res) => {
 }));
 
 router.get('/interview-prefs', clientGuard, asyncHandler(async (req, res) => {
-  res.json(interviews.prefsOf(req.client.toObject ? req.client.toObject() : req.client));
+  // + band vaqtlar (suhbat oynasida o'sha soat o'chiq ko'rinadi: "12:00 — Sardor bilan suhbat")
+  const ivs = await Interview.find({ agencyId: req.client.agencyId, clientId: req.client.id, status: { $in: ['scheduled', 'confirmed'] },
+    at: { $gte: new Date() } }, 'at candidateId').sort({ at: 1 }).limit(40).lean();
+  const names = ivs.length ? await Candidate.find({ restaurantId: req.client.agencyId, id: { $in: ivs.map(x => x.candidateId) } }, 'id fullName').lean() : [];
+  const nm = Object.fromEntries(names.map(c => [c.id, String(c.fullName || '').split(' ')[0]]));
+  res.json(Object.assign(interviews.prefsOf(req.client.toObject ? req.client.toObject() : req.client),
+    { busy: ivs.map(x => ({ at: x.at, candidateId: x.candidateId, who: nm[x.candidateId] || '' })) }));
 }));
 
 router.post('/shortlists/:id/items/:candidateId/interview', clientGuard, asyncHandler(async (req, res) => {
@@ -771,7 +777,8 @@ router.post('/shortlists/:id/items/:candidateId/interview', clientGuard, asyncHa
       agencyId: req.client.agencyId, clientId: req.client.id,
       shortlistId: req.params.id, candidateId: req.params.candidateId,
       mode: b.mode === 'fixed' ? 'fixed' : 'pick', at: b.at || null,
-      prefs: b.prefs || null, address: String(b.address || '')
+      prefs: b.prefs || null, address: String(b.address || ''),
+      slots: Array.isArray(b.slots) ? b.slots.slice(0, 12) : null
     });
     res.json({ ok: true, iv });
   } catch (e) {
@@ -1523,9 +1530,10 @@ router.get('/unread', clientGuard, asyncHandler(async (req, res) => {
       { $match: { agencyId: req.client.agencyId, clientId: req.client.id, unreadClient: { $gt: 0 } } },
       { $group: { _id: null, n: { $sum: '$unreadClient' } } }
     ]),
-    // Ko'rilmagan arizalar — "Vakansiya" tabidagi nuqta. Arizalar ro'yxati
-    // ochilganda ular 'seen' bo'ladi (GET .../applications).
-    Application.countDocuments(Object.assign({ agencyId: req.client.agencyId, clientId: req.client.id, state: 'new' }, noTestApps(req.client)))
+    // Qaror kutayotgan arizalar — "Nomzodlar" tugmasidagi son. Ro'yxatdagi "Yangi" bo'limi bilan BIR XIL
+    // (2026-11-28: tugmada 45 — faqat ko'rilmaganlar, bo'limda 63 — mijoz qaysi biri to'g'ri ekanini bilmasdi)
+    Application.countDocuments(Object.assign({ agencyId: req.client.agencyId, clientId: req.client.id,
+      state: { $nin: ['shortlisted', 'rejected'] } }, noTestApps(req.client)))
   ]);
   res.json({ chats: (r[0] && r[0].n) || 0, apps });
 }));

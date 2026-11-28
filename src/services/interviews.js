@@ -185,7 +185,7 @@ function slotsText(iv, client, lang, again) {
  * Mijoz suhbatga chaqiradi.
  * @param mode 'pick' — nomzod botda tanlaydi | 'fixed' — aniq vaqt (at)
  */
-async function offer({ agencyId, clientId, shortlistId, candidateId, mode = 'pick', at = null, prefs = null, address = '', now = new Date() }) {
+async function offer({ agencyId, clientId, shortlistId, candidateId, mode = 'pick', at = null, prefs = null, address = '', slots: picked = null, now = new Date() }) {
   const client = await Client.findOne({ agencyId, id: clientId });
   if (!client) throw new Error('Mijoz topilmadi');
   const { sl, it } = await itemOf(agencyId, shortlistId, candidateId, clientId);
@@ -216,6 +216,16 @@ async function offer({ agencyId, clientId, shortlistId, candidateId, mode = 'pic
     d = at ? new Date(at) : null;
     if (!d || isNaN(d.getTime())) throw new Error('Suhbat sanasi noto\'g\'ri');
     if (d.getTime() < now.getTime() + 30 * MIN) throw new Error('Suhbat vaqti kamida 30 daqiqadan keyin bo\'lsin');
+  } else if (Array.isArray(picked) && picked.length) {
+    // Mijoz Mini App'da aniq soatlarni o'zi belgiladi (2026-11-28): kamida 30 daqiqadan keyin, 14 kun ichida,
+    // band vaqt (±30 daq) va takrorlar chiqariladi, 8 tagacha
+    const seen = new Set();
+    slots = picked.map(s => new Date(s)).filter(d => !isNaN(d.getTime())
+      && d.getTime() >= now.getTime() + 30 * MIN && d.getTime() <= now.getTime() + 14 * 864e5
+      && !busy.some(b => Math.abs(new Date(b).getTime() - d.getTime()) < 30 * MIN)
+      && !seen.has(d.getTime()) && seen.add(d.getTime()))
+      .sort((a, b) => a - b).slice(0, 8);
+    if (!slots.length) throw new Error('Tanlangan vaqtlar o\'tib ketgan yoki band — boshqa soat tanlang');
   } else {
     slots = makeSlots(P, now, busy);
     if (!slots.length) throw new Error('Yaqin 7 kunda bo\'sh vaqt yo\'q — suhbat kunlari yoki soatlarini kengaytiring');

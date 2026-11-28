@@ -1681,3 +1681,12 @@ kirishlardan keyin t.me bo'ladi. Test `test/analytics.test.js`.
   ochilmadi (Telegram faqat "tanish" akkauntni ID bilan ochadi; nomzod bot bilan yozishgan, agentlik bilan emas).
   Endi: username -> `t.me/<u>`; username yo'q — telefon (nomzod profili yoki anketa yozuvi) -> `t.me/+998...`;
   ikkalasi yo'q — havola YO'Q, ustida sababi ("username yo'q, telefon hali kiritilmagan"). `agency.js tgContacts`.
+
+**ANKETA: RASM MAJBURIY, SELFI TUGMASI** (2026-11-28, Anas: "rasm joylashni majburiy qilish kerak; selfi olish bilan
+galereyadan qo'yish ham bo'lsin"). Jonli o'lchov: anketa tugatgan 54 nomzoddan 49 tasida rasm; 5 tasi "Keyinroq
+qo'shaman" bosgan — birortasi keyin qo'shmagan (keyinroq = hech qachon). 90 kunda rasm qadamida to'xtagan yo'q.
+- `anketa.html`: "Keyinroq" olib tashlandi; "🖼 Galereyadan tanlash" (asosiy) + "🤳 Hozir selfi olish" (ikkinchi darajali,
+  `capture="user"` — kamera darhol); chiqish yo'li — izoh "anketani yopib, keyinroq davom ettiring — javoblar saqlanadi".
+- `routes/anketa.js`: `value:'later'` -> 400 `required`; yuborishda faqat `r.photo` (eski `photoLater` o'tkazmaydi).
+- Ovozli yo'lda rasm avvaldan majburiy (o'zgarmadi). Test `test/photoreq.test.js`.
+YOZMA vs OVOZ (o'sha o'lchov): tugatganlar 52 yozma (96%), 2 ovoz (4%) — ikkalasi noyabrda.

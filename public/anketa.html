@@ -167,6 +167,7 @@ textarea.in{min-height:110px;resize:vertical;line-height:1.5}
 input.in,textarea.in{border:none;background:var(--th-fill);border-radius:14px}
 input.in:focus,textarea.in:focus{box-shadow:inset 0 0 0 2px var(--blue);background:var(--card)}
 .share{border-radius:16px;box-shadow:0 8px 20px rgba(0,102,224,.28)}
+.share.alt{background:var(--soft-blue);color:var(--blue);box-shadow:none}   /* ikkinchi darajali (selfi) — bitta asosiy harakat */
 .ok{border-radius:14px;background:var(--th-ok-soft);color:var(--ok)}
 .cons{border-radius:14px;background:var(--th-fill)}
 .ph{border-radius:20px;background:var(--th-brand-soft)}
@@ -365,7 +366,7 @@ function answeredQ(q){
   const a = S.answers || {};
   return q.type === 'contact' ? !!(S.phoneVerified || a.phone)
     : q.type === 'consent' ? a.consent === true
-    : q.type === 'photo' ? !!(S.hasPhoto || (S.answers || {}).photoLater)
+    : q.type === 'photo' ? !!S.hasPhoto
     : a[q.id] != null && a[q.id] !== '';
 }
 // To'ldirish rejimida: boshida yetishmaganlar + javob o'zgarib yangi chiqqan majburiy savol
@@ -462,7 +463,9 @@ function renderQ(){
   } else if (q.type === 'photo') {
     body = `<div class="ph" id="fPh">${S.hasPhoto && S._photoUrl ? `<img src="${S._photoUrl}" alt="">` : '&#128100;'}</div>
       <input type="file" id="fFile" accept="image/*" class="hide">
-      <button class="share" id="bPick" style="margin-top:16px">${esc(S.hasPhoto ? t('ank.photoChange') : t('ank.photoBtn'))}</button>`;
+      <button class="share" id="bPick" style="margin-top:16px">${esc(S.hasPhoto ? t('ank.photoChange') : t('ank.photoBtn'))}</button>
+      ${S.hasPhoto ? '' : `<button class="share alt" id="bCam" style="margin-top:10px">${esc(t('ank.photoCam'))}</button>
+      <div class="hint" id="fPhR" style="margin-top:12px;text-align:center">${esc(t('ank.photoResume'))}</div>`}`;
   } else if (q.type === 'consent') {
     body = `<div class="cons">${esc(L(q.hint))}</div>
       <label class="chk"><input type="checkbox" id="fChk" ${draft.value === true ? 'checked' : ''}>${esc(t('ank.consentChk'))}</label>`;
@@ -523,21 +526,14 @@ function wireQ(q){
   } else if (q.type === 'contact') {
     wireContact(q, nextTxt);
   } else if (q.type === 'photo') {
-    $('bPick').onclick = () => $('fFile').click();
+    // Rasm MAJBURIY (Anas, 2026-11-28): "Keyinroq qo'shaman" olib tashlandi — uni bosgan 5/54 nomzodning
+    // birortasi keyin rasm qo'shmagan edi. Rasmi qo'lida yo'q odamga: darhol selfi (kamera) yoki anketani
+    // yopib keyin davom ettirish (javoblar saqlanadi) — chiqish yo'li shu.
+    const pick = cam => { const f = $('fFile'); cam ? f.setAttribute('capture', 'user') : f.removeAttribute('capture'); f.click(); };
+    $('bPick').onclick = () => pick(false);
+    if ($('bCam')) $('bCam').onclick = () => pick(true);
     $('fFile').onchange = () => pickPhoto(q);
     showBar(nextTxt, S.hasPhoto, () => save(q));
-    // Chiqish yo'li: rasmi qo'lida yo'q odam anketani tashlab ketmasin — kabinetda qo'shadi
-    if (!S.hasPhoto) {
-      const sk = $('bSkip');
-      sk.textContent = t('ank.photoLater'); sk.classList.remove('hide');
-      sk.onclick = async () => {
-        sk.disabled = true;
-        try { await api('/answer', { method: 'POST', body: JSON.stringify({ q: q.id, value: 'later' }) });
-          S.answers = Object.assign({}, S.answers, { photoLater: true }); go(1); }
-        catch(e){ $('err').textContent = e.message; }
-        sk.disabled = false;
-      };
-    }
   } else if (q.type === 'consent') {
     $('fChk').onchange = () => { draft.value = $('fChk').checked; $('bNext').disabled = !draft.value; };
     showBar(nextTxt, draft.value === true, () => save(q));
@@ -794,6 +790,7 @@ function pickPhoto(q){
       await api('/answer', { method:'POST', body: JSON.stringify({ q: q.id, value: data }) });
       S.hasPhoto = true; S._photoUrl = data; draft.value = 'have';
       $('bPick').textContent = t('ank.photoChange'); $('bNext').disabled = false; haptic('ok');
+      ['bCam', 'fPhR'].forEach(id => $(id) && $(id).remove());   // rasm bor — selfi tugmasi va izoh kerak emas
     } catch(e){ $('err').textContent = errText(e.code); }
     $('bPick').disabled = false;
   };

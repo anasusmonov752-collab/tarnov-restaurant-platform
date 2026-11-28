@@ -128,13 +128,9 @@ router.post('/:rid/answer', guard, asyncHandler(async (req, res) => {
     return res.json({ ok: true });
   }
 
-  // Rasm: "Keyinroq qo'shaman" — anketa to'xtamasin (rasmi qo'lida yo'q odam shu yerda
-  // tashlab ketardi). Rasm kabinetda qo'shiladi, rahmat xabarida eslatiladi (anketaDone).
-  if (q.type === 'photo' && b.value === 'later') {
-    r.answers = Object.assign({}, r.answers || {}, { photoLater: true });
-    r.markModified('answers'); r.step = q.id; r.updatedAt = new Date(); await r.save();
-    return res.json({ ok: true });
-  }
+  // Rasm MAJBURIY (Anas, 2026-11-28): "Keyinroq qo'shaman" bekor — uni bosganlarning birortasi keyin
+  // rasm qo'shmagan (5/54). Eski (keshdagi) sahifa 'later' yuborsa — rasm so'raladi
+  if (q.type === 'photo' && b.value === 'later') return fail(res, 400, 'required', { q: q.id });
 
   let val;
   try { val = survey.checkAnswer(q, b.value); }
@@ -170,7 +166,7 @@ router.post('/:rid/submit', guard, asyncHandler(async (req, res) => {
     if (!q.required) continue;
     const ok = q.type === 'contact' ? (r.phoneVerifiedAt || a.phone)
              : q.type === 'consent' ? a.consent === true
-             : q.type === 'photo' ? !!(r.photo || a.photoLater)
+             : q.type === 'photo' ? !!r.photo
              : a[q.id] != null && a[q.id] !== '';
     if (!ok) return fail(res, 400, 'required', { q: q.id });
   }
